@@ -27,26 +27,20 @@ module Mongo
       #
       # @example Instantiate a Handle object with local KMS provider options
       #   Mongo::Crypt::Handle.new({
-      #     kms_providers: {
-      #       local: { key: 'MASTER-KEY' }
-      #     }
+      #     local: { key: 'MASTER-KEY' }
       #   })
       #
-      # @param [ Hash ] options The options used to initialize the mongocrypt handle
-      #
-      # @options option [ Hash ] kms_providers A hash of KMS settings. The only supported key
-      #   is currently :local. Local KMS options must be passed in the format { local: { key: 'MASTER-KEY' } }
-      #   where the master key is a 96-byte, base64 encoded string.
+      # @param [ Hash ] kms_providers A hash of KMS settings. The only supported key
+      # is currently :local. Local KMS options must be passed in the format
+      # { local: { key: 'MASTER-KEY' } } where the master key is a 96-byte, base64
+      # encoded string.
       #
       # @since 2.12.0
-      def initialize(options = {})
-        raise ArgumentError.new("Options must not be blank") unless options
-
-        @options = options
+      def initialize(kms_providers)
         @mongocrypt = Binding.mongocrypt_new
 
         begin
-          set_kms_providers
+          set_kms_providers(kms_providers)
           initialize_mongocrypt
         rescue => e
           self.close
@@ -63,9 +57,7 @@ module Mongo
       # @since 2.12.0
       def close
         Binding.mongocrypt_destroy(@mongocrypt) if @mongocrypt
-
         @mongocrypt = nil
-        @options = nil
 
         true
       end
@@ -74,41 +66,33 @@ module Mongo
 
       # Validate the kms_providers option and use it to set the KMS provider
       # information on the underlying mongocrypt_t object
-      def set_kms_providers
-        unless @options[:kms_providers]
+      def set_kms_providers(kms_providers)
+        unless kms_providers
           raise ArgumentError.new("The kms_providers option must not be blank")
         end
-
-        kms_providers = @options[:kms_providers]
 
         unless kms_providers.key?(:local) || kms_providers.key?(:aws)
           raise ArgumentError.new('The kms_providers option must have one of the following keys: :aws, :local')
         end
 
-        if kms_providers.key?(:local)
-          unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
-            raise ArgumentError.new(
-              "The specified kms_providers option is invalid: #{kms_providers}. " +
-              "kms_providers with :local key must be in the format: { local: { key: 'MASTER-KEY' } }"
-            )
-          end
-
-          set_kms_provider_local
-        end
+        set_kms_providers_local(kms_providers) if kms_providers.key?(:local)
 
         if kms_providers.key?(:aws)
           raise ArgumentError.new(':aws is not yet a supported kms_providers option. Use :local instead')
         end
       end
 
-      # Set the local KMS provider information on the underlying mongocrypt_t object
-      #
-      # Only called once it has been validated that @options[:kms_providers][:local][:key]
-      # is present and a String
-      #
-      # Raises an error if the operation fails
-      def set_kms_provider_local
-        master_key = @options[:kms_providers][:local][:key]
+      # Validate and set the local KMS provider information on the underlying
+      # mongocrypt_t object and raise an exception if the operation fails
+      def set_kms_providers_local(kms_providers)
+        unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
+          raise ArgumentError.new(
+            "The specified kms_providers option is invalid: #{kms_providers}. " +
+            "kms_providers with :local key must be in the format: { local: { key: 'MASTER-KEY' } }"
+          )
+        end
+
+        master_key = kms_providers[:local][:key]
 
         Binary.with_binary(Base64.decode64(master_key)) do |binary|
           success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)

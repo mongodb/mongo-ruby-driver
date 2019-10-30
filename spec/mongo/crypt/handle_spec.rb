@@ -10,16 +10,7 @@ describe Mongo::Crypt::Handle do
   require_libmongocrypt
 
   describe '#initialize' do
-    let(:handle) { described_class.new(options) }
-    let(:options) { { kms_providers: kms_providers } }
-
-    context 'with empty options' do
-      let(:options) { nil }
-
-      it 'raises an exception' do
-        expect { handle }.to raise_error(ArgumentError, /Options must not be blank/)
-      end
-    end
+    let(:handle) { described_class.new(kms_providers) }
 
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }
