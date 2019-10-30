@@ -61,6 +61,12 @@ module Mongo
         data.read_array_of_type(FFI::TYPE_UINT8, :read_uint8, len)
       end
 
+      # Returns the reference to the underlying mongocrypt_binary_t
+      # object
+      #
+      # @return [ FFI::Pointer ] The underlying mongocrypt_binary_t object
+      #
+      # @since 2.12.0
       def ref
         @bin
       end

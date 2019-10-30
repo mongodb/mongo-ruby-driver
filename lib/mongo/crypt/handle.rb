@@ -63,10 +63,8 @@ module Mongo
       # @since 2.12.0
       def close
         Binding.mongocrypt_destroy(@mongocrypt) if @mongocrypt
-        @status.close if @status
 
         @mongocrypt = nil
-        @status = nil
         @options = nil
 
         true
@@ -121,6 +119,7 @@ module Mongo
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails
       def initialize_mongocrypt
         success = Binding.mongocrypt_init(@mongocrypt)
+        # There is currently no test for this code path
         raise_from_status unless success
       end
 
@@ -130,14 +129,12 @@ module Mongo
         Status.with_status do |status|
           Binding.mongocrypt_status(@mongocrypt, status.ref)
 
-          message = "Code #{status.code}: #{status.message}"
-
           error = case status.label
           when :error_kms
             # There is currently no test for this code path
-            Error::CryptKmsError.new(status.code, message)
+            Error::CryptKmsError.new(status.code, status.message)
           when :error_client
-            Error::CryptClientError.new(status.code, message)
+            Error::CryptClientError.new(status.code, status.message)
           end
 
           raise error

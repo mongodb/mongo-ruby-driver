@@ -10,7 +10,7 @@ describe Mongo::Error::CryptError do
   describe '#initialize' do
     it 'properly populates fields' do
       expect(error.code).to eq(code)
-      expect(error.message).to eq(message)
+      expect(error.message).to eq("Code #{code}: #{message}")
     end
   end
 end

@@ -8,21 +8,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'byebug'
-
 module Mongo
   class Error
 
     # An error related to the libmongocrypt binding.
     #
-    # @param [ Symbol ] :error_client or :error_kms
+    # @param [ Integer ] code The error code
+    # @param [ String ] message The error message
+    #
     # @since 2.12.0
     class CryptError < Mongo::Error
       attr_accessor :code
 
       def initialize(code, message)
         @code = code
-        super(message)
+        super("Code #{code}: #{message}")
       end
     end
 
