@@ -1924,11 +1924,11 @@ describe Mongo::BulkWrite do
             end
 
             let(:first_txn_number) do
-              started_events[-2].command['txnNumber'].instance_variable_get(:@integer)
+              started_events[-2].command['txnNumber'].value
             end
 
             let(:second_txn_number) do
-              started_events[-1].command['txnNumber'].instance_variable_get(:@integer)
+              started_events[-1].command['txnNumber'].value
             end
 
             it 'inserts the documents' do

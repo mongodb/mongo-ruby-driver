@@ -5,7 +5,9 @@ describe Mongo::Cursor::Builder::OpGetMore do
   describe '#specification' do
 
     let(:reply) do
-      Mongo::Protocol::Reply.allocate
+      Mongo::Protocol::Reply.allocate.tap do |reply|
+        allow(reply).to receive(:cursor_id).and_return(8000)
+      end
     end
 
     let(:result) do
@@ -38,7 +40,7 @@ describe Mongo::Cursor::Builder::OpGetMore do
     end
 
     it 'includes the cursor id' do
-      expect(specification[:cursor_id]).to eq(cursor.id)
+      expect(specification[:cursor_id]).to eq(BSON::Int64.new(8000))
     end
 
     it 'includes the database name' do

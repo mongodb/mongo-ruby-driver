@@ -105,7 +105,7 @@ module Utils
       # Convert txnNumber field from a BSON integer to an extended JSON int64
       if command['txnNumber']
         command['txnNumber'] = {
-          '$numberLong' => command['txnNumber'].instance_variable_get(:@integer).to_s
+          '$numberLong' => command['txnNumber'].value.to_s
         }
       end
 

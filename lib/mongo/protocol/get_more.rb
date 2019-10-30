@@ -110,6 +110,7 @@ module Mongo
         # The get more constant.
         #
         # @since 2.2.0
+        # @deprecated
         GET_MORE = 'getMore'.freeze
 
         # @return [ String ] collection The name of the collection.
@@ -148,7 +149,7 @@ module Mongo
         # @since 2.1.0
         def command
           document = BSON::Document.new
-          document.store(GET_MORE, cursor_id)
+          document.store('getMore', BSON::Int64.new(cursor_id))
           document.store(Message::BATCH_SIZE, number_to_return)
           document.store(Message::COLLECTION, collection)
           document

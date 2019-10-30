@@ -134,6 +134,11 @@ module Mongo
         end
         if expected.keys.first == '$numberLong'
           converted = expected.values.first.to_i
+          if actual.is_a?(BSON::Int64)
+            actual = actual.value
+          elsif actual.is_a?(BSON::Int32)
+            return false
+          end
           (actual == converted) || actual >= 0
         else
           expected.each do |key, value|

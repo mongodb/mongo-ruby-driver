@@ -5,7 +5,9 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
   describe '#specification' do
 
     let(:reply) do
-      Mongo::Protocol::Reply.allocate
+      Mongo::Protocol::Reply.allocate.tap do |reply|
+        allow(reply).to receive(:cursor_id).and_return(8000)
+      end
     end
 
     let(:result) do
@@ -54,7 +56,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
       end
 
       it 'includes getMore with cursor id' do
-        expect(selector[:getMore]).to eq(cursor.id)
+        expect(selector[:getMore]).to eq(BSON::Int64.new(8000))
       end
 
       it 'includes the collection name' do
