@@ -52,7 +52,7 @@ module Mongo
         end
 
         len = Binding.mongocrypt_binary_len(@bin)
-        data.read_array_of_type(FFI::TYPE_UINT8, :read_uint8, len)
+        data.get_array_of_uint8(0, len)
       end
 
       # Returns the reference to the underlying mongocrypt_binary_t
