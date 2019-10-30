@@ -57,7 +57,10 @@ module Mongo
         private
 
         def get_more_command
-          command = { :getMore => cursor.id, :collection => collection_name }
+          command = {
+            :getMore => BSON::Int64.new(cursor.id),
+            :collection => collection_name,
+          }
           command[:batchSize] = batch_size.abs if batch_size && batch_size != 0
           # If the max_await_time_ms option is set, then we set maxTimeMS on
           # the get more command.

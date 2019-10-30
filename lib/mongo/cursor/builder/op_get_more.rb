@@ -50,9 +50,9 @@ module Mongo
         def specification
           {
             :to_return => to_return,
-            :cursor_id => cursor.id,
+            :cursor_id => BSON::Int64.new(cursor.id),
             :db_name   => database.name,
-            :coll_name => collection_name
+            :coll_name => collection_name,
           }
         end
       end
