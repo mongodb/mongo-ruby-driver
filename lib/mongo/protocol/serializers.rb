@@ -102,13 +102,16 @@ module Mongo
       # Serializes and de-serializes one 32-bit integer.
       module Int32
 
-        # Serializes a fixnum to a 4-byte 32-bit integer
+        # Serializes a number to a 32-bit integer
         #
         # @param buffer [ String ] Buffer to receive the serialized Int32.
-        # @param value [ Fixnum ] 32-bit integer to be serialized.
+        # @param value [ Integer | BSON::Int32 ] 32-bit integer to be serialized.
         #
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+          if value.is_a?(BSON::Int32)
+            value = value.value
+          end
           buffer.put_int32(value)
         end
 
@@ -127,13 +130,16 @@ module Mongo
       # Serializes and de-serializes one 64-bit integer.
       module Int64
 
-        # Serializes a fixnum to an 8-byte 64-bit integer
+        # Serializes a number to a 64-bit integer
         #
         # @param buffer [ String ] Buffer to receive the serialized Int64.
-        # @param value [ Fixnum ] 64-bit integer to be serialized.
+        # @param value [ Integer | BSON::Int64 ] 64-bit integer to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+          if value.is_a?(BSON::Int64)
+            value = value.value
+          end
           buffer.put_int64(value)
         end
 
