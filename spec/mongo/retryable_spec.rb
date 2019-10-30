@@ -175,83 +175,62 @@ describe Mongo::Retryable do
 
     context 'when an operation failure occurs' do
 
-      context 'when the cluster is not a mongos' do
+      context 'when the operation failure is not retryable' do
 
-        before do
-          expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure).ordered
-          expect(cluster).to receive(:sharded?).and_return(false)
+        let(:error) do
+          Mongo::Error::OperationFailure.new('not authorized')
         end
 
-        it 'raises an exception' do
+        before do
+          expect(operation).to receive(:execute).and_raise(error).ordered
+        end
+
+        it 'raises the exception' do
           expect {
             read_operation
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 
-      context 'when the cluster is a mongos' do
+      context 'when the operation failure is retryable' do
 
-        context 'when the operation failure is not retryable' do
+        let(:error) do
+          Mongo::Error::OperationFailure.new('not master')
+        end
 
-          let(:error) do
-            Mongo::Error::OperationFailure.new('not authorized')
-          end
+        context 'when the retry succeeds' do
 
           before do
+            expect(retryable).to receive(:select_server).ordered
             expect(operation).to receive(:execute).and_raise(error).ordered
-            expect(cluster).to receive(:sharded?).and_return(true)
+            expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
+            expect(retryable).to receive(:select_server).ordered
+            expect(operation).to receive(:execute).and_return(true).ordered
           end
 
-          it 'raises the exception' do
-            expect {
-              read_operation
-            }.to raise_error(Mongo::Error::OperationFailure)
+          it 'returns the result' do
+            expect(read_operation).to be true
           end
         end
 
-        context 'when the operation failure is retryable' do
+        context 'when the retry fails once and then succeeds' do
+          let(:max_read_retries) { 2 }
 
-          let(:error) do
-            Mongo::Error::OperationFailure.new('not master')
+          before do
+            expect(retryable).to receive(:select_server).ordered
+            expect(operation).to receive(:execute).and_raise(error).ordered
+
+            expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
+            expect(retryable).to receive(:select_server).ordered
+            expect(operation).to receive(:execute).and_raise(error).ordered
+
+            expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
+            expect(retryable).to receive(:select_server).ordered
+            expect(operation).to receive(:execute).and_return(true).ordered
           end
 
-          context 'when the retry succeeds' do
-
-            before do
-              expect(retryable).to receive(:select_server).ordered
-              expect(operation).to receive(:execute).and_raise(error).ordered
-              expect(cluster).to receive(:sharded?).and_return(true)
-              expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
-              expect(retryable).to receive(:select_server).ordered
-              expect(operation).to receive(:execute).and_return(true).ordered
-            end
-
-            it 'returns the result' do
-              expect(read_operation).to be true
-            end
-          end
-
-          context 'when the retry fails once and then succeeds' do
-            let(:max_read_retries) { 2 }
-
-            before do
-              expect(retryable).to receive(:select_server).ordered
-              expect(operation).to receive(:execute).and_raise(error).ordered
-
-              expect(cluster).to receive(:sharded?).and_return(true)
-              expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
-              expect(retryable).to receive(:select_server).ordered
-              expect(operation).to receive(:execute).and_raise(error).ordered
-
-              expect(cluster).to receive(:sharded?).and_return(true)
-              expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
-              expect(retryable).to receive(:select_server).ordered
-              expect(operation).to receive(:execute).and_return(true).ordered
-            end
-
-            it 'returns the result' do
-              expect(read_operation).to be true
-            end
+          it 'returns the result' do
+            expect(read_operation).to be true
           end
         end
       end
