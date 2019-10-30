@@ -80,15 +80,15 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
-      # Whether the error is a retryable error according to the legacy read retry
-      # logic.
+      # Whether the error is a retryable error according to the legacy
+      # read retry logic.
       #
       # @return [ true, false ]
       #
       # @since 2.1.1
       # @deprecated
       def retryable?
-        RETRY_MESSAGES.any?{ |m| message.include?(m) }
+        write_retryable? || RETRY_MESSAGES.any?{ |m| message.include?(m) }
       end
 
       # Whether the error is a retryable error according to the modern retryable
