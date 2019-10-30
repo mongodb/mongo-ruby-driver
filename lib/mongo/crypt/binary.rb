@@ -37,7 +37,7 @@ module Mongo
 
         # FFI::MemoryPointer automatically frees memory when it goes out of scope
         @data_p = FFI::MemoryPointer.new(bytes.length)
-                  .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+                  .write_array_of_uint8(bytes)
 
         @bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
       end
