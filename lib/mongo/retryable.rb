@@ -333,7 +333,7 @@ module Mongo
         retry
       rescue Error::OperationFailure => e
         e.add_note("attempt #{attempt + 1}")
-        if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
+        if e.retryable? && !(session && session.in_transaction?)
           if attempt > client.max_read_retries
             raise e
           end
