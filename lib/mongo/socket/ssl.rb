@@ -112,7 +112,7 @@ module Mongo
 
       def verify_hostname?
         @verify_hostname ||=
-         # If ssl_verify_hostname is not present, disable only if ssl_verify is
+          # If ssl_verify_hostname is not present, disable only if ssl_verify is
           # explicitly set to false.
           if options[:ssl_verify_hostname].nil?
             options[:ssl_verify] != false
