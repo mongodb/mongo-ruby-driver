@@ -20,8 +20,6 @@ module Mongo
     # A Ruby binding for the libmongocrypt C library
     #
     # @api private
-    #
-    # @since 2.12.0
     class Binding
       extend FFI::Library
 

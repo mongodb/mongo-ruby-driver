@@ -82,7 +82,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) do
         {
           local: {
-            key: Base64.encode64('ruby' * 24)
+            key: Base64.encode64("ru\xfe\x00" * 24)
           }
         }
       end

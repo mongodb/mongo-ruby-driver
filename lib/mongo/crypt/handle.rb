@@ -25,17 +25,12 @@ module Mongo
 
       # Creates a new Handle object and initializes it with options
       #
-      # @example Instantiate a Handle object with local KMS provider options
-      #   Mongo::Crypt::Handle.new({
-      #     local: { key: 'MASTER-KEY' }
-      #   })
-      #
       # @param [ Hash ] kms_providers A hash of KMS settings. The only supported key
       # is currently :local. Local KMS options must be passed in the format
-      # { local: { key: 'MASTER-KEY' } } where the master key is a 96-byte, base64
+      # { local: { key: <master key> } } where the master key is a 96-byte, base64
       # encoded string.
       #
-      # @since 2.12.0
+      # There will be more arguemnts to this method once automatic encryption is introduced.
       def initialize(kms_providers)
         @mongocrypt = Binding.mongocrypt_new
 
@@ -43,6 +38,9 @@ module Mongo
           set_kms_providers(kms_providers)
           initialize_mongocrypt
         rescue => e
+          # Setting options or initializing mongocrypt_t could cause validation/status
+          # errors; if that happens, make sure the reference to the mongocrypt_t object
+          # is destroyed before passing on the error
           self.close
           raise e
         end
@@ -53,8 +51,6 @@ module Mongo
       # clean up resources
       #
       # @return [ true ] Always true
-      #
-      # @since 2.12.0
       def close
         Binding.mongocrypt_destroy(@mongocrypt) if @mongocrypt
         @mongocrypt = nil
@@ -68,7 +64,7 @@ module Mongo
       # information on the underlying mongocrypt_t object
       def set_kms_providers(kms_providers)
         unless kms_providers
-          raise ArgumentError.new("The kms_providers option must not be blank")
+          raise ArgumentError.new("The kms_providers option must not be nil")
         end
 
         unless kms_providers.key?(:local) || kms_providers.key?(:aws)

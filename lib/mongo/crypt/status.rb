@@ -19,12 +19,8 @@ module Mongo
 
     # A wrapper around mongocrypt_status_t, representing the status of
     # a mongocrypt_t handle.
-    #
-    # @since 2.12.0
     class Status
       # Create a new Status object
-      #
-      # @since 2.12.0
       def initialize
         @status = Binding.mongocrypt_status_new
       end
@@ -36,8 +32,6 @@ module Mongo
       # @param [ String ] message
       #
       # @return [ Mongo::Crypt::Status ] returns self
-      #
-      # @since 2.12.0
       def update(label, code, message)
         unless [:ok, :error_client, :error_kms].include?(label)
           raise ArgumentError.new(
@@ -56,8 +50,6 @@ module Mongo
       #
       # @return [ Symbol ] The status label, either :ok, :error_kms, or :error_client,
       #   defaults to :ok
-      #
-      # @since 2.12.0
       def label
         Binding.mongocrypt_status_type(@status)
       end
@@ -65,8 +57,6 @@ module Mongo
       # Return the integer code associated with the status
       #
       # @return [ Integer ] The status code, defaults to 0
-      #
-      # @since 2.12.0
       def code
         Binding.mongocrypt_status_code(@status)
       end
@@ -74,8 +64,6 @@ module Mongo
       # Return the status message
       #
       # @return [ String ] The status message, defaults to empty string
-      #
-      # @since 2.12.0
       def message
         message = Binding.mongocrypt_status_message(@status, nil)
         message || ''
@@ -84,8 +72,6 @@ module Mongo
       # Checks whether the status is labeled :ok
       #
       # @return [ Boolean ] Whether the status is :ok
-      #
-      # @since 2.12.0
       def ok?
         Binding.mongocrypt_status_ok(@status)
       end
@@ -94,8 +80,6 @@ module Mongo
       # object
       #
       # @return [ FFI::Pointer ] Pointer to the underlying mongocrypt_status_t oject
-      #
-      # @since 2.12.0
       def ref
         @status
       end
@@ -104,8 +88,6 @@ module Mongo
       # cleans up resources.
       #
       # @return [ true ] Always true
-      #
-      # @since 2.12.0
       def close
         Binding.mongocrypt_status_destroy(@status)
         @status = nil
@@ -120,8 +102,6 @@ module Mongo
       #   Mongo::Crypt::Status.with_status do |status|
       #     status.ok? # => true
       #   end
-      #
-      # @since 2.12.0
       def self.with_status
         status = self.new
         begin

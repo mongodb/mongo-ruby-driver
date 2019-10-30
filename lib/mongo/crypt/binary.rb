@@ -20,17 +20,13 @@ module Mongo
     # A wrapper around mongocrypt_binary_t, a non-owning buffer of
     # uint-8 byte data. Each Binary instance keeps a copy of the data
     # passed to it in order to keep that data alive.
-    #
-    # @since 2.12.0
     class Binary
-      # Create a new Binary object that wraps a string
+      # Create a new Binary object that wraps a byte string
       #
       # @example Instantiate a Binary object
       #   Mongo::Crypt::Binary.new('Hello, world!')
       #
       # @param [ String ] data
-      #
-      # @since 2.12.0
       def initialize(data)
         unless data
           raise ArgumentError.new('Cannot create new Binary object with no data')
@@ -49,8 +45,6 @@ module Mongo
       # Returns the data stored as a byte array
       #
       # @return [ Array<Int> ] Byte array stored in mongocrypt_binary_t
-      #
-      # @since 2.12.0
       def to_bytes
         data = Binding.mongocrypt_binary_data(@bin)
         if data == FFI::Pointer::NULL
@@ -65,8 +59,6 @@ module Mongo
       # object
       #
       # @return [ FFI::Pointer ] The underlying mongocrypt_binary_t object
-      #
-      # @since 2.12.0
       def ref
         @bin
       end
@@ -74,8 +66,6 @@ module Mongo
       # Releases allocated memory and cleans up resources
       #
       # @return [ true ] Always true.
-      #
-      # @since 2.12.0
       def close
         Binding.mongocrypt_binary_destroy(@bin) if @bin
 
@@ -92,8 +82,6 @@ module Mongo
       #   Mongo::Crypt::Binary.with_binary('Hello, world!') do |binary|
       #     binary.to_bytes # => [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
       #   end
-      #
-      # @since 2.12.0
       def self.with_binary(data)
         binary = self.new(data)
         begin

@@ -15,8 +15,6 @@ module Mongo
     #
     # @param [ Integer ] code The error code
     # @param [ String ] message The error message
-    #
-    # @since 2.12.0
     class CryptError < Mongo::Error
       attr_accessor :code
 
