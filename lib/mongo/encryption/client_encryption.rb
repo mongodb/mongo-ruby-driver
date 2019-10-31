@@ -67,8 +67,8 @@ module Mongo
 
         unless key_vault_namespace.split('.').length == 2
           raise ArgumentError.new(
-            "#{key_vault_namespace} is an invalid key vault namespace;" +
-            "the :key_vault_namespace option must be in the format database.collection"
+            "#{key_vault_namespace} is an invalid key vault namespace." +
+            "The :key_vault_namespace option must be in the format database.collection"
           )
         end
       end
