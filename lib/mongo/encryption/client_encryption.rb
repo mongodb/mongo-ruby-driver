@@ -37,19 +37,29 @@ module Mongo
         validate_key_vault_namespace(options[:key_vault_namespace])
 
         @client = client
-        @key_vault_db, @key_vault_coll = options[:key_vault_namespace].split('.')
-        @kms_providers = options[:kms_providers]
+        @key_vault_namespace = options[:key_vault_namespace]
 
-        @crypt_handle = Crypt::Handle.new(@kms_providers)
+        @crypt_handle = Crypt::Handle.new(options[:kms_providers])
       end
 
+      # Closes the underlying crypt_handle object and cleans
+      # up resources
+      #
+      # @return [ true ] Always true
       def close
         @crypt_handle.close if @crypt_handle
+        @client.close if @client
+
         @crypt_handle = nil
+        @client = nil
+        @key_vault_namespace = nil
+
+        true
       end
 
       private
 
+      # Validates that the key_vault_namespace exists and is in the format database.collection
       def validate_key_vault_namespace(key_vault_namespace)
         unless key_vault_namespace
           raise ArgumentError.new('The :key_vault_namespace option cannot be nil.')
