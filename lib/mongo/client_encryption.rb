@@ -45,6 +45,9 @@ module Mongo
     #
     # @return [ true ] Always true
     def close
+      # Will eventually revisit the experience of using a
+      # Mongo::Crypt::Handle object -- having to close it manually
+      # is not the best.
       @crypt_handle.close if @crypt_handle
       @client.close if @client
 
