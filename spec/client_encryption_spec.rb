@@ -7,7 +7,7 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
 
-describe Mongo::Encryption::ClientEncryption do
+describe Mongo::ClientEncryption do
   require_libmongocrypt
 
   describe '#initialize' do
