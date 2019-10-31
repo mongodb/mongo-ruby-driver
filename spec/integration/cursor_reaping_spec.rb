@@ -59,7 +59,7 @@ describe 'Cursor reaping' do
       client.cluster.instance_variable_get('@periodic_executor').execute
 
       started_event = EventSubscriber.started_events.detect do |event|
-        event.command['killCursors'] && event.command['cursors'].include?(cursor_id)
+        event.command['killCursors'] && event.command['cursors'].map(&:value).include?(cursor_id)
       end
 
       expect(started_event).not_to be_nil

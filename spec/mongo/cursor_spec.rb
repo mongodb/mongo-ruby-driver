@@ -301,7 +301,7 @@ describe Mongo::Cursor do
         Mongo::Collection::View.new(
             authorized_collection,
             {},
-            :batch_size => 2
+            :batch_size => 2,
         )
       end
 
@@ -312,9 +312,9 @@ describe Mongo::Cursor do
 
       it 'schedules a kill cursors op' do
         cluster.instance_variable_get(:@periodic_executor).flush
-        expect {
+        expect do
           cursor.to_a
-        }.to raise_exception(Mongo::Error::OperationFailure, /[cC]ursor.*not found/)
+        end.to raise_exception(Mongo::Error::OperationFailure, /[cC]ursor.*not found/)
       end
 
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
