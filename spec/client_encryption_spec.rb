@@ -8,6 +8,8 @@ RSpec.configure do |config|
 end
 
 describe Mongo::Encryption::ClientEncryption do
+  require_libmongocrypt
+
   describe '#initialize' do
     let(:client) { new_local_client_nmio([SpecConfig.instance.addresses.first]) }
     let(:client_encryption) do
