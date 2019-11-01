@@ -12,34 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# require 'ffi'
-
 module Mongo
   module Crypt
 
-    # TODO: documentation
+    # A Context object initialized specifically for the purpose of creating
+    # a data key in the key managemenet system.
     class DataKeyContext < Context
 
-      # TODO: documentation
-      def initialize(ctx)
+      # Create a new DataKeyContext object
+      #
+      # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
+      #   used to create a new mongocrypt_ctx_t.
+      def initialize(mongocrypt)
         # This initializer will eventually take more arguments:
         # - kms_providers (just supporting local for right now)
         # - options: master key (only relevant to AWS) and key_alt_names (not required for POC)
 
-        super(ctx)
+        super(mongocrypt)
 
         begin
           set_local_master_key
           initialize_ctx
         rescue => e
+          # Setting options on or initializing the context could raise errors.
+          # Make sure the reference to the underlying mongocrypt_ctx_t is destroyed
+          # before passing those errors along.
           self.close
           raise e
         end
       end
 
-      # TODO: documentation
-      def self.with_context(ctx)
-        context = self.new(ctx)
+      # Convenient API for using context object without having
+      # to perform cleanup.
+      #
+      # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
+      #   used to create a new mongocrypt_ctx_t in the context of this block.
+      def self.with_context(mongocrypt)
+        context = self.new(mongocrypt)
         begin
           yield(context)
         ensure
@@ -49,11 +58,14 @@ module Mongo
 
       private
 
+      # Configures the underlying mongocrypt_ctx_t object to accept local
+      # KMS options
       def set_local_master_key
         success = Binding.mongocrypt_ctx_setopt_masterkey_local(@ctx)
         raise_from_status unless success
       end
 
+      # Initializes the underlying mongocrypt_ctx_t object
       def initialize_ctx
         success = Binding.mongocrypt_ctx_datakey_init(@ctx)
         raise_from_status unless success

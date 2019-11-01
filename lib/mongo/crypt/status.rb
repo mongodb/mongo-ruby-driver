@@ -84,6 +84,23 @@ module Mongo
         @status
       end
 
+      # Raises a Mongo::Error:CryptError corresponding to the
+      # information stored in this status
+      #
+      # Does nothing if self.ok? is true
+      def raise_crypt_error
+        return if ok?
+
+        error = case label
+        when :error_kms
+          Error::CryptKmsError.new(code, message)
+        when :error_client
+          Error::CryptClientError.new(code, message)
+        end
+
+        raise error
+      end
+
       # Destroys reference to mongocrypt_status_t object and
       # cleans up resources.
       #

@@ -9,14 +9,11 @@ describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
 
   let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
-  let(:ctx) { Mongo::Crypt::Binding.mongocrypt_ctx_new(mongocrypt) }
+  let(:context) { described_class.new(mongocrypt) }
 
-  let(:context) { described_class.new(ctx) }
+  let(:master_key) do
+    bytes = ("ru\xfe\x00" * 24).unpack('C*')
 
-  let(:master_key) { "ru\xfe\x00" * 24 }
-  let(:bytes) { master_key.unpack('C*') }
-
-  let(:binary) do
     p = FFI::MemoryPointer
     .new(bytes.size)
     .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
@@ -45,12 +42,12 @@ describe Mongo::Crypt::DataKeyContext do
 
     context 'when local kms provider has been set on mongocrypt' do
       before do
-        Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+        Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, master_key)
         Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
       end
 
       after do
-        Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
+        Mongo::Crypt::Binding.mongocrypt_binary_destroy(master_key)
         context.close
       end
 
@@ -64,17 +61,17 @@ describe Mongo::Crypt::DataKeyContext do
 
   describe '#with_context' do
     before do
-      Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+      Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, master_key)
       Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
 
       allow(described_class)
         .to receive(:new)
-        .with(ctx)
+        .with(mongocrypt)
         .and_return(context)
     end
 
     after do
-      Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
+      Mongo::Crypt::Binding.mongocrypt_binary_destroy(master_key)
     end
 
     context 'when yield errors' do
@@ -82,7 +79,7 @@ describe Mongo::Crypt::DataKeyContext do
         expect(context).to receive(:close).once
 
         expect do
-          described_class.with_context(ctx) do |_|
+          described_class.with_context(mongocrypt) do |_|
             raise StandardError.new("an error")
           end
         end.to raise_error(StandardError, /an error/)
@@ -93,8 +90,8 @@ describe Mongo::Crypt::DataKeyContext do
       expect(described_class).to receive(:new).once
       expect(context).to receive(:close).once
 
-      described_class.with_context(ctx) do |_|
-        1 + 1
+      described_class.with_context(mongocrypt) do |_|
+        # something here
       end
     end
   end
