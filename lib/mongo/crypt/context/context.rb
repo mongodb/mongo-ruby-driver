@@ -27,6 +27,8 @@ module Mongo
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
       #   used to create a new mongocrypt_ctx_t
       def initialize(mongocrypt)
+        # Ideally, this level of the API wouldn't be passing around pointer
+        # references between objects, so this method signature is subject to change.
         @ctx = Binding.mongocrypt_ctx_new(mongocrypt)
       end
 
