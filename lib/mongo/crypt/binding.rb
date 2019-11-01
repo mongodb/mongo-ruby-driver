@@ -124,6 +124,43 @@ module Mongo
 
       # Takes a pointer to a mongocrypt_t object and destroys the reference to that object.
       attach_function :mongocrypt_destroy, [:pointer], :void
+
+      # Takes a pointer to a mongocrypt_t object
+      # Creates a new mongocrypt_ctx_t object and returns a pointer to it
+      attach_function :mongocrypt_ctx_new, [:pointer], :pointer
+
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_status_t
+      # object as an out parameter. Sets the status information of the mongocrypt_ctx_t
+      # on the specified status object. Returns a boolean indicating the success of
+      # the operation.
+      attach_function :mongocrypt_ctx_status, [:pointer, :pointer], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
+      # mongocrypt_binary_t object wrapping the id of the key that will be used
+      # to encrypt the data. Returns a boolean indicating the success of the operation.
+      attach_function :mongocrypt_ctx_setopt_key_id, [:pointer, :pointer], :bool
+
+      # Takes a pionter to a mongocrypt_ctx_t object, a string indicating the algorithm
+      # name (valid values are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" and
+      # "AEAD_AES_256_CBC_HMAC_SHA_512-Randomized") and an integer indicating the length
+      # of the string. Returns a boolean indicating success of the operation.
+      attach_function :mongocrypt_ctx_setopt_algorithm, [:pointer, :string, :int], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object. Sets the KMS master key to
+      # the local value that has been passed into the mongocrypt_t object used to
+      # create the mongocrypt_ctx_t
+      # Returns a boolean indicating the success of the operation
+      attach_function :mongocrypt_ctx_setopt_masterkey_local, [:pointer], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and initializes the
+      # state machine in order to create a data key
+      # Returns a boolean indiating the success of the operation
+      attach_function :mongocrypt_ctx_datakey_init, [:pointer], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and destroys
+      # the reference to that object
+      attach_function :mongocrypt_ctx_destroy, [:pointer], :void
+
     end
   end
 end
