@@ -26,10 +26,10 @@ module Mongo
     #   collection is stored.
     # @param [ Hash ] options The ClientEncryption options
     #
-    # @option options [ String ] key_vault_namespace The name of the
+    # @option options [ String ] :key_vault_namespace The name of the
     #   key vault collection in the format "database.collection"
-    # @option options [ Hash ] kms_providers A hash of key management service
-    #   configuration information. Valid hash keys are :local or or :aws. There may be
+    # @option options [ Hash ] :kms_providers A hash of key management service
+    #   configuration information. Valid hash keys are :local or :aws. There may be
     #   more than one KMS provider specified.
     def initialize(client, options = {})
       validate_key_vault_namespace(options[:key_vault_namespace])

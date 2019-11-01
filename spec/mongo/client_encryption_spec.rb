@@ -3,10 +3,6 @@ require 'mongo'
 
 require 'base64'
 
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
-
 describe Mongo::ClientEncryption do
   require_libmongocrypt
 
