@@ -1,0 +1,64 @@
+require 'mongo'
+require 'support/lite_constraints'
+
+RSpec.configure do |config|
+  config.extend(LiteConstraints)
+end
+
+describe Mongo::Crypt::DataKeyContext do
+  require_libmongocrypt
+
+  let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
+  let(:ctx) { Mongo::Crypt::Binding.mongocrypt_ctx_new(mongocrypt) }
+
+  let(:context) { described_class.new(ctx) }
+
+  after do
+    Mongo::Crypt::Binding.mongocrypt_destroy(mongocrypt)
+  end
+
+  describe '#initialize' do
+    context 'when no kms provider has been set on mongocrypt' do
+      before do
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      it 'raises an exception' do
+        expect_any_instance_of(described_class).to receive(:close).once
+
+        expect do
+          context
+        end.to raise_error(Mongo::Error::CryptClientError, /requested kms provider not configured/)
+      end
+    end
+
+    context 'when local kms provider has been set on mongocrypt' do
+      let(:master_key) { "ru\xfe\x00" * 24 }
+      let(:bytes) { master_key.unpack('C*') }
+
+      let(:binary) do
+        p = FFI::MemoryPointer
+        .new(bytes.size)
+        .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+
+        Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
+      end
+
+      before do
+        Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      after do
+        Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
+        context.close
+      end
+
+      it 'does not raise an exception' do
+        expect do
+          context
+        end.not_to raise_error
+      end
+    end
+  end
+end
