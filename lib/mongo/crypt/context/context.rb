@@ -30,7 +30,6 @@ module Mongo
         @ctx = nil
       end
 
-
       private
 
       # Raise a Mongo::Error::CryptError based on the status of the underlying
