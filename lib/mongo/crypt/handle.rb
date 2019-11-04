@@ -108,16 +108,7 @@ module Mongo
       def raise_from_status
         Status.with_status do |status|
           Binding.mongocrypt_status(@mongocrypt, status.ref)
-
-          error = case status.label
-          when :error_kms
-            # There is currently no test for this code path
-            Error::CryptKmsError.new(status.code, status.message)
-          when :error_client
-            Error::CryptClientError.new(status.code, status.message)
-          end
-
-          raise error
+          status.raise_crypt_error
         end
       end
     end

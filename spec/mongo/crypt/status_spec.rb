@@ -28,7 +28,7 @@ describe Mongo::Crypt::Status do
     end
   end
 
-  describe '#set' do
+  describe '#update' do
     after do
       status.close
     end
@@ -115,6 +115,48 @@ describe Mongo::Crypt::Status do
     context 'status with info' do
       it 'returns false' do
         expect(status_with_info.ok?).to be false
+      end
+    end
+  end
+
+  describe '#crypt_error' do
+    after do
+      status.close
+    end
+
+    context 'when status is ok' do
+      before do
+        status.update(:ok, 0, '')
+      end
+
+      it 'does not raise exception' do
+        expect do
+          status.raise_crypt_error
+        end.not_to raise_error
+      end
+    end
+
+    context 'when status is :error_kms' do
+      before do
+        status.update(:error_kms, 1, 'KMS Error')
+      end
+
+      it 'raises exception' do
+        expect do
+          status.raise_crypt_error
+        end.to raise_error(Mongo::Error::CryptKmsError, /Code 1: KMS Error/)
+      end
+    end
+
+    context 'when status is error client' do
+      before do
+        status.update(:error_client, 2, 'Client Error')
+      end
+
+      it 'raises exception' do
+        expect do
+          status.raise_crypt_error
+        end.to raise_error(Mongo::Error::CryptClientError, /Code 2: Client Error/)
       end
     end
   end
