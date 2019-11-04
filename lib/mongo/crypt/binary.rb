@@ -27,19 +27,22 @@ module Mongo
       #   Mongo::Crypt::Binary.new('Hello, world!')
       #
       # @param [ String ] data
-      def initialize(data)
-        unless data
-          raise ArgumentError.new('Cannot create new Binary object with no data')
+      def initialize(data=nil)
+        # unless data
+        #   raise ArgumentError.new('Cannot create new Binary object with no data')
+        # end
+        if data
+          # Represent data string as array of uint-8 bytes
+          bytes = data.unpack('C*')
+
+          # FFI::MemoryPointer automatically frees memory when it goes out of scope
+          @data_p = FFI::MemoryPointer.new(bytes.length)
+                    .write_array_of_uint8(bytes)
+
+          @bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
+        else
+          @bin = Binding.mongocrypt_binary_new
         end
-
-        # Represent data string as array of uint-8 bytes
-        bytes = data.unpack('C*')
-
-        # FFI::MemoryPointer automatically frees memory when it goes out of scope
-        @data_p = FFI::MemoryPointer.new(bytes.length)
-                  .write_array_of_uint8(bytes)
-
-        @bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
       end
 
       # Returns the data stored as a byte array
@@ -53,6 +56,10 @@ module Mongo
 
         len = Binding.mongocrypt_binary_len(@bin)
         data.get_array_of_uint8(0, len)
+      end
+
+      def to_string
+        to_bytes.pack('C*')
       end
 
       # Returns the reference to the underlying mongocrypt_binary_t
@@ -82,7 +89,7 @@ module Mongo
       #   Mongo::Crypt::Binary.with_binary('Hello, world!') do |binary|
       #     binary.to_bytes # => [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
       #   end
-      def self.with_binary(data)
+      def self.with_binary(data=nil)
         binary = self.new(data)
         begin
           yield(binary)

@@ -42,6 +42,35 @@ module Mongo
         true
       end
 
+      # Returns the state of the mongocrypt_ctx_t
+      #
+      # @return [ Symbol ] The context state
+      def state
+        Binding.mongocrypt_ctx_state(@ctx)
+      end
+
+      # TODO: documentation
+      def run_state_machine
+        while true
+          case state
+          when :error
+            raise_from_status
+          when :need_mongo_collinfo
+            raise("Need Mongo Coll Info")
+          when :need_mongo_markings
+            raise("Need Mongo Markings")
+          when :need_mongo_keys
+            raise("Need Mongo Keys")
+          when :need_kms
+            raise("Need KMS")
+          when :ready
+            return finish
+          when :done
+            return nil
+          end
+        end
+      end
+
       private
 
       # Raise a Mongo::Error::CryptError based on the status of the underlying
@@ -50,6 +79,16 @@ module Mongo
         Status.with_status do |status|
           Binding.mongocrypt_ctx_status(@ctx, status.ref)
           status.raise_crypt_error
+        end
+      end
+
+      # TODO: documentation
+      def finish
+        bin = Binary.new
+        Binary.with_binary do |bin|
+          success = Binding.mongocrypt_ctx_finalize(@ctx, bin.ref)
+          raise_from_status unless success
+          return bin.to_string
         end
       end
     end

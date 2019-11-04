@@ -58,6 +58,23 @@ module Mongo
       true
     end
 
+    # TODO: documentation
+    def create_data_key
+      result = nil
+
+      Crypt::DataKeyContext.with_context(@crypt_handle.ref) do |context|
+        result = context.run_state_machine
+      end
+
+      buffer = BSON::ByteBuffer.new.put_bytes(result)
+      data_key = Hash.from_bson(buffer)
+
+      db, coll = @key_vault_namespace.split('.')
+
+      insert_result = @client.use(db)[coll].insert_one(data_key)
+      return insert_result.inserted_id
+    end
+
     private
 
     # Validates that the key_vault_namespace exists and is in the format database.collection

@@ -1,5 +1,6 @@
 require 'mongo'
 require 'support/lite_constraints'
+require 'byebug' # TOOD: remove
 
 RSpec.configure do |config|
   config.extend(LiteConstraints)
@@ -93,6 +94,38 @@ describe Mongo::Crypt::DataKeyContext do
       described_class.with_context(mongocrypt) do |_|
         # something here
       end
+    end
+  end
+
+  describe '#state' do
+    before do
+      Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, master_key)
+      Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+    end
+
+    after do
+      Mongo::Crypt::Binding.mongocrypt_binary_destroy(master_key)
+      context.close
+    end
+
+    it 'returns :ready' do
+      expect(context.state).to eq(:ready)
+    end
+  end
+
+  describe '#run_state_machine' do
+    before do
+      Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, master_key)
+      Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+    end
+
+    after do
+      Mongo::Crypt::Binding.mongocrypt_binary_destroy(master_key)
+      context.close
+    end
+
+    it 'creates a data key' do
+      expect(context.run_state_machine).to be_a_kind_of(String)
     end
   end
 end
