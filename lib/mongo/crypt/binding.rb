@@ -159,6 +159,20 @@ module Mongo
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
       attach_function :mongocrypt_ctx_destroy, [:pointer], :void
+
+      # mongocrypt_ctx_state_t type
+      enum :mongocrypt_ctx_state, [
+        :error,               0,
+        :need_mongo_collinfo, 1,
+        :need_mongo_markings, 2,
+        :need_mongo_keys,     3,
+        :need_kms,            4,
+        :ready,               5,
+        :done,                6
+      ]
+
+      # Takes a pointer to a mongocrypt_ctx_t object and returns a state code
+      attach_function :mongocrypt_ctx_state, [:pointer], :mongocrypt_ctx_state
     end
   end
 end
