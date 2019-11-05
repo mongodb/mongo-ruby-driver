@@ -85,9 +85,6 @@ describe 'Failing retryable operations' do
       let(:events) do
         EventSubscriber.command_started_events('find')
       end
-
-      it 'sends reads to different servers' do
-      end
     end
 
     shared_context 'write operation' do
@@ -116,7 +113,7 @@ describe 'Failing retryable operations' do
           fail('Expected operation to fail')
         end
 
-        puts exception.message
+        #puts exception.message
 
         exception
       end
@@ -148,7 +145,7 @@ describe 'Failing retryable operations' do
         expect(operation_exception.message).not_to include('attempt 3')
       end
 
-      it 'publishes one events' do
+      it 'publishes one event' do
 
         expect(events.length).to eq(1)
       end
