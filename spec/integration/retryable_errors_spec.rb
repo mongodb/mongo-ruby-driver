@@ -208,10 +208,16 @@ describe 'Failing retryable operations' do
     context 'when read is retried and retry fails' do
       include_context 'read operation'
 
-      it_behaves_like 'failing retry'
-      it_behaves_like 'modern retry'
+      context 'modern read retries' do
+        let(:client) do
+          subscribed_client.with(retry_reads: true)
+        end
 
-      context 'legacy read' do
+        it_behaves_like 'failing retry'
+        it_behaves_like 'modern retry'
+      end
+
+      context 'legacy read retries' do
         let(:client) do
           subscribed_client.with(retry_reads: false, read_retry_interval: 0)
         end
@@ -235,8 +241,14 @@ describe 'Failing retryable operations' do
     context 'when write is retried and retry fails' do
       include_context 'write operation'
 
-      it_behaves_like 'failing retry'
-      it_behaves_like 'modern retry'
+      context 'modern write retries' do
+        let(:client) do
+          subscribed_client.with(retry_writes: true)
+        end
+
+        it_behaves_like 'failing retry'
+        it_behaves_like 'modern retry'
+      end
 
       context 'legacy write' do
         let(:client) do
