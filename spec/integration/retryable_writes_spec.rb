@@ -102,22 +102,22 @@ describe 'Retryable writes integration tests' do
           end
 
           it 'does not retry writes' do
-            expect {
+            expect do
               operation
-            }.to raise_error(Mongo::Error::OperationFailure, /other error/)
+            end.to raise_error(Mongo::Error::OperationFailure, /other error/)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
 
           it 'indicates server used for operation' do
-            expect {
+            expect do
               operation
-            }.to raise_error(Mongo::Error::OperationFailure, /on #{ClusterConfig.instance.primary_address_str}/)
+            end.to raise_error(Mongo::Error::OperationFailure, /on #{ClusterConfig.instance.primary_address_str}/)
           end
 
           it 'indicates first attempt' do
-            expect {
+            expect do
               operation
-            }.to raise_error(Mongo::Error::OperationFailure, /attempt 1/)
+            end.to raise_error(Mongo::Error::OperationFailure, /attempt 1/)
           end
         end
       end
@@ -144,9 +144,9 @@ describe 'Retryable writes integration tests' do
           end
 
           it 'does not retry writes and raises the original error' do
-            expect {
+            expect do
               operation
-            }.to raise_error(error)
+            end.to raise_error(error)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
         end
@@ -158,9 +158,9 @@ describe 'Retryable writes integration tests' do
           end
 
           it 'does not retry writes and raises the original error' do
-            expect {
+            expect do
               operation
-            }.to raise_error(error)
+            end.to raise_error(error)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
         end
@@ -172,9 +172,9 @@ describe 'Retryable writes integration tests' do
           end
 
           it 'does not retry writes and raises the original error' do
-            expect {
+            expect do
               operation
-            }.to raise_error(error)
+            end.to raise_error(error)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
         end
@@ -211,22 +211,22 @@ describe 'Retryable writes integration tests' do
             end
 
             it 'raises the second error' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(second_error)
+              end.to raise_error(second_error)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
 
             it 'indicates server used for operation' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
+              end.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
             end
 
             it 'indicates second attempt' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(Mongo::Error, /attempt 2/)
+              end.to raise_error(Mongo::Error, /attempt 2/)
             end
           end
 
@@ -237,9 +237,9 @@ describe 'Retryable writes integration tests' do
             end
 
             it 'raises the second error' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(second_error)
+              end.to raise_error(second_error)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
           end
@@ -251,9 +251,9 @@ describe 'Retryable writes integration tests' do
             end
 
             it 'raises the second error' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(second_error)
+              end.to raise_error(second_error)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
           end
@@ -265,9 +265,9 @@ describe 'Retryable writes integration tests' do
             end
 
             it 'does not retry writes and raises the first error' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(error)
+              end.to raise_error(error)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
           end
@@ -279,28 +279,28 @@ describe 'Retryable writes integration tests' do
             end
 
             it 'raises the first error' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(error)
+              end.to raise_error(error)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
 
             it 'indicates server used for operation' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
+              end.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
             end
 
             it 'indicates first attempt' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(Mongo::Error, /attempt 1/)
+              end.to raise_error(Mongo::Error, /attempt 1/)
             end
 
             it 'indicates retry was performed' do
-              expect {
+              expect do
                 operation
-              }.to raise_error(Mongo::Error, /later retry failed: StandardError/)
+              end.to raise_error(Mongo::Error, /later retry failed: StandardError/)
             end
           end
         end
@@ -319,9 +319,9 @@ describe 'Retryable writes integration tests' do
     end
 
     it 'does not retry writes' do
-      expect {
+      expect do
         operation
-      }.to raise_error(Mongo::Error::SocketError)
+      end.to raise_error(Mongo::Error::SocketError)
       expect(expectation).to eq(unsuccessful_retry_value)
     end
   end
@@ -341,9 +341,9 @@ describe 'Retryable writes integration tests' do
     end
 
     it 'does not retry writes' do
-      expect {
+      expect do
         operation
-      }.to raise_error(Mongo::Error::SocketError)
+      end.to raise_error(Mongo::Error::SocketError)
       expect(expectation).to eq(unsuccessful_retry_value)
     end
   end
