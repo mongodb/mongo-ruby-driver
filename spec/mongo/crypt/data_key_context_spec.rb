@@ -1,6 +1,5 @@
 require 'mongo'
 require 'support/lite_constraints'
-require 'byebug' # TOOD: remove
 
 RSpec.configure do |config|
   config.extend(LiteConstraints)
