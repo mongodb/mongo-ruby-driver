@@ -119,7 +119,12 @@ module Mongo
         legacy_read_with_retry(session, server_selector, &block)
       else
         server = select_server(cluster, server_selector, session)
-        yield server
+        begin
+          yield server
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+          e.add_note('retries disabled')
+          raise e
+        end
       end
     end
 
@@ -214,12 +219,14 @@ module Mongo
       begin
         yield(server, txn_num, false)
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction? && !ending_transaction
           raise e
         end
         retry_write(e, session, txn_num, &block)
       rescue Error::OperationFailure => e
+        e.add_note('modern retry')
         e.add_note("attempt 1")
         if e.unsupported_retryable_write?
           raise_unsupported_error(e)
@@ -250,7 +257,12 @@ module Mongo
     def nro_write_with_retry(session, write_concern, &block)
       if session && session.client.options[:retry_writes]
         server = select_server(cluster, ServerSelector.primary, session)
-        yield server
+        begin
+          yield server
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+          e.add_note('retries disabled')
+          raise e
+        end
       else
         legacy_write_with_retry(nil, session, &block)
       end
@@ -280,7 +292,8 @@ module Mongo
         server ||= select_server(cluster, ServerSelector.primary, session)
         yield server
       rescue Error::OperationFailure => e
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note('legacy retry')
+        e.add_note("attempt #{attempt}")
         server = nil
         if attempt > client.max_write_retries
           raise e
@@ -298,18 +311,19 @@ module Mongo
     private
 
     def modern_read_with_retry(session, server_selector, &block)
-      attempt = 0
       server = select_server(cluster, server_selector, session)
       begin
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note('modern retry')
+        e.add_note("attempt 1")
         if session.in_transaction?
           raise e
         end
         retry_read(e, server_selector, session, &block)
       rescue Error::OperationFailure => e
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note('modern retry')
+        e.add_note("attempt 1")
         if session.in_transaction? || !e.write_retryable?
           raise e
         end
@@ -324,7 +338,8 @@ module Mongo
         attempt += 1
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note('legacy retry')
+        e.add_note("attempt #{attempt}")
         if attempt > client.max_read_retries || (session && session.in_transaction?)
           raise e
         end
@@ -332,7 +347,8 @@ module Mongo
         server = select_server(cluster, server_selector, session)
         retry
       rescue Error::OperationFailure => e
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note('legacy retry')
+        e.add_note("attempt #{attempt}")
         if e.retryable? && !(session && session.in_transaction?)
           if attempt > client.max_read_retries
             raise e
@@ -375,9 +391,11 @@ module Mongo
       begin
         yield server, true
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.add_note('modern retry')
         e.add_note("attempt 2")
         raise e
       rescue Error::OperationFailure => e
+        e.add_note('modern retry')
         unless e.write_retryable?
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
@@ -385,6 +403,7 @@ module Mongo
         e.add_note("attempt 2")
         raise e
       rescue => e
+        e.add_note('modern retry')
         original_error.add_note("later retry failed: #{e.class}: #{e}")
         raise original_error
       end
@@ -398,15 +417,19 @@ module Mongo
       # server unknown). Here we just need to wait for server selection.
       server = select_server(cluster, ServerSelector.primary, session)
       unless server.retry_writes?
+        # Do not need to add "modern retry" here, it should already be on
+        # the first exception.
         original_error.add_note('did not retry because server selected for retry does not supoprt retryable writes')
         raise original_error
       end
       log_retry(original_error, message: 'Write retry')
       yield(server, txn_num, true)
     rescue Error::SocketError, Error::SocketTimeoutError => e
+      e.add_note('modern retry')
       e.add_note('attempt 2')
       raise e
     rescue Error::OperationFailure => e
+      e.add_note('modern retry')
       if e.write_retryable?
         e.add_note('attempt 2')
         raise e
@@ -415,6 +438,8 @@ module Mongo
         raise original_error
       end
     rescue => e
+      # Do not need to add "modern retry" here, it should already be on
+      # the first exception.
       original_error.add_note("later retry failed: #{e.class}: #{e}")
       raise original_error
     end
