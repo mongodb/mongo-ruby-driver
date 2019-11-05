@@ -1,6 +1,8 @@
 require 'mongo'
 require 'support/lite_constraints'
 
+require 'byebug' # TODO: remove
+
 RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
@@ -13,6 +15,34 @@ def mongocrypt_binary_t_from(string)
     .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
 
   Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
+end
+
+shared_context 'initialized for explicit encryption' do
+  let(:key_id) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
+  let(:key_id_binary) { mongocrypt_binary_t_from(key_id) }
+
+  let(:value) do
+    byte_buffer = { 'v': 'Hello, world!' }.to_bson
+    byte_buffer.get_bytes(byte_buffer.length)
+  end
+
+  let(:value_binary) { mongocrypt_binary_t_from(value) }
+
+  before do
+    Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+
+    Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_id(context, key_id_binary)
+    Mongo::Crypt::Binding.mongocrypt_ctx_setopt_algorithm(
+      context,
+      'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
+      -1
+    )
+  end
+
+  after do
+    Mongo::Crypt::Binding.mongocrypt_binary_destroy(key_id_binary)
+    Mongo::Crypt::Binding.mongocrypt_binary_destroy(value_binary)
+  end
 end
 
 describe 'Mongo::Crypt::Binding' do
@@ -165,34 +195,38 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'a key_id and algorithm have been set' do
-        let(:key_id) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
-        let(:key_id_binary) { mongocrypt_binary_t_from(key_id) }
 
-        let(:value) do
-          byte_buffer = { 'v': 'Hello, world!' }.to_bson
-          byte_buffer.get_bytes(byte_buffer.length)
-        end
-
-        let(:value_binary) { mongocrypt_binary_t_from(value) }
-
-        before do
-          Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
-
-          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_id(context, key_id_binary)
-          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_algorithm(
-            context,
-            'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
-            -1
-          )
-        end
-
-        after do
-          Mongo::Crypt::Binding.mongocrypt_binary_destroy(key_id_binary)
-          Mongo::Crypt::Binding.mongocrypt_binary_destroy(value_binary)
-        end
+        include_context 'initialized for explicit encryption'
 
         it 'returns true' do
           expect(result).to be true
+        end
+      end
+    end
+
+    describe '#mongocrypt_ctx_mongo_op' do
+      context 'ctx is initialized for explicit encryption' do
+        include_context 'initialized for explicit encryption'
+
+        before do
+          Mongo::Crypt::Binding.mongocrypt_ctx_explicit_encrypt_init(context, value_binary)
+        end
+
+        let(:out_binary) { Mongo::Crypt::Binding.mongocrypt_binary_new }
+        let(:result) { Mongo::Crypt::Binding.mongocrypt_ctx_mongo_op(context, out_binary) }
+
+        after do
+          Mongo::Crypt::Binding.mongocrypt_binary_destroy(out_binary)
+        end
+
+        it 'returns a BSON document' do
+          expect(result).to be true
+
+          data = Mongo::Crypt::Binding.mongocrypt_binary_data(out_binary)
+          len = Mongo::Crypt::Binding.mongocrypt_binary_len(out_binary)
+
+          response = data.get_array_of_uint8(0, len).pack('C*')
+          expect(response).to be_a_kind_of(String)
         end
       end
     end

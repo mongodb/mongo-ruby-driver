@@ -80,4 +80,10 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
       end
     end
   end
+
+  describe '#run_state_machine' do
+    it 'encrypts the value' do
+      context.run_state_machine
+    end
+  end
 end

@@ -197,6 +197,11 @@ module Mongo
 
       # Takes a pointer to a mongocrypt_ctx_t object and returns a state code
       attach_function :mongocrypt_ctx_state, [:pointer], :mongocrypt_ctx_state
+
+      # Takes a pointer to a mognocrypt_ctx_t object and a pointer to a
+      # mongocrypt_binary_t object as an out parameter. Writes a BSON document
+      # to the provided binary pointer. Returns a boolean indicating success.
+      attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
     end
   end
 end

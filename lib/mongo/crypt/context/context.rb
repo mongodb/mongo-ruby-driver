@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'byebug' # TODO: remove
+
 module Mongo
   module Crypt
 
@@ -60,6 +62,7 @@ module Mongo
       #   :error state
       def run_state_machine
         while true
+          byebug
           case state
           when :error
             raise_from_status
@@ -67,11 +70,12 @@ module Mongo
             return finalize_state_machine
           when :done
             return nil
+          when :need_mongo_keys
+
           else
-            # There are four other states to handle:
+            # There are three other states to handle:
             # - :need_mongo_collinfo
             # - :need_mongo_markings
-            # - :need_mongo_keys
             # - :need_kms
             #
             # None of these are required to create data keys,
