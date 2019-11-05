@@ -119,7 +119,12 @@ module Mongo
         legacy_read_with_retry(session, server_selector, &block)
       else
         server = select_server(cluster, server_selector, session)
-        yield server
+        begin
+          yield server
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+          e.add_note('retries disabled')
+          raise e
+        end
       end
     end
 
@@ -252,7 +257,12 @@ module Mongo
     def nro_write_with_retry(session, write_concern, &block)
       if session && session.client.options[:retry_writes]
         server = select_server(cluster, ServerSelector.primary, session)
-        yield server
+        begin
+          yield server
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+          e.add_note('retries disabled')
+          raise e
+        end
       else
         legacy_write_with_retry(nil, session, &block)
       end

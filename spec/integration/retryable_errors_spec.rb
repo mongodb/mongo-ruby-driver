@@ -140,6 +140,20 @@ describe 'Failing retryable operations' do
       end
     end
 
+    shared_examples_for 'failing single attempt' do
+
+      it 'does not indicate attempt' do
+        expect(operation_exception.message).not_to include('attempt 1')
+        expect(operation_exception.message).not_to include('attempt 2')
+        expect(operation_exception.message).not_to include('attempt 3')
+      end
+
+      it 'publishes one events' do
+
+        expect(events.length).to eq(1)
+      end
+    end
+
     shared_examples_for 'failing retry on the same server' do
       it 'is reported on the server of the second attempt' do
         expect(operation_exception.message).to include(second_server.address.seed)
@@ -171,12 +185,22 @@ describe 'Failing retryable operations' do
       it 'indicates modern retry' do
         expect(operation_exception.message).to include('modern retry')
         expect(operation_exception.message).not_to include('legacy retry')
+        expect(operation_exception.message).not_to include('retries disabled')
       end
     end
 
     shared_examples_for 'legacy retry' do
       it 'indicates legacy retry' do
         expect(operation_exception.message).to include('legacy retry')
+        expect(operation_exception.message).not_to include('modern retry')
+        expect(operation_exception.message).not_to include('retries disabled')
+      end
+    end
+
+    shared_examples_for 'disabled retry' do
+      it 'indicates retries are disabled' do
+        expect(operation_exception.message).to include('retries disabled')
+        expect(operation_exception.message).not_to include('legacy retry')
         expect(operation_exception.message).not_to include('modern retry')
       end
     end
@@ -195,6 +219,17 @@ describe 'Failing retryable operations' do
         it_behaves_like 'failing retry'
         it_behaves_like 'legacy retry'
       end
+    end
+
+    context 'when read retries are disabled' do
+      let(:client) do
+        subscribed_client.with(retry_reads: false, max_read_retries: 0)
+      end
+
+      include_context 'read operation'
+
+      it_behaves_like 'failing single attempt'
+      it_behaves_like 'disabled retry'
     end
 
     context 'when write is retried and retry fails' do
