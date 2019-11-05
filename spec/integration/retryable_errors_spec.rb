@@ -109,17 +109,25 @@ describe 'Retryable writes tests' do
       end
     end
 
+    shared_examples_for 'modern retry' do
+      it 'indicates modern retry' do
+        expect(operation_exception.message).to include('modern retry')
+        expect(operation_exception.message).not_to include('legacy retry')
+      end
+    end
+
+    shared_examples_for 'legacy retry' do
+      it 'indicates legacy retry' do
+        expect(operation_exception.message).to include('legacy retry')
+        expect(operation_exception.message).not_to include('modern retry')
+      end
+    end
+
     context 'when operation is retried and retry fails' do
       include_context 'read operation'
+
       it_behaves_like 'failing retry'
-
-      context 'modern read' do
-
-        it 'indicates legacy read' do
-          expect(operation_exception.message).to include('modern retry')
-          expect(operation_exception.message).not_to include('legacy retry')
-        end
-      end
+      it_behaves_like 'modern retry'
 
       context 'legacy read' do
         let(:client) do
@@ -127,11 +135,7 @@ describe 'Retryable writes tests' do
         end
 
         it_behaves_like 'failing retry'
-
-        it 'indicates legacy read' do
-          expect(operation_exception.message).to include('legacy retry')
-          expect(operation_exception.message).not_to include('modern retry')
-        end
+        it_behaves_like 'legacy retry'
       end
     end
   end
