@@ -35,7 +35,7 @@ module Mongo
       validate_key_vault_namespace(options[:key_vault_namespace])
 
       @client = client
-      @key_vault_namespace = options[:key_vault_namespace]
+      @key_vault_db, @key_vault_coll = options[:key_vault_namespace].split('.')
 
       @crypt_handle = Crypt::Handle.new(options[:kms_providers])
     end
@@ -58,7 +58,11 @@ module Mongo
       true
     end
 
-    # TODO: documentation
+    # Generates a data key used for encryption/decryption and stores
+    # that key in the KMS collection. The generated key is encrypted with
+    # the KMS master key.
+    #
+    # @return [ BSON::Binary ] UUID representing the data key _id
     def create_data_key
       result = nil
 
@@ -66,12 +70,13 @@ module Mongo
         result = context.run_state_machine
       end
 
-      buffer = BSON::ByteBuffer.new.put_bytes(result)
-      data_key = Hash.from_bson(buffer)
+      data_key = Hash.from_bson(
+        BSON::ByteBuffer.new.put_bytes(result)
+      )
 
-      db, coll = @key_vault_namespace.split('.')
+      insert_result = @client.use(@key_vault_db)[@key_vault_coll].insert_one(data_key)
 
-      insert_result = @client.use(db)[coll].insert_one(data_key)
+      # Depending on how this is used, might want to transform into string
       return insert_result.inserted_id
     end
 

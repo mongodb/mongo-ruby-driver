@@ -6,21 +6,31 @@ require 'base64'
 describe Mongo::ClientEncryption do
   require_libmongocrypt
 
+  let(:key_vault_namespace) { "#{SpecConfig.instance.test_db}.keys" }
+
+  let(:client) do
+    ClientRegistry.instance.new_local_client(
+      [SpecConfig.instance.addresses.first]
+    )
+  end
+
+  let(:kms_providers) do
+    {
+      local: {
+        key: Base64.encode64("ru\xfe\x00" * 24)
+      }
+    }
+  end
+
+  let(:client_encryption) do
+    described_class.new(client, {
+      key_vault_namespace: key_vault_namespace,
+      kms_providers: kms_providers
+    })
+  end
+
   describe '#initialize' do
     let(:client) { new_local_client_nmio([SpecConfig.instance.addresses.first]) }
-    let(:client_encryption) do
-      described_class.new(client, {
-        key_vault_namespace: key_vault_namespace,
-        kms_providers: kms_providers
-      })
-    end
-
-    let(:key_vault_namespace) { 'test_db.collection' }
-    let(:kms_providers) do
-      {
-        local: { key: Base64.encode64("ru\xfe\x00" * 24) }
-      }
-    end
 
     context 'with nil key_vault_namespace' do
       let(:key_vault_namespace) { nil }
@@ -62,6 +72,20 @@ describe Mongo::ClientEncryption do
           client_encryption
         end.not_to raise_error
       end
+    end
+  end
+
+  describe '#create_data_key' do
+
+    let(:result) { client_encryption.create_data_key }
+
+    after do
+      client_encryption.close
+    end
+
+    it 'returns a binary uuid object' do
+      expect(result).to be_a_kind_of(BSON::Binary)
+      expect(result.type).to eq(:uuid)
     end
   end
 end
