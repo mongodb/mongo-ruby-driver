@@ -23,10 +23,8 @@ module Mongo
     class Binary
       # Create a new Binary object that wraps a byte string
       #
-      # @example Instantiate a Binary object
-      #   Mongo::Crypt::Binary.new('Hello, world!')
-      #
-      # @param [ String ] data Optional data to wrap
+      # @param [ String ] data The data string wrapped by the
+      #   byte buffer (optional)
       def initialize(data=nil)
         if data
           # Represent data string as array of uint-8 bytes
@@ -85,10 +83,8 @@ module Mongo
       # Convenient API for using binary object without having
       # to perform cleanup.
       #
-      # @example
-      #   Mongo::Crypt::Binary.with_binary('Hello, world!') do |binary|
-      #     binary.to_bytes # => [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
-      #   end
+      # @param [ String ] data The data string wrapped by the
+      #   byte buffer (optional)
       def self.with_binary(data=nil)
         binary = self.new(data)
         begin
