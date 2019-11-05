@@ -142,6 +142,7 @@ class ClusterTools
   # - call step down on the existing primary
   # - call step up on the target in a loop until it becomes the primary
   def change_primary
+    start = Time.now
     existing_primary = admin_client.cluster.next_primary
     existing_primary_address = existing_primary.address
 
@@ -171,7 +172,7 @@ class ClusterTools
     persistently_step_up(target.address)
 
     new_primary = admin_client.cluster.next_primary
-    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}"
+    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}. Time to change primaries: #{Time.now - start}"
   end
 
   def persistently_step_up(address)
@@ -348,8 +349,6 @@ class ClusterTools
     end
   end
 
-  private
-
   def each_server(&block)
     admin_client.cluster.servers_list.each(&block)
   end
@@ -359,6 +358,8 @@ class ClusterTools
       yield direct_client(server.address)
     end
   end
+
+  private
 
   def reset_server_states
     each_server do |server|
