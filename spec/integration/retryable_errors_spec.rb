@@ -209,6 +209,8 @@ describe 'Failing retryable operations' do
       include_context 'read operation'
 
       context 'modern read retries' do
+        require_wired_tiger_on_36
+
         let(:client) do
           subscribed_client.with(retry_reads: true)
         end
@@ -242,6 +244,8 @@ describe 'Failing retryable operations' do
       include_context 'write operation'
 
       context 'modern write retries' do
+        require_wired_tiger_on_36
+
         let(:client) do
           subscribed_client.with(retry_writes: true)
         end
