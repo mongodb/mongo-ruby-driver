@@ -351,7 +351,7 @@ EOT
   end
 
   def retry_writes_options
-    {retry_writes: retry_writes}
+    {retry_writes: retry_writes?}
   end
 
   # Base test options.
