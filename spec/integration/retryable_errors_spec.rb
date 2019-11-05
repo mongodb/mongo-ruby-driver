@@ -100,6 +100,12 @@ describe 'Retryable writes tests' do
         expect(operation_exception.message).to include(second_server.address.seed)
       end
 
+      it 'indicates second attempt' do
+        expect(operation_exception.message).to include('attempt 2')
+        expect(operation_exception.message).not_to include('attempt 1')
+        expect(operation_exception.message).not_to include('attempt 3')
+      end
+
       it 'marks servers used in both attempts unknown' do
         operation_exception
 

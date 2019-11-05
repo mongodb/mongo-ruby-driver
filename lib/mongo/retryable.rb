@@ -283,7 +283,7 @@ module Mongo
         yield server
       rescue Error::OperationFailure => e
         e.add_note('legacy retry')
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note("attempt #{attempt}")
         server = nil
         if attempt > client.max_write_retries
           raise e
@@ -301,20 +301,19 @@ module Mongo
     private
 
     def modern_read_with_retry(session, server_selector, &block)
-      attempt = 0
       server = select_server(cluster, server_selector, session)
       begin
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note("attempt 1")
         if session.in_transaction?
           raise e
         end
         retry_read(e, server_selector, session, &block)
       rescue Error::OperationFailure => e
         e.add_note('modern retry')
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note("attempt 1")
         if session.in_transaction? || !e.write_retryable?
           raise e
         end
@@ -330,7 +329,7 @@ module Mongo
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('legacy retry')
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note("attempt #{attempt}")
         if attempt > client.max_read_retries || (session && session.in_transaction?)
           raise e
         end
@@ -339,7 +338,7 @@ module Mongo
         retry
       rescue Error::OperationFailure => e
         e.add_note('legacy retry')
-        e.add_note("attempt #{attempt + 1}")
+        e.add_note("attempt #{attempt}")
         if e.retryable? && !(session && session.in_transaction?)
           if attempt > client.max_read_retries
             raise e
