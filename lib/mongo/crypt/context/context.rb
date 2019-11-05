@@ -49,24 +49,32 @@ module Mongo
         Binding.mongocrypt_ctx_state(@ctx)
       end
 
-      # TODO: documentation
+      # Runs the mongocrypt_ctx_t state machine and handles
+      # all I/O on behalf of libmongocrypt
+      #
+      # @return [ String|nil ] A BSON string representing the outcome
+      #   of the state machine. This string could represent different
+      #   values depending on how the context was initialized.
       def run_state_machine
         while true
           case state
           when :error
             raise_from_status
-          when :need_mongo_collinfo
-            raise("Need Mongo Coll Info")
-          when :need_mongo_markings
-            raise("Need Mongo Markings")
-          when :need_mongo_keys
-            raise("Need Mongo Keys")
-          when :need_kms
-            raise("Need KMS")
           when :ready
-            return finish
+            return finalize_state_machine
           when :done
             return nil
+          else
+            # There are four other states to handle:
+            # - :need_mongo_collinfo
+            # - :need_mongo_markings
+            # - :need_mongo_keys
+            # - :need_kms
+            #
+            # None of these are required to create data keys,
+            # so these parts of the state machine will be implemented
+            # later
+            raise("State #{state} is not yet supported by Mongo::Crypt::Context")
           end
         end
       end
@@ -82,13 +90,12 @@ module Mongo
         end
       end
 
-      # TODO: documentation
-      def finish
-        bin = Binary.new
-        Binary.with_binary do |bin|
-          success = Binding.mongocrypt_ctx_finalize(@ctx, bin.ref)
+      # Finalize the state machine and return the result as a string
+      def finalize_state_machine
+        Binary.with_binary do |binary|
+          success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
           raise_from_status unless success
-          return bin.to_string
+          return binary.to_string
         end
       end
     end

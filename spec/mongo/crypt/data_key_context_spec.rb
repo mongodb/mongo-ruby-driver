@@ -97,6 +97,9 @@ describe Mongo::Crypt::DataKeyContext do
     end
   end
 
+  # This is a simple spec just to test that this method works
+  # There should be multiple specs testing the context's state
+  #   depending on how it's initialized, etc.
   describe '#state' do
     before do
       Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, master_key)
@@ -113,6 +116,10 @@ describe Mongo::Crypt::DataKeyContext do
     end
   end
 
+  # This is a simple spec just to test the POC case of creating a data key
+  # There should be specs testing each state, as well as integration tests
+  #   to test that the state machine returns the correct result under various
+  #   conditions
   describe '#run_state_machine' do
     before do
       Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, master_key)
