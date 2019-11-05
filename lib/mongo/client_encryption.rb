@@ -76,6 +76,21 @@ module Mongo
       return insert_result.inserted_id
     end
 
+    # TODO: description
+    #
+    # @param [ ?? ] value
+    # @param [ Hash ] opts
+    #
+    # @option [ BSON::Binary ] :key_id
+    # @option [ String ] :algorithm The algorithm used to encrypt the value. Valid algorithms
+    #   are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+    # This method should also take :key_alt_name as an option (not relevant for POC)
+    #
+    # @return [ ?? ] The encrypted value
+    def encrypt(value, opts={})
+
+    end
+
     private
 
     # Validates that the key_vault_namespace exists and is in the format database.collection
