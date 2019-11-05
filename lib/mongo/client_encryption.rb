@@ -35,7 +35,7 @@ module Mongo
       validate_key_vault_namespace(options[:key_vault_namespace])
 
       @client = client
-      @key_vault_db, @key_vault_coll = options[:key_vault_namespace].split('.')
+      @key_vault_db_name, @key_vault_coll_name = options[:key_vault_namespace].split('.')
 
       @crypt_handle = Crypt::Handle.new(options[:kms_providers])
     end
@@ -70,11 +70,8 @@ module Mongo
         result = context.run_state_machine
       end
 
-      data_key = Hash.from_bson(
-        BSON::ByteBuffer.new.put_bytes(result)
-      )
-
-      insert_result = @client.use(@key_vault_db)[@key_vault_coll].insert_one(data_key)
+      data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
+      insert_result = @client.use(@key_vault_db_name)[@key_vault_coll_name].insert_one(data_key_document)
 
       return insert_result.inserted_id
     end

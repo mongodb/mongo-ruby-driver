@@ -64,7 +64,7 @@ module Mongo
       enum :status_type, [
         :ok,            0,
         :error_client,  1,
-        :error_kms,     2
+        :error_kms,     2,
       ]
 
       # Creates a new status object to retrieve from a mongocrypt_t handle
@@ -164,7 +164,7 @@ module Mongo
         :need_mongo_keys,     3,
         :need_kms,            4,
         :ready,               5,
-        :done,                6
+        :done,                6,
       ]
 
       # Takes a pointer to a mongocrypt_ctx_t object and returns a state code

@@ -55,6 +55,9 @@ module Mongo
       # @return [ String|nil ] A BSON string representing the outcome
       #   of the state machine. This string could represent different
       #   values depending on how the context was initialized.
+      #
+      # @raise [ Error::CryptError ] If the state machine enters the
+      #   :error state
       def run_state_machine
         while true
           case state
