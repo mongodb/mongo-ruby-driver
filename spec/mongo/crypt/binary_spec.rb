@@ -43,6 +43,16 @@ describe Mongo::Crypt::Binary do
     end
   end
 
+  describe '#to_string' do
+    after do
+      binary.close
+    end
+
+    it 'returns the original string' do
+      expect(binary.to_string).to eq(data)
+    end
+  end
+
   describe '#self.with_binary' do
     before do
       allow(described_class)

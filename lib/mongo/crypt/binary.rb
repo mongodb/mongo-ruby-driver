@@ -26,11 +26,8 @@ module Mongo
       # @example Instantiate a Binary object
       #   Mongo::Crypt::Binary.new('Hello, world!')
       #
-      # @param [ String ] data
+      # @param [ String ] data Optional data to wrap
       def initialize(data=nil)
-        # unless data
-        #   raise ArgumentError.new('Cannot create new Binary object with no data')
-        # end
         if data
           # Represent data string as array of uint-8 bytes
           bytes = data.unpack('C*')
@@ -58,6 +55,9 @@ module Mongo
         data.get_array_of_uint8(0, len)
       end
 
+      # Returns the data stored as a string
+      #
+      # @return [ String ] Data stored in the mongocrypt_binary_t as a string
       def to_string
         to_bytes.pack('C*')
       end
