@@ -12,19 +12,19 @@ describe Mongo::Crypt::Binary do
   let(:binary) { described_class.new(data) }
 
   describe '#initialize' do
+    after do
+      binary.close
+    end
+
     context 'with nil data' do
-      it 'raises an exception' do
+      it 'creates a new Mongo::Crypt::Binary object' do
         expect do
-          described_class.new(nil)
-        end.to raise_error(ArgumentError, /Cannot create new Binary object/)
+          binary
+        end.not_to raise_error
       end
     end
 
     context 'with valid data' do
-      after do
-        binary.close
-      end
-
       it 'creates a new Mongo::Crypt::Binary object' do
         expect do
           binary
@@ -40,6 +40,16 @@ describe Mongo::Crypt::Binary do
 
     it 'returns the string as a byte array' do
       expect(binary.to_bytes).to eq(data.unpack("C*"))
+    end
+  end
+
+  describe '#to_string' do
+    after do
+      binary.close
+    end
+
+    it 'returns the original string' do
+      expect(binary.to_string).to eq(data)
     end
   end
 

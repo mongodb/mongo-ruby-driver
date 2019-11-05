@@ -42,6 +42,46 @@ module Mongo
         true
       end
 
+      # Returns the state of the mongocrypt_ctx_t
+      #
+      # @return [ Symbol ] The context state
+      def state
+        Binding.mongocrypt_ctx_state(@ctx)
+      end
+
+      # Runs the mongocrypt_ctx_t state machine and handles
+      # all I/O on behalf of libmongocrypt
+      #
+      # @return [ String|nil ] A BSON string representing the outcome
+      #   of the state machine. This string could represent different
+      #   values depending on how the context was initialized.
+      #
+      # @raise [ Error::CryptError ] If the state machine enters the
+      #   :error state
+      def run_state_machine
+        while true
+          case state
+          when :error
+            raise_from_status
+          when :ready
+            return finalize_state_machine
+          when :done
+            return nil
+          else
+            # There are four other states to handle:
+            # - :need_mongo_collinfo
+            # - :need_mongo_markings
+            # - :need_mongo_keys
+            # - :need_kms
+            #
+            # None of these are required to create data keys,
+            # so these parts of the state machine will be implemented
+            # later
+            raise("State #{state} is not yet supported by Mongo::Crypt::Context")
+          end
+        end
+      end
+
       private
 
       # Raise a Mongo::Error::CryptError based on the status of the underlying
@@ -50,6 +90,15 @@ module Mongo
         Status.with_status do |status|
           Binding.mongocrypt_ctx_status(@ctx, status.ref)
           status.raise_crypt_error
+        end
+      end
+
+      # Finalize the state machine and return the result as a string
+      def finalize_state_machine
+        Binary.with_binary do |binary|
+          success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
+          raise_from_status unless success
+          return binary.to_string
         end
       end
     end

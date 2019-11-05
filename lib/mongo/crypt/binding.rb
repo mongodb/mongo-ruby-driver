@@ -64,7 +64,7 @@ module Mongo
       enum :status_type, [
         :ok,            0,
         :error_client,  1,
-        :error_kms,     2
+        :error_kms,     2,
       ]
 
       # Creates a new status object to retrieve from a mongocrypt_t handle
@@ -148,6 +148,27 @@ module Mongo
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
       attach_function :mongocrypt_ctx_destroy, [:pointer], :void
+
+      # Takes a pointer to a mongocrypt_ctx_t object and an out param,
+      # which is a pointer to a mongocrypt_binary_t object, which will serve
+      # as a wrapper around the final results of the state machine. The meaning
+      # of these results depends on how the montocrypt_ctx_t object was initialized.
+      # Returns a boolean indicating the success of the operation.
+      attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
+
+      # mongocrypt_ctx_state_t type
+      enum :mongocrypt_ctx_state, [
+        :error,               0,
+        :need_mongo_collinfo, 1,
+        :need_mongo_markings, 2,
+        :need_mongo_keys,     3,
+        :need_kms,            4,
+        :ready,               5,
+        :done,                6,
+      ]
+
+      # Takes a pointer to a mongocrypt_ctx_t object and returns a state code
+      attach_function :mongocrypt_ctx_state, [:pointer], :mongocrypt_ctx_state
     end
   end
 end

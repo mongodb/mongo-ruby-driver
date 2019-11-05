@@ -94,5 +94,39 @@ describe 'Mongo::Crypt::Binding' do
         end
       end
     end
+
+    describe 'mongocrypt_ctx_state' do
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_state(context)
+      end
+
+      context 'the mongocrypt_ctx has been properly initialized' do
+        let(:master_key) { "ru\xfe\x00" * 24 }
+        let(:bytes) { master_key.unpack('C*') }
+
+        let(:binary) do
+          p = FFI::MemoryPointer
+          .new(bytes.size)
+          .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+
+          Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
+        end
+
+        before do
+          Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+          Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
+          Mongo::Crypt::Binding.mongocrypt_ctx_datakey_init(context)
+        end
+
+        after do
+          Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
+        end
+
+        it 'returns ready state' do
+          expect(result).to eq(:ready)
+        end
+      end
+    end
   end
 end

@@ -58,6 +58,13 @@ module Mongo
         true
       end
 
+      # Return the reference to the underlying @mongocrypt object
+      #
+      # @return [ FFI::Pointer ]
+      def ref
+        @mongocrypt
+      end
+
       private
 
       # Validate the kms_providers option and use it to set the KMS provider
