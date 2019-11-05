@@ -9,10 +9,10 @@ describe 'Retryable writes tests' do
   end
 
   let(:collection) do
-    client['retryable-writes-error-spec']
+    client['retryable-errors-spec']
   end
 
-  context 'when retry fails' do
+  context 'when operation fails' do
     require_topology :replica_set
 
     let(:fail_point_command) do
@@ -40,7 +40,7 @@ describe 'Retryable writes tests' do
     end
 
     let(:collection) do
-      client['retryable-writes-error-spec', read: {mode: :secondary_preferred}]
+      client['retryable-errors-spec', read: {mode: :secondary_preferred}]
     end
 
     let(:events) do
@@ -59,7 +59,7 @@ describe 'Retryable writes tests' do
       end
     end
 
-    let(:perform_read) do
+    let(:set_fail_point) do
       client.cluster.servers_list.each do |server|
         server.monitor.stop!
       end
@@ -67,33 +67,46 @@ describe 'Retryable writes tests' do
       ClusterTools.instance.direct_client_for_each_server do |client|
         client.use(:admin).database.command(fail_point_command)
       end
+    end
 
-      begin
-        collection.find(a: 1).to_a
-      rescue Mongo::Error::OperationFailure => @exception
-      else
-        fail('Expected operation to fail')
+    shared_context 'read operation' do
+      let(:operation) do
+        set_fail_point
+
+        begin
+          collection.find(a: 1).to_a
+        rescue Mongo::Error::OperationFailure => @exception
+        else
+          fail('Expected operation to fail')
+        end
+
+        puts @exception.message
+
+        expect(events.length).to eq(2)
+        expect(events.first.address.seed).not_to eq(events.last.address.seed)
+      end
+    end
+
+    shared_context 'write operation' do
+    end
+
+    context 'when operation is retried and retry fails' do
+      include_context 'read operation'
+
+      it 'is reported on the server of the second attempt' do
+        operation
+
+        expect(@exception.message).not_to include(first_server.address.seed)
+        expect(@exception.message).to include(second_server.address.seed)
       end
 
-      puts @exception.message
+      it 'marks servers used in both attempts unknown' do
+        operation
 
-      expect(events.length).to eq(2)
-      expect(events.first.address.seed).not_to eq(events.last.address.seed)
-    end
+        expect(first_server).to be_unknown
 
-    it 'is reported on the server of the second attempt' do
-      perform_read
-
-      expect(@exception.message).not_to include(first_server.address.seed)
-      expect(@exception.message).to include(second_server.address.seed)
-    end
-
-    it 'marks servers used in both attempts unknown' do
-      perform_read
-
-      expect(first_server).to be_unknown
-
-      expect(second_server).to be_unknown
+        expect(second_server).to be_unknown
+      end
     end
   end
 end
