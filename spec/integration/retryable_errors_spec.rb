@@ -70,42 +70,68 @@ describe 'Retryable writes tests' do
     end
 
     shared_context 'read operation' do
-      let(:operation) do
+      let(:operation_exception) do
         set_fail_point
 
         begin
           collection.find(a: 1).to_a
-        rescue Mongo::Error::OperationFailure => @exception
+        rescue Mongo::Error::OperationFailure => exception
         else
           fail('Expected operation to fail')
         end
 
-        puts @exception.message
+        puts exception.message
 
         expect(events.length).to eq(2)
         expect(events.first.address.seed).not_to eq(events.last.address.seed)
+
+        exception
       end
     end
 
     shared_context 'write operation' do
     end
 
-    context 'when operation is retried and retry fails' do
-      include_context 'read operation'
-
+    shared_examples_for 'failing retry' do
       it 'is reported on the server of the second attempt' do
-        operation
+        operation_exception
 
-        expect(@exception.message).not_to include(first_server.address.seed)
-        expect(@exception.message).to include(second_server.address.seed)
+        expect(operation_exception.message).not_to include(first_server.address.seed)
+        expect(operation_exception.message).to include(second_server.address.seed)
       end
 
       it 'marks servers used in both attempts unknown' do
-        operation
+        operation_exception
 
         expect(first_server).to be_unknown
 
         expect(second_server).to be_unknown
+      end
+    end
+
+    context 'when operation is retried and retry fails' do
+      include_context 'read operation'
+      it_behaves_like 'failing retry'
+
+      context 'modern read' do
+
+        it 'indicates legacy read' do
+          expect(operation_exception.message).to include('modern retry')
+          expect(operation_exception.message).not_to include('legacy retry')
+        end
+      end
+
+      context 'legacy read' do
+        let(:client) do
+          subscribed_client.with(retry_reads: false)
+        end
+
+        it_behaves_like 'failing retry'
+
+        it 'indicates legacy read' do
+          expect(operation_exception.message).to include('legacy retry')
+          expect(operation_exception.message).not_to include('modern retry')
+        end
       end
     end
   end
