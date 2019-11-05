@@ -76,7 +76,6 @@ module Mongo
 
       insert_result = @client.use(@key_vault_db)[@key_vault_coll].insert_one(data_key)
 
-      # Depending on how this is used, might want to transform into string
       return insert_result.inserted_id
     end
 

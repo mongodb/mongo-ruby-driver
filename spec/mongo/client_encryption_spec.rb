@@ -6,7 +6,9 @@ require 'base64'
 describe Mongo::ClientEncryption do
   require_libmongocrypt
 
-  let(:key_vault_namespace) { "#{SpecConfig.instance.test_db}.keys" }
+  let(:key_vault_db) { SpecConfig.instance.test_db }
+  let(:key_vault_coll) { 'keys' }
+  let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
 
   let(:client) do
     ClientRegistry.instance.new_local_client(
@@ -86,6 +88,9 @@ describe Mongo::ClientEncryption do
     it 'returns a binary uuid object' do
       expect(result).to be_a_kind_of(BSON::Binary)
       expect(result.type).to eq(:uuid)
+
+      # make sure that the key actually exists in the DB
+      expect(client.use(key_vault_db)[key_vault_coll].find(_id: result).count).to eq(1)
     end
   end
 end
