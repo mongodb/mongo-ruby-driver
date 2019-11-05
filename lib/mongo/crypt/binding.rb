@@ -156,6 +156,23 @@ module Mongo
       # Returns a boolean indiating the success of the operation
       attach_function :mongocrypt_ctx_datakey_init, [:pointer], :bool
 
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
+      # mongocrypt_binary_t object wrapping the id of the key that will be used
+      # to encrypt the data. Returns a boolean indicating the success of the operation.
+      attach_function :mongocrypt_ctx_setopt_key_id, [:pointer, :pointer], :bool
+
+      # Takes a pionter to a mongocrypt_ctx_t object, a string indicating the algorithm
+      # name (valid values are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" and
+      # "AEAD_AES_256_CBC_HMAC_SHA_512-Random") and an integer indicating the length
+      # of the string. Returns a boolean indicating success of the operation.
+      attach_function :mongocrypt_ctx_setopt_algorithm, [:pointer, :string, :int], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
+      # object that wraps the value to be encrypted. Initializes the state machine in order
+      # to encrypt the specified value. Returns a boolean indicating the success of the
+      # operation.
+      attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
+
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
       attach_function :mongocrypt_ctx_destroy, [:pointer], :void

@@ -5,6 +5,16 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
 
+def mongocrypt_binary_t_from(string)
+  bytes = string.unpack('C*')
+
+  p = FFI::MemoryPointer
+    .new(bytes.size)
+    .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+
+  Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
+end
+
 describe 'Mongo::Crypt::Binding' do
   describe 'mongocrypt_ctx_t bindings' do
     require_libmongocrypt
@@ -59,15 +69,7 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'a master key option and KMS provider have been set' do
         let(:master_key) { "ru\xfe\x00" * 24 }
-        let(:bytes) { master_key.unpack('C*') }
-
-        let(:binary) do
-          p = FFI::MemoryPointer
-          .new(bytes.size)
-          .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
-
-          Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
-        end
+        let(:binary) { mongocrypt_binary_t_from(master_key)}
 
         before do
           Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
@@ -95,7 +97,107 @@ describe 'Mongo::Crypt::Binding' do
       end
     end
 
-    describe 'mongocrypt_ctx_state' do
+    describe '#mongocrypt_ctx_setopt_key_id' do
+      # 16-byte binary uuid string
+      let(:uuid) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
+      let(:binary) { mongocrypt_binary_t_from(uuid) }
+
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_id(context, binary)
+      end
+
+      before do
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      after do
+        Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
+      end
+
+      context 'with valid key id' do
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+    end
+
+    describe '#mongocrypt_ctx_setopt_algorithm' do
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_setopt_algorithm(
+          context,
+          algo,
+          -1
+        )
+      end
+
+      before do
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      context 'with deterministic algorithm' do
+        let(:algo) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+
+      context 'with random algorithm' do
+        let(:algo) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Random' }
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+
+      context 'with invalid algorithm' do
+        let(:algo) { 'fake-algorithm' }
+
+        it 'returns false' do
+          expect(result).to be false
+        end
+      end
+    end
+
+    describe '#mongocrypt_ctx_explicit_encrypt_init' do
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_explicit_encrypt_init(context, value_binary)
+      end
+
+      context 'a key_id and algorithm have been set' do
+        let(:key_id) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
+        let(:key_id_binary) { mongocrypt_binary_t_from(key_id) }
+
+        let(:value) do
+          byte_buffer = { 'v': 'Hello, world!' }.to_bson
+          byte_buffer.get_bytes(byte_buffer.length)
+        end
+
+        let(:value_binary) { mongocrypt_binary_t_from(value) }
+
+        before do
+          Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+
+          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_id(context, key_id_binary)
+          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_algorithm(
+            context,
+            'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
+            -1
+          )
+        end
+
+        after do
+          Mongo::Crypt::Binding.mongocrypt_binary_destroy(key_id_binary)
+          Mongo::Crypt::Binding.mongocrypt_binary_destroy(value_binary)
+        end
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+    end
+
+    describe '#mongocrypt_ctx_state' do
       let(:result) do
         Mongo::Crypt::Binding.mongocrypt_ctx_state(context)
       end
