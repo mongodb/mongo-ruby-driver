@@ -58,6 +58,9 @@ module Mongo
         true
       end
 
+      # Return the reference to the underlying @mongocrypt object
+      #
+      # @return [ FFI::Pointer ]
       def ref
         @mongocrypt
       end
