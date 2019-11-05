@@ -137,7 +137,7 @@ describe 'Retryable writes tests' do
 
       context 'legacy read' do
         let(:client) do
-          subscribed_client.with(retry_reads: false)
+          subscribed_client.with(retry_reads: false, read_retry_interval: 0)
         end
 
         it_behaves_like 'failing retry'
