@@ -173,6 +173,9 @@ module Mongo
       # operation.
       attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
 
+      # TODO
+      attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
+
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
       attach_function :mongocrypt_ctx_destroy, [:pointer], :void

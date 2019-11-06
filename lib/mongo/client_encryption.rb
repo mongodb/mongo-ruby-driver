@@ -119,6 +119,17 @@ module Mongo
       return BSON::Binary.new(result)
     end
 
+    def decrypt(value)
+      io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
+      result = nil
+
+      Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, value, io) do |context|
+        result = context.run_state_machine
+      end
+
+      Hash.from_bson(BSON::ByteBuffer.new(result))['v']
+    end
+
     private
 
     # Validates that the key_vault_namespace exists and is in the format database.collection

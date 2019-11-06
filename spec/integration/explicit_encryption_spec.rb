@@ -30,5 +30,8 @@ describe 'Explicit Encryption' do
     )
 
     expect(encrypted).to be_a_kind_of(BSON::Binary)
+
+    decrypted = client_encryption.decrypt(encrypted)
+    expect(decrypted).to eq('Hello, world!')
   end
 end
