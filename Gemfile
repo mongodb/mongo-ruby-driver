@@ -4,9 +4,12 @@ gemspec
 gem 'yard'
 
 group :development, :testing do
-  gem 'jruby-openssl', :platforms => :jruby
-  gem 'json', :platforms => :jruby
-  gem 'rspec', '~> 3.0'
+  gem 'jruby-openssl', platforms: :jruby
+  gem 'json', platforms: :jruby
+  # Explicitly specify each rspec dependency so that we can use
+  # rspec-mocks-diag instead of rspec-mocks
+  #gem 'rspec', '~> 3.0'
+  gem 'rspec-core', '~> 3.0'
   gem 'mime-types', '~> 1.25'
   if RUBY_VERSION >= '2.3'
     gem 'activesupport'
@@ -41,7 +44,8 @@ group :testing do
   gem 'ice_nine'
   gem 'rspec-retry'
   if RUBY_VERSION >= '2.3'
-    gem 'rspec-mocks', github: 'p-mongo/rspec-mocks', branch: 'args-history'
+    gem 'rspec-expectations', '~> 3.0'
+    gem 'rspec-mocks-diag', '~> 3.0'
   end
   gem 'rfc'
   gem 'fuubar'
