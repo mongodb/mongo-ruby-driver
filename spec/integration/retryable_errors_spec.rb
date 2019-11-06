@@ -59,6 +59,7 @@ describe 'Failing retryable operations' do
 
       let(:set_fail_point) do
         client.cluster.servers_list.each do |server|
+          server.scan!
           server.monitor.stop!
         end
 
