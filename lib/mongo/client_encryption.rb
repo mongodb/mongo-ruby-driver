@@ -113,8 +113,10 @@ module Mongo
       result = nil
       value = BSON::Binary.new({ 'v': value}.to_bson.to_s)
       Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, value, io, opts) do |context|
-        context.run_state_machine
+        result = context.run_state_machine
       end
+
+      return BSON::Binary.new(result)
     end
 
     private

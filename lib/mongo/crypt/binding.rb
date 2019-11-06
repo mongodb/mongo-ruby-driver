@@ -202,6 +202,14 @@ module Mongo
       # mongocrypt_binary_t object as an out parameter. Writes a BSON document
       # to the provided binary pointer. Returns a boolean indicating success.
       attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
+      # mongocrypt_binary_t object wrapping a BSON document. Returns a boolean
+      # indicating the success of the operation.
+      attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
+
+      # TODO: documentation
+      attach_function :mongocrypt_ctx_mongo_done, [:pointer], :bool
     end
   end
 end

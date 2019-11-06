@@ -29,6 +29,6 @@ describe 'Explicit Encryption' do
       }
     )
 
-    byebug
+    expect(encrypted).to be_a_kind_of(BSON::Binary)
   end
 end

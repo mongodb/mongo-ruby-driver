@@ -62,7 +62,6 @@ module Mongo
       #   :error state
       def run_state_machine
         while true
-          byebug
           case state
           when :error
             raise_from_status
@@ -73,8 +72,10 @@ module Mongo
           when :need_mongo_keys
             filter = mongo_operation
             @io.find_keys(filter).each do |key|
-              byebug
+              mongo_feed(key) if key
             end
+
+            Binding.mongocrypt_ctx_mongo_done(@ctx)
           else
             # There are three other states to handle:
             # - :need_mongo_collinfo
@@ -116,6 +117,16 @@ module Mongo
           raise_from_status unless success
           return binary.to_string
           # return BSON::Binary.new(binary.to_string)
+        end
+      end
+
+      # TODO: documentation
+      def mongo_feed(result)
+        result = result.to_bson.to_s
+        Binary.with_binary(result) do |binary|
+          success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
+          raise_from_status unless success
+          return binary.to_string
         end
       end
     end
