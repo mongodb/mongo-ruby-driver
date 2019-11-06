@@ -162,7 +162,9 @@ module Mongo
       # operation.
       attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
 
-      # TODO
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
+      # object that wraps the value to be decrypted. Initializes the staet machine for
+      # explicit decryption. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
@@ -192,15 +194,21 @@ module Mongo
 
       # Takes a pointer to a mognocrypt_ctx_t object and a pointer to a
       # mongocrypt_binary_t object as an out parameter. Writes a BSON document
-      # to the provided binary pointer. Returns a boolean indicating success.
+      # to the provided binary pointer; the purpose of this BSON document varies
+      # depending on the state of the state machine. Returns a boolean indicating success.
       attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
-      # mongocrypt_binary_t object wrapping a BSON document. Returns a boolean
-      # indicating the success of the operation.
+      # mongocrypt_binary_t object wrapping a BSON document. The BSON document
+      # should be the result of performing the necessary operation with the
+      # output of mongocrypt_ctx_mongo_op. This method can be called multiple
+      # times in a row. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
 
-      # TODO: documentation
+      # Takes a pointer to a mongocrypt_ctx_t object. Marks that the
+      # mongocrypt_ctx_t object has finished accepting input from the
+      # mongocrypt_ctx_mongo_feed method. Returns a boolean indicating success of
+      # the operation.
       attach_function :mongocrypt_ctx_mongo_done, [:pointer], :bool
     end
   end
