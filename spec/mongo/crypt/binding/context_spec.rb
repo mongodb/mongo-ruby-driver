@@ -1,12 +1,12 @@
 require 'mongo'
 require 'support/lite_constraints'
 
-require 'byebug' # TODO: remove
-
 RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
 
+# This should live in a file with other helper methods,
+# just keeping it here for now for simplicity.
 def mongocrypt_binary_t_from(string)
   bytes = string.unpack('C*')
 
@@ -15,6 +15,21 @@ def mongocrypt_binary_t_from(string)
     .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
 
   Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
+end
+
+shared_context 'initialized for data key creation' do
+  let(:master_key) { "ru\xfe\x00" * 24 }
+  let(:binary) { mongocrypt_binary_t_from(master_key)}
+
+  before do
+    Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+    Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+    Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
+  end
+
+  after do
+    Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
+  end
 end
 
 shared_context 'initialized for explicit encryption' do
@@ -98,31 +113,10 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'a master key option and KMS provider have been set' do
-        let(:master_key) { "ru\xfe\x00" * 24 }
-        let(:binary) { mongocrypt_binary_t_from(master_key)}
-
-        before do
-          Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
-          Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
-          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
-        end
-
-        after do
-          Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
-        end
+        include_context 'initialized for data key creation'
 
         it 'returns true' do
           expect(result).to be true
-        end
-      end
-
-      context 'no master key has been set' do
-        before do
-          Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
-        end
-
-        it 'returns false' do
-          expect(result).to be false
         end
       end
     end
@@ -195,7 +189,6 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'a key_id and algorithm have been set' do
-
         include_context 'initialized for explicit encryption'
 
         it 'returns true' do
@@ -237,27 +230,7 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'the mongocrypt_ctx has been properly initialized' do
-        let(:master_key) { "ru\xfe\x00" * 24 }
-        let(:bytes) { master_key.unpack('C*') }
-
-        let(:binary) do
-          p = FFI::MemoryPointer
-          .new(bytes.size)
-          .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
-
-          Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
-        end
-
-        before do
-          Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
-          Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
-          Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
-          Mongo::Crypt::Binding.mongocrypt_ctx_datakey_init(context)
-        end
-
-        after do
-          Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
-        end
+        include_context 'initialized for data key creation'
 
         it 'returns ready state' do
           expect(result).to eq(:ready)
