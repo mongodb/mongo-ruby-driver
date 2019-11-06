@@ -30,6 +30,8 @@ module Mongo
         # In the Python driver, they yield keys one by one in
         # a cursor block. Doing this for simplicity but should come
         # back to that later.
+        filter = Hash.from_bson(BSON::ByteBuffer.new(filter))
+
         @client
           .use(@key_vault_db_name)[@key_vault_coll_name]
           .find(filter)
@@ -109,7 +111,10 @@ module Mongo
       io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
 
       result = nil
-      Crypt::ExplicitEncryptionContext.with_context()
+      value = BSON::Binary.new({ 'v': value}.to_bson.to_s)
+      Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, value, io, opts) do |context|
+        context.run_state_machine
+      end
     end
 
     private

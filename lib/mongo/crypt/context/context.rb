@@ -72,9 +72,9 @@ module Mongo
             return nil
           when :need_mongo_keys
             filter = mongo_operation
-            byebug
-            keys = @io.find_keys(filter)
-
+            @io.find_keys(filter).each do |key|
+              byebug
+            end
           else
             # There are three other states to handle:
             # - :need_mongo_collinfo
@@ -114,7 +114,8 @@ module Mongo
         Binary.with_binary do |binary|
           success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
           raise_from_status unless success
-          return BSON::Binary.new(binary.to_string)
+          return binary.to_string
+          # return BSON::Binary.new(binary.to_string)
         end
       end
     end

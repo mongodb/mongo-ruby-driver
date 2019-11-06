@@ -54,17 +54,15 @@ module Mongo
 
       # Convenient API for using context object without having
       # to perform cleanup.
-      #
-      # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t in the context of this block.
-      # def self.with_context(mongocrypt)
-      #   context = self.new(mongocrypt)
-      #   begin
-      #     yield(context)
-      #   ensure
-      #     context.close
-      #   end
-      # end
+      # TODO: documentation
+      def self.with_context(mongocrypt, value, io, options={})
+        context = self.new(mongocrypt, value, io, options)
+        begin
+          yield(context)
+        ensure
+          context.close
+        end
+      end
 
       private
 
