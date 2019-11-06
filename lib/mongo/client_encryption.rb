@@ -19,6 +19,24 @@ module Mongo
   # and creating data keys.
   class ClientEncryption
 
+    class IO
+      def initialize(client, key_vault_db_name, key_vault_coll_name)
+        @client = client
+        @key_vault_db_name = key_vault_db_name
+        @key_vault_coll_name = key_vault_coll_name
+      end
+
+      def find_keys(filter)
+        # In the Python driver, they yield keys one by one in
+        # a cursor block. Doing this for simplicity but should come
+        # back to that later.
+        @client
+          .use(@key_vault_db_name)[@key_vault_coll_name]
+          .find(filter)
+          .to_a
+      end
+    end
+
     # Create a new ClientEncryption object with the provided options.
     #
     # @param [ Mongo::Client ] client A Mongo::Client
@@ -88,7 +106,10 @@ module Mongo
     #
     # @return [ ?? ] The encrypted value
     def encrypt(value, opts={})
+      io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
 
+      result = nil
+      Crypt::ExplicitEncryptionContext.with_context()
     end
 
     private

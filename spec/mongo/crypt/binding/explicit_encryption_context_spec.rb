@@ -1,17 +1,24 @@
-require 'mongo'
-require 'support/lite_constraints'
+# require 'mongo'
+# require 'support/lite_constraints'
+# require 'support/client_registry_macros'
 
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+# RSpec.configure do |config|
+#   config.extend(LiteConstraints)
+#   config.extend(ClientRegistryMacros)
+# end
+
+require 'lite_spec_helper'
 
 describe Mongo::Crypt::ExplicitEncryptionContext do
   require_libmongocrypt
 
   let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
-  let(:context) { described_class.new(mongocrypt, value, options) }
+  let(:context) { described_class.new(mongocrypt, value, io, options) }
 
   let(:value) { BSON::Binary.new({ 'v': 'Hello, world!' }.to_bson.to_s) }
+
+  let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
+  let(:key_id) { BSON::Binary.new("]\xB1\xE1>\xD6\x85G\xCA\xBB\xA3`\e4\x06\xDA\x89") }
 
   let(:options) do
     {
@@ -20,8 +27,11 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
     }
   end
 
-  let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
-  let(:key_id) { BSON::Binary.new("]\xB1\xE1>\xD6\x85G\xCA\xBB\xA3`\e4\x06\xDA\x89") }
+  let(:client) { ClientRegistry.instance.new_local_client(['localhost:27017']) }
+
+  let(:io) do
+    Mongo::ClientEncryption::IO.new(client, 'test_db', 'keys')
+  end
 
   before do
     Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)

@@ -24,18 +24,20 @@ module Mongo
       # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
       #   used to create a new mongocrypt_ctx_t.
       # @param [ BSON::Binary ] value A BSON value to encrypt
+      # @param [ Mongo::ClientEncryption::IO ] io An instance of the IO class
       # @param [ Hash ] options
       #
       # @option [ BSON::Binary ] :key_id
       # @option [ String ] :algorithm The algorithm used to encrypt the value. Valid algorithms
       #   are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
-      def initialize(mongocrypt, value, options={})
+      def initialize(mongocrypt, value, io, options={})
         # This method should also take :key_alt_name as an option (not relevant for POC)
 
         super(mongocrypt)
 
         @options = options
         @value = value
+        @io = io
 
         begin
           set_key_id

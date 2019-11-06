@@ -71,6 +71,9 @@ module Mongo
           when :done
             return nil
           when :need_mongo_keys
+            filter = mongo_operation
+            byebug
+            keys = @io.find_keys(filter)
 
           else
             # There are three other states to handle:
@@ -103,6 +106,15 @@ module Mongo
           success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
           raise_from_status unless success
           return binary.to_string
+        end
+      end
+
+      # TODO: documentation
+      def mongo_operation
+        Binary.with_binary do |binary|
+          success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
+          raise_from_status unless success
+          return BSON::Binary.new(binary.to_string)
         end
       end
     end
