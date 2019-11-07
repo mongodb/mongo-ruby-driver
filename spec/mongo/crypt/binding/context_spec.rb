@@ -24,6 +24,7 @@ shared_context 'initialized for data key creation' do
   before do
     Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
     Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+
     Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
   end
 
@@ -231,6 +232,10 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'the mongocrypt_ctx has been properly initialized' do
         include_context 'initialized for data key creation'
+
+        before do
+          Mongo::Crypt::Binding.mongocrypt_ctx_datakey_init(context)
+        end
 
         it 'returns ready state' do
           expect(result).to eq(:ready)

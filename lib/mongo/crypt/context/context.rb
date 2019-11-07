@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'byebug' # TODO: remove
-
 module Mongo
   module Crypt
 
@@ -77,7 +75,7 @@ module Mongo
             filter = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
 
             @io.find_keys(filter).each do |key|
-              mongo_feed(key) if key
+              mongo_feed(key.to_bson.to_s) if key
             end
 
             Binding.mongocrypt_ctx_mongo_done(@ctx)
@@ -87,7 +85,7 @@ module Mongo
             # - :need_mongo_markings
             # - :need_kms
             #
-            # None of these are required to create data keys,
+            # None of these are required for explicit encryption/decryption,
             # so these parts of the state machine will be implemented
             # later
             raise("State #{state} is not yet supported by Mongo::Crypt::Context")
@@ -115,23 +113,24 @@ module Mongo
         end
       end
 
-      # TODO: documentation
+      # Returns a binary string representing a mongo operation that the
+      # driver must perform to get the information it needs in order to
+      # continue with encryption/decryption (for example, a filter for
+      # a key vault query).
       def mongo_operation
         Binary.with_binary do |binary|
           success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
           raise_from_status unless success
           return binary.to_string
-          # return BSON::Binary.new(binary.to_string)
         end
       end
 
-      # TODO: documentation
+      # Feeds the result of a Mongo operation to the underlying mongocrypt_ctx_t
+      # object. The result param should be a binary string.
       def mongo_feed(result)
-        result = result.to_bson.to_s
         Binary.with_binary(result) do |binary|
           success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
           raise_from_status unless success
-          return binary.to_string
         end
       end
     end
