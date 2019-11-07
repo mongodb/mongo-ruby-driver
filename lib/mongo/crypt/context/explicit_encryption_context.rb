@@ -15,29 +15,31 @@
 module Mongo
   module Crypt
 
-    # A Context object initialized specifically for the purpose of creating
-    # a data key in the key managemenet system.
+    # A Context object initialized for explicit encryption
     class ExplicitEncryptionContext < Context
 
-      # TODO: documentation
+      # Create a new ExplicitEncryptionContext object
       #
-      # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t.
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
+      #   used to create a new mongocrypt_ctx_t
+      # @param [ ClientEncryption::IO ] A instance of the IO class
+      #   that implements driver I/O methods required to run the
+      #   state machine
       # @param [ BSON::Binary ] value A BSON value to encrypt
-      # @param [ Mongo::ClientEncryption::IO ] io An instance of the IO class
       # @param [ Hash ] options
       #
-      # @option [ BSON::Binary ] :key_id
-      # @option [ String ] :algorithm The algorithm used to encrypt the value. Valid algorithms
-      #   are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
-      def initialize(mongocrypt, value, io, options={})
-        # This method should also take :key_alt_name as an option (not relevant for POC)
+      # @option [ BSON::Binary ] :key_id The UUID of the data key that
+      #   will be used to encrypt the value
+      # @option [ String ] :algorithm The algorithm used to encrypt the
+      #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+      #
+      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
+      def initialize(mongocrypt, io, value, options={})
+        super(mongocrypt, io)
 
-        super(mongocrypt)
-
-        @options = options
         @value = value
-        @io = io
+        @options = options
 
         begin
           set_key_id
@@ -54,7 +56,22 @@ module Mongo
 
       # Convenient API for using context object without having
       # to perform cleanup.
-      # TODO: documentation
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
+      #   used to create a new mongocrypt_ctx_t
+      # @param [ ClientEncryption::IO ] A instance of the IO class
+      #   that implements driver I/O methods required to run the
+      #   state machine
+      # @param [ BSON::Binary ] value A BSON value to encrypt
+      # @param [ Hash ] options
+      #
+      # @option [ BSON::Binary ] :key_id The UUID of the data key that
+      #   will be used to encrypt the value
+      # @option [ String ] :algorithm The algorithm used to encrypt the
+      #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+      #
+      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
       def self.with_context(mongocrypt, value, io, options={})
         context = self.new(mongocrypt, value, io, options)
         begin
@@ -66,7 +83,8 @@ module Mongo
 
       private
 
-      # TODO: documentation
+      # Set the key id option on the mongocrypt_ctx_t object and raises
+      # an exception if the key_id option is somehow invalid.
       def set_key_id
         unless @options[:key_id]
           raise ArgumentError.new(':key_id option must not be nil')
@@ -82,7 +100,8 @@ module Mongo
         end
       end
 
-      # TODO: documentation
+      # Set the algorithm option on the mongocrypt_ctx_t object and raises
+      # an exception if the algorithm is invalid.
       def set_algorithm
         success = Binding.mongocrypt_ctx_setopt_algorithm(
           @ctx,
@@ -93,7 +112,8 @@ module Mongo
         raise_from_status unless success
       end
 
-      # TODO: documentation
+      # Initializes the mongocrypt_ctx_t object for explicit encryption and
+      # passes in the value to be encrypted as a Mongo::Crypt::Binary reference
       def initialize_ctx
         Binary.with_binary(@value.data) do |binary|
           success = Binding.mongocrypt_ctx_explicit_encrypt_init(@ctx, binary.ref)

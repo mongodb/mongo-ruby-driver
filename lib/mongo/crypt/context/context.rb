@@ -28,10 +28,14 @@ module Mongo
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
       #   used to create a new mongocrypt_ctx_t
-      def initialize(mongocrypt)
+      # @param [ ClientEncryption::IO ] A instance of the IO class
+      #   that implements driver I/O methods required to run the
+      #   state machine
+      def initialize(mongocrypt, io)
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.
         @ctx = Binding.mongocrypt_ctx_new(mongocrypt)
+        @io = io
       end
 
       # Releases allocated memory and cleans up resources
