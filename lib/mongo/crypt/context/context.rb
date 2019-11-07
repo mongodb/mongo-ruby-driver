@@ -74,7 +74,8 @@ module Mongo
           when :done
             return nil
           when :need_mongo_keys
-            filter = mongo_operation
+            filter = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
+
             @io.find_keys(filter).each do |key|
               mongo_feed(key) if key
             end

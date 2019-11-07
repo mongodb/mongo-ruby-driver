@@ -19,23 +19,27 @@ module Mongo
   # and creating data keys.
   class ClientEncryption
 
+    # A class that implements I/O methods between the driver and
+    # the MongoDB server or mongocryptd.
+    #
+    # @api private
     class IO
-      def initialize(client, key_vault_db_name, key_vault_coll_name)
-        @client = client
-        @key_vault_db_name = key_vault_db_name
-        @key_vault_coll_name = key_vault_coll_name
+      # Creates a new IO object with information about how to connect
+      # to the key vault.
+      #
+      # @param [ Mongo::Collection ] The key vault collection
+      def initialize(collection)
+        @collection = collection
       end
 
+      # Query for keys in the key vault collection using the provided
+      # filter
+      #
+      # @param [ Hash ] filter
+      #
+      # @return [ Array<Hash> ] The query results
       def find_keys(filter)
-        # In the Python driver, they yield keys one by one in
-        # a cursor block. Doing this for simplicity but should come
-        # back to that later.
-        filter = Hash.from_bson(BSON::ByteBuffer.new(filter))
-
-        @client
-          .use(@key_vault_db_name)[@key_vault_coll_name]
-          .find(filter)
-          .to_a
+        @collection.find(filter).to_a
       end
     end
 
@@ -54,9 +58,10 @@ module Mongo
     def initialize(client, options = {})
       validate_key_vault_namespace(options[:key_vault_namespace])
 
-      @client = client
-      @key_vault_db_name, @key_vault_coll_name = options[:key_vault_namespace].split('.')
-      @io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
+      key_vault_db_name, key_vault_coll_name = options[:key_vault_namespace].split('.')
+      @collection = client.use(key_vault_db_name)[key_vault_coll_name]
+
+      @io = IO.new(@collection)
 
       @crypt_handle = Crypt::Handle.new(options[:kms_providers])
     end
@@ -71,10 +76,9 @@ module Mongo
       # is not the best.
       @crypt_handle.close if @crypt_handle
 
-      @crypt_handle = nil
-      @client = nil
-      @key_vault_namespace = nil
+      @collection = nil
       @io = nil
+      @crypt_handle = nil
 
       true
     end
@@ -92,7 +96,7 @@ module Mongo
       end
 
       data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
-      insert_result = @client.use(@key_vault_db_name)[@key_vault_coll_name].insert_one(data_key_document)
+      insert_result = @collection.insert_one(data_key_document)
 
       return insert_result.inserted_id
     end
