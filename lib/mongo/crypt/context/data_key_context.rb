@@ -28,7 +28,7 @@ module Mongo
         # - kms_providers (just supporting local for right now)
         # - options: master key (only relevant to AWS) and key_alt_names (not required for POC)
 
-        super(mongocrypt)
+        super(mongocrypt, nil)
 
         begin
           set_local_master_key
