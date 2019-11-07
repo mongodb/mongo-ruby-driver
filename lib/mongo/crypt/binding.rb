@@ -163,20 +163,13 @@ module Mongo
       attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
-      # object that wraps the value to be decrypted. Initializes the staet machine for
+      # object that wraps the value to be decrypted. Initializes the state machine for
       # explicit decryption. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
       attach_function :mongocrypt_ctx_destroy, [:pointer], :void
-
-      # Takes a pointer to a mongocrypt_ctx_t object and an out param,
-      # which is a pointer to a mongocrypt_binary_t object, which will serve
-      # as a wrapper around the final results of the state machine. The meaning
-      # of these results depends on how the montocrypt_ctx_t object was initialized.
-      # Returns a boolean indicating the success of the operation.
-      attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
 
       # mongocrypt_ctx_state_t type
       enum :mongocrypt_ctx_state, [
@@ -196,6 +189,8 @@ module Mongo
       # mongocrypt_binary_t object as an out parameter. Writes a BSON document
       # to the provided binary pointer; the purpose of this BSON document varies
       # depending on the state of the state machine. Returns a boolean indicating success.
+      #
+      # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
@@ -203,13 +198,26 @@ module Mongo
       # should be the result of performing the necessary operation with the
       # output of mongocrypt_ctx_mongo_op. This method can be called multiple
       # times in a row. Returns a boolean indicating the success of the operation.
+      #
+      # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object. Marks that the
       # mongocrypt_ctx_t object has finished accepting input from the
       # mongocrypt_ctx_mongo_feed method. Returns a boolean indicating success of
       # the operation.
+      #
+      # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_done, [:pointer], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and an out param,
+      # which is a pointer to a mongocrypt_binary_t object, which will serve
+      # as a wrapper around the final results of the state machine. The meaning
+      # of these results depends on how the montocrypt_ctx_t object was initialized.
+      # Returns a boolean indicating the success of the operation.
+      #
+      # This method is not currently unit tested.
+      attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
     end
   end
 end
