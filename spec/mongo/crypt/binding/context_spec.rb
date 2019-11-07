@@ -6,7 +6,7 @@ RSpec.configure do |config|
 end
 
 # This should live in a file with other helper methods,
-# just keeping it here for now for simplicity.
+# just keeping it here temporarily for simplicity.
 def mongocrypt_binary_t_from(string)
   bytes = string.unpack('C*')
 
