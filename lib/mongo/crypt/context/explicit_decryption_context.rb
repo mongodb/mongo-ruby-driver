@@ -27,7 +27,6 @@ module Mongo
       #   state machine
       # @param [ BSON::Binary ] value A BSON value to decrypt
       def initialize(mongocrypt, io, value)
-
         super(mongocrypt, io)
 
         @value = value
