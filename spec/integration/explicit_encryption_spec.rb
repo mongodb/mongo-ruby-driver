@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'Explicit Encryption' do
+  require_libmongocrypt
+
   let(:client) { ClientRegistry.instance.new_local_client(['localhost:27017']) }
   let(:key_vault_namespace) { 'test.keys' }
 
@@ -13,7 +15,7 @@ describe 'Explicit Encryption' do
     }
   end
 
-  it 'encrypts a value' do
+  it 'encrypts and decrypts a value' do
     client_encryption = Mongo::ClientEncryption.new(
       client,
       client_encryption_opts
@@ -33,5 +35,8 @@ describe 'Explicit Encryption' do
 
     decrypted = client_encryption.decrypt(encrypted)
     expect(decrypted).to eq('Hello, world!')
+
+    client_encryption.close
+    client.close
   end
 end

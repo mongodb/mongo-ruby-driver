@@ -56,6 +56,7 @@ module Mongo
 
       @client = client
       @key_vault_db_name, @key_vault_coll_name = options[:key_vault_namespace].split('.')
+      @io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
 
       @crypt_handle = Crypt::Handle.new(options[:kms_providers])
     end
@@ -69,11 +70,11 @@ module Mongo
       # Mongo::Crypt::Handle object -- having to close it manually
       # is not the best.
       @crypt_handle.close if @crypt_handle
-      @client.close if @client
 
       @crypt_handle = nil
       @client = nil
       @key_vault_namespace = nil
+      @io = nil
 
       true
     end
@@ -96,34 +97,38 @@ module Mongo
       return insert_result.inserted_id
     end
 
-    # TODO: description
+    # Encrypts a value using the specified encryption key and algorithm
     #
-    # @param [ ?? ] value
+    # @param [ String|Numeric ] value The value to encrypt
     # @param [ Hash ] opts
     #
-    # @option [ BSON::Binary ] :key_id
-    # @option [ String ] :algorithm The algorithm used to encrypt the value. Valid algorithms
-    #   are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
-    # This method should also take :key_alt_name as an option (not relevant for POC)
+    # @option [ BSON::Binary ] :key_id The UUID of the encryption key as
+    #   it is stored in the key vault collection
+    # @option [ String ] :algorithm The algorithm used to encrypt the value.
+    #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+    #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
     #
-    # @return [ ?? ] The encrypted value
+    # @return [ BSON::Binary ] The encrypted value
     def encrypt(value, opts={})
-      io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
-
       result = nil
-      value = BSON::Binary.new({ 'v': value}.to_bson.to_s)
-      Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, value, io, opts) do |context|
+      value = BSON::Binary.new({ 'v': value }.to_bson.to_s)
+
+      Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, @io, value, opts) do |context|
         result = context.run_state_machine
       end
 
       return BSON::Binary.new(result)
     end
 
+    # Decrypts a value that has already been encrypted
+    #
+    # @param [ BSON::Binary ] value The value to decrypt
+    #
+    # @return [ String|Numeric ] The decrypted value
     def decrypt(value)
-      io = IO.new(@client, @key_vault_db_name, @key_vault_coll_name)
       result = nil
 
-      Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, value, io) do |context|
+      Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, @io, value) do |context|
         result = context.run_state_machine
       end
 
