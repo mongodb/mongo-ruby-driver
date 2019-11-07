@@ -62,6 +62,9 @@ module Mongo
       #
       # @raise [ Error::CryptError ] If the state machine enters the
       #   :error state
+      #
+      # This method is not currently unit tested. It is integration tested
+      # in spec/integration/explicit_encryption_spec.rb
       def run_state_machine
         while true
           case state

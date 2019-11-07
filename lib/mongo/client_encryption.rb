@@ -22,6 +22,9 @@ module Mongo
     # A class that implements I/O methods between the driver and
     # the MongoDB server or mongocryptd.
     #
+    # This class should have its own file, just leaving it here
+    # for simplicity.
+    #
     # @api private
     class IO
       # Creates a new IO object with information about how to connect
@@ -113,6 +116,9 @@ module Mongo
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
     #
     # @return [ BSON::Binary ] The encrypted value
+    #
+    # This method is not currently unit tested.
+    # Find tests in spec/integration/explicit_encryption_spec.rb
     def encrypt(value, opts={})
       result = nil
       value = BSON::Binary.new({ 'v': value }.to_bson.to_s)
@@ -129,6 +135,9 @@ module Mongo
     # @param [ BSON::Binary ] value The value to decrypt
     #
     # @return [ String|Numeric ] The decrypted value
+    #
+    # This method is not currently unit tested.
+    # Find tests in spec/integration/explicit_encryption_spec.rb
     def decrypt(value)
       result = nil
 
