@@ -117,7 +117,7 @@ module Mongo
       def initialize_ctx
         Binary.with_binary(@value.data) do |binary|
           success = Binding.mongocrypt_ctx_explicit_encrypt_init(@ctx, binary.ref)
-          raise_from_status unless success
+          # raise_from_status unless success
         end
       end
     end
