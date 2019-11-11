@@ -109,31 +109,30 @@ module Mongo
     # @param [ String|Numeric ] value The value to encrypt
     # @param [ Hash ] opts
     #
-    # @option [ BSON::Binary ] :key_id The UUID of the encryption key as
+    # @option [ String ] :key_id The UUID of the encryption key as
     #   it is stored in the key vault collection
     # @option [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
     #
-    # @return [ BSON::Binary ] The encrypted value
+    # @return [ String ] The encrypted value
     #
     # This method is not currently unit tested.
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def encrypt(value, opts={})
       result = nil
-      # value = BSON::Binary.new({ 'v': value }.to_bson.to_s)
       value = { 'v': value }.to_bson.to_s
 
       Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, @io, value, opts) do |context|
         result = context.run_state_machine
       end
 
-      return BSON::Binary.new(result)
+      return result
     end
 
     # Decrypts a value that has already been encrypted
     #
-    # @param [ BSON::Binary ] value The value to decrypt
+    # @param [ String ] value The value to decrypt
     #
     # @return [ String|Numeric ] The decrypted value
     #

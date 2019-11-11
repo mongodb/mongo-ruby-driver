@@ -25,10 +25,10 @@ module Mongo
       # @param [ ClientEncryption::IO ] A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      # @param [ BSON::Binary ] value A BSON value to encrypt
+      # @param [ String|Integer ] value A value to encrypt
       # @param [ Hash ] options
       #
-      # @option [ BSON::Binary ] :key_id The UUID of the data key that
+      # @option [ String ] :key_id The UUID of the data key that
       #   will be used to encrypt the value
       # @option [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
@@ -62,10 +62,10 @@ module Mongo
       # @param [ ClientEncryption::IO ] A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      # @param [ BSON::Binary ] value A BSON value to encrypt
+      # @param [ String|Integer ] value A value to encrypt
       # @param [ Hash ] options
       #
-      # @option [ BSON::Binary ] :key_id The UUID of the data key that
+      # @option [ String ] :key_id The UUID of the data key that
       #   will be used to encrypt the value
       # @option [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
@@ -89,10 +89,6 @@ module Mongo
         unless @options[:key_id]
           raise ArgumentError.new(':key_id option must not be nil')
         end
-
-        # unless @options[:key_id].is_a?(BSON::Binary)
-        #   raise ArgumentError.new(':key_id option must be a BSON::Binary object')
-        # end
 
         Binary.with_binary(@options[:key_id]) do |binary|
           success = Binding.mongocrypt_ctx_setopt_key_id(@ctx, binary.ref)

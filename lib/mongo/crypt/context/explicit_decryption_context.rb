@@ -25,7 +25,7 @@ module Mongo
       # @param [ ClientEncryption::IO ] A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      # @param [ BSON::Binary ] value A BSON value to decrypt
+      # @param [ String ] value A BSON value to decrypt
       def initialize(mongocrypt, io, value)
         super(mongocrypt, io)
 
@@ -50,7 +50,7 @@ module Mongo
       # @param [ ClientEncryption::IO ] A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      # @param [ BSON::Binary ] value A BSON value to decrypt
+      # @param [ String ] value A BSON value to decrypt
       def self.with_context(mongocrypt, io, value)
         context = self.new(mongocrypt, io, value)
         begin
@@ -65,7 +65,7 @@ module Mongo
       # Initialize the underlying mongocrypt_ctx_t object to perform
       # explicit decryption
       def initialize_ctx
-        Binary.with_binary(@value.data) do |binary|
+        Binary.with_binary(@value) do |binary|
           success = Binding.mongocrypt_ctx_explicit_decrypt_init(@ctx, binary.ref)
           raise_from_status unless success
         end
