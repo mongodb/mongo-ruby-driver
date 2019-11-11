@@ -23,7 +23,7 @@ module Mongo
     # the MongoDB server or mongocryptd.
     #
     # This class should have its own file, just leaving it here
-    # for simplicity.
+    # for simplicity. Should also have a name that is not IO.
     #
     # @api private
     class IO
