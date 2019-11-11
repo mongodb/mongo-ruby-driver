@@ -26,7 +26,7 @@ describe 'Explicit Encryption' do
     encrypted = client_encryption.encrypt(
       'Hello, world!',
       {
-        key_id: data_key_id.data,
+        key_id: data_key_id,
         algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
       }
     )

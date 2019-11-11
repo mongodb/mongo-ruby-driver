@@ -90,7 +90,7 @@ module Mongo
     # that key in the KMS collection. The generated key is encrypted with
     # the KMS master key.
     #
-    # @return [ BSON::Binary ] UUID representing the data key _id
+    # @return [ String ] UUID representing the data key _id
     def create_data_key
       result = nil
 
@@ -101,7 +101,7 @@ module Mongo
       data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
       insert_result = @collection.insert_one(data_key_document)
 
-      return insert_result.inserted_id
+      return insert_result.inserted_id.data
     end
 
     # Encrypts a value using the specified encryption key and algorithm

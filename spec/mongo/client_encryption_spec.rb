@@ -85,12 +85,11 @@ describe Mongo::ClientEncryption do
       client_encryption.close
     end
 
-    it 'returns a binary uuid object' do
-      expect(result).to be_a_kind_of(BSON::Binary)
-      expect(result.type).to eq(:uuid)
+    it 'returns a string' do
+      expect(result).to be_a_kind_of(String)
 
       # make sure that the key actually exists in the DB
-      expect(client.use(key_vault_db)[key_vault_coll].find(_id: result).count).to eq(1)
+      expect(client.use(key_vault_db)[key_vault_coll].find(_id: BSON::Binary.new(result, :uuid)).count).to eq(1)
     end
   end
 end
