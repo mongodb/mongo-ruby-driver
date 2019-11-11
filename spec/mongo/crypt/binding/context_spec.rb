@@ -34,6 +34,7 @@ shared_context 'initialized for data key creation' do
 end
 
 shared_context 'initialized for explicit encryption' do
+  # TODO: replace with code showing how to generate this value
   let(:key_id) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
   let(:key_id_binary) { mongocrypt_binary_t_from(key_id) }
 
@@ -138,6 +139,7 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'with valid key id' do
         # 16-byte binary uuid string
+        # TODO: replace with code showing how to generate this value
         let(:uuid) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
 
         it 'returns true' do
@@ -146,7 +148,7 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'with invalid key id' do
-        # invalid uuid string
+        # invalid uuid string -- a truncated string of bytes
         let(:uuid) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF" }
 
         it 'returns false' do
