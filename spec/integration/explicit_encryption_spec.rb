@@ -15,26 +15,40 @@ describe 'Explicit Encryption' do
     }
   end
 
-  it 'encrypts and decrypts a value' do
-    client_encryption = Mongo::ClientEncryption.new(
-      client,
-      client_encryption_opts
-    )
+  shared_examples_for 'an explicit encrypter' do
+    it 'encrypts and decrypts the value' do
+      client_encryption = Mongo::ClientEncryption.new(
+        client,
+        client_encryption_opts
+      )
 
-    data_key_id = client_encryption.create_data_key
+      data_key_id = client_encryption.create_data_key
 
-    encrypted = client_encryption.encrypt(
-      'Hello, world!',
-      {
-        key_id: data_key_id,
-        algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
-      }
-    )
+      encrypted = client_encryption.encrypt(
+        value,
+        {
+          key_id: data_key_id,
+          algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
+        }
+      )
 
-    decrypted = client_encryption.decrypt(encrypted)
-    expect(decrypted).to eq('Hello, world!')
+      decrypted = client_encryption.decrypt(encrypted)
+      expect(decrypted).to eq(value)
 
-    client_encryption.close
-    client.close
+      client_encryption.close
+      client.close
+    end
+  end
+
+  context 'value is a string' do
+    let(:value) { 'Hello, world!' }
+
+    it_behaves_like 'an explicit encrypter'
+  end
+
+  context 'value is an integer' do
+    let(:value) { 42 }
+
+    it_behaves_like 'an explicit encrypter'
   end
 end
