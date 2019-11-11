@@ -90,12 +90,11 @@ module Mongo
     # that key in the KMS collection. The generated key is encrypted with
     # the KMS master key.
     #
-    # @return [ String ] UUID representing the data key _id
+    # @return [ String ] Base64-encoded UUID string representing the
+    #   data key _id
     def create_data_key
-      result = nil
-
-      Crypt::DataKeyContext.with_context(@crypt_handle.ref) do |context|
-        result = context.run_state_machine
+      result = Crypt::DataKeyContext.with_context(@crypt_handle.ref) do |context|
+        context.run_state_machine
       end
 
       data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
@@ -109,8 +108,8 @@ module Mongo
     # @param [ String|Numeric ] value The value to encrypt
     # @param [ Hash ] opts
     #
-    # @option [ String ] :key_id The UUID of the encryption key as
-    #   it is stored in the key vault collection
+    # @option [ String ] :key_id The base64-encoded UUID of the encryption
+    #   key as it is stored in the key vault collection
     # @option [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
@@ -120,14 +119,11 @@ module Mongo
     # This method is not currently unit tested.
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def encrypt(value, opts={})
-      result = nil
       value = { 'v': value }.to_bson.to_s
 
       Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, @io, value, opts) do |context|
-        result = context.run_state_machine
+        context.run_state_machine
       end
-
-      return result
     end
 
     # Decrypts a value that has already been encrypted
@@ -139,10 +135,8 @@ module Mongo
     # This method is not currently unit tested.
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def decrypt(value)
-      result = nil
-
-      Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, @io, value) do |context|
-        result = context.run_state_machine
+      result = Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, @io, value) do |context|
+        context.run_state_machine
       end
 
       Hash.from_bson(BSON::ByteBuffer.new(result))['v']
