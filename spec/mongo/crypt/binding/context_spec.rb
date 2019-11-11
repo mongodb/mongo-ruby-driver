@@ -38,8 +38,7 @@ shared_context 'initialized for explicit encryption' do
   let(:key_id_binary) { mongocrypt_binary_t_from(key_id) }
 
   let(:value) do
-    byte_buffer = { 'v': 'Hello, world!' }.to_bson
-    byte_buffer.get_bytes(byte_buffer.length)
+    { 'v': 'Hello, world!' }.to_bson.to_s
   end
 
   let(:value_binary) { mongocrypt_binary_t_from(value) }
@@ -123,8 +122,6 @@ describe 'Mongo::Crypt::Binding' do
     end
 
     describe '#mongocrypt_ctx_setopt_key_id' do
-      # 16-byte binary uuid string
-      let(:uuid) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
       let(:binary) { mongocrypt_binary_t_from(uuid) }
 
       let(:result) do
@@ -140,8 +137,20 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'with valid key id' do
+        # 16-byte binary uuid string
+        let(:uuid) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
+
         it 'returns true' do
           expect(result).to be true
+        end
+      end
+
+      context 'with invalid key id' do
+        # invalid uuid string
+        let(:uuid) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF" }
+
+        it 'returns false' do
+          expect(result).to be false
         end
       end
     end
@@ -177,6 +186,14 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'with invalid algorithm' do
         let(:algo) { 'fake-algorithm' }
+
+        it 'returns false' do
+          expect(result).to be false
+        end
+      end
+
+      context 'with nil algorithm' do
+        let(:algo) { nil }
 
         it 'returns false' do
           expect(result).to be false

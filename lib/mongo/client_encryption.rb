@@ -121,7 +121,8 @@ module Mongo
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def encrypt(value, opts={})
       result = nil
-      value = BSON::Binary.new({ 'v': value }.to_bson.to_s)
+      # value = BSON::Binary.new({ 'v': value }.to_bson.to_s)
+      value = { 'v': value }.to_bson.to_s
 
       Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, @io, value, opts) do |context|
         result = context.run_state_machine

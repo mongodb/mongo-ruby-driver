@@ -12,10 +12,10 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
 
   let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
   let(:io) { double("Mongo::ClientEncryption::IO") }
-  let(:value) { BSON::Binary.new({ 'v': 'Hello, world!' }.to_bson.to_s) }
+  let(:value) { { 'v': 'Hello, world!' }.to_bson.to_s }
 
   let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
-  let(:key_id) { BSON::Binary.new("]\xB1\xE1>\xD6\x85G\xCA\xBB\xA3`\e4\x06\xDA\x89") }
+  let(:key_id) { "]\xB1\xE1>\xD6\x85G\xCA\xBB\xA3`\e4\x06\xDA\x89" }
 
   let(:options) do
     {
@@ -44,7 +44,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
     end
 
     context 'with invalid key_id' do
-      let(:key_id) { BSON::Binary.new('random string') }
+      let(:key_id) { 'random string' }
 
       it 'raises an exception' do
         expect do
