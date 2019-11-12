@@ -26,10 +26,14 @@ module Mongo
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
       #   used to create a new mongocrypt_ctx_t
-      def initialize(mongocrypt)
+      # @param [ ClientEncryption::IO ] A instance of the IO class
+      #   that implements driver I/O methods required to run the
+      #   state machine
+      def initialize(mongocrypt, io)
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.
         @ctx = Binding.mongocrypt_ctx_new(mongocrypt)
+        @io = io
       end
 
       # Releases allocated memory and cleans up resources
@@ -58,6 +62,9 @@ module Mongo
       #
       # @raise [ Error::CryptError ] If the state machine enters the
       #   :error state
+      #
+      # This method is not currently unit tested. It is integration tested
+      # in spec/integration/explicit_encryption_spec.rb
       def run_state_machine
         while true
           case state
@@ -67,14 +74,21 @@ module Mongo
             return finalize_state_machine
           when :done
             return nil
+          when :need_mongo_keys
+            filter = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
+
+            @io.find_keys(filter).each do |key|
+              mongo_feed(key.to_bson.to_s) if key
+            end
+
+            Binding.mongocrypt_ctx_mongo_done(@ctx)
           else
-            # There are four other states to handle:
+            # There are three other states to handle:
             # - :need_mongo_collinfo
             # - :need_mongo_markings
-            # - :need_mongo_keys
             # - :need_kms
             #
-            # None of these are required to create data keys,
+            # None of these are required for explicit encryption/decryption,
             # so these parts of the state machine will be implemented
             # later
             raise("State #{state} is not yet supported by Mongo::Crypt::Context")
@@ -99,6 +113,27 @@ module Mongo
           success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
           raise_from_status unless success
           return binary.to_string
+        end
+      end
+
+      # Returns a binary string representing a mongo operation that the
+      # driver must perform to get the information it needs in order to
+      # continue with encryption/decryption (for example, a filter for
+      # a key vault query).
+      def mongo_operation
+        Binary.with_binary do |binary|
+          success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
+          raise_from_status unless success
+          return binary.to_string
+        end
+      end
+
+      # Feeds the result of a Mongo operation to the underlying mongocrypt_ctx_t
+      # object. The result param should be a binary string.
+      def mongo_feed(result)
+        Binary.with_binary(result) do |binary|
+          success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
+          raise_from_status unless success
         end
       end
     end

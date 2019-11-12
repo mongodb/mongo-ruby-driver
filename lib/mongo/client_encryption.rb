@@ -19,6 +19,33 @@ module Mongo
   # and creating data keys.
   class ClientEncryption
 
+    # A class that implements I/O methods between the driver and
+    # the MongoDB server or mongocryptd.
+    #
+    # This class should have its own file, just leaving it here
+    # for simplicity. Should also have a name that is not IO.
+    #
+    # @api private
+    class IO
+      # Creates a new IO object with information about how to connect
+      # to the key vault.
+      #
+      # @param [ Mongo::Collection ] The key vault collection
+      def initialize(collection)
+        @collection = collection
+      end
+
+      # Query for keys in the key vault collection using the provided
+      # filter
+      #
+      # @param [ Hash ] filter
+      #
+      # @return [ Array<Hash> ] The query results
+      def find_keys(filter)
+        @collection.find(filter).to_a
+      end
+    end
+
     # Create a new ClientEncryption object with the provided options.
     #
     # @param [ Mongo::Client ] client A Mongo::Client
@@ -34,8 +61,10 @@ module Mongo
     def initialize(client, options = {})
       validate_key_vault_namespace(options[:key_vault_namespace])
 
-      @client = client
-      @key_vault_db_name, @key_vault_coll_name = options[:key_vault_namespace].split('.')
+      key_vault_db_name, key_vault_coll_name = options[:key_vault_namespace].split('.')
+      @collection = client.use(key_vault_db_name)[key_vault_coll_name]
+
+      @io = IO.new(@collection)
 
       @crypt_handle = Crypt::Handle.new(options[:kms_providers])
     end
@@ -49,11 +78,10 @@ module Mongo
       # Mongo::Crypt::Handle object -- having to close it manually
       # is not the best.
       @crypt_handle.close if @crypt_handle
-      @client.close if @client
 
+      @collection = nil
+      @io = nil
       @crypt_handle = nil
-      @client = nil
-      @key_vault_namespace = nil
 
       true
     end
@@ -62,18 +90,56 @@ module Mongo
     # that key in the KMS collection. The generated key is encrypted with
     # the KMS master key.
     #
-    # @return [ BSON::Binary ] UUID representing the data key _id
+    # @return [ String ] Base64-encoded UUID string representing the
+    #   data key _id
     def create_data_key
-      result = nil
-
-      Crypt::DataKeyContext.with_context(@crypt_handle.ref) do |context|
-        result = context.run_state_machine
+      result = Crypt::DataKeyContext.with_context(@crypt_handle.ref) do |context|
+        context.run_state_machine
       end
 
       data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
-      insert_result = @client.use(@key_vault_db_name)[@key_vault_coll_name].insert_one(data_key_document)
+      insert_result = @collection.insert_one(data_key_document)
 
-      return insert_result.inserted_id
+      return insert_result.inserted_id.data
+    end
+
+    # Encrypts a value using the specified encryption key and algorithm
+    #
+    # @param [ String|Numeric ] value The value to encrypt
+    # @param [ Hash ] opts
+    #
+    # @option [ String ] :key_id The base64-encoded UUID of the encryption
+    #   key as it is stored in the key vault collection
+    # @option [ String ] :algorithm The algorithm used to encrypt the value.
+    #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+    #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+    #
+    # @return [ String ] The encrypted value
+    #
+    # This method is not currently unit tested.
+    # Find tests in spec/integration/explicit_encryption_spec.rb
+    def encrypt(value, opts={})
+      value = { 'v': value }.to_bson.to_s
+
+      Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, @io, value, opts) do |context|
+        context.run_state_machine
+      end
+    end
+
+    # Decrypts a value that has already been encrypted
+    #
+    # @param [ String ] value The value to decrypt
+    #
+    # @return [ String|Numeric ] The decrypted value
+    #
+    # This method is not currently unit tested.
+    # Find tests in spec/integration/explicit_encryption_spec.rb
+    def decrypt(value)
+      result = Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, @io, value) do |context|
+        context.run_state_machine
+      end
+
+      Hash.from_bson(BSON::ByteBuffer.new(result))['v']
     end
 
     private

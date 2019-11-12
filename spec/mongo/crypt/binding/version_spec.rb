@@ -16,7 +16,7 @@ describe 'Mongo::Crypt::Binding' do
     end
 
     it 'is in the x.y.z-tag format' do
-      expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z\d]+)?\z/)
+      expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z\+\d]+)?\z/)
     end
   end
 end
