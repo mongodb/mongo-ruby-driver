@@ -35,6 +35,12 @@ host_arch() {
   echo $arch
 }
 
+set_home() {
+  if test -z "$HOME"; then
+    export HOME=$(pwd)
+  fi
+}
+
 set_fcv() {
   if test -n "$FCV"; then
     mongo --eval 'assert.commandWorked(db.adminCommand( { setFeatureCompatibilityVersion: "'"$FCV"'" } ));' "$MONGODB_URI"
