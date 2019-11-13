@@ -75,7 +75,7 @@ describe 'SDAM Monitoring' do
           end
 
           let(:verifier) do
-            Sdam::Verifier.new(spec)
+            Sdam::Verifier.new
           end
 
           phase.outcome.events.each_with_index do |expectation, index|
