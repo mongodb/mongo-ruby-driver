@@ -83,11 +83,6 @@ describe 'SDAM Monitoring' do
             it "expects event #{index+1} to be #{expectation.name}" do
               verifier.verify_sdam_event(
                 phase.outcome.events, @subscriber.phase_events(phase_index), index)
-=begin
-              published_event = @subscriber.phase_events(phase_index)[index]
-              expect(published_event).not_to be_nil
-              expect(published_event).to match_sdam_monitoring_event(expectation)
-=end
             end
           end
         end
