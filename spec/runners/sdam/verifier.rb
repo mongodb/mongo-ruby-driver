@@ -2,12 +2,6 @@ module Sdam
   class Verifier
     include RSpec::Matchers
 
-    def initialize(test_instance)
-      @test_instance = test_instance
-    end
-
-    attr_reader :test_instance
-
     def verify_sdam_event(expected_events, actual_events, i)
       expect(expected_events.length).to be > i
       expect(actual_events.length).to be > i
