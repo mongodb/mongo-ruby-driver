@@ -1,5 +1,7 @@
 require 'lite_spec_helper'
 
+require_relative '../runners/sdam/verifier'
+
 describe 'SDAM Monitoring' do
   include Mongo::SDAM
 
@@ -72,12 +74,20 @@ describe 'SDAM Monitoring' do
             expect(@subscriber.phase_events(phase_index).length).to eq(phase.outcome.events.length)
           end
 
+          let(:verifier) do
+            Sdam::Verifier.new(spec)
+          end
+
           phase.outcome.events.each_with_index do |expectation, index|
 
-            it "expects a #{expectation.name} to be published" do
+            it "expects event #{index+1} to be #{expectation.name}" do
+              verifier.verify_sdam_event(
+                phase.outcome.events, @subscriber.phase_events(phase_index), index)
+=begin
               published_event = @subscriber.phase_events(phase_index)[index]
               expect(published_event).not_to be_nil
               expect(published_event).to match_sdam_monitoring_event(expectation)
+=end
             end
           end
         end

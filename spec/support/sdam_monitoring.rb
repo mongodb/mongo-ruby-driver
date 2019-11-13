@@ -13,55 +13,6 @@
 # limitations under the License.
 #
 
-RSpec::Matchers.define :match_topology_opening_event do |expectation|
-
-  match do |event|
-    event.is_a?(Mongo::Monitoring::Event::TopologyOpening) &&
-      event.topology != nil
-  end
-end
-
-RSpec::Matchers.define :match_topology_description_changed_event do |expectation|
-  include Mongo::SDAMMonitoring::Matchable
-
-  match do |event|
-    event.is_a?(Mongo::Monitoring::Event::TopologyChanged) &&
-      topologies_match?(event, expectation)
-  end
-end
-
-RSpec::Matchers.define :match_server_opening_event do |expectation|
-
-  match do |event|
-    event.is_a?(Mongo::Monitoring::Event::ServerOpening) &&
-      event.address.to_s == expectation.data['address']
-  end
-end
-
-RSpec::Matchers.define :match_server_description_changed_event do |expectation|
-  include Mongo::SDAMMonitoring::Matchable
-
-  match do |event|
-    event.is_a?(Mongo::Monitoring::Event::ServerDescriptionChanged) &&
-      descriptions_match?(event, expectation)
-  end
-end
-
-RSpec::Matchers.define :match_server_closed_event do |expectation|
-
-  match do |event|
-    event.is_a?(Mongo::Monitoring::Event::ServerClosed) &&
-      event.address.to_s == expectation.data['address']
-  end
-end
-
-RSpec::Matchers.define :match_sdam_monitoring_event do |expectation|
-
-  match do |event|
-    expect(event).to send("match_#{expectation.name}", expectation)
-  end
-end
-
 module Mongo
   module SDAMMonitoring
     module Matchable
