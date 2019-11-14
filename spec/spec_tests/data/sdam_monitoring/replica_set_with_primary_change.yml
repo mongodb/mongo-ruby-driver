@@ -129,13 +129,13 @@ phases:
     outcome: 
       events: 
         - 
-          server_opening_event: 
-            topologyId: "42"
-            address: "aa:27017"
-        - 
           server_closed_event: 
             topologyId: "42"
             address: "a:27017"
+        - 
+          server_opening_event: 
+            topologyId: "42"
+            address: "aa:27017"
         - 
           topology_description_changed_event: 
             topologyId: "42"
