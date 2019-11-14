@@ -104,6 +104,7 @@ class Mongo::Cluster
         check_if_has_primary
         # Publish topology change event.
         commit_changes
+        disconnect_servers
         return
       end
 
