@@ -128,6 +128,7 @@ phases:
           maxWireVersion: 4
     outcome: 
       events: 
+        # TODO see about having the opening event precede the closing event.
         - 
           server_closed_event: 
             topologyId: "42"

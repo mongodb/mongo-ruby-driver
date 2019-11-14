@@ -74,17 +74,34 @@ class Mongo::Cluster
 
     def server_description_changed
       if updated_desc.me_mismatch? && updated_desc.primary?
+        # When the driver receives a description claiming to be a primary,
+        # we need to add and remove hosts in that description even if
+        # it also has a me mismatch. In the event of a me mismatch, the
+        # server for which we are processing the response will be removed
+        # from topology, which may cause the current thread to terminate
+        # prior to running the entire sdam flow.
+
         servers = add_servers_from_desc(updated_desc)
+        # Spec tests require us to remove servers based on data in descrptions
+        # with me mismatches. The driver will be more resilient if it only
+        # removed servenrs from descriptions with matching mes.
         remove_servers_not_in_desc(updated_desc)
 
         servers.each do |server|
           server.start_monitoring
         end
 
+        # The rest of sdam flow assumes the server being removed is not the one
+        # whose description we are processing, and publishes description update
+        # event. Since we are removing the server whose response we are
+        # processing, do not publish description change event but mark it
+        # published (by assigning to @previous_desc).
         do_remove(updated_desc.address.to_s)
         @previous_desc = updated_desc
 
+        # We may have removed the current primary, check if there is a primary.
         check_if_has_primary
+        # Publish topology change event.
         commit_changes
         return
       end
