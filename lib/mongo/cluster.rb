@@ -114,7 +114,7 @@ module Mongo
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @app_metadata = Server::AppMetadata.new(@options)
-      @update_lock = Mutex.new
+      @update_lock = ReentrantMutex.new
       @sdam_flow_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
@@ -162,12 +162,10 @@ module Mongo
         return
       end
 
-      # Need to record start time prior to starting monitoring
-      start_time = Time.now
-
-      servers.each do |server|
-        server.start_monitoring
-      end
+      # We do not take @update_lock here, thus update instance variables
+      # prior to starting monitoring threads.
+      @connecting = false
+      @connected = true
 
       if options[:cleanup] != false
         @cursor_reaper = CursorReaper.new
@@ -182,8 +180,12 @@ module Mongo
         @periodic_executor.run!
       end
 
-      @connecting = false
-      @connected = true
+      # Need to record start time prior to starting monitoring
+      start_time = Time.now
+
+      servers.each do |server|
+        server.start_monitoring
+      end
 
       if options[:scan] != false
         server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
@@ -438,33 +440,35 @@ module Mongo
     #
     # @since 2.1.0
     def disconnect!
-      unless @connecting || @connected
-        return true
-      end
-      if options[:cleanup] != false
-        session_pool.end_sessions
-        @periodic_executor.stop!
-      end
-      @srv_monitor_lock.synchronize do
-        if @srv_monitor
-          @srv_monitor.stop!
+      @update_lock.synchronize do
+        unless @connecting || @connected
+          return true
         end
-      end
-      @servers.each do |server|
-        if server.connected?
-          server.disconnect!
-          publish_sdam_event(
-            Monitoring::SERVER_CLOSED,
-            Monitoring::Event::ServerClosed.new(server.address, topology)
-          )
+        if options[:cleanup] != false
+          session_pool.end_sessions
+          @periodic_executor.stop!
         end
+        @srv_monitor_lock.synchronize do
+          if @srv_monitor
+            @srv_monitor.stop!
+          end
+        end
+        @servers.each do |server|
+          if server.connected?
+            server.disconnect!
+            publish_sdam_event(
+              Monitoring::SERVER_CLOSED,
+              Monitoring::Event::ServerClosed.new(server.address, topology)
+            )
+          end
+        end
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CLOSED,
+          Monitoring::Event::TopologyClosed.new(topology)
+        )
+        @connecting = @connected = false
+        true
       end
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CLOSED,
-        Monitoring::Event::TopologyClosed.new(topology)
-      )
-      @connecting = @connected = false
-      true
     end
 
     # Reconnect all servers.
@@ -478,14 +482,16 @@ module Mongo
     # @deprecated Use Client#reconnect to reconnect to the cluster instead of
     #   calling this method. This method does not send SDAM events.
     def reconnect!
-      @connecting = true
-      scan!
-      servers.each do |server|
-        server.reconnect!
+      @update_lock.synchronize do
+        @connecting = true
+        scan!
+        servers.each do |server|
+          server.reconnect!
+        end
+        @periodic_executor.restart!
+        @connecting = false
+        @connected = true
       end
-      @periodic_executor.restart!
-      @connecting = false
-      @connected = true
     end
 
     # Force a scan of all known servers in the cluster.
@@ -743,24 +749,32 @@ module Mongo
     #   server.remove('127.0.0.1:27017')
     #
     # @param [ String ] host The host/port or socket address.
+    # @param [ true | false ] disconnect Whether to disconnect the servers
+    #   being removed. For internal driver use only.
     #
-    # @return [ true|false ] Whether any servers were removed.
+    # @return [ Array<Server> | true | false ] If disconnect is true,
+    #   returns whether any servers were removed. If disconnect is false,
+    #   returns an array of servers that were removed (and should be
+    #   disconnected by the caller).
     #
-    # @since 2.0.0, return value added in 2.7.0
-    def remove(host)
+    # @note The return value of this method is not part of the driver's
+    #   public API.
+    #
+    # @since 2.0.0
+    def remove(host, disconnect: true)
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
-      removed_servers.each do |server|
-        if server.connected?
-          server.disconnect!
-          publish_sdam_event(
-            Monitoring::SERVER_CLOSED,
-            Monitoring::Event::ServerClosed.new(address, topology)
-          )
+      if disconnect != false
+        removed_servers.each do |server|
+          disconnect_server_if_connected(server)
         end
       end
-      removed_servers.any?
+      if disconnect != false
+        removed_servers.any?
+      else
+        removed_servers
+      end
     end
 
     # @api private
@@ -776,6 +790,17 @@ module Mongo
     # @api private
     def servers_list
       @update_lock.synchronize { @servers.dup }
+    end
+
+    # @api private
+    def disconnect_server_if_connected(server)
+      if server.connected?
+        server.disconnect!
+        publish_sdam_event(
+          Monitoring::SERVER_CLOSED,
+          Monitoring::Event::ServerClosed.new(server.address, topology)
+        )
+      end
     end
 
     private
