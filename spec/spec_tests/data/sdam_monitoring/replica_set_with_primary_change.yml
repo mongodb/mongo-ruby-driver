@@ -121,6 +121,7 @@ phases:
           setName: "rs"
           setVersion: 1
           primary: "aa:27017"
+          me: "aa:27017"
           hosts: 
             - "aa:27017"
           minWireVersion: 0

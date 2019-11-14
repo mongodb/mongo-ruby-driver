@@ -73,6 +73,18 @@ class Mongo::Cluster
     end
 
     def server_description_changed
+      if updated_desc.me && updated_desc.address.to_s != updated_desc.me && updated_desc.primary?
+        servers = add_servers_from_desc(updated_desc)
+        remove_servers_not_in_desc(updated_desc)
+
+        servers.each do |server|
+          server.start_monitoring
+        end
+
+        commit_changes
+        return
+      end
+
       unless update_server_descriptions
         # All of the transitions require that server whose updated_desc we are
         # processing is still in the cluster (i.e., was not removed as a result
