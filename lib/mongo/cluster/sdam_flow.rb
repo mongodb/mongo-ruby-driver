@@ -75,6 +75,7 @@ class Mongo::Cluster
     def server_description_changed
       if updated_desc.me_mismatch? && updated_desc.primary?
         servers = add_servers_from_desc(updated_desc)
+        remove_servers_not_in_desc(updated_desc)
 
         servers.each do |server|
           server.start_monitoring
