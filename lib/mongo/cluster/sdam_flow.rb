@@ -73,14 +73,17 @@ class Mongo::Cluster
     end
 
     def server_description_changed
-      if updated_desc.me && updated_desc.address.to_s != updated_desc.me && updated_desc.primary?
+      if updated_desc.me_mismatch? && updated_desc.primary?
         servers = add_servers_from_desc(updated_desc)
-        remove_servers_not_in_desc(updated_desc)
 
         servers.each do |server|
           server.start_monitoring
         end
 
+        do_remove(updated_desc.address.to_s)
+        @previous_desc = updated_desc
+
+        check_if_has_primary
         commit_changes
         return
       end
@@ -349,9 +352,14 @@ class Mongo::Cluster
       end.flatten
       servers_list.each do |server|
         unless updated_desc_address_strs.include?(address_str = server.address.to_s)
+          updated_host = updated_desc.address.to_s
+          if updated_desc.me && updated_desc.me != updated_host
+            updated_host += " (self-identified as #{updated_desc.me})"
+          end
           log_warn(
             "Removing server #{address_str} because it is not in hosts reported by primary " +
-            "#{updated_desc.address}"
+            "#{updated_host}. Reported hosts are: " +
+            updated_desc.hosts.join(', ')
           )
           do_remove(address_str)
         end

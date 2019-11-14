@@ -1,4 +1,4 @@
-description: "Monitoring a topology that is a replica set with primary removal"
+description: "Monitoring a topology that is a replica set with primary address change"
 uri: "mongodb://a,b"
 phases: 
   -
@@ -129,13 +129,13 @@ phases:
     outcome: 
       events: 
         - 
-          server_closed_event: 
-            topologyId: "42"
-            address: "a:27017"
-        - 
           server_opening_event: 
             topologyId: "42"
             address: "aa:27017"
+        - 
+          server_closed_event: 
+            topologyId: "42"
+            address: "a:27017"
         - 
           topology_description_changed_event: 
             topologyId: "42"
@@ -154,6 +154,7 @@ phases:
                   type: "RSPrimary"
             newDescription:
               topologyType: "ReplicaSetNoPrimary"
+              setName: rs
               servers: 
                 - 
                   address: "aa:27017"
@@ -161,3 +162,67 @@ phases:
                   hosts: []
                   passives: []
                   type: "Unknown"
+
+  # phaes 3 - response from new primary from new address
+  - 
+    responses: 
+      - 
+        - "aa:27017"
+        - 
+          ok: 1
+          ismaster: true
+          setName: "rs"
+          setVersion: 1
+          primary: "aa:27017"
+          me: "aa:27017"
+          hosts: 
+            - "aa:27017"
+          minWireVersion: 0
+          maxWireVersion: 4
+    outcome: 
+      events: 
+        - 
+          server_description_changed_event: 
+            topologyId: "42"
+            address: "aa:27017"
+            previousDescription: 
+              address: "aa:27017"
+              arbiters: []
+              hosts: []
+              passives: []
+              type: "Unknown"
+            newDescription: 
+              address: "aa:27017"
+              arbiters: []
+              hosts: 
+                - "aa:27017"
+              passives: []
+              primary: "aa:27017"
+              setName: "rs"
+              type: "RSPrimary"
+        - 
+          topology_description_changed_event: 
+            topologyId: "42"
+            previousDescription: 
+              topologyType: "ReplicaSetNoPrimary"
+              setName: rs
+              servers: 
+                - 
+                  address: "aa:27017"
+                  arbiters: []
+                  hosts: []
+                  passives: []
+                  type: "Unknown"
+            newDescription:
+              topologyType: "ReplicaSetWithPrimary"
+              setName: "rs"
+              servers: 
+                - 
+                  address: "aa:27017"
+                  arbiters: []
+                  hosts: 
+                    - "aa:27017"
+                  passives: []
+                  primary: "aa:27017"
+                  setName: "rs"
+                  type: "RSPrimary"
