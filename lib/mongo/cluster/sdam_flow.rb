@@ -30,6 +30,7 @@ class Mongo::Cluster
       @topology = cluster.topology
       @original_desc = @previous_desc = previous_desc
       @updated_desc = updated_desc
+      @servers_to_disconnect = []
     end
 
     attr_reader :cluster
@@ -73,6 +74,40 @@ class Mongo::Cluster
     end
 
     def server_description_changed
+      if updated_desc.me_mismatch? && updated_desc.primary?
+        # When the driver receives a description claiming to be a primary,
+        # we need to add and remove hosts in that description even if
+        # it also has a me mismatch. In the event of a me mismatch, the
+        # server for which we are processing the response will be removed
+        # from topology, which may cause the current thread to terminate
+        # prior to running the entire sdam flow.
+
+        servers = add_servers_from_desc(updated_desc)
+        # Spec tests require us to remove servers based on data in descrptions
+        # with me mismatches. The driver will be more resilient if it only
+        # removed servenrs from descriptions with matching mes.
+        remove_servers_not_in_desc(updated_desc)
+
+        servers.each do |server|
+          server.start_monitoring
+        end
+
+        # The rest of sdam flow assumes the server being removed is not the one
+        # whose description we are processing, and publishes description update
+        # event. Since we are removing the server whose response we are
+        # processing, do not publish description change event but mark it
+        # published (by assigning to @previous_desc).
+        do_remove(updated_desc.address.to_s)
+        @previous_desc = updated_desc
+
+        # We may have removed the current primary, check if there is a primary.
+        check_if_has_primary
+        # Publish topology change event.
+        commit_changes
+        disconnect_servers
+        return
+      end
+
       unless update_server_descriptions
         # All of the transitions require that server whose updated_desc we are
         # processing is still in the cluster (i.e., was not removed as a result
@@ -142,6 +177,7 @@ class Mongo::Cluster
       end
 
       commit_changes
+      disconnect_servers
     end
 
     # Transitions from unknown to single topology type, when a standalone
@@ -337,9 +373,14 @@ class Mongo::Cluster
       end.flatten
       servers_list.each do |server|
         unless updated_desc_address_strs.include?(address_str = server.address.to_s)
+          updated_host = updated_desc.address.to_s
+          if updated_desc.me && updated_desc.me != updated_host
+            updated_host += " (self-identified as #{updated_desc.me})"
+          end
           log_warn(
             "Removing server #{address_str} because it is not in hosts reported by primary " +
-            "#{updated_desc.address}"
+            "#{updated_host}. Reported hosts are: " +
+            updated_desc.hosts.join(', ')
           )
           do_remove(address_str)
         end
@@ -356,7 +397,21 @@ class Mongo::Cluster
     # Removes specified server from topology and warns if the topology ends
     # up with an empty server list as a result
     def do_remove(address_str)
-      cluster.remove(address_str)
+      servers = cluster.remove(address_str, disconnect: false)
+      servers.each do |server|
+        # We need to publish server closed event here, but we cannot close
+        # the server because it could be the server owning the monitor in
+        # whose thread this flow is presently executing, in which case closing
+        # the server can terminate the thread and leave SDAM processing
+        # incomplete. Thus we have to remove the server from the cluster,
+        # publish the event, but do not call disconnect on the server until
+        # the very end when all processing has completed.
+        publish_sdam_event(
+          Mongo::Monitoring::SERVER_CLOSED,
+          Mongo::Monitoring::Event::ServerClosed.new(server.address, cluster.topology)
+        )
+      end
+      @servers_to_disconnect += servers
       if servers_list.empty?
         log_warn(
           "Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application"
@@ -449,6 +504,15 @@ class Mongo::Cluster
       @topology = topology.class.new(topology.options, topology.monitoring, cluster)
       # This sends the SDAM event
       cluster.update_topology(topology)
+    end
+
+    def disconnect_servers
+      while server = @servers_to_disconnect.shift
+        if server.connected?
+          # Do not publish server closed event, as this was already done
+          server.disconnect!
+        end
+      end
     end
 
     # If the server being processed is identified as data bearing, creates the
