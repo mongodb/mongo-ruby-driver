@@ -30,6 +30,7 @@ class Mongo::Cluster
       @topology = cluster.topology
       @original_desc = @previous_desc = previous_desc
       @updated_desc = updated_desc
+      @servers_to_disconnect = []
     end
 
     attr_reader :cluster
@@ -175,6 +176,7 @@ class Mongo::Cluster
       end
 
       commit_changes
+      disconnect_servers
     end
 
     # Transitions from unknown to single topology type, when a standalone
@@ -394,7 +396,21 @@ class Mongo::Cluster
     # Removes specified server from topology and warns if the topology ends
     # up with an empty server list as a result
     def do_remove(address_str)
-      cluster.remove(address_str)
+      servers = cluster.remove(address_str, disconnect: false)
+      servers.each do |server|
+        # We need to publish server closed event here, but we cannot close
+        # the server because it could be the server owning the monitor in
+        # whose thread this flow is presently executing, in which case closing
+        # the server can terminate the thread and leave SDAM processing
+        # incomplete. Thus we have to remove the server from the cluster,
+        # publish the event, but do not call disconnect on the server until
+        # the very end when all processing has completed.
+        publish_sdam_event(
+          Mongo::Monitoring::SERVER_CLOSED,
+          Mongo::Monitoring::Event::ServerClosed.new(server.address, cluster.topology)
+        )
+      end
+      @servers_to_disconnect += servers
       if servers_list.empty?
         log_warn(
           "Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application"
@@ -487,6 +503,15 @@ class Mongo::Cluster
       @topology = topology.class.new(topology.options, topology.monitoring, cluster)
       # This sends the SDAM event
       cluster.update_topology(topology)
+    end
+
+    def disconnect_servers
+      while server = @servers_to_disconnect.shift
+        if server.connected?
+          # Do not publish server closed event, as this was already done
+          server.disconnect!
+        end
+      end
     end
 
     # If the server being processed is identified as data bearing, creates the
