@@ -94,27 +94,7 @@ describe Mongo::Client do
       # cluster during SDAM
       context 'me mismatch on the only initial seed' do
         let(:address) do
-          address = SpecConfig.instance.addresses.first
-          port = address.sub(/^.*:/, '').to_i
-          address = address.sub(/:.*/, '')
-          case address
-          when '127.0.0.1'
-            'localhost'
-          when /^(\d+\.){3}\d+$/
-            skip 'This test requires a hostname or 127.0.0.1 as address'
-          else
-            # We don't know if mongod is listening on ipv4 or ipv6,
-            # in principle.
-            # Our tests use ipv4, so hardcode that for now.
-            # To support both we need to try both addresses
-            # which will make this test more complicated.
-            resolved_address = Addrinfo.getaddrinfo(address, port, Socket::PF_INET).first.ip_address
-            if resolved_address.include?(':')
-              "[#{resolved_address}]"
-            else
-              resolved_address
-            end + ":#{port}"
-          end
+          ClusterConfig.instance.alternate_address
         end
 
         let(:logger) do
