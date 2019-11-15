@@ -78,7 +78,6 @@ describe Mongo::ClientEncryption do
   end
 
   describe '#create_data_key' do
-
     let(:result) { client_encryption.create_data_key }
 
     after do
@@ -90,6 +89,45 @@ describe Mongo::ClientEncryption do
 
       # make sure that the key actually exists in the DB
       expect(client.use(key_vault_db)[key_vault_coll].find(_id: BSON::Binary.new(result, :uuid)).count).to eq(1)
+    end
+  end
+
+  describe '#with_client_encryption' do
+    let(:client) { new_local_client_nmio([SpecConfig.instance.addresses.first]) }
+    let(:options) do
+      {
+        key_vault_namespace: key_vault_namespace,
+        kms_providers: kms_providers
+      }
+    end
+
+    before do
+      allow(described_class)
+        .to receive(:new)
+        .with(client, options)
+        .and_return(client_encryption)
+    end
+
+    it 'creates a new client encryption and closes it' do
+      expect(client_encryption).to receive(:close).and_call_original
+
+      described_class.with_client_encryption(client, options) do |ce|
+        # Do something
+      end
+    end
+
+    context 'when yield errors' do
+      let(:err_msg) { 'Something happened' }
+
+      it 'raises the error' do
+        expect(client_encryption).to receive(:close).and_call_original
+
+        expect do
+          described_class.with_client_encryption(client, options) do |ce|
+            raise err_msg
+          end
+        end.to raise_error(err_msg)
+      end
     end
   end
 end

@@ -142,6 +142,28 @@ module Mongo
       Hash.from_bson(BSON::ByteBuffer.new(result))['v']
     end
 
+    # Create a new ClientEncryption object within the context of a block.
+    # Once the block terminates, the created object is closed.
+    #
+    # @param [ Mongo::Client ] client A Mongo::Client
+    #   that is connected to the MongoDB instance where the key vault
+    #   collection is stored.
+    # @param [ Hash ] options The ClientEncryption options
+    #
+    # @option options [ String ] :key_vault_namespace The name of the
+    #   key vault collection in the format "database.collection"
+    # @option options [ Hash ] :kms_providers A hash of key management service
+    #   configuration information. Valid hash keys are :local or :aws. There may be
+    #   more than one KMS provider specified.
+    def self.with_client_encryption(client, options = {})
+      client_encryption = self.new(client, options)
+      begin
+        yield(client_encryption)
+      ensure
+        client_encryption.close
+      end
+    end
+
     private
 
     # Validates that the key_vault_namespace exists and is in the format database.collection
