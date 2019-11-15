@@ -747,10 +747,10 @@ module Mongo
     # @param [ true | false ] disconnect Whether to disconnect the servers
     #   being removed. For internal driver use only.
     #
-    # @return [ Array<Server> | true | false ] If disconnect is true,
-    #   returns whether any servers were removed. If disconnect is false,
-    #   returns an array of servers that were removed (and should be
-    #   disconnected by the caller).
+    # @return [ Array<Server> | true | false ] If disconnect is any value other
+    #   than false, including nil, returns whether any servers were removed.
+    #   If disconnect is false, returns an array of servers that were removed
+    #   (and should be disconnected by the caller).
     #
     # @note The return value of this method is not part of the driver's
     #   public API.
