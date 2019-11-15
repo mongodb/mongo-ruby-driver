@@ -57,15 +57,19 @@ describe 'Explicit Encryption' do
     let(:value) { 'Hello, world!' }
 
     it 'performs encryption and decryption' do
+      # Demonstrating that generating data key id, encrypting, and decrypting
+      # can be done by different ClientEncryption instances
+      data_key_id = Mongo::ClientEncryption.with_client_encryption(client, options) do |client_encryption|
+        client_encryption.create_data_key
+      end
+
       encrypted = Mongo::ClientEncryption.with_client_encryption(client, options) do |client_encryption|
-        data_key_id = client_encryption.create_data_key
-        encrypted = client_encryption.encrypt(
-          value,
-          {
-            key_id: data_key_id,
-            algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
-          }
-        )
+        encryption_opts = {
+          key_id: data_key_id,
+          algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
+        }
+
+        encrypted = client_encryption.encrypt(value, encryption_opts)
       end
 
       decrypted = Mongo::ClientEncryption.with_client_encryption(client, options) do |client_encryption|
