@@ -85,7 +85,7 @@ class Mongo::Cluster
         servers = add_servers_from_desc(updated_desc)
         # Spec tests require us to remove servers based on data in descrptions
         # with me mismatches. The driver will be more resilient if it only
-        # removed servenrs from descriptions with matching mes.
+        # removed servers from descriptions with matching mes.
         remove_servers_not_in_desc(updated_desc)
 
         servers.each do |server|
