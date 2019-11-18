@@ -945,6 +945,20 @@ buildvariants:
     - name: "enterprise-auth-tests"
 
 -
+  matrix_name: "enterprise-auth-tests-rhel"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    # Ruby 2.6 and 2.5 segfault
+    ruby: ["ruby-2.3", "ruby-2.4"]
+    os: rhel70
+  display_name: "Enterprise Auth ${ruby} ${os}"
+  tasks:
+    - name: "enterprise-auth-tests"
+
+# Enterprise auth tests on debian are omitted due to segfaults:
+# https://jira.mongodb.org/browse/RUBY-1534
+
+-
   matrix_name: "kerberos-tests"
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
@@ -956,6 +970,7 @@ buildvariants:
   tasks:
     - name: "kerberos-tests"
 
+-
   matrix_name: "x509-tests"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
@@ -978,16 +993,3 @@ buildvariants:
   display_name: "FLE Tests: ${ruby}"
   tasks:
     - name: "fle-tests"
-
--
-  matrix_name: "enterprise-auth-tests-rhel"
-  matrix_spec:
-    auth-and-ssl: "auth-and-ssl"
-    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5"]
-    os: rhel70
-  display_name: "Enterprise Auth ${ruby} ${os}"
-  tasks:
-    - name: "enterprise-auth-tests"
-
-# Enterprise auth tests on debian are omitted due to segfaults:
-# https://jira.mongodb.org/browse/RUBY-1534
