@@ -82,6 +82,20 @@ describe 'Client construction' do
       expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Single)
       expect(client.options[:connect]).to eq :direct
     end
+
+    context 'direct connection with mismached me' do
+      let(:address) { ClusterConfig.instance.alternate_address }
+
+      let(:client) do
+        new_local_client([address], SpecConfig.instance.test_options)
+      end
+
+      let(:server) { client.cluster.next_primary }
+
+      it 'sets server type to primary' do
+        expect(server.description).to be_primary
+      end
+    end
   end
 
   context 'in sharded topology' do
