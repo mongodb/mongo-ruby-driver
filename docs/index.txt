@@ -57,7 +57,6 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
    .. toctree::
       :titlesonly:
 
-      whats-new
       installation
       quick-start
       /tutorials/ruby-driver-create-client
