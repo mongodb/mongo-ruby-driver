@@ -101,10 +101,10 @@ module Mongo
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_ctx_t object
       def raise_from_status
-        Status.with_status do |status|
-          Binding.mongocrypt_ctx_status(@ctx, status.ref)
-          status.raise_crypt_error
-        end
+        status = Status.new
+
+        Binding.mongocrypt_ctx_status(@ctx, status.ref)
+        status.raise_crypt_error
       end
 
       # Finalize the state machine and return the result as a string

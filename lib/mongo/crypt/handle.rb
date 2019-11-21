@@ -113,10 +113,10 @@ module Mongo
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_t object
       def raise_from_status
-        Status.with_status do |status|
-          Binding.mongocrypt_status(@mongocrypt, status.ref)
-          status.raise_crypt_error
-        end
+        status = Status.new
+
+        Binding.mongocrypt_status(@mongocrypt, status.ref)
+        status.raise_crypt_error
       end
     end
   end

@@ -19,20 +19,12 @@ describe Mongo::Crypt::Status do
   end
 
   describe '#initialize' do
-    after do
-      status.close
-    end
-
     it 'doesn\'t throw an error' do
       expect { status }.not_to raise_error
     end
   end
 
   describe '#update' do
-    after do
-      status.close
-    end
-
     context 'with invalid label' do
       it 'raises an exception' do
         expect do
@@ -48,10 +40,6 @@ describe Mongo::Crypt::Status do
   end
 
   describe '#label' do
-    after do
-      status.close
-    end
-
     context 'new status' do
       it 'returns :ok' do
         expect(status.label).to eq(:ok)
@@ -66,10 +54,6 @@ describe Mongo::Crypt::Status do
   end
 
   describe '#code' do
-    after do
-      status.close
-    end
-
     context 'new status' do
       it 'returns 0' do
         expect(status.code).to eq(0)
@@ -84,10 +68,6 @@ describe Mongo::Crypt::Status do
   end
 
   describe '#message' do
-    after do
-      status.close
-    end
-
     context 'new status' do
       it 'returns an empty string' do
         expect(status.message).to eq('')
@@ -102,10 +82,6 @@ describe Mongo::Crypt::Status do
   end
 
   describe '#ok?' do
-    after do
-      status.close
-    end
-
     context 'new status' do
       it 'returns true' do
         expect(status.ok?).to be true
@@ -120,10 +96,6 @@ describe Mongo::Crypt::Status do
   end
 
   describe '#crypt_error' do
-    after do
-      status.close
-    end
-
     context 'when status is ok' do
       before do
         status.update(:ok, 0, '')
@@ -157,34 +129,6 @@ describe Mongo::Crypt::Status do
         expect do
           status.raise_crypt_error
         end.to raise_error(Mongo::Error::CryptClientError, /Code 2: Client Error/)
-      end
-    end
-  end
-
-  describe '#self.with_status' do
-    before do
-      allow(described_class)
-        .to receive(:new)
-        .and_return(status)
-    end
-
-    context 'when yield errors' do
-      it 'closes the created status and raises the error' do
-        expect(status).to receive(:close).once
-
-        expect do
-          described_class.with_status do |s|
-            raise StandardError.new("an error")
-          end
-        end.to raise_error(StandardError, /an error/)
-      end
-
-      it 'creates a new status and closes it' do
-        expect(status).to receive(:close).once
-
-        described_class.with_status do |s|
-          expect(s.ok?).to be true
-        end
       end
     end
   end
