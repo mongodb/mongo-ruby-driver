@@ -32,7 +32,10 @@ module Mongo
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
       def initialize(kms_providers)
-        @mongocrypt = Binding.mongocrypt_new
+        @mongocrypt = FFI::AutoPointer.new(
+          Binding.mongocrypt_new,
+          Binding.method(:mongocrypt_destroy)
+        )
 
         set_kms_providers(kms_providers)
         initialize_mongocrypt
