@@ -34,28 +34,8 @@ module Mongo
       def initialize(kms_providers)
         @mongocrypt = Binding.mongocrypt_new
 
-        begin
-          set_kms_providers(kms_providers)
-          initialize_mongocrypt
-        rescue => e
-          # Setting options or initializing mongocrypt_t could cause validation/status
-          # errors; if that happens, make sure the reference to the mongocrypt_t object
-          # is destroyed before passing on the error
-          self.close
-          raise e
-        end
-      end
-
-
-      # Destroy the reference to the underlying mongocrypt_t object and
-      # clean up resources
-      #
-      # @return [ true ] Always true
-      def close
-        Binding.mongocrypt_destroy(@mongocrypt) if @mongocrypt
-        @mongocrypt = nil
-
-        true
+        set_kms_providers(kms_providers)
+        initialize_mongocrypt
       end
 
       # Return the reference to the underlying @mongocrypt object

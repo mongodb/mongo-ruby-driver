@@ -35,9 +35,6 @@ describe 'Explicit Encryption' do
       decrypted = client_encryption.decrypt(encrypted)
       expect(decrypted).to eq(value)
       expect(decrypted).to be_a_kind_of(value.class)
-
-      client_encryption.close
-      client.close
     end
   end
 

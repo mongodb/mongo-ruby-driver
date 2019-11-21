@@ -65,10 +65,6 @@ describe Mongo::ClientEncryption do
     end
 
     context 'with valid options' do
-      after do
-        client_encryption.close
-      end
-
       it 'creates a ClientEncryption object' do
         expect do
           client_encryption
@@ -80,10 +76,6 @@ describe Mongo::ClientEncryption do
   describe '#create_data_key' do
 
     let(:result) { client_encryption.create_data_key }
-
-    after do
-      client_encryption.close
-    end
 
     it 'returns a string' do
       expect(result).to be_a_kind_of(String)

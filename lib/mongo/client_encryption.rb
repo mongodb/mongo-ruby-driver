@@ -69,23 +69,6 @@ module Mongo
       @crypt_handle = Crypt::Handle.new(options[:kms_providers])
     end
 
-    # Closes the underlying crypt_handle object and cleans
-    # up resources
-    #
-    # @return [ true ] Always true
-    def close
-      # Will eventually revisit the experience of using a
-      # Mongo::Crypt::Handle object -- having to close it manually
-      # is not the best.
-      @crypt_handle.close if @crypt_handle
-
-      @collection = nil
-      @io = nil
-      @crypt_handle = nil
-
-      true
-    end
-
     # Generates a data key used for encryption/decryption and stores
     # that key in the KMS collection. The generated key is encrypted with
     # the KMS master key.
