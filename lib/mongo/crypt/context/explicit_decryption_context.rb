@@ -31,33 +31,7 @@ module Mongo
 
         @value = value
 
-        begin
-          initialize_ctx
-        rescue => e
-          # Initializing the context could raise errors.
-          # Make sure the reference to the underlying mongocrypt_ctx_t is destroyed
-          # before passing those errors along.
-          self.close
-          raise e
-        end
-      end
-
-      # Convenient API for using context object without having
-      # to perform cleanup.
-      #
-      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t
-      # @param [ ClientEncryption::IO ] A instance of the IO class
-      #   that implements driver I/O methods required to run the
-      #   state machine
-      # @param [ String ] value A BSON value to decrypt
-      def self.with_context(mongocrypt, io, value)
-        context = self.new(mongocrypt, io, value)
-        begin
-          yield(context)
-        ensure
-          context.close
-        end
+        initialize_ctx
       end
 
       private

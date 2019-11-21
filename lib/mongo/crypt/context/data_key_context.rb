@@ -30,30 +30,8 @@ module Mongo
 
         super(mongocrypt, nil)
 
-        begin
-          set_local_master_key
-          initialize_ctx
-        rescue => e
-          # Setting options on or initializing the context could raise errors.
-          # Make sure the reference to the underlying mongocrypt_ctx_t is destroyed
-          # before passing those errors along.
-          self.close
-          raise e
-        end
-      end
-
-      # Convenient API for using context object without having
-      # to perform cleanup.
-      #
-      # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t in the context of this block.
-      def self.with_context(mongocrypt)
-        context = self.new(mongocrypt)
-        begin
-          yield(context)
-        ensure
-          context.close
-        end
+        set_local_master_key
+        initialize_ctx
       end
 
       private

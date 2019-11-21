@@ -32,18 +32,12 @@ module Mongo
       def initialize(mongocrypt, io)
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.
-        @ctx = Binding.mongocrypt_ctx_new(mongocrypt)
+        @ctx = FFI::AutoPointer.new(
+          Binding.mongocrypt_ctx_new(mongocrypt),
+          Binding.method(:mongocrypt_ctx_destroy)
+        )
+
         @io = io
-      end
-
-      # Releases allocated memory and cleans up resources
-      #
-      # @return [ true ] Always true
-      def close
-        Binding.mongocrypt_ctx_destroy(@ctx) if @ctx
-        @ctx = nil
-
-        true
       end
 
       # Returns the state of the mongocrypt_ctx_t

@@ -93,9 +93,8 @@ module Mongo
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
     def create_data_key
-      result = Crypt::DataKeyContext.with_context(@crypt_handle.ref) do |context|
-        context.run_state_machine
-      end
+      context = Crypt::DataKeyContext.new(@crypt_handle.ref)
+      result = context.run_state_machine
 
       data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
       insert_result = @collection.insert_one(data_key_document)
@@ -121,9 +120,8 @@ module Mongo
     def encrypt(value, opts={})
       value = { 'v': value }.to_bson.to_s
 
-      Crypt::ExplicitEncryptionContext.with_context(@crypt_handle.ref, @io, value, opts) do |context|
-        context.run_state_machine
-      end
+      context = Crypt::ExplicitEncryptionContext.new(@crypt_handle.ref, @io, value, opts)
+      context.run_state_machine
     end
 
     # Decrypts a value that has already been encrypted
@@ -135,9 +133,8 @@ module Mongo
     # This method is not currently unit tested.
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def decrypt(value)
-      result = Crypt::ExplicitDecryptionContext.with_context(@crypt_handle.ref, @io, value) do |context|
-        context.run_state_machine
-      end
+      context = Crypt::ExplicitDecryptionContext.new(@crypt_handle.ref, @io, value)
+      result = context.run_state_machine
 
       Hash.from_bson(BSON::ByteBuffer.new(result))['v']
     end

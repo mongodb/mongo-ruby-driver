@@ -41,44 +41,9 @@ module Mongo
         @value = value
         @options = options
 
-        begin
-          set_key_id
-          set_algorithm
-          initialize_ctx
-        rescue => e
-          # Setting options on or initializing the context could raise errors.
-          # Make sure the reference to the underlying mongocrypt_ctx_t is destroyed
-          # before passing those errors along.
-          self.close
-          raise e
-        end
-      end
-
-      # Convenient API for using context object without having
-      # to perform cleanup.
-      #
-      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t
-      # @param [ ClientEncryption::IO ] A instance of the IO class
-      #   that implements driver I/O methods required to run the
-      #   state machine
-      # @param [ String|Integer ] value A value to encrypt
-      # @param [ Hash ] options
-      #
-      # @option [ String ] :key_id The UUID of the data key that
-      #   will be used to encrypt the value
-      # @option [ String ] :algorithm The algorithm used to encrypt the
-      #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
-      #
-      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
-      def self.with_context(mongocrypt, value, io, options={})
-        context = self.new(mongocrypt, value, io, options)
-        begin
-          yield(context)
-        ensure
-          context.close
-        end
+        set_key_id
+        set_algorithm
+        initialize_ctx
       end
 
       private
