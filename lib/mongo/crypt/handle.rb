@@ -32,6 +32,8 @@ module Mongo
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
       def initialize(kms_providers)
+        # FFI::AutoPointer uses a custom release strategy to automatically free
+        # the pointer once this object goes out of scope
         @mongocrypt = FFI::AutoPointer.new(
           Binding.mongocrypt_new,
           Binding.method(:mongocrypt_destroy)

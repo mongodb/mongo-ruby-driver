@@ -22,6 +22,8 @@ module Mongo
     class Status
       # Create a new Status object
       def initialize
+        # FFI::AutoPointer uses a custom release strategy to automatically free
+        # the pointer once this object goes out of scope
         @status = FFI::AutoPointer.new(
           Binding.mongocrypt_status_new,
           Binding.method(:mongocrypt_status_destroy)

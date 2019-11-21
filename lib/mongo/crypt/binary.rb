@@ -34,12 +34,20 @@ module Mongo
           @data_p = FFI::MemoryPointer.new(bytes.length)
                     .write_array_of_uint8(bytes)
 
-          bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
+          # FFI::AutoPointer uses a custom release strategy to automatically free
+          # the pointer once this object goes out of scope
+          @bin = FFI::AutoPointer.new(
+            Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
+            Binding.method(:mongocrypt_binary_destroy)
+          )
         else
-          bin = Binding.mongocrypt_binary_new
+          # FFI::AutoPointer uses a custom release strategy to automatically free
+          # the pointer once this object goes out of scope
+          @bin = FFI::AutoPointer.new(
+            Binding.mongocrypt_binary_new,
+            Binding.method(:mongocrypt_binary_destroy)
+          )
         end
-
-        @bin = FFI::AutoPointer.new(bin, Binding.method(:mongocrypt_binary_destroy))
       end
 
       # Returns the data stored as a byte array
