@@ -97,10 +97,10 @@ module Mongo
 
         master_key = kms_providers[:local][:key]
 
-        Binary.with_binary(Base64.decode64(master_key)) do |binary|
-          success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
-          raise_from_status unless success
-        end
+        binary = Binary.new(Base64.decode64(master_key))
+        success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
+
+        raise_from_status unless success
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails

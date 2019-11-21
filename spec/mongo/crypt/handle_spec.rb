@@ -67,7 +67,6 @@ describe Mongo::Crypt::Handle do
       end
 
       it 'raises an exception' do
-        expect_any_instance_of(Mongo::Crypt::Binary).to receive(:close).once # make sure binary is closed
         expect_any_instance_of(Mongo::Crypt::Status).to receive(:close).once # make sure status is closed
         expect_any_instance_of(Mongo::Crypt::Handle).to receive(:close).once # make sure handle is closed
         expect { handle }.to raise_error(Mongo::Error::CryptClientError, 'Code 1: local key must be 96 bytes')
@@ -88,7 +87,6 @@ describe Mongo::Crypt::Handle do
       end
 
       it 'does not raise an exception' do
-        expect_any_instance_of(Mongo::Crypt::Binary).to receive(:close).once # make sure binary is closed
         expect { handle }.not_to raise_error
       end
     end

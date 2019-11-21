@@ -65,10 +65,10 @@ module Mongo
       # Initialize the underlying mongocrypt_ctx_t object to perform
       # explicit decryption
       def initialize_ctx
-        Binary.with_binary(@value) do |binary|
-          success = Binding.mongocrypt_ctx_explicit_decrypt_init(@ctx, binary.ref)
-          raise_from_status unless success
-        end
+        binary = Binary.new(@value)
+        success = Binding.mongocrypt_ctx_explicit_decrypt_init(@ctx, binary.ref)
+
+        raise_from_status unless success
       end
     end
   end

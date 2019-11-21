@@ -34,10 +34,12 @@ module Mongo
           @data_p = FFI::MemoryPointer.new(bytes.length)
                     .write_array_of_uint8(bytes)
 
-          @bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
+          bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
         else
-          @bin = Binding.mongocrypt_binary_new
+          bin = Binding.mongocrypt_binary_new
         end
+
+        @bin = FFI::AutoPointer.new(bin, Binding.method(:mongocrypt_binary_destroy))
       end
 
       # Returns the data stored as a byte array
@@ -66,32 +68,6 @@ module Mongo
       # @return [ FFI::Pointer ] The underlying mongocrypt_binary_t object
       def ref
         @bin
-      end
-
-      # Releases allocated memory and cleans up resources
-      #
-      # @return [ true ] Always true.
-      def close
-        Binding.mongocrypt_binary_destroy(@bin) if @bin
-
-        @data_p = nil
-        @bin = nil
-
-        true
-      end
-
-      # Convenient API for using binary object without having
-      # to perform cleanup.
-      #
-      # @param [ String ] data The data string wrapped by the
-      #   byte buffer (optional)
-      def self.with_binary(data=nil)
-        binary = self.new(data)
-        begin
-          yield(binary)
-        ensure
-          binary.close
-        end
       end
     end
   end
