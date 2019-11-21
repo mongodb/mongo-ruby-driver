@@ -37,7 +37,7 @@ module Mongo
           # FFI::AutoPointer uses a custom release strategy to automatically free
           # the pointer once this object goes out of scope
           @bin = FFI::AutoPointer.new(
-            Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
+            Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length),
             Binding.method(:mongocrypt_binary_destroy)
           )
         else
