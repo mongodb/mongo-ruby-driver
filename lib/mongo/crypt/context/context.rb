@@ -32,18 +32,15 @@ module Mongo
       def initialize(mongocrypt, io)
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.
-        @ctx = Binding.mongocrypt_ctx_new(mongocrypt)
+
+        # FFI::AutoPointer uses a custom release strategy to automatically free
+        # the pointer once this object goes out of scope
+        @ctx = FFI::AutoPointer.new(
+          Binding.mongocrypt_ctx_new(mongocrypt),
+          Binding.method(:mongocrypt_ctx_destroy)
+        )
+
         @io = io
-      end
-
-      # Releases allocated memory and cleans up resources
-      #
-      # @return [ true ] Always true
-      def close
-        Binding.mongocrypt_ctx_destroy(@ctx) if @ctx
-        @ctx = nil
-
-        true
       end
 
       # Returns the state of the mongocrypt_ctx_t
@@ -101,19 +98,19 @@ module Mongo
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_ctx_t object
       def raise_from_status
-        Status.with_status do |status|
-          Binding.mongocrypt_ctx_status(@ctx, status.ref)
-          status.raise_crypt_error
-        end
+        status = Status.new
+
+        Binding.mongocrypt_ctx_status(@ctx, status.ref)
+        status.raise_crypt_error
       end
 
       # Finalize the state machine and return the result as a string
       def finalize_state_machine
-        Binary.with_binary do |binary|
-          success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
-          raise_from_status unless success
-          return binary.to_string
-        end
+        binary = Binary.new
+        success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
+        raise_from_status unless success
+
+        binary.to_string
       end
 
       # Returns a binary string representing a mongo operation that the
@@ -121,20 +118,20 @@ module Mongo
       # continue with encryption/decryption (for example, a filter for
       # a key vault query).
       def mongo_operation
-        Binary.with_binary do |binary|
-          success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
-          raise_from_status unless success
-          return binary.to_string
-        end
+        binary = Binary.new
+        success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
+        raise_from_status unless success
+
+        binary.to_string
       end
 
       # Feeds the result of a Mongo operation to the underlying mongocrypt_ctx_t
       # object. The result param should be a binary string.
       def mongo_feed(result)
-        Binary.with_binary(result) do |binary|
-          success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
-          raise_from_status unless success
-        end
+        binary = Binary.new(result)
+        success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
+
+        raise_from_status unless success
       end
     end
   end

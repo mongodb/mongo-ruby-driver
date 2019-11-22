@@ -22,7 +22,12 @@ module Mongo
     class Status
       # Create a new Status object
       def initialize
-        @status = Binding.mongocrypt_status_new
+        # FFI::AutoPointer uses a custom release strategy to automatically free
+        # the pointer once this object goes out of scope
+        @status = FFI::AutoPointer.new(
+          Binding.mongocrypt_status_new,
+          Binding.method(:mongocrypt_status_destroy)
+        )
       end
 
       # Set a label, code, and message on the Status
@@ -99,33 +104,6 @@ module Mongo
         end
 
         raise error
-      end
-
-      # Destroys reference to mongocrypt_status_t object and
-      # cleans up resources.
-      #
-      # @return [ true ] Always true
-      def close
-        Binding.mongocrypt_status_destroy(@status)
-        @status = nil
-
-        true
-      end
-
-      # Convenient API for using status object without having
-      # to perform cleanup.
-      #
-      # @example
-      #   Mongo::Crypt::Status.with_status do |status|
-      #     status.ok? # => true
-      #   end
-      def self.with_status
-        status = self.new
-        begin
-          yield(status)
-        ensure
-          status.close
-        end
       end
     end
   end

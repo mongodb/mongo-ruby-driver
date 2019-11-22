@@ -32,30 +32,15 @@ module Mongo
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
       def initialize(kms_providers)
-        @mongocrypt = Binding.mongocrypt_new
+        # FFI::AutoPointer uses a custom release strategy to automatically free
+        # the pointer once this object goes out of scope
+        @mongocrypt = FFI::AutoPointer.new(
+          Binding.mongocrypt_new,
+          Binding.method(:mongocrypt_destroy)
+        )
 
-        begin
-          set_kms_providers(kms_providers)
-          initialize_mongocrypt
-        rescue => e
-          # Setting options or initializing mongocrypt_t could cause validation/status
-          # errors; if that happens, make sure the reference to the mongocrypt_t object
-          # is destroyed before passing on the error
-          self.close
-          raise e
-        end
-      end
-
-
-      # Destroy the reference to the underlying mongocrypt_t object and
-      # clean up resources
-      #
-      # @return [ true ] Always true
-      def close
-        Binding.mongocrypt_destroy(@mongocrypt) if @mongocrypt
-        @mongocrypt = nil
-
-        true
+        set_kms_providers(kms_providers)
+        initialize_mongocrypt
       end
 
       # Return the reference to the underlying @mongocrypt object
@@ -97,10 +82,10 @@ module Mongo
 
         master_key = kms_providers[:local][:key]
 
-        Binary.with_binary(Base64.decode64(master_key)) do |binary|
-          success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
-          raise_from_status unless success
-        end
+        binary = Binary.new(Base64.decode64(master_key))
+        success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
+
+        raise_from_status unless success
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails
@@ -113,10 +98,10 @@ module Mongo
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_t object
       def raise_from_status
-        Status.with_status do |status|
-          Binding.mongocrypt_status(@mongocrypt, status.ref)
-          status.raise_crypt_error
-        end
+        status = Status.new
+
+        Binding.mongocrypt_status(@mongocrypt, status.ref)
+        status.raise_crypt_error
       end
     end
   end
