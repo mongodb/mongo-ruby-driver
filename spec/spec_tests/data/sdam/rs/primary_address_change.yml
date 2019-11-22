@@ -1,12 +1,11 @@
-description: Primary mismatched me
+description: Primary whose address differs from client address but no me mismatch
 uri: mongodb://localhost:27017/?replicaSet=rs
 phases:
 -
   responses:
   -
     - localhost:27017
-    - me: a:27017
-      hosts:
+    - hosts:
       - a:27017
       - b:27017
       ismaster: true
