@@ -370,6 +370,15 @@ module Mongo
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
     #
+    # @option options [ Hash ] :auto_encryption_opts Auto-encryption related options
+    #   :key_vault_client => Client|nil, a client connected to the MongoDB instance containing the encryption key vault
+    #   :key_vault_namespace => String, the namespace of the key vault in the format database.collection
+    #   :kms_providers => Hash, A hash of key management service configuration information. Valid hash keys are :local or :aws.
+    #     There may be more than one KMS provider specified.
+    #   :schema_map => Hash|nil, TODO: more info here
+    #   :bypass_auto_encryption => Boolean, when true, disables auto encryption; defaults to false.
+    #   :extra_options => Hash|nil, options related to mongocryptd (this part of the API is subject to change)
+    #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
       options = options ? options.dup : {}
@@ -414,6 +423,7 @@ module Mongo
       @options.freeze
       validate_options!
       validate_authentication_options!
+      validate_auto_encryption_options!
 
       @database = Database.new(self, @options[:database], @options)
 
@@ -429,6 +439,16 @@ module Mongo
 
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
+
+      if @options[:auto_encryption_opts]
+        @crypt_handle = Crypt::Handle.new(@options[:auto_encryption_opts][:kms_providers])
+
+        mongocryptd_uri = @options[:auto_encryption_opts][:extra_options][:mongocryptd_uri] || 'mongodb://localhost:27020'
+        @mongocryptd_client = Client.new(mongocryptd_uri, server_selection_timeout: 1000)
+
+        @key_vault_client = 
+      end
+
 
       yield(self) if block_given?
     end
@@ -929,6 +949,40 @@ module Mongo
       if mech_properties && auth_mech != :gssapi
         raise Mongo::Auth::InvalidConfiguration.new("mechanism_properties are not supported for #{auth_mech}")
       end
+    end
+
+    # Validates
+    def validate_auto_encryption_options!
+      return if @options[:auto_encryption_opts].nil? || @options[:auto_encryption_opts].empty?
+
+      auto_encryption_opts = @options[:auto_encryption_opts]
+
+      # TODO: move validation of key vault namespace up one level?
+      unless auto_encryption_opts[:key_vault_namespace]
+        raise ArgumentError.new('The key_vault_namespace option inside auto_encryption_opts must not be nil')
+      end
+
+      unless auto_encryption_opts[:key_vault_namespace].split('.').length == 2
+        raise ArgumentError.new(
+          'The key_vault_namespace option inside auto_encryption_opts must be in the format "database.collection".' +
+          "#{auto_encryption_opts[:key_vault_namespace]} is an invalid namespace"
+        )
+      end
+
+      # TODO: move kms_providers validation up?
+      unless kms_providers
+        raise ArgumentError.new("The kms_providers option inside :auto_encryption_opts must not be nil")
+      end
+
+      unless kms_providers.key?(:local) || kms_providers.key?(:aws)
+        raise ArgumentError.new('The kms_providers option inside :auto_encyrpt_opts must have one of the following keys: :aws, :local')
+      end
+
+      # TODO: validate :local
+      # TODO: validate :aws
+
+      # TODO: validate schema map??
+      # TODO: validate extra options??
     end
 
     def valid_compressors(compressors)
