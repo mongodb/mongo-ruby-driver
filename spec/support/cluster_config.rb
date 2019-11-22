@@ -2,6 +2,7 @@ require 'singleton'
 
 class ClusterConfig
   include Singleton
+  include RSpec::Core::Pending
 
   def single_server?
     determine_cluster_config
@@ -112,6 +113,38 @@ class ClusterConfig
         rv_map[rv] || rv
       end
     end
+  end
+
+  # This method returns an alternate address for connecting to the configured
+  # deployment. For example, if the replica set is configured with nodes at
+  # of localhost:27017 and so on, this method will return 127.0.0.:27017.
+  #
+  # Note that the "alternate" refers to replica set configuration, not the
+  # addresses specified in test suite configuration. If the deployment topology
+  # is not a replica set, "alternate" refers to test suite configuration as
+  # this is the only configuration available.
+  def alternate_address
+    address = primary_address_host
+    case address
+    when '127.0.0.1'
+      'localhost'
+    when /^(\d+\.){3}\d+$/
+      skip 'This test requires a hostname or 127.0.0.1 as address'
+    else
+      # We don't know if mongod is listening on ipv4 or ipv6, in principle.
+      # Our tests use ipv4, so hardcode that for now.
+      # To support both we need to try both addresses which will make this
+      # test more complicated.
+      #
+      # JRuby chokes on primary_address_port as the port (e.g. 27017).
+      # Since the port does not actually matter, use a common port like 80.
+      resolved_address = Addrinfo.getaddrinfo(address, 80, Socket::PF_INET).first.ip_address
+      if resolved_address.include?(':')
+        "[#{resolved_address}]"
+      else
+        resolved_address
+      end
+    end + ":#{primary_address_port}"
   end
 
   private

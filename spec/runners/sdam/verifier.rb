@@ -37,10 +37,13 @@ module Sdam
         verify_description_matches(server, desc)
       end
 
+      # Verify actual topology has no servers not also present in the
+      # expected topology description.
+      expected_addresses = expected['servers'].map do |server|
+        server['address']
+      end
       actual.server_descriptions.keys.each do |address_str|
-        expect(
-          expected['servers'].any? { |server| server['address'] == address_str }
-        ).to be true
+        expect(expected_addresses).to include(address_str)
       end
     end
 
