@@ -57,7 +57,8 @@ args="--setParameter enableTestCommands=1"
 args="$args --setParameter diagnosticDataCollectionEnabled=false"
 uri_options=
 if test "$TOPOLOGY" = replica_set; then
-  args="$args --replicaset --name ruby-driver-rs"
+  args="$args --replicaset --name ruby-driver-rs --arbiter"
+  export HAVE_ARBITER=1
 elif test "$TOPOLOGY" = sharded_cluster; then
   args="$args --replicaset --sharded 2 --name ruby-driver-rs"
 else
