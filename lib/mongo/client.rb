@@ -756,8 +756,8 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      cluster.send(:get_session, self, options.merge(implicit: false)) ||
-        (raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED))
+      get_session(options.merge(implicit: false)) or
+        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
@@ -827,14 +827,25 @@ module Mongo
     # The session is implicit unless options[:implicit] is given.
     # If deployment does not support session, returns nil.
     #
-    # @note This method will return nil if deployment has no data-bearing
-    #   servers at the time of the call.
+    # @return [ Session | nil ] Session object or nil if sessions are not
+    #   supported by the deployment.
     def get_session(options = {})
-      cluster.send(:get_session, self, options)
+      if options[:session]
+        return options[:session].validate!(self)
+      end
+
+      if cluster.sessions_supported?
+        Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
+      end
     end
 
     def with_session(options = {}, &block)
-      cluster.send(:with_session, self, options, &block)
+      session = get_session(options)
+      yield(session)
+    ensure
+      if session && session.implicit?
+        session.end_session
+      end
     end
 
     def initialize_copy(original)
