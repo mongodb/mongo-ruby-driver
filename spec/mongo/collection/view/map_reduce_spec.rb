@@ -575,7 +575,7 @@ describe Mongo::Collection::View::MapReduce do
         expect(map_reduce.send(:secondary_ok?)).to be false
       end
 
-      context 'when the server is not a valid for writing' do
+      context 'when the server is not valid for writing' do
         clean_slate
 
         before do
