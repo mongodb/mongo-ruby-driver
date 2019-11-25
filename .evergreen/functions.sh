@@ -117,7 +117,7 @@ setup_ruby() {
 
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/ce62fbb005213564a3da1041854da54df6615b2a/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_ce62fbb005213564a3da1041854da54df6615b2a_5cfacdc857e85a3ef6647ad9_19_06_07_20_49_15.tar.gz
-    curl -fL $toolchain_url |tar zxf -
+    curl --retry 3 -fL $toolchain_url |tar zxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
@@ -188,7 +188,7 @@ prepare_server() {
   url=http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-$arch-$version.tgz
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb
   mkdir -p "$mongodb_dir"
-  curl $url |tar xz -C "$mongodb_dir" -f -
+  curl --retry 3 $url |tar xz -C "$mongodb_dir" -f -
   BINDIR="$mongodb_dir"/`basename $url |sed -e s/.tgz//`/bin
   export PATH="$BINDIR":$PATH
 }
