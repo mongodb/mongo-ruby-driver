@@ -53,6 +53,7 @@ module Mongo
       :auth_mech,
       :auth_mech_properties,
       :auth_source,
+      :auto_encryption_opts,
       :cleanup,
       :compressors,
       :connect,
@@ -446,9 +447,8 @@ module Mongo
         mongocryptd_uri = @options[:auto_encryption_opts][:extra_options][:mongocryptd_uri] || 'mongodb://localhost:27020'
         @mongocryptd_client = Client.new(mongocryptd_uri, server_selection_timeout: 1000)
 
-        @key_vault_client = 
+        @key_vault_client = @options[:auto_encryption_opts][:key_vault_client] || self
       end
-
 
       yield(self) if block_given?
     end
@@ -959,27 +959,36 @@ module Mongo
 
       # TODO: move validation of key vault namespace up one level?
       unless auto_encryption_opts[:key_vault_namespace]
-        raise ArgumentError.new('The key_vault_namespace option inside auto_encryption_opts must not be nil')
+        raise ArgumentError.new('The key_vault_namespace option must not be nil')
       end
 
       unless auto_encryption_opts[:key_vault_namespace].split('.').length == 2
         raise ArgumentError.new(
-          'The key_vault_namespace option inside auto_encryption_opts must be in the format "database.collection".' +
+          'The key_vault_namespace must be in the format "database.collection".' +
           "#{auto_encryption_opts[:key_vault_namespace]} is an invalid namespace"
         )
       end
 
+      kms_providers = auto_encryption_opts[:kms_providers]
+
       # TODO: move kms_providers validation up?
       unless kms_providers
-        raise ArgumentError.new("The kms_providers option inside :auto_encryption_opts must not be nil")
+        raise ArgumentError.new("The kms_providers option must not be nil")
       end
 
       unless kms_providers.key?(:local) || kms_providers.key?(:aws)
-        raise ArgumentError.new('The kms_providers option inside :auto_encyrpt_opts must have one of the following keys: :aws, :local')
+        raise ArgumentError.new('The kms_providers option must have one of the following keys: :aws, :local')
       end
 
-      # TODO: validate :local
-      # TODO: validate :aws
+      # if kms_providers.key?(:local)
+      #   unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
+      #     raise ArgumentError.new('The local kms_providers option must be in the format')
+      #   end
+      # end
+
+      # if kms_providers.key?(:aws)
+
+      # end
 
       # TODO: validate schema map??
       # TODO: validate extra options??

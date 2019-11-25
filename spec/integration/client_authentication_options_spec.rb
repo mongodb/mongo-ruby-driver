@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Client options' do
+describe 'Client authentication options' do
   let(:uri) { "mongodb://#{credentials}127.0.0.1:27017/#{options}" }
 
   let(:credentials) { nil }
