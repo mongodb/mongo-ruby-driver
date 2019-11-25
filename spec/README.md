@@ -74,19 +74,6 @@ configuration is needed:
 
     rake
 
-### Replica Set With Arbiter
-
-Some tests require an arbiter to be present in the replica set. Such a
-deployment can be obtained by providing `--arbiter` argument to mlaunch:
-
-    mlaunch init --replicaset --arbiter --name ruby-driver-rs \
-      --dir /tmp/mdb-rs --setParameter enableTestCommands=1
-
-To indicate to the test suite that the deployment contains an arbiter, set
-HAVE_ARBITER environment variable as follows:
-
-    HAVE_ARBITER=1 rake
-
 ### Sharded Cluster
 
 A sharded cluster can be configured with mlaunch:

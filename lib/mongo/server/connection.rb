@@ -103,12 +103,6 @@ module Mongo
         )
       end
 
-      # @return [ Server::Description ] The server description obtained from
-      #   the handshake on this connection.
-      #
-      # @api private
-      attr_reader :description
-
       # @return [ Time ] The last time the connection was checked back into a pool.
       #
       # @since 2.5.0
@@ -192,10 +186,8 @@ module Mongo
 
         begin
           handshake!(socket)
-          unless description.arbiter?
-            pending_connection = PendingConnection.new(socket, @server, monitoring, options.merge(id: id))
-            authenticate!(pending_connection)
-          end
+          pending_connection = PendingConnection.new(socket, @server, monitoring, options.merge(id: id))
+          authenticate!(pending_connection)
         rescue Exception
           socket.close
           raise
@@ -364,8 +356,8 @@ module Mongo
           @auth_mechanism = nil
         end
 
-        @description = Description.new(address, response, average_rtt)
-        @server.cluster.run_sdam_flow(@server.description, @description)
+        new_description = Description.new(address, response, average_rtt)
+        @server.cluster.run_sdam_flow(@server.description, new_description)
       end
 
       def authenticate!(pending_connection)

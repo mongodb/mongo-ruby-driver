@@ -94,7 +94,7 @@ describe Mongo::Client do
       # cluster during SDAM
       context 'me mismatch on the only initial seed' do
         let(:address) do
-          ClusterConfig.instance.alternate_address.to_s
+          ClusterConfig.instance.alternate_address
         end
 
         let(:logger) do

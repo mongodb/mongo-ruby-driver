@@ -23,8 +23,8 @@ setup_ruby
 
 install_deps
 
-arch=`host_arch`
-version=4.0.13
+arch=ubuntu1404
+version=4.0.9
 prepare_server $arch $version
 
 install_mlaunch
@@ -39,8 +39,7 @@ args="--setParameter enableTestCommands=1"
 args="$args --setParameter diagnosticDataCollectionEnabled=false"
 uri_options=
 if test "$TOPOLOGY" = replica_set; then
-  args="$args --replicaset --name ruby-driver-rs --arbiter"
-  export HAVE_ARBITER=1
+  args="$args --replicaset --name ruby-driver-rs"
 elif test "$TOPOLOGY" = sharded_cluster; then
   args="$args --replicaset --sharded 2 --name ruby-driver-rs"
 else

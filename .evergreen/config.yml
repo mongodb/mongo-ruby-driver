@@ -821,7 +821,7 @@ buildvariants:
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   tasks:
-     - name: "test-mlaunch"
+     - name: "test"
 
 -
   matrix_name: "jruby-auth"
@@ -914,7 +914,7 @@ buildvariants:
     ruby: "*"
     mongodb-version: ['4.0', '4.2']
     topology: standalone
-    os: ubuntu1604
+    os: ubuntu1404
   display_name: "Local TLS ${mongodb-version} ${ruby}"
   tasks:
     - name: "local-tls-tests"
