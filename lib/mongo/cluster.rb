@@ -776,6 +776,17 @@ module Mongo
     def update_topology(new_topology)
       old_topology = topology
       @topology = new_topology
+
+      # If new topology has data bearing servers, we know for sure whether
+      # sessions are supported - update our cached value.
+      # If new topology has no data bearing servers, leave the old value
+      # as it is and sessions_supported? method will perform server selection
+      # to try to determine session support accurately, falling back to the
+      # last known value.
+      if topology.data_bearing_servers?
+        @sessions_supported = !!topology.logical_session_timeout
+      end
+
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(old_topology, topology)
@@ -821,27 +832,32 @@ module Mongo
       session.end_session if (session && session.implicit?)
     end
 
-    # Returns whether the deployment (as this term is defined in the sessions
-    # spec) supports sessions.
+    # Returns whether the deployment that the driver is connected to supports
+    # sessions.
     #
-    # @note If the cluster has no data bearing servers, for example because
-    #   the deployment is in the middle of a failover, this method returns
-    #   false.
+    # Session support may change over time, for example due to servers in the
+    # deployment being upgraded or downgraded. This method returns the
+    # current information if the client is connected to at least one data
+    # bearing server. If the client is currently not connected to any data
+    # bearing servers, this method returns the last known value for whether
+    # the deployment supports sessions.
     #
-    # @note This method returns as soon as the driver connects to any single
-    #   server in the deployment. Whether deployment overall supports sessions
-    #   can change depending on how many servers have been contacted, if
-    #   the servers are configured differently.
+    # @return [ true | false ] Whether deployment supports sessions.
     def sessions_supported?
       if topology.data_bearing_servers?
         return !!topology.logical_session_timeout
       end
 
+      # No data bearing servers known - perform server selection to try to
+      # get a response from at least one of them, to return an accurate
+      # assessment of whether sessions are currently supported.
       begin
         ServerSelector.get(mode: :primary_preferred).select_server(self)
         !!topology.logical_session_timeout
       rescue Error::NoServerAvailable
-        false
+        # We haven't been able to contact any servers - use last known
+        # value for esssion support.
+        @sessions_supported || false
       end
     end
 
