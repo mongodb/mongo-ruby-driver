@@ -23,9 +23,21 @@ setup_ruby
 
 install_deps
 
-arch=ubuntu1404
-version=4.0.9
-prepare_server $arch $version
+arch=`host_arch`
+
+prog=`cat <<-EOT
+import urllib, json
+url = 'http://downloads.mongodb.org/current.json'
+info = json.load(urllib.urlopen(url))
+info = [i for i in info['versions'] if i['version'].startswith('$MONGODB_VERSION')][0]
+info = [i for i in info['downloads'] if i['archive']['url'].find('enterprise-$arch') > 0][0]
+url = info['archive']['url']
+print(url)
+EOT`
+
+url=`python -c "$prog"`
+
+prepare_server_from_url $url
 
 install_mlaunch
 
