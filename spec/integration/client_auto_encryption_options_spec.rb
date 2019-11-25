@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'json'
+require 'base64'
 
 describe 'Client auto-encryption options' do
   let(:client) { new_local_client_nmio('mongodb://127.0.0.1:27017/', client_opts) }
@@ -26,7 +27,7 @@ describe 'Client auto-encryption options' do
     }
   end
 
-  let(:kms_local) { { key: 'ruby' * 24 } }
+  let(:kms_local) { { key: Base64.encode64('ruby' * 24) } }
   let(:kms_aws) { { access_key_id: 'ACCESS_KEY_ID', secret_access_key: 'SECRET_ACCESS_KEY' } }
 
   let(:schema_map) do
@@ -98,6 +99,12 @@ describe 'Client auto-encryption options' do
 
     it 'raises an exception' do
       expect { client }.to raise_error(ArgumentError, /kms_providers with :aws key must be in the format: { aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }/)
+    end
+  end
+
+  context 'with all options' do
+    it 'does not raise an exception' do
+      expect { client }.not_to raise_error
     end
   end
 end

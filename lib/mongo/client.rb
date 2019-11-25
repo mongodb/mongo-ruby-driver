@@ -839,6 +839,21 @@ module Mongo
 
         default_options[:retry_reads] = true
         default_options[:retry_writes] = true
+
+        if options[:auto_encryption_opts]
+          extra_options = options[:auto_encryption_opts][:extra_options]
+
+          default_options[:auto_encryption_opts] = {
+            key_vault_namespace: self,
+            bypass_auto_encryption: false,
+            extra_options: {
+              mongocryptd_uri: extra_options[:mongocryptd_uri] || 'mongodb://localhost:27020',
+              mongocryptd_bypass_spawn: extra_options[:mongocryptd_bypass_spawn] || false,
+              mongocryptd_spawn_path: extra_options[:mongocryptd_spawn_path] || '',
+              mongocryptd_spawn_args: extra_options[:mongocryptd_spawn_path] || ['--idleShutdownTimeoutSecs=60'],
+            }
+          }
+        end
       end
     end
 
@@ -979,19 +994,6 @@ module Mongo
       unless kms_providers.key?(:local) || kms_providers.key?(:aws)
         raise ArgumentError.new('The kms_providers option must have one of the following keys: :aws, :local')
       end
-
-      # if kms_providers.key?(:local)
-      #   unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
-      #     raise ArgumentError.new('The local kms_providers option must be in the format')
-      #   end
-      # end
-
-      # if kms_providers.key?(:aws)
-
-      # end
-
-      # TODO: validate schema map??
-      # TODO: validate extra options??
     end
 
     def valid_compressors(compressors)
