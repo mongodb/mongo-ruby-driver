@@ -881,21 +881,21 @@ module Mongo
       end
     end
 
-    # Validate the session.
+    # Validate the session for use by the specified client.
     #
-    # @example
-    #   session.validate!(cluster)
+    # The session must not be ended and must have been created by a client
+    # with the same cluster as the client that the session is to be used with.
     #
-    # @param [ Cluster ] cluster The cluster the session is attempted to be used with.
+    # @param [ Client ] client The client the session is to be used with.
     #
-    # @return [ nil ] nil if the session is valid.
+    # @return [ Session ] self, if the session is valid.
     #
-    # @raise [ Mongo::Error::InvalidSession ] Raise error if the session is not valid.
+    # @raise [ Mongo::Error::InvalidSession ] Exception raised if the session is not valid.
     #
     # @since 2.5.0
     # @api private
-    def validate!(cluster)
-      check_matching_cluster!(cluster)
+    def validate!(client)
+      check_matching_cluster!(client)
       check_if_ended!
       self
     end
@@ -1041,8 +1041,8 @@ module Mongo
       raise Mongo::Error::InvalidSession.new(SESSION_ENDED_ERROR_MSG) if ended?
     end
 
-    def check_matching_cluster!(cluster)
-      if @client.cluster != cluster
+    def check_matching_cluster!(client)
+      if @client.cluster != client.cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
     end
