@@ -186,6 +186,12 @@ prepare_server() {
   version=$2
 
   url=http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-$arch-$version.tgz
+  prepare_server_from_url $url
+}
+
+prepare_server_from_url() {
+  url=$1
+
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb
   mkdir -p "$mongodb_dir"
   curl --retry 3 $url |tar xz -C "$mongodb_dir" -f -
