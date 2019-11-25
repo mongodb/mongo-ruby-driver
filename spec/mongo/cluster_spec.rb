@@ -575,6 +575,44 @@ describe Mongo::Cluster do
   end
 
   describe '#sessions_supported?' do
+    context 'when client has not contacted any servers' do
+
+      let(:cluster) do
+        described_class.new(SpecConfig.instance.addresses, monitoring,
+          SpecConfig.instance.test_options.merge(
+            monitoring_io: false, server_selection_timeout: 0.183))
+      end
+
+      it 'is false' do
+        expect(cluster.send(:sessions_supported?)).to be false
+      end
+    end
+
+    context 'when client has contacted servers and then disconnected' do
+      min_server_fcv '3.6'
+      require_wired_tiger
+      require_topology :sharded, :replica_set
+
+      let(:cluster) do
+        described_class.new(SpecConfig.instance.addresses, monitoring,
+          SpecConfig.instance.test_options.merge(
+            server_selection_timeout: 0.183)
+        ).tap do |cluster|
+          register_cluster(cluster)
+        end
+      end
+
+      before do
+        cluster.next_primary
+        cluster.servers_list.map(&:disconnect!)
+        cluster.servers_list.map(&:unknown!)
+      end
+
+      it 'is true' do
+        expect(cluster.send(:sessions_supported?)).to be true
+      end
+    end
+
     context 'in server < 3.6' do
       max_server_version '3.4'
 
