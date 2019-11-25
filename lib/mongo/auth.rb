@@ -110,25 +110,45 @@ module Mongo
       # @param [ String ] used_mechanism Auth mechanism actually used for
       #   authentication. This is a full string like SCRAM-SHA-256.
       # @param [ String ] message The error message returned by the server.
+      # @param [ Server ] server The server instance that authentication
+      #   was attempted against.
       #
       # @since 2.0.0
-      def initialize(user, used_mechanism: nil, message: nil)
-        specified_mechanism = if user.mechanism
-          " (mechanism: #{user.mechanism})"
-        else
-          ''
+      def initialize(user, used_mechanism: nil, message: nil,
+        server: nil
+      )
+        configured_bits = []
+        used_bits = [
+          "auth source: #{user.auth_source}",
+        ]
+
+        if user.mechanism
+          configured_bits << "mechanism: #{user.mechanism}"
         end
-        used_mechanism = if used_mechanism
-          " (used mechanism: #{used_mechanism})"
-        else
-          ''
+
+        if used_mechanism
+          used_bits << "used mechanism: #{used_mechanism}"
         end
+
+        if server
+          used_bits << "used server: #{server.address} (#{server.status})"
+        end
+
         used_user = if user.mechanism == :mongodb_x509
           'Client certificate'
         else
           "User #{user.name}"
         end
-        msg = "#{used_user}#{specified_mechanism} is not authorized to access #{user.database} (auth source: #{user.auth_source})#{used_mechanism}"
+
+        if configured_bits.empty?
+          configured_bits = ''
+        else
+          configured_bits = " (#{configured_bits.join(', ')})"
+        end
+
+        used_bits = " (#{used_bits.join(', ')})"
+
+        msg = "#{used_user}#{configured_bits} is not authorized to access #{user.database}#{used_bits}"
         if message
           msg += ': ' + message
         end

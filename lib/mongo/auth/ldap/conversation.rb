@@ -37,31 +37,28 @@ module Mongo
         # Finalize the PLAIN conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @example Finalize the conversation.
-        #   conversation.finalize(reply)
-        #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply)
-          validate!(reply)
+        def finalize(reply, connection)
+          validate!(reply, connection.server)
         end
 
         # Start the PLAIN conversation. This returns the first message that
         # needs to be sent to the server.
         #
-        # @example Start the conversation.
-        #   conversation.start
-        #
-        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
         #
         # @return [ Protocol::Query ] The first PLAIN conversation message.
         #
         # @since 2.0.0
-        def start(connection = nil)
+        def start(connection)
           if connection && connection.features.op_msg_enabled?
             selector = LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM)
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = Auth::EXTERNAL
@@ -96,9 +93,9 @@ module Mongo
           BSON::Binary.new("\x00#{user.name}\x00#{user.password}")
         end
 
-        def validate!(reply)
+        def validate!(reply, server)
           if reply.documents[0][Operation::Result::OK] != 1
-            raise Unauthorized.new(user, used_mechanism: MECHANISM)
+            raise Unauthorized.new(user, used_mechanism: MECHANISM, server: server)
           end
           @reply = reply
         end

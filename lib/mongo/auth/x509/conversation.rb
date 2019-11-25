@@ -42,26 +42,26 @@ module Mongo
         #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply)
-          validate!(reply)
+        def finalize(reply, connection)
+          validate!(reply, connection.server)
         end
 
         # Start the X.509 conversation. This returns the first message that
         # needs to be sent to the server.
         #
-        # @example Start the conversation.
-        #   conversation.start
-        #
-        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
         #
         # @return [ Protocol::Query ] The first X.509 conversation message.
         #
         # @since 2.0.0
-        def start(connection = nil)
+        def start(connection)
           login = LOGIN.merge(mechanism: X509::MECHANISM)
           login[:user] = user.name if user.name
           if connection && connection.features.op_msg_enabled?
@@ -103,9 +103,9 @@ module Mongo
 
         private
 
-        def validate!(reply)
+        def validate!(reply, server)
           if reply.documents[0][Operation::Result::OK] != 1
-            raise Unauthorized.new(user, used_mechanism: MECHANISM)
+            raise Unauthorized.new(user, used_mechanism: MECHANISM, server: server)
           end
           @reply = reply
         end

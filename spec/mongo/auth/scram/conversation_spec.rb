@@ -7,6 +7,15 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     described_class.new(user, mechanism)
   end
 
+  let(:connection) do
+    double('connection').tap do |connection|
+      features = double('features')
+      allow(features).to receive(:op_msg_enabled?)
+      allow(connection).to receive(:features).and_return(features)
+      allow(connection).to receive(:server)
+    end
+  end
+
   context 'when SCRAM-SHA-1 is used' do
     min_server_fcv '3.0'
 
@@ -28,7 +37,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     describe '#start' do
 
       let(:query) do
-        conversation.start
+        conversation.start(nil)
       end
 
       before do
@@ -85,7 +94,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         end
 
         let(:query) do
-          conversation.continue(reply)
+          conversation.continue(reply, connection)
         end
 
         let(:selector) do
@@ -117,7 +126,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
 
         it 'raises an error' do
           expect {
-            conversation.continue(reply)
+            conversation.continue(reply, connection)
           }.to raise_error(Mongo::Error::InvalidNonce)
         end
       end
@@ -170,8 +179,8 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         end
 
         let(:query) do
-          conversation.continue(continue_reply)
-          conversation.finalize(reply)
+          conversation.continue(continue_reply, connection)
+          conversation.finalize(reply, connection)
         end
 
         let(:selector) do
@@ -199,8 +208,8 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
 
         it 'raises an error' do
           expect {
-            conversation.continue(continue_reply)
-            conversation.finalize(reply)
+            conversation.continue(continue_reply, connection)
+            conversation.finalize(reply, connection)
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
@@ -226,7 +235,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     describe '#start' do
 
       let(:query) do
-        conversation.start
+        conversation.start(nil)
       end
 
       before do
@@ -283,7 +292,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         end
 
         let(:query) do
-          conversation.continue(reply)
+          conversation.continue(reply, connection)
         end
 
         let(:selector) do
@@ -315,7 +324,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
 
         it 'raises an error' do
           expect {
-            conversation.continue(reply)
+            conversation.continue(reply, connection)
           }.to raise_error(Mongo::Error::InvalidNonce)
         end
       end
@@ -368,8 +377,8 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         end
 
         let(:query) do
-          conversation.continue(continue_reply)
-          conversation.finalize(reply)
+          conversation.continue(continue_reply, connection)
+          conversation.finalize(reply, connection)
         end
 
         let(:selector) do
@@ -397,8 +406,8 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
 
         it 'raises an error' do
           expect {
-            conversation.continue(continue_reply)
-            conversation.finalize(reply)
+            conversation.continue(continue_reply, connection)
+            conversation.finalize(reply, connection)
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
