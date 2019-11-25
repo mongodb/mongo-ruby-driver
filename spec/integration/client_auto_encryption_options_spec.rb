@@ -18,7 +18,7 @@ describe 'Client auto-encryption options' do
     }
   end
 
-  let(:key_vault_client) { nil }
+  let(:key_vault_client) { new_local_client_nmio('mongodb://127.0.0.1:27018') }
   let(:key_vault_namespace) { 'database.collection' }
   let(:kms_providers) do
     {
@@ -39,12 +39,17 @@ describe 'Client auto-encryption options' do
 
   let(:extra_options) do
     {
-      mongocryptdURI: 'mongodb://localhost:27020',
-      mongocryptdBypassSpawn: false,
-      mongocryptdSpawnPath: '',
-      mongocryptdSpawnArgs: ["--idleShutdownTimeoutSecs=60"],
+      mongocryptd_uri: mongocryptd_uri,
+      mongocryptd_bypass_spawn: mongocryptd_bypass_spawn,
+      mongocryptd_spawn_path: mongocryptd_spawn_path,
+      mongocryptd_spawn_args: mongocryptd_spawn_args,
     }
   end
+
+  let(:mongocryptd_uri) { 'mongodb://localhost:27021' }
+  let(:mongocryptd_bypass_spawn) { true }
+  let(:mongocryptd_spawn_path) { '/spawn/path' }
+  let(:mongocryptd_spawn_args) { ['--idleShutdownTimeoutSecs=100'] }
 
   context 'when auto_encrypt_opts are nil' do
     let(:auto_encryption_opts) { nil }
@@ -105,6 +110,52 @@ describe 'Client auto-encryption options' do
   context 'with all options' do
     it 'does not raise an exception' do
       expect { client }.not_to raise_error
+
+      client_options = client.options[:auto_encryption_opts]
+
+      expect(client_options[:key_vault_client]).to eq(key_vault_client)
+      expect(client_options[:key_vault_namespace]).to eq(key_vault_namespace)
+      expect(client_options[:kms_providers]).to eq({
+        'local' => { 'key' => Base64.encode64('ruby' * 24) },
+        'aws' => { 'access_key_id' => 'ACCESS_KEY_ID', 'secret_access_key' => 'SECRET_ACCESS_KEY' }
+      })
+      expect(client_options[:schema_map]).to eq(schema_map)
+      expect(client_options[:bypass_auto_encryption]).to eq(bypass_auto_encryption)
+      expect(client_options[:extra_options]).to eq({
+        'mongocryptd_uri' => mongocryptd_uri,
+        'mongocryptd_bypass_spawn' => mongocryptd_bypass_spawn,
+        'mongocryptd_spawn_path' => mongocryptd_spawn_path,
+        'mongocryptd_spawn_args' => mongocryptd_spawn_args,
+      })
+    end
+  end
+
+  context 'with default values' do
+    let(:auto_encryption_opts) do
+      {
+        key_vault_namespace: key_vault_namespace,
+        kms_providers: kms_providers,
+        schema_map: schema_map,
+      }
+    end
+
+    it 'sets key_vault_client as self' do
+      expect(client.options[:auto_encryption_opts][:key_vault_client]).to eq(client)
+    end
+
+    it 'sets bypass_auto_encryption to false' do
+      expect(client.options[:auto_encryption_opts][:bypass_auto_encryption]).to be false
+    end
+
+    it 'sets extra options' do
+      expected_extra_options = {
+        'mongocryptd_uri' => 'mongodb://localhost:27020',
+        'mongocryptd_bypass_spawn' => false,
+        'mongocryptd_spawn_path' => '',
+        'mongocryptd_spawn_args' => ['--idleShutdownTimeoutSecs=60'],
+      }
+
+      expect(client.options[:auto_encryption_opts][:extra_options]).to eq(expected_extra_options)
     end
   end
 end

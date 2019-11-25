@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+require 'byebug' # TODO: remove
 
 module Mongo
 
@@ -413,6 +414,7 @@ module Mongo
       sdam_proc = options.delete(:sdam_proc)
 
       options = default_options(options).merge(options)
+      options = options_with_default_auto_encryption_opts(options)
       @options = validate_new_options!(options)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
@@ -444,10 +446,9 @@ module Mongo
       if @options[:auto_encryption_opts]
         @crypt_handle = Crypt::Handle.new(@options[:auto_encryption_opts][:kms_providers])
 
-        mongocryptd_uri = @options[:auto_encryption_opts][:extra_options][:mongocryptd_uri] || 'mongodb://localhost:27020'
+        mongocryptd_uri = @options['auto_encryption_opts']['extra_options']['mongocryptd_uri']
         @mongocryptd_client = Client.new(mongocryptd_uri, server_selection_timeout: 1000)
-
-        @key_vault_client = @options[:auto_encryption_opts][:key_vault_client] || self
+        @key_vault_client = @options['auto_encryption_opts']['key_vault_client']
       end
 
       yield(self) if block_given?
@@ -839,22 +840,30 @@ module Mongo
 
         default_options[:retry_reads] = true
         default_options[:retry_writes] = true
-
-        if options[:auto_encryption_opts]
-          extra_options = options[:auto_encryption_opts][:extra_options]
-
-          default_options[:auto_encryption_opts] = {
-            key_vault_namespace: self,
-            bypass_auto_encryption: false,
-            extra_options: {
-              mongocryptd_uri: extra_options[:mongocryptd_uri] || 'mongodb://localhost:27020',
-              mongocryptd_bypass_spawn: extra_options[:mongocryptd_bypass_spawn] || false,
-              mongocryptd_spawn_path: extra_options[:mongocryptd_spawn_path] || '',
-              mongocryptd_spawn_args: extra_options[:mongocryptd_spawn_path] || ['--idleShutdownTimeoutSecs=60'],
-            }
-          }
-        end
       end
+    end
+
+    def options_with_default_auto_encryption_opts(options)
+      options = options.dup
+      return options unless options[:auto_encryption_opts]
+
+      extra_options = {
+        mongocryptd_uri: 'mongodb://localhost:27020',
+        mongocryptd_bypass_spawn: false,
+        mongocryptd_spawn_path: '',
+        mongocryptd_spawn_args: ['--idleShutdownTimeoutSecs=60'],
+      }
+
+      if options[:auto_encryption_opts][:extra_options]
+        options[:auto_encryption_opts][:extra_options] = extra_options.merge(options[:auto_encryption_opts][:extra_options])
+      else
+        options[:auto_encryption_opts][:extra_options] = extra_options
+      end
+
+      options[:auto_encryption_opts][:bypass_auto_encryption] ||= false
+      options[:auto_encryption_opts][:key_vault_client] ||= self
+
+      options
     end
 
     # If options[:session] is set, validates that session and returns it.
