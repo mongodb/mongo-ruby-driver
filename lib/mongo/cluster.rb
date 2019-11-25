@@ -809,29 +809,6 @@ module Mongo
       end
     end
 
-    private
-
-    # If options[:session] is set, validates that session and returns it.
-    # If deployment supports sessions, creates a new session and returns it.
-    # The session is implicit unless options[:implicit] is given.
-    # If deployment does not support session, returns nil.
-    #
-    # @note This method will return nil if deployment has no data-bearing
-    #   servers at the time of the call.
-    def get_session(client, options = {})
-      return options[:session].validate!(self) if options[:session]
-      if sessions_supported?
-        Session.new(@session_pool.checkout, client, { implicit: true }.merge(options))
-      end
-    end
-
-    def with_session(client, options = {})
-      session = get_session(client, options)
-      yield(session)
-    ensure
-      session.end_session if (session && session.implicit?)
-    end
-
     # Returns whether the deployment that the driver is connected to supports
     # sessions.
     #
@@ -843,6 +820,7 @@ module Mongo
     # the deployment supports sessions.
     #
     # @return [ true | false ] Whether deployment supports sessions.
+    # @api private
     def sessions_supported?
       if topology.data_bearing_servers?
         return !!topology.logical_session_timeout
@@ -860,6 +838,8 @@ module Mongo
         @sessions_supported || false
       end
     end
+
+    private
 
     # @api private
     def start_stop_srv_monitor
