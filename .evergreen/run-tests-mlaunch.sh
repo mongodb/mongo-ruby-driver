@@ -25,19 +25,25 @@ install_deps
 
 arch=`host_arch`
 
-prog=`cat <<-EOT
-import urllib, json
-url = 'http://downloads.mongodb.org/current.json'
-info = json.load(urllib.urlopen(url))
-info = [i for i in info['versions'] if i['version'].startswith('$MONGODB_VERSION')][0]
-info = [i for i in info['downloads'] if i['archive']['url'].find('enterprise-$arch') > 0][0]
-url = info['archive']['url']
-print(url)
+desired_version=$MONGODB_VERSION
+if test -n "$MMAPV1" && test "$desired_version" = 4.0; then
+  # 4.0.13 segfaults on mmapv1 - https://jira.mongodb.org/browse/SERVER-43079
+  prepare_server $arch 4.0.9
+else
+  prog=`cat <<-EOT
+  import urllib, json
+  url = 'http://downloads.mongodb.org/current.json'
+  info = json.load(urllib.urlopen(url))
+  info = [i for i in info['versions'] if i['version'].startswith('$MONGODB_VERSION')][0]
+  info = [i for i in info['downloads'] if i['archive']['url'].find('enterprise-$arch') > 0][0]
+  url = info['archive']['url']
+  print(url)
 EOT`
 
-url=`python -c "$prog"`
+  url=`python -c "$prog"`
 
-prepare_server_from_url $url
+  prepare_server_from_url $url
+fi
 
 install_mlaunch
 
