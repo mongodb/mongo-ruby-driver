@@ -157,7 +157,7 @@ module Mongo
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
     #
-    # @return [ Hash ] The result of the command execution.
+    # @return [ Mongo::Operation::Result ] The result of the command execution.
     def command(operation, opts = {})
       txn_read_pref = if opts[:session] && opts[:session].in_transaction?
         opts[:session].txn_read_preference
