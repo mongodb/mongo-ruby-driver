@@ -70,6 +70,12 @@ bundle --version
 export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000$uri_options"
 bundle exec rake spec:prepare
 
+if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
+  # On 3.6 server the sessions collection is not immediately available,
+  # wait for it to spring into existence
+  bundle exec rake spec:wait_for_sessions
+fi
+
 export MONGODB_URI="mongodb://localhost:27017/?appName=test-suite$uri_options"
 bundle exec rake spec:ci
 test_status=$?

@@ -34,6 +34,30 @@ namespace :spec do
     SpecSetup.new.run
   end
 
+  desc 'Waits for sessions to be available in the deployment'
+  task :wait_for_sessions do
+    $: << File.join(File.dirname(__FILE__), 'spec')
+
+    require 'support/utils'
+    require 'support/spec_config'
+    require 'support/client_registry'
+
+    client = ClientRegistry.instance.global_client('authorized')
+    client.database.command(ping: 1)
+    deadline = Time.now + 300
+    while Time.now < deadline
+      if client.cluster.send(:sessions_supported?)
+        break
+      end
+      sleep 1
+      client.close
+      client.reconnect
+    end
+    unless client.cluster.send(:sessions_supported?)
+      raise "Sessions did not become supported in the allowed time"
+    end
+  end
+
   desc 'Prints configuration used by the test suite'
   task :config do
     $: << File.join(File.dirname(__FILE__), 'spec')
