@@ -19,7 +19,7 @@ module Mongo
   # will be interacted with.
   #
   # @since 2.0.0
-  class Client
+  class Client < Crypt::AutoEncrypter
     extend Forwardable
     include Loggable
 
@@ -414,7 +414,6 @@ module Mongo
       sdam_proc = options.delete(:sdam_proc)
 
       options = default_options(options).merge(options)
-      options = options_with_default_auto_encryption_opts(options)
       @options = validate_new_options!(options)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
@@ -426,7 +425,6 @@ module Mongo
       @options.freeze
       validate_options!
       validate_authentication_options!
-      validate_auto_encryption_options!
 
       @database = Database.new(self, @options[:database], @options)
 
@@ -444,11 +442,7 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_opts]
-        @crypt_handle = Crypt::Handle.new(@options[:auto_encryption_opts][:kms_providers])
-
-        mongocryptd_uri = @options['auto_encryption_opts']['extra_options']['mongocryptd_uri']
-        @mongocryptd_client = Client.new(mongocryptd_uri, server_selection_timeout: 1000)
-        @key_vault_client = @options['auto_encryption_opts']['key_vault_client']
+        set_encryption_options(@options[:auto_encryption_opts])
       end
 
       yield(self) if block_given?
@@ -843,29 +837,6 @@ module Mongo
       end
     end
 
-    def options_with_default_auto_encryption_opts(options)
-      options = options.dup
-      return options unless options[:auto_encryption_opts]
-
-      extra_options = {
-        mongocryptd_uri: 'mongodb://localhost:27020',
-        mongocryptd_bypass_spawn: false,
-        mongocryptd_spawn_path: '',
-        mongocryptd_spawn_args: ['--idleShutdownTimeoutSecs=60'],
-      }
-
-      if options[:auto_encryption_opts][:extra_options]
-        options[:auto_encryption_opts][:extra_options] = extra_options.merge(options[:auto_encryption_opts][:extra_options])
-      else
-        options[:auto_encryption_opts][:extra_options] = extra_options
-      end
-
-      options[:auto_encryption_opts][:bypass_auto_encryption] ||= false
-      options[:auto_encryption_opts][:key_vault_client] ||= self
-
-      options
-    end
-
     # If options[:session] is set, validates that session and returns it.
     # If deployment supports sessions, creates a new session and returns it.
     # The session is implicit unless options[:implicit] is given.
@@ -972,36 +943,6 @@ module Mongo
 
       if mech_properties && auth_mech != :gssapi
         raise Mongo::Auth::InvalidConfiguration.new("mechanism_properties are not supported for #{auth_mech}")
-      end
-    end
-
-    # Validates
-    def validate_auto_encryption_options!
-      return if @options[:auto_encryption_opts].nil? || @options[:auto_encryption_opts].empty?
-
-      auto_encryption_opts = @options[:auto_encryption_opts]
-
-      # TODO: move validation of key vault namespace up one level?
-      unless auto_encryption_opts[:key_vault_namespace]
-        raise ArgumentError.new('The key_vault_namespace option must not be nil')
-      end
-
-      unless auto_encryption_opts[:key_vault_namespace].split('.').length == 2
-        raise ArgumentError.new(
-          'The key_vault_namespace must be in the format "database.collection".' +
-          "#{auto_encryption_opts[:key_vault_namespace]} is an invalid namespace"
-        )
-      end
-
-      kms_providers = auto_encryption_opts[:kms_providers]
-
-      # TODO: move kms_providers validation up?
-      unless kms_providers
-        raise ArgumentError.new("The kms_providers option must not be nil")
-      end
-
-      unless kms_providers.key?(:local) || kms_providers.key?(:aws)
-        raise ArgumentError.new('The kms_providers option must have one of the following keys: :aws, :local')
       end
     end
 

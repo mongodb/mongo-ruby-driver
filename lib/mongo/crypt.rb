@@ -22,5 +22,7 @@ module Mongo
     autoload(:DataKeyContext, 'mongo/crypt/context/data_key_context')
     autoload(:ExplicitEncryptionContext, 'mongo/crypt/context/explicit_encryption_context')
     autoload(:ExplicitDecryptionContext, 'mongo/crypt/context/explicit_decryption_context')
+    autoload(:Encrypter, 'mongo/crypt/encrypter')
+    autoload(:AutoEncrypter, 'mongo/crypt/auto_encrypter')
   end
 end
