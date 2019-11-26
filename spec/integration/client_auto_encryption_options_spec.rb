@@ -126,6 +126,8 @@ describe 'Client auto-encryption options' do
       expect(client_options[:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
       expect(client_options[:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
       expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+
+      expect(client.mongocryptd_client.options[:monitoring_io]).to be false
     end
   end
 

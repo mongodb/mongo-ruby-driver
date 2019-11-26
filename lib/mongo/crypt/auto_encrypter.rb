@@ -21,13 +21,15 @@ module Mongo
     module AutoEncrypter
       include Encrypter
 
+      attr_accessor :mongocryptd_client
+
       # A Hash of default values for the :extra_options option
-      DEFAULT_EXTRA_OPTIONS = {
+      DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
         mongocryptd_uri: 'mongodb://localhost:27020',
         mongocryptd_bypass_spawn: false,
         mongocryptd_spawn_path: 'mongocryptd',
         mongocryptd_spawn_args: ['--idleShutdownTimeoutSecs=60'],
-      }.freeze
+      })
 
       # Set up encryption-related options and instance variables
       # on the class that includes this module. Calls the same method
@@ -49,15 +51,20 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
-        extra_options = options.delete(:extra_options) || {}
+        extra_options = options.delete(:extra_options)
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
+        mongocryptd_client_monitoring_io = extra_options.delete(:mongocryptd_client_monitoring_io)
+
         opts_copy = options.dup
-        opts_copy[:bypass_auto_encryption] = opts[:bypass_auto_encryption] || false
+        opts_copy[:bypass_auto_encryption] = opts_copy[:bypass_auto_encryption] || false
 
         super(opts_copy.merge(extra_options))
 
-        @mongocryptd_client = Client.new(@encryption_options[:mongocryptd_uri])
+        @mongocryptd_client = Client.new(
+                                @encryption_options[:mongocryptd_uri],
+                                monitoring_io: mongocryptd_client_monitoring_io,
+                              )
 
         # TODO: use all the other options for auto-encryption/auto-decryption
       end

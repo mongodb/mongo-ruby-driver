@@ -442,11 +442,16 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_options]
-        setup_encrypter(
-          @options[:auto_encryption_options].tap do |auto_encrypt_opts|
-            auto_encrypt_opts[:key_vault_client] ||= self
-          end
-        )
+        opts_copy = @options[:auto_encryption_options].dup
+
+        opts_copy.tap do |opts|
+          opts[:key_vault_client] ||= self
+          opts[:extra_options] ||= {}
+
+          opts[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
+        end
+
+        setup_encrypter(opts_copy)
       end
 
       yield(self) if block_given?
