@@ -34,12 +34,10 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
-        @encryption_options = options.dup
+        @encryption_options = options.dup.freeze
 
         validate_key_vault_namespace!
         validate_key_vault_client!
-
-        @encryption_options.freeze
 
         @crypt_handle = Crypt::Handle.new(options[:kms_providers])
         @encryption_io = EncryptionIO.new(options[:key_vault_client], options[:key_vault_namespace])
