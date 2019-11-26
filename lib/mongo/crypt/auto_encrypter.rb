@@ -63,8 +63,13 @@ module Mongo
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
 
+      # Close the resources created by the AutoEncrypter
+      #
+      # @return [ true ] Always true
       def teardown_encrypter
         @mongocryptd_client.close if @mongocryptd_client
+
+        true
       end
     end
   end
