@@ -3,6 +3,8 @@ require 'json'
 require 'base64'
 
 describe 'Client auto-encryption options' do
+  require_libmongocrypt
+
   let(:client) { new_local_client_nmio('mongodb://127.0.0.1:27017/', client_opts) }
 
   let(:client_opts) { { auto_encryption_opts: auto_encryption_opts } }
