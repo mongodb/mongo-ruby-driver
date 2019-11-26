@@ -721,7 +721,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1404-test
+        run_on: ubuntu1604-test
         variables:
           MMAPV1: 'true'
 
@@ -816,7 +816,7 @@ buildvariants:
   matrix_name: mmapv1
   matrix_spec:
     ruby: "ruby-2.6"
-    mongodb-version: [3.6, 4.0]
+    mongodb-version: [3.4, 3.6, 4.0]
     topology: '*'
     storage-engine: mmapv1
     os: rhel70
@@ -927,7 +927,7 @@ buildvariants:
     ruby: "*"
     mongodb-version: ['4.0', '4.2']
     topology: standalone
-    os: ubuntu1404
+    os: ubuntu1604
   display_name: "Local TLS ${mongodb-version} ${ruby}"
   tasks:
     - name: "local-tls-tests"
