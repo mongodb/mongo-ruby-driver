@@ -63,7 +63,7 @@ module Mongo
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
 
-      def shutdown_encrypter
+      def teardown_encrypter
         @mongocryptd_client.close if @mongocryptd_client
       end
     end

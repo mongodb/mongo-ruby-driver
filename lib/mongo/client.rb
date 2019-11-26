@@ -684,7 +684,7 @@ module Mongo
     # @since 2.1.0
     def close
       @cluster.disconnect!
-      shutdown_encrypter
+      teardown_encrypter
       true
     end
 
