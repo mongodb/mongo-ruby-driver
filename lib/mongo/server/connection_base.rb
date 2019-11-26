@@ -29,12 +29,15 @@ module Mongo
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
-      # @return [ Mongo::Address ] address The address to connect to.
-      def address
-        @server.address
-      end
+      # @return [ Server ] The server that this connection is for.
+      #
+      # @api private
+      attr_reader :server
 
-      def_delegators :@server,
+      # @return [ Mongo::Address ] address The address to connect to.
+      def_delegators :server, :address
+
+      def_delegators :server,
                      :features,
                      :max_bson_object_size,
                      :max_message_size,

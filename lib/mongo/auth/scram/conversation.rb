@@ -20,6 +20,7 @@ module Mongo
       # the client and server.
       #
       # @since 2.0.0
+      # @api private
       class Conversation
 
         # The base client continue message.
@@ -103,13 +104,14 @@ module Mongo
         #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
-        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
         #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Message ] The next message to send.
         #
         # @since 2.0.0
-        def continue(reply, connection = nil)
-          validate_first_message!(reply)
+        def continue(reply, connection)
+          validate_first_message!(reply, connection.server)
 
           # The salted password needs to be calculated now; otherwise, if the
           # client key is cached from a previous authentication, the salt in the
@@ -118,7 +120,10 @@ module Mongo
           salted_password
 
           if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id)
+            selector = CLIENT_CONTINUE_MESSAGE.merge(
+              payload: client_final_message,
+              conversationId: id,
+            )
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
@@ -127,8 +132,11 @@ module Mongo
             Protocol::Query.new(
               user.auth_source,
               Database::COMMAND,
-              CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id),
-              limit: -1
+              CLIENT_CONTINUE_MESSAGE.merge(
+                payload: client_final_message,
+                conversationId: id,
+              ),
+              limit: -1,
             )
           end
         end
@@ -136,20 +144,20 @@ module Mongo
         # Finalize the SCRAM conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @example Finalize the conversation.
-        #   conversation.finalize(reply)
-        #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
-        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        # @param [ Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply, connection = nil)
-          validate_final_message!(reply)
+        def finalize(reply, connection)
+          validate_final_message!(reply, connection.server)
           if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id)
+            selector = CLIENT_CONTINUE_MESSAGE.merge(
+              payload: client_empty_message,
+              conversationId: id,
+            )
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
@@ -158,8 +166,11 @@ module Mongo
             Protocol::Query.new(
               user.auth_source,
               Database::COMMAND,
-              CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id),
-              limit: -1
+              CLIENT_CONTINUE_MESSAGE.merge(
+                payload: client_empty_message,
+                conversationId: id,
+              ),
+              limit: -1,
             )
           end
         end
@@ -167,15 +178,12 @@ module Mongo
         # Start the SCRAM conversation. This returns the first message that
         # needs to be sent to the server.
         #
-        # @example Start the conversation.
-        #   conversation.start
-        #
-        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        # @param [ Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The first SCRAM conversation message.
         #
         # @since 2.0.0
-        def start(connection = nil)
+        def start(connection)
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_FIRST_MESSAGE.merge(
               payload: client_first_message, mechanism: full_mechanism)
@@ -189,7 +197,7 @@ module Mongo
               Database::COMMAND,
               CLIENT_FIRST_MESSAGE.merge(
                 payload: client_first_message, mechanism: full_mechanism),
-              limit: -1
+              limit: -1,
             )
           end
         end
@@ -505,23 +513,24 @@ module Mongo
           check == 0
         end
 
-        def validate_final_message!(reply)
-          validate!(reply)
+        def validate_final_message!(reply, server)
+          validate!(reply, server)
           unless compare_digest(verifier, server_signature)
             raise Error::InvalidSignature.new(verifier, server_signature)
           end
         end
 
-        def validate_first_message!(reply)
-          validate!(reply)
+        def validate_first_message!(reply, server)
+          validate!(reply, server)
           raise Error::InvalidNonce.new(nonce, rnonce) unless rnonce.start_with?(nonce)
         end
 
-        def validate!(reply)
+        def validate!(reply, server)
           if reply.documents[0][Operation::Result::OK] != 1
             raise Unauthorized.new(user,
               used_mechanism: full_mechanism,
               message: reply.documents[0]['errmsg'],
+              server: server,
             )
           end
           @reply = reply

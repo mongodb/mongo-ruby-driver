@@ -41,7 +41,7 @@ describe 'Auth' do
           it 'indicates scram-sha-1 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
+            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
           end
         end
 
@@ -53,7 +53,7 @@ describe 'Auth' do
           it 'indicates scram-sha-1 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
+            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
           end
         end
       end
@@ -73,7 +73,7 @@ describe 'Auth' do
           it 'indicates scram-sha-1 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
+            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
           end
         end
 
@@ -85,7 +85,7 @@ describe 'Auth' do
           it 'indicates scram-sha-256 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram256\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-256\)/)
+            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
           end
         end
       end
@@ -101,7 +101,7 @@ describe 'Auth' do
         it 'indicates scram-sha-1 was requested and used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
+          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
         end
       end
 
@@ -114,7 +114,7 @@ describe 'Auth' do
         it 'indicates scram-sha-256 was requested and used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram256\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-256\)/)
+          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
         end
       end
     end
@@ -126,7 +126,13 @@ describe 'Auth' do
       it 'reports auth source used' do
         expect do
           connection.connect!
-        end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user.*is not authorized to access admin \(auth source: admin\)/)
+        end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user.*is not authorized to access admin.*auth source: admin/)
+      end
+
+      it 'reports which server authentication was attempted against' do
+        expect do
+          connection.connect!
+        end.to raise_error(Mongo::Auth::Unauthorized, /used server: #{connection.address.to_s}/)
       end
     end
 

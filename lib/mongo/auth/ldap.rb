@@ -20,6 +20,7 @@ module Mongo
     # Defines behavior for LDAP Proxy authentication.
     #
     # @since 2.0.0
+    # @api private
     class LDAP
 
       # The authentication mechinism string.
@@ -56,7 +57,7 @@ module Mongo
         conversation = Conversation.new(user)
         reply = connection.dispatch([ conversation.start(connection) ])
         connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply)
+        conversation.finalize(reply, connection)
       end
     end
   end
