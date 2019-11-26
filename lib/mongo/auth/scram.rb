@@ -20,6 +20,7 @@ module Mongo
     # Defines behavior for SCRAM authentication.
     #
     # @since 2.0.0
+    # @api private
     class SCRAM
 
       # The authentication mechanism string for SCRAM-SHA-1.

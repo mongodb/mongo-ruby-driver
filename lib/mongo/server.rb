@@ -306,12 +306,11 @@ module Mongo
       "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
     end
 
-    # @note This method is experimental and subject to change.
+    # @return [ String ] String representing server status (e.g. PRIMARY).
     #
-    # @api experimental
-    # @since 2.7.0
-    def summary
-      status = case
+    # @api private
+    def status
+      case
       when primary?
         'PRIMARY'
       when secondary?
@@ -331,8 +330,16 @@ module Mongo
       else
         # Since the summary method is often used for debugging, do not raise
         # an exception in case none of the expected types matched
-        ''
+        nil
       end
+    end
+
+    # @note This method is experimental and subject to change.
+    #
+    # @api experimental
+    # @since 2.7.0
+    def summary
+      status = self.status || ''
       if replica_set_name
         status += " replica_set=#{replica_set_name}"
       end

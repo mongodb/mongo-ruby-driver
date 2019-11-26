@@ -17,7 +17,7 @@ describe Mongo::Auth::LDAP::Conversation do
   describe '#start' do
 
     let(:query) do
-      conversation.start
+      conversation.start(nil)
     end
 
     let(:selector) do

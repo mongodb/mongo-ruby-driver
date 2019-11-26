@@ -16,7 +16,7 @@ describe Mongo::Auth::X509::Conversation do
   describe '#start' do
 
     let(:query) do
-      conversation.start
+      conversation.start(nil)
     end
 
     let(:selector) do
