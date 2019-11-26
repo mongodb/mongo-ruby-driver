@@ -834,7 +834,7 @@ buildvariants:
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "jruby-auth"

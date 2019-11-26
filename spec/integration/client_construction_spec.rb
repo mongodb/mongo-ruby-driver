@@ -84,7 +84,7 @@ describe 'Client construction' do
     end
 
     context 'direct connection with mismached me' do
-      let(:address) { ClusterConfig.instance.alternate_address }
+      let(:address) { ClusterConfig.instance.alternate_address.to_s }
 
       let(:client) do
         new_local_client([address], SpecConfig.instance.test_options)
