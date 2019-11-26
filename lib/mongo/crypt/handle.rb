@@ -85,7 +85,8 @@ module Mongo
         raise_from_status unless success
       end
 
-      # TODO: documentation
+      # Validate and set the aws KMS provider information on the underlying
+      # mongocrypt_t object and raise an exception if the operation fails
       def set_kms_providers_aws(kms_providers)
         access_key_id = kms_providers[:aws][:access_key_id]
         secret_access_key = kms_providers[:aws][:secret_access_key]
@@ -97,7 +98,7 @@ module Mongo
           )
         end
 
-        # TODO: do something with aws kms provider
+        # TODO: Set the AWS kms provider on the underlying mongocrypt_t object
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails

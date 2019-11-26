@@ -33,16 +33,7 @@ module Mongo
     #   configuration information. Valid hash keys are :local or :aws. There may be
     #   more than one KMS provider specified.
     def initialize(client, options = {})
-      # validate_key_vault_namespace(options[:key_vault_namespace])
-
-      # key_vault_db_name, key_vault_coll_name = options[:key_vault_namespace].split('.')
-      # @collection = client.use(key_vault_db_name)[key_vault_coll_name]
-
-      # @io = IO.new(@collection)
-
-      # @crypt_handle = Crypt::Handle.new(options[:kms_providers])
-
-      set_encryption_options(options.merge(key_vault_client: client))
+      setup_encrypter(options.merge(key_vault_client: client))
     end
 
     # Generates a data key used for encryption/decryption and stores
@@ -55,7 +46,7 @@ module Mongo
       result = Crypt::DataKeyContext.new(@crypt_handle.ref).run_state_machine
 
       data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
-      insert_result = @io.insert(data_key_document)
+      insert_result = @encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data
     end
@@ -79,7 +70,7 @@ module Mongo
       value = { 'v': value }.to_bson.to_s
 
       Crypt::ExplicitEncryptionContext
-        .new(@crypt_handle.ref, @io, value, opts)
+        .new(@crypt_handle.ref, @encryption_io, value, opts)
         .run_state_machine
     end
 
@@ -93,7 +84,7 @@ module Mongo
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def decrypt(value)
       result = Crypt::ExplicitDecryptionContext
-                .new(@crypt_handle.ref, @io, value)
+                .new(@crypt_handle.ref, @encryption_io, value)
                 .run_state_machine
 
       Hash.from_bson(BSON::ByteBuffer.new(result))['v']

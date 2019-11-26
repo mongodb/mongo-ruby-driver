@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'byebug' # TODO: remove
 
 module Mongo
 
@@ -378,9 +377,9 @@ module Mongo
     #   :key_vault_namespace => String, the namespace of the key vault in the format database.collection
     #   :kms_providers => Hash, A hash of key management service configuration information. Valid hash keys are :local or :aws.
     #     There may be more than one KMS provider specified.
-    #   :schema_map => Hash|nil, TODO: more info here
+    #   :schema_map => Hash|nil, The JSONSchema of the collection(s) with encrypted fields.
     #   :bypass_auto_encryption => Boolean, when true, disables auto encryption; defaults to false.
-    #   :extra_options => Hash|nil, options related to mongocryptd (this part of the API is subject to change)
+    #   :extra_options => Hash|nil, options related to spawning mongocryptd (this part of the API is subject to change)
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
@@ -443,7 +442,11 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_opts]
-        set_encryption_options(@options[:auto_encryption_opts])
+        setup_encrypter(
+          @options[:auto_encryption_opts].tap do |auto_encrypt_opts|
+            auto_encrypt_opts[:key_vault_client] ||= self
+          end
+        )
       end
 
       yield(self) if block_given?

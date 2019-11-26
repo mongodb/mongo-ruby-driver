@@ -31,8 +31,7 @@ describe 'Client auto-encryption options' do
   let(:kms_aws) { { access_key_id: 'ACCESS_KEY_ID', secret_access_key: 'SECRET_ACCESS_KEY' } }
 
   let(:schema_map) do
-    file = File.read('spec/mongo/crypt/data/schema_map.json')
-    JSON.parse(file)
+    JSON.parse(File.read('spec/mongo/crypt/data/schema_map.json'))
   end
 
   let(:bypass_auto_encryption) { false }
@@ -145,7 +144,7 @@ describe 'Client auto-encryption options' do
       expect(client.encryption_options[:bypass_auto_encryption]).to be false
     end
 
-    it 'sets extra options' do
+    it 'sets extra options to defaults' do
       client_options = client.encryption_options
 
       expect(client_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')

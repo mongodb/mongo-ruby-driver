@@ -15,57 +15,39 @@
 module Mongo
   module Crypt
 
-    # A class that implements I/O methods between the driver and
-    # the MongoDB server or mongocryptd.
-    #
-    # This class should have its own file, just leaving it here
-    # for simplicity. Should also have a name that is not IO.
+    # A module that encapsulates client-side-encryption functionality
     #
     # @api private
-    class EncryptionIO
-      # Creates a new IO object with information about how to connect
-      # to the key vault.
-      #
-      # @param [ Mongo::Collection ] The key vault collection
-      def initialize(key_vault_client, key_vault_namespace)
-        key_vault_db_name, key_vault_collection_name = key_vault_namespace.split('.')
-        @collection = key_vault_client.use(key_vault_db_name)[key_vault_collection_name]
-      end
-
-      # Query for keys in the key vault collection using the provided
-      # filter
-      #
-      # @param [ Hash ] filter
-      #
-      # @return [ Array<Hash> ] The query results
-      def find_keys(filter)
-        @collection.find(filter).to_a
-      end
-
-      # TODO: documentation
-      def insert(document)
-        @collection.insert_one(document)
-      end
-    end
-
-    # TODO: documentation
     module Encrypter
       attr_accessor :encryption_options
-      # TODO: documentation
-      def set_encryption_options(options = {})
+
+      # Set up encryption-related options and instance variables
+      # on the class that includes this module.
+      #
+      # @param options [ Hash ] options
+      #
+      # @option [ Mongo::Client ] :key_vault_client A client connected
+      #   to the MongoDB instance containing the encryption key vault.
+      # @option [ String ] :key_vault_namespace The namespace of the key
+      #   vault in the format database.collection.
+      #
+      # @raise [ ArgumentError ] If required options are missing or incorrectly
+      #   formatted.
+      def setup_encrypter(options = {})
         @encryption_options = options
-        @encryption_options.freeze
 
         validate_key_vault_namespace!
         validate_key_vault_client!
 
+        @encryption_options.freeze
         @crypt_handle = Crypt::Handle.new(options[:kms_providers])
-        @io = EncryptionIO.new(options[:key_vault_client], options[:key_vault_namespace])
+        @encryption_io = EncryptionIO.new(options[:key_vault_client], options[:key_vault_namespace])
       end
 
       private
 
-      # TODO: documentation
+      # Validate that the key_vault_namespace option is not nil and
+      # is in the format database.collection
       def validate_key_vault_namespace!
         key_vault_namespace = @encryption_options[:key_vault_namespace]
 
@@ -81,7 +63,7 @@ module Mongo
         end
       end
 
-      # TODO: documentation
+      # Validate that the key_vault_client option is not nil
       def validate_key_vault_client!
         unless @encryption_options[:key_vault_client]
           raise ArgumentError.new('The :key_vault_client option cannot be nil')
