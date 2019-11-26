@@ -49,7 +49,7 @@ module Mongo
     end
 
     # TODO: documentation
-    class Encrypter
+    module Encrypter
       attr_accessor :encryption_options
       # TODO: documentation
       def set_encryption_options(options = {})

@@ -19,9 +19,10 @@ module Mongo
   # will be interacted with.
   #
   # @since 2.0.0
-  class Client < Crypt::AutoEncrypter
+  class Client
     extend Forwardable
     include Loggable
+    include Crypt::AutoEncrypter
 
     # The options that do not affect the behavior of a cluster and its
     # subcomponents.

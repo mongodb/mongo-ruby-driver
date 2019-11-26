@@ -17,7 +17,8 @@ module Mongo
   # collection that cannot be done directly on a MongoClient. It
   # provides an API for explicitly encrypting and decrypting values,
   # and creating data keys.
-  class ClientEncryption < Crypt::Encrypter
+  class ClientEncryption
+    include Crypt::Encrypter
 
     # Create a new ClientEncryption object with the provided options.
     #

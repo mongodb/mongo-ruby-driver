@@ -16,7 +16,8 @@ module Mongo
   module Crypt
 
     # TODO: documentation
-    class AutoEncrypter < Encrypter
+    module AutoEncrypter
+      include Encrypter
 
       def self.included(base)
         base.send :extend, Encrypter
