@@ -7,9 +7,9 @@ describe 'Client auto-encryption options' do
 
   let(:client) { new_local_client_nmio('mongodb://127.0.0.1:27017/', client_opts) }
 
-  let(:client_opts) { { auto_encryption_opts: auto_encryption_opts } }
+  let(:client_opts) { { auto_encryption_options: auto_encryption_options } }
 
-  let(:auto_encryption_opts) do
+  let(:auto_encryption_options) do
     {
       key_vault_client: key_vault_client,
       key_vault_namespace: key_vault_namespace,
@@ -53,7 +53,7 @@ describe 'Client auto-encryption options' do
   let(:mongocryptd_spawn_args) { ['--idleShutdownTimeoutSecs=100'] }
 
   context 'when auto_encrypt_opts are nil' do
-    let(:auto_encryption_opts) { nil }
+    let(:auto_encryption_options) { nil }
 
     it 'does not raise an exception' do
       expect { client }.not_to raise_error
@@ -130,7 +130,7 @@ describe 'Client auto-encryption options' do
   end
 
   context 'with default values' do
-    let(:auto_encryption_opts) do
+    let(:auto_encryption_options) do
       {
         key_vault_namespace: key_vault_namespace,
         kms_providers: kms_providers,

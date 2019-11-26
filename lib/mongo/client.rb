@@ -54,7 +54,7 @@ module Mongo
       :auth_mech,
       :auth_mech_properties,
       :auth_source,
-      :auto_encryption_opts,
+      :auto_encryption_options,
       :cleanup,
       :compressors,
       :connect,
@@ -372,7 +372,7 @@ module Mongo
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
     #
-    # @option options [ Hash ] :auto_encryption_opts Auto-encryption related options
+    # @option options [ Hash ] :auto_encryption_options Auto-encryption related options
     #   :key_vault_client => Client|nil, a client connected to the MongoDB instance containing the encryption key vault
     #   :key_vault_namespace => String, the namespace of the key vault in the format database.collection
     #   :kms_providers => Hash, A hash of key management service configuration information. Valid hash keys are :local or :aws.
@@ -441,9 +441,9 @@ module Mongo
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
 
-      if @options[:auto_encryption_opts]
+      if @options[:auto_encryption_options]
         setup_encrypter(
-          @options[:auto_encryption_opts].tap do |auto_encrypt_opts|
+          @options[:auto_encryption_options].tap do |auto_encrypt_opts|
             auto_encrypt_opts[:key_vault_client] ||= self
           end
         )
