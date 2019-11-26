@@ -25,7 +25,7 @@ module Mongo
       DEFAULT_EXTRA_OPTIONS = {
         mongocryptd_uri: 'mongodb://localhost:27020',
         mongocryptd_bypass_spawn: false,
-        mongocryptd_spawn_path: '',
+        mongocryptd_spawn_path: 'mongocryptd',
         mongocryptd_spawn_args: ['--idleShutdownTimeoutSecs=60'],
       }.freeze
 

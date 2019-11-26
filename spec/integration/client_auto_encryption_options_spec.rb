@@ -151,7 +151,7 @@ describe 'Client auto-encryption options' do
 
       expect(client_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')
       expect(client_options[:mongocryptd_bypass_spawn]).to be false
-      expect(client_options[:mongocryptd_spawn_path]).to eq('')
+      expect(client_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
       expect(client_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
     end
   end
