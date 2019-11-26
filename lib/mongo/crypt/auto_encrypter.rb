@@ -52,11 +52,10 @@ module Mongo
         extra_options = options.delete(:extra_options) || {}
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
-        super(
-          options.tap do |options|
-            options[:bypass_auto_encryption] = options[:bypass_auto_encryption] || false
-          end.merge(extra_options)
-        )
+        opts_copy = options.dup
+        opts_copy[:bypass_auto_encryption] = opts[:bypass_auto_encryption] || false
+
+        super(opts_copy.merge(extra_options))
 
         @mongocryptd_client = Client.new(@encryption_options[:mongocryptd_uri])
 

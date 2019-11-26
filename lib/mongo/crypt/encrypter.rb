@@ -34,7 +34,7 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
-        @encryption_options = options
+        @encryption_options = options.dup
 
         validate_key_vault_namespace!
         validate_key_vault_client!
