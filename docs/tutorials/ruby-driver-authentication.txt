@@ -32,8 +32,6 @@ client.
                              user: 'test',
                              password: '123' )
 
-For MongoDB 2.6 and later, ``:auth_source`` defaults to **admin**,
-otherwise the current database is used.
 
 The current database can be changed with the client's ``use`` method.
 
@@ -57,6 +55,30 @@ Alternatively, setting the current database and credentials can be done in one s
                                            user:'test',
                                            password:'123' )
 
+Auth Source
+```````````
+
+A user's auth source is the database where that user's authentication credentials are stored.
+
+When creating a client with authentication credentials, you may specify an auth source
+for the user:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             user: 'test',
+                             password: '123',
+                             auth_source: 'admin' )
+
+If no auth source is specified, then a default will be assumed by the client. The default
+auth source depends on the authentication mechanism that is being used to connect.
+
+For the ``MONGODB-CR``, ``SCRAM-SHA-1``, and ``SCRAM-SHA-256`` authentication mechanisms, the default
+auth source is the database to which the client is connecting; if no database is specified,
+`admin` becomes the default auth source. For the ``PLAIN`` mechanism (LDAP), the default auth source
+is the database to which the client is connecting; if no database is specified, ``$external`` is
+used as the auth source. For the ``GSSAPI`` and ``MONGODB_X509`` mechanisms,
+the auth source is always ``$external``.
 
 MONGODB-CR Mechanism
 ````````````````````

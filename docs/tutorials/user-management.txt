@@ -62,6 +62,11 @@ user information and then pass that object into the ``create`` method instead.
 
   client.database.users.create(user)
 
+Note that your new user's credentials will be stored in whatever database your ``client``
+object is currently connected to. This will be your user's ``auth_source``, and you must
+be connected to that same database in order to update, remove, or get information about
+the user you just created in the future.
+
 The ``create`` method takes a ``Hash`` of options as an optional second argument.
 The ``:roles`` option allows you to grant permissions to the new user.
 For example, the ``Mongo::Auth::Roles::READ_WRITE`` role grants the user the ability to both
