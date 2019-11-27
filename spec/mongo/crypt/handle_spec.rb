@@ -20,11 +20,11 @@ describe Mongo::Crypt::Handle do
       end
     end
 
-    context 'with aws kms_providers key' do
+    context 'with invalid aws kms_providers' do
       let(:kms_providers) { { aws: {} } }
 
       it 'raises an exception' do
-        expect { handle }.to raise_error(ArgumentError, /:aws is not yet a supported kms_providers option/)
+        expect { handle }.to raise_error(ArgumentError, /kms_providers with :aws key must be in the format: { aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }/)
       end
     end
 

@@ -21,6 +21,7 @@ module Mongo
   class Client
     extend Forwardable
     include Loggable
+    include Crypt::AutoEncrypter
 
     # The options that do not affect the behavior of a cluster and its
     # subcomponents.
@@ -53,6 +54,7 @@ module Mongo
       :auth_mech,
       :auth_mech_properties,
       :auth_source,
+      :auto_encryption_options,
       :cleanup,
       :compressors,
       :connect,
@@ -370,6 +372,15 @@ module Mongo
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
     #
+    # @option options [ Hash ] :auto_encryption_options Auto-encryption related options
+    #   :key_vault_client => Client|nil, a client connected to the MongoDB instance containing the encryption key vault
+    #   :key_vault_namespace => String, the namespace of the key vault in the format database.collection
+    #   :kms_providers => Hash, A hash of key management service configuration information. Valid hash keys are :local or :aws.
+    #     There may be more than one KMS provider specified.
+    #   :schema_map => Hash|nil, The JSONSchema of the collection(s) with encrypted fields.
+    #   :bypass_auto_encryption => Boolean, when true, disables auto encryption; defaults to false.
+    #   :extra_options => Hash|nil, options related to spawning mongocryptd (this part of the API is subject to change)
+    #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
       options = options ? options.dup : {}
@@ -429,6 +440,19 @@ module Mongo
 
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
+
+      if @options[:auto_encryption_options]
+        opts_copy = @options[:auto_encryption_options].dup
+
+        opts_copy.tap do |opts|
+          opts[:key_vault_client] ||= self
+          opts[:extra_options] ||= {}
+
+          opts[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
+        end
+
+        setup_encrypter(opts_copy)
+      end
 
       yield(self) if block_given?
     end
@@ -665,6 +689,7 @@ module Mongo
     # @since 2.1.0
     def close
       @cluster.disconnect!
+      teardown_encrypter
       true
     end
 

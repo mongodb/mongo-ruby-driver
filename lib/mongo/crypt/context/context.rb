@@ -40,7 +40,7 @@ module Mongo
           Binding.method(:mongocrypt_ctx_destroy)
         )
 
-        @io = io
+        @encryption_io = io
       end
 
       # Returns the state of the mongocrypt_ctx_t
@@ -74,7 +74,7 @@ module Mongo
           when :need_mongo_keys
             filter = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
 
-            @io.find_keys(filter).each do |key|
+            @encryption_io.find_keys(filter).each do |key|
               mongo_feed(key.to_bson.to_s) if key
             end
 
