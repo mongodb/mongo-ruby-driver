@@ -28,11 +28,8 @@ describe Mongo::Cluster do
         SpecConfig.instance.addresses + SpecConfig.instance.addresses
       end
       let(:cluster_with_dup_addresses) do
-        described_class.new(addresses, monitoring, SpecConfig.instance.test_options)
-      end
-
-      after do
-        cluster_with_dup_addresses.disconnect!
+        register_cluster(
+          described_class.new(addresses, monitoring, SpecConfig.instance.test_options))
       end
 
       it 'does not raise an exception' do
