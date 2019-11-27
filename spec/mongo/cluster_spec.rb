@@ -20,6 +20,24 @@ describe Mongo::Cluster do
 
   let(:cluster) { cluster_without_io }
 
+  describe 'initialize' do
+
+    context 'when there are duplicate addresses' do
+
+      let(:addresses) do
+        SpecConfig.instance.addresses + SpecConfig.instance.addresses
+      end
+      let(:cluster_with_dup_addresses) do
+        described_class.new(addresses, monitoring, SpecConfig.instance.test_options)
+      end
+
+      it 'does not error out' do
+        cluster_with_dup_addresses
+      end
+    end
+
+  end
+
   describe '#==' do
 
     context 'when the other is a cluster' do
