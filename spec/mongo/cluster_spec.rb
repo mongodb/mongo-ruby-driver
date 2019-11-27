@@ -31,8 +31,8 @@ describe Mongo::Cluster do
         described_class.new(addresses, monitoring, SpecConfig.instance.test_options)
       end
 
-      it 'does not error out' do
-        cluster_with_dup_addresses
+      it 'does not raise an exception' do
+        expect { cluster_with_dup_addresses }.not_to raise_error
       end
     end
 
