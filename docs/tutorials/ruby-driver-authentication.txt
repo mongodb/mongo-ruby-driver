@@ -73,12 +73,12 @@ for the user:
 If no auth source is specified, then a default will be assumed by the client. The default
 auth source depends on the authentication mechanism that is being used to connect.
 
-For the `MONGODB-CR`, `SCRAM-SHA-1`, and `SCRAM-SHA-256` authentication mechanisms, the default
+For the ``MONGODB-CR``, ``SCRAM-SHA-1``, and ``SCRAM-SHA-256`` authentication mechanisms, the default
 auth source is the database to which the client is connecting; if no database is specified,
-`admin` becomes the default auth source. For the `PLAIN` mechanism (LDAP), the default auth source
-is the database to which the client is connecting; if no database is specified, `$external` is
-used as the auth source. For the `GSSAPI` and `MONGODB_X509` mechanisms,
-the auth source is always the `$external` database.
+`admin` becomes the default auth source. For the ``PLAIN`` mechanism (LDAP), the default auth source
+is the database to which the client is connecting; if no database is specified, ``$external`` is
+used as the auth source. For the ``GSSAPI`` and ``MONGODB_X509`` mechanisms,
+the auth source is always ``$external``.
 
 MONGODB-CR Mechanism
 ````````````````````
