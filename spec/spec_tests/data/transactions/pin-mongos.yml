@@ -317,7 +317,7 @@ tests:
           insertedIds: {0: 3, 1: 4}
       # Session is pinned.
       - *assertSessionPinned
-      # Fail the commit with a non-transient error, eg MaxTimeMSExpired.
+      # Fail the commit with a non-transient error.
       - name: targetedFailPoint
         object: testRunner
         arguments:
@@ -327,8 +327,7 @@ tests:
             mode: { times: 1 }
             data:
               failCommands: ["commitTransaction"]
-              # https://jira.mongodb.org/browse/SPEC-1378
-              errorCode: 51 # not MaxTimeMSExpired
+              errorCode: 51 # ManualInterventionRequired
       - name: commitTransaction
         object: session0
         result:
