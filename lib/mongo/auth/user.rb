@@ -153,8 +153,6 @@ module Mongo
       # @option options [ String ] :password The user's password.
       # @option options [ Symbol ] :auth_mech The authorization mechanism.
       # @option options [ Array<String>, Array<Hash> ] roles The user roles.
-      # @option options [ String ] :client_key The user's client key cached from a previous
-      #   authentication on the same connection.
       #
       # @since 2.0.0
       def initialize(options)
@@ -184,7 +182,6 @@ module Mongo
         end
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
-        @client_key = options[:client_key]
       end
 
       # Get the specification for the user, used in creation.
@@ -200,11 +197,6 @@ module Mongo
       end
 
       private
-
-      # The client key for the user.
-      #
-      # @return [ String ] The client key for the user.
-      attr_reader :client_key
 
       # Generate default auth source based on the URI and options
       #

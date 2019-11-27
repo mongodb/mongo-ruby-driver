@@ -190,4 +190,29 @@ describe 'Auth' do
       end
     end
   end
+
+  describe 'scram-sha-1 client key caching' do
+    clean_slate
+    min_server_version '3.0'
+    require_no_x509_auth
+
+    let(:client) { authorized_client.with(max_pool_size: 2) }
+
+    it 'caches' do
+      client.close
+      Mongo::Auth::CredentialCache.clear
+
+      RSpec::Mocks.with_temporary_scope do
+        expect_any_instance_of(Mongo::Auth::SCRAM::Conversation).to receive(:hi).exactly(:once).and_call_original
+
+        client.reconnect
+        server = client.cluster.next_primary
+        server.with_connection do
+          server.with_connection do
+            # nothing
+          end
+        end
+      end
+    end
+  end
 end

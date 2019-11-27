@@ -36,6 +36,7 @@ module Mongo
         # The client key string.
         #
         # @since 2.0.0
+        # @deprecated
         CLIENT_KEY = 'Client Key'.freeze
 
         # The key for the done field in the responses.
@@ -78,6 +79,7 @@ module Mongo
         # The server key string.
         #
         # @since 2.0.0
+        # @deprecated
         SERVER_KEY = 'Server Key'.freeze
 
         # The server signature verifier in the response.
@@ -112,12 +114,6 @@ module Mongo
         # @since 2.0.0
         def continue(reply, connection)
           validate_first_message!(reply, connection.server)
-
-          # The salted password needs to be calculated now; otherwise, if the
-          # client key is cached from a previous authentication, the salt in the
-          # reply will no longer be available for when the salted password is
-          # needed to calculate the server key.
-          salted_password
 
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
@@ -234,7 +230,6 @@ module Mongo
 
           @user = user
           @nonce = SecureRandom.base64
-          @client_key = user.send(:client_key)
           @mechanism = mechanism
         end
 
@@ -301,9 +296,9 @@ module Mongo
         #
         # @since 2.0.0
         def client_key
-          @client_key ||= hmac(salted_password, CLIENT_KEY)
-          user.instance_variable_set(:@client_key, @client_key) unless user.send(:client_key)
-          @client_key
+          @client_key ||= CredentialCache.cache(cache_key(:client_key)) do
+            hmac(salted_password, 'Client Key')
+          end
         end
 
         # Client proof algorithm implementation.
@@ -429,6 +424,11 @@ module Mongo
           @salt ||= payload_data.match(SALT)[1]
         end
 
+        # @api private
+        def cache_key(*extra)
+          [user.password, salt, iterations, @mechanism] + extra
+        end
+
         # Salted password algorithm implementation.
         #
         # @api private
@@ -437,11 +437,13 @@ module Mongo
         #
         # @since 2.0.0
         def salted_password
-          @salted_password ||= case @mechanism
-          when :scram256
-            hi(user.sasl_prepped_password)
-          else
-            hi(user.hashed_password)
+          @salted_password ||= CredentialCache.cache(cache_key(:salted_password)) do
+            case @mechanism
+            when :scram256
+              hi(user.sasl_prepped_password)
+            else
+              hi(user.hashed_password)
+            end
           end
         end
 
@@ -453,7 +455,9 @@ module Mongo
         #
         # @since 2.0.0
         def server_key
-          @server_key ||= hmac(salted_password, SERVER_KEY)
+          @server_key ||= CredentialCache.cache(cache_key(:server_key)) do
+            hmac(salted_password, 'Server Key')
+          end
         end
 
         # Server signature algorithm implementation.

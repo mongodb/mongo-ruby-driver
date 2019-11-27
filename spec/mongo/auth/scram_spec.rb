@@ -11,6 +11,24 @@ describe Mongo::Auth::SCRAM do
     Mongo::Server::Connection.new(server, SpecConfig.instance.test_options)
   end
 
+  let(:cache_mod) { Mongo::Auth::CredentialCache }
+
+  shared_examples_for 'caches scram credentials' do |cache_key|
+
+    it 'caches scram credentials' do
+      cache_mod.clear
+      expect(cache_mod.store).to be_empty
+
+      expect(login['ok']).to eq(1)
+
+      expect(cache_mod.store).not_to be_empty
+      client_key_entry = cache_mod.store.keys.detect do |key|
+        key.include?(test_user.password) && key.include?(cache_key)
+      end
+      expect(client_key_entry).not_to be nil
+    end
+  end
+
   context 'when SCRAM-SHA-1 is used' do
     min_server_fcv '3.0'
 
@@ -27,13 +45,13 @@ describe Mongo::Auth::SCRAM do
           )
         end
 
-        let(:cr) do
+        let(:authenticator) do
           described_class.new(user)
         end
 
         it 'raises an exception' do
           expect {
-            cr.login(connection)
+            authenticator.login(connection)
           }.to raise_error(Mongo::Auth::Unauthorized)
         end
 
@@ -44,7 +62,7 @@ describe Mongo::Auth::SCRAM do
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
             expect {
-              cr.login(connection)
+              authenticator.login(connection)
             }.to raise_error(Mongo::Auth::Unauthorized)
           end
         end
@@ -52,29 +70,21 @@ describe Mongo::Auth::SCRAM do
 
       context 'when the user is authorized for the database' do
 
-        let(:cr) do
-          described_class.new(root_user)
+        let(:authenticator) do
+          described_class.new(test_user)
         end
 
         let(:login) do
-          cr.login(connection).documents[0]
+          authenticator.login(connection).documents[0]
         end
 
-        after do
-          root_user.instance_variable_set(:@client_key, nil)
-        end
-
-        it 'logs the user into the connection and caches the client key' do
+        it 'logs the user into the connection' do
           expect(login['ok']).to eq(1)
-          expect(root_user.send(:client_key)).not_to be_nil
         end
 
-        it 'raises an exception when an incorrect client key is set' do
-          root_user.instance_variable_set(:@client_key, "incorrect client key")
-          expect {
-            cr.login(connection)
-          }.to raise_error(Mongo::Auth::Unauthorized)
-        end
+        it_behaves_like 'caches scram credentials', :salted_password
+        it_behaves_like 'caches scram credentials', :client_key
+        it_behaves_like 'caches scram credentials', :server_key
       end
     end
   end
@@ -95,13 +105,13 @@ describe Mongo::Auth::SCRAM do
           )
         end
 
-        let(:cr) do
+        let(:authenticator) do
           described_class.new(user)
         end
 
         it 'raises an exception' do
           expect {
-            cr.login(connection)
+            authenticator.login(connection)
           }.to raise_error(Mongo::Auth::Unauthorized)
         end
 
@@ -112,7 +122,7 @@ describe Mongo::Auth::SCRAM do
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
             expect {
-              cr.login(connection)
+              authenticator.login(connection)
             }.to raise_error(Mongo::Auth::Unauthorized)
           end
         end
@@ -120,29 +130,21 @@ describe Mongo::Auth::SCRAM do
 
       context 'when the user is authorized for the database' do
 
-        let(:cr) do
+        let(:authenticator) do
           described_class.new(test_user)
         end
 
         let(:login) do
-          cr.login(connection).documents[0]
+          authenticator.login(connection).documents[0]
         end
 
-        after do
-          test_user.instance_variable_set(:@client_key, nil)
-        end
-
-        it 'logs the user into the connection and caches the client key' do
+        it 'logs the user into the connection' do
           expect(login['ok']).to eq(1)
-          expect(test_user.send(:client_key)).not_to be_nil
         end
 
-        it 'raises an exception when an incorrect client key is set' do
-          test_user.instance_variable_set(:@client_key, "incorrect client key")
-          expect {
-            cr.login(connection)
-          }.to raise_error(Mongo::Auth::Unauthorized)
-        end
+        it_behaves_like 'caches scram credentials', :salted_password
+        it_behaves_like 'caches scram credentials', :client_key
+        it_behaves_like 'caches scram credentials', :server_key
       end
     end
   end

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/credential_cache'
 require 'mongo/auth/cr'
 require 'mongo/auth/ldap'
 require 'mongo/auth/scram'
