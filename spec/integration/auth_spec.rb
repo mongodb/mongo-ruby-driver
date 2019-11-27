@@ -123,16 +123,29 @@ describe 'Auth' do
       let(:options) { SpecConfig.instance.ssl_options.merge(
         user: 'nonexistent_user', password: 'foo') }
 
-      it 'reports auth source used' do
-        expect do
-          connection.connect!
-        end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user.*is not authorized to access admin.*auth source: admin/)
-      end
-
       it 'reports which server authentication was attempted against' do
         expect do
           connection.connect!
         end.to raise_error(Mongo::Auth::Unauthorized, /used server: #{connection.address.to_s}/)
+      end
+
+      context 'with default auth source' do
+        it 'reports auth source used' do
+          expect do
+            connection.connect!
+          end.to raise_error(Mongo::Auth::Unauthorized, /auth source: admin/)
+        end
+      end
+
+      context 'with custom auth source' do
+        let(:options) { SpecConfig.instance.ssl_options.merge(
+          user: 'nonexistent_user', password: 'foo', auth_source: 'authdb') }
+
+        it 'reports auth source used' do
+          expect do
+            connection.connect!
+          end.to raise_error(Mongo::Auth::Unauthorized, /auth source: authdb/)
+        end
       end
     end
 
