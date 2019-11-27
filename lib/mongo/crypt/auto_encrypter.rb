@@ -77,8 +77,14 @@ module Mongo
       def spawn_mongocryptd
         @mongocryptd_pid = Process.spawn(
                             @encryption_options[:mongocryptd_spawn_path],
-                            *@encryption_options[:mongocryptd_spawn_args]
+                            *@encryption_options[:mongocryptd_spawn_args],
+                            [:out, :err]=>'/dev/null'
                           )
+      end
+
+      # TODO: documentation
+      def kill_mongocryptd
+        Process.kill('EXIT', @mongocryptd_pid)
       end
 
       # Close the resources created by the AutoEncrypter
@@ -86,6 +92,7 @@ module Mongo
       # @return [ true ] Always true
       def teardown_encrypter
         @mongocryptd_client.close if @mongocryptd_client
+        kill_mongocryptd if @mongocryptd_pid
 
         true
       end
