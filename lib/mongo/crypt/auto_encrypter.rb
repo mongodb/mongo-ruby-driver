@@ -69,6 +69,11 @@ module Mongo
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
 
+      # TODO: documentation
+      def spawn_mongocryptd
+        Process.spawn(@encryption_options[:mongocryptd_spawn_path])
+      end
+
       # Close the resources created by the AutoEncrypter
       #
       # @return [ true ] Always true
