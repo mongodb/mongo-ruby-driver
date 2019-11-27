@@ -66,12 +66,19 @@ module Mongo
                                 monitoring_io: mongocryptd_client_monitoring_io,
                               )
 
+        unless @encryption_options[:mongocryptd_bypass_spawn]
+          spawn_mongocryptd
+        end
+
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
 
       # TODO: documentation
       def spawn_mongocryptd
-        Process.spawn(@encryption_options[:mongocryptd_spawn_path])
+        @mongocryptd_pid = Process.spawn(
+                            @encryption_options[:mongocryptd_spawn_path],
+                            *@encryption_options[:mongocryptd_spawn_args]
+                          )
       end
 
       # Close the resources created by the AutoEncrypter
