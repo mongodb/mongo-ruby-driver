@@ -688,6 +688,7 @@ module Mongo
     #
     # @since 2.1.0
     def close
+      byebug if @encryption_options
       @cluster.disconnect!
       teardown_encrypter
       true

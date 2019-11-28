@@ -58,6 +58,10 @@ describe 'Client auto-encryption options' do
     it 'does not raise an exception' do
       expect { client }.not_to raise_error
     end
+
+    it 'does not spawn a mongocryptd process' do
+      expect(client).not_to receive(:spawn_mongocryptd)
+    end
   end
 
   context 'when key_vault_namespace is nil' do
@@ -108,10 +112,12 @@ describe 'Client auto-encryption options' do
     end
   end
 
-  context 'with all options' do
+  context 'with valid options' do
     it 'does not raise an exception' do
       expect { client }.not_to raise_error
+    end
 
+    it 'sets options on the client' do
       client_options = client.encryption_options
 
       expect(client_options[:key_vault_client]).to eq(key_vault_client)
@@ -129,32 +135,61 @@ describe 'Client auto-encryption options' do
 
       expect(client.mongocryptd_client.options[:monitoring_io]).to be false
     end
-  end
 
-  context 'with default values' do
-    let(:auto_encryption_options) do
-      {
-        key_vault_namespace: key_vault_namespace,
-        kms_providers: kms_providers,
-        schema_map: schema_map,
-      }
+    it 'does not spawn mongocryptd' do
+      expect(client).not_to receive(:spawn_mongocryptd)
     end
 
-    it 'sets key_vault_client as self' do
-      expect(client.encryption_options[:key_vault_client]).to eq(client)
-    end
+    context 'with default extra options' do
 
-    it 'sets bypass_auto_encryption to false' do
-      expect(client.encryption_options[:bypass_auto_encryption]).to be false
-    end
+      let(:auto_encryption_options) do
+        {
+          key_vault_namespace: key_vault_namespace,
+          kms_providers: kms_providers,
+          schema_map: schema_map,
+        }
+      end
 
-    it 'sets extra options to defaults' do
-      client_options = client.encryption_options
+      before do
+        # allow(Process).to receive(:spawn).with(
+        #   'mongocryptd',
+        #   '--idleShutdownTimeoutSecs=60',
+        #   [:out, :err] => '/dev/null'
+        # )
+      end
 
-      expect(client_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')
-      expect(client_options[:mongocryptd_bypass_spawn]).to be false
-      expect(client_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
-      expect(client_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
+      it 'sets key_vault_client as self' do
+        expect(client.encryption_options[:key_vault_client]).to eq(client)
+      end
+
+      it 'sets bypass_auto_encryption to false' do
+        expect(client.encryption_options[:bypass_auto_encryption]).to be false
+      end
+
+      it 'sets extra options to defaults' do
+        client_options = client.encryption_options
+
+        expect(client_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')
+        expect(client_options[:mongocryptd_bypass_spawn]).to be false
+        expect(client_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
+        expect(client_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
+      end
+
+      it 'spawns mongocryptd' do
+        client
+
+        expect(client.mongocryptd_pid).not_to be_nil
+        expect(Process.getpgid(client.mongocryptd_pid)).to be_a_kind_of(Numeric)
+
+        client.close
+      end
+
+      it 'kills mongocryptd process on close' do
+        pid = client.mongocryptd_pid
+
+        client.close
+        expect { Process.getpgid(pid) }.to raise_error(Errno::ESRCH)
+      end
     end
   end
 end

@@ -21,7 +21,7 @@ module Mongo
     module AutoEncrypter
       include Encrypter
 
-      attr_accessor :mongocryptd_client
+      attr_accessor :mongocryptd_client, :mongocryptd_pid
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
@@ -67,7 +67,7 @@ module Mongo
                               )
 
         unless @encryption_options[:mongocryptd_bypass_spawn]
-          spawn_mongocryptd
+          self.spawn_mongocryptd
         end
 
         # TODO: use all the other options for auto-encryption/auto-decryption
@@ -75,6 +75,7 @@ module Mongo
 
       # TODO: documentation
       def spawn_mongocryptd
+        # TODO: think through validation
         @mongocryptd_pid = Process.spawn(
                             @encryption_options[:mongocryptd_spawn_path],
                             *@encryption_options[:mongocryptd_spawn_args],
@@ -84,7 +85,12 @@ module Mongo
 
       # TODO: documentation
       def kill_mongocryptd
-        Process.kill('EXIT', @mongocryptd_pid)
+        # TODO: think through validation
+        print "kill!!"
+        Process.kill('ABRT', @mongocryptd_pid)
+        Process.wait(@mongocryptd_pid)
+
+        @mongocryptd_pid = nil
       end
 
       # Close the resources created by the AutoEncrypter
