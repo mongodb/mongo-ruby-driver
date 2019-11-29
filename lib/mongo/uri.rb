@@ -454,7 +454,7 @@ module Mongo
     end
 
     def decode(value)
-      ::URI.decode(value)
+      ::URI.decode_www_form_component(value)
     end
 
     def encode(value)
