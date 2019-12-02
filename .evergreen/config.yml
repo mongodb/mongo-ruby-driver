@@ -351,6 +351,16 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
+  "run tests via mlaunch":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-mlaunch.sh
+
   "run tests with kerberos":
     - command: shell.exec
       type: test
@@ -370,6 +380,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-x509-tests.sh
+  
   "run field level encryption tests":
     - command: shell.exec
       type: test
@@ -379,16 +390,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-fle-tests.sh
-
-  "run tests via mlaunch":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-mlaunch.sh
 
   "run local tls tests":
     - command: shell.exec
