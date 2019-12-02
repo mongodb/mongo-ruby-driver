@@ -136,12 +136,7 @@ describe 'Client auto-encryption options' do
       expect(client.mongocryptd_client.options[:monitoring_io]).to be false
     end
 
-    it 'does not spawn mongocryptd' do
-      expect(client).not_to receive(:spawn_mongocryptd)
-    end
-
     context 'with default extra options' do
-
       let(:auto_encryption_options) do
         {
           key_vault_namespace: key_vault_namespace,
@@ -179,11 +174,16 @@ describe 'Client auto-encryption options' do
             key_vault_namespace: 'database.collection',
             kms_providers: {
               local: { key: Base64.encode64('ruby' * 24) },
+            },
+            extra_options: {
+              mongocryptd_bypass_spawn: mongocryptd_bypass_spawn
             }
           }
         }
       )
     end
+
+    let(:mongocryptd_bypass_spawn) { false }
 
     describe '#initialize' do
       after do
@@ -198,6 +198,15 @@ describe 'Client auto-encryption options' do
         # if the process group id is a number, the process is
         # still running
         expect(Process.getpgid(pid)).to be_a_kind_of(Numeric)
+      end
+
+      context 'with mongocryptd_bypass_spawn: true' do
+        let(:mongocryptd_bypass_spawn) { true }
+
+        it 'does not spawn mongocryptd' do
+          expect_any_instance_of(Mongo::Client).not_to receive(:spawn_mongocryptd)
+          expect(client.mongocryptd_pid).to be_nil
+        end
       end
     end
 
