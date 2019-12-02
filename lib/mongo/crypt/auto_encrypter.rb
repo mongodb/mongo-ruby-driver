@@ -104,7 +104,7 @@ module Mongo
           Process.kill('ABRT', @mongocryptd_pid)
           Process.wait(@mongocryptd_pid)
         rescue Errno::ESRCH
-         log_warn("There is no mongocrypd process running at #{@mongocryptd_pid}.")
+         log_warn("There was no mongocrypd process running at #{@mongocryptd_pid}.")
         end
 
         @mongocryptd_pid = nil
