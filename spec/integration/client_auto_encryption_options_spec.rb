@@ -6,7 +6,7 @@ describe 'Client auto-encryption options' do
   require_libmongocrypt
   min_server_version '4.2'
 
-  let(:client) { new_local_client_nmio('mongodb://127.0.0.1:27017/', client_opts) }
+  let(:client) { new_local_client_nmio([SpecConfig.instance.addresses.first], client_opts) }
 
   let(:client_opts) { { auto_encryption_options: auto_encryption_options } }
 
@@ -170,7 +170,7 @@ describe 'Client auto-encryption options' do
 
     let(:client) do
       ClientRegistry.instance.new_local_client(
-        'mongodb://127.0.0.1:27017',
+        [SpecConfig.instance.addresses.first],
         {
           auto_encryption_options: {
             key_vault_client: new_local_client_nmio('mongodb://127.0.0.1:27018'),
@@ -187,10 +187,6 @@ describe 'Client auto-encryption options' do
     let(:extra_options) { {} }
 
     describe '#initialize' do
-      after do
-        close_local_clients
-      end
-
       it 'spawns mongocryptd' do
         pid = client.mongocryptd_pid
 
