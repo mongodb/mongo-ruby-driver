@@ -104,31 +104,11 @@ module Mongo
                           )
       end
 
-      # Abort the spawned mongocryptd process. Will not raise an error,
-      # even if the process has already been terminated.
-      #
-      # @return [ true ] Always true
-      def kill_mongocryptd
-        return true if @mongocryptd_pid.nil?
-
-        begin
-          Process.kill('ABRT', @mongocryptd_pid)
-          Process.wait(@mongocryptd_pid)
-        rescue Errno::ESRCH
-         log_warn("There was no mongocrypd process running at #{@mongocryptd_pid}.")
-        end
-
-        @mongocryptd_pid = nil
-
-        true
-      end
-
       # Close the resources created by the AutoEncrypter
       #
       # @return [ true ] Always true
       def teardown_encrypter
         @mongocryptd_client.close if @mongocryptd_client
-        kill_mongocryptd
 
         true
       end
