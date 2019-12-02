@@ -72,7 +72,7 @@ module Mongo
                                 monitoring_io: mongocryptd_client_monitoring_io,
                               )
 
-        unless @encryption_options[:mongocryptd_bypass_spawn] || !mongocryptd_client_monitoring_io
+        if !@encryption_options[:mongocryptd_bypass_spawn] && mongocryptd_client_monitoring_io
           self.spawn_mongocryptd
         end
 
