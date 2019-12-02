@@ -84,6 +84,9 @@ module Mongo
       # encrypt options. Stdout and Stderr of this new process are written
       # to /dev/null.
       #
+      # @note To capture the mongocryptd logs, add "--logpath=/path/to/logs"
+      #   to auto_encryption_options -> extra_options -> mongocrpytd_spawn_args
+      #
       # @return [ Integer ] The process id of the spawned process
       def spawn_mongocryptd
         @mongocryptd_pid = Process.spawn(
