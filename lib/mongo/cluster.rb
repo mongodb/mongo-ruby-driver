@@ -105,6 +105,8 @@ module Mongo
         options[:cleanup] = false
       end
 
+      seeds = seeds.uniq
+
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
