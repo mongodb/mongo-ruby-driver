@@ -187,6 +187,10 @@ describe 'Client auto-encryption options' do
     let(:extra_options) { {} }
 
     describe '#initialize' do
+      after do
+        close_local_clients
+      end
+
       it 'spawns mongocryptd' do
         pid = client.mongocryptd_pid
 
