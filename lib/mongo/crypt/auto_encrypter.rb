@@ -21,7 +21,7 @@ module Mongo
     module AutoEncrypter
       include Encrypter
 
-      attr_accessor :mongocryptd_client, :mongocryptd_pid
+      attr_reader :mongocryptd_client, :mongocryptd_pid
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
@@ -54,7 +54,13 @@ module Mongo
         extra_options = options.delete(:extra_options)
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
-        mongocryptd_client_monitoring_io = extra_options.delete(:mongocryptd_client_monitoring_io)
+        monitoring_io_option = extra_options.delete(:mongocryptd_client_monitoring_io)
+
+        if monitoring_io_option.nil?
+          mongocryptd_client_monitoring_io = true
+        else
+          mongocryptd_client_monitoring_io = monitoring_io_option
+        end
 
         opts_copy = options.dup
         opts_copy[:bypass_auto_encryption] = opts_copy[:bypass_auto_encryption] || false
@@ -66,7 +72,7 @@ module Mongo
                                 monitoring_io: mongocryptd_client_monitoring_io,
                               )
 
-        unless @encryption_options[:mongocryptd_bypass_spawn]
+        unless @encryption_options[:mongocryptd_bypass_spawn] || !mongocryptd_client_monitoring_io
           self.spawn_mongocryptd
         end
 
@@ -75,7 +81,6 @@ module Mongo
 
       # TODO: documentation
       def spawn_mongocryptd
-        # TODO: think through validation
         @mongocryptd_pid = Process.spawn(
                             @encryption_options[:mongocryptd_spawn_path],
                             *@encryption_options[:mongocryptd_spawn_args],
@@ -86,9 +91,12 @@ module Mongo
       # TODO: documentation
       def kill_mongocryptd
         # TODO: think through validation
-        print "kill!!"
-        Process.kill('ABRT', @mongocryptd_pid)
-        Process.wait(@mongocryptd_pid)
+        begin
+          Process.kill('ABRT', @mongocryptd_pid)
+          Process.wait(@mongocryptd_pid)
+        rescue Errno::ESRCH
+
+        end
 
         @mongocryptd_pid = nil
       end
@@ -97,8 +105,9 @@ module Mongo
       #
       # @return [ true ] Always true
       def teardown_encrypter
+        # TODO: fix this
         @mongocryptd_client.close if @mongocryptd_client
-        kill_mongocryptd if @mongocryptd_pid
+        kill_mongocryptd if @mongocryptd_pid # TODO: validation of some sort
 
         true
       end

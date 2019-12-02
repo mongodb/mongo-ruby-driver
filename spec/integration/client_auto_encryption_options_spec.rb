@@ -36,7 +36,7 @@ describe 'Client auto-encryption options' do
     JSON.parse(File.read('spec/mongo/crypt/data/schema_map.json'))
   end
 
-  let(:bypass_auto_encryption) { false }
+  let(:bypass_auto_encryption) { true }
 
   let(:extra_options) do
     {
@@ -150,14 +150,6 @@ describe 'Client auto-encryption options' do
         }
       end
 
-      before do
-        # allow(Process).to receive(:spawn).with(
-        #   'mongocryptd',
-        #   '--idleShutdownTimeoutSecs=60',
-        #   [:out, :err] => '/dev/null'
-        # )
-      end
-
       it 'sets key_vault_client as self' do
         expect(client.encryption_options[:key_vault_client]).to eq(client)
       end
@@ -174,21 +166,62 @@ describe 'Client auto-encryption options' do
         expect(client_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
         expect(client_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
       end
+    end
+  end
 
-      it 'spawns mongocryptd' do
-        client
+  describe 'Spawning mongocryptd' do
+    let(:client) do
+      ClientRegistry.instance.new_local_client(
+        'mongodb://127.0.0.1:27017',
+        {
+          auto_encryption_options: {
+            key_vault_client: new_local_client_nmio('mongodb://127.0.0.1:27018'),
+            key_vault_namespace: 'database.collection',
+            kms_providers: {
+              local: { key: Base64.encode64('ruby' * 24) },
+            }
+          }
+        }
+      )
+    end
 
-        expect(client.mongocryptd_pid).not_to be_nil
-        expect(Process.getpgid(client.mongocryptd_pid)).to be_a_kind_of(Numeric)
-
+    describe '#initialize' do
+      after do
         client.close
       end
 
-      it 'kills mongocryptd process on close' do
+      it 'spawns mongocryptd' do
         pid = client.mongocryptd_pid
+        expect(Process.getpgid(pid)).to be_a_kind_of(Numeric)
+      end
+    end
+
+    describe '#close' do
+      it 'kills mongocryptd process' do
+        pid = client.mongocryptd_pid
+        expect(Process.getpgid(pid)).to be_a_kind_of(Numeric)
 
         client.close
-        expect { Process.getpgid(pid) }.to raise_error(Errno::ESRCH)
+        expect(client.mongocryptd_pid).to be_nil
+
+        expect do
+          Process.getpgid(pid)
+        end.to raise_error(Errno::ESRCH)
+      end
+
+      context 'if mongocryptd process has already been killed' do
+        before do
+          pid = client.mongocryptd_pid
+
+          Process.kill('ABRT', pid)
+          Process.wait(pid)
+        end
+
+        it 'does not throw an error' do
+          expect do
+            client.close
+          end.not_to raise_error
+        end
       end
     end
   end
