@@ -208,6 +208,14 @@ module Constraints
     end
   end
 
+  def require_enterprise
+    before(:all) do
+      unless ClusterConfig.instance.enterprise?
+        skip 'Test requires enterprise build of MongoDB'
+      end
+    end
+  end
+
   # Integration tests for SRV polling require internet connectivity to
   # look up SRV records and a sharded cluster configured on default port on
   # localhost (localhost:27017, localhost:27018).

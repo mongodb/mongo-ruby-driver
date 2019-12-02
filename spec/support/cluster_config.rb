@@ -19,6 +19,11 @@ class ClusterConfig
     @server_version
   end
 
+  def enterprise?
+    determine_cluster_config
+    @enterprise
+  end
+
   def short_server_version
     server_version.split('.')[0..1].join('.')
   end
@@ -178,7 +183,10 @@ class ClusterConfig
 
     @single_server = client.cluster.servers_list.length == 1
 
-    @server_version = client.database.command(buildInfo: 1).first['version']
+    build_info = client.database.command(buildInfo: 1).first
+
+    @server_version = build_info['version']
+    @enterprise = build_info['modules'].include?('enterprise')
 
     if @topology != :sharded && short_server_version >= '3.4'
       rv = client.use(:admin).command(getParameter: 1, featureCompatibilityVersion: 1).first['featureCompatibilityVersion']

@@ -4,6 +4,7 @@ require 'base64'
 
 describe 'Client auto-encryption options' do
   require_libmongocrypt
+  min_server_version '4.2'
 
   let(:client) { new_local_client_nmio('mongodb://127.0.0.1:27017/', client_opts) }
 
@@ -165,6 +166,8 @@ describe 'Client auto-encryption options' do
   end
 
   describe 'Spawning mongocryptd' do
+    require_enterprise
+
     let(:client) do
       ClientRegistry.instance.new_local_client(
         'mongodb://127.0.0.1:27017',
