@@ -192,6 +192,11 @@ describe 'Client auto-encryption options' do
 
       it 'spawns mongocryptd' do
         pid = client.mongocryptd_pid
+
+        # Verify that the process at pid is still running -
+        # every active process will have a process group, so
+        # if the process group id is a number, the process is
+        # still running
         expect(Process.getpgid(pid)).to be_a_kind_of(Numeric)
       end
     end
@@ -199,14 +204,16 @@ describe 'Client auto-encryption options' do
     describe '#close' do
       it 'kills mongocryptd process' do
         pid = client.mongocryptd_pid
-        expect(Process.getpgid(pid)).to be_a_kind_of(Numeric)
 
         client.close
         expect(client.mongocryptd_pid).to be_nil
 
+        # Verify that there is no process running at pid -
+        # the getpgid method will throw and error if
+        # no process is running at that pid
         expect do
           Process.getpgid(pid)
-        end.to raise_error(Errno::ESRCH)
+        end.to raise_error(Errno::ESRCH, /No such process/)
       end
 
       context 'if mongocryptd process has already been killed' do

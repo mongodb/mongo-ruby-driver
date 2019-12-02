@@ -79,7 +79,12 @@ module Mongo
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
 
-      # TODO: documentation
+      # Spawn a new mongocryptd process using the mongocryptd_spawn_path
+      # and mongocryptd_spawn_args passed in through the extra auto
+      # encrypt options. Stdout and Stderr of this new process are written
+      # to /dev/null.
+      #
+      # @return [ Integer ] The process id of the spawned process
       def spawn_mongocryptd
         @mongocryptd_pid = Process.spawn(
                             @encryption_options[:mongocryptd_spawn_path],
@@ -88,26 +93,31 @@ module Mongo
                           )
       end
 
-      # TODO: documentation
+      # Abort the spawned mongocryptd process. Will not raise an error,
+      # even if the process has already been terminated.
+      #
+      # @return [ true ] Always true
       def kill_mongocryptd
-        # TODO: think through validation
+        return true if @mongocryptd_pid.nil?
+
         begin
           Process.kill('ABRT', @mongocryptd_pid)
           Process.wait(@mongocryptd_pid)
         rescue Errno::ESRCH
-
+         log_warn("There is no mongocrypd process running at #{@mongocryptd_pid}.")
         end
 
         @mongocryptd_pid = nil
+
+        true
       end
 
       # Close the resources created by the AutoEncrypter
       #
       # @return [ true ] Always true
       def teardown_encrypter
-        # TODO: fix this
         @mongocryptd_client.close if @mongocryptd_client
-        kill_mongocryptd if @mongocryptd_pid # TODO: validation of some sort
+        kill_mongocryptd
 
         true
       end
