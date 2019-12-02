@@ -178,21 +178,15 @@ describe 'Client auto-encryption options' do
             kms_providers: {
               local: { key: Base64.encode64('ruby' * 24) },
             },
-            extra_options: {
-              mongocryptd_bypass_spawn: mongocryptd_bypass_spawn
-            }
+            extra_options: extra_options
           }
         }
       )
     end
 
-    let(:mongocryptd_bypass_spawn) { false }
+    let(:extra_options) { {} }
 
     describe '#initialize' do
-      after do
-        client.close
-      end
-
       it 'spawns mongocryptd' do
         pid = client.mongocryptd_pid
 
@@ -204,11 +198,30 @@ describe 'Client auto-encryption options' do
       end
 
       context 'with mongocryptd_bypass_spawn: true' do
-        let(:mongocryptd_bypass_spawn) { true }
+        let(:extra_options) do
+          {
+            mongocryptd_bypass_spawn: true,
+          }
+        end
 
         it 'does not spawn mongocryptd' do
           expect_any_instance_of(Mongo::Client).not_to receive(:spawn_mongocryptd)
           expect(client.mongocryptd_pid).to be_nil
+        end
+      end
+
+      context 'with empty arguments and shell command as path' do
+        let(:extra_options) do
+          {
+            mongocryptd_spawn_path: 'echo hello world',
+            mongocryptd_spawn_args: []
+          }
+        end
+
+        it 'attempmts to spawn mongocryptd at path and throws an error' do
+          expect do
+            client
+          end.to raise_error(Errno::ENOENT, /No such file or directory - echo hello world/)
         end
       end
     end

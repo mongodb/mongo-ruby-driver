@@ -67,6 +67,8 @@ module Mongo
 
         super(opts_copy.merge(extra_options))
 
+        # validate_extra_options!
+
         @mongocryptd_client = Client.new(
                                 @encryption_options[:mongocryptd_uri],
                                 monitoring_io: mongocryptd_client_monitoring_io,
@@ -89,9 +91,15 @@ module Mongo
       #
       # @return [ Integer ] The process id of the spawned process
       def spawn_mongocryptd
+        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
+
+        if  mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
+          mongocryptd_spawn_args = ['--idleShutdownTimeoutSecs=0']
+        end
+
         @mongocryptd_pid = Process.spawn(
                             @encryption_options[:mongocryptd_spawn_path],
-                            *@encryption_options[:mongocryptd_spawn_args],
+                            *mongocryptd_spawn_args,
                             [:out, :err]=>'/dev/null'
                           )
       end
@@ -123,6 +131,30 @@ module Mongo
         kill_mongocryptd
 
         true
+      end
+
+      private
+
+      def validate_extra_options!
+        mongocryptd_spawn_path = @encryption_options[:mongocryptd_spawn_path]
+        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
+
+        empty_arguments = mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
+
+        if empty_arguments
+          executable = File.executable?(mongocryptd_spawn_path)
+          executable_in_path = ENV['PATH'].split(':').any? do |path_loc|
+            File.executable?("#{path_loc}/#{mongocryptd_spawn_path}")
+          end
+
+          if !executable && !executable_in_path
+            raise ArgumentError.new(
+              "The argument provided for mongocryptd_spawn_path must be the path " +
+              "to an executable file. #{mongocryptd_spawn_path} is not an " +
+              "executable file."
+            )
+          end
+        end
       end
     end
   end
