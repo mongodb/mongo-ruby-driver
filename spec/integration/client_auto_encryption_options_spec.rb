@@ -225,36 +225,5 @@ describe 'Client auto-encryption options' do
         end
       end
     end
-
-    describe '#close' do
-      it 'kills mongocryptd process' do
-        pid = client.mongocryptd_pid
-
-        client.close
-        expect(client.mongocryptd_pid).to be_nil
-
-        # Verify that there is no process running at pid -
-        # the getpgid method will throw and error if
-        # no process is running at that pid
-        expect do
-          Process.getpgid(pid)
-        end.to raise_error(Errno::ESRCH, /No such process/)
-      end
-
-      context 'if mongocryptd process has already been killed' do
-        before do
-          pid = client.mongocryptd_pid
-
-          Process.kill('ABRT', pid)
-          Process.wait(pid)
-        end
-
-        it 'does not throw an error' do
-          expect do
-            client.close
-          end.not_to raise_error
-        end
-      end
-    end
   end
 end
