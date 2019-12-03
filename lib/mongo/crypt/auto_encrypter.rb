@@ -75,12 +75,15 @@ module Mongo
       #   to auto_encryption_options -> extra_options -> mongocrpytd_spawn_args
       #
       # @return [ Integer ] The process id of the spawned process
+      #
+      # @raise [ ArgumentError ] Raises an exception if no encryption options
+      #   have been provided
       def spawn_mongocryptd
-        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
-
-        if  mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
-          mongocryptd_spawn_args = ['--idleShutdownTimeoutSecs=0']
+        unless @encryption_options
+          raise ArgumentError.new('Cannot spawn mongocryptd process without setting auto encryption options on the client.')
         end
+
+        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
 
         Process.spawn(
           @encryption_options[:mongocryptd_spawn_path],
@@ -100,6 +103,11 @@ module Mongo
 
       private
 
+      # Sets the following default options:
+      # - default values for all extra_options
+      # - adds --idleShtudownTimeoutSecs=60 to extra_options[:mongocryptd_spawn_args]
+      #   if not already present
+      # - sets bypass_auto_encryption to false
       def set_default_options(options)
         opts = options.dup
 
