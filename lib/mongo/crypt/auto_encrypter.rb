@@ -51,7 +51,7 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
-        opts = set_default_options(options)
+        opts = set_default_options(options.dup)
 
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
@@ -109,8 +109,6 @@ module Mongo
       #   if not already present
       # - sets bypass_auto_encryption to false
       def set_default_options(options)
-        opts = options.dup
-
         extra_options = opts.delete(:extra_options)
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
