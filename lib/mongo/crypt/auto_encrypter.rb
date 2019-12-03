@@ -21,7 +21,7 @@ module Mongo
     module AutoEncrypter
       include Encrypter
 
-      attr_reader :mongocryptd_client, :mongocryptd_pid
+      attr_reader :mongocryptd_client
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
@@ -51,32 +51,17 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
-        extra_options = options.delete(:extra_options)
-        extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
+        opts = set_default_options(options)
 
-        monitoring_io_option = extra_options.delete(:mongocryptd_client_monitoring_io)
+        mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
+        mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
-        if monitoring_io_option.nil?
-          mongocryptd_client_monitoring_io = true
-        else
-          mongocryptd_client_monitoring_io = monitoring_io_option
-        end
-
-        opts_copy = options.dup
-        opts_copy[:bypass_auto_encryption] = opts_copy[:bypass_auto_encryption] || false
-
-        super(opts_copy.merge(extra_options))
-
-        # validate_extra_options!
+        super(opts)
 
         @mongocryptd_client = Client.new(
                                 @encryption_options[:mongocryptd_uri],
                                 monitoring_io: mongocryptd_client_monitoring_io,
                               )
-
-        if !@encryption_options[:mongocryptd_bypass_spawn] && mongocryptd_client_monitoring_io
-          self.spawn_mongocryptd
-        end
 
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
@@ -97,11 +82,11 @@ module Mongo
           mongocryptd_spawn_args = ['--idleShutdownTimeoutSecs=0']
         end
 
-        @mongocryptd_pid = Process.spawn(
-                            @encryption_options[:mongocryptd_spawn_path],
-                            *mongocryptd_spawn_args,
-                            [:out, :err]=>'/dev/null'
-                          )
+        Process.spawn(
+          @encryption_options[:mongocryptd_spawn_path],
+          *mongocryptd_spawn_args,
+          [:out, :err]=>'/dev/null'
+        )
       end
 
       # Close the resources created by the AutoEncrypter
@@ -115,26 +100,26 @@ module Mongo
 
       private
 
-      def validate_extra_options!
-        mongocryptd_spawn_path = @encryption_options[:mongocryptd_spawn_path]
-        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
+      def set_default_options(options)
+        opts = options.dup
 
-        empty_arguments = mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
+        extra_options = opts.delete(:extra_options)
+        extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
-        if empty_arguments
-          executable = File.executable?(mongocryptd_spawn_path)
-          executable_in_path = ENV['PATH'].split(':').any? do |path_loc|
-            File.executable?("#{path_loc}/#{mongocryptd_spawn_path}")
-          end
-
-          if !executable && !executable_in_path
-            raise ArgumentError.new(
-              "The argument provided for mongocryptd_spawn_path must be the path " +
-              "to an executable file. #{mongocryptd_spawn_path} is not an " +
-              "executable file."
-            )
-          end
+        has_timeout_string_arg = extra_options[:mongocryptd_spawn_args].any? do |elem|
+          elem.is_a?(String) && elem.match(/\A--idleShutdownTimeoutSecs=\d+\z/)
         end
+
+        timeout_int_arg_idx = extra_options[:mongocryptd_spawn_args].index('--idleShutdownTimeoutSecs')
+        has_timeout_int_arg = timeout_int_arg_idx && extra_options[:mongocryptd_spawn_args][timeout_int_arg_idx + 1].is_a?(Integer)
+
+        unless has_timeout_string_arg || has_timeout_int_arg
+          extra_options[:mongocryptd_spawn_args] << '--idleShutdownTimeoutSecs=60'
+        end
+
+        opts[:bypass_auto_encryption] ||= false
+
+        opts.merge(extra_options)
       end
     end
   end

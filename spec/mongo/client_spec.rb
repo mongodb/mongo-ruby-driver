@@ -840,4 +840,8 @@ describe Mongo::Client do
       end
     end
   end
+
+  describe '#spawn_mongocryptd' do
+   
+  end
 end
