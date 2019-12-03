@@ -109,6 +109,8 @@ module Mongo
       #   if not already present
       # - sets bypass_auto_encryption to false
       def set_default_options(options)
+        opts = options.dup
+
         extra_options = opts.delete(:extra_options)
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 

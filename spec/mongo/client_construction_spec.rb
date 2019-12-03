@@ -274,71 +274,73 @@ describe Mongo::Client do
           end
         end
 
-        it 'does not raise an exception' do
-          expect { client }.not_to raise_error
-        end
-
-        it 'sets options on the client' do
-          client_options = client.encryption_options
-
-          expect(client_options[:key_vault_client]).to eq(key_vault_client)
-          expect(client_options[:key_vault_namespace]).to eq(key_vault_namespace)
-          expect(client_options[:kms_providers]).to eq({
-            'local' => { 'key' => Base64.encode64('ruby' * 24) },
-            'aws' => { 'access_key_id' => 'ACCESS_KEY_ID', 'secret_access_key' => 'SECRET_ACCESS_KEY' }
-          })
-          expect(client_options[:schema_map]).to eq(schema_map)
-          expect(client_options[:bypass_auto_encryption]).to eq(bypass_auto_encryption)
-          expect(client_options[:mongocryptd_uri]).to eq(mongocryptd_uri)
-          expect(client_options[:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
-          expect(client_options[:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
-          expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
-
-          expect(client.mongocryptd_client.options[:monitoring_io]).to be false
-        end
-
-        context 'with default extra options' do
-          let(:auto_encryption_options) do
-            {
-              key_vault_namespace: key_vault_namespace,
-              kms_providers: kms_providers,
-              schema_map: schema_map,
-            }
+        context 'with valid options' do
+          it 'does not raise an exception' do
+            expect { client }.not_to raise_error
           end
 
-          it 'sets key_vault_client as self' do
-            expect(client.encryption_options[:key_vault_client]).to eq(client)
-          end
-
-          it 'sets bypass_auto_encryption to false' do
-            expect(client.encryption_options[:bypass_auto_encryption]).to be false
-          end
-
-          it 'sets extra options to defaults' do
+          it 'sets options on the client' do
             client_options = client.encryption_options
 
-            expect(client_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')
-            expect(client_options[:mongocryptd_bypass_spawn]).to be false
-            expect(client_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
-            expect(client_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
-          end
-        end
-
-        context 'with mongocryptd_spawn_args that don\'t include idleShutdownTimeoutSecs' do
-          let(:mongocryptd_spawn_args) { ['--otherArgument=true'] }
-
-          it 'adds a default value to mongocryptd_spawn_args' do
-            client_options = client.encryption_options
-            expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args + ['--idleShutdownTimeoutSecs=60'])
-          end
-        end
-
-        context 'with mongocryptd_spawn_args that has idleShutdownTimeoutSecs as two arguments' do
-          let(:mongocryptd_spawn_args) { ['--idleShutdownTimeoutSecs', 100] }
-
-          it 'does not modify mongocryptd_spawn_args' do
-            client_options = client.encryption_options
+            expect(client_options[:key_vault_client]).to eq(key_vault_client)
+            expect(client_options[:key_vault_namespace]).to eq(key_vault_namespace)
+            expect(client_options[:kms_providers]).to eq({
+              'local' => { 'key' => Base64.encode64('ruby' * 24) },
+              'aws' => { 'access_key_id' => 'ACCESS_KEY_ID', 'secret_access_key' => 'SECRET_ACCESS_KEY' }
+            })
+            expect(client_options[:schema_map]).to eq(schema_map)
+            expect(client_options[:bypass_auto_encryption]).to eq(bypass_auto_encryption)
+            expect(client_options[:mongocryptd_uri]).to eq(mongocryptd_uri)
+            expect(client_options[:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
+            expect(client_options[:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
             expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+
+            expect(client.mongocryptd_client.options[:monitoring_io]).to be false
+          end
+
+          context 'with default extra options' do
+            let(:auto_encryption_options) do
+              {
+                key_vault_namespace: key_vault_namespace,
+                kms_providers: kms_providers,
+                schema_map: schema_map,
+              }
+            end
+
+            it 'sets key_vault_client as self' do
+              expect(client.encryption_options[:key_vault_client]).to eq(client)
+            end
+
+            it 'sets bypass_auto_encryption to false' do
+              expect(client.encryption_options[:bypass_auto_encryption]).to be false
+            end
+
+            it 'sets extra options to defaults' do
+              client_options = client.encryption_options
+
+              expect(client_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')
+              expect(client_options[:mongocryptd_bypass_spawn]).to be false
+              expect(client_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
+              expect(client_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
+            end
+          end
+
+          context 'with mongocryptd_spawn_args that don\'t include idleShutdownTimeoutSecs' do
+            let(:mongocryptd_spawn_args) { ['--otherArgument=true'] }
+
+            it 'adds a default value to mongocryptd_spawn_args' do
+              client_options = client.encryption_options
+              expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args + ['--idleShutdownTimeoutSecs=60'])
+            end
+          end
+
+          context 'with mongocryptd_spawn_args that has idleShutdownTimeoutSecs as two arguments' do
+            let(:mongocryptd_spawn_args) { ['--idleShutdownTimeoutSecs', 100] }
+
+            it 'does not modify mongocryptd_spawn_args' do
+              client_options = client.encryption_options
+              expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+            end
           end
         end
       end
