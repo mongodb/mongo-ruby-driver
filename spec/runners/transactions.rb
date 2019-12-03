@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'support/transactions/context'
-require 'support/transactions/operation'
-require 'support/transactions/spec'
-require 'support/transactions/test'
+require 'runners/transactions/context'
+require 'runners/transactions/operation'
+require 'runners/transactions/spec'
+require 'runners/transactions/test'
 
 def define_transactions_spec_tests(test_paths)
 

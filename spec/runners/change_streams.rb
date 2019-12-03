@@ -24,7 +24,7 @@ RSpec::Matchers.define :match_commands do |test|
   end
 end
 
-require 'support/change_streams/operation'
+require 'runners/change_streams/operation'
 
 module Mongo
   module ChangeStreams

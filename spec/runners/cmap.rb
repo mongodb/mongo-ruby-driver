@@ -1,4 +1,4 @@
-require 'support/cmap/verifier'
+require 'runners/cmap/verifier'
 
 module Mongo
   module Cmap
