@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'support/gridfs'
-require 'support/crud/requirement'
-require 'support/crud/spec'
-require 'support/crud/test_base'
-require 'support/crud/test'
-require 'support/crud/outcome'
-require 'support/crud/context'
-require 'support/crud/operation'
-require 'support/crud/verifier'
+require 'runners/gridfs'
+require 'runners/crud/requirement'
+require 'runners/crud/spec'
+require 'runners/crud/test_base'
+require 'runners/crud/test'
+require 'runners/crud/outcome'
+require 'runners/crud/context'
+require 'runners/crud/operation'
+require 'runners/crud/verifier'
 
 def collection_data(collection)
   collection.find.to_a
