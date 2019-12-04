@@ -21,7 +21,7 @@ module Mongo
     module AutoEncrypter
       include Encrypter
 
-      attr_accessor :mongocryptd_client
+      attr_reader :mongocryptd_client
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
@@ -51,15 +51,12 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
-        extra_options = options.delete(:extra_options)
-        extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
+        opts = set_default_options(options.dup)
 
-        mongocryptd_client_monitoring_io = extra_options.delete(:mongocryptd_client_monitoring_io)
+        mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
+        mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
-        opts_copy = options.dup
-        opts_copy[:bypass_auto_encryption] = opts_copy[:bypass_auto_encryption] || false
-
-        super(opts_copy.merge(extra_options))
+        super(opts)
 
         @mongocryptd_client = Client.new(
                                 @encryption_options[:mongocryptd_uri],
@@ -69,6 +66,32 @@ module Mongo
         # TODO: use all the other options for auto-encryption/auto-decryption
       end
 
+      # Spawn a new mongocryptd process using the mongocryptd_spawn_path
+      # and mongocryptd_spawn_args passed in through the extra auto
+      # encrypt options. Stdout and Stderr of this new process are written
+      # to /dev/null.
+      #
+      # @note To capture the mongocryptd logs, add "--logpath=/path/to/logs"
+      #   to auto_encryption_options -> extra_options -> mongocrpytd_spawn_args
+      #
+      # @return [ Integer ] The process id of the spawned process
+      #
+      # @raise [ ArgumentError ] Raises an exception if no encryption options
+      #   have been provided
+      def spawn_mongocryptd
+        unless @encryption_options
+          raise ArgumentError.new('Cannot spawn mongocryptd process without setting auto encryption options on the client.')
+        end
+
+        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
+
+        Process.spawn(
+          @encryption_options[:mongocryptd_spawn_path],
+          *mongocryptd_spawn_args,
+          [:out, :err]=>'/dev/null'
+        )
+      end
+
       # Close the resources created by the AutoEncrypter
       #
       # @return [ true ] Always true
@@ -76,6 +99,35 @@ module Mongo
         @mongocryptd_client.close if @mongocryptd_client
 
         true
+      end
+
+      private
+
+      # Sets the following default options:
+      # - default values for all extra_options
+      # - adds --idleShtudownTimeoutSecs=60 to extra_options[:mongocryptd_spawn_args]
+      #   if not already present
+      # - sets bypass_auto_encryption to false
+      def set_default_options(options)
+        opts = options.dup
+
+        extra_options = opts.delete(:extra_options)
+        extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
+
+        has_timeout_string_arg = extra_options[:mongocryptd_spawn_args].any? do |elem|
+          elem.is_a?(String) && elem.match(/\A--idleShutdownTimeoutSecs=\d+\z/)
+        end
+
+        timeout_int_arg_idx = extra_options[:mongocryptd_spawn_args].index('--idleShutdownTimeoutSecs')
+        has_timeout_int_arg = timeout_int_arg_idx && extra_options[:mongocryptd_spawn_args][timeout_int_arg_idx + 1].is_a?(Integer)
+
+        unless has_timeout_string_arg || has_timeout_int_arg
+          extra_options[:mongocryptd_spawn_args] << '--idleShutdownTimeoutSecs=60'
+        end
+
+        opts[:bypass_auto_encryption] ||= false
+
+        opts.merge(extra_options)
       end
     end
   end

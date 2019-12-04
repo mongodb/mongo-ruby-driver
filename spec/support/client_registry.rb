@@ -233,6 +233,7 @@ class ClientRegistry
           cluster.disconnect!
         end
       end
+
       @local_clients = []
     end
   end
