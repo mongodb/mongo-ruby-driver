@@ -20,8 +20,13 @@ configuration are given later in this document.
 ## MongoDB Server Deployment
 
 The tests require a running MongoDB deployment, configured and started
-externally to the test suite. Tests that are not appropriate for the running
-deployment will be skipped.
+externally to the test suite.
+
+Tests that are not appropriate for the running deployment will be skipped,
+with one exception: the test suite assumes that fail points are enabled in
+the deployment (see the Fail Points section below). Not every test uses fail
+points, therefore it is possible to launch the server without fail points
+being enabled and still pass many of the tests in the test suite.
 
 ## Starting MongoDB Deployment
 
@@ -41,7 +46,7 @@ launched as follows:
 
     # Launch mongod in one terminal
     mkdir /tmp/mdb
-    mongod --dbpath /tmp/mdb
+    mongod --dbpath /tmp/mdb --setParameter enableTestCommands=1
 
     # Run tests in another terminal
     rake
