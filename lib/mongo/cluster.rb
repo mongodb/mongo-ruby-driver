@@ -258,8 +258,8 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
-    # @return [ Mongo::Server::AppMetadata ] The application metadata, used for connection
-    #   handshakes.
+    # @return [ Mongo::Server::AppMetadata ] The application metadata, used for
+    #   connection handshakes.
     #
     # @since 2.4.0
     attr_reader :app_metadata

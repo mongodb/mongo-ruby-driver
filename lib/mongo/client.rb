@@ -436,7 +436,11 @@ module Mongo
         sdam_proc.call(self)
       end
 
-      @cluster = Cluster.new(addresses, @monitoring, cluster_options.merge(srv_uri: srv_uri))
+      @connect_lock = Mutex.new
+      @connect_lock.synchronize do
+        @cluster = Cluster.new(addresses, @monitoring,
+          cluster_options.merge(srv_uri: srv_uri))
+      end
 
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
@@ -688,7 +692,9 @@ module Mongo
     #
     # @since 2.1.0
     def close
-      @cluster.disconnect!
+      @connect_lock.synchronize do
+        @cluster.disconnect!
+      end
       teardown_encrypter
       true
     end
@@ -704,9 +710,12 @@ module Mongo
     def reconnect
       addresses = cluster.addresses.map(&:to_s)
 
-      @cluster.disconnect! rescue nil
+      @connect_lock.synchronize do
+        @cluster.disconnect! rescue nil
 
-      @cluster = Cluster.new(addresses, monitoring, cluster_options)
+        @cluster = Cluster.new(addresses, monitoring, cluster_options)
+      end
+
       true
     end
 
