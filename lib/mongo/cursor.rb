@@ -207,7 +207,7 @@ module Mongo
 
         unless closed?
           if exhausted?
-            kill_cursors
+            close
             raise StopIteration
           end
           @documents = get_more
@@ -256,6 +256,26 @@ module Mongo
     def closed?
       # @cursor_id should in principle never be nil
       @cursor_id.nil? || @cursor_id == 0
+    end
+
+    # Closes this cursor, freeing any associated resources on the client and
+    # the server.
+    #
+    # @return [ nil ] Always nil.
+    #
+    # @raise [ Error::OperationFailure ] If the server cursor close fails.
+    def close
+      return if closed?
+
+      unregister
+      read_with_one_retry do
+        kill_cursors_operation.execute(@server)
+      end
+
+      nil
+    ensure
+      end_session
+      @cursor_id = 0
     end
 
     # Get the parsed collection name.
@@ -337,16 +357,6 @@ module Mongo
         spec = Builder::OpGetMore.new(self).specification
       end
       Operation::GetMore.new(spec)
-    end
-
-    def kill_cursors
-      unregister
-      read_with_one_retry do
-        kill_cursors_operation.execute(@server)
-      end
-    ensure
-      end_session
-      @cursor_id = 0
     end
 
     def end_session
