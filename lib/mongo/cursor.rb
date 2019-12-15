@@ -19,8 +19,9 @@ module Mongo
   # Client-side representation of an iterator over a query result set on
   # the server.
   #
-  # A +Cursor+ is not created directly by a user. Rather, +CollectionView+
-  # creates a +Cursor+ in an Enumerable module method.
+  # +Cursor+ objects are not directly exposed to application code. Rather,
+  # +Collection::View+ exposes the +Enumerable+ interface to the applications,
+  # and the enumerator is backed by a +Cursor+ instance.
   #
   # @example Get an array of 5 users named Emily.
   #   users.find({:name => 'Emily'}).limit(5).to_a
@@ -28,8 +29,7 @@ module Mongo
   # @example Call a block on each user doc.
   #   users.find.each { |doc| puts doc }
   #
-  # @note The +Cursor+ API is semipublic.
-  # @api semipublic
+  # @api private
   class Cursor
     extend Forwardable
     include Enumerable
