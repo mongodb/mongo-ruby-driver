@@ -584,10 +584,10 @@ describe Mongo::Cursor do
           expect(cursor.to_a.map { |doc| doc['a'] }).to eq((0..9).to_a + (20..99).to_a)
         end
 =end
-        it 'raises NotImplementedError' do
+        it 'raises InvalidCursorOperation' do
           expect do
             cursor.to_a
-          end.to raise_error(NotImplementedError, 'Cannot restart iteration of a cursor which issued a getMore')
+          end.to raise_error(Mongo::Error::InvalidCursorOperation, 'Cannot restart iteration of a cursor which issued a getMore')
         end
       end
     end

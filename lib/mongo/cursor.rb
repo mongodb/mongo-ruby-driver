@@ -122,6 +122,10 @@ module Mongo
 
     # Iterate through documents returned from the query.
     #
+    # A cursor may be iterated at most once. Incomplete iteration is also
+    # allowed. Attempting to iterate the cursor more than once raises
+    # InvalidCursorOperation.
+    #
     # @example Iterate over the documents in the cursor.
     #   cursor.each do |doc|
     #     ...
@@ -142,19 +146,29 @@ module Mongo
       # end of previous iteration or would always restart from the
       # beginning.
       if @get_more_called
-        raise NotImplementedError, 'Cannot restart iteration of a cursor which issued a getMore'
+        raise Error::InvalidCursorOperation, 'Cannot restart iteration of a cursor which issued a getMore'
       end
 
       # To maintain compatibility with pre-2.10 driver versions, reset
       # the documents array each time a new iteration is started.
       @documents = nil
 
-      loop do
-        document = try_next
-        yield document if document
+      if block_given?
+        # StopIteration raised by try_next ends this loop.
+        loop do
+          document = try_next
+          yield document if document
+        end
+        self
+      else
+        documents = []
+        # StopIteration raised by try_next ends this loop.
+        loop do
+          document = try_next
+          documents << document if document
+        end
+        documents
       end
-    rescue StopIteration => e
-      return self
     end
 
     # Return one document from the query, if one is available.
@@ -168,6 +182,10 @@ module Mongo
     # @note This method is experimental and subject to change.
     #
     # @return [ BSON::Document | nil ] A document.
+    #
+    # @raise [ StopIteration ] Raised on the calls after the cursor had been
+    #   completely iterated.
+    #
     # @api private
     def try_next
       if @documents.nil?
