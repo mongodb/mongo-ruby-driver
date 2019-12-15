@@ -71,11 +71,14 @@ module Mongo
       @initial_result = result
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
+      if @cursor_id.nil?
+        raise ArgumentError, 'Cursor id must be present in the result'
+      end
       @coll_name = nil
       @options = options
       @session = @options[:session]
-      register
-      if @cursor_id && @cursor_id > 0
+      unless closed?
+        register
         ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
           cluster,
           kill_cursors_op_spec,
@@ -202,7 +205,7 @@ module Mongo
         # On empty batches, we cache the batch resume token
         cache_batch_resume_token
 
-        if more?
+        unless closed?
           if exhausted?
             kill_cursors
             raise StopIteration
@@ -251,7 +254,8 @@ module Mongo
     #
     # @since 2.2.0
     def closed?
-      !more?
+      # @cursor_id should in principle never be nil
+      @cursor_id.nil? || @cursor_id == 0
     end
 
     # Get the parsed collection name.
@@ -365,21 +369,21 @@ module Mongo
       limit ? limit > 0 : false
     end
 
-    def more?
-      @cursor_id != 0
-    end
-
     def process(result)
       @remaining -= result.returned_count if limited?
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
-      unregister if result.cursor_id == 0
+      # #process is called for the first batch of results. In this case
+      # the @cursor_id may be zero (all results fit in the first batch).
+      # Thus we need to check both @cursor_id and the cursor_id of the result
+      # prior to calling unregister here.
+      unregister if !closed? && result.cursor_id == 0
       @cursor_id = result.cursor_id
 
       if result.respond_to?(:post_batch_resume_token)
         @post_batch_resume_token = result.post_batch_resume_token
       end
 
-      end_session if !more?
+      end_session if closed?
 
       # Since our iteration code mutates the documents array by calling #shift
       # on it, duplicate the documents here to permit restarting iteration

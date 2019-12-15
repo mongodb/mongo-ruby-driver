@@ -91,18 +91,16 @@ describe Mongo::Cluster::CursorReaper do
 
   describe '#register_cursor' do
 
-    before do
-      reaper.register_cursor(cursor_id)
-    end
-
     context 'when the cursor id is nil' do
 
       let(:cursor_id) do
         nil
       end
 
-      it 'does not register the cursor' do
-        expect(active_cursors.size).to be(0)
+      it 'raises exception' do
+        expect do
+          reaper.register_cursor(cursor_id)
+        end.to raise_error(ArgumentError, /register_cursor called with nil cursor_id/)
       end
     end
 
@@ -112,8 +110,10 @@ describe Mongo::Cluster::CursorReaper do
         0
       end
 
-      it 'does not register the cursor' do
-        expect(active_cursors.size).to be(0)
+      it 'raises exception' do
+        expect do
+          reaper.register_cursor(cursor_id)
+        end.to raise_error(ArgumentError, /register_cursor called with cursor_id=0/)
       end
     end
 
@@ -121,6 +121,10 @@ describe Mongo::Cluster::CursorReaper do
 
       let(:cursor_id) do
         2
+      end
+
+      before do
+        reaper.register_cursor(cursor_id)
       end
 
       it 'registers the cursor id as active' do
