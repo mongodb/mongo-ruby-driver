@@ -49,6 +49,10 @@ describe Mongo::CachingCursor do
 
       context 'when iterating second time' do
         before do
+          authorized_collection.count_documents({}).should == 10
+        end
+
+        before do
           cursor.to_a
         end
 
