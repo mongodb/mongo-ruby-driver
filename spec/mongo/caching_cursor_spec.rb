@@ -63,7 +63,9 @@ describe Mongo::CachingCursor do
         end
 
         it 'supports each' do
-          expect(cursor.each.to_a.length).to eq(10)
+          result = cursor.each.to_a
+          p result
+          expect(result.length).to eq(10)
         end
       end
     end
