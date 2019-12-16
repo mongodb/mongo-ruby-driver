@@ -1,0 +1,77 @@
+.. _query-cache:
+
+===========
+Query Cache
+===========
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+The driver can cache query results and, when identical queries are performed,
+return cached results instead of sending queries to the server repeatedly.
+
+When using the query cache, keep the following in mind:
+
+- Query cache is always scoped to the current thread. If two threads issue
+the same query, each thread will send its query to the database.
+- Query cache only stores documents when a query's result set is iterated
+completely. For example, if a ``find`` is issued and 100 documents match
+the query, and only the first document is retrieved by the application,
+the complete result set is never iterated and the documents will never be
+cached.
+- Query cache stores documents regardless of the number of returned documents
+for a query or the size of any individual document. Disable the query
+cache if you are processing large volumes of data and do not want it cached.
+
+
+Basic Usage
+-----------
+
+Query cache provides a block API to request that queries within a certain scope
+be cached:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.cache do
+  end
+
+To disable the query cache in a scope where it is enabled, use the ``uncached``
+method:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.cache do
+    Mongo::QueryCache.uncached do
+    end
+  end
+
+It is possible to also manually enable and disable the query cache. The
+setting remains in effect until it is changed:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.enabled = true
+  
+  Mongo::QueryCache.enabled?
+  # => true
+  
+  Mongo::QueryCache.enabled = false
+  
+  Mongo::QueryCache.enabled?
+  # => false
+
+
+Cache Expiration
+----------------
+
+
+Query Cache Middleware
+----------------------
+
+The driver provides a Rack middleware that enables the query cache for the
+duration of a single Rack request processing.
