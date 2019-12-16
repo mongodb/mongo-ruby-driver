@@ -65,6 +65,7 @@ describe Mongo::CachingCursor do
         it 'supports each' do
           result = cursor.each.to_a
           p result
+          p cursor.instance_variable_get(:@cached_documents)
           expect(result.length).to eq(10)
         end
       end
