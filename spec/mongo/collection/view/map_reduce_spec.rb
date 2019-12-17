@@ -80,7 +80,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'calls the Enumerable method' do
-      expect(results).to eq(map_reduce.to_a)
+      expect(results.sort_by { |d| d['_id'] }).to eq(map_reduce.to_a.sort_by { |d| d['_id'] })
     end
   end
 
@@ -186,7 +186,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'executes the map reduce' do
-          expect(map_reduce.to_a).to eq(new_map_reduce.to_a)
+          expect(new_map_reduce.to_a.sort_by { |d| d['_id'] }).to eq(map_reduce.to_a.sort_by { |d| d['_id'] })
         end
       end
 
