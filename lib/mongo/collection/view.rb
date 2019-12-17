@@ -119,7 +119,7 @@ module Mongo
       # @option options :comment [ String ] Associate a comment with the query.
       # @option options :batch_size [ Integer ] The number of docs to return in
       #   each response from MongoDB.
-      # @option options :fields [ Hash ] The fields to include or exclude in
+      # @option options :projection [ Hash ] The fields to include or exclude in
       #   returned docs.
       # @option options :hint [ Hash ] Override default index selection and force
       #   MongoDB to use a specific index for the query.

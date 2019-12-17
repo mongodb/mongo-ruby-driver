@@ -66,7 +66,7 @@ describe Mongo::Collection::View::MapReduce do
 
   describe '#reduce_function' do
 
-    it 'returns the map function' do
+    it 'returns the reduce function' do
       expect(map_reduce.reduce_function).to eq(reduce)
     end
   end
