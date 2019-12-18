@@ -81,9 +81,11 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
 
       context 'with verbose logging' do
         before(:all) do
-          unless ENV['MONGOCRYPT_TRACE'] == 'ON'
-            skip "Test requires MONGOCRYPT_TRACE environment variable to be 'ON'"
-          end
+          ENV['MONGOCRYPT_TRACE'] = 'ON'
+        end
+
+        after(:all) do
+          ENV['MONGOCRYPT_TRACE'] = nil
         end
 
         let(:logger) do
