@@ -22,7 +22,6 @@ module Mongo
     # allowing clients to set options on that object or perform operations such
     # as encryption and decryption
     class Handle
-
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Hash ] kms_providers A hash of KMS settings. The only supported key
@@ -39,6 +38,7 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
 
+        set_logger
         set_kms_providers(kms_providers)
         initialize_mongocrypt
       end
@@ -51,6 +51,31 @@ module Mongo
       end
 
       private
+
+      # TODO: documentation
+      def set_logger
+        @log_callback = Proc.new do |level, msg, len=nil, ctx=nil|
+          logger = Mongo::Logger.logger
+
+          case level
+          when :fatal
+            logger.fatal(msg)
+          when :error
+            logger.error(msg)
+          when :warning
+            logger.warn(msg)
+          when :info
+            logger.info(msg)
+          when :trace
+            logger.debug(msg)
+          else
+            raise ArgumentError.new("Invalid log level: #{level}")
+          end
+        end
+
+        success = Binding.mongocrypt_setopt_log_handler(@mongocrypt, @log_callback, nil)
+        raise_from_status unless success
+      end
 
       # Validate the kms_providers option and use it to set the KMS provider
       # information on the underlying mongocrypt_t object
