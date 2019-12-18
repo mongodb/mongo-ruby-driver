@@ -29,14 +29,14 @@ module Mongo
       # @param [ ClientEncryption::IO ] A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      def initialize(mongocrypt, io)
+      def initialize(mongocrypt_handle, io)
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.
 
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @ctx = FFI::AutoPointer.new(
-          Binding.mongocrypt_ctx_new(mongocrypt),
+          Binding.mongocrypt_ctx_new(mongocrypt_handle.ref),
           Binding.method(:mongocrypt_ctx_destroy)
         )
 
