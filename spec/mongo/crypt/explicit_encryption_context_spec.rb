@@ -10,7 +10,14 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
 
   let(:context) { described_class.new(mongocrypt, io, value, options) }
 
-  let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
+  let(:mongocrypt) do
+    Mongo::Crypt::Handle.new({
+      local: {
+        key: Base64.encode64("ru\xfe\x00" * 24)
+      }
+    })
+  end
+
   let(:io) { double("Mongo::ClientEncryption::IO") }
   let(:value) { { 'v': 'Hello, world!' }.to_bson.to_s }
 
@@ -22,14 +29,6 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
       key_id: key_id,
       algorithm: algorithm
     }
-  end
-
-  before do
-    Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
-  end
-
-  after do
-    Mongo::Crypt::Binding.mongocrypt_destroy(mongocrypt)
   end
 
   describe '#initialize' do
@@ -78,6 +77,36 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
         expect do
           context
         end.not_to raise_error
+      end
+
+      context 'with verbose logging' do
+        before(:all) do
+          unless ENV['MONGOCRYPT_TRACE'] == 'ON'
+            skip "Test requires MONGOCRYPT_TRACE environment variable to be 'ON'"
+          end
+        end
+
+        let(:logger) do
+          Logger.new('/dev/null'). tap do |logger|
+            logger.level = :debug
+          end
+        end
+
+        before do
+          Mongo::Logger.logger = logger
+        end
+
+        after do
+          Mongo::Logger.logger = nil
+        end
+
+        it 'receives log messages from libmongocrypt' do
+          expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_key_id/)
+          expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_algorithm/)
+          expect(logger).to receive(:debug).with(/mongocrypt_ctx_explicit_encrypt_init/)
+
+          context
+        end
       end
     end
   end
