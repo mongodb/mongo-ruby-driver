@@ -275,6 +275,8 @@ module Mongo
       #
       # @since 2.9.0
       def check_out
+        check_invariants
+
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckOutStarted.new(@server.address)
         )
@@ -379,7 +381,10 @@ module Mongo
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
         )
+
         connection
+      ensure
+        check_invariants
       end
 
       # Check a connection back into the pool.
@@ -390,6 +395,8 @@ module Mongo
       #
       # @since 2.9.0
       def check_in(connection)
+        check_invariants
+
         @lock.synchronize do
           unless connection.connection_pool == self
             raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
@@ -431,6 +438,8 @@ module Mongo
             @available_semaphore.signal
           end
         end
+      ensure
+        check_invariants
       end
 
       # Closes all idle connections in the pool and schedules currently checked
@@ -449,6 +458,8 @@ module Mongo
       # @since 2.1.0
       def clear(options = nil)
         raise_if_closed!
+
+        check_invariants
 
         if options && options[:stop_populator]
           stop_populator
@@ -471,6 +482,8 @@ module Mongo
         end
 
         true
+      ensure
+        check_invariants
       end
 
       # @since 2.1.0
@@ -732,6 +745,28 @@ module Mongo
         rescue Exception
           connection.disconnect!(reason: :error)
           raise
+        end
+      end
+
+      def check_invariants
+        return unless Lint.enabled?
+
+        # Server summary calls pool summary which requires pool lock -> deadlock.
+        # Obtain the server summary ahead of time.
+        server_summary = @server.summary
+
+        @lock.synchronize do
+          @available_connections.each do |connection|
+            if connection.closed?
+              raise Error::LintError, "Available connection is closed: #{connection} for #{server_summary}"
+            end
+          end
+
+          @pending_connections.each do |connection|
+            if connection.closed?
+              raise Error::LintError, "Pending connection is closed: #{connection} for #{server_summary}"
+            end
+          end
         end
       end
     end
