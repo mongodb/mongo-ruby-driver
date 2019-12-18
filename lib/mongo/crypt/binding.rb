@@ -105,9 +105,9 @@ module Mongo
       enum :log_level, [
         :fatal,   0,
         :error,   1,
-        :warning, 2,
+        :warn,    2,
         :info,    3,
-        :trace,   4,
+        :debug,   4,
       ]
 
       # Mongocrypt log function signature. Takes a log level, a log message as a string,

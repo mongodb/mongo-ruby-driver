@@ -8,14 +8,16 @@ end
 describe Mongo::Crypt::ExplicitEncryptionContext do
   require_libmongocrypt
 
+  let(:mongocrypt) { Mongo::Crypt::Handle.new(kms_providers, logger) }
   let(:context) { described_class.new(mongocrypt, io, value, options) }
 
-  let(:mongocrypt) do
-    Mongo::Crypt::Handle.new({
+  let(:logger) { nil }
+  let(:kms_providers) do
+    {
       local: {
         key: Base64.encode64("ru\xfe\x00" * 24)
       }
-    })
+    }
   end
 
   let(:io) { double("Mongo::ClientEncryption::IO") }
@@ -88,21 +90,16 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
           # while debugging any problems.
           #
           # For now, skip this test by default and revisit once we have determined how we want to
-          # package libmongocrypt with the Ruby driver.
+          # package libmongocrypt with the Ruby driver (see: https://jira.mongodb.org/browse/RUBY-1966)
           skip "These tests require libmongocrypt to be built with the '-DENABLE_TRACE=ON' cmake option." +
             " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
         end
 
-        before do
-          @original_logger_level = Mongo::Logger.level
-          Mongo::Logger.level = Logger::DEBUG
+        let(:logger) do
+          ::Logger.new($stdout).tap do |logger|
+            logger.level = ::Logger::DEBUG
+          end
         end
-
-        after do
-          Mongo::Logger.level = @original_logger_level
-        end
-
-        let(:logger) { Mongo::Logger.logger }
 
         it 'receives log messages from libmongocrypt' do
           expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_key_id/)
