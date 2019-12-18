@@ -28,12 +28,16 @@ module Mongo
       # is currently :local. Local KMS options must be passed in the format
       # { local: { key: <master key> } } where the master key is a 96-byte, base64
       # encoded string.
+      # @param [ Hash ] options A hash of options
+      #
+      # @option [ Logger ] :logger A Logger object to which libmongocrypt logs
+      #   will be sent
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
-      def initialize(kms_providers, logger=nil)
+      def initialize(kms_providers, options={})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
-        @logger = logger
+        @logger = options[:logger]
         @mongocrypt = FFI::AutoPointer.new(
           Binding.mongocrypt_new,
           Binding.method(:mongocrypt_destroy)
