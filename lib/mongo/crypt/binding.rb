@@ -112,7 +112,7 @@ module Mongo
 
       # Mongocrypt log function signature. Takes a log level, a log message as a string,
       # an integer representing the length of the message, and a pointer to a context provided
-      # by the caller.
+      # by the caller (can be set to nil).
       callback :mongocrypt_log_fn_t, [:log_level, :string, :int, :pointer], :void
 
       # Sets a method to be called on every log message. Takes a pointer to a mongocrypt_t object,

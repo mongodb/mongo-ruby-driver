@@ -52,9 +52,9 @@ module Mongo
 
       private
 
-      # TODO: documentation
+      # Send the logs from libmongocrypt to the Mongo::Logger
       def set_logger
-        @log_callback = Proc.new do |level, msg, len=nil, ctx=nil|
+        @log_callback = Proc.new do |level, msg|
           logger = Mongo::Logger.logger
 
           case level
