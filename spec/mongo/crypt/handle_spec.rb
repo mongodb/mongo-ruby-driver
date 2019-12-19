@@ -10,7 +10,24 @@ describe Mongo::Crypt::Handle do
   require_libmongocrypt
 
   describe '#initialize' do
-    let(:handle) { described_class.new(kms_providers) }
+    let(:handle) { described_class.new(kms_providers, schema_map) }
+
+    let(:kms_providers) do
+      {
+        local: {
+          key: Base64.encode64("ru\xfe\x00" * 24)
+        }
+      }
+    end
+
+    let(:schema_map) do
+      {
+        'admin.datakeys' => {
+          'bsonType' => 'object',
+          'properties' => 
+        }
+      }
+    end
 
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }

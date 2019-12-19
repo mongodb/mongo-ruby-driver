@@ -25,24 +25,28 @@ module Mongo
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Hash ] kms_providers A hash of KMS settings. The only supported key
-      # is currently :local. Local KMS options must be passed in the format
-      # { local: { key: <master key> } } where the master key is a 96-byte, base64
-      # encoded string.
+      #   is currently :local. Local KMS options must be passed in the format
+      #   { local: { key: <master key> } } where the master key is a 96-byte, base64
+      #   encoded string.
+      # @param [ Hash | nil ] schema_map A hash representing the JSON schema of the collection
+      #   that stores auto encrypted documents.
       # @param [ Hash ] options A hash of options
       #
       # @option [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
-      def initialize(kms_providers, options={})
+      def initialize(kms_providers, schema_map, options={})
+        @logger = options[:logger]
+
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
-        @logger = options[:logger]
         @mongocrypt = FFI::AutoPointer.new(
           Binding.mongocrypt_new,
           Binding.method(:mongocrypt_destroy)
         )
 
+        set_schema_map(schema_map) if schema_map
         set_logger_callback if @logger
         set_kms_providers(kms_providers)
         initialize_mongocrypt
@@ -56,6 +60,14 @@ module Mongo
       end
 
       private
+
+      # Set the schema map option on the underlying mongocrypt_t object
+      def set_schema_map(schema_map)
+        binary = Binary.new(schema_map.to_bson.to_s)
+        success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, binary.ref)
+
+        raise_from_status unless success
+      end
 
       # Send the logs from libmongocrypt to the Mongo::Logger
       def set_logger_callback

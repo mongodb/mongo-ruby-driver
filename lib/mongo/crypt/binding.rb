@@ -129,6 +129,11 @@ module Mongo
       # indicating the success of the operation.
       attach_function :mongocrypt_setopt_kms_provider_local, [:pointer, :pointer], :bool
 
+      # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_binary_t
+      # object. Sets the mongocrypt schema map to the string wrapped by the binary and
+      # returns a boolean indicating the success of the operation.
+      attach_function :mongocrypt_setopt_schema_map, [:pointer, :pointer], :bool
+
       # Takes a pointer to a mongocrypt_t object and initializes that object.
       # Should be called after mongocrypt_setopt_kms_provider_local and other methods that
       # set options on the mongocrypt_t object.
