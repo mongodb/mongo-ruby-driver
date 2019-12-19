@@ -22,9 +22,16 @@ describe Mongo::Crypt::Handle do
 
     let(:schema_map) do
       {
-        'admin.datakeys' => {
-          'bsonType' => 'object',
-          'properties' => 
+        'admin.datakeys': {
+          bsonType: 'object',
+          properties: {
+            ssn: {
+              encrypt: {
+                keyId: BSON::Binary.new("e114f7ad-ad7a-4a68-81a7-ebcb9ea0953a", :uuid),
+                algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+              }
+            }
+          }
         }
       }
     end
@@ -83,7 +90,7 @@ describe Mongo::Crypt::Handle do
       end
     end
 
-    context 'with valid local kms_providers' do
+    context 'with valid local kms_providers and schema map' do
       let(:kms_providers) do
         {
           local: {
@@ -91,6 +98,14 @@ describe Mongo::Crypt::Handle do
           }
         }
       end
+
+      it 'does not raise an exception' do
+        expect { handle }.not_to raise_error
+      end
+    end
+
+    context 'with nil schema map' do
+      let(:schema_map) { nil }
 
       it 'does not raise an exception' do
         expect { handle }.not_to raise_error

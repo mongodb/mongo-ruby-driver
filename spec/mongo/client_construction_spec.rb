@@ -279,6 +279,14 @@ describe Mongo::Client do
             expect { client }.not_to raise_error
           end
 
+          context 'with a nil schema_map' do
+            let(:schema_map) { nil }
+
+            it 'does not raise an exception' do
+              expect { client }.not_to raise_error
+            end
+          end
+
           it 'sets options on the client' do
             client_options = client.encryption_options
 
