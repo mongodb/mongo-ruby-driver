@@ -20,9 +20,9 @@ module Mongo
 
       # Create a new ExplicitEncryptionContext object
       #
-      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t
-      # @param [ ClientEncryption::IO ] A instance of the IO class
+      # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
+      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
+      # @param [ ClientEncryption::IO ] io A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
       # @param [ String|Integer ] value A value to encrypt
