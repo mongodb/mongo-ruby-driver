@@ -18,7 +18,6 @@ module Mongo
     # A Context object initialized for auto encryption
     class AutoEncryptionContext < Context
 
-
       # Create a new AutoEncryptionContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
