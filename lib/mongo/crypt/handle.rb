@@ -22,23 +22,28 @@ module Mongo
     # allowing clients to set options on that object or perform operations such
     # as encryption and decryption
     class Handle
-
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Hash ] kms_providers A hash of KMS settings. The only supported key
       # is currently :local. Local KMS options must be passed in the format
       # { local: { key: <master key> } } where the master key is a 96-byte, base64
       # encoded string.
+      # @param [ Hash ] options A hash of options
+      #
+      # @option [ Logger ] :logger A Logger object to which libmongocrypt logs
+      #   will be sent
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
-      def initialize(kms_providers)
+      def initialize(kms_providers, options={})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
+        @logger = options[:logger]
         @mongocrypt = FFI::AutoPointer.new(
           Binding.mongocrypt_new,
           Binding.method(:mongocrypt_destroy)
         )
 
+        set_logger_callback if @logger
         set_kms_providers(kms_providers)
         initialize_mongocrypt
       end
@@ -51,6 +56,16 @@ module Mongo
       end
 
       private
+
+      # Send the logs from libmongocrypt to the Mongo::Logger
+      def set_logger_callback
+        @log_callback = Proc.new do |level, msg|
+          @logger.send(level, msg)
+        end
+
+        success = Binding.mongocrypt_setopt_log_handler(@mongocrypt, @log_callback, nil)
+        raise_from_status unless success
+      end
 
       # Validate the kms_providers option and use it to set the KMS provider
       # information on the underlying mongocrypt_t object

@@ -101,6 +101,25 @@ module Mongo
       # reference to that status
       attach_function :mongocrypt_status_destroy, [:pointer], :void
 
+      # Log level
+      enum :log_level, [
+        :fatal,   0,
+        :error,   1,
+        :warn,    2,
+        :info,    3,
+        :debug,   4,
+      ]
+
+      # Mongocrypt log function signature. Takes a log level, a log message as a string,
+      # an integer representing the length of the message, and a pointer to a context provided
+      # by the caller (can be set to nil).
+      callback :mongocrypt_log_fn_t, [:log_level, :string, :int, :pointer], :void
+
+      # Sets a method to be called on every log message. Takes a pointer to a mongocrypt_t object,
+      # a mongocrypt_log_fn_t callback, and a pointer to a log_ctx. Returns a boolean indicating
+      # success of the operation.
+      attach_function :mongocrypt_setopt_log_handler, [:pointer, :mongocrypt_log_fn_t, :pointer], :bool
+
       # Creates a new mongocrypt_t object and returns a pointer to that object
       attach_function :mongocrypt_new, [], :pointer
 
