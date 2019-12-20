@@ -63,6 +63,10 @@ module Mongo
 
       # Set the schema map option on the underlying mongocrypt_t object
       def set_schema_map(schema_map)
+        unless schema_map.is_a?(Hash)
+          raise ArgumentError.new("#{schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
+        end
+
         binary = Binary.new(schema_map.to_bson.to_s)
         success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, binary.ref)
 

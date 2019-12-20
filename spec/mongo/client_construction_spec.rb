@@ -274,6 +274,14 @@ describe Mongo::Client do
           end
         end
 
+        context 'with an invalid schema map' do
+          let(:schema_map) { '' }
+
+          it 'raises an exception' do
+            expect { client }.to raise_error(ArgumentError, /schema_map must be a Hash or nil/)
+          end
+        end
+
         context 'with valid options' do
           it 'does not raise an exception' do
             expect { client }.not_to raise_error

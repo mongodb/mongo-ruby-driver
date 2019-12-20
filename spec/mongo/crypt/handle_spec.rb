@@ -90,6 +90,14 @@ describe Mongo::Crypt::Handle do
       end
     end
 
+    context 'with invalid schema map' do
+      let(:schema_map) { '' }
+
+      it 'raises an exception' do
+        expect { handle }.to raise_error(ArgumentError, /schema_map must be a Hash or nil/)
+      end
+    end
+
     context 'with valid local kms_providers and schema map' do
       let(:kms_providers) do
         {
