@@ -127,7 +127,7 @@ module Mongo
       @options = options.freeze
       @app_metadata = Server::AppMetadata.new(@options)
       @update_lock = Mutex.new
-      @sdam_flow_lock = Mutex.new
+      @sdam_flow_lock = ReentrantMutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
       @srv_monitor_lock = Mutex.new
@@ -451,32 +451,34 @@ module Mongo
     #
     # @since 2.1.0
     def disconnect!
-      unless @connecting || @connected
-        return true
-      end
-      if options[:cleanup] != false
-        session_pool.end_sessions
-        @periodic_executor.stop!
-      end
-      @srv_monitor_lock.synchronize do
-        if @srv_monitor
-          @srv_monitor.stop!
+      @sdam_flow_lock.synchronize do
+        unless @connecting || @connected
+          return true
         end
-      end
-      @servers.each do |server|
-        if server.connected?
-          server.disconnect!
-          publish_sdam_event(
-            Monitoring::SERVER_CLOSED,
-            Monitoring::Event::ServerClosed.new(server.address, topology)
-          )
+        if options[:cleanup] != false
+          session_pool.end_sessions
+          @periodic_executor.stop!
         end
+        @srv_monitor_lock.synchronize do
+          if @srv_monitor
+            @srv_monitor.stop!
+          end
+        end
+        @servers.each do |server|
+          if server.connected?
+            server.disconnect!
+            publish_sdam_event(
+              Monitoring::SERVER_CLOSED,
+              Monitoring::Event::ServerClosed.new(server.address, topology)
+            )
+          end
+        end
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CLOSED,
+          Monitoring::Event::TopologyClosed.new(topology)
+        )
+        @connecting = @connected = false
       end
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CLOSED,
-        Monitoring::Event::TopologyClosed.new(topology)
-      )
-      @connecting = @connected = false
       true
     end
 
