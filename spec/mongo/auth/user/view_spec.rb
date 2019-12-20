@@ -2,8 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Auth::User::View do
 
+  let(:database) { root_authorized_client.database }
+
   let(:view) do
-    described_class.new(root_authorized_client.database)
+    described_class.new(database)
   end
 
   before do
@@ -11,6 +13,39 @@ describe Mongo::Auth::User::View do
   end
 
   describe '#create' do
+
+    context 'when password is not provided' do
+
+      let(:database) { root_authorized_client.use('$external').database }
+
+      let(:username) { 'passwordless-user' }
+
+      let(:response) do
+        view.create(
+          username,
+          # https://stackoverflow.com/questions/55939832/mongodb-external-database-cannot-create-new-user-with-user-defined-role
+          roles: [{role: 'read', db: 'admin'}],
+        )
+      end
+
+      before do
+        begin
+          view.remove(username)
+        rescue Mongo::Error::OperationFailure
+          # can be user not found, ignore
+        end
+      end
+
+      it 'creates the user' do
+        view.info(username).should == []
+
+        lambda do
+          response
+        end.should_not raise_error
+
+        view.info(username).first['user'].should == username
+      end
+    end
 
     context 'when a session is not used' do
 
