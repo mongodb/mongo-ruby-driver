@@ -55,6 +55,8 @@ Alternatively, setting the current database and credentials can be done in one s
                                            user:'test',
                                            password:'123' )
 
+.. _auth-source:
+
 Auth Source
 ```````````
 
