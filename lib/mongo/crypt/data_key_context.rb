@@ -21,8 +21,8 @@ module Mongo
 
       # Create a new DataKeyContext object
       #
-      # @param [ FFI::Pointer ] mongocrypt A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t.
+      # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
+      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
       def initialize(mongocrypt)
         # This initializer will eventually take more arguments:
         # - kms_providers (just supporting local for right now)
