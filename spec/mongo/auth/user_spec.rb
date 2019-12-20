@@ -325,4 +325,16 @@ describe Mongo::Auth::User do
       end
     end
   end
+
+  describe '#spec' do
+    context 'when no password and no roles are set' do
+      let(:user) do
+        described_class.new(user: 'foo')
+      end
+
+      it 'is a hash with empty roles' do
+        user.spec.should == {roles: []}
+      end
+    end
+  end
 end

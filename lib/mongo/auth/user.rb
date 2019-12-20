@@ -151,6 +151,8 @@ module Mongo
       #   authorized for.
       # @option options [ String ] :user The user name.
       # @option options [ String ] :password The user's password.
+      # @option options [ String ] :pwd Legacy option for the user's password.
+      #   If :password and :pwd are both specified, :password takes precedence.
       # @option options [ Symbol ] :auth_mech The authorization mechanism.
       # @option options [ Array<String>, Array<Hash> ] roles The user roles.
       # @option options [ String ] :client_key The user's client key cached from a previous
@@ -196,7 +198,11 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        { pwd: password, roles: roles }
+        {roles: roles}.tap do |spec|
+          if password
+            spec[:pwd] = password
+          end
+        end
       end
 
       private
