@@ -38,6 +38,31 @@ For more information about users and user management, see MongoDB's
 :manual:`online documentation </core/security-users>`.
 
 
+Users and Databases
+-------------------
+
+When a client connects to the server, MongoDB distinguishes the database
+that the client will perform operations on from the `auth source <auth-source>`_
+which is the database storing the user that the client is authenticating as.
+
+In many cases, the auth source is the same as the database. When they differ,
+user management operations must be done on the auth source database. For
+example, to create a user authenticating with X.509 certifcate, which must be
+defined on the ``$external`` database:
+
+.. code-block:: ruby
+
+  client.use('$external').database.users.create(
+    'C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost',
+    roles: [{role: 'read', db: 'admin'}],
+  )
+
+Note that the auth source is not specified for creating the user - auth source
+is only used during the authentication process. If ``#create`` is invoked with
+a ``User`` object with ``auth_source`` set, the auth source is ignored for
+the purposes of user management.
+
+
 Creating Users
 --------------
 
@@ -60,11 +85,11 @@ method instead.
 
 .. code-block:: ruby
 
-  user = Mongo::User.new({
+  user = Mongo::User.new(
     user: 'alanturing',
     password: 'enigma',
     roles: [ Mongo::Auth::Roles::READWRITE ]
-  })
+  )
 
   client.database.users.create(user)
 
