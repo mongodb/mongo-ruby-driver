@@ -37,8 +37,10 @@ In this example, all operations would be performed on the ``users`` database.
 For more information about users and user management, see MongoDB's
 :manual:`online documentation </core/security-users>`.
 
-Creating a user
-```````````````
+
+Creating Users
+--------------
+
 There are two ways to create a new database user with the Ruby Driver.
 
 The simplest way to create a new user is to use the ``create`` method,
@@ -103,8 +105,10 @@ replica set.
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
   :ref:`Sessions<sessions>`,
 
-User Info
-`````````
+
+User Information
+----------------
+
 To view information about a user that already exists in the database, use the
 ``info`` method:
 
@@ -127,8 +131,10 @@ currently exist in a database.
 .. seealso::
   :ref:`Sessions <sessions>`
 
-Updating a user
-```````````````
+
+Updating Users
+--------------
+
 To update a user that already exists in the database, you can use the
 ``update`` method in one of two ways. The first way is to specify the name of
 the user you wish to update, along with a new set of options.
@@ -170,8 +176,9 @@ is performed on a replica set.
   :ref:`Sessions<sessions>`
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
 
-Removing users
-``````````````
+Removing Users
+--------------
+
 To remove a user from the database, use the ``remove`` method:
 
 .. code-block:: ruby
