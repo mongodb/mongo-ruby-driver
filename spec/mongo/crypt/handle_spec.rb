@@ -10,7 +10,7 @@ describe Mongo::Crypt::Handle do
   require_libmongocrypt
 
   describe '#initialize' do
-    let(:handle) { described_class.new(kms_providers, schema_map) }
+    let(:handle) { described_class.new(kms_providers, schema_map: schema_map) }
 
     let(:kms_providers) do
       {

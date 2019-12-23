@@ -156,6 +156,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options)
+        byebug
         @database = options[:database] || Database::ADMIN
         @auth_source = options[:auth_source] || self.class.default_auth_source(options)
         @name = options[:user]

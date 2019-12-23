@@ -11,8 +11,7 @@ describe Mongo::Crypt::DataKeyContext do
 
   let(:mongocrypt) do
     Mongo::Crypt::Handle.new(
-      { local: { key: Base64.encode64("ru\xfe\x00" * 24) } },
-      nil
+      { local: { key: Base64.encode64("ru\xfe\x00" * 24) } }
     )
   end
 

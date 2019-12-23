@@ -39,7 +39,7 @@ module Mongo
         validate_key_vault_namespace!
         validate_key_vault_client!
 
-        @crypt_handle = Crypt::Handle.new(options[:kms_providers], options[:schema_map])
+        @crypt_handle = Crypt::Handle.new(options[:kms_providers], schema_map: options[:schema_map])
         @encryption_io = EncryptionIO.new(options[:key_vault_client], options[:key_vault_namespace])
       end
 

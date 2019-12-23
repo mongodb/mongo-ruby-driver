@@ -36,7 +36,7 @@ module Mongo
       #   will be sent
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
-      def initialize(kms_providers, schema_map, options={})
+      def initialize(kms_providers, schema_map: nil, options: {})
         @logger = options[:logger]
 
         # FFI::AutoPointer uses a custom release strategy to automatically free
