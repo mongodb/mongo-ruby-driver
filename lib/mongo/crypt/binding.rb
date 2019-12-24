@@ -191,12 +191,17 @@ module Mongo
       # explicit decryption. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
 
-          # Takes a pointer to a mongocrypt_ctx_t object, the string name of the database against which
+      # Takes a pointer to a mongocrypt_ctx_t object, the string name of the database against which
       # the command is being run, the length of the database name as an integer, and a pointer
       # to a mongocrypt_binary_t object wrapping the command to be encrypted. Initializes
       # the mongocrypt_ctx_t object for auto-encryption and returns a boolean indicating the
       # success of the operation.
       attach_function :mongocrypt_ctx_encrypt_init, [:pointer, :string, :int, :pointer], :bool
+
+      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t object
+      # that wraps the value to be decrypted. Initializes the mongocrypt_ctx_t object for
+      # auto-decryption and returns a boolean indicating the success of the operation.
+      attach_function :mongocrypt_ctx_decrypt_init, [:pointer, :pointer], :bool
 
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
