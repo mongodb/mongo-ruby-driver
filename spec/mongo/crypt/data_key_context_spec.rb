@@ -10,11 +10,9 @@ describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
 
   let(:mongocrypt) do
-    Mongo::Crypt::Handle.new({
-      local: {
-        key: Base64.encode64("ru\xfe\x00" * 24)
-      }
-    })
+    Mongo::Crypt::Handle.new(
+      { local: { key: Base64.encode64("ru\xfe\x00" * 24) } }
+    )
   end
 
   let(:context) { described_class.new(mongocrypt) }

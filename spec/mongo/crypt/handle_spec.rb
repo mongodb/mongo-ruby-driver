@@ -10,7 +10,31 @@ describe Mongo::Crypt::Handle do
   require_libmongocrypt
 
   describe '#initialize' do
-    let(:handle) { described_class.new(kms_providers) }
+    let(:handle) { described_class.new(kms_providers, schema_map: schema_map) }
+
+    let(:kms_providers) do
+      {
+        local: {
+          key: Base64.encode64("ru\xfe\x00" * 24)
+        }
+      }
+    end
+
+    let(:schema_map) do
+      {
+        'admin.datakeys': {
+          bsonType: 'object',
+          properties: {
+            ssn: {
+              encrypt: {
+                keyId: BSON::Binary.new("e114f7ad-ad7a-4a68-81a7-ebcb9ea0953a", :uuid),
+                algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+              }
+            }
+          }
+        }
+      }
+    end
 
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }
@@ -66,7 +90,15 @@ describe Mongo::Crypt::Handle do
       end
     end
 
-    context 'with valid local kms_providers' do
+    context 'with invalid schema map' do
+      let(:schema_map) { '' }
+
+      it 'raises an exception' do
+        expect { handle }.to raise_error(ArgumentError, /schema_map must be a Hash or nil/)
+      end
+    end
+
+    context 'with valid local kms_providers and schema map' do
       let(:kms_providers) do
         {
           local: {
@@ -74,6 +106,14 @@ describe Mongo::Crypt::Handle do
           }
         }
       end
+
+      it 'does not raise an exception' do
+        expect { handle }.not_to raise_error
+      end
+    end
+
+    context 'with nil schema map' do
+      let(:schema_map) { nil }
 
       it 'does not raise an exception' do
         expect { handle }.not_to raise_error
