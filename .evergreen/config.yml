@@ -554,6 +554,10 @@ axes:
         display_name: ruby-2.6
         variables:
            RVM_RUBY: "ruby-2.6"
+      - id: "ruby-2.7"
+        display_name: ruby-2.7
+        variables:
+           RVM_RUBY: "ruby-2.7"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
@@ -655,7 +659,7 @@ buildvariants:
   matrix_name: "mongo"
   matrix_spec:
     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-    ruby: "ruby-2.6"
+    ruby: "ruby-2.7"
     mongodb-version: "*"
     topology: "*"
     os: rhel70
