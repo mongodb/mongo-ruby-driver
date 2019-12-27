@@ -95,8 +95,8 @@ setup_ruby() {
     if ! test "$RVM_RUBY" = ruby-1.9; then
     
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/741a9eba5788e6d5254a09319d7d237b40a9f4d6/mongo_ruby_driver_toolchain_`host_arch`_patch_741a9eba5788e6d5254a09319d7d237b40a9f4d6_5cfa8ad0d6d80a02bbb45be7_19_06_07_16_03_30.tar.gz
-    curl -fL $toolchain_url |tar zxf -
+    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/e7cf68d7146c09d54dfbe241c04aad3e3eadbb10/mongo_ruby_driver_toolchain_`host_arch |tr - _`_e7cf68d7146c09d54dfbe241c04aad3e3eadbb10_19_12_27_00_47_13.tar.gz
+    curl --retry 3 -fL $toolchain_url |tar zxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     
     # Attempt to get bundler to report all errors - so far unsuccessful
