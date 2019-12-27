@@ -490,7 +490,7 @@ module Mongo
     end
 
     def decode(value)
-      ::URI.decode(value)
+      ::URI::DEFAULT_PARSER.unescape(value)
     end
 
     def encode(value)
