@@ -97,6 +97,7 @@ module Mongo
       # @return [ true ] Always true
       def teardown_encrypter
         @mongocryptd_client.close if @mongocryptd_client
+        @encryption_options = nil
 
         true
       end
