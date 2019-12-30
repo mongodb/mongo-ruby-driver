@@ -323,8 +323,18 @@ describe Mongo::Client do
               }
             end
 
-            it 'sets key_vault_client as self' do
-              expect(client.encryption_options[:key_vault_client]).to eq(client)
+            it 'sets key_vault_client as a clone of self with no encryption options' do
+              key_vault_client = client.encryption_options[:key_vault_client]
+              expect(key_vault_client.encryption_options).to be_nil
+
+              key_vault_client_options = key_vault_client.options.to_h
+              key_vault_client_options.delete('auto_encryption_options')
+
+              client_options = client.options.dup
+              client_options.delete(:auto_encryption_options)
+
+              expect(key_vault_client_options).to eq(client_options)
+              expect(key_vault_client)
             end
 
             it 'sets bypass_auto_encryption to false' do
