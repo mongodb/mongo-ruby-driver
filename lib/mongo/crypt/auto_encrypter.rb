@@ -53,6 +53,17 @@ module Mongo
       def setup_encrypter(options = {})
         opts = set_default_options(options.dup)
 
+        unless opts[:key_vault_client]
+          # If no key vault client is passed in, create one by duplicating the
+          # Mongo::Client used for encryption. Update options so that key vault
+          # client does not perform auto-encryption/decryption, and keep a reference
+          # to it so it is destroyed later.
+          @key_vault_client = self.dup
+          @key_vault_client.update_options({ auto_encryption_options: nil })
+
+          opts[:key_vault_client] = @key_vault_client
+        end
+
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
@@ -97,6 +108,10 @@ module Mongo
       # @return [ true ] Always true
       def teardown_encrypter
         @mongocryptd_client.close if @mongocryptd_client
+        @key_vault_client.close if @key_vault_client
+
+        @mongocryptd_client = nil
+        @key_vault_client = nil
         @encryption_options = nil
 
         true

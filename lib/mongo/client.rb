@@ -861,11 +861,7 @@ module Mongo
       opts_copy = @options[:auto_encryption_options].dup
 
       opts_copy.tap do |opts|
-        opts[:key_vault_client] ||= self.dup
-        opts[:key_vault_client].update_options({ auto_encryption_options: nil })
-
         opts[:extra_options] ||= {}
-
         opts[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
       end
 
