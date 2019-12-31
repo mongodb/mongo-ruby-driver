@@ -201,10 +201,11 @@ prepare_server_from_url() {
 
 install_mlaunch_python3() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
+  sudo apt-get install python3.6
   pip install -t "$pythonpath" virtualenv
 
   mkdir mlaunch
-  virtualenv -p python3.6 mlaunch
+  virtualenv -p /usr/bin/python3.6 mlaunch
   source mlaunch/venv/bin/activate
 
   pip install 'mtools[mlaunch]'
