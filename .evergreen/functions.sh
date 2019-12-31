@@ -202,14 +202,14 @@ prepare_server_from_url() {
 install_mlaunch_python3() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
   yes | sudo apt-get install python3-venv
-  pip install -t "$pythonpath" virtualenv
+  pip3 install -t "$pythonpath" virtualenv
 
   mkdir mlaunch
 
   python3 -m venv mlaunch/venv
   source mlaunch/venv/bin/activate
 
-  pip install 'mtools[mlaunch]'
+  pip3 install 'mtools[mlaunch]'
   deactivate
 }
 
