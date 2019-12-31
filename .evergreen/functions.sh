@@ -202,7 +202,7 @@ prepare_server_from_url() {
 install_mlaunch_python3() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
   yes | sudo apt-get install python3-venv
-  pip3 install -t "$pythonpath" virtualenv
+  pip install -t "$pythonpath" virtualenv
 
   mkdir mlaunch
 
