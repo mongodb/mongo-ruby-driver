@@ -211,14 +211,14 @@ install_mlaunch_python3() {
   ./configure
 
   make
-  make install
+  sudo make install
 
   cd ..
 
   pip install -t "$pythonpath" virtualenv
 
   mkdir mlaunch
-  virtualenv -p /usr/bin/python3.6 mlaunch
+  virtualenv -p /usr/local/bin/python3.6 mlaunch
   source mlaunch/venv/bin/activate
 
   pip install 'mtools[mlaunch]'
