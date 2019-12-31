@@ -37,7 +37,7 @@ export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
 source mlaunch/venv/bin/activate
-./mlaunch/venv/bin/python mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
+python=mlaunch/venv/bin/python mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslMode requireSSL \
   --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem \
   --sslCAFile spec/support/certificates/ca.crt \
