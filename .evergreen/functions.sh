@@ -207,7 +207,7 @@ install_mlaunch_python3() {
 
   cd Python-3.6.3
 
-  apt-get install build-essential
+  sudo apt-get install build-essential
   ./configure
 
   make
