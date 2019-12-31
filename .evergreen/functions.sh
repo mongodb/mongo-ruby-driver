@@ -202,9 +202,18 @@ prepare_server_from_url() {
 install_mlaunch_python3() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
 
-  sudo add-apt-repository ppa:jonathonf/python-3.6
-  sudo apt-get update
-  sudo apt-get install python3.6
+  wget https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tgz
+  tar -xvf Python-3.6.3.tgz
+
+  cd Python-3.6.3
+
+  apt-get install build-essential
+  ./configure
+
+  make
+  make install
+
+  cd ..
 
   pip install -t "$pythonpath" virtualenv
 
