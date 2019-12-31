@@ -28,18 +28,21 @@ arch=ubuntu1404
 version=4.0.9
 prepare_server $arch $version
 
-install_mlaunch
+install_mlaunch_python3
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its long available through log collecting machinery
 
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
+
+source mlaunch/venv/bin/activate
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslMode requireSSL \
   --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem \
   --sslCAFile spec/support/certificates/ca.crt \
   --sslClientCertificate spec/support/certificates/client.pem
+deactivate
 
 if echo $RVM_RUBY |grep -q jruby; then
   # JRuby does not grok chained certificate bundles -
@@ -65,6 +68,8 @@ echo ${test_status}
 
 kill_jruby
 
+source mlaunch/venv/bin/activate
 mlaunch stop --dir "$dbdir"
+deactivate
 
 exit ${test_status}

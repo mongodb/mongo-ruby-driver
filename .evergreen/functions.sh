@@ -199,6 +199,16 @@ prepare_server_from_url() {
   export PATH="$BINDIR":$PATH
 }
 
+install_mlaunch_python3() {
+  mkdir mlaunch
+
+  python3 -m venv mlaunch/venv
+  source mlaunch/venv/bin/activate
+
+  pip install 'mtools[mlaunch]'
+  deactivate
+}
+
 install_mlaunch() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
   pip install -t "$pythonpath" 'mtools[mlaunch]'
