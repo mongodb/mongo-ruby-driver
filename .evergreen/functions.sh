@@ -201,7 +201,11 @@ prepare_server_from_url() {
 
 install_mlaunch_python3() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
+
+  sudo add-apt-repository ppa:jonathonf/python-3.6
+  sudo apt-get update
   sudo apt-get install python3.6
+
   pip install -t "$pythonpath" virtualenv
 
   mkdir mlaunch
