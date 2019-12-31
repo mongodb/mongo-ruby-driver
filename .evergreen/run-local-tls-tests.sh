@@ -36,7 +36,7 @@ install_mlaunch_python3
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
-source mlaunch/venv/bin/activate
+source mlaunch/bin/activate
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslMode requireSSL \
   --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem \
@@ -68,7 +68,7 @@ echo ${test_status}
 
 kill_jruby
 
-source mlaunch/venv/bin/activate
+source mlaunch/bin/activate
 mlaunch stop --dir "$dbdir"
 deactivate
 

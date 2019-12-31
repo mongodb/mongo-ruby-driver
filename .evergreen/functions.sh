@@ -219,7 +219,7 @@ install_mlaunch_python3() {
 
   mkdir mlaunch
   virtualenv -p /usr/local/bin/python3.6 mlaunch
-  source mlaunch/venv/bin/activate
+  source mlaunch/bin/activate
 
   pip install 'mtools[mlaunch]'
   deactivate
