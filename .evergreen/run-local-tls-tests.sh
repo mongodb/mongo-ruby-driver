@@ -36,7 +36,9 @@ install_mlaunch_python3
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
+which python
 source mlaunch/venv/bin/activate
+which python
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslMode requireSSL \
   --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem \
