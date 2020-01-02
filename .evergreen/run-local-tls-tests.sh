@@ -23,10 +23,10 @@ setup_ruby
 
 install_deps
 
-arch=ubuntu1404
+# arch=ubuntu1404
 # Last server version built for Ubuntu 14.04 is apparently 4.0.9
 version=4.0.9
-prepare_server $arch $version
+prepare_server host_arch $MONGODB_VERSION
 
 install_mlaunch
 

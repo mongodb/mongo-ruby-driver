@@ -193,7 +193,7 @@ prepare_server_from_url() {
   url=$1
 
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb
-  mkdir -p "$mongodb_dir"
+  sudo mkdir -p "$mongodb_dir"
   curl --retry 3 $url |tar xz -C "$mongodb_dir" -f -
   BINDIR="$mongodb_dir"/`basename $url |sed -e s/.tgz//`/bin
   export PATH="$BINDIR":$PATH
