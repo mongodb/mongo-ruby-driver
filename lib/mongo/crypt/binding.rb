@@ -17,6 +17,13 @@ require 'ffi'
 module Mongo
   module Crypt
 
+    # @api private
+    def reset_autoload
+      remove_const(:Binding)
+      autoload(:Binding, 'mongo/crypt/binding')
+    end
+    module_function :reset_autoload
+
     # A Ruby binding for the libmongocrypt C library
     #
     # @api private
@@ -24,14 +31,16 @@ module Mongo
       extend FFI::Library
 
       unless ENV['LIBMONGOCRYPT_PATH']
-        raise "Cannot load Mongo::Crypt::Binding because there is no path " +
+        Crypt.reset_autoload
+        raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
             "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
       end
 
       begin
         ffi_lib ENV['LIBMONGOCRYPT_PATH']
       rescue LoadError => e
-        raise "Cannot load Mongo::Crypt::Binding because the path to " +
+        Crypt.reset_autoload
+        raise LoadError, "Cannot load Mongo::Crypt::Binding because the path to " +
           "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
           "is invalid: #{ENV['LIBMONGOCRYPT']}\n\n#{e.class}: #{e.message}"
       end
