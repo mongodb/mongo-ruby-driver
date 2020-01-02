@@ -20,6 +20,16 @@ tests:
             mechanism: ~
             mechanism_properties: ~
     -
+        description: "should use the database when authSource is empty"
+        uri: "mongodb://user:password@localhost/foo?authSource="
+        valid: true
+        credential:
+            username: "user"
+            password: "password"
+            source: "foo"
+            mechanism: ~
+            mechanism_properties: ~
+    -
         description: "should use the authSource when specified"
         uri: "mongodb://user:password@localhost/foo?authSource=bar"
         valid: true
