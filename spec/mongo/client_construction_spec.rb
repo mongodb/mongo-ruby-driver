@@ -372,8 +372,13 @@ describe Mongo::Client do
           context 'with default key_vault_client' do
             let(:key_vault_client) { nil }
 
-            it 'creates a working key_vault_client' do
-              client
+            it 'creates a key_vault_client' do
+              client_options = client.encryption_options
+              key_vault_client = client_options[:key_vault_client]
+
+              expect(key_vault_client).to be_a_kind_of(Mongo::Client)
+              expect(key_vault_client.addresses_or_uri).to eq(client.addresses_or_uri)
+              expect(key_vault_client.encryption_options).to be_nil
             end
           end
         end
