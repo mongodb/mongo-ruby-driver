@@ -155,6 +155,7 @@ describe 'Client construction' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], options)
 
         key_vault_client = client.encryption_options['key_vault_client']
+        expect(key_vault_client.encryption_options).to be_nil
 
         result = key_vault_client[:test].insert_one(test: 1)
         expect(result).to be_ok
