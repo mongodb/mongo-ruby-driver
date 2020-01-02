@@ -133,4 +133,32 @@ describe 'Client construction' do
       expect(client.cluster.topology).not_to be_a(Mongo::Cluster::Topology::Unknown)
     end
   end
+
+  context 'with auto encryption options'do
+    require_libmongocrypt
+    let(:options) { { auto_encryption_options: auto_encryption_options } }
+
+    let(:auto_encryption_options) do
+      {
+        key_vault_client: key_vault_client,
+        key_vault_namespace: 'database.collection',
+        kms_providers: {
+          local: { key: Base64.encode64('ruby' * 24) },
+        }
+      }
+    end
+
+    context 'with default key vault client' do
+      let(:key_vault_client) { nil }
+
+      it 'creates a working key vault client' do
+        client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], options)
+
+        key_vault_client = client.encryption_options['key_vault_client']
+
+        result = key_vault_client[:test].insert_one(test: 1)
+        expect(result).to be_ok
+      end
+    end
+  end
 end

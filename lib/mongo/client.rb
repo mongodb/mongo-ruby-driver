@@ -121,6 +121,9 @@ module Mongo
     # @return [ Hash ] options The configuration options.
     attr_reader :options
 
+    # TODO: documentation
+    attr_reader :addresses_or_uri
+
     # Delegate command and collections execution to the current database.
     def_delegators :@database, :command, :collections
 
@@ -384,6 +387,8 @@ module Mongo
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
       options = options ? options.dup : {}
+
+      @addresses_or_uri = addresses_or_uri
 
       srv_uri = nil
       if addresses_or_uri.is_a?(::String)

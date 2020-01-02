@@ -368,6 +368,14 @@ describe Mongo::Client do
               expect(client_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
             end
           end
+
+          context 'with default key_vault_client' do
+            let(:key_vault_client) { nil }
+
+            it 'creates a working key_vault_client' do
+              client
+            end
+          end
         end
       end
 

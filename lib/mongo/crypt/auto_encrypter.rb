@@ -58,8 +58,10 @@ module Mongo
           # Mongo::Client used for encryption. Update options so that key vault
           # client does not perform auto-encryption/decryption, and keep a reference
           # to it so it is destroyed later.
-          @key_vault_client = self.dup
-          @key_vault_client.update_options({ auto_encryption_options: nil })
+          @key_vault_client = Client.new(
+                                self.addresses_or_uri,
+                                self.options.dup.merge({ auto_encryption_options: nil })
+                              )
 
           opts[:key_vault_client] = @key_vault_client
         end
