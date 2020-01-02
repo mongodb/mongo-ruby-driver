@@ -71,7 +71,10 @@ if test -n "$MMAPV1"; then
   args="$args --storageEngine mmapv1"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
+
+activate_virtualenv
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+deactivate_virtualenv
 
 echo "Running specs"
 which bundle
@@ -94,6 +97,8 @@ echo ${test_status}
 
 kill_jruby
 
+activate_virtualenv
 mlaunch stop --dir "$dbdir"
+deactivate_virtualenv
 
 exit ${test_status}

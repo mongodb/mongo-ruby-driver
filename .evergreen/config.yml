@@ -289,7 +289,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-x509-tests.sh
-  
+
   "run field level encryption tests":
     - command: shell.exec
       type: test
@@ -575,9 +575,15 @@ axes:
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
         run_on: ubuntu1604-test
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-test
       - id: rhel70
         display_name: "RHEL 7.0"
         run_on: rhel70-small
+      - id: rhel80
+        display_name: "RHEL 8.0"
+        run_on: rhel80-test
   - id: "compressor"
     display_name: Compressor
     values:
@@ -723,7 +729,7 @@ buildvariants:
     mongodb-version: [3.4, 3.6, 4.0]
     topology: '*'
     storage-engine: mmapv1
-    os: rhel70
+    os: rhel80
   display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -735,7 +741,7 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: ["4.0", "4.2"]
     topology: [replica-set, sharded-cluster]
-    os: rhel70
+    os: rhel80
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -831,7 +837,7 @@ buildvariants:
     ruby: "*"
     mongodb-version: ['4.0', '4.2']
     topology: standalone
-    os: ubuntu1604
+    os: ubuntu1804
   display_name: "Local TLS ${mongodb-version} ${ruby}"
   tasks:
     - name: "local-tls-tests"
@@ -881,7 +887,7 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: "4.2"
     topology: standalone
-    os: rhel70
+    os: rhel80
   display_name: "X.509 Tests"
   tasks:
     - name: "x509-tests"

@@ -199,35 +199,23 @@ prepare_server_from_url() {
   export PATH="$BINDIR":$PATH
 }
 
-install_mlaunch_python3() {
+install_mlaunch() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-
-  wget https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tgz
-  tar -xvf Python-3.6.3.tgz
-
-  cd Python-3.6.3
-
-  sudo apt-get install build-essential
-  ./configure
-
-  make
-  sudo make install
-
-  cd ..
 
   pip install -t "$pythonpath" virtualenv
 
-  mkdir mlaunch
-  virtualenv -p /usr/local/bin/python3.6 mlaunch
-  source mlaunch/bin/activate
+  mkdir venv
+  virtualenv -p /usr/bin/python3.6 venv
 
+  activate_virtualenv
   pip install 'mtools[mlaunch]'
-  deactivate
+  deactivate_virtualenv
 }
 
-install_mlaunch() {
-  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" 'mtools[mlaunch]'
-  export PATH="$pythonpath/bin":$PATH
-  export PYTHONPATH="$pythonpath"
+activate_virtualenv() {
+  source venv/bin/activate
+}
+
+deactivate_virtualenv() {
+  deactivate
 }

@@ -20,6 +20,8 @@ install_mlaunch
 
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
+
+activate_virtualenv
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslMode requireSSL \
   --sslPEMKeyFile spec/support/certificates/server.pem \
@@ -27,6 +29,7 @@ mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslClientCertificate spec/support/certificates/client.pem \
   --auth --username bootstrap --password bootstrap \
   --setParameter enableTestCommands=1
+deactivate_virtualenv
 
 create_user_cmd="`cat <<'EOT'
   db.getSiblingDB("$external").runCommand(
@@ -63,6 +66,8 @@ echo ${test_status}
 
 kill_jruby
 
+activate_virtualenv
 mlaunch stop --dir "$dbdir"
+deactivate_virtualenv
 
 exit ${test_status}
