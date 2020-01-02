@@ -205,7 +205,7 @@ install_mlaunch() {
   pip install -t "$pythonpath" virtualenv
 
   mkdir venv
-  virtualenv -p /usr/bin/python3.6 venv
+  virtualenv -p python3 venv
 
   activate_virtualenv
   pip install 'mtools[mlaunch]'
