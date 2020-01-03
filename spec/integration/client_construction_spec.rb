@@ -151,6 +151,10 @@ describe 'Client construction' do
     context 'with default key vault client' do
       let(:key_vault_client) { nil }
 
+      after do
+        client.encryption_options['key_vault_client'].close
+      end
+
       it 'creates a working key vault client' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], options)
 
