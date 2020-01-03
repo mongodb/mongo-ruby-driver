@@ -73,6 +73,8 @@ if test -n "$MMAPV1"; then
 fi
 
 activate_virtualenv
+python --version
+which python
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 deactivate_virtualenv
 
