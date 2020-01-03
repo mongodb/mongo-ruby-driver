@@ -583,7 +583,7 @@ axes:
         run_on: rhel70-small
       - id: rhel80
         display_name: "RHEL 8.0"
-        run_on: rhel80-test
+        run_on: rhel80-build
   - id: "compressor"
     display_name: Compressor
     values:
