@@ -725,7 +725,7 @@ buildvariants:
 -
   matrix_name: mmapv1
   matrix_spec:
-    ruby: "ruby-2.6"
+    ruby: "ruby-head" # TODO: change later
     mongodb-version: [3.4, 3.6, 4.0]
     topology: '*'
     storage-engine: mmapv1
@@ -738,7 +738,7 @@ buildvariants:
   matrix_name: "lint"
   matrix_spec:
     lint: on
-    ruby: "ruby-2.6"
+    ruby: "ruby-head" # TODO: change later
     mongodb-version: ["4.0", "4.2"]
     topology: [replica-set, sharded-cluster]
     os: rhel80
