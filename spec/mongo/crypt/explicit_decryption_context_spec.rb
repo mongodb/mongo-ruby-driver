@@ -8,7 +8,7 @@ end
 describe Mongo::Crypt::ExplicitDecryptionContext do
   require_libmongocrypt
 
-  let(:mongocrypt) { Mongo::Crypt::Handle.new(kms_providers, options: { logger: logger }) }
+  let(:mongocrypt) { Mongo::Crypt::Handle.new(kms_providers, logger: logger) }
   let(:context) { described_class.new(mongocrypt, io, value) }
   let(:logger) { nil }
 
