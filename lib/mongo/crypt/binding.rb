@@ -275,16 +275,46 @@ module Mongo
       # Returns a boolean indicating the success of the operation
       callback :mongocrypt_hmac_fn, [:pointer, :pointer, :pointer, :pointer, :pointer], :bool
 
+      # A callback to a crypto hash (SHA-256) function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object that wraps the encryption input
+      # - A pointer to a mongocrypt_binary_t object to which the output will be written
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_hash_fn, [:pointer, :pointer, :pointer, :pointer], :bool
 
-            # Mongocrypt log function signature. Takes a log level, a log message as a string,
-      # an integer representing the length of the message, and a pointer to a context provided
-      # by the caller (can be set to nil).
-      # callback :mongocrypt_log_fn_t, [:log_level, :string, :int, :pointer], :void
+      # A callback to a crypto secure random function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object to which the output will be written
+      # - The number of random bytes requested
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_random_fn, [:pointer, :pointer, :int, :pointer], :bool
 
-      # # Sets a method to be called on every log message. Takes a pointer to a mongocrypt_t object,
-      # # a mongocrypt_log_fn_t callback, and a pointer to a log_ctx. Returns a boolean indicating
-      # # success of the operation.
-      # attach_function :mongocrypt_setopt_log_handler, [:pointer, :mongocrypt_log_fn_t, :pointer], :boo
+      # Sets crypto hooks on mongocrypt_t object. Takes:
+      # - A pointer to a mongocrypt_t object, which will use the hooks for encryption
+      # - A mongocrypt_crypto_fn for encryption
+      # - A mongocrypt_crypto_fn for decryption
+      # - A mongocrypt_random_fn
+      # - A mongocrypt_hmac_fn with an HMAC SHA-512 function
+      # - A mongocrypt_hmac_fn with an HMAC SHA-256 function
+      # - A mongocrypt_hash_fn
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # Returns a boolean indicating the success of the operation
+      attach_function(
+        :mongocrypt_setopt_crypto_hooks,
+        [
+          :pointer,
+          :mongocrypt_crypto_fn,
+          :mongocrypt_crypto_fn,
+          :mongocrypt_random_fn,
+          :mongocrypt_hmac_fn,
+          :mongocrypt_hmac_fn,
+          :mongocrypt_hash_fn,
+          :pointer
+        ],
+        :bool
+      )
     end
   end
 end
