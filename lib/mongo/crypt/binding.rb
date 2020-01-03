@@ -254,6 +254,20 @@ module Mongo
       #
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
+
+      # A callback to a crypto AES-256-CBC encrypt function. Takes:
+      # - 
+      callback :mongocrypt_crypto_fn, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :bool
+
+            # Mongocrypt log function signature. Takes a log level, a log message as a string,
+      # an integer representing the length of the message, and a pointer to a context provided
+      # by the caller (can be set to nil).
+      # callback :mongocrypt_log_fn_t, [:log_level, :string, :int, :pointer], :void
+
+      # # Sets a method to be called on every log message. Takes a pointer to a mongocrypt_t object,
+      # # a mongocrypt_log_fn_t callback, and a pointer to a log_ctx. Returns a boolean indicating
+      # # success of the operation.
+      # attach_function :mongocrypt_setopt_log_handler, [:pointer, :mongocrypt_log_fn_t, :pointer], :boo
     end
   end
 end
