@@ -255,9 +255,26 @@ module Mongo
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
 
-      # A callback to a crypto AES-256-CBC encrypt function. Takes:
-      # - 
+      # A callback to a crypto AES-256-CBC encrypt/decrypt function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object that wraps a 32-byte encryption key
+      # - A pointer to a mongocrypt_binary_t object that wraps a 16-byte iv
+      # - A pointer to a mongocrypt_binary_t object that wraps the encryption/decryption input
+      # - A pointer to a mongocrypt_binary_t object to which the encryption/decryption output will be written
+      # - A pointer to an int32 where the number of bytes of the output will be written
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
       callback :mongocrypt_crypto_fn, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :bool
+
+      # A callback to a crypto HMAC SHA-512 or SHA-256 function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object that wraps a 32-byte encryption key
+      # - A pointer to a mongocrypt_binary_t object that wraps the encryption input
+      # - A pointer to a mongocrypt_binary_t object to which the output will be written
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_hmac_fn, [:pointer, :pointer, :pointer, :pointer, :pointer], :bool
+
 
             # Mongocrypt log function signature. Takes a log level, a log message as a string,
       # an integer representing the length of the message, and a pointer to a context provided
