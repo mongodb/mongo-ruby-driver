@@ -125,7 +125,7 @@ setup_ruby() {
     if host_arch=rhel80; then
       toolchain_arch=rhel70
     else
-      toolchain_arch=host_arch
+      toolchain_arch=$(host_arch)
     fi
 
     # For testing toolchains:
