@@ -27,10 +27,10 @@ install_deps
 # Last server version built for Ubuntu 14.04 is apparently 4.0.9
 if $MONGODB_VERSION=4.0; then
   version=4.0.9
-else
-  version=$MONGODB_VERSION
+elif $MONGODB_VERSION=4.2; then
+  version=4.2.0
 fi
-# version=4.0.9
+
 prepare_server $(host_arch) $version
 
 install_mlaunch

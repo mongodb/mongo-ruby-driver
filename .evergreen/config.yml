@@ -583,7 +583,7 @@ axes:
         run_on: rhel70-small
       - id: rhel80
         display_name: "RHEL 8.0"
-        run_on: rhel80-build
+        run_on: rhel80-test
   - id: "compressor"
     display_name: Compressor
     values:
@@ -742,7 +742,7 @@ buildvariants:
     mongodb-version: ["4.0", "4.2"]
     topology: [replica-set, sharded-cluster]
     os: rhel80
-  display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
+  display_name: "${mongodb-version} ${topology} lint ${ruby}"
   tasks:
      - name: "test-mlaunch"
 
