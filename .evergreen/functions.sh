@@ -21,8 +21,15 @@ host_arch() {
       arch=rhel72-s390x
     elif test "`uname -m`" = ppc64le; then
       arch=rhel71-ppc
-    elif lsb_release -i |grep -q RedHat; then
-      release=`lsb_release -r |awk '{print $2}' |tr -d .`
+    # elif lsb_release -i |grep -q RedHat; then
+    #   release=`lsb_release -r |awk '{print $2}' |tr -d .`
+    #   arch="rhel$release"
+    elif cat /etc/redhat-release | grep -q 'Red Hat'; then
+      if cat /etc/redhat-release | grep -q '7.0'; then
+        release=`cat /etc/redhat-release | awk '{print $7}' | tr -d .`
+      else
+        release=`cat /etc/redhat-release | awk '{print $6}' | tr -d .`
+      fi
       arch="rhel$release"
     else
       echo 'Unknown RHEL flavor' 1>&2

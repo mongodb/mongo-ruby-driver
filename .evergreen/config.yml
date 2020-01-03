@@ -722,29 +722,29 @@ buildvariants:
 #   tasks:
 #      - name: "test"
 
-# -
-#   matrix_name: mmapv1
-#   matrix_spec:
-#     ruby: "ruby-2.6"
-#     mongodb-version: [3.4, 3.6, 4.0]
-#     topology: '*'
-#     storage-engine: mmapv1
-#     os: rhel80
-#   display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-#   tasks:
-#      - name: "test-mlaunch"
+-
+  matrix_name: mmapv1
+  matrix_spec:
+    ruby: "ruby-2.6"
+    mongodb-version: [3.4, 3.6, 4.0]
+    topology: '*'
+    storage-engine: mmapv1
+    os: rhel80
+  display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
+  tasks:
+     - name: "test-mlaunch"
 
-# -
-#   matrix_name: "lint"
-#   matrix_spec:
-#     lint: on
-#     ruby: "ruby-2.6"
-#     mongodb-version: ["4.0", "4.2"]
-#     topology: [replica-set, sharded-cluster]
-#     os: rhel80
-#   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
-#   tasks:
-#      - name: "test-mlaunch"
+-
+  matrix_name: "lint"
+  matrix_spec:
+    lint: on
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.0", "4.2"]
+    topology: [replica-set, sharded-cluster]
+    os: rhel80
+  display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
+  tasks:
+     - name: "test-mlaunch"
 
 # -
 #   matrix_name: "jruby-auth"
