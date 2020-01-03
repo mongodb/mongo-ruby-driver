@@ -377,7 +377,6 @@ describe Mongo::Client do
               key_vault_client = client_options[:key_vault_client]
 
               expect(key_vault_client).to be_a_kind_of(Mongo::Client)
-              expect(key_vault_client.addresses_or_uri).to eq(client.addresses_or_uri)
               expect(key_vault_client.encryption_options).to be_nil
             end
           end
