@@ -156,7 +156,7 @@ describe 'Client construction' do
       end
 
       after do
-        client.encryption_options['key_vault_client'].close
+        client.teardown_encrypter
       end
 
       it 'creates a working key vault client' do
