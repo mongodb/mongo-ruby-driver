@@ -26,8 +26,7 @@ install_deps
 # arch=ubuntu1404
 # Last server version built for Ubuntu 14.04 is apparently 4.0.9
 version=4.0.9
-x=$(host_arch)
-prepare_server $arch $version
+prepare_server $(host_arch) $version
 
 install_mlaunch
 
