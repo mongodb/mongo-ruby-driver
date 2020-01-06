@@ -201,7 +201,7 @@ prepare_server_from_url() {
 
 install_mlaunch() {
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" 'mtools[mlaunch]'
+  pip install -t "$pythonpath" -v 'mtools[mlaunch]==1.5.3'
   export PATH="$pythonpath/bin":$PATH
   export PYTHONPATH="$pythonpath"
 }
