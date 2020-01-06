@@ -90,6 +90,7 @@ describe Mongo::Crypt::Binary do
   end
 
   describe '#write' do
+    # Binary must have enough space pre-allocated
     let(:binary) { described_class.from_data("\0" * 11) }
 
     it 'writes data to the binary object' do
@@ -99,5 +100,7 @@ describe Mongo::Crypt::Binary do
 
       expect(binary.to_string).to eq(data)
     end
+
+    # TODO: test case without space pre-allocated
   end
 end
