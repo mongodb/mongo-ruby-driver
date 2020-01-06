@@ -166,6 +166,11 @@ describe 'Client construction' do
         result = key_vault_client[:test].insert_one(test: 1)
         expect(result).to be_ok
       end
+
+      it 'creates a key vault client with a different cluster from the existing client' do
+        key_vault_client = client.encryption_options['key_vault_client']
+        expect(key_vault_client.cluster).not_to eq(client.cluster)
+      end
     end
   end
 end
