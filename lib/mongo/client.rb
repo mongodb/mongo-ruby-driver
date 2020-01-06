@@ -446,16 +446,7 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_options]
-        opts_copy = @options[:auto_encryption_options].dup
-
-        opts_copy.tap do |opts|
-          opts[:key_vault_client] ||= self
-          opts[:extra_options] ||= {}
-
-          opts[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
-        end
-
-        setup_encrypter(opts_copy)
+        set_auto_encryption_options
       end
 
       yield(self) if block_given?
@@ -657,6 +648,17 @@ module Mongo
         @options = options.freeze
         validate_options!
         validate_authentication_options!
+
+        # If the user specifies that auto_encryption_options are now nil, prevent the client
+        # from doing any further auto-encryption by cleaning up the resources related to
+        # auto-encryption.
+        if @options.key?(:auto_encryption_options) && @options[:auto_encryption_options].nil?
+          teardown_encrypter
+        end
+
+        if @options[:auto_encryption_options]
+          set_auto_encryption_options
+        end
       end
     end
 
@@ -854,6 +856,17 @@ module Mongo
         default_options[:retry_reads] = true
         default_options[:retry_writes] = true
       end
+    end
+
+    # Provides some default encryption options and sets up data necessary
+    # for auto-encryption
+    def set_auto_encryption_options
+      opts_copy = @options[:auto_encryption_options].dup
+
+      opts_copy[:extra_options] ||= {}
+      opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
+
+      setup_encrypter(opts_copy)
     end
 
     # If options[:session] is set, validates that session and returns it.

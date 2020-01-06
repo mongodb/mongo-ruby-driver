@@ -19,7 +19,7 @@ module Mongo
     #
     # @api private
     module Encrypter
-      attr_accessor :encryption_options
+      attr_reader :encryption_options
 
       # Set up encryption-related options and instance variables
       # on the class that includes this module.
