@@ -62,6 +62,7 @@ module Mongo
         self.new(pointer: pointer)
       end
 
+      # TODO: documentation
       def self.from_data(data)
         self.new(data: data)
       end
@@ -70,7 +71,7 @@ module Mongo
       def write(data)
         bytes = data.unpack('C*')
 
-        data_p = Binding.mongocrypt_binary_data(@bin)
+        @data_p = Binding.mongocrypt_binary_data(@bin)
                   .write_array_of_uint8(bytes)
 
         true

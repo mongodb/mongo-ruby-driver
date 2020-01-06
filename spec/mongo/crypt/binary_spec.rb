@@ -88,4 +88,16 @@ describe Mongo::Crypt::Binary do
       expect(binary.to_string).to eq(data)
     end
   end
+
+  describe '#write' do
+    let(:binary) { described_class.from_data("\0" * 11) }
+
+    it 'writes data to the binary object' do
+      expect do
+        binary.write(data)
+      end.not_to raise_error
+
+      expect(binary.to_string).to eq(data)
+    end
+  end
 end
