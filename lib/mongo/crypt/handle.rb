@@ -16,6 +16,7 @@ require 'ffi'
 require 'base64'
 require 'securerandom'
 require 'digest'
+require 'byebug' # TODO: remove
 
 module Mongo
   module Crypt
@@ -103,8 +104,7 @@ module Mongo
             data = Binary.from_pointer(input_binary_p).to_string
             encrypted = cipher.update(data) + cipher.final
 
-            output_binary = Binary.from_pointer(output_binary_p)
-            output_binary.write(encrypted)
+            Binary.from_pointer(output_binary_p).write(encrypted)
 
             int_p.write(:int, encrypted.length)
           rescue => e
@@ -128,8 +128,7 @@ module Mongo
             data = Binary.from_pointer(input_binary_p).to_string
             encrypted = cipher.update(data) + cipher.final
 
-            output_binary = Binary.from_pointer(output_binary_p)
-            output_binary.write(encrypted)
+            Binary.from_pointer(output_binary_p).write(encrypted)
 
             int_p.write(:int, encrypted.length)
           rescue => e
@@ -144,8 +143,7 @@ module Mongo
 
         @random_fn = Proc.new do |ctx_p, output_binary_p, num_bytes, status_p|
           begin
-            output_binary = Binary.from_pointer(output_binary_p)
-            output_binary.write(SecureRandom.random_bytes(num_bytes))
+            Binary.from_pointer(output_binary_p).write(SecureRandom.random_bytes(num_bytes))
           rescue => e
             status = Status.from_pointer(status_p)
             status.update(:error_client, e.code || 1, e.message)
@@ -161,13 +159,14 @@ module Mongo
             key = Binary.from_pointer(key_binary_p).to_string
             data = Binary.from_pointer(input_binary_p).to_string
 
-            hmac = OpenSSL::HMAC.digest('SHA512', key, data)
+            key = key.unpack('H*')
+            data =
 
-            output_binary = Binary.from_pointer(output_binary_p)
-            output_binary.write(hmac)
+            hmac = OpenSSL::HMAC.digest("SHA512", key, data)
+            Binary.from_pointer(output_binary_p).write(hmac)
           rescue => e
             status = Status.from_pointer(status_p)
-            status.update(:error_client, e.code || 1, e.message)
+            status.update(:error_client, 202, e.message)
 
             return false
           end
@@ -177,13 +176,12 @@ module Mongo
 
         @hmac_sha_256_fn = Proc.new do |ctx_p, key_binary_p, input_binary_p, output_binary_p, status_p|
           begin
+            byebug
             key = Binary.from_pointer(key_binary_p).to_string
             data = Binary.from_pointer(input_binary_p).to_string
 
             hmac = OpenSSL::HMAC.digest('SHA256', key, data)
-
-            output_binary = Binary.from_pointer(output_binary_p)
-            output_binary.write(hmac)
+            Binary.from_pointer(output_binary_p).write(hmac)
           rescue => e
             status = Status.from_pointer(status_p)
             status.update(:error_client, e.code || 1, e.message)
@@ -199,9 +197,7 @@ module Mongo
             data = Binary.from_pointer(input_binary_p).to_string
 
             hashed = Digest::SHA2.new(256).digest(data)
-
-            output_binary = Binary.from_pointer(output_binary_p)
-            output_binary.write(hashed)
+            Binary.from_pointer(output_binary_p).write(hashed)
           rescue => e
             status = Status.from_pointer(status_p)
             status.update(:error_client, e.code || 1, e.message)
