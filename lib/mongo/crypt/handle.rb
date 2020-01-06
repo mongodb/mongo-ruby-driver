@@ -37,8 +37,6 @@ module Mongo
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
       def initialize(kms_providers, options={})
-        @logger = options[:logger]
-
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @mongocrypt = FFI::AutoPointer.new(
@@ -46,10 +44,12 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
 
-        schema_map = options[:schema_map]
-        set_schema_map(schema_map) if schema_map
+        @schema_map = options[:schema_map]
+        set_schema_map if @schema_map
 
+        @logger = options[:logger]
         set_logger_callback if @logger
+
         set_kms_providers(kms_providers)
         initialize_mongocrypt
       end
@@ -64,12 +64,12 @@ module Mongo
       private
 
       # Set the schema map option on the underlying mongocrypt_t object
-      def set_schema_map(schema_map)
-        unless schema_map.is_a?(Hash)
-          raise ArgumentError.new("#{schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
+      def set_schema_map
+        unless @schema_map.is_a?(Hash)
+          raise ArgumentError.new("#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
         end
 
-        binary = Binary.new(schema_map.to_bson.to_s)
+        binary = Binary.new(@schema_map.to_bson.to_s)
         success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, binary.ref)
 
         raise_from_status unless success
