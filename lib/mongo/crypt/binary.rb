@@ -20,12 +20,14 @@ module Mongo
     # A wrapper around mongocrypt_binary_t, a non-owning buffer of
     # uint-8 byte data. Each Binary instance keeps a copy of the data
     # passed to it in order to keep that data alive.
+    #
+    # @api private
     class Binary
       # Create a new Binary object that wraps a byte string
       #
       # @param [ String ] data The data string wrapped by the
       #   byte buffer (optional)
-      def initialize(data=nil)
+      def initialize(data: nil, pointer: nil)
         if data
           # Represent data string as array of uint-8 bytes
           bytes = data.unpack('C*')
@@ -40,6 +42,11 @@ module Mongo
             Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length),
             Binding.method(:mongocrypt_binary_destroy)
           )
+        elsif pointer
+          # If the Binary class is used this way, it means that the pointer
+          # for the underlying mongocrypt_binary_t object is allocated somewhere
+          # else. The Binary object is not responsible for deallocating data.
+          @bin = pointer
         else
           # FFI::AutoPointer uses a custom release strategy to automatically free
           # the pointer once this object goes out of scope
@@ -52,10 +59,11 @@ module Mongo
 
       # TODO: documentation
       def self.from_pointer(pointer)
-        # If the Binary class is used this way, it means that the pointer
-        # for the underlying mongocrypt_binary_t object is allocated somewhere
-        # else. The Binary object is not responsible for deallocating data.
-        @bin = pointer
+        self.new(pointer: pointer)
+      end
+
+      def self.from_data(data)
+        self.new(data: data)
       end
 
       # TODO: documentation

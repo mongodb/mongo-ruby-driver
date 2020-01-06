@@ -73,7 +73,7 @@ module Mongo
           raise ArgumentError.new("#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
         end
 
-        binary = Binary.new(@schema_map.to_bson.to_s)
+        binary = Binary.from_data(@schema_map.to_bson.to_s)
         success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, binary.ref)
 
         raise_from_status unless success
@@ -251,7 +251,7 @@ module Mongo
 
         master_key = kms_providers[:local][:key]
 
-        binary = Binary.new(Base64.decode64(master_key))
+        binary = Binary.from_data(Base64.decode64(master_key))
         success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
 
         raise_from_status unless success

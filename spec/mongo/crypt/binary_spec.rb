@@ -9,10 +9,12 @@ describe Mongo::Crypt::Binary do
   require_libmongocrypt
 
   let(:data) { 'I love Ruby' }
-  let(:binary) { described_class.new(data) }
+  let(:binary) { described_class.from_data(data) }
 
   describe '#initialize' do
     context 'with nil data' do
+      let(:binary) { described_class.new }
+
       it 'creates a new Mongo::Crypt::Binary object' do
         expect do
           binary
@@ -21,11 +23,57 @@ describe Mongo::Crypt::Binary do
     end
 
     context 'with valid data' do
+      let(:binary) { described_class.new(data: data) }
+
       it 'creates a new Mongo::Crypt::Binary object' do
         expect do
           binary
         end.not_to raise_error
       end
+    end
+
+    context 'with pointer' do
+      let(:pointer) { Mongo::Crypt::Binding.mongocrypt_binary_new }
+      let(:binary) { described_class.new(pointer: pointer) }
+
+      after do
+        Mongo::Crypt::Binding.mongocrypt_binary_destroy(pointer)
+      end
+
+      it 'creates a new Mongo::Crypt::Binary object from pointer' do
+        expect do
+          binary
+        end.not_to raise_error
+
+        expect(binary.ref).to eq(pointer)
+      end
+    end
+  end
+
+  describe '#self.from_data' do
+    let(:binary) { described_class.from_data(data) }
+
+    it 'creates a new Mongo::Crypt::Binary object' do
+      expect do
+        binary
+      end.not_to raise_error
+    end
+  end
+
+  describe '#self.from_pointer' do
+    let(:pointer) { Mongo::Crypt::Binding.mongocrypt_binary_new }
+    let(:binary) { described_class.from_pointer(pointer) }
+
+    after do
+      Mongo::Crypt::Binding.mongocrypt_binary_destroy(pointer)
+    end
+
+    it 'creates a new Mongo::Crypt::Binary object from pointer' do
+      expect do
+        binary
+      end.not_to raise_error
+
+      expect(binary.ref).to eq(pointer)
     end
   end
 

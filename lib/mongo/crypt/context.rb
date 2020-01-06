@@ -128,7 +128,7 @@ module Mongo
       # Feeds the result of a Mongo operation to the underlying mongocrypt_ctx_t
       # object. The result param should be a binary string.
       def mongo_feed(result)
-        binary = Binary.new(result)
+        binary = Binary.from_data(result)
         success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
 
         raise_from_status unless success
