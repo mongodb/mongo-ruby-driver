@@ -21,19 +21,19 @@ module Mongo
     # a mongocrypt_t handle.
     class Status
       # Create a new Status object
-      def initialize
+      def initialize(pointer=nil)
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
-        @status = FFI::AutoPointer.new(
-          Binding.mongocrypt_status_new,
-          Binding.method(:mongocrypt_status_destroy)
-        )
+        @status = pointer || FFI::AutoPointer.new(
+                              Binding.mongocrypt_status_new,
+                              Binding.method(:mongocrypt_status_destroy)
+                            )
       end
 
       # TODO: documentation
       def self.from_pointer(pointer)
         # TODO: info here
-        @status = pointer
+        self.new(pointer)
       end
 
       # Set a label, code, and message on the Status
