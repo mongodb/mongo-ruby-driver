@@ -161,6 +161,7 @@ for that Ruby version is deprecated.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - Ruby 2.7
      - Ruby 2.6
      - Ruby 2.5
      - Ruby 2.4
@@ -178,6 +179,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      - 
      - 
      - 
@@ -191,6 +193,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      - D
      - D
      - D
@@ -200,6 +203,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.9
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -213,6 +217,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.8
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -226,6 +231,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.7
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -239,6 +245,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.6
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -252,6 +259,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.5
+     -
      -
      -
      - |checkmark|
@@ -268,6 +276,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -278,6 +287,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.3
+     -
      -
      -
      -
@@ -294,6 +304,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -307,6 +318,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -317,6 +329,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.0
+     -
      -
      -
      -
