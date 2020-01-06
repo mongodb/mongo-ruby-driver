@@ -30,6 +30,12 @@ module Mongo
         )
       end
 
+      # TODO: documentation
+      def self.from_pointer(pointer)
+        # TODO: info here
+        @status = pointer
+      end
+
       # Set a label, code, and message on the Status
       #
       # @param [ Symbol ] label One of :ok, :error_client, or :error_kms

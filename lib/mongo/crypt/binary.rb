@@ -50,6 +50,24 @@ module Mongo
         end
       end
 
+      # TODO: documentation
+      def self.from_pointer(pointer)
+        # If the Binary class is used this way, it means that the pointer
+        # for the underlying mongocrypt_binary_t object is allocated somewhere
+        # else. The Binary object is not responsible for deallocating data.
+        @bin = pointer
+      end
+
+      # TODO: documentation
+      def write(data)
+        bytes = data.unpack('C*')
+
+        data_p = Binding.mongocrypt_binary_data(@bin)
+                  .write_array_of_uint8(bytes)
+
+        true
+      end
+
       # Returns the data stored as a byte array
       #
       # @return [ Array<Int> ] Byte array stored in mongocrypt_binary_t
