@@ -232,7 +232,7 @@ module Mongo
                          Operation::U => replacement,
                         }
           if opts[:upsert]
-            update_doc[:upsert] = true
+            update_doc['upsert'] = true
           end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
@@ -279,7 +279,7 @@ module Mongo
                          Operation::MULTI => true,
                          }
           if opts[:upsert]
-            update_doc[:upsert] = true
+            update_doc['upsert'] = true
           end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
@@ -323,7 +323,7 @@ module Mongo
                          Operation::U => spec,
                          }
           if opts[:upsert]
-            update_doc[:upsert] = true
+            update_doc['upsert'] = true
           end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
