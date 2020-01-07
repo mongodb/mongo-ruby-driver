@@ -1,4 +1,45 @@
+require 'base64'
+
 module Utils
+  # TODO: documentation
+  def parse_extended_json(doc)
+    if doc.is_a?(Hash)
+      doc.each do |key, val|
+        doc[key] = parse_json_key_val(key, val)
+
+        if doc[key].is_a?(Hash) || doc[key].is_a?(Array)
+          doc[key] = parse_extended_json(val)
+        end
+      end
+    elsif doc.is_a?(Array)
+      doc.each.with_index do |val, key|
+        doc[key] = parse_json_key_val(key, val)
+
+        if doc[key].is_a?(Hash) || doc[key].is_a?(Array)
+          doc[key] = parse_extended_json(val)
+        end
+      end
+    end
+  end
+  module_function :parse_extended_json
+
+  # TODO: documentation
+  def parse_json_key_val(key, val)
+    if val.is_a?(Hash) && val.key?('$binary')
+      data = Base64.decode64(val['$binary']['base64'])
+      subtype = val['$binary']['subType'].to_i == 4 ? :uuid : :generic
+
+      BSON::Binary.new(data, subtype)
+    elsif val.is_a?(Hash) && val.key?('$date')
+      time = val['$date']['$numberLong']
+      DateTime.strptime(time, '%Q')
+    elsif val.is_a?(Hash) && val.key?('$numberInt')
+      val['$numberInt'].to_i
+    else
+      val
+    end
+  end
+  module_function :parse_json_key_val
 
   # Converts a 'camelCase' string or symbol to a :under_score symbol.
   def underscore(str)

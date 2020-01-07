@@ -53,7 +53,7 @@ module Mongo
         @logger = options[:logger]
         set_logger_callback if @logger
 
-        set_crypto_hooks
+        # set_crypto_hooks
 
         set_kms_providers(kms_providers)
         initialize_mongocrypt
@@ -95,6 +95,7 @@ module Mongo
         # TODO: documentation
         @aes_encrypt_fn = Proc.new do |ctx_p, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, int_p, status_p|
           begin
+            byebug
             cipher = OpenSSL::Cipher::AES256.new(:CBC)
 
             cipher.encrypt
@@ -119,6 +120,7 @@ module Mongo
 
         @aes_decrypt_fn = Proc.new do |ctx_p, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, int_p, status_p|
           begin
+            byebug
             cipher = OpenSSL::Cipher::AES256.new(:CBC)
 
             cipher.decrypt
@@ -143,6 +145,7 @@ module Mongo
 
         @random_fn = Proc.new do |ctx_p, output_binary_p, num_bytes, status_p|
           begin
+            byebug
             Binary.from_pointer(output_binary_p).write(SecureRandom.random_bytes(num_bytes))
           rescue => e
             status = Status.from_pointer(status_p)
@@ -156,11 +159,9 @@ module Mongo
 
         @hmac_sha_512_fn = Proc.new do |ctx_p, key_binary_p, input_binary_p, output_binary_p, status_p|
           begin
+            byebug
             key = Binary.from_pointer(key_binary_p).to_string
             data = Binary.from_pointer(input_binary_p).to_string
-
-            key = key.unpack('H*')
-            data =
 
             hmac = OpenSSL::HMAC.digest("SHA512", key, data)
             Binary.from_pointer(output_binary_p).write(hmac)
@@ -194,6 +195,7 @@ module Mongo
 
         @hmac_hash_fn = Proc.new do |ctx_p, input_binary_p, output_binary_p, status_p|
           begin
+            byebug
             data = Binary.from_pointer(input_binary_p).to_string
 
             hashed = Digest::SHA2.new(256).digest(data)
