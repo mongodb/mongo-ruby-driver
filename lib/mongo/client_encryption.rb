@@ -71,7 +71,6 @@ module Mongo
     def encrypt(value, opts={})
       value = { 'v': value }.to_bson.to_s
 
-      byebug
       Crypt::ExplicitEncryptionContext.new(
         @crypt_handle,
         @encryption_io,
