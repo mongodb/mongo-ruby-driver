@@ -23,7 +23,16 @@ module Mongo
     # @api private
     class Status
       # Create a new Status object
-      def initialize(pointer=nil)
+      #
+      # @param [ FFI::Pointer | nil ] pointer A pointer to an existing
+      #   mongocrypt_status_t object. Defaults to nil.
+      #
+      # @note When initializing a Status object with a pointer, it is
+      # recommended that you use the #self.from_pointer method
+      def initialize(pointer: nil)
+        # If a pointer is passed in, this class is not responsible for
+        # destroying that pointer and deallocating data.
+        #
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @status = pointer || FFI::AutoPointer.new(
@@ -32,10 +41,15 @@ module Mongo
                             )
       end
 
-      # TODO: documentation
+      # Initialize a Status object from an existing pointer to a
+      # mongocrypt_status_t object.
+      #
+      # @param [ FFI::Pointer ] pointer A pointer to an existing
+      #   mongocrypt_status_t object
+      #
+      # @return [ Mongo::Crypt::Status ] A new Status object
       def self.from_pointer(pointer)
-        # TODO: info here
-        self.new(pointer)
+        self.new(pointer: pointer)
       end
 
       # Set a label, code, and message on the Status
