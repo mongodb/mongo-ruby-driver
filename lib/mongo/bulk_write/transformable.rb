@@ -92,7 +92,7 @@ module Mongo
           Operation::U => doc[:replacement],
         }.tap do |d|
           if doc[:upsert]
-            d[:upsert] = true
+            d['upsert'] = true
           end
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
         end
@@ -108,7 +108,7 @@ module Mongo
           Operation::MULTI => true,
         }.tap do |d|
           if doc[:upsert]
-            d[:upsert] = true
+            d['upsert'] = true
           end
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
@@ -124,7 +124,7 @@ module Mongo
           Operation::U => doc[:update],
         }.tap do |d|
           if doc[:upsert]
-            d[:upsert] = true
+            d['upsert'] = true
           end
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
