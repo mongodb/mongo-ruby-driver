@@ -18,11 +18,31 @@ require 'digest'
 module Mongo
   module Crypt
 
-    # TODO: documentation
+    # A helper module that implements cryptography methods required
+    # for native Ruby crypto hooks. These methods are passed into FFI
+    # as C callbacks and called from the libmongocrypt library.
     module Hooks
 
-      # TODO: documentation
-      def aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt=false)
+      # An AES encrypt or decrypt method.
+      #
+      # @param [ FFI::Pointer ] key_binary_p A pointer to a mongocrypt_binary_t
+      #   object that wraps the 32-byte AES encryption key
+      # @param [ FFI::Pointer ] iv_binary_p A pointer to a mongocrypt_binary_t
+      #   object that wraps the 16-byte AES iv
+      # @param [ FFI::Pointer ] input_binary_p A pointer to a mongocrypt_binary_t
+      #   object that wraps the data to be encrypted/decrypted
+      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
+      #   object to which the encrypted/decrypted output will be written
+      # @param [ FFI::Pointer ] response_length_p A pointer to an int32 to which
+      #   the length of the output will be written
+      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
+      #   object; if this method fails, an error message will be written to this status
+      # @param [ true | false ] decrypt Whether this method is decrypting. Default is
+      #   false, which means the method will create an encryption cipher by default
+      #
+      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
+      # error message from the mongocrypt_status_t object passed into the method.
+      def aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: false)
         begin
           cipher = OpenSSL::Cipher::AES.new(256, :CBC)
 
@@ -46,6 +66,16 @@ module Mongo
       end
       module_function :aes
 
+      # Crypto secure random function
+      #
+      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
+      #   object to which the encrypted/decrypted output will be written
+      # @param [ Integer ] num_bytes The number of random bytes requested
+      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
+      #   object; if this method fails, an error message will be written to this status
+      #
+      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
+      # error message from the mongocrypt_status_t object passed into the method.
       def random(output_binary_p, num_bytes, status_p)
         begin
           Binary.from_pointer(output_binary_p).write(SecureRandom.random_bytes(num_bytes))
@@ -58,6 +88,20 @@ module Mongo
       end
       module_function :random
 
+      # An HMAC SHA-512 or SHA-256 function
+      #
+      # @param [ String ] The name of the digest, either "SHA256" or "SHA512"
+      # @param [ FFI::Pointer ] key_binary_p A pointer to a mongocrypt_binary_t
+      #   object that wraps the 32-byte encryption key
+      # @param [ FFI::Pointer ] input_binary_p A pointer to a mongocrypt_binary_t
+      #   object that wraps the data to be encrypted/decrypted
+      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
+      #   object to which the encrypted/decrypted output will be written
+      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
+      #   object; if this method fails, an error message will be written to this status
+      #
+      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
+      # error message from the mongocrypt_status_t object passed into the method.
       def hmac_sha(digest, key_binary_p, input_binary_p, output_binary_p, status_p)
         begin
           key = Binary.from_pointer(key_binary_p).to_string
@@ -74,6 +118,17 @@ module Mongo
       end
       module_function :hmac_sha
 
+      # A crypto hash (SHA-256) function
+      #
+      # @param [ FFI::Pointer ] input_binary_p A pointer to a mongocrypt_binary_t
+      #   object that wraps the data to be encrypted/decrypted
+      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
+      #   object to which the encrypted/decrypted output will be written
+      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
+      #   object; if this method fails, an error message will be written to this status
+      #
+      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
+      # error message from the mongocrypt_status_t object passed into the method.
       def hash_sha256(input_binary_p, output_binary_p, status_p)
         begin
           data = Binary.from_pointer(input_binary_p).to_string
@@ -89,7 +144,8 @@ module Mongo
 
       private
 
-      # TODO: documentation
+      # In the case of an error during cryptography, set the error message
+      # of the specified status to the message of the runtime error
       def handle_error(status_p, e)
         status = Status.from_pointer(status_p)
         status.update(:error_client, 1, e.message)

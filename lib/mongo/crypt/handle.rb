@@ -87,14 +87,20 @@ module Mongo
         raise_from_status unless success
       end
 
-      # TODO: documentation
+      # We are buildling libmongocrypt without crypto functions to remove the
+      # external dependency on OpenSSL. This method binds native Ruby crypto methods
+      # to the underlying mongocrypt_t object so that libmongocrypt can still perform
+      # cryptography.
+      #
+      # Every crypto binding ignores its first argument, which is an option mongocrypt_ctx_t
+      # object and is not required to use crypto hooks.
       def set_crypto_hooks
         @aes_encrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
           Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
         end
 
         @aes_decrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
-          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, true)
+          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: true)
         end
 
         @random_fn = Proc.new do |_, output_binary_p, num_bytes, status_p|
