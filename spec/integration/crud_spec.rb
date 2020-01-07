@@ -13,7 +13,6 @@ describe 'CRUD operations' do
         collection.count_documents({}).should == 0
 
         res = collection.find(_id: 'foo').update_one({'$set' => {foo: 'bar'}}, upsert: true)
-        p res
 
         res.documents.first['upserted'].length.should == 1
 
