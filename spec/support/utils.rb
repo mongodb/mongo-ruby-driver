@@ -1,45 +1,47 @@
 require 'base64'
 
 module Utils
-  # TODO: documentation
+  # A limited extended JSON parser to use in FLE specs.
+  # DO NOT consider this a complete extended JSON parser.
+  #
+  # This method may modify the provided argument
   def parse_extended_json(doc)
+    requires_parsing = doc.is_a?(Hash) && (doc.key?('$binary') || doc.key?('$date') || doc.key?('$numberInt'))
+    return parse_json_object(doc) if requires_parsing
+
     if doc.is_a?(Hash)
-      doc.each do |key, val|
-        doc[key] = parse_json_key_val(key, val)
-
-        if doc[key].is_a?(Hash) || doc[key].is_a?(Array)
-          doc[key] = parse_extended_json(val)
-        end
-      end
-    elsif doc.is_a?(Array)
-      doc.each.with_index do |val, key|
-        doc[key] = parse_json_key_val(key, val)
-
-        if doc[key].is_a?(Hash) || doc[key].is_a?(Array)
-          doc[key] = parse_extended_json(val)
-        end
+      return doc.each do |key, value|
+        doc[key] = parse_extended_json(value)
       end
     end
+
+    if doc.is_a?(Array)
+      return doc.each.with_index do |el, idx|
+        doc[idx] = parse_extended_json(el)
+      end
+    end
+
+    return doc
   end
   module_function :parse_extended_json
 
-  # TODO: documentation
-  def parse_json_key_val(key, val)
-    if val.is_a?(Hash) && val.key?('$binary')
-      data = Base64.decode64(val['$binary']['base64'])
-      subtype = val['$binary']['subType'].to_i == 4 ? :uuid : :generic
+  def parse_json_object(obj)
+    raise "JSON object must be a Hash" unless obj.is_a?(Hash)
+
+    if obj.key?('$binary')
+      data = Base64.decode64(obj['$binary']['base64'])
+      subtype = obj['$binary']['subType'].to_i == 4 ? :uuid : :generic
 
       BSON::Binary.new(data, subtype)
-    elsif val.is_a?(Hash) && val.key?('$date')
-      time = val['$date']['$numberLong']
+    elsif obj.key?('$date')
+      time = obj['$date']['$numberLong']
       DateTime.strptime(time, '%Q')
-    elsif val.is_a?(Hash) && val.key?('$numberInt')
-      val['$numberInt'].to_i
-    else
-      val
+    elsif obj.key?('$numberInt')
+      obj['$numberInt'].to_i
     end
   end
-  module_function :parse_json_key_val
+  module_function :parse_json_object
+  private :parse_json_object
 
   # Converts a 'camelCase' string or symbol to a :under_score symbol.
   def underscore(str)
