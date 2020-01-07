@@ -88,6 +88,8 @@ python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
 
+export MONGO_RUBY_DRIVER_LINT=1
+
 echo "Running specs"
 which bundle
 bundle --version
