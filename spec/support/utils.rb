@@ -3,6 +3,8 @@ require 'base64'
 module Utils
   # A limited extended JSON parser to use in FLE specs.
   # DO NOT consider this a complete extended JSON parser.
+  # This method will be removed once a complete extended
+  # JSON parser has been implemented.
   #
   # This method may modify the provided argument
   def parse_extended_json(doc)
