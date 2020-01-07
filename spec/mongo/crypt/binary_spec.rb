@@ -1,5 +1,6 @@
 require 'mongo'
 require 'support/lite_constraints'
+require 'byebug'
 
 RSpec.configure do |config|
   config.extend(LiteConstraints)
@@ -91,16 +92,27 @@ describe Mongo::Crypt::Binary do
 
   describe '#write' do
     # Binary must have enough space pre-allocated
-    let(:binary) { described_class.from_data("\0" * 11) }
+    let(:binary) { described_class.from_data("\00" * data.length) }
 
     it 'writes data to the binary object' do
-      expect do
-        binary.write(data)
-      end.not_to raise_error
-
+      expect(binary.write(data)).to be true
       expect(binary.to_string).to eq(data)
     end
 
-    # TODO: test case without space pre-allocated
+    context 'with no space allocated' do
+      let(:binary) { described_class.new }
+
+      it 'returns false' do
+        expect(binary.write(data)).to be false
+      end
+    end
+
+    context 'without enough space allocated' do
+      let(:binary) { described_class.from_data("\00" * (data.length - 1)) }
+
+      it 'returns false' do
+        expect(binary.write(data)).to be false
+      end
+    end
   end
 end
