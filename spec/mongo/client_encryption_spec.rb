@@ -84,14 +84,14 @@ describe Mongo::ClientEncryption do
     end
   end
 
-  describe '#encrypt' do
+  shared_context 'encryption/decryption' do
     let(:data_key) do
       Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/key_document.json')))
     end
 
+    # Represented in as Base64 for simplicity
+    let(:encrypted_value) { "bwAAAAV2AGIAAAAGASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QT\nYNYHvplIMWjXWlnxAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGI\nJ4pHUwVPSiNqfFTKu3OewGtKV9AA\n" }
     let(:value) { 'Hello world' }
-
-    let(:expected_encrypted_value) { "bwAAAAV2AGIAAAAGASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QT\nYNYHvplIMWjXWlnxAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGI\nJ4pHUwVPSiNqfFTKu3OewGtKV9AA\n" }
 
     before do
       key_vault_collection = client.use(key_vault_db)[key_vault_coll]
@@ -99,6 +99,10 @@ describe Mongo::ClientEncryption do
 
       key_vault_collection.insert_one(data_key)
     end
+  end
+
+  describe '#encrypt' do
+    include_context 'encryption/decryption'
 
     it 'returns the correct encrypted string' do
       encrypted = client_encryption.encrypt(
@@ -110,25 +114,12 @@ describe Mongo::ClientEncryption do
       )
 
       expect(encrypted).to be_a_kind_of(String)
-      expect(encrypted).to eq(Base64.decode64(expected_encrypted_value))
+      expect(encrypted).to eq(Base64.decode64(encrypted_value))
     end
   end
 
   describe '#decrypt' do
-    let(:data_key) do
-      Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/key_document.json')))
-    end
-
-    let(:value) { 'Hello world' }
-
-    let(:encrypted_value) { "bwAAAAV2AGIAAAAGASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QT\nYNYHvplIMWjXWlnxAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGI\nJ4pHUwVPSiNqfFTKu3OewGtKV9AA\n" }
-
-    before do
-      key_vault_collection = client.use(key_vault_db)[key_vault_coll]
-      key_vault_collection.drop
-
-      key_vault_collection.insert_one(data_key)
-    end
+    include_context 'encryption/decryption'
 
     it 'returns the correct unencrypted value' do
       result = client_encryption.decrypt(Base64.decode64(encrypted_value))
