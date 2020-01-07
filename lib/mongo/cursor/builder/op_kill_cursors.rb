@@ -87,7 +87,14 @@ module Mongo
           #
           # @since 2.3.0
           def get_cursors_list(spec)
-            spec[:cursor_ids].map(&:value)
+            spec[:cursor_ids].map do |value|
+              if value.respond_to?(:value)
+                # bson-ruby >= 4.6.0
+                value.value
+              else
+                value.instance_variable_get('@integer')
+              end
+            end
           end
         end
       end

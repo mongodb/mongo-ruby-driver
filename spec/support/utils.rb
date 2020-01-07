@@ -105,7 +105,7 @@ module Utils
       # Convert txnNumber field from a BSON integer to an extended JSON int64
       if command['txnNumber']
         command['txnNumber'] = {
-          '$numberLong' => command['txnNumber'].value.to_s
+          '$numberLong' => int64_value(command['txnNumber']).to_s
         }
       end
 
@@ -217,4 +217,14 @@ module Utils
     end
   end
   module_function :convert_operation_options
+
+  def int64_value(value)
+    if value.respond_to?(:value)
+      # bson-ruby >= 4.6.0
+      value.value
+    else
+      value.instance_variable_get('@integer')
+    end
+  end
+  module_function :int64_value
 end
