@@ -1,6 +1,5 @@
 def standard_dependencies
   gem 'yard'
-  gem 'ffi'
 
   group :development, :testing do
     gem 'jruby-openssl', platforms: :jruby
