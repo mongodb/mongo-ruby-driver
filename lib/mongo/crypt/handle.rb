@@ -14,9 +14,6 @@
 
 require 'ffi'
 require 'base64'
-require 'securerandom'
-require 'digest'
-require 'byebug' # TODO: remove
 
 module Mongo
   module Crypt
@@ -92,116 +89,28 @@ module Mongo
 
       # TODO: documentation
       def set_crypto_hooks
-        # TODO: documentation
-        @aes_encrypt_fn = Proc.new do |ctx_p, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, int_p, status_p|
-          begin
-            cipher = OpenSSL::Cipher::AES.new(256, :CBC)
-
-            cipher.encrypt
-            cipher.key = Binary.from_pointer(key_binary_p).to_string
-            cipher.iv = Binary.from_pointer(iv_binary_p).to_string
-            cipher.padding = 0
-
-            data = Binary.from_pointer(input_binary_p).to_string
-            encrypted = cipher.update(data) #+ cipher.final
-
-            Binary.from_pointer(output_binary_p).write(encrypted)
-
-            int_p.write(:int, encrypted.length)
-          rescue => e
-            status = Status.from_pointer(status_p)
-            status.update(:error_client, e.code || 1, e.message)
-
-            return false
-          end
-
-          true
+        @aes_encrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
+          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
         end
 
-        @aes_decrypt_fn = Proc.new do |ctx_p, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, int_p, status_p|
-          begin
-            cipher = OpenSSL::Cipher::AES.new(256, :CBC)
-
-            cipher.decrypt
-            cipher.key = Binary.from_pointer(key_binary_p).to_string
-            cipher.iv = Binary.from_pointer(iv_binary_p).to_string
-            cipher.padding = 0
-
-            data = Binary.from_pointer(input_binary_p).to_string
-            encrypted = cipher.update(data) #+ cipher.final
-
-            Binary.from_pointer(output_binary_p).write(encrypted)
-
-            int_p.write(:int, encrypted.length)
-          rescue => e
-            status = Status.from_pointer(status_p)
-            status.update(:error_client, e.code || 1, e.message)
-
-            return false
-          end
-
-          true
+        @aes_decrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
+          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, true)
         end
 
-        @random_fn = Proc.new do |ctx_p, output_binary_p, num_bytes, status_p|
-          begin
-            Binary.from_pointer(output_binary_p).write(SecureRandom.random_bytes(num_bytes))
-          rescue => e
-            status = Status.from_pointer(status_p)
-            status.update(:error_client, e.code || 1, e.message)
-
-            return false
-          end
-
-          true
+        @random_fn = Proc.new do |_, output_binary_p, num_bytes, status_p|
+          Hooks.random(output_binary_p, num_bytes, status_p)
         end
 
-        @hmac_sha_512_fn = Proc.new do |ctx_p, key_binary_p, input_binary_p, output_binary_p, status_p|
-          begin
-            key = Binary.from_pointer(key_binary_p).to_string
-            data = Binary.from_pointer(input_binary_p).to_string
-
-            hmac = OpenSSL::HMAC.digest("SHA512", key, data)
-            Binary.from_pointer(output_binary_p).write(hmac)
-          rescue => e
-            status = Status.from_pointer(status_p)
-            status.update(:error_client, 202, e.message)
-
-            return false
-          end
-
-          true
+        @hmac_sha_512_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
+          Hooks.hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 
-        @hmac_sha_256_fn = Proc.new do |ctx_p, key_binary_p, input_binary_p, output_binary_p, status_p|
-          begin
-            key = Binary.from_pointer(key_binary_p).to_string
-            data = Binary.from_pointer(input_binary_p).to_string
-
-            hmac = OpenSSL::HMAC.digest('SHA256', key, data)
-            Binary.from_pointer(output_binary_p).write(hmac)
-          rescue => e
-            status = Status.from_pointer(status_p)
-            status.update(:error_client, e.code || 1, e.message)
-
-            return false
-          end
-
-          true
+        @hmac_sha_256_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
+          Hooks.hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 
-        @hmac_hash_fn = Proc.new do |ctx_p, input_binary_p, output_binary_p, status_p|
-          begin
-            data = Binary.from_pointer(input_binary_p).to_string
-
-            hashed = Digest::SHA2.new(256).digest(data)
-            Binary.from_pointer(output_binary_p).write(hashed)
-          rescue => e
-            status = Status.from_pointer(status_p)
-            status.update(:error_client, e.code || 1, e.message)
-
-            return false
-          end
+        @hmac_hash_fn = Proc.new do |_, input_binary_p, output_binary_p, status_p|
+          Hooks.hash_sha256(input_binary_p, output_binary_p, status_p)
         end
 
         success = Binding.mongocrypt_setopt_crypto_hooks(

@@ -17,6 +17,7 @@ module Mongo
     autoload(:Binding, 'mongo/crypt/binding')
     autoload(:Binary, 'mongo/crypt/binary')
     autoload(:Status, 'mongo/crypt/status')
+    autoload(:Hooks, 'mongo/crypt/hooks')
     autoload(:Handle, 'mongo/crypt/handle')
     autoload(:Context, 'mongo/crypt/context')
     autoload(:DataKeyContext, 'mongo/crypt/data_key_context')
