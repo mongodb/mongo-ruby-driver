@@ -58,7 +58,13 @@ set_env_vars() {
   fi
   export CI=evergreen
   # JRUBY_OPTS were initially set for Mongoid
-  export JRUBY_OPTS="--server -J-Xms512m -J-Xmx1G"
+  export JRUBY_OPTS="--server -J-Xms512m -J-Xmx2G"
+  
+  if test "$BSON" = min; then
+    export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
+  elif test "$BSON" = master; then
+    export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
+  fi
 }
 
 setup_ruby() {

@@ -110,7 +110,12 @@ module Mongo
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
           if value.is_a?(BSON::Int32)
-            value = value.value
+            if value.respond_to?(:value)
+              # bson-ruby >= 4.6.0
+              value = value.value
+            else
+              value = value.instance_variable_get('@integer')
+            end
           end
           buffer.put_int32(value)
         end
@@ -138,7 +143,12 @@ module Mongo
         # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
           if value.is_a?(BSON::Int64)
-            value = value.value
+            if value.respond_to?(:value)
+              # bson-ruby >= 4.6.0
+              value = value.value
+            else
+              value = value.instance_variable_get('@integer')
+            end
           end
           buffer.put_int64(value)
         end

@@ -135,7 +135,7 @@ module Mongo
         if expected.keys.first == '$numberLong'
           converted = expected.values.first.to_i
           if actual.is_a?(BSON::Int64)
-            actual = actual.value
+            actual = Utils.int64_value(actual)
           elsif actual.is_a?(BSON::Int32)
             return false
           end
