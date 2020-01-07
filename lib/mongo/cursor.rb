@@ -19,8 +19,9 @@ module Mongo
   # Client-side representation of an iterator over a query result set on
   # the server.
   #
-  # A +Cursor+ is not created directly by a user. Rather, +CollectionView+
-  # creates a +Cursor+ in an Enumerable module method.
+  # +Cursor+ objects are not directly exposed to application code. Rather,
+  # +Collection::View+ exposes the +Enumerable+ interface to the applications,
+  # and the enumerator is backed by a +Cursor+ instance.
   #
   # @example Get an array of 5 users named Emily.
   #   users.find({:name => 'Emily'}).limit(5).to_a
@@ -28,8 +29,7 @@ module Mongo
   # @example Call a block on each user doc.
   #   users.find.each { |doc| puts doc }
   #
-  # @note The +Cursor+ API is semipublic.
-  # @api semipublic
+  # @api private
   class Cursor
     extend Forwardable
     include Enumerable
@@ -71,11 +71,14 @@ module Mongo
       @initial_result = result
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
+      if @cursor_id.nil?
+        raise ArgumentError, 'Cursor id must be present in the result'
+      end
       @coll_name = nil
       @options = options
       @session = @options[:session]
-      register
-      if @cursor_id && @cursor_id > 0
+      unless closed?
+        register
         ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
           cluster,
           kill_cursors_op_spec,
@@ -122,6 +125,10 @@ module Mongo
 
     # Iterate through documents returned from the query.
     #
+    # A cursor may be iterated at most once. Incomplete iteration is also
+    # allowed. Attempting to iterate the cursor more than once raises
+    # InvalidCursorOperation.
+    #
     # @example Iterate over the documents in the cursor.
     #   cursor.each do |doc|
     #     ...
@@ -142,19 +149,29 @@ module Mongo
       # end of previous iteration or would always restart from the
       # beginning.
       if @get_more_called
-        raise NotImplementedError, 'Cannot restart iteration of a cursor which issued a getMore'
+        raise Error::InvalidCursorOperation, 'Cannot restart iteration of a cursor which issued a getMore'
       end
 
       # To maintain compatibility with pre-2.10 driver versions, reset
       # the documents array each time a new iteration is started.
       @documents = nil
 
-      loop do
-        document = try_next
-        yield document if document
+      if block_given?
+        # StopIteration raised by try_next ends this loop.
+        loop do
+          document = try_next
+          yield document if document
+        end
+        self
+      else
+        documents = []
+        # StopIteration raised by try_next ends this loop.
+        loop do
+          document = try_next
+          documents << document if document
+        end
+        documents
       end
-    rescue StopIteration => e
-      return self
     end
 
     # Return one document from the query, if one is available.
@@ -168,6 +185,10 @@ module Mongo
     # @note This method is experimental and subject to change.
     #
     # @return [ BSON::Document | nil ] A document.
+    #
+    # @raise [ StopIteration ] Raised on the calls after the cursor had been
+    #   completely iterated.
+    #
     # @api private
     def try_next
       if @documents.nil?
@@ -184,9 +205,9 @@ module Mongo
         # On empty batches, we cache the batch resume token
         cache_batch_resume_token
 
-        if more?
+        unless closed?
           if exhausted?
-            kill_cursors
+            close
             raise StopIteration
           end
           @documents = get_more
@@ -233,7 +254,28 @@ module Mongo
     #
     # @since 2.2.0
     def closed?
-      !more?
+      # @cursor_id should in principle never be nil
+      @cursor_id.nil? || @cursor_id == 0
+    end
+
+    # Closes this cursor, freeing any associated resources on the client and
+    # the server.
+    #
+    # @return [ nil ] Always nil.
+    #
+    # @raise [ Error::OperationFailure ] If the server cursor close fails.
+    def close
+      return if closed?
+
+      unregister
+      read_with_one_retry do
+        kill_cursors_operation.execute(@server)
+      end
+
+      nil
+    ensure
+      end_session
+      @cursor_id = 0
     end
 
     # Get the parsed collection name.
@@ -317,16 +359,6 @@ module Mongo
       Operation::GetMore.new(spec)
     end
 
-    def kill_cursors
-      unregister
-      read_with_one_retry do
-        kill_cursors_operation.execute(@server)
-      end
-    ensure
-      end_session
-      @cursor_id = 0
-    end
-
     def end_session
       @session.end_session if @session && @session.implicit?
     end
@@ -347,21 +379,21 @@ module Mongo
       limit ? limit > 0 : false
     end
 
-    def more?
-      @cursor_id != 0
-    end
-
     def process(result)
       @remaining -= result.returned_count if limited?
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
-      unregister if result.cursor_id == 0
+      # #process is called for the first batch of results. In this case
+      # the @cursor_id may be zero (all results fit in the first batch).
+      # Thus we need to check both @cursor_id and the cursor_id of the result
+      # prior to calling unregister here.
+      unregister if !closed? && result.cursor_id == 0
       @cursor_id = result.cursor_id
 
       if result.respond_to?(:post_batch_resume_token)
         @post_batch_resume_token = result.post_batch_resume_token
       end
 
-      end_session if !more?
+      end_session if closed?
 
       # Since our iteration code mutates the documents array by calling #shift
       # on it, duplicate the documents here to permit restarting iteration

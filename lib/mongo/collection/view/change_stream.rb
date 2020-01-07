@@ -194,12 +194,21 @@ module Mongo
         # @example Close the change stream.
         #   stream.close
         #
-        # @return [ nil ] nil.
+        # @note This method attempts to close the cursor used by the change
+        #   stream, which in turn closes the server-side change stream cursor.
+        #   This method ignores any errors that occur when closing the
+        #   server-side cursor.
+        #
+        # @return [ nil ] Always nil.
         #
         # @since 2.5.0
         def close
           unless closed?
-            begin; @cursor.send(:kill_cursors); rescue; end
+            begin
+              @cursor.close
+            rescue Error::OperationFailure
+              # ignore
+            end
             @cursor = nil
           end
         end

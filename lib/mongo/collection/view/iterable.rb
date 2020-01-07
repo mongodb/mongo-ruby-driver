@@ -55,14 +55,23 @@ module Mongo
           end
         end
 
-        # Stop the iteration by sending a KillCursors command to the server.
+        # Cleans up resources associated with this query.
         #
-        # @example Stop the iteration.
-        #   view.close_query
+        # If there is a server cursor associated with this query, it is
+        # closed by sending a KillCursors command to the server.
+        #
+        # @note This method propagates any errors that occur when closing the
+        #   server-side cursor.
+        #
+        # @return [ nil ] Always nil.
+        #
+        # @raise [ Error::OperationFailure ] If the server cursor close fails.
         #
         # @since 2.1.0
         def close_query
-          @cursor.send(:kill_cursors) if @cursor && !@cursor.closed?
+          if @cursor
+            @cursor.close
+          end
         end
         alias :kill_cursors :close_query
 

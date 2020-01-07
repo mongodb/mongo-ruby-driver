@@ -147,7 +147,7 @@ describe Mongo::Collection::View do
       end
 
       it 'sends a kill cursors command for the cursor' do
-        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(cursor).to receive(:close).and_call_original
         view.close_query
       end
     end

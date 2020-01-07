@@ -76,10 +76,15 @@ module Mongo
       #
       # @since 2.3.0
       def register_cursor(id)
-        if id && id > 0
-          @mutex.synchronize do
-            @active_cursors << id
-          end
+        if id.nil?
+          raise ArgumentError, 'register_cursor called with nil cursor_id'
+        end
+        if id == 0
+          raise ArgumentError, 'register_cursor called with cursor_id=0'
+        end
+
+        @mutex.synchronize do
+          @active_cursors << id
         end
       end
 
@@ -94,6 +99,13 @@ module Mongo
       #
       # @since 2.3.0
       def unregister_cursor(id)
+        if id.nil?
+          raise ArgumentError, 'unregister_cursor called with nil cursor_id'
+        end
+        if id == 0
+          raise ArgumentError, 'unregister_cursor called with cursor_id=0'
+        end
+
         @mutex.synchronize do
           @active_cursors.delete(id)
         end

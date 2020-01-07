@@ -372,7 +372,7 @@ describe Mongo::Collection::View::ChangeStream do
     context 'when documents have not been retrieved and the stream is closed' do
 
       before do
-        expect(cursor).to receive(:kill_cursors)
+        expect(cursor).to receive(:close).and_call_original
         change_stream.close
       end
 
@@ -448,7 +448,7 @@ describe Mongo::Collection::View::ChangeStream do
       max_server_version '4.0'
 
       it 'driver raises an exception and closes the cursor' do
-        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(cursor).to receive(:close).and_call_original
         expect {
           change_stream.to_enum.next
         }.to raise_exception(Mongo::Error::MissingResumeToken)
@@ -459,7 +459,7 @@ describe Mongo::Collection::View::ChangeStream do
       min_server_fcv '4.2'
 
       it 'server errors, driver closes the cursor' do
-        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(cursor).to receive(:close).and_call_original
         expect {
           change_stream.to_enum.next
         }.to raise_exception(Mongo::Error::OperationFailure, /Encountered an event whose _id field, which contains the resume token, was modified by the pipeline. Modifying the _id field of an event makes it impossible to resume the stream from that point. Only transformations that retain the unmodified _id field are allowed./)
@@ -663,7 +663,7 @@ describe Mongo::Collection::View::ChangeStream do
           enum.next
           collection.insert_one(a: 2)
           expect(cursor).to receive(:get_more).once.and_raise(error)
-          expect(cursor).to receive(:kill_cursors).and_call_original
+          expect(cursor).to receive(:close).and_call_original
           expect(view.send(:server_selector)).to receive(:select_server).once.and_call_original
           expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
         end
@@ -748,7 +748,7 @@ describe Mongo::Collection::View::ChangeStream do
         enum.next
         collection.insert_one(a: 2)
         expect(cursor).to receive(:get_more).and_raise(Mongo::Error::MissingResumeToken)
-        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(cursor).to receive(:close).and_call_original
         expect(Mongo::Operation::Aggregate).not_to receive(:new)
       end
 
