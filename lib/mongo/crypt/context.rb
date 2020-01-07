@@ -21,6 +21,8 @@ module Mongo
     # This class is a superclass that defines shared methods
     # amongst contexts that are initialized for different purposes
     # (e.g. data key creation, encryption, explicit encryption, etc.)
+    #
+    # @api private
     class Context
       #  Create a new Context object
       #

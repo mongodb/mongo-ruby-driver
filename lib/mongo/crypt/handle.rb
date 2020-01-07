@@ -21,6 +21,8 @@ module Mongo
     # A handle to the libmongocrypt library that wraps a mongocrypt_t object,
     # allowing clients to set options on that object or perform operations such
     # as encryption and decryption
+    #
+    # @api private
     class Handle
       # Creates a new Handle object and initializes it with options
       #

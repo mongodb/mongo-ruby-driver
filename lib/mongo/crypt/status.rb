@@ -19,6 +19,8 @@ module Mongo
 
     # A wrapper around mongocrypt_status_t, representing the status of
     # a mongocrypt_t handle.
+    #
+    # @api private
     class Status
       # Create a new Status object
       def initialize(pointer=nil)

@@ -21,6 +21,8 @@ module Mongo
     # A helper module that implements cryptography methods required
     # for native Ruby crypto hooks. These methods are passed into FFI
     # as C callbacks and called from the libmongocrypt library.
+    #
+    # @api private
     module Hooks
 
       # An AES encrypt or decrypt method.

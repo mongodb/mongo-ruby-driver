@@ -16,6 +16,8 @@ module Mongo
   module Crypt
 
     # A Context object initialized for explicit decryption
+    #
+    # @api private
     class ExplicitDecryptionContext < Context
 
       # Create a new ExplicitDecryptionContext object

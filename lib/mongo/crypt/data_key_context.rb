@@ -17,6 +17,8 @@ module Mongo
 
     # A Context object initialized specifically for the purpose of creating
     # a data key in the key managemenet system.
+    #
+    # @api private
     class DataKeyContext < Context
 
       # Create a new DataKeyContext object
