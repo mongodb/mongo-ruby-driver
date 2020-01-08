@@ -73,9 +73,11 @@ module Mongo
                                 monitoring_io: mongocryptd_client_monitoring_io,
                               )
 
-        # @encryption_io = EncryptionIO.new(options[:key_vault_client], options[:key_vault_namespace])
-
-        # TODO: use all the other options for auto-encryption/auto-decryption
+        @encryption_io = EncryptionIO.new(
+                          client: self,
+                          mongocryptd_client: @mongocryptd_client,
+                          key_vault_collection: build_key_vault_collection
+                         )
       end
 
       # Spawn a new mongocryptd process using the mongocryptd_spawn_path

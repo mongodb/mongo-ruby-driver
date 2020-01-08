@@ -30,7 +30,9 @@ module Mongo
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
-      def initialize(key_vault_collection:)
+      def initialize(client: nil, mongocryptd_client: nil, key_vault_collection:)
+        @client = client
+        @mongocryptd_client = client
         @key_vault_collection = key_vault_collection
       end
 
