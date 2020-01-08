@@ -40,7 +40,7 @@ module Mongo
         validate_key_vault_client!
 
         @crypt_handle = Crypt::Handle.new(options[:kms_providers], schema_map: options[:schema_map])
-        @encryption_io = EncryptionIO.new(options[:key_vault_client], options[:key_vault_namespace])
+        @encryption_io = EncryptionIO.new(key_vault_collection: build_key_vault_collection)
       end
 
       private
@@ -67,6 +67,12 @@ module Mongo
         unless @encryption_options[:key_vault_client]
           raise ArgumentError.new('The :key_vault_client option cannot be nil')
         end
+      end
+
+      # Build the key vault collection for EncryptionIO object
+      def build_key_vault_collection
+        key_vault_db, key_vault_coll = @encryption_options[:key_vault_namespace].split('.')
+        @encryption_options[:key_vault_client].use(key_vault_db)[key_vault_coll]
       end
     end
   end

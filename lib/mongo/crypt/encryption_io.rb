@@ -30,9 +30,8 @@ module Mongo
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
-      def initialize(key_vault_client, key_vault_namespace)
-        key_vault_db_name, key_vault_collection_name = key_vault_namespace.split('.')
-        @collection = key_vault_client.use(key_vault_db_name)[key_vault_collection_name]
+      def initialize(key_vault_collection:)
+        @key_vault_collection = key_vault_collection
       end
 
       # Query for keys in the key vault collection using the provided
@@ -42,7 +41,7 @@ module Mongo
       #
       # @return [ Array<Hash> ] The query results
       def find_keys(filter)
-        @collection.find(filter).to_a
+        @key_vault_collection.find(filter).to_a
       end
 
       # Insert a document into the key vault collection
@@ -51,7 +50,7 @@ module Mongo
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
       def insert(document)
-        @collection.insert_one(document)
+        @key_vault_collection.insert_one(document)
       end
     end
   end
