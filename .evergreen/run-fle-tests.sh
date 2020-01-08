@@ -15,6 +15,8 @@ setup_ruby
 
 install_deps
 
-bundle exec rake
+# bundle exec rake
+bundle exec rake spec:prepare
+bundle exec rspec spec/mongo/crypt
 
 kill_jruby
