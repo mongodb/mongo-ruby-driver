@@ -1,5 +1,6 @@
 require 'mongo'
 require 'support/lite_constraints'
+require 'mongo/crypt/helpers/mongo_crypt_spec_helper'
 
 RSpec.configure do |config|
   config.extend(LiteConstraints)
@@ -75,7 +76,7 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'with valid kms option' do
         before do
-          CryptoHooksHelper.bind_crypto_hooks(mongocrypt)
+          MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
         end
 
         it 'returns true' do
@@ -91,7 +92,7 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'with invalid kms option' do
         before do
-          CryptoHooksHelper.bind_crypto_hooks(mongocrypt)
+          MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
         end
 
         let(:key_bytes) { [114, 117, 98, 121] * 23 } # NOT 96 bytes

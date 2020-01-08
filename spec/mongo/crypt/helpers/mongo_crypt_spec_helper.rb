@@ -1,4 +1,4 @@
-module CryptoHooksHelper
+module MongoCryptSpecHelper
   def bind_crypto_hooks(mongocrypt)
     Mongo::Crypt::Binding.mongocrypt_setopt_crypto_hooks(
       mongocrypt,
