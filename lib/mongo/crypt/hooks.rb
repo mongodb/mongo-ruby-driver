@@ -58,7 +58,7 @@ module Mongo
 
           Binary.from_pointer(output_binary_p).write(encrypted)
 
-          response_length_p.write(:int, encrypted.length)
+          response_length_p.write_int(encrypted.length)
         rescue => e
           handle_error(status_p, e)
           return false
