@@ -21,6 +21,8 @@ module Mongo
     # A handle to the libmongocrypt library that wraps a mongocrypt_t object,
     # allowing clients to set options on that object or perform operations such
     # as encryption and decryption
+    #
+    # @api private
     class Handle
       # Creates a new Handle object and initializes it with options
       #
@@ -28,17 +30,15 @@ module Mongo
       #   is currently :local. Local KMS options must be passed in the format
       #   { local: { key: <master key> } } where the master key is a 96-byte, base64
       #   encoded string.
-      # @param [ Hash | nil ] schema_map A hash representing the JSON schema of the collection
-      #   that stores auto encrypted documents.
       # @param [ Hash ] options A hash of options
       #
+      # @option [ Hash | nil ] :schema_map A hash representing the JSON schema of the collection
+      #   that stores auto encrypted documents.
       # @option [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       #
       # There will be more arguemnts to this method once automatic encryption is introduced.
-      def initialize(kms_providers, schema_map: nil, options: {})
-        @logger = options[:logger]
-
+      def initialize(kms_providers, options={})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @mongocrypt = FFI::AutoPointer.new(
@@ -46,8 +46,14 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
 
-        set_schema_map(schema_map) if schema_map
+        @schema_map = options[:schema_map]
+        set_schema_map if @schema_map
+
+        @logger = options[:logger]
         set_logger_callback if @logger
+
+        set_crypto_hooks
+
         set_kms_providers(kms_providers)
         initialize_mongocrypt
       end
@@ -62,12 +68,12 @@ module Mongo
       private
 
       # Set the schema map option on the underlying mongocrypt_t object
-      def set_schema_map(schema_map)
-        unless schema_map.is_a?(Hash)
-          raise ArgumentError.new("#{schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
+      def set_schema_map
+        unless @schema_map.is_a?(Hash)
+          raise ArgumentError.new("#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
         end
 
-        binary = Binary.new(schema_map.to_bson.to_s)
+        binary = Binary.from_data(@schema_map.to_bson.to_s)
         success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, binary.ref)
 
         raise_from_status unless success
@@ -80,6 +86,52 @@ module Mongo
         end
 
         success = Binding.mongocrypt_setopt_log_handler(@mongocrypt, @log_callback, nil)
+        raise_from_status unless success
+      end
+
+      # We are buildling libmongocrypt without crypto functions to remove the
+      # external dependency on OpenSSL. This method binds native Ruby crypto methods
+      # to the underlying mongocrypt_t object so that libmongocrypt can still perform
+      # cryptography.
+      #
+      # Every crypto binding ignores its first argument, which is an option mongocrypt_ctx_t
+      # object and is not required to use crypto hooks.
+      def set_crypto_hooks
+        @aes_encrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
+          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
+        end
+
+        @aes_decrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
+          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: true)
+        end
+
+        @random_fn = Proc.new do |_, output_binary_p, num_bytes, status_p|
+          Hooks.random(output_binary_p, num_bytes, status_p)
+        end
+
+        @hmac_sha_512_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
+          Hooks.hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
+        end
+
+        @hmac_sha_256_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
+          Hooks.hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
+        end
+
+        @hmac_hash_fn = Proc.new do |_, input_binary_p, output_binary_p, status_p|
+          Hooks.hash_sha256(input_binary_p, output_binary_p, status_p)
+        end
+
+        success = Binding.mongocrypt_setopt_crypto_hooks(
+                    @mongocrypt,
+                    @aes_encrypt_fn,
+                    @aes_decrypt_fn,
+                    @random_fn,
+                    @hmac_sha_512_fn,
+                    @hmac_sha_256_fn,
+                    @hmac_hash_fn,
+                    nil
+                  )
+
         raise_from_status unless success
       end
 
@@ -110,7 +162,7 @@ module Mongo
 
         master_key = kms_providers[:local][:key]
 
-        binary = Binary.new(Base64.decode64(master_key))
+        binary = Binary.from_data(Base64.decode64(master_key))
         success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
 
         raise_from_status unless success

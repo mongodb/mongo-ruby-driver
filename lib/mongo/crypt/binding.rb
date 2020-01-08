@@ -254,6 +254,67 @@ module Mongo
       #
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
+
+      # A callback to a crypto AES-256-CBC encrypt/decrypt function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object that wraps a 32-byte encryption key
+      # - A pointer to a mongocrypt_binary_t object that wraps a 16-byte iv
+      # - A pointer to a mongocrypt_binary_t object that wraps the encryption/decryption input
+      # - A pointer to a mongocrypt_binary_t object to which the encryption/decryption output will be written
+      # - A pointer to an int32 where the number of bytes of the output will be written
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_crypto_fn, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :bool
+
+      # A callback to a crypto HMAC SHA-512 or SHA-256 function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object that wraps a 32-byte encryption key
+      # - A pointer to a mongocrypt_binary_t object that wraps the encryption input
+      # - A pointer to a mongocrypt_binary_t object to which the output will be written
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_hmac_fn, [:pointer, :pointer, :pointer, :pointer, :pointer], :bool
+
+      # A callback to a crypto hash (SHA-256) function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object that wraps the encryption input
+      # - A pointer to a mongocrypt_binary_t object to which the output will be written
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_hash_fn, [:pointer, :pointer, :pointer, :pointer], :bool
+
+      # A callback to a crypto secure random function. Takes:
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # - A pointer to a mongocrypt_binary_t object to which the output will be written
+      # - The number of random bytes requested
+      # - An optional pointer to a mongocrypt_status_t object for error messages
+      # Returns a boolean indicating the success of the operation
+      callback :mongocrypt_random_fn, [:pointer, :pointer, :int, :pointer], :bool
+
+      # Sets crypto hooks on mongocrypt_t object. Takes:
+      # - A pointer to a mongocrypt_t object, which will use the hooks for encryption
+      # - A mongocrypt_crypto_fn for encryption
+      # - A mongocrypt_crypto_fn for decryption
+      # - A mongocrypt_random_fn
+      # - A mongocrypt_hmac_fn with an HMAC SHA-512 function
+      # - A mongocrypt_hmac_fn with an HMAC SHA-256 function
+      # - A mongocrypt_hash_fn
+      # - An optional pointer to a mongocrypt_ctx_t object
+      # Returns a boolean indicating the success of the operation
+      attach_function(
+        :mongocrypt_setopt_crypto_hooks,
+        [
+          :pointer,
+          :mongocrypt_crypto_fn,
+          :mongocrypt_crypto_fn,
+          :mongocrypt_random_fn,
+          :mongocrypt_hmac_fn,
+          :mongocrypt_hmac_fn,
+          :mongocrypt_hash_fn,
+          :pointer
+        ],
+        :bool
+      )
     end
   end
 end

@@ -1,5 +1,6 @@
 require 'mongo'
 require 'support/lite_constraints'
+require 'mongo/crypt/helpers/mongo_crypt_spec_helper'
 
 RSpec.configure do |config|
   config.extend(LiteConstraints)
@@ -23,6 +24,7 @@ shared_context 'initialized for data key creation' do
 
   before do
     Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+    MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
     Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
 
     Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
@@ -45,6 +47,7 @@ shared_context 'initialized for explicit encryption' do
   let(:value_binary) { mongocrypt_binary_t_from(value) }
 
   before do
+    MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
     Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
 
     Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_id(context, key_id_binary)
@@ -64,6 +67,7 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'mongocrypt_ctx_t bindings' do
     require_libmongocrypt
+    fails_on_jruby
 
     let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
     let(:context) { Mongo::Crypt::Binding.mongocrypt_ctx_new(mongocrypt) }

@@ -20,12 +20,20 @@ module Mongo
     # A wrapper around mongocrypt_binary_t, a non-owning buffer of
     # uint-8 byte data. Each Binary instance keeps a copy of the data
     # passed to it in order to keep that data alive.
+    #
+    # @api private
     class Binary
       # Create a new Binary object that wraps a byte string
       #
       # @param [ String ] data The data string wrapped by the
       #   byte buffer (optional)
-      def initialize(data=nil)
+      # @param [ FFI::Pointer ] pointer A pointer to an existing
+      #   mongocrypt_binary_t object
+      #
+      # @note When initializing a Binary object with a string or a pointer,
+      # it is recommended that you use #self.from_pointer or #self.from_data
+      # methods
+      def initialize(data: nil, pointer: nil)
         if data
           # Represent data string as array of uint-8 bytes
           bytes = data.unpack('C*')
@@ -40,6 +48,11 @@ module Mongo
             Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length),
             Binding.method(:mongocrypt_binary_destroy)
           )
+        elsif pointer
+          # If the Binary class is used this way, it means that the pointer
+          # for the underlying mongocrypt_binary_t object is allocated somewhere
+          # else. It is not the responsibility of this class to de-allocate data.
+          @bin = pointer
         else
           # FFI::AutoPointer uses a custom release strategy to automatically free
           # the pointer once this object goes out of scope
@@ -48,6 +61,63 @@ module Mongo
             Binding.method(:mongocrypt_binary_destroy)
           )
         end
+      end
+
+      # Initialize a Binary object from an existing pointer to a mongocrypt_binary_t
+      # object.
+      #
+      # @param [ FFI::Pointer ] pointer A pointer to an existing
+      #   mongocrypt_binary_t object
+      #
+      # @return [ Mongo::Crypt::Binary ] A new binary object
+      def self.from_pointer(pointer)
+        self.new(pointer: pointer)
+      end
+
+      # Initialize a Binary object with a string. The Binary object will store a
+      # copy of the specified string and destroy the allocated memory when
+      # it goes out of scope.
+      #
+      # @param [ String ] data A string to be wrapped by the Binary object
+      #
+      # @return [ Mongo::Crypt::Binary ] A new binary object
+      def self.from_data(data)
+        self.new(data: data)
+      end
+
+      # Overwrite the existing data wrapped by this Binary object
+      #
+      # @note The data passed in must not take up more memory than the
+      # original memory allocated to the underlying mongocrypt_binary_t
+      # object. Do NOT use this method unless required to do so by libmongocrypt.
+      #
+      # @param [ String ] data The new string data to be wrapped by this binary object
+      #
+      # @return [ true ] Always true
+      #
+      # @raise [ ]
+      def write(data)
+        # Cannot write a string that's longer than the space currently allocated
+        # by the mongocrypt_binary_t object
+        if Binding.mongocrypt_binary_len(@bin) < data.length
+          raise ArgumentError.new(
+            "Cannot write #{data.length} bytes of data to a Binary object that was initialized " +
+            "with #{Binding.mongocrypt_binary_len(@bin)} bytes."
+          )
+        end
+
+        bytes = data.unpack('C*')
+
+        @data_p.clear if @data_p
+
+        # # FFI::MemoryPointer automatically frees memory when it goes out of scope
+        @data_p = FFI::MemoryPointer.new(bytes.length)
+                    .write_array_of_uint8(bytes)
+
+        Binding.mongocrypt_binary_data(@bin)
+                  .write_array_of_uint8(bytes)
+
+        true
       end
 
       # Returns the data stored as a byte array

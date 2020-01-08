@@ -16,6 +16,8 @@ module Mongo
   module Crypt
 
     # A Context object initialized for explicit decryption
+    #
+    # @api private
     class ExplicitDecryptionContext < Context
 
       # Create a new ExplicitDecryptionContext object
@@ -39,7 +41,7 @@ module Mongo
       # Initialize the underlying mongocrypt_ctx_t object to perform
       # explicit decryption
       def initialize_ctx
-        binary = Binary.new(@value)
+        binary = Binary.from_data(@value)
         success = Binding.mongocrypt_ctx_explicit_decrypt_init(@ctx, binary.ref)
 
         raise_from_status unless success

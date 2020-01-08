@@ -8,7 +8,7 @@ end
 describe Mongo::Crypt::Status do
   require_libmongocrypt
 
-  let(:status) { Mongo::Crypt::Status.new }
+  let(:status) { described_class.new }
 
   let(:label) { :error_client }
   let(:code) { 401 }
@@ -21,6 +21,23 @@ describe Mongo::Crypt::Status do
   describe '#initialize' do
     it 'doesn\'t throw an error' do
       expect { status }.not_to raise_error
+    end
+  end
+
+  describe '#self.from_pointer' do
+    let(:pointer) { Mongo::Crypt::Binding.mongocrypt_status_new }
+    let(:status) { described_class.from_pointer(pointer) }
+
+    after do
+      Mongo::Crypt::Binding.mongocrypt_status_destroy(pointer)
+    end
+
+    it 'creates a status from the pointer passed in' do
+      expect do
+        status
+      end.not_to raise_error
+
+      expect(status.ref).to eq(pointer)
     end
   end
 

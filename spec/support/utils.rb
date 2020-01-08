@@ -1,4 +1,49 @@
+require 'base64'
+
 module Utils
+  # A limited extended JSON parser to use in FLE specs.
+  # DO NOT consider this a complete extended JSON parser.
+  # This method will be removed once a complete extended
+  # JSON parser has been implemented.
+  #
+  # This method may modify the provided argument
+  def parse_extended_json(doc)
+    requires_parsing = doc.is_a?(Hash) && (doc.key?('$binary') || doc.key?('$date') || doc.key?('$numberInt'))
+    return parse_json_object(doc) if requires_parsing
+
+    if doc.is_a?(Hash)
+      return doc.each do |key, value|
+        doc[key] = parse_extended_json(value)
+      end
+    end
+
+    if doc.is_a?(Array)
+      return doc.each.with_index do |el, idx|
+        doc[idx] = parse_extended_json(el)
+      end
+    end
+
+    return doc
+  end
+  module_function :parse_extended_json
+
+  def parse_json_object(obj)
+    raise "JSON object must be a Hash" unless obj.is_a?(Hash)
+
+    if obj.key?('$binary')
+      data = Base64.decode64(obj['$binary']['base64'])
+      subtype = obj['$binary']['subType'].to_i == 4 ? :uuid : :generic
+
+      BSON::Binary.new(data, subtype)
+    elsif obj.key?('$date')
+      time = obj['$date']['$numberLong']
+      DateTime.strptime(time, '%Q')
+    elsif obj.key?('$numberInt')
+      obj['$numberInt'].to_i
+    end
+  end
+  module_function :parse_json_object
+  private :parse_json_object
 
   # Converts a 'camelCase' string or symbol to a :under_score symbol.
   def underscore(str)

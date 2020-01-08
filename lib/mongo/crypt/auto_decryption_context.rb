@@ -16,6 +16,8 @@ module Mongo
   module Crypt
 
     # A Context object initialized for auto decryption
+    #
+    # @api private
     class AutoDecryptionContext < Context
 
       # Create a new AutoEncryptionContext object
@@ -39,7 +41,7 @@ module Mongo
       private
 
       def initialize_ctx
-        binary = Binary.new(@command.to_bson.to_s)
+        binary = Binary.from_data(@command.to_bson.to_s)
         success = Binding.mongocrypt_ctx_decrypt_init(@ctx, binary.ref)
 
         raise_from_status unless success
