@@ -1,5 +1,6 @@
 require 'mongo'
 require 'support/lite_constraints'
+require 'mongo/crypt/helpers/crypto_hooks_helper'
 
 RSpec.configure do |config|
   config.extend(LiteConstraints)
@@ -23,6 +24,7 @@ shared_context 'initialized for data key creation' do
 
   before do
     Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+    CryptoHooksHelper.bind_crypto_hooks(mongocrypt)
     Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
 
     Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)

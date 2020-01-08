@@ -53,6 +53,8 @@ describe 'Mongo::Crypt::Binding' do
     end
 
     describe '#mongocrypt_init' do
+      let(:key_bytes) { [114, 117, 98, 121] * 24 } # 96 bytes
+
       let(:binary) do
         p = FFI::MemoryPointer.new(key_bytes.size)
               .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, key_bytes)
@@ -72,14 +74,26 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'with valid kms option' do
-        let(:key_bytes) { [114, 117, 98, 121] * 24 } # 96 bytes
+        before do
+          CryptoHooksHelper.bind_crypto_hooks(mongocrypt)
+        end
 
         it 'returns true' do
           expect(Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)).to be true
         end
       end
 
+      context 'without binding crypto hooks' do
+        it 'returns false' do
+          expect(Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)).to be false
+        end
+      end
+
       context 'with invalid kms option' do
+        before do
+          CryptoHooksHelper.bind_crypto_hooks(mongocrypt)
+        end
+
         let(:key_bytes) { [114, 117, 98, 121] * 23 } # NOT 96 bytes
 
         it 'returns false' do
