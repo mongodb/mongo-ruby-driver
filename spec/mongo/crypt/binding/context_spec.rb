@@ -66,6 +66,7 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'mongocrypt_ctx_t bindings' do
     require_libmongocrypt
+    fails_on_jruby
 
     let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
     let(:context) { Mongo::Crypt::Binding.mongocrypt_ctx_new(mongocrypt) }
