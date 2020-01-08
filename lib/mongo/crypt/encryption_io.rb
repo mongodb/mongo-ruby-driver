@@ -34,7 +34,7 @@ module Mongo
       #   options are not nil and are in the correct format
       def initialize(client: nil, mongocryptd_client: nil, key_vault_collection:)
         @client = client
-        @mongocryptd_client = client
+        @mongocryptd_client = mongocryptd_client
         @key_vault_collection = key_vault_collection
       end
 
@@ -64,6 +64,7 @@ module Mongo
       # @return [ Hash ] The collection information
       def collection_info(filter)
         result = @client.database.list_collections
+
         name = filter['name']
         result.find { |r| r['name'] == name }
       end

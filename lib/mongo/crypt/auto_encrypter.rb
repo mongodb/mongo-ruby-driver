@@ -71,6 +71,7 @@ module Mongo
         @mongocryptd_client = Client.new(
                                 @encryption_options[:mongocryptd_uri],
                                 monitoring_io: mongocryptd_client_monitoring_io,
+                                server_selection_timeout: 3,
                               )
 
         @encryption_io = EncryptionIO.new(

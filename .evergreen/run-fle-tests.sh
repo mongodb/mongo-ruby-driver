@@ -13,7 +13,7 @@ export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 set_env_vars
 setup_ruby
 
-install_deps
+bundle install --gemfile="$BUNDLE_GEMFILE"
 
 bundle exec rake
 
