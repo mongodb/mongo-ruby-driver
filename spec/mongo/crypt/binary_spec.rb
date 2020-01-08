@@ -102,7 +102,9 @@ describe Mongo::Crypt::Binary do
       let(:binary) { described_class.new }
 
       it 'returns false' do
-        expect(binary.write(data)).to be false
+        expect do
+          binary.write(data)
+        end.to raise_error(ArgumentError, /Cannot write #{data.length} bytes of data to a Binary object that was initialized with 0 bytes/)
       end
     end
 
@@ -110,7 +112,9 @@ describe Mongo::Crypt::Binary do
       let(:binary) { described_class.from_data("\00" * (data.length - 1)) }
 
       it 'returns false' do
-        expect(binary.write(data)).to be false
+        expect do
+          binary.write(data)
+        end.to raise_error(ArgumentError, /Cannot write #{data.length} bytes of data to a Binary object that was initialized with #{data.length - 1} bytes/)
       end
     end
   end

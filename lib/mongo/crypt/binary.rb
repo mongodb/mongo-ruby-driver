@@ -93,26 +93,29 @@ module Mongo
       #
       # @param [ String ] data The new string data to be wrapped by this binary object
       #
-      # @return [ true | false ] Whether the operation was successful
+      # @return [ true ] Always true
+      #
+      # @raise [ ]
       def write(data)
         # Cannot write a string that's longer than the space currently allocated
         # by the mongocrypt_binary_t object
-        return false if Binding.mongocrypt_binary_len(@bin) < data.length
+        if Binding.mongocrypt_binary_len(@bin) < data.length
+          raise ArgumentError.new(
+            "Cannot write #{data.length} bytes of data to a Binary object that was initialized " +
+            "with #{Binding.mongocrypt_binary_len(@bin)} bytes."
+          )
+        end
 
         bytes = data.unpack('C*')
 
-        begin
-          @data_p.clear if @data_p
+        @data_p.clear if @data_p
 
-          # # FFI::MemoryPointer automatically frees memory when it goes out of scope
-          @data_p = FFI::MemoryPointer.new(bytes.length)
-                      .write_array_of_uint8(bytes)
-
-          Binding.mongocrypt_binary_data(@bin)
+        # # FFI::MemoryPointer automatically frees memory when it goes out of scope
+        @data_p = FFI::MemoryPointer.new(bytes.length)
                     .write_array_of_uint8(bytes)
-        rescue FFI::NullPointerError
-          return false
-        end
+
+        Binding.mongocrypt_binary_data(@bin)
+                  .write_array_of_uint8(bytes)
 
         true
       end
