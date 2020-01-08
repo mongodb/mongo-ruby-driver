@@ -56,6 +56,35 @@ module Mongo
       def insert(document)
         @key_vault_collection.insert_one(document)
       end
+
+      # Get collection info for a collection matching the provided filter
+      #
+      # @param [ Hash ] filter
+      #
+      # @return [ Hash ] The collection information
+      def collection_info(filter)
+        result = @client.database.list_collections
+        name = filter['name']
+        result.find { |r| r['name'] == name }
+      end
+
+      # Send the command to mongocryptd to be marked with intent-to-encrypt markings
+      #
+      # @param [ Hash ] cmd
+      #
+      # @return [ Hash ] The marked command
+      def mark_command(cmd)
+        begin
+          response = @mongocryptd_client.database.command(cmd)
+        rescue Error::NoServerAvailable => e
+          raise e if @client.encryption_options[:mongocryptd_bypass_spawn]
+
+          @client.spawn_mongocryptd
+          response = @mongocryptd_client.database.command(cmd)
+        end
+
+        return response.first
+      end
     end
   end
 end
