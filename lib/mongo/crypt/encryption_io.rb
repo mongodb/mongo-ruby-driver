@@ -23,10 +23,12 @@ module Mongo
       # Creates a new EncryptionIO object with information about how to connect
       # to the key vault.
       #
-      # @param [ Mongo::Client ] key_vault_client A Client connected to the
-      #   MongoDB instance containing the key vault
-      # @param [ String ] key_vault_namespace The namespace of the key vault
-      #   collection in the format database.collection
+      # @param [ Mongo::Client ] client: The client used to connect to the collection
+      #   that stores the encrypted documents, defaults to nil
+      # @param [ Mongo::Client ] mongocryptd_client: The client connected to mongocryptd,
+      #   defaults to nil
+      # @param [ Mongo::Collection ] key_vault_collection: The Collection object
+      #   representing the database collection storing the encryption data keys
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
