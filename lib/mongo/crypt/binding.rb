@@ -41,7 +41,7 @@ module Mongo
         Crypt.reset_autoload
         raise LoadError, "Cannot load Mongo::Crypt::Binding because the path to " +
           "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
-          "is invalid: #{ENV['LIBMONGOCRYPT']}\n\n#{e.class}: #{e.message}"
+          "is invalid: #{ENV['LIBMONGOCRYPT_PATH']}\n\n#{e.class}: #{e.message}"
       end
 
       # Takes an integer pointer as an optional out parameter specifying
