@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+unless ENV['LIBMONGOCRYPT_PATH']
+  raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
+      "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
+end
+
 require 'ffi'
 
 module Mongo
@@ -29,12 +34,6 @@ module Mongo
     # @api private
     class Binding
       extend FFI::Library
-
-      unless ENV['LIBMONGOCRYPT_PATH']
-        Crypt.reset_autoload
-        raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
-            "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
-      end
 
       begin
         ffi_lib ENV['LIBMONGOCRYPT_PATH']
