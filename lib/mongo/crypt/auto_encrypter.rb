@@ -80,6 +80,39 @@ module Mongo
                          )
       end
 
+      # Encrypt a database command
+      #
+      # @param [ String ] database_name The name of the database on which the
+      #   command is being run
+      # @param [ Hash ] command The command to be encrypted
+      #
+      # @return [ Hash ] The encrypted command
+      def encrypt(database_name, command)
+        result = AutoEncryptionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          database_name,
+          command
+        ).run_state_machine
+
+        Hash.from_bson(BSON::ByteBuffer.new(result))
+      end
+
+      # Decrypt a database command
+      #
+      # @param [ Hash ] command The command with encrypted fields
+      #
+      # @return [ Hash ] The decrypted command
+      def decrypt(command)
+        result = AutoDecryptionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          command
+        ).run_state_machine
+
+        Hash.from_bson(BSON::ByteBuffer.new(result))
+      end
+
       # Spawn a new mongocryptd process using the mongocryptd_spawn_path
       # and mongocryptd_spawn_args passed in through the extra auto
       # encrypt options. Stdout and Stderr of this new process are written
