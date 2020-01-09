@@ -13,6 +13,18 @@
 # limitations under the License.
 
 unless ENV['LIBMONGOCRYPT_PATH']
+  # It seems that MRI maintains autoload configuration for a module until
+  # that module is defined, but JRuby removes autoload configuration as soon
+  # as the referenced file is attempted to be loaded, even if the module
+  # never ends up being defined.
+  if BSON::Environment.jruby?
+    module Mongo
+      module Crypt
+        autoload :Binding, 'mongo/crypt/binding'
+      end
+    end
+  end
+
   raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
       "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
 end

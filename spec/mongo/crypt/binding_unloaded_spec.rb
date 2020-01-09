@@ -4,7 +4,6 @@ describe 'Mongo::Crypt::Binding' do
   require_no_libmongocrypt
 
   context 'when load fails' do
-    fails_on_jruby
 
     it 'retries loading at the next reference' do
       lambda do
