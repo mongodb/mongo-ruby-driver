@@ -5,10 +5,6 @@ describe 'Auto Encryption' do
   require_libmongocrypt
   require_enterprise
 
-  let(:auto_encryption_options) do
-
-  end
-
   let(:encryption_client) do
     new_local_client(
       'mongodb://localhost:27017/test',
@@ -18,19 +14,6 @@ describe 'Auto Encryption' do
           key_vault_namespace: 'admin.datakeys',
           schema_map: schema_map,
           bypass_auto_encryption: bypass_auto_encryption
-        }
-      }
-    )
-  end
-
-  let(:other_encryption_client) do
-    new_local_client(
-      'mongodb://localhost:27017/test',
-      {
-        auto_encryption_options: {
-          kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
-          key_vault_namespace: 'admin.datakeys',
-          schema_map: schema_map,
         }
       }
     )
@@ -139,12 +122,15 @@ describe 'Auto Encryption' do
   end
 
   describe '#find' do
+    shared_context 'with encrypted ssn document' do
+      before do
+        client.use(:test)[:users].insert_one(ssn: encrypted_ssn)
+      end
+    end
+
     context 'with validator' do
       include_context 'jsonSchema validator on collection'
-
-      before do
-        encryption_client[:users].insert_one(ssn: ssn)
-      end
+      include_context 'with encrypted ssn document'
 
       it 'encrypts the command' do
         document = encryption_client[:users].find(ssn: ssn).first
@@ -154,10 +140,7 @@ describe 'Auto Encryption' do
 
     context 'with schema map' do
       include_context 'schema map in client options'
-
-      before do
-        encryption_client[:users].insert_one(ssn: ssn)
-      end
+      include_context 'with encrypted ssn document'
 
       it 'encrypts the command' do
         document = encryption_client[:users].find(ssn: ssn).first
@@ -167,10 +150,7 @@ describe 'Auto Encryption' do
 
     context 'with bypass_auto_encryption=true' do
       include_context 'bypass auto encryption'
-
-      before do
-        other_encryption_client[:users].insert_one(ssn: ssn)
-      end
+      include_context 'with encrypted ssn document'
 
       it 'finds nothing' do
         document = encryption_client[:users].find(ssn: ssn).first
