@@ -6,19 +6,31 @@ describe 'Auto Encryption' do
   require_enterprise
 
   let(:auto_encryption_options) do
-    {
-      kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
-      key_vault_namespace: 'admin.datakeys',
-      schema_map: schema_map,
-      bypass_auto_encryption: bypass_auto_encryption
-    }
+
   end
 
   let(:encryption_client) do
     new_local_client(
       'mongodb://localhost:27017/test',
       {
-        auto_encryption_options: auto_encryption_options.merge(mongocryptd_server_selection_timeout: 3)
+        auto_encryption_options: {
+          kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
+          key_vault_namespace: 'admin.datakeys',
+          schema_map: schema_map,
+          bypass_auto_encryption: bypass_auto_encryption
+        }
+      }
+    )
+  end
+
+  let(:other_encryption_client) do
+    new_local_client(
+      'mongodb://localhost:27017/test',
+      {
+        auto_encryption_options: {
+          kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
+          key_vault_namespace: 'admin.datakeys',
+        }
       }
     )
   end
@@ -28,8 +40,8 @@ describe 'Auto Encryption' do
   end
 
   let(:ssn) { '123-456-7890' }
+
   let(:bypass_auto_encryption) { false }
-  let(:schema_map) { { "test.users" => json_schema } }
 
   let(:encrypted_ssn) do
     BSON::Binary.new(Base64.decode64("ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68FttXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"), :ciphertext)
@@ -43,6 +55,35 @@ describe 'Auto Encryption' do
     Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/schema_map.json')))
   end
 
+  shared_context 'bypass auto encryption' do
+    let(:schema_map) { { "test.users" => json_schema } }
+    let(:bypass_auto_encryption) { true }
+
+    before do
+      client.use(:test)[:users].create
+    end
+  end
+
+  shared_context 'jsonSchema validator on collection' do
+    let(:schema_map) { nil }
+
+    before do
+      client.use(:test)[:users,
+        {
+          'validator' => { '$jsonSchema' => json_schema }
+        }
+      ].create
+    end
+  end
+
+  shared_context 'schema map in client options' do
+    let(:schema_map) { { "test.users" => json_schema } }
+
+    before do
+      client.use(:test)[:users].create
+    end
+  end
+
   before(:each) do
     client.use(:test)[:users].drop
     client[:datakeys].drop
@@ -51,18 +92,10 @@ describe 'Auto Encryption' do
 
   describe '#insert_one' do
     context 'with validator' do
-      let(:schema_map) { nil }
-
-      before do
-        client.use(:test)[:users,
-          {
-            'validator' => { '$jsonSchema' => json_schema }
-          }
-        ].create
-      end
+      include_context 'jsonSchema validator on collection'
 
       it 'encrypts the command' do
-        result = encryption_client[:users].insert_one({ ssn: ssn })
+        result = encryption_client[:users].insert_one(ssn: ssn)
         expect(result).to be_ok
         expect(result.inserted_ids.length).to eq(1)
 
@@ -74,6 +107,8 @@ describe 'Auto Encryption' do
     end
 
     context 'with schema map' do
+      include_context 'schema map in client options'
+
       it 'encrypts the command' do
         result = encryption_client[:users].insert_one(ssn: ssn)
         expect(result).to be_ok
@@ -87,7 +122,7 @@ describe 'Auto Encryption' do
     end
 
     context 'with bypass_auto_encryption=true' do
-      let(:bypass_auto_encryption) { true }
+      include_context 'bypass auto encryption'
 
       it 'does not encrypt the command' do
         result = encryption_client[:users].insert_one(ssn: ssn)
@@ -98,6 +133,47 @@ describe 'Auto Encryption' do
 
         document = client.use(:test)[:users].find(_id: id).first
         expect(document['ssn']).to eq(ssn)
+      end
+    end
+  end
+
+  describe '#find' do
+    context 'with validator' do
+      include_context 'jsonSchema validator on collection'
+
+      before do
+        encryption_client[:users].insert_one(ssn: ssn)
+      end
+
+      it 'encrypts the command' do
+        document = encryption_client[:users].find(ssn: ssn).first
+        expect(document['ssn']).to eq(ssn)
+      end
+    end
+
+    context 'with schema map' do
+      include_context 'schema map in client options'
+
+      before do
+        encryption_client[:users].insert_one(ssn: ssn)
+      end
+
+      it 'encrypts the command' do
+        document = encryption_client[:users].find(ssn: ssn).first
+        expect(document['ssn']).to eq(ssn)
+      end
+    end
+
+    context 'with bypass_auto_encryption=true' do
+      include_context 'bypass auto encryption'
+
+      before do
+        other_encryption_client[:users].insert_one(ssn: ssn)
+      end
+
+      it 'finds nothing' do
+        document = encryption_client[:users].find(ssn: ssn).first
+        expect(document).to be_nil
       end
     end
   end

@@ -398,7 +398,7 @@ module Mongo
       # Since our iteration code mutates the documents array by calling #shift
       # on it, duplicate the documents here to permit restarting iteration
       # from the beginning of the cursor as long as get_more was not called
-      result.documents.dup
+      result.documents(client).dup
     end
 
     def use_limit?

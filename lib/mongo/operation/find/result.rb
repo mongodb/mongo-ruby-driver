@@ -41,8 +41,16 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.2.0
-        def documents
-          cursor_document[FIRST_BATCH]
+        def documents(client=nil)
+          documents = cursor_document[FIRST_BATCH]
+
+          if client && client.encryption_options
+            documents = documents.map do |doc|
+              client.decrypt(doc)
+            end
+          end
+
+          documents
         end
 
         private

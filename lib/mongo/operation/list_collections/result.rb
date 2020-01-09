@@ -60,7 +60,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.0.0
-        def documents
+        def documents(client=nil)
           cursor_document[FIRST_BATCH]
         end
 
