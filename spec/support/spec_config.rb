@@ -373,7 +373,7 @@ EOT
   # Base test options.
   def base_test_options
     {
-      max_pool_size: 1,
+      max_pool_size: 2,
       heartbeat_frequency: 20,
       # The test suite seems to perform a number of operations
       # requiring server selection. Hence a timeout of 1 here,
