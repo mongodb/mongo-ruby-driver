@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+unless ENV['LIBMONGOCRYPT_PATH']
+  raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
+      "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
+end
+
 require 'ffi'
 
 module Mongo
   module Crypt
+
+    # @api private
+    def reset_autoload
+      remove_const(:Binding)
+      autoload(:Binding, 'mongo/crypt/binding')
+    end
+    module_function :reset_autoload
 
     # A Ruby binding for the libmongocrypt C library
     #
@@ -23,17 +35,13 @@ module Mongo
     class Binding
       extend FFI::Library
 
-      unless ENV['LIBMONGOCRYPT_PATH']
-        raise "Cannot load Mongo::Crypt::Binding because there is no path " +
-            "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
-      end
-
       begin
         ffi_lib ENV['LIBMONGOCRYPT_PATH']
       rescue LoadError => e
-        raise "Cannot load Mongo::Crypt::Binding because the path to " +
+        Crypt.reset_autoload
+        raise LoadError, "Cannot load Mongo::Crypt::Binding because the path to " +
           "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
-          "is invalid: #{ENV['LIBMONGOCRYPT']}\n\n#{e.class}: #{e.message}"
+          "is invalid: #{ENV['LIBMONGOCRYPT_PATH']}\n\n#{e.class}: #{e.message}"
       end
 
       # Takes an integer pointer as an optional out parameter specifying

@@ -60,6 +60,14 @@ module LiteConstraints
     end
   end
 
+  def require_no_libmongocrypt
+    before(:all) do
+      if ENV['LIBMONGOCRYPT_PATH']
+        skip 'Test requires libmongocrypt to not be configured'
+      end
+    end
+  end
+
   # Some tests will fail if linting is enabled:
   # 1. Tests that pass invalid options to client, etc. which the linter
   #    rejects.
