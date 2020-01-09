@@ -13,7 +13,10 @@ export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 set_env_vars
 setup_ruby
 
+which bundle
+bundle --version
 bundle install --gemfile=gemfiles/bson_master.gemfile
+bundle exec rake clean
 
 bundle exec rake
 
