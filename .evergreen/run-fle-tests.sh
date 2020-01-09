@@ -10,12 +10,10 @@ tar -xvf libmongocrypt-all.tar.gz
 
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 
-export BSON=master
-
 set_env_vars
 setup_ruby
 
-bundle install --gemfile="$BUNDLE_GEMFILE"
+bundle install --gemfile=gemfiles/bson_master.gemfile
 
 bundle exec rake
 

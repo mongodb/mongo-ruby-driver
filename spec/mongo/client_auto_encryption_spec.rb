@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Mongo::Client do
   require_libmongocrypt
   require_enterprise
+  clean_slate
 
   let(:schema_map) { Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/schema_map.json'))) }
   let(:key) { "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" }
@@ -70,16 +71,9 @@ describe Mongo::Client do
   end
 
   before do
-    ClientRegistry.instance.register_local_client(encryption_client.mongocryptd_client)
-    ClientRegistry.instance.register_local_client(encryption_client.key_vault_client)
-
     key_vault_collection = client.use(:admin)[:datakeys]
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
-  end
-
-  after do
-
   end
 
   context 'with schema map in auto encryption commands' do

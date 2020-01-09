@@ -928,7 +928,6 @@ buildvariants:
     topology: standalone
     mongodb-version: "4.2"
     os: rhel70
-    bson: master
   display_name: "FLE Tests: ${ruby}"
   tasks:
     - name: "fle-tests"

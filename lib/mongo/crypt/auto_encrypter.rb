@@ -76,6 +76,8 @@ module Mongo
                                 server_selection_timeout: mongocryptd_server_selection_timeout, # For testing purposes
                               )
 
+        ClientRegistry.instance.register_local_client(@mongocryptd_client) if defined?(ClientRegistry)
+
         @encryption_io = EncryptionIO.new(
                           client: self,
                           mongocryptd_client: @mongocryptd_client,
