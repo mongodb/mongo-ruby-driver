@@ -655,277 +655,278 @@ axes:
 
 
 buildvariants:
-# -
-#   matrix_name: "ruby-min"
-#   matrix_spec:
-#     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-#     ruby: "ruby-2.3"
-#     mongodb-version: "3.6"
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "ruby-min"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+    ruby: "ruby-2.3"
+    mongodb-version: "3.6"
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "ruby-mid"
-#   matrix_spec:
-#     auth-and-ssl: "auth-and-ssl"
-#     ruby: [ruby-2.4, ruby-2.5]
-#     mongodb-version: "4.0"
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "ruby-mid"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: [ruby-2.4, ruby-2.5]
+    mongodb-version: "4.0"
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "mongo"
-#   matrix_spec:
-#     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-#     ruby: "ruby-2.7"
-#     mongodb-version: "*"
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "mongo"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+    ruby: "ruby-2.7"
+    mongodb-version: "*"
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "single-mongos"
-#   matrix_spec:
-#     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-#     ruby: "ruby-2.6"
-#     mongodb-version: ["4.2", latest]
-#     topology: "sharded-cluster"
-#     single-mongos: single-mongos
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "single-mongos"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.2", latest]
+    topology: "sharded-cluster"
+    single-mongos: single-mongos
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "partial-auth-ssl"
-#   matrix_spec:
-#     auth-and-ssl: ["auth-and-nossl", "noauth-and-ssl"]
-#     ruby: "ruby-2.6"
-#     mongodb-version: ["4.0"]
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "partial-auth-ssl"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-nossl", "noauth-and-ssl"]
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.0"]
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "no-retry-reads"
-#   matrix_spec:
-#     retry-reads: no-retry-reads
-#     ruby: "ruby-2.6"
-#     mongodb-version: ["4.0"]
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "no-retry-reads"
+  matrix_spec:
+    retry-reads: no-retry-reads
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.0"]
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "no-retry-writes"
-#   matrix_spec:
-#     retry-writes: no-retry-writes
-#     ruby: "ruby-2.6"
-#     mongodb-version: ["4.0"]
-#     topology: [replica-set, sharded-cluster]
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "no-retry-writes"
+  matrix_spec:
+    retry-writes: no-retry-writes
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.0"]
+    topology: [replica-set, sharded-cluster]
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: mmapv1
-#   matrix_spec:
-#     ruby: "ruby-2.6"
-#     mongodb-version: [3.4, 3.6, 4.0]
-#     topology: '*'
-#     storage-engine: mmapv1
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-#   tasks:
-#      - name: "test-mlaunch"
+-
+  matrix_name: mmapv1
+  matrix_spec:
+    ruby: "ruby-2.6"
+    mongodb-version: [3.4, 3.6, 4.0]
+    topology: '*'
+    storage-engine: mmapv1
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
+  tasks:
+     - name: "test-mlaunch"
 
-# -
-#   matrix_name: "lint"
-#   matrix_spec:
-#     lint: on
-#     ruby: "ruby-2.6"
-#     mongodb-version: ["4.0", "4.2"]
-#     topology: [replica-set, sharded-cluster]
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
-#   tasks:
-#      - name: "test-mlaunch"
+-
+  matrix_name: "lint"
+  matrix_spec:
+    lint: on
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.0", "4.2"]
+    topology: [replica-set, sharded-cluster]
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
+  tasks:
+     - name: "test-mlaunch"
 
-# -
-#   matrix_name: "jruby-auth"
-#   matrix_spec:
-#     auth-and-ssl: "auth-and-ssl"
-#     ruby: "jruby-9.2"
-#     mongodb-version: "4.2"
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "jruby-auth"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "jruby-9.2"
+    mongodb-version: "4.2"
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "jruby-noauth"
-#   matrix_spec:
-#     auth-and-ssl: "noauth-and-nossl"
-#     ruby: "jruby-9.2"
-#     mongodb-version: "2.6"
-#     topology: "*"
-#     os: rhel70
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "jruby-noauth"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: "jruby-9.2"
+    mongodb-version: "2.6"
+    topology: "*"
+    os: rhel70
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "zlib-auth"
-#   matrix_spec:
-#     auth-and-ssl: "auth-and-ssl"
-#     ruby: "ruby-2.6"
-#     mongodb-version: "4.2"
-#     topology: "*"
-#     compressor: 'zlib'
-#     os: rhel70
-#   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "zlib-auth"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
+    topology: "*"
+    compressor: 'zlib'
+    os: rhel70
+  display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "zlib-noauth"
-#   matrix_spec:
-#     auth-and-ssl: "noauth-and-nossl"
-#     ruby: "ruby-2.3"
-#     mongodb-version: "3.6"
-#     topology: "*"
-#     compressor: 'zlib'
-#     os: rhel70
-#   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "zlib-noauth"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: "ruby-2.3"
+    mongodb-version: "3.6"
+    topology: "*"
+    compressor: 'zlib'
+    os: rhel70
+  display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "ruby-head"
-#   matrix_spec:
-#     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-#     ruby: ["ruby-head"]
-#     mongodb-version: "4.0"
-#     topology: "*"
-#     os: ubuntu1604
-#   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#   tasks:
-#      - name: "test"
+-
+  matrix_name: "ruby-head"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+    ruby: ["ruby-head"]
+    mongodb-version: "4.0"
+    topology: "*"
+    os: ubuntu1604
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test"
 
-# - matrix_name: "activesupport"
-#   matrix_spec:
-#     ruby: ruby-2.5
-#     mongodb-version: '4.0'
-#     topology: replica-set
-#     as: as
-#     os: rhel70
-#   display_name: "AS ${mongodb-version} ${topology} ${ruby}"
-#   tasks:
-#      - name: "test"
+- matrix_name: "activesupport"
+  matrix_spec:
+    ruby: ruby-2.5
+    mongodb-version: '4.0'
+    topology: replica-set
+    as: as
+    os: rhel70
+  display_name: "AS ${mongodb-version} ${topology} ${ruby}"
+  tasks:
+     - name: "test"
 
-# - matrix_name: "bson"
-#   matrix_spec:
-#     ruby: ruby-2.6
-#     mongodb-version: '4.2'
-#     topology: replica-set
-#     bson: "*"
-#     os: rhel70
-#   display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
-#   tasks:
-#      - name: "test"
+- matrix_name: "bson"
+  matrix_spec:
+    ruby: ruby-2.6
+    mongodb-version: '4.2'
+    topology: replica-set
+    bson: "*"
+    os: rhel70
+  display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
+  tasks:
+     - name: "test"
 
-# -
-#   matrix_name: "3.6-with-3.4-fcv"
-#   matrix_spec:
-#     fcv: '3.4'
-#     ruby: ["ruby-2.5"]
-#     mongodb-version: '3.6'
-#     topology: replica-set
-#     os: rhel70
-#   display_name: "3.6 Replica Set with 3.4 FCV"
-#   tasks:
-#     - name: "test"
+-
+  matrix_name: "3.6-with-3.4-fcv"
+  matrix_spec:
+    fcv: '3.4'
+    ruby: ["ruby-2.5"]
+    mongodb-version: '3.6'
+    topology: replica-set
+    os: rhel70
+  display_name: "3.6 Replica Set with 3.4 FCV"
+  tasks:
+    - name: "test"
 
-# -
-#   matrix_name: "local-tls"
-#   matrix_spec:
-#     ruby: "*"
-#     mongodb-version: ['4.0', '4.2']
-#     topology: standalone
-#     os: ubuntu1604
-#   display_name: "Local TLS ${mongodb-version} ${ruby}"
-#   tasks:
-#     - name: "local-tls-tests"
+-
+  matrix_name: "local-tls"
+  matrix_spec:
+    ruby: "*"
+    mongodb-version: ['4.0', '4.2']
+    topology: standalone
+    os: ubuntu1604
+  display_name: "Local TLS ${mongodb-version} ${ruby}"
+  tasks:
+    - name: "local-tls-tests"
 
-# -
-#   matrix_name: "enterprise-auth-tests-ubuntu"
-#   matrix_spec:
-#     auth-and-ssl: "auth-and-ssl"
-#     # Ruby 2.6 and 2.4 segfault
-#     ruby: ["ruby-2.5", "jruby-9.2"]
-#   display_name: "Enterprise Auth Ubuntu ${ruby}"
-#   run_on:
-#     - ubuntu1604-test
-#   tasks:
-#     - name: "enterprise-auth-tests"
+-
+  matrix_name: "enterprise-auth-tests-ubuntu"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    # Ruby 2.6 and 2.4 segfault
+    ruby: ["ruby-2.5", "jruby-9.2"]
+  display_name: "Enterprise Auth Ubuntu ${ruby}"
+  run_on:
+    - ubuntu1604-test
+  tasks:
+    - name: "enterprise-auth-tests"
 
-# -
-#   matrix_name: "enterprise-auth-tests-rhel"
-#   matrix_spec:
-#     auth-and-ssl: "auth-and-ssl"
-#     # Ruby 2.6 and 2.5 segfault
-#     ruby: ["ruby-2.3", "ruby-2.4"]
-#     os: rhel70
-#   display_name: "Enterprise Auth ${ruby} ${os}"
-#   tasks:
-#     - name: "enterprise-auth-tests"
+-
+  matrix_name: "enterprise-auth-tests-rhel"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    # Ruby 2.6 and 2.5 segfault
+    ruby: ["ruby-2.3", "ruby-2.4"]
+    os: rhel70
+  display_name: "Enterprise Auth ${ruby} ${os}"
+  tasks:
+    - name: "enterprise-auth-tests"
 
-# # Enterprise auth tests on debian are omitted due to segfaults:
-# # https://jira.mongodb.org/browse/RUBY-1534
+# Enterprise auth tests on debian are omitted due to segfaults:
+# https://jira.mongodb.org/browse/RUBY-1534
 
-# -
-#   matrix_name: "kerberos-tests"
-#   matrix_spec:
-#     auth-and-ssl: "noauth-and-nossl"
-#     ruby: "ruby-2.6"
-#     mongodb-version: "4.2"
-#     topology: standalone
-#     os: rhel70
-#   display_name: "Kerberos Tests"
-#   tasks:
-#     - name: "kerberos-tests"
+-
+  matrix_name: "kerberos-tests"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
+    topology: standalone
+    os: rhel70
+  display_name: "Kerberos Tests"
+  tasks:
+    - name: "kerberos-tests"
 
-# -
-#   matrix_name: "x509-tests"
-#   matrix_spec:
-#     auth-and-ssl: "auth-and-ssl"
-#     ruby: "ruby-2.6"
-#     mongodb-version: "4.2"
-#     topology: standalone
-#     os: rhel70
-#   display_name: "X.509 Tests"
-#   tasks:
-#     - name: "x509-tests"
+-
+  matrix_name: "x509-tests"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
+    topology: standalone
+    os: rhel70
+  display_name: "X.509 Tests"
+  tasks:
+    - name: "x509-tests"
 
 -
   matrix_name: "fle-tests"
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
-    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6", "jruby-9.2"]
+    # Until we stop installing bson from master, don't test on jruby
+    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
     topology: standalone
     mongodb-version: "4.2"
     os: rhel70
