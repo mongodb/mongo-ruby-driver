@@ -22,6 +22,7 @@ module Mongo
       include Encrypter
 
       attr_reader :mongocryptd_client
+      attr_reader :key_vault_client
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({

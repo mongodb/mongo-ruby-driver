@@ -2,17 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Client do
   require_libmongocrypt
-  clean_slate
+  require_enterprise
 
   let(:schema_map) { Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/schema_map.json'))) }
-
-  let(:auto_encryption_options) do
-    {
-      kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
-      key_vault_namespace: 'admin.datakeys',
-      schema_map: { 'test.users': schema_map }
-    }
-  end
+  let(:key) { "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" }
 
   let(:client) { new_local_client('mongodb://localhost:27017') }
 
@@ -54,31 +47,103 @@ describe Mongo::Client do
   end
 
   before do
+    ClientRegistry.instance.register_local_client(encryption_client.mongocryptd_client)
+    ClientRegistry.instance.register_local_client(encryption_client.key_vault_client)
+
     key_vault_collection = client.use(:admin)[:datakeys]
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
-
-    users_collection = client.use(:test)[:users]
-    users_collection.drop
-    users_collection.create
-
   end
 
-  after do
-    encryption_client.teardown_encrypter
-  end
+  context 'with schema map in auto encryption commands' do
+    let(:auto_encryption_options) do
+      {
+        kms_providers: { local: { key: key } },
+        key_vault_namespace: 'admin.datakeys',
+        schema_map: { 'test.users': schema_map }
+      }
+    end
 
-  describe '#encrypt' do
-    it 'replaces the ssn field with a BSON::Binary' do
-      result = encryption_client.encrypt('test', command)
-      expect(result).to eq(encrypted_command)
+    before do
+      users_collection = client.use(:test)[:users]
+      users_collection.drop
+      users_collection.create
+    end
+
+    describe '#encrypt' do
+      it 'replaces the ssn field with a BSON::Binary' do
+        result = encryption_client.encrypt('test', command)
+        expect(result).to eq(encrypted_command)
+      end
+    end
+
+    describe '#decrypt' do
+      it 'returns the unencrypted document' do
+        result = encryption_client.decrypt(encrypted_command)
+        expect(result).to eq(command)
+      end
     end
   end
 
-  describe '#decrypt' do
-    it 'returns the unencrypted document' do
-      result = encryption_client.decrypt(encrypted_command)
-      expect(result).to eq(command)
+  context 'with schema map collection validator' do
+    let(:auto_encryption_options) do
+      {
+        kms_providers: { local: { key: key } },
+        key_vault_namespace: 'admin.datakeys'
+      }
+    end
+
+    before do
+      users_collection = client.use(:test)[:users]
+      users_collection.drop
+      client.use(:test)[:users,
+        {
+          'validator' => { '$jsonSchema' => schema_map }
+        }
+      ].create
+    end
+
+    describe '#encrypt' do
+      it 'replaces the ssn field with a BSON::Binary' do
+        result = encryption_client.encrypt('test', command)
+        expect(result).to eq(encrypted_command)
+      end
+    end
+
+    describe '#decrypt' do
+      it 'returns the unencrypted document' do
+        result = encryption_client.decrypt(encrypted_command)
+        expect(result).to eq(command)
+      end
+    end
+  end
+
+  context 'with no validator or client option' do
+    let(:auto_encryption_options) do
+      {
+        kms_providers: { local: { key: key } },
+        key_vault_namespace: 'admin.datakeys',
+      }
+    end
+
+    before do
+      users_collection = client.use(:test)[:users]
+      users_collection.drop
+      users_collection.create
+    end
+
+    describe '#encrypt' do
+      it 'does not perform encryption' do
+        result = encryption_client.encrypt('test', command)
+        expect(result).to eq(command)
+      end
+    end
+
+    describe '#decrypt' do
+      it 'still performs decryption' do
+        result = encryption_client.decrypt(encrypted_command)
+        expect(result).to eq(command)
+      end
     end
   end
 end
