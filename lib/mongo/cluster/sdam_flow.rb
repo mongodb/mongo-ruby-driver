@@ -117,6 +117,9 @@ class Mongo::Cluster
         # event. Since we are removing the server whose response we are
         # processing, do not publish description change event but mark it
         # published (by assigning to @previous_desc).
+        log_warn(
+          "Removing server #{updated_desc.address} (self-identified as #{updated_desc.me}) due to me mismatch"
+        )
         do_remove(updated_desc.address.to_s)
         @previous_desc = updated_desc
 
