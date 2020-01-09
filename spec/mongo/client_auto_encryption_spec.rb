@@ -10,7 +10,10 @@ describe Mongo::Client do
   let(:client) { new_local_client('mongodb://localhost:27017') }
 
   let(:encryption_client) do
-    new_local_client('mongodb://localhost:27017/test', { auto_encryption_options: auto_encryption_options })
+    new_local_client(
+      'mongodb://localhost:27017/test',
+      { auto_encryption_options: auto_encryption_options.merge(mongocryptd_server_selection_timeout: 3) }
+    )
   end
 
   let(:data_key) do
@@ -73,6 +76,10 @@ describe Mongo::Client do
     key_vault_collection = client.use(:admin)[:datakeys]
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
+  end
+
+  after do
+
   end
 
   context 'with schema map in auto encryption commands' do

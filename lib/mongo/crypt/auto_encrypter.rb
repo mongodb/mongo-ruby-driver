@@ -64,6 +64,7 @@ module Mongo
           opts[:key_vault_client] = @key_vault_client
         end
 
+        mongocryptd_server_selection_timeout = opts.delete(:mongocryptd_server_selection_timeout)
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
@@ -72,7 +73,7 @@ module Mongo
         @mongocryptd_client = Client.new(
                                 @encryption_options[:mongocryptd_uri],
                                 monitoring_io: mongocryptd_client_monitoring_io,
-                                server_selection_timeout: 3,
+                                server_selection_timeout: mongocryptd_server_selection_timeout, # For testing purposes
                               )
 
         @encryption_io = EncryptionIO.new(
