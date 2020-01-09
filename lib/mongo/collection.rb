@@ -547,7 +547,7 @@ module Mongo
                 :session => session,
                 :txn_num => txn_num
               },
-              :client => client
+              client
            ).execute(server)
         end
       end

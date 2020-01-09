@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+require 'byebug' # TODO: remove
 
 module Mongo
   module Protocol
@@ -65,8 +66,7 @@ module Mongo
         @sections = [ { type: 0, payload: global_args } ] + sections
         @request_id = nil
 
-        byebug
-        if client && client.encryption_options && !client.encryption_options[:bypass_encryption]
+        if client && client.encryption_options && !client.encryption_options[:bypass_auto_encryption]
           encrypted_command = client.encrypt(global_args[DATABASE_IDENTIFIER], build_command)
 
           @sections.delete_if { |section| section[:type] == 1 }
@@ -170,13 +170,12 @@ module Mongo
 
       def build_section(command)
         command = command.dup
-        command.delete(:insert)
 
         {
           payload: {
-            identifier: :insert,
-            sequence: command
-          }
+            identifier: 'documents',
+            sequence: command['documents']
+          },
           type: 1
         }
       end

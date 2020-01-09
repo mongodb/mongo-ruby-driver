@@ -9,7 +9,8 @@ describe 'Auto Encryption' do
     {
       kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
       key_vault_namespace: 'admin.datakeys',
-      schema_map: schema_map
+      schema_map: schema_map,
+      bypass_auto_encryption: bypass_auto_encryption
     }
   end
 
@@ -27,8 +28,11 @@ describe 'Auto Encryption' do
   end
 
   let(:ssn) { '123-456-7890' }
+  let(:bypass_auto_encryption) { false }
+  let(:schema_map) { { "test.users" => json_schema } }
+
   let(:encrypted_ssn) do
-    BSON::Binary.new(Base64.decode64("ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68FttXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"), :ciphertext),
+    BSON::Binary.new(Base64.decode64("ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68FttXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"), :ciphertext)
   end
 
   let(:local_data_key) do
@@ -58,7 +62,7 @@ describe 'Auto Encryption' do
       end
 
       it 'encrypts the command' do
-        result = encrypted_client[:users].insert_one({ ssn: ssn })
+        result = encryption_client[:users].insert_one({ ssn: ssn })
         expect(result).to be_ok
         expect(result.inserted_ids.length).to eq(1)
 
@@ -70,17 +74,30 @@ describe 'Auto Encryption' do
     end
 
     context 'with schema map' do
-      let(:schema_map) { { "test.users" => json_schema } }
-
       it 'encrypts the command' do
-        result = encrypted_client[:users].insert_one(ssn: ssn)
+        result = encryption_client[:users].insert_one(ssn: ssn)
         expect(result).to be_ok
         expect(result.inserted_ids.length).to eq(1)
 
         id = result.inserted_ids.first
 
-        document = client[:users].find(_id: id).first
+        document = client.use(:test)[:users].find(_id: id).first
         expect(document['ssn']).to eq(encrypted_ssn)
+      end
+    end
+
+    context 'with bypass_auto_encryption=true' do
+      let(:bypass_auto_encryption) { true }
+
+      it 'does not encrypt the command' do
+        result = encryption_client[:users].insert_one(ssn: ssn)
+        expect(result).to be_ok
+        expect(result.inserted_ids.length).to eq(1)
+
+        id = result.inserted_ids.first
+
+        document = client.use(:test)[:users].find(_id: id).first
+        expect(document['ssn']).to eq(ssn)
       end
     end
   end
