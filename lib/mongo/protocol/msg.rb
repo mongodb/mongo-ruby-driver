@@ -58,12 +58,21 @@ module Mongo
       # @api private
       #
       # @since 2.5.0
-      def initialize(flags, options, global_args, *sections)
+      def initialize(flags, options, global_args, client=nil, *sections)
         @flags = flags || []
         @options = options
         @global_args = global_args
         @sections = [ { type: 0, payload: global_args } ] + sections
         @request_id = nil
+
+        byebug
+        if client && client.encryption_options && !client.encryption_options[:bypass_encryption]
+          encrypted_command = client.encrypt(global_args[DATABASE_IDENTIFIER], build_command)
+
+          @sections.delete_if { |section| section[:type] == 1 }
+          @sections << build_section(encrypted_command)
+        end
+
         super
       end
 
@@ -146,9 +155,8 @@ module Mongo
       end
 
       private
-
-      def command
-        @command ||= global_args.dup.tap do |cmd|
+      def build_command
+        global_args.dup.tap do |cmd|
           cmd.delete(DATABASE_IDENTIFIER)
           sections.each do |section|
             if section[:type] == 1
@@ -158,6 +166,23 @@ module Mongo
             end
           end
         end
+      end
+
+      def build_section(command)
+        command = command.dup
+        command.delete(:insert)
+
+        {
+          payload: {
+            identifier: :insert,
+            sequence: command
+          }
+          type: 1
+        }
+      end
+
+      def command
+        @command ||= build_command
       end
 
       def add_check_sum(buffer)

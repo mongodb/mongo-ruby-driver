@@ -35,7 +35,7 @@ module Mongo
       def execute(server)
         validate!
         result = if server.features.op_msg_enabled?
-            self.class::OpMsg.new(spec).execute(server)
+            self.class::OpMsg.new(spec, client).execute(server)
           elsif !acknowledged_write?
             self.class::Legacy.new(spec).execute(server)
           else

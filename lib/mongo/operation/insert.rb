@@ -30,6 +30,13 @@ module Mongo
       include Specifiable
       include Write
 
+      attr_reader :client
+
+      def initialize(spec, client=nil)
+        @client = client
+        super(spec)
+      end
+
       private
 
       IDENTIFIER = 'documents'.freeze

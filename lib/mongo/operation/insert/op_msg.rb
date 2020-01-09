@@ -28,6 +28,11 @@ module Mongo
         include ExecutableTransactionLabel
         include PolymorphicResult
 
+        def initialize(spec, client=nil)
+          @client = client
+          super(spec)
+        end
+
         private
 
         def get_result(server)

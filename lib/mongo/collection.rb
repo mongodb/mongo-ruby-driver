@@ -536,15 +536,18 @@ module Mongo
         write_concern = write_concern_with_session(session)
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Insert.new(
-              :documents => [ document ],
-              :db_name => database.name,
-              :coll_name => name,
-              :write_concern => write_concern,
-              :bypass_document_validation => !!opts[:bypass_document_validation],
-              :options => opts,
-              :id_generator => client.options[:id_generator],
-              :session => session,
-              :txn_num => txn_num
+              {
+                :documents => [ document ],
+                :db_name => database.name,
+                :coll_name => name,
+                :write_concern => write_concern,
+                :bypass_document_validation => !!opts[:bypass_document_validation],
+                :options => opts,
+                :id_generator => client.options[:id_generator],
+                :session => session,
+                :txn_num => txn_num
+              },
+              :client => client
            ).execute(server)
         end
       end
