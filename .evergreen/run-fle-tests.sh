@@ -10,8 +10,6 @@ tar -xvf libmongocrypt-all.tar.gz
 
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 
-export BSON=master
-
 set_env_vars
 setup_ruby
 

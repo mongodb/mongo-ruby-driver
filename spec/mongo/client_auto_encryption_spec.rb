@@ -76,10 +76,6 @@ describe Mongo::Client do
     key_vault_collection.insert_one(data_key)
   end
 
-  after do
-
-  end
-
   context 'with schema map in auto encryption commands' do
     include_context 'without jsonSchema validator'
 
