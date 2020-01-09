@@ -30,6 +30,7 @@ describe 'Auto Encryption' do
         auto_encryption_options: {
           kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
           key_vault_namespace: 'admin.datakeys',
+          schema_map: schema_map,
         }
       }
     )
