@@ -46,6 +46,26 @@ describe Mongo::Client do
     )
   end
 
+  shared_context 'with jsonSchema validator' do
+    before do
+      users_collection = client.use(:test)[:users]
+      users_collection.drop
+      client.use(:test)[:users,
+        {
+          'validator' => { '$jsonSchema' => schema_map }
+        }
+      ].create
+    end
+  end
+
+  shared_context 'without jsonSchema validator' do
+    before do
+      users_collection = client.use(:test)[:users]
+      users_collection.drop
+      users_collection.create
+    end
+  end
+
   before do
     ClientRegistry.instance.register_local_client(encryption_client.mongocryptd_client)
     ClientRegistry.instance.register_local_client(encryption_client.key_vault_client)
@@ -56,18 +76,14 @@ describe Mongo::Client do
   end
 
   context 'with schema map in auto encryption commands' do
+    include_context 'without jsonSchema validator'
+
     let(:auto_encryption_options) do
       {
         kms_providers: { local: { key: key } },
         key_vault_namespace: 'admin.datakeys',
         schema_map: { 'test.users': schema_map }
       }
-    end
-
-    before do
-      users_collection = client.use(:test)[:users]
-      users_collection.drop
-      users_collection.create
     end
 
     describe '#encrypt' do
@@ -86,21 +102,13 @@ describe Mongo::Client do
   end
 
   context 'with schema map collection validator' do
+    include_context 'with jsonSchema validator'
+
     let(:auto_encryption_options) do
       {
         kms_providers: { local: { key: key } },
         key_vault_namespace: 'admin.datakeys'
       }
-    end
-
-    before do
-      users_collection = client.use(:test)[:users]
-      users_collection.drop
-      client.use(:test)[:users,
-        {
-          'validator' => { '$jsonSchema' => schema_map }
-        }
-      ].create
     end
 
     describe '#encrypt' do
@@ -119,17 +127,13 @@ describe Mongo::Client do
   end
 
   context 'with no validator or client option' do
+    include_context 'without jsonSchema validator'
+
     let(:auto_encryption_options) do
       {
         kms_providers: { local: { key: key } },
         key_vault_namespace: 'admin.datakeys',
       }
-    end
-
-    before do
-      users_collection = client.use(:test)[:users]
-      users_collection.drop
-      users_collection.create
     end
 
     describe '#encrypt' do
