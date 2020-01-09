@@ -249,7 +249,7 @@ module Mongo
                                 db_name: database.name,
                                 write_concern: write_concern,
                                 session: session
-                                }).execute(server)
+                                }).execute(server, client)
       end
     end
 
@@ -275,7 +275,7 @@ module Mongo
                               db_name: database.name,
                               write_concern: write_concern,
                               session: session
-                              }).execute(next_primary(nil, session))
+                              }).execute(next_primary(nil, session), client)
       end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
@@ -545,7 +545,7 @@ module Mongo
               :id_generator => client.options[:id_generator],
               :session => session,
               :txn_num => txn_num
-           ).execute(server)
+           ).execute(server, client)
         end
       end
     end

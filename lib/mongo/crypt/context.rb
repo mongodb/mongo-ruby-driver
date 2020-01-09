@@ -114,8 +114,14 @@ module Mongo
       end
 
       # Feeds the result of a Mongo operation back to libmongocrypt.
-      # The result param should be a BSON::Document.
+      #
+      # @param [ Hash ] doc BSON document to feed.
+      #
+      # @return [ BSON::Document ] BSON document containing the result.
       def mongocrypt_feed(doc)
+        unless doc.is_a?(Hash)
+          raise ArgumentError, "Document must be a Hash, given #{doc.class}: #{doc.inspect}"
+        end
         Binding.ctx_mongo_feed(self, doc)
       end
     end

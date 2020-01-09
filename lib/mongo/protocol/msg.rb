@@ -182,6 +182,35 @@ module Mongo
         [@main_document]
       end
 
+      def maybe_encrypt(client)
+        # TODO verify compression happens later, i.e. when this method runs
+        # the message is not compressed.
+        if client && client.encryption_options && !client.encryption_options[:bypass_auto_encryption]
+          db_name = @main_document[DATABASE_IDENTIFIER]
+          cmd = merge_sections
+          enc_cmd = client.encrypt(db_name, cmd)
+          if cmd.key?('$db') && !enc_cmd.key?('$db')
+            enc_cmd['$db'] = cmd['$db']
+          end
+          if enc_cmd['txnNumber'].is_a?(Integer) && cmd[:txnNumber].is_a?(BSON::Int64)
+            enc_cmd['txnNumber'] = BSON::Int64.new(enc_cmd[:txnNumber])
+          end
+          Msg.new(@flags, @options, enc_cmd)
+        else
+          self
+        end
+      end
+
+      def maybe_decrypt(client)
+        if client && client.encryption_options
+          cmd = merge_sections
+          enc_cmd = client.decrypt(cmd)
+          Msg.new(@flags, @options, enc_cmd)
+        else
+          self
+        end
+      end
+
       private
 
       def command
