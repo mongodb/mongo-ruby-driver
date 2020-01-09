@@ -86,6 +86,7 @@ functions:
               export RETRY_WRITES=${RETRY_WRITES}
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
               export SINGLE_MONGOS="${SINGLE_MONGOS}"
+              export BSON="${BSON}"
               export MMAPV1="${MMAPV1}"
 
               export STRESS_SPEC=true
@@ -924,10 +925,12 @@ buildvariants:
   matrix_name: "fle-tests"
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
-    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6", "jruby-9.2"]
+    # Until we stop installing bson from master, don't test on jruby
+    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
     topology: standalone
     mongodb-version: "4.2"
     os: rhel70
+    bson: master
   display_name: "FLE Tests: ${ruby}"
   tasks:
     - name: "fle-tests"

@@ -23,16 +23,19 @@ module Mongo
       # Creates a new EncryptionIO object with information about how to connect
       # to the key vault.
       #
-      # @param [ Mongo::Client ] key_vault_client A Client connected to the
-      #   MongoDB instance containing the key vault
-      # @param [ String ] key_vault_namespace The namespace of the key vault
-      #   collection in the format database.collection
+      # @param [ Mongo::Client ] client: The client used to connect to the collection
+      #   that stores the encrypted documents, defaults to nil
+      # @param [ Mongo::Client ] mongocryptd_client: The client connected to mongocryptd,
+      #   defaults to nil
+      # @param [ Mongo::Collection ] key_vault_collection: The Collection object
+      #   representing the database collection storing the encryption data keys
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
-      def initialize(key_vault_client, key_vault_namespace)
-        key_vault_db_name, key_vault_collection_name = key_vault_namespace.split('.')
-        @collection = key_vault_client.use(key_vault_db_name)[key_vault_collection_name]
+      def initialize(client: nil, mongocryptd_client: nil, key_vault_collection:)
+        @client = client
+        @mongocryptd_client = mongocryptd_client
+        @key_vault_collection = key_vault_collection
       end
 
       # Query for keys in the key vault collection using the provided
@@ -42,7 +45,7 @@ module Mongo
       #
       # @return [ Array<Hash> ] The query results
       def find_keys(filter)
-        @collection.find(filter).to_a
+        @key_vault_collection.find(filter).to_a
       end
 
       # Insert a document into the key vault collection
@@ -51,7 +54,37 @@ module Mongo
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
       def insert(document)
-        @collection.insert_one(document)
+        @key_vault_collection.insert_one(document)
+      end
+
+      # Get collection info for a collection matching the provided filter
+      #
+      # @param [ Hash ] filter
+      #
+      # @return [ Hash ] The collection information
+      def collection_info(filter)
+        result = @client.database.list_collections
+
+        name = filter['name']
+        result.find { |r| r['name'] == name }
+      end
+
+      # Send the command to mongocryptd to be marked with intent-to-encrypt markings
+      #
+      # @param [ Hash ] cmd
+      #
+      # @return [ Hash ] The marked command
+      def mark_command(cmd)
+        begin
+          response = @mongocryptd_client.database.command(cmd)
+        rescue Error::NoServerAvailable => e
+          raise e if @client.encryption_options[:mongocryptd_bypass_spawn]
+
+          @client.spawn_mongocryptd
+          response = @mongocryptd_client.database.command(cmd)
+        end
+
+        return response.first
       end
     end
   end

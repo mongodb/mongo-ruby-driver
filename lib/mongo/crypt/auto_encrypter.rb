@@ -22,6 +22,7 @@ module Mongo
       include Encrypter
 
       attr_reader :mongocryptd_client
+      attr_reader :key_vault_client
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
@@ -63,6 +64,7 @@ module Mongo
           opts[:key_vault_client] = @key_vault_client
         end
 
+        mongocryptd_server_selection_timeout = opts.delete(:mongocryptd_server_selection_timeout)
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
@@ -71,9 +73,52 @@ module Mongo
         @mongocryptd_client = Client.new(
                                 @encryption_options[:mongocryptd_uri],
                                 monitoring_io: mongocryptd_client_monitoring_io,
+                                server_selection_timeout: mongocryptd_server_selection_timeout, # For testing purposes
                               )
 
-        # TODO: use all the other options for auto-encryption/auto-decryption
+        # Tests fail with live background threads if the @mongocryptd client is not closed at the
+        # end of every test run. Better to write one line registering it as a local client than to
+        # do it separately in every test.
+        ClientRegistry.instance.register_local_client(@mongocryptd_client) if defined?(ClientRegistry)
+
+        @encryption_io = EncryptionIO.new(
+                          client: self,
+                          mongocryptd_client: @mongocryptd_client,
+                          key_vault_collection: build_key_vault_collection
+                         )
+      end
+
+      # Encrypt a database command
+      #
+      # @param [ String ] database_name The name of the database on which the
+      #   command is being run
+      # @param [ Hash ] command The command to be encrypted
+      #
+      # @return [ Hash ] The encrypted command
+      def encrypt(database_name, command)
+        result = AutoEncryptionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          database_name,
+          command
+        ).run_state_machine
+
+        Hash.from_bson(BSON::ByteBuffer.new(result))
+      end
+
+      # Decrypt a database command
+      #
+      # @param [ Hash ] command The command with encrypted fields
+      #
+      # @return [ Hash ] The decrypted command
+      def decrypt(command)
+        result = AutoDecryptionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          command
+        ).run_state_machine
+
+        Hash.from_bson(BSON::ByteBuffer.new(result))
       end
 
       # Spawn a new mongocryptd process using the mongocryptd_spawn_path
