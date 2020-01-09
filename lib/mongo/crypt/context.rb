@@ -74,27 +74,27 @@ module Mongo
           when :done
             return nil
           when :need_mongo_keys
-            filter = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
+            filter = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
 
             @encryption_io.find_keys(filter).each do |key|
-              mongo_feed(key.to_bson.to_s) if key
+              mongocrypt_feed(key.to_bson.to_s) if key
             end
 
-            mongo_done
+            mongocrypt_done
           when :need_mongo_collinfo
-            filter = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
+            filter = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
 
             result = @encryption_io.collection_info(filter)
-            mongo_feed(result.to_bson.to_s)
+            mongocrypt_feed(result.to_bson.to_s)
 
-            mongo_done
+            mongocrypt_done
           when :need_mongo_markings
-            cmd = Hash.from_bson(BSON::ByteBuffer.new(mongo_operation))
+            cmd = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
 
             result = @encryption_io.mark_command(cmd)
-            mongo_feed(result.to_bson.to_s)
+            mongocrypt_feed(result.to_bson.to_s)
 
-            mongo_done
+            mongocrypt_done
           else
             # There is one other state to handle:
             # - :need_kms
@@ -115,7 +115,7 @@ module Mongo
       end
 
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
-      def mongo_done
+      def mongocrypt_done
         Binding.mongocrypt_ctx_mongo_done(@ctx)
       end
 
@@ -128,11 +128,11 @@ module Mongo
         binary.to_string
       end
 
-      # Returns a binary string representing a mongo operation that the
-      # driver must perform to get the information it needs in order to
-      # continue with encryption/decryption (for example, a filter for
-      # a key vault query).
-      def mongo_operation
+      # Returns a binary string representing an operation that the
+      # driver must perform on behalf of libmongocrypt to get the
+      # information it needs in order to continue with
+      # encryption/decryption (for example, a filter for a key vault query).
+      def mongocrypt_operation
         binary = Binary.new
         success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
         raise_from_status unless success
@@ -140,9 +140,9 @@ module Mongo
         binary.to_string
       end
 
-      # Feeds the result of a Mongo operation to the underlying mongocrypt_ctx_t
-      # object. The result param should be a binary string.
-      def mongo_feed(result)
+      # Feeds the result of a Mongo operation back to libmongocrypt.
+      # The result param should be a binary string.
+      def mongocrypt_feed(result)
         binary = Binary.from_data(result)
         success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
 
