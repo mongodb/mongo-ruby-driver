@@ -136,17 +136,33 @@ module Mongo
       end
 
       def random(_, output_binary_p, num_bytes, status_p)
-        write_binary_string_and_set_status(output_binary_p) do
+        write_binary_string_and_set_status(output_binary_p, status_p) do
           Hooks.random(num_bytes)
         end
       end
 
-      def hmac_sha_512(_, key_binary_p, input_binary_p, output_binary_p, status_p)
+      def do_hmac_sha(digest_name, key_binary_p, input_binary_p, output_binary_p, status_p)
         key = Binary.from_pointer(key_binary_p).to_string
         input = Binary.from_pointer(input_binary_p).to_string
 
-        write_binary_string_and_set_status(output_binary_p) do
-          Hooks.hmac_sha('SHA512', key, input)
+        write_binary_string_and_set_status(output_binary_p, status_p) do
+          Hooks.hmac_sha(digest_name, key, input)
+        end
+      end
+
+      def hmac_sha_512(_, key_binary_p, input_binary_p, output_binary_p, status_p)
+        do_hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
+      end
+
+      def hmac_sha_256(_, key_binary_p, input_binary_p, output_binary_p, status_p)
+        do_hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
+      end
+
+      def hmac_hash(_, input_binary_p, output_binary_p, status_p)
+        input = Binary.from_pointer(input_binary_p).to_string
+
+        write_binary_string_and_set_status(output_binary_p, status_p) do
+          Hooks.hash_sha256(input)
         end
       end
 
@@ -159,26 +175,14 @@ module Mongo
       # object and is not required to use crypto hooks.
       def set_crypto_hooks
 
-        @hmac_sha_512_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
-          Hooks.hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
-        end
-
-        @hmac_sha_256_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
-          Hooks.hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
-        end
-
-        @hmac_hash_fn = Proc.new do |_, input_binary_p, output_binary_p, status_p|
-          Hooks.hash_sha256(input_binary_p, output_binary_p, status_p)
-        end
-
         success = Binding.mongocrypt_setopt_crypto_hooks(
                     @mongocrypt,
                     method(:aes_encrypt),
                     method(:aes_decrypt),
                     method(:random),
-                    @hmac_sha_512_fn,
-                    @hmac_sha_256_fn,
-                    @hmac_hash_fn,
+                    method(:hmac_sha_512),
+                    method(:hmac_sha_256),
+                    method(:hmac_hash),
                     nil
                   )
 
