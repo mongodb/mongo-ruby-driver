@@ -371,15 +371,26 @@ module Mongo
     #   See Ruby's Zlib module for valid levels.
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
-    #
     # @option options [ Hash ] :auto_encryption_options Auto-encryption related options
-    #   :key_vault_client => Client|nil, a client connected to the MongoDB instance containing the encryption key vault
-    #   :key_vault_namespace => String, the namespace of the key vault in the format database.collection
-    #   :kms_providers => Hash, A hash of key management service configuration information. Valid hash keys are :local or :aws.
-    #     There may be more than one KMS provider specified.
-    #   :schema_map => Hash|nil, The JSONSchema of the collection(s) with encrypted fields.
-    #   :bypass_auto_encryption => Boolean, when true, disables auto encryption; defaults to false.
-    #   :extra_options => Hash|nil, options related to spawning mongocryptd (this part of the API is subject to change)
+    #   - :key_vault_client => Client | nil, a client connected to the MongoDB instance containing the encryption key vault
+    #   - :key_vault_namespace => String, the namespace of the key vault in the format database.collection
+    #   - :kms_providers => Hash, A hash of key management service configuration information. Valid hash keys are :local or :aws.
+    #     There may be more than one kms provider specified.
+    #   - :schema_map => Hash | nil, JSONSchema for one or more collections specifying which fields should be encrypted.
+    #     - Note: Schemas supplied in the schema_map only apply to configuring automatic encryption for client side encryption.
+    #       Other validation rules in the JSON schema will not be enforced by the driver and will result in an error.
+    #     - Note: Supplying a schema_map provides more security than relying on JSON Schemas obtained from the server.
+    #       It protects against a malicious server advertising a false JSON Schema, which could trick the client
+    #       into sending unencrypted data that should be encrypted.
+    #   - :bypass_auto_encryption => Boolean, when true, disables auto encryption; defaults to false.
+    #   - :extra_options => Hash | nil, options related to spawning mongocryptd (this part of the API is subject to change)
+    #
+    #   Notes on automatic encryption:
+    #   - Automatic encryption is an enterprise only feature that only applies to operations on a collection.
+    #   - Automatic encryption is not supported for operations on a database or view.
+    #   - Automatic encryption requires the authenticated user to have the listCollections privilege.
+    #   - If automatic encryption fails on an operation, use a MongoClient configured with bypass_auto_encryption: true
+    #     and use ClientEncryption.encrypt to manually encrypt values.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
