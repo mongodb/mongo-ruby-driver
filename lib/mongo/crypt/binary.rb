@@ -120,24 +120,13 @@ module Mongo
         true
       end
 
-      # Returns the data stored as a byte array
-      #
-      # @return [ Array<Int> ] Byte array stored in mongocrypt_binary_t
-      def to_bytes
-        data = Binding.mongocrypt_binary_data(@bin)
-        if data == FFI::Pointer::NULL
-          return []
-        end
-
-        len = Binding.mongocrypt_binary_len(@bin)
-        data.get_array_of_uint8(0, len)
-      end
-
       # Returns the data stored as a string
       #
       # @return [ String ] Data stored in the mongocrypt_binary_t as a string
       def to_string
-        to_bytes.pack('C*')
+        str = Binding.mongocrypt_binary_data(ref)
+        len = Binding.mongocrypt_binary_len(ref)
+        str.read_string(len)
       end
 
       # Returns the reference to the underlying mongocrypt_binary_t
