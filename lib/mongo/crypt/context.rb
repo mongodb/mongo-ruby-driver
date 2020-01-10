@@ -45,6 +45,10 @@ module Mongo
         @encryption_io = io
       end
 
+      def ctx_p
+        @ctx
+      end
+
       # Returns the state of the mongocrypt_ctx_t
       #
       # @return [ Symbol ] The context state
@@ -143,8 +147,7 @@ module Mongo
       # Feeds the result of a Mongo operation back to libmongocrypt.
       # The result param should be a binary string.
       def mongocrypt_feed(result)
-        binary = Binary.from_data(result)
-        success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
+        success = Binding.ctx_mongo_feed(@ctx, result)
 
         raise_from_status unless success
       end

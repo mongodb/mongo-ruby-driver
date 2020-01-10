@@ -149,10 +149,23 @@ module Mongo
       # indicating the success of the operation.
       attach_function :mongocrypt_setopt_kms_provider_local, [:pointer, :pointer], :bool
 
+      def self.setopt_kms_provider_local(context, raw_master_key)
+        Binary.wrap_string(raw_master_key) do |master_key_p|
+          mongocrypt_setopt_kms_provider_local(context.ctx_p, master_key_p)
+        end
+      end
+
       # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_binary_t
       # object. Sets the mongocrypt schema map to the string wrapped by the binary and
       # returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_setopt_schema_map, [:pointer, :pointer], :bool
+
+      def self.setopt_schema_map(context, schema_map_doc)
+        data = schema_map_doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          mongocrypt_setopt_schema_map(context.ctx_p, data_p)
+        end
+      end
 
       # Takes a pointer to a mongocrypt_t object and initializes that object.
       # Should be called after mongocrypt_setopt_kms_provider_local and other methods that
@@ -194,6 +207,18 @@ module Mongo
       # to encrypt the data. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_setopt_key_id, [:pointer, :pointer], :bool
 
+      # Sets the key id option on an explicit encryption context.
+      #
+      # @param [ Context ] context Explicit encryption context
+      # @param [ String ] key_id The key id
+      #
+      # @raise [ Error::CryptError ] If the operation failed
+      def self.ctx_setopt_key_id(context, key_id)
+        Binary.wrap_string(key_id) do |key_id_p|
+          mongocrypt_ctx_setopt_key_id(context.ctx_p, key_id_p)
+        end
+      end
+
       # Takes a pionter to a mongocrypt_ctx_t object, a string indicating the algorithm
       # name (valid values are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" and
       # "AEAD_AES_256_CBC_HMAC_SHA_512-Random") and an integer indicating the length
@@ -206,10 +231,22 @@ module Mongo
       # operation.
       attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
 
+      def self.ctx_explicit_encrypt_init(context, value)
+        Binary.wrap_string(value) do |value_p|
+          mongocrypt_ctx_explicit_encrypt_init(context.ctx_p, value_p)
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
       # object that wraps the value to be decrypted. Initializes the state machine for
       # explicit decryption. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
+
+      def self.ctx_explicit_decrypt_init(context, value)
+        Binary.wrap_string(value) do |value_p|
+          mongocrypt_ctx_explicit_decrypt_init(context.ctx_p, value_p)
+        end
+      end
 
       # Takes a pointer to a mongocrypt_ctx_t object, the string name of the database against which
       # the command is being run, the length of the database name as an integer, and a pointer
@@ -218,10 +255,24 @@ module Mongo
       # success of the operation.
       attach_function :mongocrypt_ctx_encrypt_init, [:pointer, :string, :int, :pointer], :bool
 
+      def self.ctx_encrypt_init(context, db_name, an_int, command)
+        data = command.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          mongocrypt_ctx_encrypt_init(context.ctx_p, db_name, an_int, data_p)
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t object
       # that wraps the value to be decrypted. Initializes the mongocrypt_ctx_t object for
       # auto-decryption and returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_decrypt_init, [:pointer, :pointer], :bool
+
+      def self.ctx_decrypt_init(context, command)
+        data = command.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          mongocrypt_ctx_decrypt_init(context.ctx_p, data_p)
+        end
+      end
 
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
@@ -257,6 +308,12 @@ module Mongo
       #
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
+
+      def self.ctx_mongo_feed(context, data)
+        Binary.wrap_string(data) do |data_p|
+          mongocrypt_ctx_mongo_feed(context.ctx_p, data_p)
+        end
+      end
 
       # Takes a pointer to a mongocrypt_ctx_t object. Marks that the
       # mongocrypt_ctx_t object has finished accepting input from the

@@ -136,6 +136,20 @@ module Mongo
       def ref
         @bin
       end
+
+      # Wraps a String with a mongocrypt_binary_t, yielding an FFI::Pointer
+      # to the wrapped struct.
+      def self.wrap_string(str)
+        binary_p = Binding.mongocrypt_binary_new_from_data(
+          FFI::MemoryPointer.from_string(str),
+          str.length,
+        )
+        begin
+          yield binary_p
+        ensure
+          Binding.mongocrypt_binary_destroy(binary_p)
+        end
+      end
     end
   end
 end

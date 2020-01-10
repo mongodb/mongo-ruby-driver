@@ -57,8 +57,7 @@ module Mongo
           raise ArgumentError.new(':key_id option must not be nil')
         end
 
-        binary = Binary.from_data(@options[:key_id])
-        success = Binding.mongocrypt_ctx_setopt_key_id(@ctx, binary.ref)
+        success = Binding.ctx_setopt_key_id(self, @options[:key_id])
 
         raise_from_status unless success
       end
@@ -76,10 +75,9 @@ module Mongo
       end
 
       # Initializes the mongocrypt_ctx_t object for explicit encryption and
-      # passes in the value to be encrypted as a Mongo::Crypt::Binary reference
+      # passes in the value to be encrypted.
       def initialize_ctx
-        binary = Binary.from_data(@value)
-        success = Binding.mongocrypt_ctx_explicit_encrypt_init(@ctx, binary.ref)
+        success = Binding.ctx_explicit_encrypt_init(@ctx, @value)
 
         raise_from_status unless success
       end

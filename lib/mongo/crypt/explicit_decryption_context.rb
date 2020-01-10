@@ -41,8 +41,7 @@ module Mongo
       # Initialize the underlying mongocrypt_ctx_t object to perform
       # explicit decryption
       def initialize_ctx
-        binary = Binary.from_data(@value)
-        success = Binding.mongocrypt_ctx_explicit_decrypt_init(@ctx, binary.ref)
+        success = Binding.ctx_explicit_decrypt_init(@ctx, @value)
 
         raise_from_status unless success
       end

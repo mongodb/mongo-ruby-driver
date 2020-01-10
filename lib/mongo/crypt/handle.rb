@@ -73,8 +73,7 @@ module Mongo
           )
         end
 
-        binary = Binary.from_data(@schema_map.to_bson.to_s)
-        success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, binary.ref)
+        success = Binding.mongocrypt_setopt_schema_map(@mongocrypt, @schema_map)
 
         raise_from_status unless success
       end
@@ -270,9 +269,9 @@ module Mongo
         end
 
         master_key = kms_providers[:local][:key]
+        raw_master_key = Base64.decode64(master_key)
 
-        binary = Binary.from_data(Base64.decode64(master_key))
-        success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
+        success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, raw_master_key)
 
         raise_from_status unless success
       end
