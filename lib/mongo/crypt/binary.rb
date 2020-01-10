@@ -97,25 +97,23 @@ module Mongo
       #
       # @raise [ ]
       def write(data)
+        if @data
+          raise ArgumentError, 'Cannot write to an owned Binary'
+        end
+
         # Cannot write a string that's longer than the space currently allocated
         # by the mongocrypt_binary_t object
-        if Binding.mongocrypt_binary_len(@bin) < data.length
+        str_p = Binding.mongocrypt_binary_data(ref)
+        len = Binding.mongocrypt_binary_len(ref)
+
+        if len < data.length
           raise ArgumentError.new(
             "Cannot write #{data.length} bytes of data to a Binary object that was initialized " +
             "with #{Binding.mongocrypt_binary_len(@bin)} bytes."
           )
         end
 
-        bytes = data.unpack('C*')
-
-        @data_p.clear if @data_p
-
-        # # FFI::MemoryPointer automatically frees memory when it goes out of scope
-        @data_p = FFI::MemoryPointer.new(bytes.length)
-                    .write_array_of_uint8(bytes)
-
-        Binding.mongocrypt_binary_data(@bin)
-                  .write_array_of_uint8(bytes)
+        str_p.put_bytes(0, data)
 
         true
       end
@@ -124,9 +122,9 @@ module Mongo
       #
       # @return [ String ] Data stored in the mongocrypt_binary_t as a string
       def to_string
-        str = Binding.mongocrypt_binary_data(ref)
+        str_p = Binding.mongocrypt_binary_data(ref)
         len = Binding.mongocrypt_binary_len(ref)
-        str.read_string(len)
+        str_p.read_string(len)
       end
 
       # Returns the reference to the underlying mongocrypt_binary_t
