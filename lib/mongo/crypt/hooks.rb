@@ -65,17 +65,9 @@ module Mongo
       # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
       #   object; if this method fails, an error message will be written to this status
       #
-      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
-      # error message from the mongocrypt_status_t object passed into the method.
-      def random(output_binary_p, num_bytes, status_p)
-        begin
-          Binary.from_pointer(output_binary_p).write(SecureRandom.random_bytes(num_bytes))
-        rescue => e
-          handle_error(status_p, e)
-          return false
-        end
-
-        true
+      # @return [ String ]
+      def random(num_bytes)
+        SecureRandom.random_bytes(num_bytes)
       end
       module_function :random
 

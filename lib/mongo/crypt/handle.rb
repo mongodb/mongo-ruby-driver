@@ -96,6 +96,19 @@ module Mongo
         status.update(:error_client, 1, "#{e.class}: #{e}")
       end
 
+      def write_binary_string_and_set_status(output_binary_p)
+        begin
+          output = yield
+
+          Binary.from_pointer(output_binary_p).write(output)
+
+          true
+        rescue => e
+          handle_error(status_p, e)
+          false
+        end
+      end
+
       def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: false)
         key = Binary.from_pointer(key_binary_p).to_string
         iv = Binary.from_pointer(iv_binary_p).to_string
@@ -124,6 +137,12 @@ module Mongo
         do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: true)
       end
 
+      def random(_, output_binary_p, num_bytes, status_p)
+        write_binary_string_and_set_status(output_binary_p) do
+          Hooks.random(num_bytes)
+        end
+      end
+
       # We are buildling libmongocrypt without crypto functions to remove the
       # external dependency on OpenSSL. This method binds native Ruby crypto methods
       # to the underlying mongocrypt_t object so that libmongocrypt can still perform
@@ -132,10 +151,6 @@ module Mongo
       # Every crypto binding ignores its first argument, which is an option mongocrypt_ctx_t
       # object and is not required to use crypto hooks.
       def set_crypto_hooks
-
-        @random_fn = Proc.new do |_, output_binary_p, num_bytes, status_p|
-          Hooks.random(output_binary_p, num_bytes, status_p)
-        end
 
         @hmac_sha_512_fn = Proc.new do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
           Hooks.hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
@@ -153,7 +168,7 @@ module Mongo
                     @mongocrypt,
                     method(:aes_encrypt),
                     method(:aes_decrypt),
-                    @random_fn,
+                    method(:random),
                     @hmac_sha_512_fn,
                     @hmac_sha_256_fn,
                     @hmac_hash_fn,
