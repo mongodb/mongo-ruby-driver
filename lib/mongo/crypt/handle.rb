@@ -89,6 +89,41 @@ module Mongo
         raise_from_status unless success
       end
 
+      # In the case of an error during cryptography, set the error message
+      # of the specified status to the message of the runtime error
+      def handle_error(status_p, e)
+        status = Status.from_pointer(status_p)
+        status.update(:error_client, 1, "#{e.class}: #{e}")
+      end
+
+      def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: false)
+        key = Binary.from_pointer(key_binary_p).to_string
+        iv = Binary.from_pointer(iv_binary_p).to_string
+        input = Binary.from_pointer(input_binary_p).to_string
+
+        begin
+          output = Hooks.aes(key, iv, input, decrypt: decrypt)
+
+          Binary.from_pointer(output_binary_p).write(output)
+
+          response_length_p.write_int(output.length)
+          true
+        rescue => e
+          handle_error(status_p, e)
+          false
+        end
+      end
+
+      def aes_encrypt(_, key_binary_p, iv_binary_p, input_binary_p,
+        output_binary_p, response_length_p, status_p
+      )
+        do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
+      end
+
+      def aes_decrypt(_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
+        do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: true)
+      end
+
       # We are buildling libmongocrypt without crypto functions to remove the
       # external dependency on OpenSSL. This method binds native Ruby crypto methods
       # to the underlying mongocrypt_t object so that libmongocrypt can still perform
@@ -97,13 +132,6 @@ module Mongo
       # Every crypto binding ignores its first argument, which is an option mongocrypt_ctx_t
       # object and is not required to use crypto hooks.
       def set_crypto_hooks
-        @aes_encrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
-          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
-        end
-
-        @aes_decrypt_fn = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
-          Hooks.aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: true)
-        end
 
         @random_fn = Proc.new do |_, output_binary_p, num_bytes, status_p|
           Hooks.random(output_binary_p, num_bytes, status_p)
@@ -123,8 +151,8 @@ module Mongo
 
         success = Binding.mongocrypt_setopt_crypto_hooks(
                     @mongocrypt,
-                    @aes_encrypt_fn,
-                    @aes_decrypt_fn,
+                    method(:aes_encrypt),
+                    method(:aes_decrypt),
                     @random_fn,
                     @hmac_sha_512_fn,
                     @hmac_sha_256_fn,

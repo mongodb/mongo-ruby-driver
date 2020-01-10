@@ -42,29 +42,18 @@ module Mongo
       # @param [ true | false ] decrypt Whether this method is decrypting. Default is
       #   false, which means the method will create an encryption cipher by default
       #
-      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
-      # error message from the mongocrypt_status_t object passed into the method.
-      def aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: false)
-        begin
-          cipher = OpenSSL::Cipher::AES.new(256, :CBC)
+      # @return [ String ] Output
+      # @raise [ Exception ] Exceptions raised during encryption are propagated
+      #   to caller.
+      def aes(key, iv, input, decrypt: false)
+        cipher = OpenSSL::Cipher::AES.new(256, :CBC)
 
-          decrypt ? cipher.decrypt : cipher.encrypt
-          cipher.key = Binary.from_pointer(key_binary_p).to_string
-          cipher.iv = Binary.from_pointer(iv_binary_p).to_string
-          cipher.padding = 0
+        decrypt ? cipher.decrypt : cipher.encrypt
+        cipher.key = key
+        cipher.iv = iv
+        cipher.padding = 0
 
-          data = Binary.from_pointer(input_binary_p).to_string
-          encrypted = cipher.update(data)
-
-          Binary.from_pointer(output_binary_p).write(encrypted)
-
-          response_length_p.write_int(encrypted.length)
-        rescue => e
-          handle_error(status_p, e)
-          return false
-        end
-
-        true
+        encrypted = cipher.update(input)
       end
       module_function :aes
 
