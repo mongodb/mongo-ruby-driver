@@ -141,6 +141,15 @@ module Mongo
         end
       end
 
+      def hmac_sha_512(_, key_binary_p, input_binary_p, output_binary_p, status_p)
+        key = Binary.from_pointer(key_binary_p).to_string
+        input = Binary.from_pointer(input_binary_p).to_string
+
+        write_binary_string_and_set_status(output_binary_p) do
+          Hooks.hmac_sha('SHA512', key, input)
+        end
+      end
+
       # We are buildling libmongocrypt without crypto functions to remove the
       # external dependency on OpenSSL. This method binds native Ruby crypto methods
       # to the underlying mongocrypt_t object so that libmongocrypt can still perform
