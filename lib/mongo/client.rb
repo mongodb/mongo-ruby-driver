@@ -391,7 +391,6 @@ module Mongo
     #   - Automatic encryption requires the authenticated user to have the listCollections privilege.
     #   - If automatic encryption fails on an operation, use a MongoClient configured with bypass_auto_encryption: true
     #     and use ClientEncryption.encrypt to manually encrypt values.
-    #   - Enabling automatic encryption reduces the maximum write batch size and may have a negative performance impact.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
