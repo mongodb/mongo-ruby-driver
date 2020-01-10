@@ -91,21 +91,23 @@ module Mongo
 
       # In the case of an error during cryptography, set the error message
       # of the specified status to the message of the runtime error
-      def handle_error(status_p, e)
-        status = Status.from_pointer(status_p)
-        status.update(:error_client, 1, "#{e.class}: #{e}")
-      end
-
-      def write_binary_string_and_set_status(output_binary_p)
+      def handle_error(status_p)
         begin
-          output = yield
-
-          Binary.from_pointer(output_binary_p).write(output)
+          yield
 
           true
         rescue => e
-          handle_error(status_p, e)
+          status = Status.from_pointer(status_p)
+          status.update(:error_client, 1, "#{e.class}: #{e}")
           false
+        end
+      end
+
+      def write_binary_string_and_set_status(output_binary_p, status_p)
+        handle_error(status_p) do
+          output = yield
+
+          Binary.from_pointer(output_binary_p).write(output)
         end
       end
 
@@ -114,16 +116,12 @@ module Mongo
         iv = Binary.from_pointer(iv_binary_p).to_string
         input = Binary.from_pointer(input_binary_p).to_string
 
-        begin
+        handle_error(status_p) do
           output = Hooks.aes(key, iv, input, decrypt: decrypt)
 
           Binary.from_pointer(output_binary_p).write(output)
 
           response_length_p.write_int(output.length)
-          true
-        rescue => e
-          handle_error(status_p, e)
-          false
         end
       end
 
