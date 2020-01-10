@@ -150,7 +150,7 @@ module Mongo
       # of the specified status to the message of the runtime error
       def handle_error(status_p, e)
         status = Status.from_pointer(status_p)
-        status.update(:error_client, 1, e.message)
+        status.update(:error_client, 1, "#{e.class}: #{e}")
       end
       module_function :handle_error
     end
