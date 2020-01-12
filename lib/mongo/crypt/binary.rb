@@ -96,7 +96,8 @@ module Mongo
       # @return [ true ] Always true
       #
       # @raise [ ArgumentError ] Raises when trying to write more data
-      #   than was originally allocated.
+      # than was originally allocated or when writing to an object that
+      # already owns data.
       def write(data)
         if @data
           raise ArgumentError, 'Cannot write to an owned Binary'
@@ -109,8 +110,8 @@ module Mongo
 
         if len < data.length
           raise ArgumentError.new(
-            "Cannot write #{data.length} bytes of data to a Binary object that was initialized " +
-            "with #{Binding.mongocrypt_binary_len(@bin)} bytes."
+            "Cannot write #{data.length} bytes of data to a Binary object " +
+            "that was initialized with #{Binding.mongocrypt_binary_len(@bin)} bytes."
           )
         end
 
