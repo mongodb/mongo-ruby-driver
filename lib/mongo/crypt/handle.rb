@@ -26,18 +26,16 @@ module Mongo
     class Handle
       # Creates a new Handle object and initializes it with options
       #
-      # @param [ Hash ] kms_providers A hash of KMS settings. The only supported key
-      #   is currently :local. Local KMS options must be passed in the format
-      #   { local: { key: <master key> } } where the master key is a 96-byte, base64
-      #   encoded string.
+      # @param [ Hash ] kms_providers A hash of KMS settings. The only supported
+      #   key is currently :local. Local KMS options must be passed in the
+      #   format { local: { key: <master key> } } where the master key is a
+      #   96-byte, base64 encoded string.
       # @param [ Hash ] options A hash of options
       #
-      # @option [ Hash | nil ] :schema_map A hash representing the JSON schema of the collection
-      #   that stores auto encrypted documents.
+      # @option [ Hash | nil ] :schema_map A hash representing the JSON schema
+      #   of the collection that stores auto encrypted documents.
       # @option [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
-      #
-      # There will be more arguemnts to this method once automatic encryption is introduced.
       def initialize(kms_providers, options={})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
@@ -70,7 +68,9 @@ module Mongo
       # Set the schema map option on the underlying mongocrypt_t object
       def set_schema_map
         unless @schema_map.is_a?(Hash)
-          raise ArgumentError.new("#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil")
+          raise ArgumentError.new(
+            "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil"
+          )
         end
 
         binary = Binary.from_data(@schema_map.to_bson.to_s)
@@ -85,7 +85,12 @@ module Mongo
           @logger.send(level, msg)
         end
 
-        success = Binding.mongocrypt_setopt_log_handler(@mongocrypt, @log_callback, nil)
+        success = Binding.mongocrypt_setopt_log_handler(
+          @mongocrypt,
+          @log_callback,
+          nil
+        )
+
         raise_from_status unless success
       end
 
@@ -103,6 +108,9 @@ module Mongo
         end
       end
 
+      # Write the return value of the provided block to the specified
+      # mongocrypt_binary_t object; if there's an error, write the error
+      # message to the mongocrypt_status_t object.
       def write_binary_string_and_set_status(output_binary_p, status_p)
         handle_error(status_p) do
           output = yield
@@ -111,42 +119,65 @@ module Mongo
         end
       end
 
-      def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: false)
+      # Perform AES encryption or decryption and write the output to a
+      # provided mongocrypt_binary_t object
+      def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
+        response_length_p, status_p, decrypt: false)
         key = Binary.from_pointer(key_binary_p).to_string
         iv = Binary.from_pointer(iv_binary_p).to_string
         input = Binary.from_pointer(input_binary_p).to_string
 
-        handle_error(status_p) do
-          output = Hooks.aes(key, iv, input, decrypt: decrypt)
-
-          Binary.from_pointer(output_binary_p).write(output)
-
-          response_length_p.write_int(output.length)
-        end
-      end
-
-      def aes_encrypt(_, key_binary_p, iv_binary_p, input_binary_p,
-        output_binary_p, response_length_p, status_p
-      )
-        do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
-      end
-
-      def aes_decrypt(_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p)
-        do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: true)
-      end
-
-      def random(_, output_binary_p, num_bytes, status_p)
         write_binary_string_and_set_status(output_binary_p, status_p) do
-          Hooks.random(num_bytes)
+          output = Hooks.aes(key, iv, input, decrypt: decrypt)
+          response_length_p.write_int(output.length)
+
+          output
         end
       end
 
-      def do_hmac_sha(digest_name, key_binary_p, input_binary_p, output_binary_p, status_p)
+      # Perform HMAC SHA encryption and write the output to a provided
+      # mongocrypt_binary_t object
+      def do_hmac_sha(digest_name, key_binary_p, input_binary_p,
+        output_binary_p, status_p)
         key = Binary.from_pointer(key_binary_p).to_string
         input = Binary.from_pointer(input_binary_p).to_string
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
           Hooks.hmac_sha(digest_name, key, input)
+        end
+      end
+
+      # Perform AES encryption
+      def aes_encrypt(_, key_binary_p, iv_binary_p, input_binary_p,
+        output_binary_p, response_length_p, status_p)
+        do_aes(
+          key_binary_p,
+          iv_binary_p,
+          input_binary_p,
+          output_binary_p,
+          response_length_p,
+          status_p
+        )
+      end
+
+      # Perform AES decryption
+      def aes_decrypt(_, key_binary_p, iv_binary_p, input_binary_p,
+        output_binary_p, response_length_p, status_p)
+        do_aes(
+          key_binary_p,
+          iv_binary_p,
+          input_binary_p,
+          output_binary_p,
+          response_length_p,
+          status_p,
+          decrypt: true
+        )
+      end
+
+      # Generate a string of random bytes
+      def random(_, output_binary_p, num_bytes, status_p)
+        write_binary_string_and_set_status(output_binary_p, status_p) do
+          Hooks.random(num_bytes)
         end
       end
 
@@ -167,12 +198,12 @@ module Mongo
       end
 
       # We are buildling libmongocrypt without crypto functions to remove the
-      # external dependency on OpenSSL. This method binds native Ruby crypto methods
-      # to the underlying mongocrypt_t object so that libmongocrypt can still perform
-      # cryptography.
+      # external dependency on OpenSSL. This method binds native Ruby crypto
+      # methods to the underlying mongocrypt_t object so that libmongocrypt can
+      # still perform cryptography.
       #
-      # Every crypto binding ignores its first argument, which is an option mongocrypt_ctx_t
-      # object and is not required to use crypto hooks.
+      # Every crypto binding ignores its first argument, which is an option
+      # mongocrypt_ctx_t object and is not required to use crypto hooks.
       def set_crypto_hooks
 
         success = Binding.mongocrypt_setopt_crypto_hooks(
@@ -197,7 +228,10 @@ module Mongo
         end
 
         unless kms_providers.key?(:local) || kms_providers.key?(:aws)
-          raise ArgumentError.new('The kms_providers option must have one of the following keys: :aws, :local')
+          raise ArgumentError.new(
+            'The kms_providers option must have one of the following keys: ' +
+            ':aws, :local'
+          )
         end
 
         set_kms_providers_local(kms_providers) if kms_providers.key?(:local)
@@ -209,8 +243,9 @@ module Mongo
       def set_kms_providers_local(kms_providers)
         unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
           raise ArgumentError.new(
-            "The specified local kms_providers option is invalid: #{kms_providers[:local]}. " +
-            "kms_providers with :local key must be in the format: { local: { key: 'MASTER-KEY' } }"
+            "The specified local kms_providers option is invalid: "
+            "#{kms_providers[:local]}. kms_providers with :local key must be " +
+            " in the format: { local: { key: 'MASTER-KEY' } }"
           )
         end
 
@@ -228,10 +263,14 @@ module Mongo
         access_key_id = kms_providers[:aws][:access_key_id]
         secret_access_key = kms_providers[:aws][:secret_access_key]
 
-        unless access_key_id && access_key_id.is_a?(String) && secret_access_key && secret_access_key.is_a?(String)
+        valid_access_key_id = access_key_id && access_key_id.is_a?(String)
+        valid_secret_access_key = secret_access_key && secret_access_key.is_a?(String)
+
+        unless valid_access_key_id && valid_secret_access_key
           raise ArgumentError.new(
             "The specified aws kms_providers option is invalid: #{kms_providers[:aws]}. " +
-            "kms_providers with :aws key must be in the format: { aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }"
+            "kms_providers with :aws key must be in the format: " +
+            "{ aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }"
           )
         end
 
