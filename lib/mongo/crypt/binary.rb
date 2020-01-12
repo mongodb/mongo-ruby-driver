@@ -95,7 +95,8 @@ module Mongo
       #
       # @return [ true ] Always true
       #
-      # @raise [ ]
+      # @raise [ ArgumentError ] Raises when trying to write more data
+      #   than was originally allocated.
       def write(data)
         if @data
           raise ArgumentError, 'Cannot write to an owned Binary'
