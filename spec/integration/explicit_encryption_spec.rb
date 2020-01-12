@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Explicit Encryption' do
   require_libmongocrypt
 
-  let(:client) { ClientRegistry.instance.new_local_client(['localhost:27017']) }
+  let(:client) { ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses) }
   let(:key_vault_namespace) { 'test.keys' }
 
   let(:client_encryption_opts) do
