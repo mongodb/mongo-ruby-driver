@@ -32,8 +32,8 @@ module Mongo
           def write(binary, data)
             binary_p = binary.ref
 
-            # Cannot write a string that's longer than the space currently allocated
-            # by the mongocrypt_binary_t object
+            # Cannot write a string that's longer than the space currently
+            # allocated by the mongocrypt_binary_t object
             data_p = Binding.mongocrypt_binary_data(binary_p)
             len = Binding.mongocrypt_binary_len(binary_p)
 
@@ -88,11 +88,6 @@ module Mongo
             )
           end
 
-          def data_p(binary)
-            binary_p = binary.ref
-            Binding.mongocrypt_binary_data(binary_p)
-          end
-
           # Create a new pointer to a mongocrypt_binary_t object that wraps no
           #   data
           #
@@ -100,8 +95,8 @@ module Mongo
           #   mongocrypt_binary_t object, which will be automatically cleaned
           #   up when it goes out of scope
           def without_data
-            # FFI::AutoPointer uses a custom release strategy to automatically free
-            # the pointer once this object goes out of scope
+            # FFI::AutoPointer uses a custom release strategy to automatically
+            # free the pointer once this object goes out of scope
             FFI::AutoPointer.new(
               Binding.mongocrypt_binary_new,
               Binding.method(:mongocrypt_binary_destroy)

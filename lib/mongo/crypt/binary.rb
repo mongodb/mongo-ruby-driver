@@ -35,8 +35,8 @@ module Mongo
       # methods
       def initialize(data: nil, pointer: nil)
         if data
-          @binary_p = Binding::Binary.with_data(data)
-          @data_p = Binding::Binary.data_p(self)
+          @data = data
+          @binary_p = Binding::Binary.with_data(@data)
         elsif pointer
           # If the Binary class is used this way, it means that the pointer
           # for the underlying mongocrypt_binary_t object is allocated somewhere
@@ -85,7 +85,7 @@ module Mongo
       # than was originally allocated or when writing to an object that
       # already owns data.
       def write(data)
-        if @data_p
+        if @data
           raise ArgumentError, 'Cannot write to an owned Binary'
         end
 
