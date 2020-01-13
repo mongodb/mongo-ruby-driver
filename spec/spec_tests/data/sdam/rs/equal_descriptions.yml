@@ -1,0 +1,65 @@
+description: "Equal server descriptions from one server and delayed response from another"
+
+uri: "mongodb://a,b/?replicaSet=rs"
+
+phases:
+  # A responds with C removed
+  - responses:
+    -
+      - a:27017
+      -
+        ok: 1
+        ismaster: false
+        secondary: true
+        hosts: ["a:27017", "b:27017"]
+        setName: "rs"
+        setVersion: 2
+        electionId: {"$oid": "000000000000000000000002"}
+        minWireVersion: 0
+        maxWireVersion: 6
+    
+    outcome:
+      servers:
+        "a:27017":
+          type: "RSSecondary"
+          setName: rs
+          setVersion:
+          electionId:
+        "b:27017":
+          type: "Unknown"
+      topologyType: "ReplicaSetNoPrimary"
+      logicalSessionTimeoutMinutes: null
+      setName: "rs"
+      
+  # delayed response from B which still includes C
+  - responses:
+    -
+      - b:27017
+      -
+        ok: 1
+        ismaster: false
+        secondary: true
+        hosts: ["a:27017", "b:27017", "c:27017"]
+        setName: "rs"
+        setVersion: 1
+        electionId: {"$oid": "000000000000000000000001"}
+        minWireVersion: 0
+        maxWireVersion: 6
+    
+    outcome:
+      servers:
+        "a:27017":
+          type: "RSSecondary"
+          setName: rs
+          setVersion:
+          electionId:
+        "b:27017":
+          type: "RSSecondary"
+          setName: rs
+          setVersion:
+          electionId:
+        "c:27017":
+          type: "Unknown"
+      topologyType: "ReplicaSetNoPrimary"
+      logicalSessionTimeoutMinutes: null
+      setName: "rs"
