@@ -41,6 +41,9 @@ module Mongo
           # If the Binary class is used this way, it means that the pointer
           # for the underlying mongocrypt_binary_t object is allocated somewhere
           # else. It is not the responsibility of this class to de-allocate data.
+          #
+          # TODO: refactor this when refactoring crypto hooks; this class should
+          # never take a pointer as an argument
           @binary_p = pointer
         else
           # FFI::AutoPointer uses a custom release strategy to automatically free
