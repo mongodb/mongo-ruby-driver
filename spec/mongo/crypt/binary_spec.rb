@@ -77,12 +77,6 @@ describe Mongo::Crypt::Binary do
     end
   end
 
-  describe '#to_bytes' do
-    it 'returns the string as a byte array' do
-      expect(binary.to_bytes).to eq(data.unpack("C*"))
-    end
-  end
-
   describe '#to_string' do
     it 'returns the original string' do
       expect(binary.to_string).to eq(data)
