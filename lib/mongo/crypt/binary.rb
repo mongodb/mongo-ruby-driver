@@ -105,7 +105,7 @@ module Mongo
       # object
       #
       # @return [ FFI::Pointer ] The underlying mongocrypt_binary_t object
-      def ref
+      def pointer
         @binary_p
       end
     end

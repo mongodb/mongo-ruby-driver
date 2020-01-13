@@ -122,7 +122,7 @@ module Mongo
       # Finalize the state machine and return the result as a string
       def finalize_state_machine
         binary = Binary.new
-        success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
+        success = Binding.mongocrypt_ctx_finalize(@ctx, binary.pointer)
         raise_from_status unless success
 
         binary.to_string
@@ -134,7 +134,7 @@ module Mongo
       # encryption/decryption (for example, a filter for a key vault query).
       def mongocrypt_operation
         binary = Binary.new
-        success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
+        success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.pointer)
         raise_from_status unless success
 
         binary.to_string
@@ -144,7 +144,7 @@ module Mongo
       # The result param should be a binary string.
       def mongocrypt_feed(result)
         binary = Binary.from_data(result)
-        success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
+        success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.pointer)
 
         raise_from_status unless success
       end

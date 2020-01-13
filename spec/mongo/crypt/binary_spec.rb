@@ -45,7 +45,7 @@ describe Mongo::Crypt::Binary do
           binary
         end.not_to raise_error
 
-        expect(binary.ref).to eq(pointer)
+        expect(binary.pointer).to eq(pointer)
       end
     end
   end
@@ -73,7 +73,7 @@ describe Mongo::Crypt::Binary do
         binary
       end.not_to raise_error
 
-      expect(binary.ref).to eq(pointer)
+      expect(binary.pointer).to eq(pointer)
     end
   end
 
@@ -86,7 +86,7 @@ describe Mongo::Crypt::Binary do
   describe '#write' do
     # Binary must have enough space pre-allocated
     let(:binary) { described_class.from_data("\00" * data.length) }
-    let(:binary_p) { binary.ref }
+    let(:binary_p) { binary.pointer }
     let(:binary_without_data) { described_class.from_pointer(binary_p) }
 
     context 'to a binary that owns data' do
@@ -116,7 +116,7 @@ describe Mongo::Crypt::Binary do
 
     context 'without enough space allocated' do
       let(:binary) { described_class.from_data("\00" * (data.length - 1)) }
-      let(:binary_p) { binary.ref }
+      let(:binary_p) { binary.pointer }
       let(:binary_without_data) { described_class.from_pointer(binary_p) }
 
       it 'returns false' do

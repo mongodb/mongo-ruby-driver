@@ -30,7 +30,7 @@ module Mongo
           # @raise [ ArgumentError ] Raises when trying to write more data
           # than was originally allocated
           def write(binary, data)
-            binary_p = binary.ref
+            binary_p = binary.pointer
 
             # Cannot write a string that's longer than the space currently
             # allocated by the mongocrypt_binary_t object
@@ -56,7 +56,7 @@ module Mongo
           #
           # @return [ String ] The underlying byte data as a string
           def to_s(binary)
-            binary_p = binary.ref
+            binary_p = binary.pointer
 
             str_p = Binding.mongocrypt_binary_data(binary_p)
             len = Binding.mongocrypt_binary_len(binary_p)
