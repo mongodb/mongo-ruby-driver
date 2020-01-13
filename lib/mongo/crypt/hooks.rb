@@ -27,18 +27,9 @@ module Mongo
 
       # An AES encrypt or decrypt method.
       #
-      # @param [ FFI::Pointer ] key_binary_p A pointer to a mongocrypt_binary_t
-      #   object that wraps the 32-byte AES encryption key
-      # @param [ FFI::Pointer ] iv_binary_p A pointer to a mongocrypt_binary_t
-      #   object that wraps the 16-byte AES iv
-      # @param [ FFI::Pointer ] input_binary_p A pointer to a mongocrypt_binary_t
-      #   object that wraps the data to be encrypted/decrypted
-      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
-      #   object to which the encrypted/decrypted output will be written
-      # @param [ FFI::Pointer ] response_length_p A pointer to an int32 to which
-      #   the length of the output will be written
-      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
-      #   object; if this method fails, an error message will be written to this status
+      # @param [ String ] key The 32-byte AES encryption key
+      # @param [ String ] iv The 16-byte AES IV
+      # @param [ String ] input The data to be encrypted/decrypted
       # @param [ true | false ] decrypt Whether this method is decrypting. Default is
       #   false, which means the method will create an encryption cipher by default
       #
@@ -59,13 +50,11 @@ module Mongo
 
       # Crypto secure random function
       #
-      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
-      #   object to which the encrypted/decrypted output will be written
       # @param [ Integer ] num_bytes The number of random bytes requested
-      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
-      #   object; if this method fails, an error message will be written to this status
       #
       # @return [ String ]
+      # @raise [ Exception ] Exceptions raised during encryption are propagated
+      #   to caller.
       def random(num_bytes)
         SecureRandom.random_bytes(num_bytes)
       end
@@ -74,35 +63,26 @@ module Mongo
       # An HMAC SHA-512 or SHA-256 function
       #
       # @param [ String ] The name of the digest, either "SHA256" or "SHA512"
-      # @param [ FFI::Pointer ] key_binary_p A pointer to a mongocrypt_binary_t
-      #   object that wraps the 32-byte encryption key
-      # @param [ FFI::Pointer ] input_binary_p A pointer to a mongocrypt_binary_t
-      #   object that wraps the data to be encrypted/decrypted
-      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
-      #   object to which the encrypted/decrypted output will be written
-      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
-      #   object; if this method fails, an error message will be written to this status
+      # @param [ String ] key The 32-byte AES encryption key
+      # @param [ String ] input The data to be encrypted/decrypted
       #
-      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
-      # error message from the mongocrypt_status_t object passed into the method.
+      # @return [ String ]
+      # @raise [ Exception ] Exceptions raised during encryption are propagated
+      #   to caller.
       def hmac_sha(digest_name, key, input)
-        hmac = OpenSSL::HMAC.digest(digest_name, key, input)
+        OpenSSL::HMAC.digest(digest_name, key, input)
       end
       module_function :hmac_sha
 
       # A crypto hash (SHA-256) function
       #
-      # @param [ FFI::Pointer ] input_binary_p A pointer to a mongocrypt_binary_t
-      #   object that wraps the data to be encrypted/decrypted
-      # @param [ FFI::Pointer ] output_binary_p A pointer to a mongocrypt_binary_t
-      #   object to which the encrypted/decrypted output will be written
-      # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
-      #   object; if this method fails, an error message will be written to this status
+      # @param [ String ] input The data to be hashed
       #
-      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
-      # error message from the mongocrypt_status_t object passed into the method.
+      # @return [ String ]
+      # @raise [ Exception ] Exceptions raised during encryption are propagated
+      #   to caller.
       def hash_sha256(input)
-        hashed = Digest::SHA2.new(256).digest(data)
+        Digest::SHA2.new(256).digest(data)
       end
       module_function :hash_sha256
     end
