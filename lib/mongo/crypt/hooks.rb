@@ -42,29 +42,18 @@ module Mongo
       # @param [ true | false ] decrypt Whether this method is decrypting. Default is
       #   false, which means the method will create an encryption cipher by default
       #
-      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
-      # error message from the mongocrypt_status_t object passed into the method.
-      def aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p, decrypt: false)
-        begin
-          cipher = OpenSSL::Cipher::AES.new(256, :CBC)
+      # @return [ String ] Output
+      # @raise [ Exception ] Exceptions raised during encryption are propagated
+      #   to caller.
+      def aes(key, iv, input, decrypt: false)
+        cipher = OpenSSL::Cipher::AES.new(256, :CBC)
 
-          decrypt ? cipher.decrypt : cipher.encrypt
-          cipher.key = Binary.from_pointer(key_binary_p).to_string
-          cipher.iv = Binary.from_pointer(iv_binary_p).to_string
-          cipher.padding = 0
+        decrypt ? cipher.decrypt : cipher.encrypt
+        cipher.key = key
+        cipher.iv = iv
+        cipher.padding = 0
 
-          data = Binary.from_pointer(input_binary_p).to_string
-          encrypted = cipher.update(data)
-
-          Binary.from_pointer(output_binary_p).write(encrypted)
-
-          response_length_p.write_int(encrypted.length)
-        rescue => e
-          handle_error(status_p, e)
-          return false
-        end
-
-        true
+        encrypted = cipher.update(input)
       end
       module_function :aes
 
@@ -76,17 +65,9 @@ module Mongo
       # @param [ FFI::Pointer ] status_p A pointer to a mongocrypt_status_t
       #   object; if this method fails, an error message will be written to this status
       #
-      # @return [ true | false ] Whether the method succeeded. If false, retrieve the
-      # error message from the mongocrypt_status_t object passed into the method.
-      def random(output_binary_p, num_bytes, status_p)
-        begin
-          Binary.from_pointer(output_binary_p).write(SecureRandom.random_bytes(num_bytes))
-        rescue => e
-          handle_error(status_p, e)
-          return false
-        end
-
-        true
+      # @return [ String ]
+      def random(num_bytes)
+        SecureRandom.random_bytes(num_bytes)
       end
       module_function :random
 
@@ -104,19 +85,8 @@ module Mongo
       #
       # @return [ true | false ] Whether the method succeeded. If false, retrieve the
       # error message from the mongocrypt_status_t object passed into the method.
-      def hmac_sha(digest, key_binary_p, input_binary_p, output_binary_p, status_p)
-        begin
-          key = Binary.from_pointer(key_binary_p).to_string
-          data = Binary.from_pointer(input_binary_p).to_string
-
-          hmac = OpenSSL::HMAC.digest(digest, key, data)
-          Binary.from_pointer(output_binary_p).write(hmac)
-        rescue => e
-          handle_error(status_p, e)
-          return false
-        end
-
-        true
+      def hmac_sha(digest_name, key, input)
+        hmac = OpenSSL::HMAC.digest(digest_name, key, input)
       end
       module_function :hmac_sha
 
@@ -131,28 +101,10 @@ module Mongo
       #
       # @return [ true | false ] Whether the method succeeded. If false, retrieve the
       # error message from the mongocrypt_status_t object passed into the method.
-      def hash_sha256(input_binary_p, output_binary_p, status_p)
-        begin
-          data = Binary.from_pointer(input_binary_p).to_string
-
-          hashed = Digest::SHA2.new(256).digest(data)
-          Binary.from_pointer(output_binary_p).write(hashed)
-        rescue => e
-          handle_error(status_p, e)
-          return false
-        end
+      def hash_sha256(input)
+        hashed = Digest::SHA2.new(256).digest(data)
       end
       module_function :hash_sha256
-
-      private
-
-      # In the case of an error during cryptography, set the error message
-      # of the specified status to the message of the runtime error
-      def handle_error(status_p, e)
-        status = Status.from_pointer(status_p)
-        status.update(:error_client, 1, e.message)
-      end
-      module_function :handle_error
     end
   end
 end
