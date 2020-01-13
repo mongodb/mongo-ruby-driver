@@ -56,6 +56,8 @@ module Mongo
           "is invalid: #{ENV['LIBMONGOCRYPT_PATH']}\n\n#{e.class}: #{e.message}"
       end
 
+      autoload(:Binary, 'mongo/crypt/binding/binary')
+
       # Takes an integer pointer as an optional out parameter specifying
       # the return string length.
       # Returns the version string for the libmongocrypt library
