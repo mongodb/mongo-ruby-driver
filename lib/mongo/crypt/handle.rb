@@ -243,9 +243,9 @@ module Mongo
       def set_kms_providers_local(kms_providers)
         unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
           raise ArgumentError.new(
-            "The specified local kms_providers option is invalid: "
+            "The specified local kms_providers option is invalid: " +
             "#{kms_providers[:local]}. kms_providers with :local key must be " +
-            " in the format: { local: { key: 'MASTER-KEY' } }"
+            "in the format: { local: { key: 'MASTER-KEY' } }"
           )
         end
 
