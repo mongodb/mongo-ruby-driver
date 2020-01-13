@@ -64,7 +64,7 @@ module Mongo
       #
       # @param [ String ] The name of the digest, either "SHA256" or "SHA512"
       # @param [ String ] key The 32-byte AES encryption key
-      # @param [ String ] input The data to be encrypted/decrypted
+      # @param [ String ] input The data to be tagged
       #
       # @return [ String ]
       # @raise [ Exception ] Exceptions raised during encryption are propagated
