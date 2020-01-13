@@ -94,8 +94,18 @@ module Mongo
         raise_from_status unless success
       end
 
-      # In the case of an error during cryptography, set the error message
-      # of the specified status to the message of the runtime error
+      # Yields to the provided block and rescues exceptions raised by
+      # the block. If an exception was raised, sets the specified status
+      # to the exception message and returns false. If no exceptions were
+      # raised, does not modify the status and returns true.
+      #
+      # This method is meant to be used with libmongocrypt callbacks and
+      # follows the API defined by libmongocrypt.
+      #
+      # @param [ FFI::Pointer ] status_p A pointer to libmongocrypt status object
+      #
+      # @return [ true | false ] Whether block executed without raising
+      #   exceptions.
       def handle_error(status_p)
         begin
           yield
@@ -108,9 +118,19 @@ module Mongo
         end
       end
 
-      # Write the return value of the provided block to the specified
-      # mongocrypt_binary_t object; if there's an error, write the error
+      # Yields to the provided block and writes the return value of block
+      # to the specified mongocrypt_binary_t object. If an exception is
+      # raised during execution of the block, writes the exception message
+      # to the specified status object and returns false. If no exception is
+      # raised, does not modify status and returns true.
       # message to the mongocrypt_status_t object.
+      #
+      # @param [ FFI::Pointer ] output_binary_p A pointer to libmongocrypt
+      #   Binary object to receive the result of block's execution
+      # @param [ FFI::Pointer ] status_p A pointer to libmongocrypt status object
+      #
+      # @return [ true | false ] Whether block executed without raising
+      #   exceptions.
       def write_binary_string_and_set_status(output_binary_p, status_p)
         handle_error(status_p) do
           output = yield
@@ -119,8 +139,8 @@ module Mongo
         end
       end
 
-      # Perform AES encryption or decryption and write the output to a
-      # provided mongocrypt_binary_t object
+      # Perform AES encryption or decryption and write the output to the
+      # provided mongocrypt_binary_t object.
       def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
         response_length_p, status_p, decrypt: false)
         key = Binary.from_pointer(key_binary_p).to_string
@@ -135,8 +155,8 @@ module Mongo
         end
       end
 
-      # Perform HMAC SHA encryption and write the output to a provided
-      # mongocrypt_binary_t object
+      # Perform HMAC SHA encryption and write the output to the provided
+      # mongocrypt_binary_t object.
       def do_hmac_sha(digest_name, key_binary_p, input_binary_p,
         output_binary_p, status_p)
         key = Binary.from_pointer(key_binary_p).to_string
