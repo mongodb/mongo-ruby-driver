@@ -13,6 +13,17 @@ module MongoCryptSpecHelper
   end
   module_function :bind_crypto_hooks
 
+  def mongocrypt_binary_t_from(string)
+    bytes = string.unpack('C*')
+
+    p = FFI::MemoryPointer
+      .new(bytes.size)
+      .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+
+    Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
+  end
+  module_function :mongocrypt_binary_t_from
+
   private
 
   def string_from_binary(binary_p)

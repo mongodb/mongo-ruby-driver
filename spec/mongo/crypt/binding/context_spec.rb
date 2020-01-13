@@ -6,21 +6,9 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
 
-# This should live in a file with other helper methods,
-# just keeping it here temporarily for simplicity.
-def mongocrypt_binary_t_from(string)
-  bytes = string.unpack('C*')
-
-  p = FFI::MemoryPointer
-    .new(bytes.size)
-    .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
-
-  Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
-end
-
 shared_context 'initialized for data key creation' do
   let(:master_key) { "ru\xfe\x00" * 24 }
-  let(:binary) { mongocrypt_binary_t_from(master_key)}
+  let(:binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(master_key)}
 
   before do
     Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
@@ -38,13 +26,13 @@ end
 shared_context 'initialized for explicit encryption' do
   # TODO: replace with code showing how to generate this value
   let(:key_id) { "\xDEd\x00\xDC\x0E\xF8J\x99\x97\xFA\xCC\x04\xBF\xAA\x00\xF5" }
-  let(:key_id_binary) { mongocrypt_binary_t_from(key_id) }
+  let(:key_id_binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(key_id) }
 
   let(:value) do
     { 'v': 'Hello, world!' }.to_bson.to_s
   end
 
-  let(:value_binary) { mongocrypt_binary_t_from(value) }
+  let(:value_binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(value) }
 
   before do
     MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
@@ -127,7 +115,7 @@ describe 'Mongo::Crypt::Binding' do
     end
 
     describe '#mongocrypt_ctx_setopt_key_id' do
-      let(:binary) { mongocrypt_binary_t_from(uuid) }
+      let(:binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(uuid) }
 
       let(:result) do
         Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_id(context, binary)
