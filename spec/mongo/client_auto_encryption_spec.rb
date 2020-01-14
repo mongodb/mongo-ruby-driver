@@ -5,7 +5,7 @@ describe Mongo::Client do
   require_enterprise
   clean_slate
 
-  let(:schema_map) { Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/schema_map.json'))) }
+  let(:schema_map) { BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map.json')) }
   let(:key) { "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" }
 
   let(:client) { new_local_client('mongodb://localhost:27017') }
@@ -18,7 +18,7 @@ describe Mongo::Client do
   end
 
   let(:data_key) do
-    Utils.parse_extended_json(JSON.parse(File.read('spec/mongo/crypt/data/key_document.json')))
+    BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document.json'))
   end
 
   let(:ssn) { '123-456-7890' }
