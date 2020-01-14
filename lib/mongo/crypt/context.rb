@@ -75,7 +75,7 @@ module Mongo
             Binding.check_ctx_status
           when :ready
             # Finalize the state machine and return the result as a string
-            Binding.ctx_finalize(self)
+            return Binding.ctx_finalize(self)
           when :done
             return nil
           when :need_mongo_keys
