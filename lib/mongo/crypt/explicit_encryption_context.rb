@@ -40,35 +40,23 @@ module Mongo
       def initialize(mongocrypt, io, value, options={})
         super(mongocrypt, io)
 
-        @value = value
-        @options = options
-
-        set_key_id
-        set_algorithm
-        initialize_ctx
-      end
-
-      private
-
-      # Set the key id option on the mongocrypt_ctx_t object and raises
-      # an exception if the key_id option is somehow invalid.
-      def set_key_id
         unless @options[:key_id]
           raise ArgumentError.new(':key_id option must not be nil')
         end
 
+        @value = value
+        @options = options
+
+        # Set the key id option on the mongocrypt_ctx_t object and raises
+        # an exception if the key_id option is somehow invalid.
         Binding.ctx_setopt_key_id(self, @options[:key_id])
-      end
 
-      # Set the algorithm option on the mongocrypt_ctx_t object and raises
-      # an exception if the algorithm is invalid.
-      def set_algorithm
+        # Set the algorithm option on the mongocrypt_ctx_t object and raises
+        # an exception if the algorithm is invalid.
         Binding.ctx_setopt_algorithm(@ctx, @options[:algorithm])
-      end
 
-      # Initializes the mongocrypt_ctx_t object for explicit encryption and
-      # passes in the value to be encrypted.
-      def initialize_ctx
+        # Initializes the mongocrypt_ctx_t object for explicit encryption and
+        # passes in the value to be encrypted.
         Binding.ctx_explicit_encrypt_init(@ctx, @value)
       end
     end

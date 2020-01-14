@@ -35,12 +35,6 @@ module Mongo
 
         @command = command
 
-        initialize_ctx
-      end
-
-      private
-
-      def initialize_ctx
         Binding.ctx_decrypt_init(@ctx, @command)
       end
     end

@@ -33,14 +33,8 @@ module Mongo
 
         @value = value
 
-        initialize_ctx
-      end
-
-      private
-
-      # Initialize the underlying mongocrypt_ctx_t object to perform
-      # explicit decryption
-      def initialize_ctx
+        # Initialize the underlying mongocrypt_ctx_t object to perform
+        # explicit decryption
         Binding.ctx_explicit_decrypt_init(@ctx, @value)
       end
     end

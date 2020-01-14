@@ -74,7 +74,8 @@ module Mongo
           when :error
             Binding.check_ctx_status
           when :ready
-            return finalize_state_machine
+            # Finalize the state machine and return the result as a string
+            Binding.ctx_finalize(self)
           when :done
             return nil
           when :need_mongo_keys
@@ -112,11 +113,6 @@ module Mongo
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done
         Binding.mongocrypt_ctx_mongo_done(@ctx)
-      end
-
-      # Finalize the state machine and return the result as a string
-      def finalize_state_machine
-        Binding.ctx_finalize(self)
       end
 
       # Returns a binary string representing an operation that the
