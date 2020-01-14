@@ -77,7 +77,7 @@ module Mongo
           when :done
             return nil
           when :need_mongo_keys
-            filter = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
+            filter = Binding.ctx_mongo_op(self)
 
             @encryption_io.find_keys(filter).each do |key|
               mongocrypt_feed(key.to_bson.to_s) if key
@@ -85,14 +85,14 @@ module Mongo
 
             mongocrypt_done
           when :need_mongo_collinfo
-            filter = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
+            filter = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.collection_info(filter)
             mongocrypt_feed(result.to_bson.to_s)
 
             mongocrypt_done
           when :need_mongo_markings
-            cmd = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
+            cmd = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.mark_command(cmd)
             mongocrypt_feed(result.to_bson.to_s)
@@ -111,14 +111,6 @@ module Mongo
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done
         Binding.mongocrypt_ctx_mongo_done(ctx_p)
-      end
-
-      # Returns a binary string representing an operation that the
-      # driver must perform on behalf of libmongocrypt to get the
-      # information it needs in order to continue with
-      # encryption/decryption (for example, a filter for a key vault query).
-      def mongocrypt_operation
-        Binding.ctx_mongo_op(self)
       end
 
       # Feeds the result of a Mongo operation back to libmongocrypt.

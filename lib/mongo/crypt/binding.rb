@@ -344,6 +344,10 @@ module Mongo
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
 
+      # Returns a BSON::Document representing an operation that the
+      # driver must perform on behalf of libmongocrypt to get the
+      # information it needs in order to continue with
+      # encryption/decryption (for example, a filter for a key vault query).
       def self.ctx_mongo_op(context)
         binary = Binary.new
 
@@ -351,7 +355,10 @@ module Mongo
           mongocrypt_ctx_mongo_op(context.ctx_p, binary.ref)
         end
 
-        binary.to_string
+        # TODO since the binary references a C pointer, and ByteBuffer is
+        # written in C in MRI, we could omit a copy of the data by making
+        # ByteBuffer reference the string that is owned by libmongocrypt.
+        BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_string))
       end
 
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
