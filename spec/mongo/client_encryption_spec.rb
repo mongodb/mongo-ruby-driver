@@ -86,7 +86,7 @@ describe Mongo::ClientEncryption do
 
   shared_context 'encryption/decryption' do
     let(:data_key) do
-      BSON::ExtJSON.parse_obj(JSON.parse(File.read('spec/mongo/crypt/data/key_document.json')))
+      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document.json'))
     end
 
     # Represented in as Base64 for simplicity
