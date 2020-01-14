@@ -57,9 +57,9 @@ module Mongo
       # Runs the mongocrypt_ctx_t state machine and handles
       # all I/O on behalf of libmongocrypt
       #
-      # @return [ String|nil ] A BSON string representing the outcome
-      #   of the state machine. This string could represent different
-      #   values depending on how the context was initialized.
+      # @return [ BSON::Document ] A BSON document representing the outcome
+      #   of the state machine. Contents can differ depending on how the
+      #   context was initialized.
       #
       # @raise [ Error::CryptError ] If the state machine enters the
       #   :error state
@@ -72,7 +72,7 @@ module Mongo
           when :error
             Binding.check_ctx_status
           when :ready
-            # Finalize the state machine and return the result as a string
+            # Finalize the state machine and return the result as a BSON::Document
             return Binding.ctx_finalize(self)
           when :done
             return nil

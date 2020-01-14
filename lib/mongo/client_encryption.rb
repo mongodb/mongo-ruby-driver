@@ -43,9 +43,8 @@ module Mongo
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
     def create_data_key
-      result = Crypt::DataKeyContext.new(@crypt_handle).run_state_machine
+      data_key_document = Crypt::DataKeyContext.new(@crypt_handle).run_state_machine
 
-      data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
       insert_result = @encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data
@@ -74,7 +73,7 @@ module Mongo
         @encryption_io,
         value,
         opts
-      ).run_state_machine
+      ).run_state_machine['v']
     end
 
     # Decrypts a value that has already been encrypted
@@ -92,7 +91,7 @@ module Mongo
                 value
                ).run_state_machine
 
-      Hash.from_bson(BSON::ByteBuffer.new(result))['v']
+      result['v']
     end
   end
 end

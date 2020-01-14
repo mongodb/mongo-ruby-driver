@@ -402,7 +402,10 @@ module Mongo
           mongocrypt_ctx_finalize(context.ctx_p, binary.ref)
         end
 
-        binary.to_string
+        # TODO since the binary references a C pointer, and ByteBuffer is
+        # written in C in MRI, we could omit a copy of the data by making
+        # ByteBuffer reference the string that is owned by libmongocrypt.
+        BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_string))
       end
 
       # A callback to a crypto AES-256-CBC encrypt/decrypt function. Takes:
