@@ -72,7 +72,7 @@ module Mongo
         while true
           case state
           when :error
-            raise_from_status
+            Binding.check_ctx_status
           when :ready
             return finalize_state_machine
           when :done
@@ -109,15 +109,6 @@ module Mongo
 
       private
 
-      # Raise a Mongo::Error::CryptError based on the status of the underlying
-      # mongocrypt_ctx_t object
-      def raise_from_status
-        status = Status.new
-
-        Binding.mongocrypt_ctx_status(@ctx, status.ref)
-        status.raise_crypt_error
-      end
-
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done
         Binding.mongocrypt_ctx_mongo_done(@ctx)
@@ -125,11 +116,7 @@ module Mongo
 
       # Finalize the state machine and return the result as a string
       def finalize_state_machine
-        binary = Binary.new
-        success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
-        raise_from_status unless success
-
-        binary.to_string
+        Binding.ctx_finalize(self)
       end
 
       # Returns a binary string representing an operation that the
@@ -137,19 +124,13 @@ module Mongo
       # information it needs in order to continue with
       # encryption/decryption (for example, a filter for a key vault query).
       def mongocrypt_operation
-        binary = Binary.new
-        success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
-        raise_from_status unless success
-
-        binary.to_string
+        Binding.ctx_mongo_op(self)
       end
 
       # Feeds the result of a Mongo operation back to libmongocrypt.
       # The result param should be a binary string.
       def mongocrypt_feed(result)
-        success = Binding.ctx_mongo_feed(@ctx, result)
-
-        raise_from_status unless success
+        Binding.ctx_mongo_feed(self, result)
       end
     end
   end

@@ -41,9 +41,7 @@ module Mongo
       private
 
       def initialize_ctx
-        success = Binding.ctx_decrypt_init(@ctx, @command)
-
-        raise_from_status unless success
+        Binding.ctx_decrypt_init(@ctx, @command)
       end
     end
   end
