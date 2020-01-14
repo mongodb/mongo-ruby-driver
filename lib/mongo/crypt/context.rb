@@ -37,7 +37,7 @@ module Mongo
 
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
-        @ctx = FFI::AutoPointer.new(
+        @ctx_p = FFI::AutoPointer.new(
           Binding.mongocrypt_ctx_new(mongocrypt_handle.ref),
           Binding.method(:mongocrypt_ctx_destroy)
         )
@@ -45,15 +45,13 @@ module Mongo
         @encryption_io = io
       end
 
-      def ctx_p
-        @ctx
-      end
+      attr_reader :ctx_p
 
       # Returns the state of the mongocrypt_ctx_t
       #
       # @return [ Symbol ] The context state
       def state
-        Binding.mongocrypt_ctx_state(@ctx)
+        Binding.mongocrypt_ctx_state(ctx_p)
       end
 
       # Runs the mongocrypt_ctx_t state machine and handles
@@ -112,7 +110,7 @@ module Mongo
 
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done
-        Binding.mongocrypt_ctx_mongo_done(@ctx)
+        Binding.mongocrypt_ctx_mongo_done(ctx_p)
       end
 
       # Returns a binary string representing an operation that the
