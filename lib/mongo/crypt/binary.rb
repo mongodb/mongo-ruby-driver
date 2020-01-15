@@ -108,7 +108,7 @@ module Mongo
         str_p = Binding.mongocrypt_binary_data(ref)
         len = Binding.mongocrypt_binary_len(ref)
 
-        if len < data.length
+        if len < data.bytesize
           raise ArgumentError.new(
             "Cannot write #{data.length} bytes of data to a Binary object " +
             "that was initialized with #{Binding.mongocrypt_binary_len(@bin)} bytes."

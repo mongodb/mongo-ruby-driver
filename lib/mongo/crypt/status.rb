@@ -67,7 +67,7 @@ module Mongo
           )
         end
 
-        message_length = message ? message.length + 1 : 0
+        message_length = message ? message.bytesize + 1 : 0
         Binding.mongocrypt_status_set(@status, label, code, message, message_length)
 
         self

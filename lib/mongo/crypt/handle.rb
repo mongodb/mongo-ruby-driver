@@ -140,7 +140,7 @@ module Mongo
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
           output = Hooks.aes(key, iv, input, decrypt: decrypt)
-          response_length_p.write_int(output.length)
+          response_length_p.write_int(output.bytesize)
 
           output
         end
