@@ -271,7 +271,7 @@ To run the test suite against such a server, run:
 
 ## Field-Level Encryption
 
-Install libmongocrypt on your machine
+Install libmongocrypt on your machine:
 
 Option 1: Download a pre-built binary
 - Download a tarball of all libmongocrypt variations from this link:
@@ -287,7 +287,7 @@ Option 1: Download a pre-built binary
 Option 2: Build from source
 - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
 
-In one terminal, launch MongoDB
+In one terminal, launch MongoDB:
 
 NOTE: You must be running MongoDB 4.2 or higher. All auto-encryption features
 will require an enterprise build of MongoDB, but you can still run
