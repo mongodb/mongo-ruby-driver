@@ -142,7 +142,7 @@ module Mongo
       def self.wrap_string(str)
         binary_p = Binding.mongocrypt_binary_new_from_data(
           FFI::MemoryPointer.from_string(str),
-          str.length,
+          str.bytesize,
         )
         begin
           yield binary_p

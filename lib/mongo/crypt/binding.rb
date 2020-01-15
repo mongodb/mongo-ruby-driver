@@ -171,7 +171,7 @@ module Mongo
       def self.setopt_schema_map(handle, schema_map_doc)
         data = schema_map_doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
-          check_status(handle)
+          check_status(handle) do
             mongocrypt_setopt_schema_map(handle.ref, data_p)
           end
         end
@@ -185,7 +185,7 @@ module Mongo
 
       def self.init(handle)
         check_status(handle) do
-          mongocrypt_init(handle)
+          mongocrypt_init(handle.ref)
         end
       end
 
@@ -255,9 +255,9 @@ module Mongo
       # of the string. Returns a boolean indicating success of the operation.
       attach_function :mongocrypt_ctx_setopt_algorithm, [:pointer, :string, :int], :bool
 
-      def self.mongocrypt_ctx_setopt_algorithm(context, name)
+      def self.ctx_setopt_algorithm(context, name)
         check_ctx_status(context) do
-          mongocrypt_ctx_setopt_algorithm(context.ref, name, -1)
+          mongocrypt_ctx_setopt_algorithm(context.ctx_p, name, -1)
         end
       end
 
@@ -476,7 +476,7 @@ module Mongo
         check_status(handle) do
           mongocrypt_setopt_crypto_hooks(handle.ref,
             aes_encrypt_cb, aes_decrypt_cb, random_cb,
-            hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb,
+            hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb, nil
           )
         end
       end
@@ -485,7 +485,7 @@ module Mongo
       # mongocrypt_t object.
       #
       # @return [ nil ] Always nil.
-      def check_status(handle)
+      def self.check_status(handle)
         unless yield
           status = Status.new
 
@@ -498,7 +498,7 @@ module Mongo
       # mongocrypt_ctx_t object.
       #
       # @return [ nil ] Always nil.
-      def check_ctx_status(context)
+      def self.check_ctx_status(context)
         if block_given?
           do_raise = !yield
         else

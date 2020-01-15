@@ -40,7 +40,7 @@ describe Mongo::Crypt::DataKeyContext do
   #   conditions
   describe '#run_state_machine' do
     it 'creates a data key' do
-      expect(context.run_state_machine).to be_a_kind_of(String)
+      expect(context.run_state_machine).to be_a_kind_of(Hash)
     end
   end
 end

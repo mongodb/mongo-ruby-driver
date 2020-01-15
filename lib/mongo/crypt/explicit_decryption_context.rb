@@ -35,7 +35,7 @@ module Mongo
 
         # Initialize the underlying mongocrypt_ctx_t object to perform
         # explicit decryption
-        Binding.ctx_explicit_decrypt_init(@ctx, @value)
+        Binding.ctx_explicit_decrypt_init(self, @value)
       end
     end
   end

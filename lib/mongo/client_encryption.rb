@@ -44,7 +44,6 @@ module Mongo
     #   data key _id
     def create_data_key
       data_key_document = Crypt::DataKeyContext.new(@crypt_handle).run_state_machine
-
       insert_result = @encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data
@@ -85,13 +84,13 @@ module Mongo
     # This method is not currently unit tested.
     # Find tests in spec/integration/explicit_encryption_spec.rb
     def decrypt(value)
-      result = Crypt::ExplicitDecryptionContext.new(
-                @crypt_handle,
-                @encryption_io,
-                value
-               ).run_state_machine
+      value = { 'v': value }.to_bson.to_s
 
-      result['v']
+      result = Crypt::ExplicitDecryptionContext.new(
+        @crypt_handle,
+        @encryption_io,
+        value
+      ).run_state_machine['v']
     end
   end
 end

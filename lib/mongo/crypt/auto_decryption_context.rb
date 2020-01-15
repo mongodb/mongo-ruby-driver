@@ -35,7 +35,7 @@ module Mongo
 
         @command = command
 
-        Binding.ctx_decrypt_init(@ctx, @command)
+        Binding.ctx_decrypt_init(self, @command)
       end
     end
   end

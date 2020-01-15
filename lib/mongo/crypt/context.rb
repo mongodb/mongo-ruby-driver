@@ -51,7 +51,7 @@ module Mongo
       #
       # @return [ Symbol ] The context state
       def state
-        Binding.mongocrypt_ctx_state(ctx_p)
+        Binding.mongocrypt_ctx_state(@ctx_p)
       end
 
       # Runs the mongocrypt_ctx_t state machine and handles
@@ -59,7 +59,7 @@ module Mongo
       #
       # @return [ BSON::Document ] A BSON document representing the outcome
       #   of the state machine. Contents can differ depending on how the
-      #   context was initialized.
+      #   context was initialized..
       #
       # @raise [ Error::CryptError ] If the state machine enters the
       #   :error state
