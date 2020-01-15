@@ -290,22 +290,20 @@ Option 2: Build from source
 In one terminal, launch MongoDB:
 
 NOTE: You must be running MongoDB 4.2 or higher. All auto-encryption features
-will require an enterprise build of MongoDB, but you can still run
-explicit encryption tests without enterprise.
+require an enterprise build of MongoDB, but you can still run
+explicit encryption tests using the community edition of MongoDB.
 
-Download different versions of MongoDB here: https://www.mongodb.com/download-center/community
+Download different versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
 
 ```
 mkdir /tmp/mdb
-mongod --dbpath /tmp/mdb --setParameter enableTestCommands=
+mongod --dbpath /tmp/mdb --setParameter enableTestCommands=1
 ```
 
-In another terminal, install bson-ruby from master, then run the tests, making
-sure to set the `LIBMONGOCRYPT_PATH` environment variable to the location
-where you saved your libmongocrypt build.
+In another terminal run the tests, making sure to set the `LIBMONGOCRYPT_PATH`
+environment variable to the full path to the .so/.dll/.dylib
 ```
-bundle install --gemfile=gemfiles/bson_master.gemfile
-LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt/build bundle exec rake
+LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt/nocrypto/libmongocrypt.so bundle exec rake
 ```
 
 ## Compression
