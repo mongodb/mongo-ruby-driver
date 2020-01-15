@@ -267,10 +267,11 @@ module Mongo
       # operation.
       attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
 
-      def self.ctx_explicit_encrypt_init(context, value)
-        Binary.wrap_string(value) do |value_p|
+      def self.ctx_explicit_encrypt_init(context, doc)
+        data = doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
-            mongocrypt_ctx_explicit_encrypt_init(context.ctx_p, value_p)
+            mongocrypt_ctx_explicit_encrypt_init(context.ctx_p, data_p)
           end
         end
       end
@@ -280,10 +281,11 @@ module Mongo
       # explicit decryption. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
 
-      def self.ctx_explicit_decrypt_init(context, value)
-        Binary.wrap_string(value) do |value_p|
+      def self.ctx_explicit_decrypt_init(context, doc)
+        data = doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
-            mongocrypt_ctx_explicit_decrypt_init(context.ctx_p, value_p)
+            mongocrypt_ctx_explicit_decrypt_init(context.ctx_p, data_p)
           end
         end
       end
@@ -370,7 +372,8 @@ module Mongo
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
 
-      def self.ctx_mongo_feed(context, data)
+      def self.ctx_mongo_feed(context, doc)
+        data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
             mongocrypt_ctx_mongo_feed(context.ctx_p, data_p)
