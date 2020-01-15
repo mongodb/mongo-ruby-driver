@@ -289,7 +289,11 @@ To run the tests with Field-level encryption enabled, follow these steps:
 2. Option 2: Build from source
     - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
 
-### In one terminal, launch MongoDB:
+### In one terminal, launch MongoDB
+- NOTE: You must be running MongoDB 4.2 or higher. All auto-encryption features
+will require an enterprise build of MongoDB, but you can still run
+explicit encryption tests without enterprise.
+- Download different versions of MongoDB here: https://www.mongodb.com/download-center/community
 
 ```
 mkdir /tmp/mdb
