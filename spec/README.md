@@ -269,6 +269,39 @@ To run the test suite against such a server, run:
 
     MONGODB_URI="mongodb://localhost:27017/?authMechanism=MONGODB-X509&tls=true&tlsCAFile=spec/support/certificates/ca.crt&tlsCertificateKeyFile=spec/support/certificates/client-x509.pem" rake
 
+## Field-Level Encryption
+
+To run the tests with Field-level encryption enabled, follow these steps:
+
+### Install libmongocrypt on your machine
+
+1. Option 1: Download a pre-built binary
+    - Download a tarball of all libmongocrypt variations from this link:
+        https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz
+    - Unzip the file you downloaded. You will see a list of folders, each
+        corresponding to an operating system. Find the folder that matches
+        your operating system and open it.
+    - Inside that folder, open the folder called "nocrypto." In either the
+        lib or lb64 folder, you will find the libmongocrypt.so or
+        libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
+    - Move that file to wherever you want to keep it on your machine.
+
+2. Option 2: Build from source
+    - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
+
+### In one terminal, launch MongoDB:
+
+```
+mkdir /tmp/mdb
+mongod --dbpath /tmp/mdb --setParameter enableTestCommands=
+```
+
+### In another terminal, install bson-ruby from master, then run the tests
+```
+bundle install --gemfile=gemfiles/bson_master.gemfile
+LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt/build bundle exec rake
+```
+
 ## Compression
 
 To be written.
