@@ -37,7 +37,7 @@ module Mongo
 
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
-        @ctx = FFI::AutoPointer.new(
+        @ctx_p = FFI::AutoPointer.new(
           Binding.mongocrypt_ctx_new(mongocrypt_handle.ref),
           Binding.method(:mongocrypt_ctx_destroy)
         )
@@ -45,19 +45,21 @@ module Mongo
         @encryption_io = io
       end
 
+      attr_reader :ctx_p
+
       # Returns the state of the mongocrypt_ctx_t
       #
       # @return [ Symbol ] The context state
       def state
-        Binding.mongocrypt_ctx_state(@ctx)
+        Binding.mongocrypt_ctx_state(@ctx_p)
       end
 
       # Runs the mongocrypt_ctx_t state machine and handles
       # all I/O on behalf of libmongocrypt
       #
-      # @return [ String|nil ] A BSON string representing the outcome
-      #   of the state machine. This string could represent different
-      #   values depending on how the context was initialized.
+      # @return [ BSON::Document ] A BSON document representing the outcome
+      #   of the state machine. Contents can differ depending on how the
+      #   context was initialized..
       #
       # @raise [ Error::CryptError ] If the state machine enters the
       #   :error state
@@ -68,13 +70,14 @@ module Mongo
         while true
           case state
           when :error
-            raise_from_status
+            Binding.check_ctx_status
           when :ready
-            return finalize_state_machine
+            # Finalize the state machine and return the result as a BSON::Document
+            return Binding.ctx_finalize(self)
           when :done
             return nil
           when :need_mongo_keys
-            filter = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
+            filter = Binding.ctx_mongo_op(self)
 
             @encryption_io.find_keys(filter).each do |key|
               mongocrypt_feed(key.to_bson.to_s) if key
@@ -82,14 +85,14 @@ module Mongo
 
             mongocrypt_done
           when :need_mongo_collinfo
-            filter = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
+            filter = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.collection_info(filter)
             mongocrypt_feed(result.to_bson.to_s)
 
             mongocrypt_done
           when :need_mongo_markings
-            cmd = Hash.from_bson(BSON::ByteBuffer.new(mongocrypt_operation))
+            cmd = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.mark_command(cmd)
             mongocrypt_feed(result.to_bson.to_s)
@@ -105,48 +108,15 @@ module Mongo
 
       private
 
-      # Raise a Mongo::Error::CryptError based on the status of the underlying
-      # mongocrypt_ctx_t object
-      def raise_from_status
-        status = Status.new
-
-        Binding.mongocrypt_ctx_status(@ctx, status.ref)
-        status.raise_crypt_error
-      end
-
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done
-        Binding.mongocrypt_ctx_mongo_done(@ctx)
-      end
-
-      # Finalize the state machine and return the result as a string
-      def finalize_state_machine
-        binary = Binary.new
-        success = Binding.mongocrypt_ctx_finalize(@ctx, binary.ref)
-        raise_from_status unless success
-
-        binary.to_string
-      end
-
-      # Returns a binary string representing an operation that the
-      # driver must perform on behalf of libmongocrypt to get the
-      # information it needs in order to continue with
-      # encryption/decryption (for example, a filter for a key vault query).
-      def mongocrypt_operation
-        binary = Binary.new
-        success = Binding.mongocrypt_ctx_mongo_op(@ctx, binary.ref)
-        raise_from_status unless success
-
-        binary.to_string
+        Binding.mongocrypt_ctx_mongo_done(ctx_p)
       end
 
       # Feeds the result of a Mongo operation back to libmongocrypt.
       # The result param should be a binary string.
       def mongocrypt_feed(result)
-        binary = Binary.from_data(result)
-        success = Binding.mongocrypt_ctx_mongo_feed(@ctx, binary.ref)
-
-        raise_from_status unless success
+        Binding.ctx_mongo_feed(self, result)
       end
     end
   end

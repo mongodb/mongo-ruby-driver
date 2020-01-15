@@ -43,9 +43,7 @@ module Mongo
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
     def create_data_key
-      result = Crypt::DataKeyContext.new(@crypt_handle).run_state_machine
-
-      data_key_document = Hash.from_bson(BSON::ByteBuffer.new(result))
+      data_key_document = Crypt::DataKeyContext.new(@crypt_handle).run_state_machine
       insert_result = @encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data
@@ -53,7 +51,7 @@ module Mongo
 
     # Encrypts a value using the specified encryption key and algorithm
     #
-    # @param [ String|Numeric ] value The value to encrypt
+    # @param [ String | Integer | Symbol ] value The value to encrypt
     # @param [ Hash ] opts
     #
     # @option [ String ] :key_id The base64-encoded UUID of the encryption
@@ -62,10 +60,8 @@ module Mongo
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
     #
-    # @return [ String ] The encrypted value
-    #
-    # This method is not currently unit tested.
-    # Find tests in spec/integration/explicit_encryption_spec.rb
+    # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
+    #   representing the encrypted value
     def encrypt(value, opts={})
       value = { 'v': value }.to_bson.to_s
 
@@ -74,25 +70,23 @@ module Mongo
         @encryption_io,
         value,
         opts
-      ).run_state_machine
+      ).run_state_machine['v']
     end
 
     # Decrypts a value that has already been encrypted
     #
-    # @param [ String ] value The value to decrypt
+    # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)
+    #   that will be decrypted
     #
-    # @return [ String|Numeric ] The decrypted value
-    #
-    # This method is not currently unit tested.
-    # Find tests in spec/integration/explicit_encryption_spec.rb
+    # @return [ String | Integer | Symbol ] The decrypted value
     def decrypt(value)
-      result = Crypt::ExplicitDecryptionContext.new(
-                @crypt_handle,
-                @encryption_io,
-                value
-               ).run_state_machine
+      value = { 'v': value }.to_bson.to_s
 
-      Hash.from_bson(BSON::ByteBuffer.new(result))['v']
+      result = Crypt::ExplicitDecryptionContext.new(
+        @crypt_handle,
+        @encryption_io,
+        value
+      ).run_state_machine['v']
     end
   end
 end

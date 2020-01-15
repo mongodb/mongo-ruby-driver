@@ -35,16 +35,7 @@ module Mongo
 
         @command = command
 
-        initialize_ctx
-      end
-
-      private
-
-      def initialize_ctx
-        binary = Binary.from_data(@command.to_bson.to_s)
-        success = Binding.mongocrypt_ctx_decrypt_init(@ctx, binary.ref)
-
-        raise_from_status unless success
+        Binding.ctx_decrypt_init(self, @command)
       end
     end
   end

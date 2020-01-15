@@ -140,6 +140,12 @@ module Mongo
       # success of the operation.
       attach_function :mongocrypt_setopt_log_handler, [:pointer, :mongocrypt_log_fn_t, :pointer], :bool
 
+      def setopt_log_handler(handle, log_callback)
+        check_status(handle) do
+          mongocrypt_setopt_log_handler(handle, log_callback, nil)
+        end
+      end
+
       # Creates a new mongocrypt_t object and returns a pointer to that object
       attach_function :mongocrypt_new, [], :pointer
 
@@ -149,16 +155,39 @@ module Mongo
       # indicating the success of the operation.
       attach_function :mongocrypt_setopt_kms_provider_local, [:pointer, :pointer], :bool
 
+      def self.setopt_kms_provider_local(handle, raw_master_key)
+        Binary.wrap_string(raw_master_key) do |master_key_p|
+          check_status(handle) do
+            mongocrypt_setopt_kms_provider_local(handle.ref, master_key_p)
+          end
+        end
+      end
+
       # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_binary_t
       # object. Sets the mongocrypt schema map to the string wrapped by the binary and
       # returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_setopt_schema_map, [:pointer, :pointer], :bool
+
+      def self.setopt_schema_map(handle, schema_map_doc)
+        data = schema_map_doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_status(handle) do
+            mongocrypt_setopt_schema_map(handle.ref, data_p)
+          end
+        end
+      end
 
       # Takes a pointer to a mongocrypt_t object and initializes that object.
       # Should be called after mongocrypt_setopt_kms_provider_local and other methods that
       # set options on the mongocrypt_t object.
       # Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_init, [:pointer], :bool
+
+      def self.init(handle)
+        check_status(handle) do
+          mongocrypt_init(handle.ref)
+        end
+      end
 
       # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_status_t
       # object as an out parameter. Sets the status information of the mongocrypt_t
@@ -184,15 +213,41 @@ module Mongo
       # Returns a boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_setopt_masterkey_local, [:pointer], :bool
 
+      def self.ctx_setopt_masterkey_local(context)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and initializes the
       # state machine in order to create a data key
       # Returns a boolean indiating the success of the operation
       attach_function :mongocrypt_ctx_datakey_init, [:pointer], :bool
 
+      def self.ctx_datakey_init(context)
+        check_ctx_status(context) do
+          mongocrypt_ctx_datakey_init(context.ctx_p)
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
       # mongocrypt_binary_t object wrapping the id of the key that will be used
       # to encrypt the data. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_setopt_key_id, [:pointer, :pointer], :bool
+
+      # Sets the key id option on an explicit encryption context.
+      #
+      # @param [ Context ] context Explicit encryption context
+      # @param [ String ] key_id The key id
+      #
+      # @raise [ Error::CryptError ] If the operation failed
+      def self.ctx_setopt_key_id(context, key_id)
+        Binary.wrap_string(key_id) do |key_id_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_setopt_key_id(context.ctx_p, key_id_p)
+          end
+        end
+      end
 
       # Takes a pionter to a mongocrypt_ctx_t object, a string indicating the algorithm
       # name (valid values are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" and
@@ -200,16 +255,38 @@ module Mongo
       # of the string. Returns a boolean indicating success of the operation.
       attach_function :mongocrypt_ctx_setopt_algorithm, [:pointer, :string, :int], :bool
 
+      def self.ctx_setopt_algorithm(context, name)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_algorithm(context.ctx_p, name, -1)
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
       # object that wraps the value to be encrypted. Initializes the state machine in order
       # to encrypt the specified value. Returns a boolean indicating the success of the
       # operation.
       attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
 
+      def self.ctx_explicit_encrypt_init(context, value)
+        Binary.wrap_string(value) do |value_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_explicit_encrypt_init(context.ctx_p, value_p)
+          end
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
       # object that wraps the value to be decrypted. Initializes the state machine for
       # explicit decryption. Returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
+
+      def self.ctx_explicit_decrypt_init(context, value)
+        Binary.wrap_string(value) do |value_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_explicit_decrypt_init(context.ctx_p, value_p)
+          end
+        end
+      end
 
       # Takes a pointer to a mongocrypt_ctx_t object, the string name of the database against which
       # the command is being run, the length of the database name as an integer, and a pointer
@@ -218,10 +295,28 @@ module Mongo
       # success of the operation.
       attach_function :mongocrypt_ctx_encrypt_init, [:pointer, :string, :int, :pointer], :bool
 
+      def self.ctx_encrypt_init(context, db_name, an_int, command)
+        data = command.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_encrypt_init(context.ctx_p, db_name, an_int, data_p)
+          end
+        end
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t object
       # that wraps the value to be decrypted. Initializes the mongocrypt_ctx_t object for
       # auto-decryption and returns a boolean indicating the success of the operation.
       attach_function :mongocrypt_ctx_decrypt_init, [:pointer, :pointer], :bool
+
+      def self.ctx_decrypt_init(context, command)
+        data = command.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_decrypt_init(context.ctx_p, data_p)
+          end
+        end
+      end
 
       # Takes a pointer to a mongocrypt_ctx_t object and destroys
       # the reference to that object
@@ -249,6 +344,23 @@ module Mongo
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
 
+      # Returns a BSON::Document representing an operation that the
+      # driver must perform on behalf of libmongocrypt to get the
+      # information it needs in order to continue with
+      # encryption/decryption (for example, a filter for a key vault query).
+      def self.ctx_mongo_op(context)
+        binary = Binary.new
+
+        check_ctx_status(context) do
+          mongocrypt_ctx_mongo_op(context.ctx_p, binary.ref)
+        end
+
+        # TODO since the binary references a C pointer, and ByteBuffer is
+        # written in C in MRI, we could omit a copy of the data by making
+        # ByteBuffer reference the string that is owned by libmongocrypt.
+        BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_string))
+      end
+
       # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
       # mongocrypt_binary_t object wrapping a BSON document. The BSON document
       # should be the result of performing the necessary operation with the
@@ -257,6 +369,14 @@ module Mongo
       #
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
+
+      def self.ctx_mongo_feed(context, data)
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_mongo_feed(context.ctx_p, data_p)
+          end
+        end
+      end
 
       # Takes a pointer to a mongocrypt_ctx_t object. Marks that the
       # mongocrypt_ctx_t object has finished accepting input from the
@@ -274,6 +394,19 @@ module Mongo
       #
       # This method is not currently unit tested.
       attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
+
+      def self.ctx_finalize(context)
+        binary = Binary.new
+
+        check_ctx_status(context) do
+          mongocrypt_ctx_finalize(context.ctx_p, binary.ref)
+        end
+
+        # TODO since the binary references a C pointer, and ByteBuffer is
+        # written in C in MRI, we could omit a copy of the data by making
+        # ByteBuffer reference the string that is owned by libmongocrypt.
+        BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_string))
+      end
 
       # A callback to a crypto AES-256-CBC encrypt/decrypt function. Takes:
       # - An optional pointer to a mongocrypt_ctx_t object
@@ -335,6 +468,50 @@ module Mongo
         ],
         :bool
       )
+
+      def self.setopt_crypto_hooks(handle,
+        aes_encrypt_cb, aes_decrypt_cb, random_cb,
+        hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb
+      )
+        check_status(handle) do
+          mongocrypt_setopt_crypto_hooks(handle.ref,
+            aes_encrypt_cb, aes_decrypt_cb, random_cb,
+            hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb, nil
+          )
+        end
+      end
+
+      # Raise a Mongo::Error::CryptError based on the status of the underlying
+      # mongocrypt_t object.
+      #
+      # @return [ nil ] Always nil.
+      def self.check_status(handle)
+        unless yield
+          status = Status.new
+
+          mongocrypt_status(handle.ref, status.ref)
+          status.raise_crypt_error
+        end
+      end
+
+      # Raise a Mongo::Error::CryptError based on the status of the underlying
+      # mongocrypt_ctx_t object.
+      #
+      # @return [ nil ] Always nil.
+      def self.check_ctx_status(context)
+        if block_given?
+          do_raise = !yield
+        else
+          do_raise = true
+        end
+
+        if do_raise
+          status = Status.new
+
+          mongocrypt_ctx_status(context.ctx_p, status.ref)
+          status.raise_crypt_error
+        end
+      end
     end
   end
 end

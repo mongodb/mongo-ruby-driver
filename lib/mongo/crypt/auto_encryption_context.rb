@@ -36,17 +36,8 @@ module Mongo
         @db_name = db_name
         @command = command
 
-        initialize_ctx
-      end
-
-      private
-
-      # Initialize the ctx object for auto encryption
-      def initialize_ctx
-        binary = Binary.from_data(@command.to_bson.to_s)
-        success = Binding.mongocrypt_ctx_encrypt_init(@ctx, @db_name, -1, binary.ref)
-
-        raise_from_status unless success
+        # Initialize the ctx object for auto encryption
+        Binding.ctx_encrypt_init(self, @db_name, -1, @command)
       end
     end
   end

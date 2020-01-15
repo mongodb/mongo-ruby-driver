@@ -32,23 +32,12 @@ module Mongo
 
         super(mongocrypt, nil)
 
-        set_local_master_key
-        initialize_ctx
-      end
+        # Configures the underlying mongocrypt_ctx_t object to accept local
+        # KMS options
+        Binding.ctx_setopt_masterkey_local(self)
 
-      private
-
-      # Configures the underlying mongocrypt_ctx_t object to accept local
-      # KMS options
-      def set_local_master_key
-        success = Binding.mongocrypt_ctx_setopt_masterkey_local(@ctx)
-        raise_from_status unless success
-      end
-
-      # Initializes the underlying mongocrypt_ctx_t object
-      def initialize_ctx
-        success = Binding.mongocrypt_ctx_datakey_init(@ctx)
-        raise_from_status unless success
+        # Initializes the underlying mongocrypt_ctx_t object
+        Binding.ctx_datakey_init(self)
       end
     end
   end

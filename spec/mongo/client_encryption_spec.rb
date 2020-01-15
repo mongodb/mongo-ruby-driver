@@ -90,7 +90,8 @@ describe Mongo::ClientEncryption do
     end
 
     # Represented in as Base64 for simplicity
-    let(:encrypted_value) { "bwAAAAV2AGIAAAAGASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QT\nYNYHvplIMWjXWlnxAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGI\nJ4pHUwVPSiNqfFTKu3OewGtKV9AA\n" }
+    # let(:encrypted_value) { "bwAAAAV2AGIAAAAGASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QT\nYNYHvplIMWjXWlnxAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGI\nJ4pHUwVPSiNqfFTKu3OewGtKV9AA\n" }
+    let(:encrypted_value) { "ASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QTYNYHvplIMWjXWlnx\nAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGIJ4pHUwVPSiNqfFTK\nu3OewGtKV9A=\n" }
     let(:value) { 'Hello world' }
 
     before do
@@ -113,8 +114,9 @@ describe Mongo::ClientEncryption do
         }
       )
 
-      expect(encrypted).to be_a_kind_of(String)
-      expect(encrypted).to eq(Base64.decode64(encrypted_value))
+      expect(encrypted).to be_a_kind_of(BSON::Binary)
+      expect(encrypted.type).to eq(:ciphertext)
+      expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
     end
   end
 
@@ -122,7 +124,9 @@ describe Mongo::ClientEncryption do
     include_context 'encryption/decryption'
 
     it 'returns the correct unencrypted value' do
-      result = client_encryption.decrypt(Base64.decode64(encrypted_value))
+      encrypted = BSON::Binary.new(Base64.decode64(encrypted_value), :ciphertext)
+
+      result = client_encryption.decrypt(encrypted)
       expect(result).to eq(value)
     end
   end

@@ -108,9 +108,9 @@ module Mongo
         str_p = Binding.mongocrypt_binary_data(ref)
         len = Binding.mongocrypt_binary_len(ref)
 
-        if len < data.length
+        if len < data.bytesize
           raise ArgumentError.new(
-            "Cannot write #{data.length} bytes of data to a Binary object " +
+            "Cannot write #{data.bytesize} bytes of data to a Binary object " +
             "that was initialized with #{Binding.mongocrypt_binary_len(@bin)} bytes."
           )
         end
@@ -135,6 +135,20 @@ module Mongo
       # @return [ FFI::Pointer ] The underlying mongocrypt_binary_t object
       def ref
         @bin
+      end
+
+      # Wraps a String with a mongocrypt_binary_t, yielding an FFI::Pointer
+      # to the wrapped struct.
+      def self.wrap_string(str)
+        binary_p = Binding.mongocrypt_binary_new_from_data(
+          FFI::MemoryPointer.from_string(str),
+          str.bytesize,
+        )
+        begin
+          yield binary_p
+        ensure
+          Binding.mongocrypt_binary_destroy(binary_p)
+        end
       end
     end
   end
