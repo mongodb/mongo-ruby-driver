@@ -51,7 +51,7 @@ module Mongo
 
     # Encrypts a value using the specified encryption key and algorithm
     #
-    # @param [ String|Numeric ] value The value to encrypt
+    # @param [ String | Integer | Symbol ] value The value to encrypt
     # @param [ Hash ] opts
     #
     # @option [ String ] :key_id The base64-encoded UUID of the encryption
@@ -60,10 +60,8 @@ module Mongo
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
     #
-    # @return [ String ] The encrypted value
-    #
-    # This method is not currently unit tested.
-    # Find tests in spec/integration/explicit_encryption_spec.rb
+    # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
+    #   representing the encrypted value
     def encrypt(value, opts={})
       value = { 'v': value }.to_bson.to_s
 
@@ -77,12 +75,10 @@ module Mongo
 
     # Decrypts a value that has already been encrypted
     #
-    # @param [ String ] value The value to decrypt
+    # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)
+    #   that will be decrypted
     #
-    # @return [ String|Numeric ] The decrypted value
-    #
-    # This method is not currently unit tested.
-    # Find tests in spec/integration/explicit_encryption_spec.rb
+    # @return [ String | Integer | Symbol ] The decrypted value
     def decrypt(value)
       value = { 'v': value }.to_bson.to_s
 

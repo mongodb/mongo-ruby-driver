@@ -49,4 +49,10 @@ describe 'Explicit Encryption' do
 
     it_behaves_like 'an explicit encrypter'
   end
+
+  context 'value is an symbol' do
+    let(:value) { :hello_world }
+
+    it_behaves_like 'an explicit encrypter'
+  end
 end
