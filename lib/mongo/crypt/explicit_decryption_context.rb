@@ -27,15 +27,13 @@ module Mongo
       # @param [ ClientEncryption::IO ] io A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      # @param [ String ] value A BSON value to decrypt
-      def initialize(mongocrypt, io, value)
+      # @param [ BSON::Document ] doc A document to decrypt
+      def initialize(mongocrypt, io, doc)
         super(mongocrypt, io)
-
-        @value = value
 
         # Initialize the underlying mongocrypt_ctx_t object to perform
         # explicit decryption
-        Binding.ctx_explicit_decrypt_init(self, @value)
+        Binding.ctx_explicit_decrypt_init(self, doc)
       end
     end
   end

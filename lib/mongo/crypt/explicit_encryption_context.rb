@@ -27,7 +27,7 @@ module Mongo
       # @param [ ClientEncryption::IO ] io A instance of the IO class
       #   that implements driver I/O methods required to run the
       #   state machine
-      # @param [ String|Integer ] value A value to encrypt
+      # @param [ BSON::Document ] doc A document to encrypt
       # @param [ Hash ] options
       #
       # @option [ String ] :key_id The UUID of the data key that
@@ -37,14 +37,13 @@ module Mongo
       #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
       #
       # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
-      def initialize(mongocrypt, io, value, options={})
+      def initialize(mongocrypt, io, doc, options={})
         super(mongocrypt, io)
 
         unless options[:key_id]
           raise ArgumentError.new(':key_id option must not be nil')
         end
 
-        @value = value
         @options = options
 
         # Set the key id option on the mongocrypt_ctx_t object and raises
@@ -57,7 +56,7 @@ module Mongo
 
         # Initializes the mongocrypt_ctx_t object for explicit encryption and
         # passes in the value to be encrypted.
-        Binding.ctx_explicit_encrypt_init(self, @value)
+        Binding.ctx_explicit_encrypt_init(self, doc)
       end
     end
   end

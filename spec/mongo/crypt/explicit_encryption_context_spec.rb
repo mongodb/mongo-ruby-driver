@@ -21,7 +21,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
   end
 
   let(:io) { double("Mongo::ClientEncryption::IO") }
-  let(:value) { { 'v': 'Hello, world!' }.to_bson.to_s }
+  let(:value) { { 'v': 'Hello, world!' } }
 
   let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
   let(:key_id) { "]\xB1\xE1>\xD6\x85G\xCA\xBB\xA3`\e4\x06\xDA\x89" }

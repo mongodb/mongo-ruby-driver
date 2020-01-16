@@ -43,7 +43,7 @@ module Mongo
       #
       # @param [ Hash ] filter
       #
-      # @return [ Array<Hash> ] The query results
+      # @return [ Array<BSON::Document> ] The query results
       def find_keys(filter)
         @key_vault_collection.find(filter).to_a
       end
