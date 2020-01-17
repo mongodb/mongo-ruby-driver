@@ -216,6 +216,12 @@ module Mongo
         :bool
       )
 
+      # Set the logger callback function on the Mongo::Crypt::Handle object
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ Method ] log_callback
+      #
+      # @raise [ Mongo::CryptError ] If the callback is not set successfully
       def setopt_log_handler(handle, log_callback)
         check_status(handle) do
           mongocrypt_setopt_log_handler(handle, log_callback, nil)
@@ -235,6 +241,12 @@ module Mongo
         :bool
       )
 
+      # Set local KMS provider options on the Mongo::Crypt::Handle object
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ String ] raw_master_key The 96-byte local KMS master key
+      #
+      # @raise [ Mongo::CryptError ] If the option is not set successfully
       def self.setopt_kms_provider_local(handle, raw_master_key)
         Binary.wrap_string(raw_master_key) do |master_key_p|
           check_status(handle) do
@@ -252,6 +264,13 @@ module Mongo
       # @return [ Boolean ] Returns whether the option was set successfully
       attach_function :mongocrypt_setopt_schema_map, [:pointer, :pointer], :bool
 
+      # Set schema map on the Mongo::Crypt::Handle object
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ BSON::Document ] schema_map_doc The schema map as a
+      #   BSON::Document object
+      #
+      # @raise [ Mongo::CryptError ] If the schema map is not set successfully
       def self.setopt_schema_map(handle, schema_map_doc)
         data = schema_map_doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -268,6 +287,11 @@ module Mongo
       # @return [ Boolean ] Returns whether the crypt was initialized successfully
       attach_function :mongocrypt_init, [:pointer], :bool
 
+      # Initialize the Mongo::Crypt::Handle object
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      #
+      # @raise [ Mongo::CryptError ] If initialization fails
       def self.init(handle)
         check_status(handle) do
           mongocrypt_init(handle.ref)
@@ -347,6 +371,14 @@ module Mongo
         :bool
       )
 
+      # Set the algorithm on the context
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ String ] name The algorithm name. Valid values are:
+      #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+      #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+      #
+      # @raise [ Error::CryptError ] If the operation failed
       def self.ctx_setopt_algorithm(context, name)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_algorithm(context.ctx_p, name, -1)
@@ -365,6 +397,11 @@ module Mongo
         :bool
       )
 
+      # Tell the Context object to read the masterkey from local KMS options
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Error::CryptError ] If the operation failed
       def self.ctx_setopt_masterkey_local(context)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
@@ -383,6 +420,11 @@ module Mongo
       # @return [ Boolean ] Whether the initialization was successful
       attach_function :mongocrypt_ctx_datakey_init, [:pointer], :bool
 
+      # Initialize the Context to create a data key
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_datakey_init(context)
         check_ctx_status(context) do
           mongocrypt_ctx_datakey_init(context.ctx_p)
@@ -408,6 +450,11 @@ module Mongo
         :bool
       )
 
+      # Initialize the Context for auto-encryption
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_encrypt_init(context, db_name, an_int, command)
         data = command.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -435,6 +482,11 @@ module Mongo
         :bool
       )
 
+      # Initialize the Context for explicit encryption
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_explicit_encrypt_init(context, doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -453,6 +505,11 @@ module Mongo
       # @return [ Boolean ] Whether the initialization was successful
       attach_function :mongocrypt_ctx_decrypt_init, [:pointer, :pointer], :bool
 
+      # Initialize the Context for auto-decryption
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_decrypt_init(context, command)
         data = command.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -475,6 +532,11 @@ module Mongo
         :bool
       )
 
+      # Initialize the Context for explicit decryption
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_explicit_decrypt_init(context, doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -518,6 +580,11 @@ module Mongo
       # driver must perform on behalf of libmongocrypt to get the
       # information it needs in order to continue with
       # encryption/decryption (for example, a filter for a key vault query).
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Mongo::Crypt ] If there is an error getting the operation
+      # @return [ BSON::Document ] The operation that the driver must perform
       def self.ctx_mongo_op(context)
         binary = Binary.new
 
@@ -540,6 +607,12 @@ module Mongo
       # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
 
+      # Feed a response from the driver back to libmongocrypt
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] doc The document representing the response
+      #
+      # @raise [ Mongo::Crypt::Error ] If the response is not fed successfully
       def self.ctx_mongo_feed(context, doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -566,6 +639,12 @@ module Mongo
       # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
 
+      # Finalize the state machine represented by the Context
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Mongo::Crypt::Error ] If the state machine is not successfully
+      #   finalized
       def self.ctx_finalize(context)
         binary = Binary.new
 
@@ -665,8 +744,8 @@ module Mongo
       # @param [ Method ] An AES encryption method
       # @param [ Method ] An AES decryption method
       # @param [ Method ] A random method
-      # @param [ Method ] A HMAC-SHA-512 method
-      # @param [ Method ] A HMAC-SHA-256 method
+      # @param [ Method ] A HMAC SHA-512 method
+      # @param [ Method ] A HMAC SHA-256 method
       # @param [ Method ] A SHA-256 hash method
       # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
       #   that may have been set when hooks were enabled.
@@ -687,6 +766,17 @@ module Mongo
         :bool
       )
 
+      # Set crypto callbacks on the Handle
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ Method ] aes_encrypt_cb An AES encryption method
+      # @param [ Method ] aes_decrypt_cb A AES decryption method
+      # @param [ Method ] random_cb A method that returns a string of random bytes
+      # @param [ Method ] hmac_sha_512_cb A HMAC SHA-512 method
+      # @param [ Method ] hmac_sha_256_cb A HMAC SHA-256 method
+      # @param [ Method ] hmac_hash_cb A SHA-256 hash method
+      #
+      # @raise [ Mongo::CryptError ] If the callbacks aren't set successfully
       def self.setopt_crypto_hooks(handle,
         aes_encrypt_cb, aes_decrypt_cb, random_cb,
         hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb
