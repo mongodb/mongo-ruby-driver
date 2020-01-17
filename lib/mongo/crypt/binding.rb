@@ -56,72 +56,124 @@ module Mongo
           "is invalid: #{ENV['LIBMONGOCRYPT_PATH']}\n\n#{e.class}: #{e.message}"
       end
 
-      # Takes an integer pointer as an optional out parameter specifying
-      # the return string length.
-      # Returns the version string for the libmongocrypt library
+      # Returns the version string of the libmongocrypt library
+      #
+      # @param [ FFI::Pointer | nil ] len (out param) An optional pointer to a
+      #   uint8 that will reference the length of the returned string.
+      #
+      # @return [ String ] A version string for libmongocrypt
       attach_function :mongocrypt_version, [:pointer], :string
 
-      # Returns a pointer to a new mongocrypt_binary_t
+      # Create a new mongocrypt_binary_t object (a non-owning view of a byte
+      # array)
+      #
+      # @return [ FFI::Pointer ] A pointer to the newly-created
+      #   mongocrypt_binary_t object
       attach_function :mongocrypt_binary_new, [], :pointer
 
-      # Takes a pointer to an array of uint-8 bytes and an integer length
-      # Returns a pointer to a new mongocrypt_binary_t wrapping the specified byte buffer.
-      attach_function :mongocrypt_binary_new_from_data, [:pointer, :int], :pointer
+      # Create a new mongocrypt_binary_t object that maintains a pointer to
+      # the specified byte array.
+      #
+      # @param [ FFI::Pointer ] data A pointer to an array of bytes; the data
+      #   is not copied and must outlive the mongocrypt_binary_t object
+      # @param [ Integer ] len The length of the array argument
+      #
+      # @return [ FFI::Pointer ] A pointer to the newly-created
+      #   mongocrypt_binary_t object
+      attach_function(
+        :mongocrypt_binary_new_from_data,
+        [:pointer, :int],
+        :pointer
+      )
 
-      # Takes a mongocrypt_binary_t pointer
-      # Returns a pointer to the byte array wrapped by the mongocrypt_binary_t
+      # Get the pointer to the underlying data for the mongocrypt_binary_t
+      #
+      # @param [ FFI::Pointer ] binary A pointer to a mongocrypt_binary_t object
+      #
+      # @return [ FFI::Pointer ] A pointer to the data array
       attach_function :mongocrypt_binary_data, [:pointer], :pointer
 
-      # Takes a mongocrypt_binary_t pointer
-      # Returns the length of the byte array wrapped by the mongocrypt_binary_t
+      # Get the length of the underlying data array
+      #
+      # @param [ FFI::Pointer ] binary A pointer to a mongocrypt_binary_t object
+      #
+      # @return [ Integer ] The length of the data array
       attach_function :mongocrypt_binary_len, [:pointer], :int
 
-      # Takes a mongocrypt_binary_t pointer
-      # Frees the reference to that mongocrypt_binary_t
+      # Destroy the mongocrypt_binary_t object
+      #
+      # @param [ FFI::Pointer ] A pointer to a mongocrypt_binary_t object
+      #
+      # @return [ nil ] Always nil
       attach_function :mongocrypt_binary_destroy, [:pointer], :void
 
-      # Status types
+      # Enum labeling different status types
       enum :status_type, [
         :ok,            0,
         :error_client,  1,
         :error_kms,     2,
       ]
 
-      # Creates a new status object to retrieve from a mongocrypt_t handle
-      # and returns the pointer to that status
+      # Create a new mongocrypt_status_t object
+      #
+      # @return [ FFI::Pointer ] A pointer to the new mongocrypt_status_ts
       attach_function :mongocrypt_status_new, [], :pointer
 
-      # Takes:
-      # - a pointer to a status
-      # - a status type (defined in :status_type enum)
-      # - an integer error code
-      # - a string error message
-      # - an integer that is the length of the string + 1
-      # Sets the status_type, error code, and error message on the specified status
-      attach_function :mongocrypt_status_set, [:pointer, :status_type, :int, :string, :int], :void
+      # Set a message, type, and code on an existing status
+      #
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      # @param [ Symbol ] type The status type; possible values are defined
+      #   by the status_type enum
+      # @param [ Integer ] code The status code
+      # @param [ String ] message The status message
+      # @param [ Integer ] len The length of the message argument (or -1 for a
+      #   null-terminated string)
+      #
+      # @return [ nil ] Always nil
+      attach_function(
+        :mongocrypt_status_set,
+        [:pointer, :status_type, :int, :string, :int],
+        :void
+      )
 
-      # Takes a pointer to a mongocrypt_status_t object and returns the status
-      # type set on that object
+      # Indicates the status type
+      #
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #
+      # @return [ Symbol ] The status type (as defined by the status_type enum)
       attach_function :mongocrypt_status_type, [:pointer], :status_type
 
-      # Takes a pointer to a mongocrypt_status_t object and returns the status
-      # code set on that object
+      # Return the status error code
+      #
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #
+      # @return [ Integer ] The status code
       attach_function :mongocrypt_status_code, [:pointer], :int
 
-      # Takes a pointer to a mongocrypt_status_t object and returns the status
-      # message set on that object. Takes an optional out parameter specifying
-      # the length of the returned string.
+      # Returns the status message
+      #
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      # @param [ FFI::Pointer | nil ] len (out param) An optional pointer to a
+      #   uint32, where the length of the retun string will be written
+      #
+      # @return [ String ] The status message
       attach_function :mongocrypt_status_message, [:pointer, :pointer], :string
 
-      # Takes a pointer to a mongocrypt_status_t object and returns whether or not
-      # the status type is ok
+      # Returns whether the status is ok or an error
+      #
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #
+      # @return [ Boolean ] Whether the status is ok
       attach_function :mongocrypt_status_ok, [:pointer], :bool
 
-      # Takes a pointer to a mongocrypt_status_t object and destroys the
-      # reference to that status
+      # Destroys the reference to the mongocrypt_status_t object
+      #
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #
+      # @return [ nil ] Always nil
       attach_function :mongocrypt_status_destroy, [:pointer], :void
 
-      # Log level
+      # Enum labeling the various log levels
       enum :log_level, [
         :fatal,   0,
         :error,   1,
@@ -130,15 +182,39 @@ module Mongo
         :debug,   4,
       ]
 
-      # Mongocrypt log function signature. Takes a log level, a log message as a string,
-      # an integer representing the length of the message, and a pointer to a context provided
-      # by the caller (can be set to nil).
+      # A callback to the mongocrypt log function
+      # Set a custom log callback with the mongocrypt_setopt_log_handler method
+      #
+      # @param [ Symbol ] level The log level; possible values defined by the
+      #   log_level enum
+      # @param [ String ] message The log message
+      # @param [ Integer ] len The length of the message param, or -1 if the
+      #   string is null terminated
+      # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context
+      #   object when this callback was set
+      #
+      # @return [ nil ] Always nil.
       callback :mongocrypt_log_fn_t, [:log_level, :string, :int, :pointer], :void
 
-      # Sets a method to be called on every log message. Takes a pointer to a mongocrypt_t object,
-      # a mongocrypt_log_fn_t callback, and a pointer to a log_ctx. Returns a boolean indicating
-      # success of the operation.
-      attach_function :mongocrypt_setopt_log_handler, [:pointer, :mongocrypt_log_fn_t, :pointer], :bool
+      # Creates a new mongocrypt_t object
+      #
+      # @return [ FFI::Pointer ] A pointer to a new mongocrypt_t object
+      attach_function :mongocrypt_new, [], :pointer
+
+      # Set the handler on the mongocrypt_t object to be called every time
+      #   libmongocrypt logs a message
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ Method ] log_fn A logging callback method
+      # @param [ FFI::Pointer | nil ] log_ctx An optional pointer to a context
+      #   to be passed into the log callback on every invocation.
+      #
+      # @return [ Boolean ] Whether setting the callback was successful
+      attach_function(
+        :mongocrypt_setopt_log_handler,
+        [:pointer, :mongocrypt_log_fn_t, :pointer],
+        :bool
+      )
 
       def setopt_log_handler(handle, log_callback)
         check_status(handle) do
@@ -146,14 +222,18 @@ module Mongo
         end
       end
 
-      # Creates a new mongocrypt_t object and returns a pointer to that object
-      attach_function :mongocrypt_new, [], :pointer
-
-      # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_binary_t
-      # object wrapping a 96-byte master key for encryption/decryption.
-      # Configures the mongocrypt_t with the KMS provider options and returns a boolean
-      # indicating the success of the operation.
-      attach_function :mongocrypt_setopt_kms_provider_local, [:pointer, :pointer], :bool
+      # Configure mongocrypt_t object to take local KSM provider options
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ FFI::Pointer ] key A pointer to a mongocrypt_binary_t object
+      #   that references the 96-byte local master key
+      #
+      # @return [ Boolean ] Returns whether the option was set successfully
+      attach_function(
+        :mongocrypt_setopt_kms_provider_local,
+        [:pointer, :pointer],
+        :bool
+      )
 
       def self.setopt_kms_provider_local(handle, raw_master_key)
         Binary.wrap_string(raw_master_key) do |master_key_p|
@@ -163,9 +243,13 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_binary_t
-      # object. Sets the mongocrypt schema map to the string wrapped by the binary and
-      # returns a boolean indicating the success of the operation.
+      # Sets a local schema map for encryption
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ FFI::Pointer ] schema_map A pointer to a mongocrypt_binary_t
+      #   object that references the schema map as a BSON binary string
+      #
+      # @return [ Boolean ] Returns whether the option was set successfully
       attach_function :mongocrypt_setopt_schema_map, [:pointer, :pointer], :bool
 
       def self.setopt_schema_map(handle, schema_map_doc)
@@ -177,10 +261,11 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_t object and initializes that object.
-      # Should be called after mongocrypt_setopt_kms_provider_local and other methods that
-      # set options on the mongocrypt_t object.
-      # Returns a boolean indicating the success of the operation.
+      # Initialize the mongocrypt_t object
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      #
+      # @return [ Boolean ] Returns whether the crypt was initialized successfully
       attach_function :mongocrypt_init, [:pointer], :bool
 
       def self.init(handle)
@@ -189,50 +274,47 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_status_t
-      # object as an out parameter. Sets the status information of the mongocrypt_t
-      # on the specified status object. Returns a boolean indicating the success of
-      # the operation.
+      # Set the status information from the mongocrypt_t object on the
+      # mongocrypt_status_t object
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t object
+      #
+      # @return [ Boolean ] Whether the status was successfully set
       attach_function :mongocrypt_status, [:pointer, :pointer], :bool
 
-      # Takes a pointer to a mongocrypt_t object and destroys the reference to that object.
+      # Destroy the reference the mongocrypt_t object
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      #
+      # @return [ nil ] Always nil
       attach_function :mongocrypt_destroy, [:pointer], :void
 
-      # Takes a pointer to a mongocrypt_t object
-      # Creates a new mongocrypt_ctx_t object and returns a pointer to it
+      # Create a new mongocrypt_ctx_t object (a wrapper for the libmongocrypt
+      #   state machine)
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      #
+      # @return [ FFI::Pointer ] A new mongocrypt_ctx_t object
       attach_function :mongocrypt_ctx_new, [:pointer], :pointer
 
-      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_status_t
-      # object as an out parameter. Sets the status information of the mongocrypt_ctx_t
-      # on the specified status object. Returns a boolean indicating the success of
-      # the operation.
+      # Set the status information from the mongocrypt_ctx_t object on the
+      # mongocrypt_status_t object
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t object
+      #
+      # @return [ Boolean ] Whether the status was successfully set
       attach_function :mongocrypt_ctx_status, [:pointer, :pointer], :bool
 
-      # Takes a pointer to a mongocrypt_ctx_t object and configures it to accept
-      # a local KMS master key
-      # Returns a boolean indicating the success of the operation
-      attach_function :mongocrypt_ctx_setopt_masterkey_local, [:pointer], :bool
-
-      def self.ctx_setopt_masterkey_local(context)
-        check_ctx_status(context) do
-          mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
-        end
-      end
-
-      # Takes a pointer to a mongocrypt_ctx_t object and initializes the
-      # state machine in order to create a data key
-      # Returns a boolean indiating the success of the operation
-      attach_function :mongocrypt_ctx_datakey_init, [:pointer], :bool
-
-      def self.ctx_datakey_init(context)
-        check_ctx_status(context) do
-          mongocrypt_ctx_datakey_init(context.ctx_p)
-        end
-      end
-
-      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
-      # mongocrypt_binary_t object wrapping the id of the key that will be used
-      # to encrypt the data. Returns a boolean indicating the success of the operation.
+      # Set the key id used for explicit encryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] key_id A pointer to a mongocrypt_binary_t object
+      #   that references the 16-byte key-id
+      #
+      # @note Do not initialize ctx before calling this method
+      # @return [ Boolean ] Whether the option was successfully set
       attach_function :mongocrypt_ctx_setopt_key_id, [:pointer, :pointer], :bool
 
       # Sets the key id option on an explicit encryption context.
@@ -249,11 +331,21 @@ module Mongo
         end
       end
 
-      # Takes a pionter to a mongocrypt_ctx_t object, a string indicating the algorithm
-      # name (valid values are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" and
-      # "AEAD_AES_256_CBC_HMAC_SHA_512-Random") and an integer indicating the length
-      # of the string. Returns a boolean indicating success of the operation.
-      attach_function :mongocrypt_ctx_setopt_algorithm, [:pointer, :string, :int], :bool
+      # Set the algorithm used for explicit encryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ String ] algorithm The algorithm name. Valid values are:
+      #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+      #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+      # @param [ Integer ] len The length of the algorithm string
+      #
+      # @note Do not initialize ctx before calling this method
+      # @return [ Boolean ] Whether the option was successfully set
+      attach_function(
+        :mongocrypt_ctx_setopt_algorithm,
+        [:pointer, :string, :int],
+        :bool
+      )
 
       def self.ctx_setopt_algorithm(context, name)
         check_ctx_status(context) do
@@ -261,41 +353,60 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
-      # object that wraps the value to be encrypted. Initializes the state machine in order
-      # to encrypt the specified value. Returns a boolean indicating the success of the
-      # operation.
-      attach_function :mongocrypt_ctx_explicit_encrypt_init, [:pointer, :pointer], :bool
+      # Set the ctx to take a local master key
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @note Do not initialize ctx before calling this method
+      # @return [ Boolean ] Whether the option was successfully set
+      attach_function(
+        :mongocrypt_ctx_setopt_masterkey_local,
+        [:pointer],
+        :bool
+      )
 
-      def self.ctx_explicit_encrypt_init(context, doc)
-        data = doc.to_bson.to_s
-        Binary.wrap_string(data) do |data_p|
-          check_ctx_status(context) do
-            mongocrypt_ctx_explicit_encrypt_init(context.ctx_p, data_p)
-          end
+      def self.ctx_setopt_masterkey_local(context)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
         end
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t
-      # object that wraps the value to be decrypted. Initializes the state machine for
-      # explicit decryption. Returns a boolean indicating the success of the operation.
-      attach_function :mongocrypt_ctx_explicit_decrypt_init, [:pointer, :pointer], :bool
+      # Initializes the ctx to create a data key
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @note Before calling this method, masterkey options must be set.
+      #   Set AWS masterkey by calling mongocrypt_ctx_setopt_masterkey_aws
+      #   and mongocrypt_ctx_setopt_masterkey_aws_endpoint. Set local master
+      #   key by calling mongocrypt_ctx_setopt_masterkey_local.
+      #
+      # @return [ Boolean ] Whether the initialization was successful
+      attach_function :mongocrypt_ctx_datakey_init, [:pointer], :bool
 
-      def self.ctx_explicit_decrypt_init(context, doc)
-        data = doc.to_bson.to_s
-        Binary.wrap_string(data) do |data_p|
-          check_ctx_status(context) do
-            mongocrypt_ctx_explicit_decrypt_init(context.ctx_p, data_p)
-          end
+      def self.ctx_datakey_init(context)
+        check_ctx_status(context) do
+          mongocrypt_ctx_datakey_init(context.ctx_p)
         end
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object, the string name of the database against which
-      # the command is being run, the length of the database name as an integer, and a pointer
-      # to a mongocrypt_binary_t object wrapping the command to be encrypted. Initializes
-      # the mongocrypt_ctx_t object for auto-encryption and returns a boolean indicating the
-      # success of the operation.
-      attach_function :mongocrypt_ctx_encrypt_init, [:pointer, :string, :int, :pointer], :bool
+      # Initializes the ctx for auto-encryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ String ] db The database name
+      # @param [ Integer ] db_len The length of the database name argument (or
+      #   -1 for a null-terminated string)
+      # @param [ FFI::Pointer ] cmd A pointer to a mongocrypt_binary_t object
+      #   that references the database command as a binary string
+      #
+      # @note This method expects the passed-in BSON to be in the format:
+      #   { "v": BSON value to decrypt }
+      #
+      # @return [ Boolean ] Whether the initialization was successful
+      attach_function(
+        :mongocrypt_ctx_encrypt_init,
+        [:pointer, :string, :int, :pointer],
+        :bool
+      )
 
       def self.ctx_encrypt_init(context, db_name, an_int, command)
         data = command.to_bson.to_s
@@ -306,9 +417,40 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a mongocrypt_binary_t object
-      # that wraps the value to be decrypted. Initializes the mongocrypt_ctx_t object for
-      # auto-decryption and returns a boolean indicating the success of the operation.
+      # Initializes the ctx for explicit encryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] msg A pointer to a mongocrypt_binary_t object
+      #   that references the message to be encrypted as a binary string
+      #
+      # @note Before calling this method, set a key_id, key_alt_name (optional),
+      #   and encryption algorithm using the following methods:
+      #   mongocrypt_ctx_setopt_key_id, mongocrypt_ctx_setopt_key_alt_name,
+      #   and mongocrypt_ctx_setopt_algorithm
+      #
+      # @return [ Boolean ] Whether the initialization was successful
+      attach_function(
+        :mongocrypt_ctx_explicit_encrypt_init,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      def self.ctx_explicit_encrypt_init(context, doc)
+        data = doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_explicit_encrypt_init(context.ctx_p, data_p)
+          end
+        end
+      end
+
+      # Initializes the ctx for auto-decryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] doc A pointer to a mongocrypt_binary_t object
+      #   that references the document to be decrypted as a BSON binary string
+      #
+      # @return [ Boolean ] Whether the initialization was successful
       attach_function :mongocrypt_ctx_decrypt_init, [:pointer, :pointer], :bool
 
       def self.ctx_decrypt_init(context, command)
@@ -320,11 +462,29 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object and destroys
-      # the reference to that object
-      attach_function :mongocrypt_ctx_destroy, [:pointer], :void
+      # Initializes the ctx for explicit decryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] msg A pointer to a mongocrypt_binary_t object
+      #   that references the message to be decrypted as a BSON binary string
+      #
+      # @return [ Boolean ] Whether the initialization was successful
+      attach_function(
+        :mongocrypt_ctx_explicit_decrypt_init,
+        [:pointer, :pointer],
+        :bool
+      )
 
-      # mongocrypt_ctx_state_t type
+      def self.ctx_explicit_decrypt_init(context, doc)
+        data = doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_explicit_decrypt_init(context.ctx_p, data_p)
+          end
+        end
+      end
+
+      # An enum labeling different libmognocrypt state machine states
       enum :mongocrypt_ctx_state, [
         :error,               0,
         :need_mongo_collinfo, 1,
@@ -335,15 +495,23 @@ module Mongo
         :done,                6,
       ]
 
-      # Takes a pointer to a mongocrypt_ctx_t object and returns a state code
+      # Get the current state of the ctx
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @return [ Symbol ] The current state, will be one of the values defined
+      #   by the mongocrypt_ctx_state enum
       attach_function :mongocrypt_ctx_state, [:pointer], :mongocrypt_ctx_state
 
-      # Takes a pointer to a mognocrypt_ctx_t object and a pointer to a
-      # mongocrypt_binary_t object as an out parameter. Writes a BSON document
-      # to the provided binary pointer; the purpose of this BSON document varies
-      # depending on the state of the state machine. Returns a boolean indicating success.
+      # Get a BSON operation for the driver to run against the MongoDB
+      # collection, the key vault database, or mongocryptd.
       #
-      # This method is not currently unit tested.
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] op_bson (out param) A pointer to a
+      #   mongocrypt_binary_t object that will have a reference to the
+      #   BSON operation written to it by libmongocrypt
+      #
+      # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_mongo_op, [:pointer, :pointer], :bool
 
       # Returns a BSON::Document representing an operation that the
@@ -363,13 +531,13 @@ module Mongo
         BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_string))
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object and a pointer to a
-      # mongocrypt_binary_t object wrapping a BSON document. The BSON document
-      # should be the result of performing the necessary operation with the
-      # output of mongocrypt_ctx_mongo_op. This method can be called multiple
-      # times in a row. Returns a boolean indicating the success of the operation.
+      # Feed a BSON reply to libmongocrypt
       #
-      # This method is not currently unit tested.
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] reply A mongocrypt_binary_t object that
+      #   references the BSON reply to feed to libmongocrypt
+      #
+      # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_mongo_feed, [:pointer, :pointer], :bool
 
       def self.ctx_mongo_feed(context, doc)
@@ -381,21 +549,21 @@ module Mongo
         end
       end
 
-      # Takes a pointer to a mongocrypt_ctx_t object. Marks that the
-      # mongocrypt_ctx_t object has finished accepting input from the
-      # mongocrypt_ctx_mongo_feed method. Returns a boolean indicating success of
-      # the operation.
+      # Indicate to libmongocrypt that the driver is done feeding replies
       #
-      # This method is not currently unit tested.
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_mongo_done, [:pointer], :bool
 
-      # Takes a pointer to a mongocrypt_ctx_t object and an out param,
-      # which is a pointer to a mongocrypt_binary_t object, which will serve
-      # as a wrapper around the final results of the state machine. The meaning
-      # of these results depends on how the montocrypt_ctx_t object was initialized.
-      # Returns a boolean indicating the success of the operation.
+      # Perform the final encryption or decryption and return a BSON document
       #
-      # This method is not currently unit tested.
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] op_bson (out param) A pointer to a
+      #   mongocrypt_binary_t object that will have a reference to the
+      #   final encrypted BSON document
+      #
+      # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_finalize, [:pointer, :pointer], :void
 
       def self.ctx_finalize(context)
@@ -411,52 +579,99 @@ module Mongo
         BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_string))
       end
 
-      # A callback to a crypto AES-256-CBC encrypt/decrypt function. Takes:
-      # - An optional pointer to a mongocrypt_ctx_t object
-      # - A pointer to a mongocrypt_binary_t object that wraps a 32-byte encryption key
-      # - A pointer to a mongocrypt_binary_t object that wraps a 16-byte iv
-      # - A pointer to a mongocrypt_binary_t object that wraps the encryption/decryption input
-      # - A pointer to a mongocrypt_binary_t object to which the encryption/decryption output will be written
-      # - A pointer to an int32 where the number of bytes of the output will be written
-      # - An optional pointer to a mongocrypt_status_t object for error messages
-      # Returns a boolean indicating the success of the operation
-      callback :mongocrypt_crypto_fn, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :bool
+      # Destroy the reference to the mongocrypt_ctx_t object
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @return [ nil ] Always nil
+      attach_function :mongocrypt_ctx_destroy, [:pointer], :void
 
-      # A callback to a crypto HMAC SHA-512 or SHA-256 function. Takes:
-      # - An optional pointer to a mongocrypt_ctx_t object
-      # - A pointer to a mongocrypt_binary_t object that wraps a 32-byte encryption key
-      # - A pointer to a mongocrypt_binary_t object that wraps the encryption input
-      # - A pointer to a mongocrypt_binary_t object to which the output will be written
-      # - An optional pointer to a mongocrypt_status_t object for error messages
-      # Returns a boolean indicating the success of the operation
-      callback :mongocrypt_hmac_fn, [:pointer, :pointer, :pointer, :pointer, :pointer], :bool
+      # A callback to a function that performs AES encryption or decryption
+      #
+      # @param [ FFI::Pointer | nil] ctx An optional pointer to a context object
+      #   that may have been set when hooks were enabled.
+      # @param [ FFI::Pointer ] key A pointer to a mongocrypt_binary_t object
+      #   that references the 32-byte AES encryption key
+      # @param [ FFI::Pointer ] iv A pointer to a mongocrypt_binary_t object
+      #   that references the 16-byte AES IV
+      # @param [ FFI::Pointer ] in A pointer to a mongocrypt_binary_t object
+      #   that references the value to be encrypted/decrypted
+      # @param [ FFI::Pointer ] out (out param) A pointer to a
+      #   mongocrypt_binary_t object will have a reference to the encrypted/
+      #   decrypted value written to it by libmongocrypt
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #   object to which an error message will be written if encryption fails
+      #
+      # @return [ Bool ] Whether encryption/decryption was successful
+      callback(
+        :mongocrypt_crypto_fn,
+        [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :pointer],
+        :bool
+      )
 
-      # A callback to a crypto hash (SHA-256) function. Takes:
-      # - An optional pointer to a mongocrypt_ctx_t object
-      # - A pointer to a mongocrypt_binary_t object that wraps the encryption input
-      # - A pointer to a mongocrypt_binary_t object to which the output will be written
-      # - An optional pointer to a mongocrypt_status_t object for error messages
-      # Returns a boolean indicating the success of the operation
+      # A callback to a function that performs HMAC SHA-512 or SHA-256
+      #
+      # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
+      #   that may have been set when hooks were enabled.
+      # @param [ FFI::Pointer ] key A pointer to a mongocrypt_binary_t object
+      #   that references the 32-byte HMAC SHA encryption key
+      # @param [ FFI::Pointer ] in A pointer to a mongocrypt_binary_t object
+      #   that references the input value
+      # @param [ FFI::Pointer ] out (out param) A pointer to a
+      #   mongocrypt_binary_t object will have a reference to the output value
+      #   written to it by libmongocrypt
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #   object to which an error message will be written if encryption fails
+      #
+      # @return [ Bool ] Whether HMAC-SHA was successful
+      callback(
+        :mongocrypt_hmac_fn,
+        [:pointer, :pointer, :pointer, :pointer, :pointer],
+        :bool
+      )
+
+      # A callback to a SHA-256 hash function
+      #
+      # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
+      #   that may have been set when hooks were enabled.
+      # @param [ FFI::Pointer ] in A pointer to a mongocrypt_binary_t object
+      #   that references the value to be hashed
+      # @param [ FFI::Pointer ] out (out param) A pointer to a
+      #   mongocrypt_binary_t object will have a reference to the output value
+      #   written to it by libmongocrypt
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #   object to which an error message will be written if encryption fails
+      #
+      # @return [ Bool ] Whether hashing was successful
       callback :mongocrypt_hash_fn, [:pointer, :pointer, :pointer, :pointer], :bool
 
-      # A callback to a crypto secure random function. Takes:
-      # - An optional pointer to a mongocrypt_ctx_t object
-      # - A pointer to a mongocrypt_binary_t object to which the output will be written
-      # - The number of random bytes requested
-      # - An optional pointer to a mongocrypt_status_t object for error messages
-      # Returns a boolean indicating the success of the operation
+      # A callback to a crypto secure random function
+      #
+      # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
+      #   that may have been set when hooks were enabled.
+      # @param [ FFI::Pointer ] out (out param) A pointer to a
+      #   mongocrypt_binary_t object will have a reference to the output value
+      #   written to it by libmongocrypt
+      # @param [ Integer ] count The number of random bytes to return
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t
+      #   object to which an error message will be written if encryption fails
+      #
+      # @return [ Bool ] Whether hashing was successful
       callback :mongocrypt_random_fn, [:pointer, :pointer, :int, :pointer], :bool
 
-      # Sets crypto hooks on mongocrypt_t object. Takes:
-      # - A pointer to a mongocrypt_t object, which will use the hooks for encryption
-      # - A mongocrypt_crypto_fn for encryption
-      # - A mongocrypt_crypto_fn for decryption
-      # - A mongocrypt_random_fn
-      # - A mongocrypt_hmac_fn with an HMAC SHA-512 function
-      # - A mongocrypt_hmac_fn with an HMAC SHA-256 function
-      # - A mongocrypt_hash_fn
-      # - An optional pointer to a mongocrypt_ctx_t object
-      # Returns a boolean indicating the success of the operation
+      # Set crypto hooks on the provided mongocrypt object
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ Method ] An AES encryption method
+      # @param [ Method ] An AES decryption method
+      # @param [ Method ] A random method
+      # @param [ Method ] A HMAC-SHA-512 method
+      # @param [ Method ] A HMAC-SHA-256 method
+      # @param [ Method ] A SHA-256 hash method
+      # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
+      #   that may have been set when hooks were enabled.
+      #
+      # @return [ Boolean ] Whether setting this option succeeded
       attach_function(
         :mongocrypt_setopt_crypto_hooks,
         [
