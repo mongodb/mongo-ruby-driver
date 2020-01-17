@@ -967,6 +967,10 @@ module Mongo
       auth_source = options[:auth_source]
       mech_properties = options[:auth_mech_properties]
 
+      if auth_source == ''
+        raise Mongo::Auth::InvalidConfiguration.new('Auth source cannot be an empty string')
+      end
+
       if auth_mech.nil?
         if user && user.empty?
           raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
