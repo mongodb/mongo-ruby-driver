@@ -30,6 +30,18 @@ module CommonShortcuts
       end
     end
 
+    # If only the lite spec helper was loaded, this method does nothing.
+    # If the full spec helper was loaded, this method performs the same function
+    # as clean_state_for_all.
+    def clean_slate_for_all_if_possible
+      before(:all) do
+        if defined?(ClusterTools)
+          ClientRegistry.instance.close_all_clients
+          BackgroundThreadRegistry.instance.verify_empty!
+        end
+      end
+    end
+
     # For some reason, there are tests which fail on evergreen either
     # intermittently or reliably that always succeed locally.
     # Debugging of tests in evergreen is difficult/impossible,
