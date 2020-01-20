@@ -355,7 +355,7 @@ end
 
 def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::ConnectionString::Spec, &block)
 
-  clean_slate_for_all
+  clean_slate_for_all_if_possible
 
   test_paths.each do |path|
 
@@ -401,7 +401,7 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
               expect(test.client).to have_hosts(test, test.hosts)
             end
 
-            it 'creates a client with the correct authentication properties' do
+            it 'creates a client with the correct authentication options' do
               expect(test.client).to match_auth(test)
             end
 
