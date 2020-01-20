@@ -222,7 +222,7 @@ module Mongo
       # @param [ Method ] log_callback
       #
       # @raise [ Mongo::CryptError ] If the callback is not set successfully
-      def setopt_log_handler(handle, log_callback)
+      def self.setopt_log_handler(handle, log_callback)
         check_status(handle) do
           mongocrypt_setopt_log_handler(handle, log_callback, nil)
         end
@@ -485,6 +485,7 @@ module Mongo
       # Initialize the Context for explicit encryption
       #
       # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] A BSON document to encrypt
       #
       # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_explicit_encrypt_init(context, doc)
@@ -508,6 +509,7 @@ module Mongo
       # Initialize the Context for auto-decryption
       #
       # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] A BSON document to decrypt
       #
       # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_decrypt_init(context, command)
@@ -535,6 +537,7 @@ module Mongo
       # Initialize the Context for explicit decryption
       #
       # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] A BSON document to decrypt
       #
       # @raise [ Error::CryptError ] If initialization fails
       def self.ctx_explicit_decrypt_init(context, doc)
