@@ -21,8 +21,9 @@ module Mongo
     class PendingConnection < ConnectionBase
       extend Forwardable
 
-      def initialize(socket, server, monitoring, options = {})
+      def initialize(socket, description, server, monitoring, options = {})
         @socket = socket
+        @description = description
         @options = options
         @server = server
         @monitoring = monitoring

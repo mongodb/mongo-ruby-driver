@@ -38,13 +38,31 @@ module Mongo
       def_delegators :server, :address
 
       def_delegators :server,
-                     :features,
-                     :max_bson_object_size,
-                     :max_message_size,
-                     :mongos?,
                      :compressor,
                      :cluster_time,
                      :update_cluster_time
+
+      # Returns the server description for this connection, derived from
+      # the isMaster response for the handshake performed on this connection.
+      #
+      # @note A connection object that hasn't yet connected (handshaken and
+      #   authenticated, if authentication is required) does not have a
+      #   description. While handshaking and authenticating the driver must
+      #   be using global defaults, in particular not assuming that the
+      #   properties of a particular connection are the same as properties
+      #   of other connections made to the same address (since the server
+      #   on the other end could have been shut down and a different server
+      #   version could have been launched).
+      #
+      # @return [ Server::Description ] Server description for this connection.
+      # @api private
+      attr_reader :description
+
+      def_delegators :description,
+        :features,
+        :max_bson_object_size,
+        :max_message_size,
+        :mongos?
 
       def app_metadata
         @app_metadata ||= begin
@@ -96,6 +114,9 @@ module Mongo
       private
 
       def deliver(message)
+        if Lint.enabled? && !@socket
+          raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
+        end
         buffer = serialize(message)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
@@ -124,7 +145,8 @@ module Mongo
 
       def serialize(message, buffer = BSON::ByteBuffer.new)
         start_size = 0
-        message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
+        final_message = message.compress!(compressor, options[:zlib_compression_level])
+        final_message.serialize(buffer, max_bson_object_size)
         if max_message_size &&
           (buffer.length - start_size) > max_message_size
         then

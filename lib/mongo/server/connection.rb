@@ -174,7 +174,7 @@ module Mongo
         unless @socket
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
-          @socket = do_connect
+          @socket, @description = do_connect
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionReady.new(address, id)
@@ -186,14 +186,18 @@ module Mongo
       end
 
       # Separate method to permit easier mocking in the test suite.
+      #
+      # @return [ Array<Socket, Server::Description> ] Connected socket and
+      #   a server description instance from the ismaster response of the
+      #   returned socket.
       def do_connect
         socket = address.socket(socket_timeout, ssl_options,
           connect_timeout: address.connect_timeout)
 
         begin
-          handshake!(socket)
-          unless description.arbiter?
-            pending_connection = PendingConnection.new(socket, @server, monitoring, options.merge(id: id))
+          new_description = handshake!(socket)
+          unless new_description.arbiter?
+            pending_connection = PendingConnection.new(socket, new_description, @server, monitoring, options.merge(id: id))
             authenticate!(pending_connection)
           end
         rescue Exception
@@ -201,7 +205,7 @@ module Mongo
           raise
         end
 
-        socket
+        [socket, new_description]
       end
       private :do_connect
 
@@ -304,6 +308,8 @@ module Mongo
 
       private
 
+      # @return [ Server::Description ] The server description calculated from
+      #   ismaster response for this particular connection.
       def handshake!(socket)
         unless socket
           raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
@@ -315,7 +321,7 @@ module Mongo
             response, exc, rtt, average_rtt =
               @server.round_trip_time_averager.measure do
                 socket.write(app_metadata.ismaster_bytes)
-                Protocol::Message.deserialize(socket, max_message_size).documents[0]
+                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
               end
 
             if exc
@@ -331,6 +337,9 @@ module Mongo
       end
 
       # This is a separate method to keep the nesting level down.
+      #
+      # @return [ Server::Description ] The server description calculated from
+      #   ismaster response for this particular connection.
       def post_handshake(response, average_rtt)
         if response["ok"] == 1
           # Auth mechanism is entirely dependent on the contents of
@@ -364,8 +373,9 @@ module Mongo
           @auth_mechanism = nil
         end
 
-        @description = Description.new(address, response, average_rtt)
-        @server.cluster.run_sdam_flow(@server.description, @description)
+        Description.new(address, response, average_rtt).tap do |new_description|
+          @server.cluster.run_sdam_flow(@server.description, new_description)
+        end
       end
 
       def authenticate!(pending_connection)

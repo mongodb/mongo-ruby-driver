@@ -16,6 +16,10 @@ describe Mongo::Auth::LDAP do
 
   describe '#login' do
 
+    before do
+      connection.connect!
+    end
+
     context 'when the user is not authorized for the database' do
 
       let(:cr) do
@@ -26,7 +30,7 @@ describe Mongo::Auth::LDAP do
         cr.login(connection).documents[0]
       end
 
-      it 'logs the user into the connection' do
+      it 'attempts to log the user into the connection' do
         expect {
           cr.login(connection)
         }.to raise_error(Mongo::Auth::Unauthorized)

@@ -48,6 +48,10 @@ describe Mongo::Auth::X509 do
 
     context 'when the user is not authorized for the database' do
 
+      before do
+        connection.connect!
+      end
+
       let(:x509) do
         described_class.new(user)
       end
@@ -56,7 +60,7 @@ describe Mongo::Auth::X509 do
         x509.login(connection).documents[0]
       end
 
-      it 'logs the user into the connection' do
+      it 'attempts to log the user into the connection' do
         expect {
           x509.login(connection)
         }.to raise_error(Mongo::Auth::Unauthorized)
