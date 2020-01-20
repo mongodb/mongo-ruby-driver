@@ -50,12 +50,9 @@ describe 'Explicit Encryption' do
     it_behaves_like 'an explicit encrypter'
   end
 
-  # A change to BSON master has caused this test to fail.
-  # TODO: investigate and get working again
-  #
-  # context 'value is an symbol' do
-  #   let(:value) { :hello_world }
+  context 'value is an symbol' do
+    let(:value) { BSON::Symbol::Raw.new(:hello_world) }
 
-  #   it_behaves_like 'an explicit encrypter'
-  # end
+    it_behaves_like 'an explicit encrypter'
+  end
 end
