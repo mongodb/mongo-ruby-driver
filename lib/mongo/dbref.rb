@@ -101,7 +101,14 @@ module Mongo
       #
       # @since 2.0.0
       def from_bson(buffer, **options)
-        decoded = super
+        # bson-ruby 4.8.0 changes #from_bson API to take **options.
+        # However older bsons fail if invoked with a plain super here,
+        # even if options are empty.
+        decoded = if options.empty?
+          super(buffer)
+        else
+          super
+        end
         if ref = decoded[COLLECTION]
           decoded = DBRef.new(ref, decoded[ID], decoded[DATABASE])
         end
