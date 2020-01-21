@@ -232,7 +232,7 @@ module Mongo
             log_warn("Asked to handshake with #{address} but there was no app metadata provided")
           end
         rescue => e
-          log_warn("Failed to handshake with #{address}: #{e.class}: #{e}")
+          log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
           raise
         end
 
