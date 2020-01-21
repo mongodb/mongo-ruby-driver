@@ -531,7 +531,9 @@ describe Mongo::Server::Connection, retry: 3 do
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
         ))
-      )
+      ).tap do |connection|
+        connection.connect!
+      end
     end
 
     let(:documents) do
@@ -626,14 +628,24 @@ describe Mongo::Server::Connection, retry: 3 do
       context 'linting' do
         require_linting
 
-        it 'marks the connection no longer usable' do
+        it 'does not permit sending over the connection' do
           expect {
             connection.dispatch([ query_alice ])
           }.to raise_error(Mongo::Error::UnexpectedResponse)
 
           expect do
             connection.dispatch([ query_alice ]).documents
-          end.to raise_error(Mongo::Error::LintError, /Reconnecting closed connections is no longer supported.*/)
+          end.to raise_error(Mongo::Error::LintError, /Trying to deliver a message over a disconnected connection/)
+        end
+
+        it 'marks the connection no longer usable' do
+          expect {
+            connection.dispatch([ query_alice ])
+          }.to raise_error(Mongo::Error::UnexpectedResponse)
+
+          expect do
+            connection.connect!
+          end.to raise_error(Mongo::Error::LintError, /Reconnecting closed connections is no longer supported/)
         end
       end
 
@@ -713,6 +725,9 @@ describe Mongo::Server::Connection, retry: 3 do
       end
 
       context 'when the message is a command' do
+        # Server description is frozen when linting is enabled, which is
+        # incompatible with expectations set on it in this test
+        skip_if_linting
 
         let(:selector) do
           { :getlasterror => '1' }
@@ -729,7 +744,8 @@ describe Mongo::Server::Connection, retry: 3 do
         it 'checks the size against the max bson size' do
           # 100 works for non-x509 auth.
           # 10 is needed for x509 auth due to smaller payloads, apparently.
-          expect_any_instance_of(Mongo::Server).to receive(:max_bson_object_size).at_least(:once).and_return(10)
+          expect_any_instance_of(Mongo::Server::Description).to receive(
+            :max_bson_object_size).at_least(:once).and_return(10)
           expect do
             reply
           end.to raise_exception(Mongo::Error::MaxBSONSize)
@@ -861,7 +877,9 @@ describe Mongo::Server::Connection, retry: 3 do
       context 'when the socket_timeout is negative' do
 
         let(:connection) do
-          described_class.new(server, server.options)
+          described_class.new(server, server.options).tap do |connection|
+            connection.connect!
+          end
         end
 
         let(:message) do

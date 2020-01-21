@@ -12,6 +12,10 @@ describe Mongo::Auth::CR do
 
   describe '#login' do
 
+    before do
+      connection.connect!
+    end
+
     context 'when the user is not authorized' do
 
       let(:user) do
@@ -52,6 +56,10 @@ describe Mongo::Auth::CR do
 
   context 'when the user is authorized for the database' do
     max_server_fcv '2.6'
+
+    before do
+      connection.connect!
+    end
 
     let(:cr) do
       described_class.new(root_user)

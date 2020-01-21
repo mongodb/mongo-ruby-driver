@@ -32,6 +32,10 @@ describe Mongo::Auth::SCRAM do
   context 'when SCRAM-SHA-1 is used' do
     min_server_fcv '3.0'
 
+    before do
+      connection.connect!
+    end
+
     describe '#login' do
 
       context 'when the user is not authorized' do
@@ -91,6 +95,10 @@ describe Mongo::Auth::SCRAM do
 
   context 'when SCRAM-SHA-256 is used' do
     min_server_fcv '4.0'
+
+    before do
+      connection.connect!
+    end
 
     describe '#login' do
 

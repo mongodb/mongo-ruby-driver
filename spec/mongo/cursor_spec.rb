@@ -75,6 +75,23 @@ describe Mongo::Cursor do
         end
       end
     end
+
+    context 'server is unknown' do
+      let(:server) do
+        view.send(:server_selector).select_server(authorized_client.cluster).tap do |server|
+          authorized_client.cluster.disconnect!
+          server.unknown!
+        end
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(authorized_collection)
+      end
+
+      it 'works' do
+        cursor
+      end
+    end
   end
 
   describe '#each' do
