@@ -173,4 +173,36 @@ describe 'Client construction' do
       end
     end
   end
+
+  context 'when seed addresses are repeated in host list' do
+    require_topology :single
+
+    let(:primary_address) do
+      ClusterConfig.instance.primary_address_host
+    end
+
+    let(:client) do
+      new_local_client([primary_address, primary_address], SpecConfig.instance.test_options)
+    end
+
+    it 'deduplicates the addresses' do
+      expect(client.cluster.addresses).to eq([Mongo::Address.new(primary_address)])
+    end
+  end
+
+  context 'when seed addresses are repeated in URI' do
+    require_topology :single
+
+    let(:primary_address) do
+      ClusterConfig.instance.primary_address_host
+    end
+
+    let(:client) do
+      new_local_client("mongodb://#{primary_address},#{primary_address}", SpecConfig.instance.test_options)
+    end
+
+    it 'deduplicates the addresses' do
+      expect(client.cluster.addresses).to eq([Mongo::Address.new(primary_address)])
+    end
+  end
 end
