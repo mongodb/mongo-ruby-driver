@@ -51,7 +51,7 @@ module Mongo
 
     # Encrypts a value using the specified encryption key and algorithm
     #
-    # @param [ String | Integer | Symbol ] value The value to encrypt
+    # @param [ Object ] value The value to encrypt
     # @param [ Hash ] opts
     #
     # @option [ String ] :key_id The base64-encoded UUID of the encryption
@@ -78,7 +78,7 @@ module Mongo
     # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)
     #   that will be decrypted
     #
-    # @return [ String | Integer | Symbol ] The decrypted value
+    # @return [ Object ] The decrypted value
     def decrypt(value)
       doc = { 'v': value }
 
