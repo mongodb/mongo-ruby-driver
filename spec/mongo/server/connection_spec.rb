@@ -137,12 +137,13 @@ describe Mongo::Server::Connection, retry: 3 do
 
         it 'logs a warning' do
           messages = []
-          # Straightforward expectations are not working here for some reason
           expect(Mongo::Logger.logger).to receive(:warn) do |msg|
             messages << msg
           end
+
           expect(error).not_to be nil
-          expect(messages).to include(expected_message)
+
+          messages.any? { |msg| msg.include?(expected_message) }.should be true
         end
 
       end

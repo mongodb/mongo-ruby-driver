@@ -189,10 +189,17 @@ describe Mongo::Server::Monitor::Connection do
 
       it 'logs a warning' do
         expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
-        expect(Mongo::Logger.logger).to receive(:warn).with(expected_message).and_call_original
+
+        messages = []
+        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
+          messages << msg
+        end
+
         expect do
           monitor.connection.connect!
         end.to raise_error(Mongo::Error::SocketError, 'test error')
+
+        messages.any? { |msg| msg.include?(expected_message) }.should be true
       end
     end
   end
