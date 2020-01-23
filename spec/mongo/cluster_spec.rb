@@ -27,8 +27,8 @@ describe Mongo::Cluster do
         SpecConfig.instance.addresses + SpecConfig.instance.addresses
       end
       let(:cluster_with_dup_addresses) do
-        register_cluster(
-          described_class.new(addresses, monitoring, SpecConfig.instance.test_options))
+        described_class.new(addresses, monitoring, SpecConfig.instance.test_options.merge(
+          server_selection_semaphore: Mongo::Semaphore.new))
       end
 
       it 'does not raise an exception' do
