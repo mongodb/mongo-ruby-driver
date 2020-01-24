@@ -39,6 +39,7 @@ module Mongo
         {:code_name => 'HostUnreachable', :code => 6},
         {:code_name => 'NetworkTimeout', :code => 89},
         {:code_name => 'SocketException', :code => 9001},
+        {:code_name => 'ExceededTimeLimit', :code => 262}
       ].freeze
 
       # These are magic error messages that could indicate a master change.
