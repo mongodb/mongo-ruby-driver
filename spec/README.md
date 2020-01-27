@@ -308,7 +308,16 @@ LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt/nocrypto/libmongocrypt.so bundle 
 
 ## Compression
 
-To be written.
+To test compression, set the `compressors` URI option:
+
+    MONGODB_URI="mongodb://localhost:27017/?compressors=zlib" rake
+
+Note that as of this writing, the driver only supports zlib compression.
+Servers 4.2+ enable zlib by default; to test older servers, explicitly enable
+zlib compression when launching the server:
+
+    mongod --dbpath /tmp/mdb --setParameter enableTestCommands=1 \
+      --networkMessageCompressors snappy,zlib
 
 ## Other Options
 
