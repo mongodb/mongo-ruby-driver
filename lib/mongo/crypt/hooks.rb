@@ -82,7 +82,7 @@ module Mongo
       # @raise [ Exception ] Exceptions raised during encryption are propagated
       #   to caller.
       def hash_sha256(input)
-        Digest::SHA2.new(256).digest(data)
+        Digest::SHA2.new(256).digest(input)
       end
       module_function :hash_sha256
     end
