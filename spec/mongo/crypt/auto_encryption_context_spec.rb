@@ -47,10 +47,29 @@ describe Mongo::Crypt::AutoEncryptionContext do
     end
 
     context 'with valid options' do
-      it 'does not raise an exception' do
-        expect do
-          context
-        end.not_to raise_error
+      context 'when mongocrypt is initialized with local KMS provider options' do
+        it 'initializes context' do
+          expect do
+            context
+          end.not_to raise_error
+        end
+      end
+
+      context 'when mongocrypt is initialized with AWS KMS provider options' do
+        let(:kms_providers) do
+          {
+            aws: {
+              access_key_id: ENV['FLE_AWS_ACCESS_KEY'],
+              secret_access_key: ENV['FLE_AWS_SECRET_ACCESS_KEY']
+            }
+          }
+        end
+
+        it 'initializes context' do
+          expect do
+            context
+          end.not_to raise_error
+        end
       end
 
       context 'with verbose logging' do
