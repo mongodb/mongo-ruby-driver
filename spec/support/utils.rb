@@ -228,4 +228,50 @@ module Utils
     end
   end
   module_function :int64_value
+
+  URI_OPTION_MAP = {
+    :auth_source => 'authsource',
+    :replica_set => 'replicaSet',
+    :auth_mech => 'authMechanism',
+  }.freeze
+
+  module_function def create_mongodb_uri(address_strs, **opts)
+    creds = if opts[:username]
+      "#{opts[:username]}:#{opts[:password]}@"
+    else
+      ''
+    end
+    uri = "mongodb://#{creds}#{address_strs.join(',')}/"
+    if opts[:database]
+      uri << opts[:database]
+    end
+    if uri_options = opts[:uri_options]
+      uri << '?'
+
+      uri_options.each do |k, v|
+        uri << '&'
+
+        write_k = URI_OPTION_MAP[k] || k
+
+        if k == :compressors
+          write_v = v.join(',')
+        elsif k == :auth_mech
+          if v
+            write_v = Mongo::URI::AUTH_MECH_MAP.key(v)
+            unless write_v
+              raise "Unhandled auth mech value: #{v}"
+            end
+          else
+            next
+          end
+        else
+          write_v = v
+        end
+
+        uri << "#{write_k}=#{write_v}"
+      end
+    end
+
+    uri
+  end
 end

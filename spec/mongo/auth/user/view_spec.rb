@@ -109,7 +109,8 @@ describe Mongo::Auth::User::View do
           min_server_fcv '3.6'
 
           it 'does not compress the message' do
-            # The dropUser command message will be compressed, so expect instantiation once.
+            # The dropUser command message will be compressed, so expect
+            # instantiation once.
             expect(Mongo::Protocol::Compressed).to receive(:new).once.and_call_original
             expect(response).to be_successful
           end
