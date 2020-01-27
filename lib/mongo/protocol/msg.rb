@@ -128,21 +128,18 @@ module Mongo
         buffer
       end
 
-      # Compress this message.
+      # Compress the message, if the command being sent permits compression.
+      # Otherwise returns self.
       #
       # @param [ String, Symbol ] compressor The compressor to use.
       # @param [ Integer ] zlib_compression_level The zlib compression level to use.
       #
-      # @return [ Compressed, self ] A Protocol::Compressed message or self, depending on whether
-      #  this message can be compressed.
+      # @return [ Message ] A Protocol::Compressed message or self,
+      #  depending on whether this message can be compressed.
       #
       # @since 2.5.0
-      def compress!(compressor, zlib_compression_level = nil)
-        if compressor && compression_allowed?(command.keys.first)
-          Compressed.new(self, compressor, zlib_compression_level)
-        else
-          self
-        end
+      def maybe_compress(compressor, zlib_compression_level = nil)
+        compress_if_possible(command.keys.first, compressor, zlib_compression_level)
       end
 
       private

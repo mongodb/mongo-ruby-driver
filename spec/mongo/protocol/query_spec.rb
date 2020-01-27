@@ -320,7 +320,7 @@ describe Mongo::Protocol::Query do
       end
 
       it 'returns a compressed message' do
-        expect(message.compress!('zlib')).to be_a(Mongo::Protocol::Compressed)
+        expect(message.maybe_compress('zlib')).to be_a(Mongo::Protocol::Compressed)
       end
     end
 
@@ -335,7 +335,7 @@ describe Mongo::Protocol::Query do
         context "when the command is #{command}" do
 
           it 'does not allow compression for the command' do
-            expect(message.compress!('zlib')).to be(message)
+            expect(message.maybe_compress('zlib')).to be(message)
           end
         end
       end

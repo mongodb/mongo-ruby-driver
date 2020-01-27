@@ -133,11 +133,7 @@ class SpecConfig
 
   # What compressor to use, if any.
   def compressors
-    if ENV['COMPRESSORS']
-      ENV['COMPRESSORS'].split(',')
-    else
-      nil
-    end
+    uri_options[:compressors]
   end
 
   def retry_reads
@@ -189,7 +185,7 @@ class SpecConfig
   end
 
   def auth_source
-    @uri_options && uri_options[:auth_source]
+    uri_options[:auth_source]
   end
 
   def connect_replica_set?
@@ -316,7 +312,7 @@ EOT
   def auth_options
     if x509_auth?
       {
-        auth_mech: @uri_options[:auth_mech],
+        auth_mech: uri_options[:auth_mech],
         auth_source: '$external',
       }
     else
@@ -356,7 +352,6 @@ EOT
 
   # Base test options.
   def base_test_options
-    uri_options = @uri_options || {}
     {
       max_pool_size: 1,
       heartbeat_frequency: 20,
@@ -428,7 +423,7 @@ EOT
   end
 
   def x509_auth?
-    @uri_options[:auth_mech] == :mongodb_x509
+    uri_options[:auth_mech] == :mongodb_x509
   end
 
   # When we use x.509 authentication, omit all of the users we normally create

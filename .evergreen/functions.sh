@@ -48,6 +48,20 @@ set_fcv() {
   fi
 }
 
+add_uri_option() {
+  opt=$1
+  
+  if ! echo $MONGODB_URI |sed -e s,//,, |grep -q /; then
+    MONGODB_URI="$MONGODB_URI/"
+  fi
+  
+  if ! echo $MONGODB_URI |grep -q '?'; then
+    MONGODB_URI="$MONGODB_URI?"
+  fi
+  
+  MONGODB_URI="$MONGODB_URI&$opt"
+}
+
 set_env_vars() {
   AUTH=${AUTH:-noauth}
   SSL=${SSL:-nossl}
@@ -55,14 +69,13 @@ set_env_vars() {
 
   # drivers-evergreen-tools do not set tls parameter in URI when the
   # deployment uses TLS, repair this
-  if test $SSL = ssl && ! echo $MONGODB_URI |grep -q tls=; then
-    if echo $MONGODB_URI |grep -q '?'; then
-      MONGODB_URI=$(echo $MONGODB_URI |sed -e 's/?/?tls=true\&/')
-    elif echo $MONGODB_URI |grep -q '/$'; then
-      MONGODB_URI="$MONGODB_URI?tls=true"
-    else
-      MONGODB_URI="$MONGODB_URI/?tls=true"
-    fi
+  if test "$SSL" = ssl && ! echo $MONGODB_URI |grep -q tls=; then
+    add_uri_option tls=true
+  fi
+  
+  # Compression is handled via an environment variable, convert to URI option
+  if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
+    add_uri_option compressors=zlib
   fi
 
   TOPOLOGY=${TOPOLOGY:-server}
@@ -74,7 +87,6 @@ set_env_vars() {
   fi
 
   export MONGODB_URI
-  export COMPRESSOR
 
   export CI=evergreen
 

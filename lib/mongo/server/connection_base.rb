@@ -145,7 +145,7 @@ module Mongo
 
       def serialize(message, buffer = BSON::ByteBuffer.new)
         start_size = 0
-        final_message = message.compress!(compressor, options[:zlib_compression_level])
+        final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
         final_message.serialize(buffer, max_bson_object_size)
         if max_message_size &&
           (buffer.length - start_size) > max_message_size
