@@ -145,7 +145,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: nil,
-            secret_access_key: ENV['FLE_AWS_SECRET_ACCESS_KEY']
+            secret_access_key: ENV['FLE_AWS_SECRET']
           }
         }
       }
@@ -162,7 +162,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: 5,
-            secret_access_key: ENV['FLE_AWS_SECRET_ACCESS_KEY']
+            secret_access_key: ENV['FLE_AWS_SECRET_']
           }
         }
       }
@@ -179,7 +179,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: ENV['FLE_AWS_ACCESS_KEY'],
+            access_key_id: ENV['FLE_AWS_KEY'],
             secret_access_key: nil
           }
         }
@@ -196,7 +196,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: ENV['FLE_AWS_ACCESS_KEY'],
+            access_key_id: ENV['FLE_AWS_KEY'],
             secret_access_key: 5
           }
         }
@@ -213,8 +213,8 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) do
         {
           aws: {
-            access_key_id: ENV['FLE_AWS_ACCESS_KEY'],
-            secret_access_key: ENV['FLE_AWS_SECRET_ACCESS_KEY']
+            access_key_id: ENV['FLE_AWS_KEY'],
+            secret_access_key: ENV['FLE_AWS_SECRET']
           }
         }
       end

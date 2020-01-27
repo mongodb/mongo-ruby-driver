@@ -295,9 +295,13 @@ functions:
     - command: shell.exec
       type: test
       params:
+        silent: true
         shell: bash
         working_dir: "src"
         script: |
+          export FLE_AWS_KEY="${fle_aws_key}"
+          export FLE_AWS_SECRET="${fle_aws_secret}"
+
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-fle-tests.sh
 
