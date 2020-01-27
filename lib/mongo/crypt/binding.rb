@@ -423,6 +423,72 @@ module Mongo
         end
       end
 
+            # Configure the ctx to take a masterkey from AWS
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_object
+      # @param [ String ] region The AWS region
+      # @param [ Integer ] region_len The length of the region string (or -1
+      #   for a null-terminated string)
+      # @param [ String ] arn The Amazon Resource Name (ARN) of the mater key
+      # @param [ Integer ] arn_len The length of the ARN (or -1 for a
+      #   null-terminated string)
+      #
+      # @return [ Boolean ] Returns whether the option was set successfully
+      attach_function(
+        :mongocrypt_ctx_setopt_masterkey_aws,
+        [:pointer, :string, :int, :string, :int],
+        :bool
+      )
+
+      # Configure the Context object to take a masterkey from AWS
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ String ] region The AWS region (e.g. "us-east-2")
+      # @param [ String ] arn The masterkey Amazon Resource Name
+      #
+      # @raise [ Error::CryptError ] If the operation failed
+      def self.ctx_setopt_masterkey_aws(context, region, arn)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_masterkey_aws(
+            context.ctx_p,
+            region,
+            -1,
+            arn,
+            -1
+          )
+        end
+      end
+
+      # Set a custom endpoint at which to fetch the AWS master key
+      #
+      # @param [ FFI::Pointer ] ctx
+      # @param [ String ] endpoint The custom endpoint
+      # @param [ Integer ] endpoint_len The length of the endpoint string (or
+      #   -1 for a null-terminated string)
+      #
+      # @return [ Boolean ] Returns whether the option was set successfully
+      attach_function(
+        :mongocrypt_ctx_setopt_masterkey_aws_endpoint,
+        [:pointer, :string, :int],
+        :bool
+      )
+
+      # Configure the Context object to take a masterkey from AWS
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ String ] endpoint The custom AWS masterkey endpoint
+      #
+      # @raise [ Error::CryptError ] If the operation failed
+      def self.ctx_setopt_masterkey_aws_endpoint(context, endpoint)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_masterkey_aws_endpoint(
+            context.ctx_p,
+            endpoint,
+            -1,
+          )
+        end
+      end
+
       # Set the ctx to take a local master key
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object

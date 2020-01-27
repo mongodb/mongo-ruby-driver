@@ -42,8 +42,15 @@ module Mongo
     #
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
-    def create_data_key
-      data_key_document = Crypt::DataKeyContext.new(@crypt_handle).run_state_machine
+    def create_data_key(kms_provider="local")
+      # TODO: the default kms_provider value is a stand-in to prevent breaking
+      # the API. This will be fixed in a follow-up PR.
+      data_key_document = Crypt::DataKeyContext.new(
+        @crypt_handle,
+        @encryption_io,
+        kms_provider,
+        {}
+      ).run_state_machine
       insert_result = @encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data
