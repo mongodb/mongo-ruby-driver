@@ -228,6 +228,44 @@ module Mongo
         end
       end
 
+      # Configure mongocrypt_t object with AWS KMS provider options
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ String ] aws_access_key_id The AWS access key id
+      # @param [ Integer ] aws_access_key_id_len The length of the AWS access
+      #   key string (or -1 for a null-terminated string)
+      # @param [ String ] aws_secret_access_key The AWS secret access key
+      # @param [ Integer ] aws_secret_access_key_len The length of the AWS
+      #   secret access key (or -1 for a null-terminated string)
+      #
+      # @return [ Boolean ] Returns whether the option was set successfully
+      attach_function(
+        :mongocrypt_setopt_kms_provider_aws,
+        [:pointer, :string, :int, :string, :int],
+        :bool
+      )
+
+      # Configure the Handle object with AWS KMS provider options
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ String ] aws_access_key The AWS access key
+      # @param [ String ] aws_secret_access_key The AWS secret access key
+      #
+      # @raise [ Mongo::CryptError ] If the option is not set successfully
+      def self.setopt_kms_provider_aws(handle,
+        aws_access_key, aws_secret_access_key
+      )
+        check_status(handle) do
+          mongocrypt_setopt_kms_provider_aws(
+            handle.ref,
+            aws_access_key,
+            -1,
+            aws_secret_access_key,
+            -1
+          )
+        end
+      end
+
       # Configure mongocrypt_t object to take local KSM provider options
       #
       # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
