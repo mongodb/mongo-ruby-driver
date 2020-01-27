@@ -14,8 +14,8 @@ describe Mongo::Crypt::DataKeyContext do
       {
         local: { key: Base64.encode64("ru\xfe\x00" * 24) },
         aws: {
-          access_key_id: ENV['FLE_AWS_ACCESS_KEY'],
-          secret_access_key: ENV['FLE_AWS_SECRET_ACCESS_KEY']
+          access_key_id: ENV['FLE_AWS_KEY'],
+          secret_access_key: ENV['FLE_AWS_SECRET']
         }
       }
     )
