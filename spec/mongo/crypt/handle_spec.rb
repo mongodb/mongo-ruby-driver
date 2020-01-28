@@ -36,6 +36,10 @@ describe Mongo::Crypt::Handle do
       }
     end
 
+    # TODO: replace with environment variables
+    let(:aws_key) { 'temp-aws-key' }
+    let(:aws_secret) { 'temp-aws-secret' }
+
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }
 
@@ -145,7 +149,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: nil,
-            secret_access_key: ENV['FLE_AWS_SECRET']
+            secret_access_key: aws_secret
           }
         }
       }
@@ -162,7 +166,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: 5,
-            secret_access_key: ENV['FLE_AWS_SECRET_']
+            secret_access_key: aws_secret
           }
         }
       }
@@ -179,7 +183,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: ENV['FLE_AWS_KEY'],
+            access_key_id: aws_key,
             secret_access_key: nil
           }
         }
@@ -196,7 +200,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: ENV['FLE_AWS_KEY'],
+            access_key_id: aws_key,
             secret_access_key: 5
           }
         }
@@ -214,8 +218,8 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             # TODO: replace with environment variables
-            access_key_id: 'temp-aws-key',
-            secret_access_key: 'temp-aws-secret'
+            access_key_id: aws_key,
+            secret_access_key: aws_secret
           }
         }
       end
