@@ -58,16 +58,12 @@ class Mongo::Cluster
     def update_server_descriptions
       servers_list.each do |server|
         if server.address == updated_desc.address
-          changed = server.description != updated_desc
-          # Always update server description, so that fields that do not
-          # affect description equality comparisons but are part of the
-          # description are updated.
           server.update_description(updated_desc)
           server.update_last_scan
           # But return if there was a content difference between
           # descriptions, and if there wasn't we'll skip the remainder of
           # sdam flow
-          return changed
+          return true
         end
       end
       false
