@@ -273,8 +273,9 @@ functions:
 
   "delete FLE AWS credentials":
     - command: shell.exec
+      type: test
       params:
-        silent: true
+        # silent: true
         working_dir: "src"
         script: |
           rm fle_aws_creds.sh
