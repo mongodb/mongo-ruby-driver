@@ -256,29 +256,30 @@ functions:
     - command: shell.exec
       type: test
       params:
-        # silent: true
         working_dir: "src"
         script: |
           cat <<EOT > fle_aws_creds.sh
           export MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
           export MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
           EOT
+
+          cat fle_aws_creds
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ls
+          . ./fle_aws_creds.sh
+
+  "delete FLE AWS credentials":
     - command: shell.exec
       type: test
       params:
         # silent: true
         working_dir: "src"
         script: |
-          . ./fle_aws_creds.sh
-
-  # "delete FLE AWS credentials":
-  #   - command: shell.exec
-  #     type: test
-  #     params:
-  #       # silent: true
-  #       working_dir: "src"
-  #       script: |
-  #         rm fle_aws_creds.sh
+          rm fle_aws_creds.sh
 
   "run tests":
     - command: shell.exec
@@ -452,7 +453,7 @@ post:
   #- func: "upload test results"
   - func: "upload test results to s3"
   - func: "cleanup mo if running"
-  # - func: "delete FLE AWS creds"
+  - func: "delete FLE AWS credentials"
 
 tasks:
 
