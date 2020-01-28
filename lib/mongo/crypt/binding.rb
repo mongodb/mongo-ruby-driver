@@ -423,7 +423,7 @@ module Mongo
         end
       end
 
-      # Configure the ctx to take a masterkey from AWS
+      # Configure the ctx to take a master key from AWS
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_object
       # @param [ String ] region The AWS region
@@ -440,14 +440,14 @@ module Mongo
         :bool
       )
 
-      # Configure the Context object to take a masterkey from AWS
+      # Configure the Context object to take a master key from AWS
       #
       # @param [ Mongo::Crypt::Context ] context
       # @param [ String ] region The AWS region (e.g. "us-east-2")
-      # @param [ String ] arn The masterkey Amazon Resource Name
+      # @param [ String ] arn The master key Amazon Resource Name
       #
       # @raise [ Error::CryptError ] If the operation failed
-      def self.ctx_setopt_masterkey_aws(context, region, arn)
+      def self.ctx_setopt_master_key_aws(context, region, arn)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws(
             context.ctx_p,
@@ -473,13 +473,13 @@ module Mongo
         :bool
       )
 
-      # Configure the Context object to take a masterkey from AWS
+      # Configure the Context object to take a masterk ey from AWS
       #
       # @param [ Mongo::Crypt::Context ] context
-      # @param [ String ] endpoint The custom AWS masterkey endpoint
+      # @param [ String ] endpoint The custom AWS master key endpoint
       #
       # @raise [ Error::CryptError ] If the operation failed
-      def self.ctx_setopt_masterkey_aws_endpoint(context, endpoint)
+      def self.ctx_setopt_master_key_aws_endpoint(context, endpoint)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws_endpoint(
             context.ctx_p,
@@ -501,12 +501,12 @@ module Mongo
         :bool
       )
 
-      # Tell the Context object to read the masterkey from local KMS options
+      # Tell the Context object to read the master key from local KMS options
       #
       # @param [ Mongo::Crypt::Context ] context
       #
       # @raise [ Error::CryptError ] If the operation failed
-      def self.ctx_setopt_masterkey_local(context)
+      def self.ctx_setopt_master_key_local(context)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
         end
@@ -516,8 +516,8 @@ module Mongo
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
       #
-      # @note Before calling this method, masterkey options must be set.
-      #   Set AWS masterkey by calling mongocrypt_ctx_setopt_masterkey_aws
+      # @note Before calling this method, master key options must be set.
+      #   Set AWS master key by calling mongocrypt_ctx_setopt_masterkey_aws
       #   and mongocrypt_ctx_setopt_masterkey_aws_endpoint. Set local master
       #   key by calling mongocrypt_ctx_setopt_masterkey_local.
       #
