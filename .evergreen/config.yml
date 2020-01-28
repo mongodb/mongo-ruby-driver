@@ -262,6 +262,9 @@ functions:
           cat <<EOT > aws_creds.yml
           MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
           MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
+    - command: expansions.update
+      params:
+        file: src/aws_creds.yml
 
   "run tests":
     - command: shell.exec
