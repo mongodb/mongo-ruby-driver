@@ -9,8 +9,9 @@ wget "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmon
 tar -xvf libmongocrypt-all.tar.gz
 
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
+
 echo $MONGO_RUBY_DRIVER_AWS_KEY
- echo $MONGO_RUBY_DRIVER_AWS_SECRET
+echo $MONGO_RUBY_DRIVER_AWS_SECRET
 
 set_env_vars
 setup_ruby

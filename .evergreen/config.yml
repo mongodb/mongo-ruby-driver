@@ -252,21 +252,32 @@ functions:
       params:
         file: mo-expansion.yml
 
-  "export AWS credentials":
+  "export FLE AWS credentials":
     - command: shell.exec
       type: test
       params:
+        # silent: true
         working_dir: "src"
         script: |
-          cat <<EOT > aws_creds.yml
-          MONGO_RUBY_DRIVER_AWS_KEY: "${fle_aws_key}"
-          MONGO_RUBY_DRIVER_AWS_SECRET: "${fle_aws_secret}"
+          cat <<EOT > fle_aws_creds.sh
+          export MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
+          export MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
           EOT
-
-          cat aws_creds.yml
-    - command: expansions.update
+    - command: shell.exec
+      type: test
       params:
-        file: src/aws_creds.yml
+        # silent: true
+        working_dir: "src"
+        script: |
+          . ./fle_aws_creds.sh
+
+  "delete FLE AWS credentials":
+    - command: shell.exec
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          rm fle_aws_creds.sh
 
   "run tests":
     - command: shell.exec
@@ -440,6 +451,7 @@ post:
   #- func: "upload test results"
   - func: "upload test results to s3"
   - func: "cleanup mo if running"
+  - func: "delete FLE AWS creds"
 
 tasks:
 
@@ -466,7 +478,7 @@ tasks:
         - func: "run tests with X.509 authentication"
     - name: "fle-tests"
       commands:
-        - func: "export AWS credentials"
+        - func: "export FLE AWS credentials"
         - func: "bootstrap mongo-orchestration"
         - func: "run field level encryption tests"
 
