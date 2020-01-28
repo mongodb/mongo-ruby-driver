@@ -289,7 +289,7 @@ Option 2: Build from source
 
 Create AWS KMS keys
 Many of the Field-Level Encryption tests require that you have an encryption
-masterkey hosted on AWS's Key Management Service. Set up a masterkey by following
+master key hosted on AWS's Key Management Service. Set up a master key by following
 these steps:
 
 1. Sign up for an AWS account at this link if you don't already have one: https://aws.amazon.com/resources/create-account/
@@ -309,8 +309,8 @@ or .bashrc file. Otherwise, you can run them in the terminal window where you
 plan to run your tests.
 
 ```
-export FLE_AWS_KEY="YOUR-ACCESS-KEY-ID"
-export FLE_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
+export MONGO_RUBY_DRIVER_AWS_KEY="YOUR-ACCESS-KEY-ID"
+export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
 ```
 
 4. Create a new symmetric Customer Master Key (CMK) by following the "Creating Symmetric CMKs (Console)"
