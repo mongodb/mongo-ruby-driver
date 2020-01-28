@@ -448,7 +448,7 @@ describe Mongo::Client do
             min_server_fcv '3.6'
 
             it 'uses compression for messages' do
-              expect(Mongo::Protocol::Compressed).to receive(:new).and_call_original
+              expect(Mongo::Protocol::Compressed).to receive(:new).at_least(:once).and_call_original
               client[TEST_COLL].find({}, limit: 1).first
             end
           end

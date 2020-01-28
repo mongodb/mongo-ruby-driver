@@ -78,6 +78,7 @@ functions:
               export AUTH=${AUTH}
               export SSL=${SSL}
               export TOPOLOGY=${TOPOLOGY}
+              export COMPRESSOR=${COMPRESSOR}
               export RVM_RUBY="${RVM_RUBY}"
               export MONGODB_VERSION=${VERSION}
               export FCV=${FCV}

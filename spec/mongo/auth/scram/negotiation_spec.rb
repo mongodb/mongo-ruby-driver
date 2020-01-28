@@ -10,11 +10,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   min_server_fcv '4.0'
   clean_slate
 
-  URI_OPTION_MAP = {
-    :auth_source => 'authsource',
-    :replica_set => 'replicaSet',
-  }
-
   let(:create_user!) do
     root_authorized_admin_client.tap do |client|
       users = client.database.users
@@ -312,26 +307,14 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   context 'when the configuration is specified in the URI' do
 
     let(:uri) do
-      "mongodb://#{user.name}:#{password}@#{SpecConfig.instance.addresses.join(',')}/admin".tap do |uri|
-        first = true
-
-        if SpecConfig.instance.uri_options
-          SpecConfig.instance.uri_options.each do |k, v|
-            uri << (first ? '?' : '&')
-            first = false
-
-            k = URI_OPTION_MAP[k] || k
-
-            uri << "#{k}=#{v}"
-          end
-        end
-
-        if auth_mech
-          uri << (first ? '?' : '&')
-
-          uri << "authMechanism=#{Mongo::URI::AUTH_MECH_MAP.key(auth_mech)}"
-        end
-      end
+      Utils.create_mongodb_uri(
+        SpecConfig.instance.addresses,
+        username: user.name,
+        password: password,
+        uri_options: SpecConfig.instance.uri_options.merge(
+          auth_mech: auth_mech,
+        ),
+      )
     end
 
     let(:client) do
@@ -350,7 +333,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           Mongo::Auth::User.new(
             user: 'sha1',
             password: 'sha1',
-            auth_mech: auth_mech
+            auth_mech: auth_mech,
           )
         end
 
@@ -403,7 +386,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           Mongo::Auth::User.new(
             user: 'sha256',
             password: 'sha256',
-            auth_mech: auth_mech
+            auth_mech: auth_mech,
           )
         end
 
@@ -457,7 +440,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           Mongo::Auth::User.new(
             user: 'both',
             password: 'both',
-            auth_mech: auth_mech
+            auth_mech: auth_mech,
           )
         end
 
