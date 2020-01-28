@@ -263,7 +263,7 @@ functions:
           export MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
           EOT
 
-          cat fle_aws_creds
+          cat fle_aws_creds.sh
     - command: shell.exec
       type: test
       params:
