@@ -423,7 +423,7 @@ module Mongo
         end
       end
 
-            # Configure the ctx to take a masterkey from AWS
+      # Configure the ctx to take a masterkey from AWS
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_object
       # @param [ String ] region The AWS region
