@@ -246,7 +246,7 @@ module Mongo
         set_kms_providers_aws(kms_providers) if kms_providers.key?(:aws)
       end
 
-      # Validate and set the local KMS provider information on the underlying
+    # Validate and set the local KMS provider information on the underlying
       # mongocrypt_t object and raise an exception if the operation fails
       def set_kms_providers_local(kms_providers)
         unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
@@ -266,6 +266,10 @@ module Mongo
       # Validate and set the aws KMS provider information on the underlying
       # mongocrypt_t object and raise an exception if the operation fails
       def set_kms_providers_aws(kms_providers)
+        unless kms_providers[:aws]
+          raise ArgumentError.new('The :aws KMS provider must not be nil')
+        end
+
         access_key_id = kms_providers[:aws][:access_key_id]
         secret_access_key = kms_providers[:aws][:secret_access_key]
 
@@ -280,7 +284,7 @@ module Mongo
           )
         end
 
-        # TODO: Set the AWS kms provider on the underlying mongocrypt_t object
+        Binding.setopt_kms_provider_aws(self, access_key_id, secret_access_key)
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails

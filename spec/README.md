@@ -287,6 +287,41 @@ Option 1: Download a pre-built binary
 Option 2: Build from source
 - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
 
+Create AWS KMS keys
+Many of the Field-Level Encryption tests require that you have an encryption
+master key hosted on AWS's Key Management Service. Set up a master key by following
+these steps:
+
+1. Sign up for an AWS account at this link if you don't already have one: https://aws.amazon.com/resources/create-account/
+
+2. Create a new IAM user that you want to have permissions to access your new
+master key by following this guide: the "Creating an Administrator IAM User and Group (Console)"
+section of this guide: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user.html
+
+3. Create an access key for your new IAM user and store the access key credentials
+in environment variables on your local machine. Create an access key by following the
+"Managing Access Keys (Console)" instructions in this guide:
+https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey
+Once an access key has been created, store the access key id and the access key
+secret in environment variables. If you plan to frequently run Field-Level
+Encryption tests, it may be a good idea to put these lines in your .bash_profile
+or .bashrc file. Otherwise, you can run them in the terminal window where you
+plan to run your tests.
+
+```
+export MONGO_RUBY_DRIVER_AWS_KEY="YOUR-ACCESS-KEY-ID"
+export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
+```
+
+4. Create a new symmetric Customer Master Key (CMK) by following the "Creating Symmetric CMKs (Console)"
+section of this guide: https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
+
+5. Give your IAM user "Key administrator" and "Key user" privileges on your new CMK
+by following the "Using the AWS Management Console Default View" section of this guide:
+https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html
+
+TODO: explain where in the test suite to store CMK information (not yet relevant)
+
 In one terminal, launch MongoDB:
 
 NOTE: You must be running MongoDB 4.2 or higher. All auto-encryption features

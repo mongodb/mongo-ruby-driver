@@ -36,6 +36,10 @@ describe Mongo::Crypt::Handle do
       }
     end
 
+    # TODO: replace with environment variables
+    let(:aws_key) { 'temp-aws-key' }
+    let(:aws_secret) { 'temp-aws-secret' }
+
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }
 
@@ -103,6 +107,119 @@ describe Mongo::Crypt::Handle do
         {
           local: {
             key: Base64.encode64("ru\xfe\x00" * 24)
+          }
+        }
+      end
+
+      it 'does not raise an exception' do
+        expect { handle }.not_to raise_error
+      end
+    end
+
+    context 'with nil AWS kms_provider' do
+      let(:kms_providers) {
+        {
+          aws: nil
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The :aws KMS provider must not be nil/)
+      end
+    end
+
+    context 'with empty AWS kms_provider' do
+      let(:kms_providers) {
+        {
+          aws: {}
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+      end
+    end
+
+    context 'with nil AWS access_key_id' do
+      let(:kms_providers) {
+        {
+          aws: {
+            access_key_id: nil,
+            secret_access_key: aws_secret
+          }
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+      end
+    end
+
+    context 'with non-string AWS access_key_id' do
+      let(:kms_providers) {
+        {
+          aws: {
+            access_key_id: 5,
+            secret_access_key: aws_secret
+          }
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+      end
+    end
+
+
+    context 'with nil AWS secret_access_key' do
+      let(:kms_providers) {
+        {
+          aws: {
+            access_key_id: aws_key,
+            secret_access_key: nil
+          }
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+      end
+    end
+
+    context 'with non-string AWS secret_access_key' do
+      let(:kms_providers) {
+        {
+          aws: {
+            access_key_id: aws_key,
+            secret_access_key: 5
+          }
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+      end
+    end
+
+    context 'with valid AWS kms_providers and schema map' do
+      let(:kms_providers) do
+        {
+          aws: {
+            # TODO: replace with environment variables
+            access_key_id: aws_key,
+            secret_access_key: aws_secret
           }
         }
       end
