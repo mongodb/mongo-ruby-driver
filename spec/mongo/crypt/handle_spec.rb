@@ -213,8 +213,9 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) do
         {
           aws: {
-            access_key_id: ENV['FLE_AWS_KEY'],
-            secret_access_key: ENV['FLE_AWS_SECRET']
+            # TODO: replace with environment variables
+            access_key_id: 'temp-aws-key',
+            secret_access_key: 'temp-aws-secret'
           }
         }
       end
