@@ -49,10 +49,10 @@ module Mongo
         Binding.ctx_setopt_masterkey_local(self) if kms_provider == 'local'
 
         if kms_provider == 'aws'
-          masterkey_info = options[:masterkey]
+          masterkey_opts = options[:masterkey]
 
-          set_aws_master_key(masterkey_info)
-          set_aws_endpoint(masterkey_info[:endpoint]) if masterkey_info[:endpoint]
+          set_aws_master_key(masterkey_opts)
+          set_aws_endpoint(masterkey_opts[:endpoint]) if masterkey_opts[:endpoint]
         end
 
         initialize_ctx
@@ -62,20 +62,20 @@ module Mongo
 
       # Configure the underlying mongocrypt_ctx_t object to accept AWS
       # KMS options
-      def set_aws_master_key(masterkey_info)
-        unless masterkey_info
+      def set_aws_master_key(masterkey_opts)
+        unless masterkey_opts
           raise ArgumentError.new('The masterkey options cannot be nil')
         end
 
-        unless masterkey_info.is_a?(Hash)
+        unless masterkey_opts.is_a?(Hash)
           raise ArgumentError.new(
-            "#{masterkey_info} is an invalid masterkey option. " +
+            "#{masterkey_opts} is an invalid masterkey option. " +
             "The masterkey option must be a Hash in the format " +
             "{ region: 'AWS-REGION', key: 'AWS-KEY-ARN' }"
           )
         end
 
-        region = masterkey_info[:region]
+        region = masterkey_opts[:region]
         unless region
           raise ArgumentError.new(
             'The :region key of the :masterkey options Hash cannot be nil'
@@ -84,12 +84,12 @@ module Mongo
 
         unless region.is_a?(String)
           raise ArgumentError.new(
-            "#{masterkey_info[:region]} is an invalid AWS masterkey region. " +
+            "#{masterkey_opts[:region]} is an invalid AWS masterkey region. " +
             "The :region key of the :masterkey options Hash must be a String"
           )
         end
 
-        key = masterkey_info[:key]
+        key = masterkey_opts[:key]
         unless key
           raise ArgumentError.new(
             'The :key key of the :masterkey options Hash cannot be nil'
@@ -98,15 +98,15 @@ module Mongo
 
         unless key.is_a?(String)
           raise ArgumentError.new(
-            "#{masterkey_info[:key]} is an invalid AWS masterkey key. " +
+            "#{masterkey_opts[:key]} is an invalid AWS masterkey key. " +
             "The :key key of the :masterkey options Hash must be a String"
           )
         end
 
         Binding.ctx_setopt_masterkey_aws(
           self,
-          masterkey_info[:region],
-          masterkey_info[:key],
+          masterkey_opts[:region],
+          masterkey_opts[:key],
         )
       end
 
