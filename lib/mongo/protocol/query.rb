@@ -110,6 +110,7 @@ module Mongo
       #  depending on whether this message can be compressed.
       #
       # @since 2.5.0
+      # @api private
       def maybe_compress(compressor, zlib_compression_level = nil)
         compress_if_possible(selector.keys.first, compressor, zlib_compression_level)
       end
