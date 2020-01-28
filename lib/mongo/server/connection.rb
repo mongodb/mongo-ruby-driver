@@ -369,6 +369,7 @@ module Mongo
               :mongodb_cr
             end
           end
+          set_compressor!(response)
         else
           @auth_mechanism = nil
         end

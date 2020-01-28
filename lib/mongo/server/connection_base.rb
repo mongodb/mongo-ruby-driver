@@ -22,7 +22,7 @@ module Mongo
     #   the classes which include this module is not part of the public API.
     #
     # @api semipublic
-    class ConnectionBase
+    class ConnectionBase < ConnectionCommon
       extend Forwardable
       include Monitoring::Publishable
 
@@ -38,7 +38,6 @@ module Mongo
       def_delegators :server, :address
 
       def_delegators :server,
-                     :compressor,
                      :cluster_time,
                      :update_cluster_time
 

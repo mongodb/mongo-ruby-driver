@@ -19,7 +19,7 @@ module Mongo
       # This class models the monitor connections and their behavior.
       #
       # @since 2.0.0
-      class Connection
+      class Connection < Server::ConnectionCommon
         include Retryable
         include Connectable
         include Loggable
@@ -64,12 +64,14 @@ module Mongo
         # Key for compression algorithms in the response from the server during handshake.
         #
         # @since 2.5.0
+        # @deprecated
         COMPRESSION = 'compression'.freeze
 
         # Warning message that the server has no compression algorithms in common with those requested
         #   by the client.
         #
         # @since 2.5.0
+        # @deprecated
         COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
                                 'Compression will not be used.'.freeze
 
@@ -124,11 +126,6 @@ module Mongo
 
         # @return [ Mongo::Address ] address The address to connect to.
         attr_reader :address
-
-        # The compressor, which is determined during the handshake.
-        #
-        # @since 2.5.0
-        attr_reader :compressor
 
         # Send the preserialized ismaster call.
         #
@@ -209,18 +206,6 @@ module Mongo
         alias :timeout :socket_timeout
 
         private
-
-        def set_compressor!(reply)
-          server_compressors = reply[COMPRESSION]
-
-          if options[:compressors]
-            if intersection = (server_compressors & options[:compressors])
-              @compressor = intersection[0]
-            else
-              log_warn(COMPRESSION_WARNING)
-            end
-          end
-        end
 
         def handshake!(socket)
           if @app_metadata

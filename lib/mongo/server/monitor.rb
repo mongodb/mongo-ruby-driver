@@ -94,6 +94,8 @@ module Mongo
 
       # The compressor is determined during the handshake, so it must be an attribute
       # of the connection.
+      #
+      # @deprecated
       def_delegators :connection, :compressor
 
       # @return [ Monitoring ] monitoring The monitoring.
