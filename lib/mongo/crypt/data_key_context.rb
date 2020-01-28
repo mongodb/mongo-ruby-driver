@@ -25,18 +25,103 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
       #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
-      def initialize(mongocrypt)
-        # This initializer will eventually take more arguments:
-        # - kms_providers (just supporting local for right now)
-        # - options: master key (only relevant to AWS) and key_alt_names (not required for POC)
+      # @param [ Mongo::Crypt::EncryptionIO ] io An object that performs all
+      #   driver I/O on behalf of libmongocrypt
+      # @param [ String ] kms_provider The KMS provider to use. Options are
+      #   "aws" and "local".
+      # @param [ Hash ] options Data key creation options.
+      #
+      # @option [ Hash ] :master_key A Hash of options related to the AWS
+      #   KMS provider option. Required if kms_provider is "aws".
+      #   - :region [ String ] The The AWS region of the master key (required).
+      #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
+      #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
+      def initialize(mongocrypt, io, kms_provider, options={})
+        super(mongocrypt, io)
 
-        super(mongocrypt, nil)
+        case kms_provider
+        when 'local'
+          Binding.ctx_setopt_master_key_local(self)
+        when 'aws'
+          master_key_opts = options[:master_key]
 
-        # Configures the underlying mongocrypt_ctx_t object to accept local
-        # KMS options
-        Binding.ctx_setopt_masterkey_local(self)
+          set_aws_master_key(master_key_opts)
+          set_aws_endpoint(master_key_opts[:endpoint]) if master_key_opts[:endpoint]
+        else
+          raise ArgumentError.new(
+            "#{kms_provider} is an invalid kms provider. " +
+            "Valid options are 'aws' and 'local'"
+          )
+        end
 
-        # Initializes the underlying mongocrypt_ctx_t object
+        initialize_ctx
+      end
+
+      private
+
+      # Configure the underlying mongocrypt_ctx_t object to accept AWS
+      # KMS options
+      def set_aws_master_key(master_key_opts)
+        unless master_key_opts
+          raise ArgumentError.new('The master key options cannot be nil')
+        end
+
+        unless master_key_opts.is_a?(Hash)
+          raise ArgumentError.new(
+            "#{master_key_opts} is an invalid master key option. " +
+            "The master key option must be a Hash in the format " +
+            "{ region: 'AWS-REGION', key: 'AWS-KEY-ARN' }"
+          )
+        end
+
+        region = master_key_opts[:region]
+        unless region
+          raise ArgumentError.new(
+            'The :region key of the :master_key options Hash cannot be nil'
+          )
+        end
+
+        unless region.is_a?(String)
+          raise ArgumentError.new(
+            "#{master_key_opts[:region]} is an invalid AWS master_key region. " +
+            "The :region key of the :master_key options Hash must be a String"
+          )
+        end
+
+        key = master_key_opts[:key]
+        unless key
+          raise ArgumentError.new(
+            'The :key key of the :master_key options Hash cannot be nil'
+          )
+        end
+
+        unless key.is_a?(String)
+          raise ArgumentError.new(
+            "#{master_key_opts[:key]} is an invalid AWS master_key key. " +
+            "The :key key of the :master_key options Hash must be a String"
+          )
+        end
+
+        Binding.ctx_setopt_master_key_aws(
+          self,
+          master_key_opts[:region],
+          master_key_opts[:key],
+        )
+      end
+
+      def set_aws_endpoint(endpoint)
+        unless endpoint.is_a?(String)
+          raise ArgumentError.new(
+            "#{endpoint} is an invalid AWS master_key endpoint. " +
+            "The master_key endpoint option must be a String"
+          )
+        end
+
+        Binding.ctx_setopt_master_key_aws_endpoint(self, endpoint)
+      end
+
+      # Initializes the underlying mongocrypt_ctx_t object
+      def initialize_ctx
         Binding.ctx_datakey_init(self)
       end
     end
