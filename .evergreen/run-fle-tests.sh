@@ -1,12 +1,15 @@
 #!/bin/bash
 
-set +x # Avoid accidentally printing sensitive data
+set -o xtrace   # Write all commands first to stderr
 set -o errexit  # Exit the script with error if any of the commands fail
 
 . `dirname "$0"`/functions.sh
 
 wget "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
 tar -xvf libmongocrypt-all.tar.gz
+
+export MONGO_RUBY_DRIVER_AWS_KEY=temp-aws-key
+export MONGO_RUBY_DRIVER_AWS_SECRET=temp-aws-secret
 
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 
