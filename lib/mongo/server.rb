@@ -124,11 +124,16 @@ module Mongo
     # @deprecated
     def_delegators :monitor, :scan!
 
-    # The last compressor discovered by the server monitor.
+    # The compressor negotiated by the server monitor, if any.
     #
-    # The compressor state should be determined for each individual
-    # connection rather than kept per server. A future version of the
-    # driver will change how compressors are tracked and used.
+    # This attribute is nil if no server check has not yet completed, and if
+    # no compression was negatiated.
+    #
+    # @note Compression is negotiated for each connection separately.
+    #
+    # @return [ String | nil ] The negotiated compressor.
+    #
+    # @deprecated
     def compressor
       if monitor
         monitor.compressor
@@ -523,6 +528,7 @@ end
 
 require 'mongo/server/app_metadata'
 require 'mongo/server/connectable'
+require 'mongo/server/connection_common'
 require 'mongo/server/connection_base'
 require 'mongo/server/pending_connection'
 require 'mongo/server/connection'
