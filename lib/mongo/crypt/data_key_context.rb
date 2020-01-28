@@ -37,22 +37,21 @@ module Mongo
       #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
       #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
       def initialize(mongocrypt, io, kms_provider, options={})
-        unless ['aws', 'local'].include?(kms_provider)
-          raise ArgumentError.new(
-            "#{kms_provider} is an invalid kms provider. " +
-            "Valid options are 'aws' and 'local'"
-          )
-        end
-
         super(mongocrypt, io)
 
-        if kms_provider == 'local'
+        case kms_provider
+        when 'local'
           Binding.ctx_setopt_master_key_local(self)
-        elsif kms_provider == 'aws'
+        when 'aws'
           master_key_opts = options[:master_key]
 
           set_aws_master_key(master_key_opts)
           set_aws_endpoint(master_key_opts[:endpoint]) if master_key_opts[:endpoint]
+        else
+          raise ArgumentError.new(
+            "#{kms_provider} is an invalid kms provider. " +
+            "Valid options are 'aws' and 'local'"
+          )
         end
 
         initialize_ctx
