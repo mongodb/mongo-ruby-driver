@@ -267,7 +267,7 @@ module Mongo
       # mongocrypt_t object and raise an exception if the operation fails
       def set_kms_providers_aws(kms_providers)
         unless kms_providers[:aws]
-          raise ArgumentError.new('The :aws KMS provider must not be nil.')
+          raise ArgumentError.new('The :aws KMS provider must not be nil')
         end
 
         access_key_id = kms_providers[:aws][:access_key_id]
