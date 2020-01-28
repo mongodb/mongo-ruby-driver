@@ -271,14 +271,14 @@ functions:
         script: |
           . ./fle_aws_creds.sh
 
-  "delete FLE AWS credentials":
-    - command: shell.exec
-      type: test
-      params:
-        # silent: true
-        working_dir: "src"
-        script: |
-          rm fle_aws_creds.sh
+  # "delete FLE AWS credentials":
+  #   - command: shell.exec
+  #     type: test
+  #     params:
+  #       # silent: true
+  #       working_dir: "src"
+  #       script: |
+  #         rm fle_aws_creds.sh
 
   "run tests":
     - command: shell.exec
@@ -452,7 +452,7 @@ post:
   #- func: "upload test results"
   - func: "upload test results to s3"
   - func: "cleanup mo if running"
-  - func: "delete FLE AWS creds"
+  # - func: "delete FLE AWS creds"
 
 tasks:
 
