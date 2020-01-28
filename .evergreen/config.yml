@@ -256,12 +256,14 @@ functions:
     - command: shell.exec
       type: test
       params:
-        silent: true
         working_dir: "src"
         script: |
           cat <<EOT > aws_creds.yml
           MONGO_RUBY_DRIVER_AWS_KEY: "${fle_aws_key}"
           MONGO_RUBY_DRIVER_AWS_SECRET: "${fle_aws_secret}"
+          EOT
+
+          cat expansion.yml
     - command: expansions.update
       params:
         file: src/aws_creds.yml
@@ -942,7 +944,8 @@ buildvariants:
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
     # Until we stop installing bson from master, don't test on jruby
-    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
+    ruby: "ruby-2.6"
+    # ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
     topology: standalone
     mongodb-version: "4.2"
     os: rhel70
