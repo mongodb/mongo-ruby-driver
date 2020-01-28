@@ -263,7 +263,7 @@ functions:
           MONGO_RUBY_DRIVER_AWS_SECRET: "${fle_aws_secret}"
           EOT
 
-          cat expansion.yml
+          cat aws_creds.yml
     - command: expansions.update
       params:
         file: src/aws_creds.yml
