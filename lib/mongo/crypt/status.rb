@@ -119,9 +119,9 @@ module Mongo
         return if ok?
 
         if label == :error_kms
-          error = Error::KmsError.new(message)
+          error = Error::KmsError.new(code, message)
         else
-          error = Error::CryptError.new(message)
+          error = Error::CryptError.new(code, message)
         end
 
         raise error

@@ -11,7 +11,14 @@
 module Mongo
   class Error
 
-    # An error related to field-level encryption
-    class MongocryptdSpawnError < CryptError; end
+    # An error related to spawning mongocryptd for field-level encrpytion
+    class MongocryptdSpawnError < CryptError
+      # Create a new MongocryptdSpawnError
+      #
+      # @param [ String ] message The error message
+      def initialize(message)
+        super(nil, message)
+      end
+    end
   end
 end

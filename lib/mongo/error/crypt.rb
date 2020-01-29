@@ -12,6 +12,16 @@ module Mongo
   class Error
 
     # An error related to field-level encryption
-    class CryptError < Mongo::Error; end
+    class CryptError < Mongo::Error
+      # Create a new CryptError
+      #
+      # @param [ Integer | nil ] code The optional libmongocrypt error code
+      # @param [ String ] message The error message
+      def initialize(code, message)
+        msg = message
+        msg += " (libmongocrypt error code #{code})" if code
+        super(msg)
+      end
+    end
   end
 end

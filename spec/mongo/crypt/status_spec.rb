@@ -127,13 +127,13 @@ describe Mongo::Crypt::Status do
 
     context 'when status is :error_kms' do
       before do
-        status.update(:error_kms, 1, 'KMS error message')
+        status.update(:error_kms, 100, 'KMS error message')
       end
 
       it 'raises exception' do
         expect do
           status.raise_crypt_error
-        end.to raise_error(Mongo::Error::KmsError, /KMS error message/)
+        end.to raise_error(Mongo::Error::KmsError, 'KMS error message (libmongocrypt error code 100)')
       end
     end
 
@@ -145,7 +145,7 @@ describe Mongo::Crypt::Status do
       it 'raises exception' do
         expect do
           status.raise_crypt_error
-        end.to raise_error(Mongo::Error::CryptError, /Client Error/)
+        end.to raise_error(Mongo::Error::CryptError, 'Client Error (libmongocrypt error code 2)')
       end
     end
   end
