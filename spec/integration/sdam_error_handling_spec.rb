@@ -179,8 +179,7 @@ describe 'SDAM error handling' do
     end
   end
 
-  # These tests fail intermittently in Evergreen
-  describe 'when there is an error on monitoring connection', retry: 3 do
+  describe 'when there is an error on monitoring connection' do
     let(:client) do
       authorized_client_without_any_retries.with(
         connect_timeout: 1, socket_timeout: 1)
