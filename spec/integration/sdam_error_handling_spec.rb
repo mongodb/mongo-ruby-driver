@@ -205,7 +205,7 @@ describe 'SDAM error handling' do
         end
         server.scan_semaphore.broadcast
       end
-      expect(server).to be_unknown
+      expect_server_state_change
     end
 
     shared_examples_for 'marks server unknown - sdam event' do
@@ -247,24 +247,39 @@ describe 'SDAM error handling' do
       end
     end
 
+    shared_examples_for 'marks server unknown and clears connection pool' do
+      context 'via object inspection' do
+        let(:expect_server_state_change) do
+          expect(server).to be_unknown
+        end
+
+        it_behaves_like 'marks server unknown'
+        it_behaves_like 'clears connection pool'
+      end
+
+      context 'via events' do
+        # When we use events we do not need to examine object state, therefore
+        # it does not matter whether the server stays unknown or gets
+        # successfully checked.
+        let(:expect_server_state_change) do
+          # nothing
+        end
+
+        it_behaves_like 'marks server unknown - sdam event'
+        it_behaves_like 'clears connection pool - cmap event'
+      end
+    end
+
     context 'network timeout' do
       let(:exception) { Mongo::Error::SocketTimeoutError }
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'clears connection pool'
-
-      it_behaves_like 'marks server unknown - sdam event'
-      it_behaves_like 'clears connection pool - cmap event'
+      it_behaves_like 'marks server unknown and clears connection pool'
     end
 
     context 'non-timeout network error' do
       let(:exception) { Mongo::Error::SocketError }
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'clears connection pool'
-
-      it_behaves_like 'marks server unknown - sdam event'
-      it_behaves_like 'clears connection pool - cmap event'
+      it_behaves_like 'marks server unknown and clears connection pool'
     end
 
     context 'non-timeout network error via fail point' do
@@ -295,14 +310,10 @@ describe 'SDAM error handling' do
           end
           server.scan_semaphore.broadcast
         end
-        expect(server).to be_unknown
+        expect_server_state_change
       end
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'clears connection pool'
-
-      it_behaves_like 'marks server unknown - sdam event'
-      it_behaves_like 'clears connection pool - cmap event'
+      it_behaves_like 'marks server unknown and clears connection pool'
 
       after do
         admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
