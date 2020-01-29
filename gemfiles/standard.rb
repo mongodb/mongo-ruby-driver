@@ -33,6 +33,7 @@ def standard_dependencies
     gem 'fuubar'
     gem 'timeout-interrupt', platforms: :mri
     gem 'concurrent-ruby', platforms: :jruby
+    gem 'dotenv'
   end
 
   group :development do

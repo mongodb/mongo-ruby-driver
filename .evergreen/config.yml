@@ -259,19 +259,19 @@ functions:
         silent: true
         working_dir: "src"
         script: |
-          cat <<EOT > fle_aws_creds.sh
-          export MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
-          export MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
+          cat <<EOT > .env.private
+          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
+          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
           EOT
 
-  "delete FLE AWS credentials":
+  "delete private environment":
     - command: shell.exec
       type: test
       params:
         silent: true
         working_dir: "src"
         script: |
-          rm fle_aws_creds.sh
+          rm -f .env.private
 
   "run tests":
     - command: shell.exec
@@ -439,13 +439,13 @@ pre:
   - func: "install dependencies"
 
 post:
+  - func: "delete private environment"
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
   - func: "cleanup mo if running"
-  - func: "delete FLE AWS credentials"
 
 tasks:
 
@@ -472,8 +472,8 @@ tasks:
         - func: "run tests with X.509 authentication"
     - name: "fle-tests"
       commands:
-        - func: "export FLE AWS credentials"
         - func: "bootstrap mongo-orchestration"
+        - func: "export FLE AWS credentials"
         - func: "run field level encryption tests"
 
 axes:

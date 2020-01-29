@@ -140,3 +140,8 @@ if SpecConfig.instance.active_support?
   require "active_support/time"
   require 'mongo/active_support'
 end
+
+if File.exist?('.env.private')
+  require 'dotenv'
+  Dotenv.load('.env.private')
+end

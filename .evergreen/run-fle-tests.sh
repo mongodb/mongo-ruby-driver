@@ -8,7 +8,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 wget "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
 tar -xvf libmongocrypt-all.tar.gz
 
-. ./fle_aws_creds.sh
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 
 set_env_vars
