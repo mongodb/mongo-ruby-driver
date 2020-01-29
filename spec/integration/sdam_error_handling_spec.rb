@@ -252,6 +252,9 @@ describe 'SDAM error handling' do
 
       it_behaves_like 'marks server unknown'
       it_behaves_like 'clears connection pool'
+
+      it_behaves_like 'marks server unknown - sdam event'
+      it_behaves_like 'clears connection pool - cmap event'
     end
 
     context 'non-timeout network error' do
@@ -259,6 +262,9 @@ describe 'SDAM error handling' do
 
       it_behaves_like 'marks server unknown'
       it_behaves_like 'clears connection pool'
+
+      it_behaves_like 'marks server unknown - sdam event'
+      it_behaves_like 'clears connection pool - cmap event'
     end
 
     context 'non-timeout network error via fail point' do
