@@ -1,10 +1,6 @@
 require 'mongo'
-require 'support/lite_constraints'
 require 'base64'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
