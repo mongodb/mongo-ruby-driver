@@ -132,16 +132,28 @@ module Mongo
       #   have been provided
       def spawn_mongocryptd
         unless @encryption_options
-          raise ArgumentError.new('Cannot spawn mongocryptd process without setting auto encryption options on the client.')
+          raise ArgumentError.new(
+            'Cannot spawn mongocryptd process without setting ' +
+            'auto encryption options on the client.'
+          )
         end
 
         mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
+        mongocryptd_spawn_path = @encryption_options[:mongocryptd_spawn_path]
 
-        Process.spawn(
-          @encryption_options[:mongocryptd_spawn_path],
-          *mongocryptd_spawn_args,
-          [:out, :err]=>'/dev/null'
-        )
+        begin
+          Process.spawn(
+            mongocryptd_spawn_path,
+            *mongocryptd_spawn_args,
+            [:out, :err]=>'/dev/null'
+          )
+        rescue Errno::ENOENT => e
+          raise Error::MongocryptdSpawnError.new(
+            "Failed to spawn mongocryptd at the path \"#{mongocryptd_spawn_path}\" " +
+            "with arguments #{mongocryptd_spawn_args}. Received error " +
+            "#{e.class}: \"#{e.message}\""
+          )
+        end
       end
 
       # Close the resources created by the AutoEncrypter
