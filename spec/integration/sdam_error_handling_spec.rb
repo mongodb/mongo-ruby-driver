@@ -268,6 +268,8 @@ describe 'SDAM error handling' do
     end
 
     context 'non-timeout network error via fail point' do
+      min_server_fcv '4.0'
+
       let(:admin_client) { client.use(:admin) }
 
       let(:set_fail_point) do
