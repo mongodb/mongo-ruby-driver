@@ -182,11 +182,20 @@ describe 'SDAM error handling' do
   describe 'when there is an error on monitoring connection' do
     let(:client) do
       authorized_client_without_any_retries.with(
-        connect_timeout: 1, socket_timeout: 1)
+        connect_timeout: 1, socket_timeout: 1,
+      )
+    end
+
+    let(:subscriber) { EventSubscriber.new }
+
+    let(:set_subscribers) do
+      client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
     end
 
     let(:operation) do
       expect(server.monitor.connection).not_to be nil
+      set_subscribers
       expect(server.monitor.connection).to receive(:ismaster).at_least(:once).and_raise(exception)
       server.scan_semaphore.broadcast
       6.times do
@@ -197,6 +206,45 @@ describe 'SDAM error handling' do
         server.scan_semaphore.broadcast
       end
       expect(server).to be_unknown
+    end
+
+    shared_examples_for 'marks server unknown - sdam event' do
+      it 'marks server unknown' do
+        expect(server).not_to be_unknown
+
+        events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
+        events.should be_empty
+
+        RSpec::Mocks.with_temporary_scope do
+          operation
+
+          events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
+          events.should_not be_empty
+          event = events.detect do |event|
+            event.new_description.address == server.address &&
+            event.new_description.unknown?
+          end
+          event.should_not be_nil
+        end
+      end
+    end
+
+    shared_examples_for 'clears connection pool - cmap event' do
+      it 'clears connection pool' do
+        events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
+        events.should be_empty
+
+        RSpec::Mocks.with_temporary_scope do
+          operation
+
+          events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
+          events.should_not be_empty
+          event = events.detect do |event|
+            event.address == server.address
+          end
+          event.should_not be_nil
+        end
+      end
     end
 
     context 'network timeout' do
@@ -229,6 +277,7 @@ describe 'SDAM error handling' do
 
       let(:operation) do
         expect(server.monitor.connection).not_to be nil
+        set_subscribers
         set_fail_point
         server.scan_semaphore.broadcast
         6.times do
@@ -243,6 +292,9 @@ describe 'SDAM error handling' do
 
       it_behaves_like 'marks server unknown'
       it_behaves_like 'clears connection pool'
+
+      it_behaves_like 'marks server unknown - sdam event'
+      it_behaves_like 'clears connection pool - cmap event'
 
       after do
         admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
