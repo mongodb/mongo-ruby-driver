@@ -11,9 +11,6 @@ tar -xvf libmongocrypt-all.tar.gz
 . ./fle_aws_creds.sh
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
 
-echo $MONGO_RUBY_DRIVER_AWS_KEY
-echo $MONGO_RUBY_DRIVER_AWS_SECRET
-
 set_env_vars
 setup_ruby
 
