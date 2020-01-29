@@ -13,7 +13,7 @@ describe Mongo::Client do
   let(:encryption_client) do
     new_local_client(
       'mongodb://localhost:27017/test',
-      { auto_encryption_options: auto_encryption_options.merge(mongocryptd_server_selection_timeout: 3) }
+      { auto_encryption_options: auto_encryption_options }
     )
   end
 
