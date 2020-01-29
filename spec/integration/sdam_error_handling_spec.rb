@@ -194,8 +194,16 @@ describe 'SDAM error handling' do
         if server.unknown?
           break
         end
+        server.scan_semaphore.broadcast
       end
       expect(server).to be_unknown
+    end
+
+    context 'network timeout' do
+      let(:exception) { Mongo::Error::SocketTimeoutError }
+
+      it_behaves_like 'marks server unknown'
+      it_behaves_like 'clears connection pool'
     end
 
     context 'non-timeout network error' do
@@ -205,11 +213,40 @@ describe 'SDAM error handling' do
       it_behaves_like 'clears connection pool'
     end
 
-    context 'network timeout' do
-      let(:exception) { Mongo::Error::SocketTimeoutError }
+    context 'non-timeout network error via fail point' do
+      let(:admin_client) { client.use(:admin) }
+
+      let(:set_fail_point) do
+        admin_client.command(
+          configureFailPoint: 'failCommand',
+          mode: {times: 1},
+          data: {
+            failCommands: %w(isMaster),
+            closeConnection: true,
+          },
+        )
+      end
+
+      let(:operation) do
+        expect(server.monitor.connection).not_to be nil
+        set_fail_point
+        server.scan_semaphore.broadcast
+        6.times do
+          sleep 0.5
+          if server.unknown?
+            break
+          end
+          server.scan_semaphore.broadcast
+        end
+        expect(server).to be_unknown
+      end
 
       it_behaves_like 'marks server unknown'
       it_behaves_like 'clears connection pool'
+
+      after do
+        admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
+      end
     end
   end
 end
