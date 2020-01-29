@@ -50,7 +50,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
       it 'raises an exception' do
         expect do
           context
-        end.to raise_error(Mongo::Error::CryptClientError, /expected 16 byte UUID/)
+        end.to raise_error(Mongo::Error::CryptError, /expected 16 byte UUID/)
       end
     end
 
@@ -60,7 +60,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
       it 'raises exception' do
         expect do
           context
-        end.to raise_error(Mongo::Error::CryptClientError, /passed null algorithm/)
+        end.to raise_error(Mongo::Error::CryptError, /passed null algorithm/)
       end
     end
 
@@ -70,7 +70,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
       it 'raises an exception' do
         expect do
           context
-        end.to raise_error(Mongo::Error::CryptClientError, /unsupported algorithm/)
+        end.to raise_error(Mongo::Error::CryptError, /unsupported algorithm/)
       end
     end
 

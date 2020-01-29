@@ -118,11 +118,10 @@ module Mongo
       def raise_crypt_error
         return if ok?
 
-        error = case label
-        when :error_kms
-          Error::CryptKmsError.new(code, message)
-        when :error_client
-          Error::CryptClientError.new(code, message)
+        if label == :error_kms
+          error = Error::KmsError.new(code, message)
+        else
+          error = Error::CryptError.new(code, message)
         end
 
         raise error

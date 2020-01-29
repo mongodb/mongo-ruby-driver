@@ -898,7 +898,10 @@ describe Mongo::Client do
       it 'raises an exception' do
         expect do
           client.spawn_mongocryptd
-        end.to raise_error(Errno::ENOENT, /No such file or directory - echo hello world/)
+        end.to raise_error(
+          Mongo::Error::MongocryptdSpawnError,
+          'Failed to spawn mongocryptd at the path "echo hello world" with arguments ["--idleShutdownTimeoutSecs=60"]. Received error Errno::ENOENT: "No such file or directory - echo hello world"'
+        )
       end
     end
   end

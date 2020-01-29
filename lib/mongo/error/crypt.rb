@@ -11,23 +11,17 @@
 module Mongo
   class Error
 
-    # An error related to the libmongocrypt binding.
-    #
-    # @param [ Integer ] code The error code
-    # @param [ String ] message The error message
+    # An error related to field-level encryption
     class CryptError < Mongo::Error
-      attr_accessor :code
-
+      # Create a new CryptError
+      #
+      # @param [ Integer | nil ] code The optional libmongocrypt error code
+      # @param [ String ] message The error message
       def initialize(code, message)
-        @code = code
-        super("Code #{code}: #{message}")
+        msg = message
+        msg += " (libmongocrypt error code #{code})" if code
+        super(msg)
       end
     end
-
-    # A libmongocrypt error relating to the client
-    class CryptClientError < CryptError; end
-
-    # A libmongocrypt error relating to the KMS
-    class CryptKmsError < CryptError; end
   end
 end

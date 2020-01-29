@@ -64,17 +64,18 @@ module Mongo
           opts[:key_vault_client] = @key_vault_client
         end
 
-        mongocryptd_server_selection_timeout = opts.delete(:mongocryptd_server_selection_timeout)
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
         super(opts)
 
+        # Set server selection timeout to 1 to prevent the client waiting for a
+        # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
-                                @encryption_options[:mongocryptd_uri],
-                                monitoring_io: mongocryptd_client_monitoring_io,
-                                server_selection_timeout: mongocryptd_server_selection_timeout, # For testing purposes
-                              )
+          @encryption_options[:mongocryptd_uri],
+          monitoring_io: mongocryptd_client_monitoring_io,
+          server_selection_timeout: 1
+        )
 
         # Tests fail with live background threads if the @mongocryptd client is not closed at the
         # end of every test run. Better to write one line registering it as a local client than to
@@ -82,10 +83,10 @@ module Mongo
         ClientRegistry.instance.register_local_client(@mongocryptd_client) if defined?(ClientRegistry)
 
         @encryption_io = EncryptionIO.new(
-                          client: self,
-                          mongocryptd_client: @mongocryptd_client,
-                          key_vault_collection: build_key_vault_collection
-                         )
+          client: self,
+          mongocryptd_client: @mongocryptd_client,
+          key_vault_collection: build_key_vault_collection
+        )
       end
 
       # Encrypt a database command
@@ -131,16 +132,28 @@ module Mongo
       #   have been provided
       def spawn_mongocryptd
         unless @encryption_options
-          raise ArgumentError.new('Cannot spawn mongocryptd process without setting auto encryption options on the client.')
+          raise ArgumentError.new(
+            'Cannot spawn mongocryptd process without setting ' +
+            'auto encryption options on the client.'
+          )
         end
 
         mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
+        mongocryptd_spawn_path = @encryption_options[:mongocryptd_spawn_path]
 
-        Process.spawn(
-          @encryption_options[:mongocryptd_spawn_path],
-          *mongocryptd_spawn_args,
-          [:out, :err]=>'/dev/null'
-        )
+        begin
+          Process.spawn(
+            mongocryptd_spawn_path,
+            *mongocryptd_spawn_args,
+            [:out, :err]=>'/dev/null'
+          )
+        rescue Errno::ENOENT => e
+          raise Error::MongocryptdSpawnError.new(
+            "Failed to spawn mongocryptd at the path \"#{mongocryptd_spawn_path}\" " +
+            "with arguments #{mongocryptd_spawn_args}. Received error " +
+            "#{e.class}: \"#{e.message}\""
+          )
+        end
       end
 
       # Close the resources created by the AutoEncrypter
