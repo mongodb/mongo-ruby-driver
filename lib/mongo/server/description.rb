@@ -723,7 +723,10 @@ module Mongo
       def ==(other)
         return false if self.class != other.class
         return false if unknown? || other.unknown?
-        compare_config(other)
+
+        (config.keys + other.config.keys).uniq.all? do |k|
+          config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
+        end
       end
       alias_method :eql?, :==
 
@@ -749,14 +752,6 @@ module Mongo
           end
 
         required_wv >= min_wire_version && required_wv <= max_wire_version
-      end
-
-      private
-
-      def compare_config(other)
-        (config.keys + other.config.keys).uniq.all? do |k|
-          config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
-        end
       end
     end
   end

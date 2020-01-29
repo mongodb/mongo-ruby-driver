@@ -58,16 +58,18 @@ class Mongo::Cluster
     def update_server_descriptions
       servers_list.each do |server|
         if server.address == updated_desc.address
-          changed = server.description != updated_desc
+          @server_description_changed = server.description != updated_desc
+
           # Always update server description, so that fields that do not
           # affect description equality comparisons but are part of the
           # description are updated.
           server.update_description(updated_desc)
           server.update_last_scan
-          # But return if there was a content difference between
-          # descriptions, and if there wasn't we'll skip the remainder of
-          # sdam flow
-          return changed
+
+          # If there was no content difference between descriptions, we
+          # still need to run sdam flow, but if the flow produces no change
+          # in topology we will omit sending events.
+          return true
         end
       end
       false
@@ -129,6 +131,10 @@ class Mongo::Cluster
         commit_changes
         disconnect_servers
         return
+      end
+
+      @previous_server_descriptions = servers_list.map do |server|
+        [server.address.to_s, server.description]
       end
 
       unless update_server_descriptions
@@ -443,6 +449,16 @@ class Mongo::Cluster
     end
 
     def publish_description_change_event
+      # This method may be invoked when server description definitely changed
+      # but prior to the topology getting updated. Therefore we check both
+      # server description changes and overall topology changes. When this
+      # method is called at the end of SDAM flow as part of "commit changes"
+      # step, server description change is incorporated into the topology
+      # change.
+      unless @server_description_changed || topology_effectively_changed?
+        return
+      end
+
       # updated_desc here may not be the description we received from
       # the server - in case of a stale primary, the server reported itself
       # as being a primary but updated_desc here will be unknown.
@@ -495,7 +511,7 @@ class Mongo::Cluster
       start_pool_if_data_bearing
 
       topology_changed_event_published = false
-      if topology.object_id != cluster.topology.object_id || @need_topology_changed_event
+      if !topology.equal?(cluster.topology) || @need_topology_changed_event
         # We are about to publish topology changed event.
         # Recreate the topology instance to get its server descriptions
         # up to date.
@@ -517,6 +533,10 @@ class Mongo::Cluster
         return
       end
       if updated_desc.object_id == previous_desc.object_id
+        return
+      end
+
+      unless topology_effectively_changed?
         return
       end
 
@@ -586,6 +606,27 @@ class Mongo::Cluster
     # whether to clear the server's connection pool.
     def became_unknown?
       updated_desc.unknown? && !original_desc.unknown?
+    end
+
+    # Returns whether topology meaningfully changed as a result of running
+    # SDAM flow.
+    #
+    # The spec defines topology equality through equality of topology types
+    # and server descriptions in each topology; this definition is not usable
+    # by us because our topology objects do not hold server descriptions and
+    # are instead "live". Thus we have to store the full list of server
+    # descriptions at the beginning of SDAM flow and compare them to the
+    # current ones.
+    def topology_effectively_changed?
+      unless topology.equal?(cluster.topology)
+        return true
+      end
+
+      server_descriptions = servers_list.map do |server|
+        [server.address.to_s, server.description]
+      end
+
+      @previous_server_descriptions != server_descriptions
     end
   end
 end
