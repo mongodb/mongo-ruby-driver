@@ -62,24 +62,53 @@ describe 'Client with auto encryption after reconnect' do
     it_behaves_like 'a functioning mongocryptd client'
   end
 
-  context 'after closing and reconnecting main client' do
+  # context 'after closing and reconnecting main client' do
+  #   before do
+  #     client.close
+  #     client.reconnect
+  #   end
 
-  end
+  #   it_behaves_like 'a functioning client'
+  #   it_behaves_like 'a functioning mongocryptd client'
+  # end
 
   context 'after killing client monitor thread' do
+    before do
+      thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      expect(thread).to be_alive
 
+      thread.kill
+
+      sleep 0.1
+      expect(thread).not_to be_alive
+
+      client.reconnect
+    end
+
+    it_behaves_like 'a functioning client'
+    it_behaves_like 'a functioning mongocryptd client'
   end
 
-  context 'after reconnecting without closing mongocryptd client' do
+  # context 'after closing and reconnecting mongocryptd client' do
 
-  end
-
-  context 'after closing and reconnecting mongocryptd client' do
-
-  end
+  # end
 
   context 'after killing mongocryptd client monitor thread' do
+    before do
+      byebug
+      thread = mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      expect(thread).to be_alive
 
+      thread.kill
+
+      sleep 0.1
+      expect(thread).not_to be_alive
+
+      mongocryptd_client.reconnect
+    end
+
+    it_behaves_like 'a functioning client'
+    it_behaves_like 'a functioning mongocryptd client'
   end
 
 end
