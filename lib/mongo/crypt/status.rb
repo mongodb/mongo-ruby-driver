@@ -119,7 +119,7 @@ module Mongo
         return if ok?
 
         if label == :error_kms
-          error = Error::KMSError.new(message)
+          error = Error::KmsError.new(message)
         else
           error = Error::CryptError.new(message)
         end

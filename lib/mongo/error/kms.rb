@@ -12,6 +12,6 @@ module Mongo
   class Error
 
     # An error related to field-level encryption
-    class KMSError < Mongo::Error; end
+    class KmsError < Mongo::Error; end
   end
 end

@@ -133,7 +133,7 @@ describe Mongo::Crypt::Status do
       it 'raises exception' do
         expect do
           status.raise_crypt_error
-        end.to raise_error(Mongo::Error::KMSError, /KMS error message/)
+        end.to raise_error(Mongo::Error::KmsError, /KMS error message/)
       end
     end
 
