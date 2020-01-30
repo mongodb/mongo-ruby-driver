@@ -121,6 +121,24 @@ describe 'Client with auto encryption #reconnect' do
       it_behaves_like 'a functioning key vault client'
     end
 
+    context 'after killing mongocryptd client monitor thread and reconnecting' do
+      before do
+        thread = mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        expect(thread).to be_alive
+
+        thread.kill
+
+        sleep 0.1
+        expect(thread).not_to be_alive
+
+        client.reconnect
+      end
+
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
+    end
+
     context 'after closing key_vault_client and reconnecting' do
       before do
         key_vault_client.close
