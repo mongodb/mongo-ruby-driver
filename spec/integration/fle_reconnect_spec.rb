@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Client with auto encryption after reconnect' do
+describe 'Client with auto encryption #reconnect' do
   require_libmongocrypt
   require_enterprise
 

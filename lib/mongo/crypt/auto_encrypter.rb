@@ -165,7 +165,6 @@ module Mongo
 
         @mongocryptd_client = nil
         @key_vault_client = nil
-        @encryption_options = nil
 
         true
       end

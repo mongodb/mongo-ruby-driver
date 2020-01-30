@@ -457,7 +457,7 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_options]
-        set_auto_encryption_options
+        set_auto_encryption_options(@options[:auto_encryption_options])
       end
 
       yield(self) if block_given?
@@ -655,21 +655,22 @@ module Mongo
         if options[:write_concern] && opts[:write]
           options.delete(:write_concern)
         end
-        options.update(opts)
-        @options = options.freeze
-        validate_options!
-        validate_authentication_options!
 
         # If the user specifies that auto_encryption_options are now nil, prevent the client
         # from doing any further auto-encryption by cleaning up the resources related to
         # auto-encryption.
-        if @options.key?(:auto_encryption_options) && @options[:auto_encryption_options].nil?
+        if options[:auto_encryption] && opts[:auto_encryption_options].nil?
           teardown_encrypter
         end
 
-        if @options[:auto_encryption_options]
-          set_auto_encryption_options
+        if @options[:auto_encryption_options].nil? && opts[:auto_encryption_options]
+          set_auto_encryption_options(opts[:auto_encryption_options])
         end
+
+        options.update(opts)
+        @options = options.freeze
+        validate_options!
+        validate_authentication_options!
       end
     end
 
@@ -727,6 +728,8 @@ module Mongo
         @cluster.disconnect! rescue nil
 
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
+
+        set_auto_encryption_options(@options[:auto_encryption_options])
       end
 
       true
@@ -871,8 +874,8 @@ module Mongo
 
     # Provides some default encryption options and sets up data necessary
     # for auto-encryption
-    def set_auto_encryption_options
-      opts_copy = @options[:auto_encryption_options].dup
+    def set_auto_encryption_options(auto_encryption_options)
+      opts_copy = auto_encryption_options.dup
 
       opts_copy[:extra_options] ||= {}
       opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
