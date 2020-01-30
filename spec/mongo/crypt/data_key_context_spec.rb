@@ -1,10 +1,6 @@
 require 'mongo'
-require 'support/lite_constraints'
 require 'base64'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
@@ -14,8 +10,8 @@ describe Mongo::Crypt::DataKeyContext do
       {
         local: { key: Base64.encode64("ru\xfe\x00" * 24) },
         aws: {
-          access_key_id: 'temp-aws-key',
-          secret_access_key: 'temp-aws-secret'
+          access_key_id: ENV['MONGO_RUBY_DRIVER_AWS_KEY'],
+          secret_access_key: ENV['MONGO_RUBY_DRIVER_AWS_SECRET'],
         }
       }
     )

@@ -1,10 +1,6 @@
 require 'mongo'
 require 'base64'
-require 'support/lite_constraints'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe Mongo::Crypt::Handle do
   require_libmongocrypt
@@ -36,9 +32,8 @@ describe Mongo::Crypt::Handle do
       }
     end
 
-    # TODO: replace with environment variables
-    let(:aws_key) { 'temp-aws-key' }
-    let(:aws_secret) { 'temp-aws-secret' }
+    let(:aws_key) { ENV['MONGO_RUBY_DRIVER_AWS_KEY'] }
+    let(:aws_secret) { ENV['MONGO_RUBY_DRIVER_AWS_SECRET'] }
 
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }
@@ -217,7 +212,6 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) do
         {
           aws: {
-            # TODO: replace with environment variables
             access_key_id: aws_key,
             secret_access_key: aws_secret
           }
