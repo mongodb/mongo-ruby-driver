@@ -59,9 +59,7 @@ module Mongo
           # Mongo::Client used for encryption. Update options so that key vault
           # client does not perform auto-encryption/decryption, and keep a reference
           # to it so it is destroyed later.
-          @key_vault_client = self.with({ auto_encryption_options: nil })
-
-          opts[:key_vault_client] = @key_vault_client
+          opts[:key_vault_client] = self.with({ auto_encryption_options: nil })
         end
 
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
@@ -69,12 +67,14 @@ module Mongo
 
         super(opts)
 
+        @key_vault_client = opts[:key_vault_client]
+
         # Set server selection timeout to 1 to prevent the client waiting for a
         # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
           @encryption_options[:mongocryptd_uri],
           monitoring_io: mongocryptd_client_monitoring_io,
-          server_selection_timeout: 1
+          server_selection_timeout: 1,
         )
 
         # Tests fail with live background threads if the @mongocryptd client is not closed at the
