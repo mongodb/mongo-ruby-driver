@@ -92,7 +92,7 @@ module Mongo
         # https://jira.mongodb.org/browse/RUBY-1591.
         # Note that even without the reordering, the payload is not an exact
         # match to what is sent over the wire because the command as used in
-        # the published eent combines keys from multiple sections of the
+        # the published event combines keys from multiple sections of the
         # payload sent over the wire.
         ordered_command = {}
         skipped_command = {}
@@ -110,7 +110,7 @@ module Mongo
           database_name: global_args[DATABASE_IDENTIFIER],
           command: ordered_command,
           request_id: request_id,
-          reply: sections[0]
+          reply: sections[0],
         )
       end
 
