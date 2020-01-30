@@ -83,8 +83,8 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
         let(:kms_providers) do
           {
             aws: {
-              access_key_id: ENV['FLE_AWS_ACCESS_KEY'],
-              secret_access_key: ENV['FLE_AWS_SECRET_ACCESS_KEY']
+              access_key_id: ENV['MONGO_RUBY_DRIVER_AWS_KEY'],
+              secret_access_key: ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
             }
           }
         end
