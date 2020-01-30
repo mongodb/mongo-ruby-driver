@@ -1,13 +1,17 @@
 require 'spec_helper'
 
 describe 'Client with auto encryption after reconnect' do
+  require_libmongocrypt
+  require_enterprise
+
   let(:client) do
     new_local_client(
-      'mongodb://localhost:27017/test',
+      SpecConfig.instance.addresses,
       {
         auto_encryption_options: {
-          kms_providers: { local: { key: Base64.encode64('ruby' * 24) } },
+          kms_providers: { local: { key: Base64.encode64("\x00" * 96) } },
           key_vault_namespace: 'admin.datakeys',
+          key_vault_client: key_vault_client_option
         }
       }
     )
@@ -22,10 +26,11 @@ describe 'Client with auto encryption after reconnect' do
 
   before do
     client['test'].insert_one('testk' => 'testv')
+    key_vault_client['datakeys'].insert_one('key_id' => 'key_material')
   end
 
   shared_examples 'a functioning client' do
-    it 'can find the document' do
+    it 'can perform a find command' do
       doc = client['test'].find('testk' => 'testv').first
       expect(doc).not_to be_nil
       expect(doc['testk']).to eq('testv')
@@ -33,16 +38,20 @@ describe 'Client with auto encryption after reconnect' do
   end
 
   shared_examples 'a functioning mongocryptd client' do
-    it 'can perform a schemaRequiresEncryption command' do
+    before do
       client.spawn_mongocryptd
-      sleep 5
+    end
+
+    it 'can perform a schemaRequiresEncryption command' do
+      # A schemaRequiresEncryption command; mongocryptd should respond that
+      # this command requires encryption.
       response = mongocryptd_client.database.command(
         insert: 'users',
         ordered: true,
-        lsid: { id: BSON::Binary.new("\v8#O\xE6\xF2D\xAF\x85)E\x86\xE9\x06\xF2\x8D", :uuid) },
+        lsid: { id: BSON::Binary.new("\x00" * 16, :uuid) },
         documents: [{
           ssn: '123-456-7890',
-          _id: BSON::ObjectId('5e16516e781d8a89b94df6df'),
+          _id: BSON::ObjectId.new,
         }],
         jsonSchema: json_schema,
         isRemoteSchema: false
@@ -53,62 +62,106 @@ describe 'Client with auto encryption after reconnect' do
     end
   end
 
-  context 'after reconnecting without closing main client' do
-    before do
-      client.reconnect
+  shared_examples 'a functioning key vault client' do
+    it 'can perform a find command' do
+      doc = key_vault_client['datakeys'].find('key_id' => 'key_material').first
+      expect(doc).not_to be_nil
+      expect(doc['key_id']).to eq('key_material')
     end
-
-    it_behaves_like 'a functioning client'
-    it_behaves_like 'a functioning mongocryptd client'
   end
 
-  # context 'after closing and reconnecting main client' do
-  #   before do
-  #     client.close
-  #     client.reconnect
-  #   end
+  shared_examples 'an auto-encryption client that reconnects properly' do
+    context 'after reconnecting without closing main client' do
+      before do
+        client.reconnect
+      end
 
-  #   it_behaves_like 'a functioning client'
-  #   it_behaves_like 'a functioning mongocryptd client'
-  # end
-
-  context 'after killing client monitor thread' do
-    before do
-      thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
-      expect(thread).to be_alive
-
-      thread.kill
-
-      sleep 0.1
-      expect(thread).not_to be_alive
-
-      client.reconnect
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
     end
 
-    it_behaves_like 'a functioning client'
-    it_behaves_like 'a functioning mongocryptd client'
-  end
+    context 'after closing and reconnecting main client' do
+      before do
+        client.close
+        client.reconnect
+      end
 
-  # context 'after closing and reconnecting mongocryptd client' do
-
-  # end
-
-  context 'after killing mongocryptd client monitor thread' do
-    before do
-      byebug
-      thread = mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
-      expect(thread).to be_alive
-
-      thread.kill
-
-      sleep 0.1
-      expect(thread).not_to be_alive
-
-      mongocryptd_client.reconnect
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
     end
 
-    it_behaves_like 'a functioning client'
-    it_behaves_like 'a functioning mongocryptd client'
+    context 'after killing client monitor thread' do
+      before do
+        thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        expect(thread).to be_alive
+
+        thread.kill
+
+        sleep 0.1
+        expect(thread).not_to be_alive
+
+        client.reconnect
+      end
+
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
+    end
+
+    context 'after closing mongocryptd client and reconnecting' do
+      before do
+        mongocryptd_client.close
+        client.reconnect
+      end
+
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
+    end
+
+    context 'after closing key_vault_client and reconnecting' do
+      before do
+        key_vault_client.close
+        client.reconnect
+      end
+
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
+    end
+
+    context 'after killing key_vault_client monitor thread and reconnecting' do
+      before do
+        thread = key_vault_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        expect(thread).to be_alive
+
+        thread.kill
+
+        sleep 0.1
+        expect(thread).not_to be_alive
+
+        client.reconnect
+      end
+
+      it_behaves_like 'a functioning client'
+      it_behaves_like 'a functioning mongocryptd client'
+      it_behaves_like 'a functioning key vault client'
+    end
   end
 
+  context 'with default key vault client option' do
+    let(:key_vault_client_option) { nil }
+
+    it_behaves_like 'an auto-encryption client that reconnects properly'
+  end
+
+  context 'with custom key vault client option' do
+    let(:key_vault_client_option) do
+      Mongo::Client.new(SpecConfig.instance.addresses).use(:test)
+    end
+
+    it_behaves_like 'an auto-encryption client that reconnects properly'
+  end
 end
