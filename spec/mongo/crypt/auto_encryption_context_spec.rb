@@ -1,9 +1,5 @@
 require 'mongo'
-require 'support/lite_constraints'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe Mongo::Crypt::AutoEncryptionContext do
   require_libmongocrypt
@@ -47,10 +43,29 @@ describe Mongo::Crypt::AutoEncryptionContext do
     end
 
     context 'with valid options' do
-      it 'does not raise an exception' do
-        expect do
-          context
-        end.not_to raise_error
+      context 'when mongocrypt is initialized with local KMS provider options' do
+        it 'initializes context' do
+          expect do
+            context
+          end.not_to raise_error
+        end
+      end
+
+      context 'when mongocrypt is initialized with AWS KMS provider options' do
+        let(:kms_providers) do
+          {
+            aws: {
+              access_key_id: ENV['MONGO_RUBY_DRIVER_AWS_KEY'],
+              secret_access_key: ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
+            }
+          }
+        end
+
+        it 'initializes context' do
+          expect do
+            context
+          end.not_to raise_error
+        end
       end
 
       context 'with verbose logging' do
