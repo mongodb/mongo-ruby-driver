@@ -1,7 +1,11 @@
 require 'lite_spec_helper'
+require
 require 'mongo'
-
 require 'base64'
+
+RSpec.configure do |config|
+  config.include(Crypt)
+end
 
 describe Mongo::ClientEncryption do
   require_libmongocrypt

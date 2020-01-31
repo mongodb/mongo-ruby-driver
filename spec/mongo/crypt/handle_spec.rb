@@ -7,33 +7,31 @@ describe Mongo::Crypt::Handle do
 
   describe '#initialize' do
     let(:handle) { described_class.new(kms_providers, schema_map: schema_map) }
+    let(:schema_map) { nil }
 
-    let(:kms_providers) do
-      {
-        local: {
-          key: Base64.encode64("ru\xfe\x00" * 24)
-        }
-      }
+    shared_examples 'a functioning Mongo::Crypt::Handle' do
+      context 'with valid schema map' do
+        it 'does not raise an exception' do
+          expect { handle }.not_to raise_error
+        end
+      end
+
+      context 'with invalid schema map' do
+        let(:schema_map) { '' }
+
+        it 'raises an exception' do
+          expect { handle }.to raise_error(ArgumentError, /schema_map must be a Hash or nil/)
+        end
+      end
+
+      context 'with nil schema map' do
+        let(:schema_map) { nil }
+
+        it 'does not raise an exception' do
+          expect { handle }.not_to raise_error
+        end
+      end
     end
-
-    let(:schema_map) do
-      {
-        'admin.datakeys': {
-          bsonType: 'object',
-          properties: {
-            ssn: {
-              encrypt: {
-                keyId: BSON::Binary.new("e114f7ad-ad7a-4a68-81a7-ebcb9ea0953a", :uuid),
-                algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
-              }
-            }
-          }
-        }
-      }
-    end
-
-    let(:aws_key) { ENV['MONGO_RUBY_DRIVER_AWS_KEY'] }
-    let(:aws_secret) { ENV['MONGO_RUBY_DRIVER_AWS_SECRET'] }
 
     context 'with empty kms_providers' do
       let(:kms_providers) { {} }
@@ -89,26 +87,9 @@ describe Mongo::Crypt::Handle do
       end
     end
 
-    context 'with invalid schema map' do
-      let(:schema_map) { '' }
-
-      it 'raises an exception' do
-        expect { handle }.to raise_error(ArgumentError, /schema_map must be a Hash or nil/)
-      end
-    end
-
-    context 'with valid local kms_providers and schema map' do
-      let(:kms_providers) do
-        {
-          local: {
-            key: Base64.encode64("ru\xfe\x00" * 24)
-          }
-        }
-      end
-
-      it 'does not raise an exception' do
-        expect { handle }.not_to raise_error
-      end
+    context 'with valid local kms_providers' do
+      include_context 'with local kms_providers'
+      it_behaves_like 'a functioning Mongo::Crypt::Handle'
     end
 
     context 'with nil AWS kms_provider' do
@@ -144,7 +125,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: nil,
-            secret_access_key: aws_secret
+            secret_access_key: fle_aws_secret
           }
         }
       }
@@ -161,7 +142,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: 5,
-            secret_access_key: aws_secret
+            secret_access_key: fle_aws_secret
           }
         }
       }
@@ -178,7 +159,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: aws_key,
+            access_key_id: fle_aws_key,
             secret_access_key: nil
           }
         }
@@ -195,7 +176,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: aws_key,
+            access_key_id: fle_aws_key,
             secret_access_key: 5
           }
         }
@@ -208,27 +189,9 @@ describe Mongo::Crypt::Handle do
       end
     end
 
-    context 'with valid AWS kms_providers and schema map' do
-      let(:kms_providers) do
-        {
-          aws: {
-            access_key_id: aws_key,
-            secret_access_key: aws_secret
-          }
-        }
-      end
-
-      it 'does not raise an exception' do
-        expect { handle }.not_to raise_error
-      end
-    end
-
-    context 'with nil schema map' do
-      let(:schema_map) { nil }
-
-      it 'does not raise an exception' do
-        expect { handle }.not_to raise_error
-      end
+    context 'with valid AWS kms_providers' do
+      include_context 'with AWS kms_providers'
+      it_behaves_like 'a functioning Mongo::Crypt::Handle'
     end
   end
 end

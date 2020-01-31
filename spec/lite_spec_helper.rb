@@ -66,6 +66,7 @@ require 'support/event_subscriber'
 require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'
+require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
@@ -126,6 +127,10 @@ RSpec.configure do |config|
     unless BSON::Environment.jruby?
       Rfc::Rif.output_object_space_stats = true
     end
+  end
+
+  if ENV['LIBMONGOCRYPT_PATH']
+    config.include(Crypt)
   end
 
   config.expect_with :rspec do |c|
