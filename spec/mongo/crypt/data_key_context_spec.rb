@@ -10,17 +10,18 @@ describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
 
   let(:mongocrypt) do
-    Mongo::Crypt::Handle.new(local_kms_providers.merge(aws_kms_providers))
+    Mongo::Crypt::Handle.new(kms_providers)
   end
 
   let(:io) { double("Mongo::Crypt::EncryptionIO") }
 
-  let(:context) { described_class.new(mongocrypt, io, kms_provider, options) }
+  let(:context) { described_class.new(mongocrypt, io, kms_provider_name, options) }
   let(:options) { {} }
 
   describe '#initialize' do
     context 'with invalid kms provider'do
-      let(:kms_provider) { 'invalid' }
+      let(:kms_providers) { local_kms_providers }
+      let(:kms_provider_name) { 'invalid' }
 
       it 'raises an exception' do
         expect do

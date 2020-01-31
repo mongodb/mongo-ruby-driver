@@ -16,7 +16,7 @@ module Crypt
 
   # For tests that require local KMS to be configured
   shared_context 'with local kms_providers' do
-    let(:kms_provider) { 'local' }
+    let(:kms_provider_name) { 'local' }
     let(:kms_providers) { local_kms_providers }
 
     let(:data_key) do
@@ -30,8 +30,7 @@ module Crypt
 
   # For tests that require AWS KMS to be configured
   shared_context 'with AWS kms_providers' do
-    let(:kms_provider) { 'aws' }
-
+    let(:kms_provider_name) { 'aws' }
     let(:kms_providers) { aws_kms_providers }
 
     let(:data_key) do
@@ -44,22 +43,28 @@ module Crypt
   end
 
   def self.included(context)
-    # 96-byte binary string, base64-encoded
+    # 96-byte binary string, base64-encoded local master key
     context.let(:local_master_key) do
       "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3" +
         "YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk"
     end
 
+    # AWS IAM user access key id
     context.let(:fle_aws_key) { ENV['MONGO_RUBY_DRIVER_AWS_KEY'] }
+
+    # AWS IAM user secret access key
     context.let(:fle_aws_secret) { ENV['MONGO_RUBY_DRIVER_AWS_SECRET'] }
 
-    context.let(:key_vault_db) { 'admin' }
-    context.let(:key_vault_coll) { 'datakeys' }
-    context.let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
+    # Data key id as a binary string
     context.let(:key_id) { data_key['_id'].data }
+
+    # Deterministic encryption algorithm
     context.let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
 
+    # Local KMS provider options
     context.let(:local_kms_providers) { { local: { key: local_master_key } } }
+
+    # AWS KMS provider options
     context.let(:aws_kms_providers) do
       {
         aws: {
