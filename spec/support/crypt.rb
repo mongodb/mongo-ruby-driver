@@ -13,6 +13,37 @@
 # limitations under the License.
 
 module Crypt
+
+  # For tests that require local KMS to be configured
+  shared_context 'with local kms_providers' do
+    let(:kms_provider) { 'local' }
+
+    let(:kms_providers) { local_kms_providers }
+
+    let(:data_key) do
+      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document_local.json'))
+    end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map_local.json'))
+    end
+  end
+
+  # For tests that require AWS KMS to be configured
+  shared_context 'with AWS kms_providers' do
+    let(:kms_provider) { 'aws' }
+
+    let(:kms_providers) { aws_kms_providers }
+
+    let(:data_key) do
+      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document_aws.json'))
+    end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map_aws.json'))
+    end
+  end
+
   def self.included(context)
     # 96-byte binary string, base64-encoded
     context.let(:local_master_key) do
@@ -27,37 +58,14 @@ module Crypt
     context.let(:key_vault_coll) { 'datakeys' }
     context.let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
 
-    # For tests that require local KMS to be configured
-    shared_context 'with local kms_providers' do
-      let(:kms_providers) { { local: { key: local_master_key } } }
-
-      let(:data_key) do
-        BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document_local.json'))
-      end
-
-      let(:schema_map) do
-        BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map_local.json'))
-      end
-    end
-
-    # For tests that require AWS KMS to be configured
-    shared_context 'with AWS kms_providers' do
-      let(:kms_providers) do
-        {
-          aws: {
-            access_key_id: fle_aws_key,
-            secret_access_key: fle_aws_secret
-          }
+    context.let(:local_kms_providers) { { local: { key: local_master_key } } }
+    context.let(:aws_kms_providers) do
+      {
+        aws: {
+          access_key_id: fle_aws_key,
+          secret_access_key: fle_aws_secret
         }
-      end
-
-      let(:data_key) do
-        BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document_aws.json'))
-      end
-
-      let(:schema_map) do
-        BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map_aws.json'))
-      end
+      }
     end
   end
 end
