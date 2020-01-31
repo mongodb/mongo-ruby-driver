@@ -729,7 +729,9 @@ module Mongo
 
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
-        set_auto_encryption_options(@options[:auto_encryption_options])
+        if @options[:auto_encryption_options]
+          set_auto_encryption_options(@options[:auto_encryption_options])
+        end
       end
 
       true
