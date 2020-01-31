@@ -883,7 +883,6 @@ module Mongo
     # for auto-encryption
     def set_auto_encryption_options
       opts_copy = @options[:auto_encryption_options].dup
-      return unless opts_copy
 
       opts_copy[:extra_options] ||= {}
       opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
