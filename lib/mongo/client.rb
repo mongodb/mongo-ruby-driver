@@ -457,7 +457,7 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_options]
-        set_auto_encryption_options(@options[:auto_encryption_options])
+        set_auto_encryption_options
       end
 
       yield(self) if block_given?
@@ -656,19 +656,24 @@ module Mongo
           options.delete(:write_concern)
         end
 
-        # If the user specifies that auto_encryption_options are now nil, prevent the client
-        # from doing any further auto-encryption by cleaning up the resources related to
-        # auto-encryption.
-        if options[:auto_encryption] && opts[:auto_encryption_options].nil?
-          teardown_encrypter
+        # If the user specifies new auto_encryption_options, teardown the
+        # existing encryption infrastructure
+        if opts.key?(:auto_encryption_options)
+          should_teardown_encrypter = true
         end
 
-        if @options[:auto_encryption_options].nil? && opts[:auto_encryption_options]
-          set_auto_encryption_options(opts[:auto_encryption_options])
+        # If the new auto_encryption_options are not nil, then set up the
+        # encrypter again with the new options
+        if opts[:auto_encryption_options]
+          should_set_new_encryption_options = true
         end
 
         options.update(opts)
         @options = options.freeze
+
+        teardown_encrypter if should_teardown_encrypter
+        set_auto_encryption_options if should_set_new_encryption_options
+
         validate_options!
         validate_authentication_options!
       end
@@ -730,7 +735,7 @@ module Mongo
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
         if @options[:auto_encryption_options]
-          set_auto_encryption_options(@options[:auto_encryption_options])
+          set_auto_encryption_options
         end
       end
 
@@ -876,8 +881,9 @@ module Mongo
 
     # Provides some default encryption options and sets up data necessary
     # for auto-encryption
-    def set_auto_encryption_options(auto_encryption_options)
-      opts_copy = auto_encryption_options.dup
+    def set_auto_encryption_options
+      opts_copy = @options[:auto_encryption_options].dup
+      return unless opts_copy
 
       opts_copy[:extra_options] ||= {}
       opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
