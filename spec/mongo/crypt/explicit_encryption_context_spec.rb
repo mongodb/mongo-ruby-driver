@@ -1,6 +1,10 @@
 require 'mongo'
 require 'lite_spec_helper'
 
+RSpec.configure do |config|
+  config.include(Crypt)
+end
+
 describe Mongo::Crypt::ExplicitEncryptionContext do
   require_libmongocrypt
 
@@ -8,19 +12,9 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
   let(:context) { described_class.new(mongocrypt, io, value, options) }
 
   let(:logger) { nil }
-  let(:kms_providers) do
-    {
-      local: {
-        key: Base64.encode64("ru\xfe\x00" * 24)
-      }
-    }
-  end
 
   let(:io) { double("Mongo::ClientEncryption::IO") }
   let(:value) { { 'v': 'Hello, world!' } }
-
-  let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
-  let(:key_id) { "]\xB1\xE1>\xD6\x85G\xCA\xBB\xA3`\e4\x06\xDA\x89" }
 
   let(:options) do
     {
@@ -30,99 +24,94 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
   end
 
   describe '#initialize' do
-    context 'with nil key_id option' do
-      let(:key_id) { nil }
+    shared_examples 'a functioning ExplicitEncryptionContext' do
+      context 'with nil key_id option' do
+        let(:key_id) { nil }
 
-      it 'raises an exception' do
-        expect do
-          context
-        end.to raise_error(ArgumentError, /:key_id option must not be nil/)
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(ArgumentError, /:key_id option must not be nil/)
+        end
       end
-    end
 
-    context 'with invalid key_id' do
-      let(:key_id) { 'random string' }
+      context 'with invalid key_id' do
+        let(:key_id) { 'random string' }
 
-      it 'raises an exception' do
-        expect do
-          context
-        end.to raise_error(Mongo::Error::CryptError, /expected 16 byte UUID/)
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /expected 16 byte UUID/)
+        end
       end
-    end
 
-    context 'with nil algorithm' do
-      let(:algorithm) { nil }
+      context 'with nil algorithm' do
+        let(:algorithm) { nil }
 
-      it 'raises exception' do
-        expect do
-          context
-        end.to raise_error(Mongo::Error::CryptError, /passed null algorithm/)
+        it 'raises exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /passed null algorithm/)
+        end
       end
-    end
 
-    context 'with invalid algorithm' do
-      let(:algorithm) { 'unsupported-algorithm' }
+      context 'with invalid algorithm' do
+        let(:algorithm) { 'unsupported-algorithm' }
 
-      it 'raises an exception' do
-        expect do
-          context
-        end.to raise_error(Mongo::Error::CryptError, /unsupported algorithm/)
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /unsupported algorithm/)
+        end
       end
-    end
 
-    context 'with valid options' do
-      context 'when mongocrypt is initialized with local KMS provider options' do
+      context 'with valid options' do
         it 'initializes context' do
           expect do
             context
           end.not_to raise_error
         end
       end
+    end
 
-      context 'when mongocrypt is initialized with AWS KMS provider options' do
-        let(:kms_providers) do
-          {
-            aws: {
-              access_key_id: ENV['MONGO_RUBY_DRIVER_AWS_KEY'],
-              secret_access_key: ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
-            }
-          }
-        end
+    context 'when mongocrypt is initialized with AWS KMS provider options' do
+      include_context 'with AWS kms_providers'
+      it_behaves_like 'a functioning ExplicitEncryptionContext'
+    end
 
-        it 'initializes context' do
-          expect do
-            context
-          end.not_to raise_error
+    context 'when mongocrypt is initialized with local KMS provider options' do
+      include_context 'with local kms_providers'
+      it_behaves_like 'a functioning ExplicitEncryptionContext'
+    end
+
+    context 'with verbose logging' do
+      include_context 'with local kms_providers'
+
+      before(:all) do
+        # Logging from libmongocrypt requires the C library to be built with the -DENABLE_TRACE=ON
+        # option; none of the pre-built packages on Evergreen have been built with logging enabled.
+        #
+        # It is still useful to be able to run these tests locally to confirm that logging is working
+        # while debugging any problems.
+        #
+        # For now, skip this test by default and revisit once we have determined how we want to
+        # package libmongocrypt with the Ruby driver (see: https://jira.mongodb.org/browse/RUBY-1966)
+        skip "These tests require libmongocrypt to be built with the '-DENABLE_TRACE=ON' cmake option." +
+          " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
+      end
+
+      let(:logger) do
+        ::Logger.new($stdout).tap do |logger|
+          logger.level = ::Logger::DEBUG
         end
       end
 
-      context 'with verbose logging' do
-        before(:all) do
-          # Logging from libmongocrypt requires the C library to be built with the -DENABLE_TRACE=ON
-          # option; none of the pre-built packages on Evergreen have been built with logging enabled.
-          #
-          # It is still useful to be able to run these tests locally to confirm that logging is working
-          # while debugging any problems.
-          #
-          # For now, skip this test by default and revisit once we have determined how we want to
-          # package libmongocrypt with the Ruby driver (see: https://jira.mongodb.org/browse/RUBY-1966)
-          skip "These tests require libmongocrypt to be built with the '-DENABLE_TRACE=ON' cmake option." +
-            " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
-        end
+      it 'receives log messages from libmongocrypt' do
+        expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_key_id/)
+        expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_algorithm/)
+        expect(logger).to receive(:debug).with(/mongocrypt_ctx_explicit_encrypt_init/)
 
-        let(:logger) do
-          ::Logger.new($stdout).tap do |logger|
-            logger.level = ::Logger::DEBUG
-          end
-        end
-
-        it 'receives log messages from libmongocrypt' do
-          expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_key_id/)
-          expect(logger).to receive(:debug).with(/mongocrypt_ctx_setopt_algorithm/)
-          expect(logger).to receive(:debug).with(/mongocrypt_ctx_explicit_encrypt_init/)
-
-          context
-        end
+        context
       end
     end
   end

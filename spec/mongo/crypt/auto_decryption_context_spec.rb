@@ -1,6 +1,10 @@
 require 'mongo'
 require 'lite_spec_helper'
 
+RSpec.configure do |config|
+  config.include(Crypt)
+end
+
 describe Mongo::Crypt::AutoDecryptionContext do
   require_libmongocrypt
 
@@ -8,13 +12,6 @@ describe Mongo::Crypt::AutoDecryptionContext do
   let(:context) { described_class.new(mongocrypt, io, command) }
 
   let(:logger) { nil }
-  let(:kms_providers) do
-    {
-      local: {
-        key: Base64.encode64("ru\xfe\x00" * 24)
-      }
-    }
-  end
 
   let(:io) { double("Mongo::ClientEncryption::IO") }
   let(:command) do
@@ -29,6 +26,8 @@ describe Mongo::Crypt::AutoDecryptionContext do
   describe '#initialize' do
     context 'with valid options' do
       context 'when mongocrypt is initialized with local KMS provider options' do
+        include_context 'with local kms_providers'
+
         it 'initializes context' do
           expect do
             context
@@ -37,14 +36,7 @@ describe Mongo::Crypt::AutoDecryptionContext do
       end
 
       context 'when mongocrypt is initialized with AWS KMS provider options' do
-        let(:kms_providers) do
-          {
-            aws: {
-              access_key_id: ENV['MONGO_RUBY_DRIVER_AWS_KEY'],
-              secret_access_key: ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
-            }
-          }
-        end
+        include_context 'with AWS kms_providers'
 
         it 'initializes context' do
           expect do
@@ -54,6 +46,8 @@ describe Mongo::Crypt::AutoDecryptionContext do
       end
 
       context 'with verbose logging' do
+        include_context 'with local kms_providers'
+
         before(:all) do
           # Logging from libmongocrypt requires the C library to be built with the -DENABLE_TRACE=ON
           # option; none of the pre-built packages on Evergreen have been built with logging enabled.

@@ -129,10 +129,6 @@ RSpec.configure do |config|
     end
   end
 
-  if ENV['LIBMONGOCRYPT_PATH']
-    config.include(Crypt)
-  end
-
   config.expect_with :rspec do |c|
     c.syntax = [:should, :expect]
     c.max_formatted_output_length = 10000
