@@ -44,6 +44,9 @@ module Crypt
     let(:key_vault_db) { 'admin' }
     let(:key_vault_coll) { 'datakeys' }
     let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
+
+    # Example value to encrypt
+    let(:ssn) { '123-456-7890' }
   end
 
   # For tests that require local KMS to be configured
@@ -60,6 +63,11 @@ module Crypt
     end
 
     let(:data_key_options) { {} }
+
+    let(:encrypted_ssn) do
+      "ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68Ft" +
+      "tXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"
+    end
   end
 
   # For tests that require AWS KMS to be configured
@@ -99,5 +107,10 @@ module Crypt
     let(:aws_arn) { 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0' }
     let(:aws_endpoint_host) { 'kms.us-east-1.amazonaws.com' }
     let(:aws_endpoint_port) { 443 }
+
+    let(:encrypted_ssn) do
+      "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
+      "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
+    end
   end
 end

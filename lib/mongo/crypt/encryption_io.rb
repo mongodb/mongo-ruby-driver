@@ -66,7 +66,7 @@ module Mongo
         result = @client.database.list_collections
 
         name = filter['name']
-        result.find { |r| r['name'] == name }
+        result.find { |r| r['name'] == name } || {}
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
