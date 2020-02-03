@@ -723,7 +723,7 @@ describe Mongo::Collection::View::ChangeStream do
 
         let(:error) do
           Mongo::Error::OperationFailure.new('not master',
-            Mongo::Operation::GetMore::Result.new([]))
+            Mongo::Operation::GetMore::Result.new(nil))
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'
@@ -733,7 +733,7 @@ describe Mongo::Collection::View::ChangeStream do
 
         let(:error) do
           Mongo::Error::OperationFailure.new('node is recovering',
-            Mongo::Operation::GetMore::Result.new([]))
+            Mongo::Operation::GetMore::Result.new(nil))
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'

@@ -18,7 +18,13 @@ require 'mongo/operation/shared/result/use_legacy_error_parser'
 module Mongo
   module Operation
 
-    # Result wrapper for operations.
+    # Result wrapper for wire protocol replies.
+    #
+    # An operation has zero or one replies. The only operations producing zero
+    # replies are unacknowledged writes; all other operations produce one reply.
+    # This class provides an object that can be operated on (for example, to
+    # check whether an operation succeeded) even when the operation did not
+    # produce a reply (in which case it is assumed to have succeeded).
     #
     # @since 2.0.0
     class Result
@@ -67,17 +73,33 @@ module Mongo
 
       # Initialize a new result.
       #
-      # @example Instantiate the result.
-      #   Result.new(replies)
+      # For an unkacknowledged write, pass nil in replies.
       #
-      # @param [ Protocol::Reply ] replies The wire protocol replies.
+      # For all other operations, replies must be a Protocol::Message instance
+      # or an array containing a single Protocol::Message instance.
       #
-      # @since 2.0.0
+      # @param [ Protocol::Message | Array<Protocol::Message> | nil ] replies
+      #  The wire protocol replies.
+      #
+      # @api private
       def initialize(replies)
-        @replies = [ *replies ] if replies
+        if replies
+          if replies.is_a?(Array)
+            if replies.length != 1
+              raise ArgumentError, "Only one (or zero) reply is supported, given #{replies.length}"
+            end
+            reply = replies.first
+          else
+            reply = replies
+          end
+          unless reply.is_a?(Protocol::Message)
+            raise ArgumentError, "Argument must be a Message instance, but is a #{reply.class}: #{reply.inspect}"
+          end
+          @replies = [ reply ]
+        end
       end
 
-      # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
+      # @return [ Array<Protocol::Message> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
       # @api private
@@ -97,19 +119,6 @@ module Mongo
       # @since 2.0.0
       def acknowledged?
         !!@replies
-      end
-
-      # Determine if this result is a collection of multiple replies from the
-      # server.
-      #
-      # @example Is the result for multiple replies?
-      #   result.multiple?
-      #
-      # @return [ true, false ] If the result is for multiple replies.
-      #
-      # @since 2.0.0
-      def multiple?
-        replies.size > 1
       end
 
       # Get the cursor id if the response is acknowledged.
@@ -146,7 +155,7 @@ module Mongo
       # @since 2.0.0
       def documents
         if acknowledged?
-          replies.flat_map{ |reply| reply.documents }
+          replies.flat_map(&:documents)
         else
           []
         end
@@ -180,12 +189,12 @@ module Mongo
         "#<#{self.class.name}:0x#{object_id} documents=#{documents}>"
       end
 
-      # Get the first reply from the result.
+      # Get the reply from the result.
       #
-      # @example Get the first reply.
-      #   result.reply
+      # Returns nil if there is no reply (i.e. the operation was an
+      # unacknowledged write).
       #
-      # @return [ Protocol::Reply ] The first reply.
+      # @return [ Protocol::Message ] The first reply.
       #
       # @since 2.0.0
       def reply
@@ -206,7 +215,7 @@ module Mongo
       # @since 2.0.0
       def returned_count
         if acknowledged?
-          multiple? ? aggregate_returned_count : reply.number_returned
+          reply.number_returned
         else
           0
         end
@@ -308,7 +317,7 @@ module Mongo
       # @since 2.0.0
       def written_count
         if acknowledged?
-          multiple? ? aggregate_written_count : (first_document[N] || 0)
+          first_document[N] || 0
         else
           0
         end

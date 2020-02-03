@@ -72,7 +72,7 @@ describe Mongo::Error::OperationFailure do
     context 'when there is a network error' do
       context 'getMore' do
         let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception',
-          Mongo::Operation::GetMore::Result.new([])) }
+          Mongo::Operation::GetMore::Result.new(nil)) }
 
         it 'returns true' do
           expect(error.change_stream_resumable?).to be true
@@ -91,7 +91,7 @@ describe Mongo::Error::OperationFailure do
     context 'when there is a resumable message' do
       context 'getMore response' do
         let(:error) { Mongo::Error::OperationFailure.new('problem: node is recovering',
-          Mongo::Operation::GetMore::Result.new([])) }
+          Mongo::Operation::GetMore::Result.new(nil)) }
 
         it 'returns true' do
           expect(error.change_stream_resumable?).to eql(true)
@@ -110,7 +110,7 @@ describe Mongo::Error::OperationFailure do
     context 'when there is a resumable code' do
       context 'getMore response' do
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new([]),
+          Mongo::Operation::GetMore::Result.new(nil),
           :code => 91, :code_name => 'ShutdownInProgress') }
 
         it 'returns true' do
@@ -131,7 +131,7 @@ describe Mongo::Error::OperationFailure do
     context 'when there is a non-resumable code' do
       context 'getMore response' do
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new([]),
+          Mongo::Operation::GetMore::Result.new(nil),
           :code => 136, :code_name => 'CappedPositionLost') }
 
         it 'returns false' do
@@ -152,7 +152,7 @@ describe Mongo::Error::OperationFailure do
     context 'when there is a non-resumable label' do
       context 'getMore response' do
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new([]),
+          Mongo::Operation::GetMore::Result.new(nil),
           :code => 91, :code_name => 'ShutdownInProgress',
           :labels => ['NonResumableChangeStreamError']) }
 
@@ -175,7 +175,7 @@ describe Mongo::Error::OperationFailure do
     context 'when there is another label' do
       context 'getMore response' do
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new([]),
+          Mongo::Operation::GetMore::Result.new(nil),
           :code => 91, :code_name => 'ShutdownInProgress',
           :labels => %w(TransientTransactionError)) }
 
