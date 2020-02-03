@@ -74,7 +74,7 @@ describe Mongo::ClientEncryption do
   describe '#create_data_key' do
     let(:data_key_id) { client_encryption.create_data_key(kms_provider_name, options) }
 
-    shared_examples 'data key creation' do
+    shared_examples 'it creates a data key' do
       it 'returns the data key id and inserts it into the key vault collection' do
         expect(data_key_id).to be_a_kind_of(String)
         expect(data_key_id.bytesize).to eq(16)
@@ -141,7 +141,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with nil region' do
-        let(:options) { { master_key: { region: nil, key: 'arn' } } }
+        let(:options) { { master_key: { region: nil, key: cmk_arn } } }
 
         it 'raises an exception' do
           expect do
@@ -151,7 +151,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid region' do
-        let(:options) { { master_key: { region: 5, key: 'arn' } } }
+        let(:options) { { master_key: { region: 5, key: cmk_arn } } }
 
         it 'raises an exception' do
           expect do
@@ -161,7 +161,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with nil key' do
-        let(:options) { { master_key: { key: nil, region: 'us-east-1' } } }
+        let(:options) { { master_key: { key: nil, region: cmk_region } } }
 
         it 'raises an exception' do
           expect do
@@ -171,7 +171,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid key' do
-        let(:options) { { master_key: { key: 5, region: 'us-east-1' } } }
+        let(:options) { { master_key: { key: 5, region: cmk_region } } }
 
         it 'raises an exception' do
           expect do
@@ -181,7 +181,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid endpoint' do
-        let(:options) { { master_key: { key: 'arn', region: 'us-east-1', endpoint: 5 } } }
+        let(:options) { { master_key: { key: cmk_arn, region: cmk_region, endpoint: 5 } } }
 
         it 'raises an exception' do
           expect do
@@ -191,32 +191,44 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with nil endpoint' do
-        include_examples 'data key creation'
-      end
-
-      context 'with valid endpoint' do
-
-        include_examples 'data key creation'
-      end
-
-      let(:options) do
-        {
-          master_key: {
-            region: 'us-east-1',
-            key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
-            endpoint: 'kms.us-east-1.amazonaws.com:443'
+        let(:options) do
+          {
+            master_key: {
+              key: cmk_arn,
+              region: cmk_region,
+              endpoint: nil
+            }
           }
-        }
+        end
+
+        include_examples 'it creates a data key'
       end
 
-      include_examples 'data key creation'
+      context 'with valid endpoint, no port' do
+        let(:options) do
+          {
+            master_key: {
+              key: cmk_arn,
+              region: cmk_region,
+              endpoint: cmk_endpoint_host
+            }
+          }
+        end
+
+        include_examples 'it creates a data key'
+      end
+
+      context 'with valid endpoint, no port' do
+        let(:options) { cmk_options }
+        include_examples 'it creates a data key'
+      end
     end
 
     context 'with local KMS provider' do
       include_context 'with local kms_providers'
       let(:options) { {} }
 
-      include_examples 'data key creation'
+      include_examples 'it creates a data key'
     end
   end
 

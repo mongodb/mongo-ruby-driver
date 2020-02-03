@@ -82,5 +82,20 @@ module Crypt
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
     end
+
+    let(:cmk_options) do
+      {
+        master_key: {
+          region: cmk_region,
+          key: cmk_arn,
+          endpoint: "#{cmk_endpoint_host}:#{cmk_endpoint_port}"
+        }
+      }
+    end
+
+    let(:cmk_region) { 'us-east-1' }
+    let(:cmk_arn) { 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0' }
+    let(:cmk_endpoint_host) { 'kms.us-east-1.amazonaws.com' }
+    let(:cmk_endpoint_port) { 443 }
   end
 end
