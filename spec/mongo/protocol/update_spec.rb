@@ -1,17 +1,18 @@
-require 'spec_helper'
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::Update do
 
   let(:opcode)   { 2001 }
   let(:db)       { SpecConfig.instance.test_db }
-  let(:coll)     { TEST_COLL }
-  let(:ns)       { "#{db}.#{coll}" }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)       { "#{db}.#{collection_name}" }
   let(:selector) { { :name => 'Tyler' } }
   let(:update_doc) { { :name => 'Bob' } }
   let(:options)       { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, update_doc, options)
+    described_class.new(db, collection_name, selector, update_doc, options)
   end
 
   describe '#initialize' do
@@ -35,7 +36,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, update_doc, options)
+          described_class.new(db, collection_name, selector, update_doc, options)
         end
 
         it 'returns true' do
@@ -45,7 +46,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, update_doc, options)
+          described_class.new('tyler', collection_name, selector, update_doc, options)
         end
 
         it 'returns false' do
@@ -65,7 +66,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, update_doc, options)
+          described_class.new(db, collection_name, { :a => 1 }, update_doc, options)
         end
 
         it 'returns false' do
@@ -75,7 +76,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the update document is not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, { :a => 1 }, options)
+          described_class.new(db, collection_name, selector, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -85,7 +86,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, update_doc,
+          described_class.new(db, collection_name, selector, update_doc,
                               :flags => :upsert)
         end
 

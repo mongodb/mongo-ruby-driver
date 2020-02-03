@@ -1,16 +1,17 @@
-require 'spec_helper'
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::GetMore do
 
   let(:opcode)    { 2005 }
   let(:db)        { SpecConfig.instance.test_db }
-  let(:coll)      { TEST_COLL }
-  let(:ns)        { "#{db}.#{coll}" }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)        { "#{db}.#{collection_name}" }
   let(:limit)     { 25 }
   let(:cursor_id) { 12345 }
 
   let(:message) do
-    described_class.new(db, coll, limit, cursor_id)
+    described_class.new(db, collection_name, limit, cursor_id)
   end
 
   describe '#initialize' do
@@ -34,7 +35,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, limit, cursor_id)
+          described_class.new(db, collection_name, limit, cursor_id)
         end
 
         it 'returns true' do
@@ -44,7 +45,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, limit, cursor_id)
+          described_class.new('tyler', collection_name, limit, cursor_id)
         end
 
         it 'returns false' do
@@ -64,7 +65,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the limit is not equal' do
         let(:other) do
-          described_class.new(db, coll, 123, cursor_id)
+          described_class.new(db, collection_name, 123, cursor_id)
         end
 
         it 'returns false' do
@@ -74,7 +75,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the cursor id is not equal' do
         let(:other) do
-          described_class.new(db, coll, limit, 7777)
+          described_class.new(db, collection_name, limit, 7777)
         end
 
         it 'returns false' do

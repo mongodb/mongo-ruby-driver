@@ -4,12 +4,15 @@ describe 'Client with auto encryption #reconnect' do
   require_libmongocrypt
   require_enterprise
 
+  include_context 'define shared FLE helpers'
+  include_context 'with local kms_providers'
+
   let(:client) do
     new_local_client(
       SpecConfig.instance.addresses,
       {
         auto_encryption_options: {
-          kms_providers: { local: { key: Base64.encode64("\x00" * 96) } },
+          kms_providers: kms_providers,
           key_vault_namespace: 'admin.datakeys',
           key_vault_client: key_vault_client_option
         }
@@ -19,10 +22,6 @@ describe 'Client with auto encryption #reconnect' do
 
   let(:mongocryptd_client) { client.mongocryptd_client }
   let(:key_vault_client) { client.key_vault_client }
-
-  let(:json_schema) do
-    BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map.json'))
-  end
 
   before do
     client['test'].insert_one('testk' => 'testv')
@@ -53,7 +52,7 @@ describe 'Client with auto encryption #reconnect' do
           ssn: '123-456-7890',
           _id: BSON::ObjectId.new,
         }],
-        jsonSchema: json_schema,
+        jsonSchema: schema_map,
         isRemoteSchema: false
       )
 
