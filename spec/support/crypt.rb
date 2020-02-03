@@ -39,6 +39,11 @@ module Crypt
         }
       }
     end
+
+    # Key vault database and collection names
+    let(:key_vault_db) { 'admin' }
+    let(:key_vault_coll) { 'datakeys' }
+    let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
   end
 
   # For tests that require local KMS to be configured

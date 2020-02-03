@@ -1,27 +1,15 @@
-require 'lite_spec_helper'
 require 'mongo'
-
 require 'base64'
+require 'lite_spec_helper'
 
 describe Mongo::ClientEncryption do
   require_libmongocrypt
-
-  let(:key_vault_db) { 'admin' }
-  let(:key_vault_coll) { 'datakeys' }
-  let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
+  include_context 'define shared FLE helpers'
 
   let(:client) do
     ClientRegistry.instance.new_local_client(
       [SpecConfig.instance.addresses.first]
     )
-  end
-
-  let(:kms_providers) do
-    {
-      local: {
-        key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk"
-      }
-    }
   end
 
   let(:client_encryption) do
@@ -32,26 +20,44 @@ describe Mongo::ClientEncryption do
   end
 
   describe '#initialize' do
-    let(:client) { new_local_client_nmio([SpecConfig.instance.addresses.first]) }
+    shared_examples 'a functioning ClientEncryption' do
+      context 'with nil key_vault_namespace' do
+        let(:key_vault_namespace) { nil }
 
-    context 'with nil key_vault_namespace' do
-      let(:key_vault_namespace) { nil }
+        it 'raises an exception' do
+          expect do
+            client_encryption
+          end.to raise_error(ArgumentError, /:key_vault_namespace option cannot be nil/)
+        end
+      end
 
-      it 'raises an exception' do
-        expect do
-          client_encryption
-        end.to raise_error(ArgumentError, /:key_vault_namespace option cannot be nil/)
+      context 'with invalid key_vault_namespace' do
+        let(:key_vault_namespace) { 'three.word.namespace' }
+
+        it 'raises an exception' do
+          expect do
+            client_encryption
+          end.to raise_error(ArgumentError, /invalid key vault namespace/)
+        end
+      end
+
+      context 'with valid options' do
+        it 'creates a ClientEncryption object' do
+          expect do
+            client_encryption
+          end.not_to raise_error
+        end
       end
     end
 
-    context 'with invalid key_vault_namespace' do
-      let(:key_vault_namespace) { 'three.word.namespace' }
+    context 'with local KMS providers' do
+      include_context 'with local kms_providers'
+      it_behaves_like 'a functioning ClientEncryption'
+    end
 
-      it 'raises an exception' do
-        expect do
-          client_encryption
-        end.to raise_error(ArgumentError, /invalid key vault namespace/)
-      end
+    context 'with AWS KMS providers' do
+      include_context 'with AWS kms_providers'
+      it_behaves_like 'a functioning ClientEncryption'
     end
 
     context 'with invalid KMS provider information' do
@@ -63,24 +69,138 @@ describe Mongo::ClientEncryption do
         end.to raise_error(ArgumentError, /kms_providers option must have one of the following keys/)
       end
     end
-
-    context 'with valid options' do
-      it 'creates a ClientEncryption object' do
-        expect do
-          client_encryption
-        end.not_to raise_error
-      end
-    end
   end
 
   describe '#create_data_key' do
-    let(:result) { client_encryption.create_data_key }
+    let(:data_key_id) { client_encryption.create_data_key(kms_provider_name, options) }
 
-    it 'returns a string' do
-      expect(result).to be_a_kind_of(String)
+    shared_examples 'data key creation' do
+      it 'returns the data key id and inserts it into the key vault collection' do
+        expect(data_key_id).to be_a_kind_of(String)
+        expect(data_key_id.bytesize).to eq(16)
 
-      # make sure that the key actually exists in the DB
-      expect(client.use(key_vault_db)[key_vault_coll].find(_id: BSON::Binary.new(result, :uuid)).count).to eq(1)
+        documents = client.use(key_vault_db)[key_vault_coll].find(
+          _id: BSON::Binary.new(data_key_id, :uuid)
+        )
+
+        expect(documents.count).to eq(1)
+      end
+    end
+
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      # context 'with nil options' do
+      #   let(:options) { nil }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /options cannot be nil/)
+      #   end
+      # end
+
+      # context 'with empty options' do
+      #   let(:options) { {} }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /options Hash must contain a key named :master_key/)
+      #   end
+      # end
+
+      # context 'with nil master key' do
+      #   let(:options) { { master_key: nil } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /:master_key options cannot be nil/)
+      #   end
+      # end
+
+      # context 'with invalid master key' do
+      #   let(:options) { { master_key: 'master-key' } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /master-key is an invalid :master_key option/)
+      #   end
+      # end
+
+      # context 'with empty master key' do
+      #   let(:options) { { master_key: {} } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
+      #   end
+      # end
+
+      # context 'with nil region' do
+      #   let(:options) { { master_key: { region: nil, key: 'arn' } } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
+      #   end
+      # end
+
+      # context 'with invalid region' do
+      #   let(:options) { { master_key: { region: 5, key: 'arn' } } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /region key of the :master_key options Hash must be a String/)
+      #   end
+      # end
+
+      # context 'with nil key' do
+      #   let(:options) { { master_key: { key: nil, region: 'us-east-1' } } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /key key of the :master_key options Hash cannot be nil/)
+      #   end
+      # end
+
+      # context 'with invalid key' do
+      #   let(:options) { { master_key: { key: 5, region: 'us-east-1' } } }
+
+      #   it 'raises an exception' do
+      #     expect do
+      #       data_key_id
+      #     end.to raise_error(ArgumentError, /key key of the :master_key options Hash must be a String/)
+      #   end
+      # end
+
+      # context 'with invalid endpoint' do; end
+      # context 'with nil endpoint' do; end
+      # context 'with valid endpoint' do; end
+
+      let(:options) do
+        {
+          master_key: {
+            region: 'us-east-1',
+            key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'
+          }
+        }
+      end
+
+      include_examples 'data key creation'
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+      let(:options) { {} }
+
+      include_examples 'data key creation'
     end
   end
 

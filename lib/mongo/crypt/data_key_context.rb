@@ -43,6 +43,20 @@ module Mongo
         when 'local'
           Binding.ctx_setopt_master_key_local(self)
         when 'aws'
+          unless options
+            raise ArgumentError.new(
+              'When "aws" is specified as the KMS provider, options cannot be nil'
+            )
+          end
+
+          unless options.key?(:master_key)
+            raise ArgumentError.new(
+              'When "aws" is specified as the KMS provider, the options Hash ' +
+              'must contain a key named :master_key with a Hash value in the ' +
+              '{ region: "AWS-REGION", key: "AWS-KEY-ARN" }'
+            )
+          end
+
           master_key_opts = options[:master_key]
 
           set_aws_master_key(master_key_opts)
@@ -63,13 +77,13 @@ module Mongo
       # KMS options
       def set_aws_master_key(master_key_opts)
         unless master_key_opts
-          raise ArgumentError.new('The master key options cannot be nil')
+          raise ArgumentError.new('The :master_key options cannot be nil')
         end
 
         unless master_key_opts.is_a?(Hash)
           raise ArgumentError.new(
-            "#{master_key_opts} is an invalid master key option. " +
-            "The master key option must be a Hash in the format " +
+            "#{master_key_opts} is an invalid :master_key option. " +
+            "The :master_key option must be a Hash in the format " +
             "{ region: 'AWS-REGION', key: 'AWS-KEY-ARN' }"
           )
         end
@@ -104,8 +118,8 @@ module Mongo
 
         Binding.ctx_setopt_master_key_aws(
           self,
-          master_key_opts[:region],
-          master_key_opts[:key],
+          region,
+          key,
         )
       end
 

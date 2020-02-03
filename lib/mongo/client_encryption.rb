@@ -22,35 +22,44 @@ module Mongo
 
     # Create a new ClientEncryption object with the provided options.
     #
-    # @param [ Mongo::Client ] client A Mongo::Client
+    # @param [ Mongo::Client ] key_vault_client A Mongo::Client
     #   that is connected to the MongoDB instance where the key vault
     #   collection is stored.
-    # @param [ Hash ] options The ClientEncryption options
+    # @param [ Hash ] options The ClientEncryption options.
     #
     # @option options [ String ] :key_vault_namespace The name of the
-    #   key vault collection in the format "database.collection"
+    #   key vault collection in the format "database.collection".
     # @option options [ Hash ] :kms_providers A hash of key management service
-    #   configuration information. Valid hash keys are :local or :aws. There may be
-    #   more than one KMS provider specified.
-    def initialize(client, options = {})
-      setup_encrypter(options.merge(key_vault_client: client))
+    #   configuration information. Valid hash keys are :local or :aws. There
+    #   may be more than one KMS provider specified.
+    def initialize(key_vault_client, options = {})
+      setup_encrypter(options.merge(key_vault_client: key_vault_client))
     end
 
     # Generates a data key used for encryption/decryption and stores
     # that key in the KMS collection. The generated key is encrypted with
     # the KMS master key.
     #
+    # @param [ String ] kms_provider The KMS provider to use. Options are
+    #   "aws" and "local".
+    # @params [ Hash ] options
+    #
+    # @option [ Hash ] :master_key Information about the AWS master key. Required
+    #   if kms_provider is "aws".
+    #   - :region [ String ] The The AWS region of the master key (required).
+    #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
+    #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
+    #
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
-    def create_data_key(kms_provider="local")
-      # TODO: the default kms_provider value is a stand-in to prevent breaking
-      # the API. This will be fixed in a follow-up PR.
+    def create_data_key(kms_provider, options={})
       data_key_document = Crypt::DataKeyContext.new(
         @crypt_handle,
         @encryption_io,
         kms_provider,
-        {}
+        options
       ).run_state_machine
+
       insert_result = @encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data

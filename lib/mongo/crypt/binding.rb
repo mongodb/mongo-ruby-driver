@@ -748,7 +748,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       #
       # @return [ Mongo::Crypt::KMSContext | nil ] The KMSContext needed to
-      #   fetch an AWS masterkey or nil, if no KMSContext is needed
+      #   fetch an AWS master key or nil, if no KMSContext is needed
       def self.ctx_next_kms_ctx(context)
         kms_ctx_p = mongocrypt_ctx_next_kms_ctx(context.ctx_p)
 
@@ -759,7 +759,7 @@ module Mongo
         end
       end
 
-      # Get the message needed to fetch the AWS KMS masterkey
+      # Get the message needed to fetch the AWS KMS master key
       #
       # @param [ FFI::Pointer ] kms Pointer to the mongocrypt_kms_ctx_t object
       # @param [ FFI::Pointer ] msg (outparam) Pointer to a mongocrypt_binary_t
@@ -769,7 +769,7 @@ module Mongo
       # @return [ Boolean ] Whether the operation is successful
       attach_function :mongocrypt_kms_ctx_message, [:pointer, :pointer], :bool
 
-      # Get the HTTP message needed to fetch the AWS KMS masterkey from a
+      # Get the HTTP message needed to fetch the AWS KMS master key from a
       # KMSContext object
       #
       # @param [ Mongo::Crypt::KMSContext ] kms_context
@@ -788,7 +788,7 @@ module Mongo
       end
 
       # Get the hostname with which to connect over TLS to get information about
-      # the AWS masterkey
+      # the AWS master key
       #
       # @param [ FFI::Pointer ] kms A pointer to a mongocrypt_kms_ctx_t object
       # @param [ FFI::Pointer ] endpoint (out param) A pointer to which the
@@ -798,7 +798,7 @@ module Mongo
       attach_function :mongocrypt_kms_ctx_endpoint, [:pointer, :pointer], :bool
 
       # Get the hostname with which to connect over TLS to get information
-      # about the AWS masterkey
+      # about the AWS master key
       #
       # @param [ Mongo::Crypt::KMSContext ] kms_context
       #
