@@ -1,12 +1,9 @@
 require 'mongo'
 require 'lite_spec_helper'
 
-RSpec.configure do |config|
-  config.include(Crypt)
-end
-
 describe Mongo::Crypt::AutoEncryptionContext do
   require_libmongocrypt
+  include_context 'define shared FLE helpers'
 
   let(:mongocrypt) { Mongo::Crypt::Handle.new(kms_providers, logger: logger) }
   let(:context) { described_class.new(mongocrypt, io, db_name, command) }

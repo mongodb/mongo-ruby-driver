@@ -2,12 +2,9 @@ require 'mongo'
 require 'base64'
 require 'lite_spec_helper'
 
-RSpec.configure do |config|
-  config.include(Crypt)
-end
-
 describe Mongo::Crypt::Handle do
   require_libmongocrypt
+  include_context 'define shared FLE helpers'
 
   describe '#initialize' do
     let(:handle) { described_class.new(kms_providers, schema_map: schema_map) }

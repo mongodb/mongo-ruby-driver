@@ -2,12 +2,9 @@ require 'mongo'
 require 'base64'
 require 'lite_spec_helper'
 
-RSpec.configure do |config|
-  config.include(Crypt)
-end
-
 describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
+  include_context 'define shared FLE helpers'
 
   let(:mongocrypt) do
     Mongo::Crypt::Handle.new(kms_providers)
