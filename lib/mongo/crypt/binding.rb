@@ -719,7 +719,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] doc The document representing the response
       #
-      # @raise [ Mongo::Crypt::Error ] If the response is not fed successfully
+      # @raise [ Mongo::CryptError ] If the response is not fed successfully
       def self.ctx_mongo_feed(context, doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -736,14 +736,14 @@ module Mongo
       # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_mongo_done, [:pointer], :bool
 
-      # Return a pointer to a mongocrypt_kms_ctx_t object or NULL
+      # Return a pointer to a mongocrypt_kms_ctx_t object or NULL.
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
       #
       # @return [ FFI::Pointer ] A pointer to a mongocrypt_kms_ctx_t object
       attach_function :mongocrypt_ctx_next_kms_ctx, [:pointer], :pointer
 
-      # Return a new KMSContext object needed by a Context object
+      # Return a new KMSContext object needed by a Context object.
       #
       # @param [ Mongo::Crypt::Context ] context
       #
@@ -759,7 +759,7 @@ module Mongo
         end
       end
 
-      # Get the message needed to fetch the AWS KMS master key
+      # Get the message needed to fetch the AWS KMS master key.
       #
       # @param [ FFI::Pointer ] kms Pointer to the mongocrypt_kms_ctx_t object
       # @param [ FFI::Pointer ] msg (outparam) Pointer to a mongocrypt_binary_t
@@ -770,11 +770,11 @@ module Mongo
       attach_function :mongocrypt_kms_ctx_message, [:pointer, :pointer], :bool
 
       # Get the HTTP message needed to fetch the AWS KMS master key from a
-      # KMSContext object
+      # KMSContext object.
       #
       # @param [ Mongo::Crypt::KMSContext ] kms_context
       #
-      # @raise [ Mongo::Crypt::Error ] If the response is not fed successfully
+      # @raise [ Mongo::CryptError ] If the response is not fed successfully
       #
       # @return [ String ] The HTTP message
       def self.kms_ctx_message(kms_context)
@@ -788,7 +788,7 @@ module Mongo
       end
 
       # Get the hostname with which to connect over TLS to get information about
-      # the AWS master key
+      # the AWS master key.
       #
       # @param [ FFI::Pointer ] kms A pointer to a mongocrypt_kms_ctx_t object
       # @param [ FFI::Pointer ] endpoint (out param) A pointer to which the
@@ -798,11 +798,11 @@ module Mongo
       attach_function :mongocrypt_kms_ctx_endpoint, [:pointer, :pointer], :bool
 
       # Get the hostname with which to connect over TLS to get information
-      # about the AWS master key
+      # about the AWS master key.
       #
       # @param [ Mongo::Crypt::KMSContext ] kms_context
       #
-      # @raise [ Mongo::Crypt::Error ] If the response is not fed successfully
+      # @raise [ Mongo::CryptError ] If the response is not fed successfully
       #
       # @return [ String | nil ] The hostname, or nil if none exists
       def self.kms_ctx_endpoint(kms_context)
@@ -816,14 +816,14 @@ module Mongo
         str_ptr.null? ? nil : str_ptr.read_string.force_encoding('UTF-8')
       end
 
-      # Get the number of bytes needed by the KMS context
+      # Get the number of bytes needed by the KMS context.
       #
       # @param [ FFI::Pointer ] kms The mongocrypt_kms_ctx_t object
       #
       # @return [ Integer ] The number of bytes needed
       attach_function :mongocrypt_kms_ctx_bytes_needed, [:pointer], :int
 
-      # Get the number of bytes needed by the KMSContext
+      # Get the number of bytes needed by the KMSContext.
       #
       # @param [ Mongo::Crypt::KMSContext ] kms_context
       #
@@ -832,7 +832,7 @@ module Mongo
         mongocrypt_kms_ctx_bytes_needed(kms_context.kms_ctx_p)
       end
 
-      # Feed replies from the KMS back to libmongocrypt
+      # Feed replies from the KMS back to libmongocrypt.
       #
       # @param [ FFI::Pointer ] kms A pointer to the mongocrypt_kms_ctx_t object
       # @param [ FFI::Pointer ] bytes A pointer to a mongocrypt_binary_t
@@ -841,7 +841,12 @@ module Mongo
       # @return [ Boolean ] Whether the operation was successful
       attach_function :mongocrypt_kms_ctx_feed, [:pointer, :pointer], :bool
 
-      # TODO: documentation
+      # Feed replies from the KMS back to libmongocrypt.
+      #
+      # @param [ Mongo::Crypt::KMSContext ] kms_context
+      # @oaram [ String ] data The data to feed to libmongocrypt
+      #
+      # @raise [ Mongo::CryptError ] If the response is not fed successfully
       def self.kms_ctx_feed(kms_context, bytes)
         check_kms_ctx_status(kms_context) do
           Binary.wrap_string(bytes) do |bytes_p|
@@ -850,10 +855,21 @@ module Mongo
         end
       end
 
-      # TODO: documentation
+      # Write status information about the mongocrypt_kms_ctx_t object
+      # to the mongocrypt_status_t object.
+      #
+      # @param [ FFI::Pointer ] kms A pointer to the mongocrypt_kms_ctx_t object
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t object
+      #
+      # @return [ Boolean ] Whether the operation was successful
       attach_function :mongocrypt_kms_ctx_status, [:pointer, :pointer], :bool
 
-      # TODO: documentation
+      # If the provided block returns false, raise a CryptError with the
+      # status information from the provided KmsContext object.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      #
+      # @raise [ Mongo::CryptError ] If the provided block returns false
       def self.check_kms_ctx_status(kms_context)
         unless yield
           status = Status.new
@@ -863,10 +879,19 @@ module Mongo
         end
       end
 
-      # TODO: documentation
+      # Indicate to libmongocrypt that it will receive no more replies from
+      # mongocrypt_kms_ctx_t objects.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @return [ Boolean ] Whether the operation was successful
       attach_function :mongocrypt_ctx_kms_done, [:pointer], :bool
 
-      # TODO: documentation
+      # Indicate to libmongocrypt that it will receive no more KMS replies.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Mongo::CryptError ] If the operation is unsuccessful
       def self.ctx_kms_done(context)
         check_ctx_status(context) do
           mongocrypt_ctx_kms_done(context.ctx_p)
@@ -887,7 +912,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Mongo::Crypt::Error ] If the state machine is not successfully
+      # @raise [ Mongo::CryptError ] If the state machine is not successfully
       #   finalized
       def self.ctx_finalize(context)
         binary = Binary.new
