@@ -129,13 +129,14 @@ module Mongo
         end
       end
 
-      # Inflate a message.
+      # Inflate a message if it is compressed.
       #
-      # @return [ self ] Always returns self. Other message types should
-      #   override this method.
+      # @return [ Protocol::Message ] Always returns self. Subclasses should
+      #   override this method as necessary.
       #
       # @since 2.5.0
-      def inflate!
+      # @api private
+      def maybe_inflate
         self
       end
 
@@ -183,7 +184,7 @@ module Mongo
             deserialize_field(message, buffer, field)
           end
         end
-        message.inflate!
+        message.maybe_inflate
       end
 
       # Tests for equality between two wire protocol messages

@@ -44,16 +44,17 @@ module Mongo
       #           { type: 1, payload: { identifier: 'documents', sequence: [..] } })
       #
       # @param [ Array<Symbol> ] flags The flag bits. Current supported values
-      # are :more_to_come and :checksum_present.
-      # @param [ Hash ] options The options. There are currently no supported
-      #   options, this is a placeholder for the future.
+      #   are :more_to_come and :checksum_present.
+      # @param [ Hash ] options The options.
       # @param [ BSON::Document, Hash ] global_args The global arguments,
       #   becomes a section of payload type 0.
       # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format
       #   { type: 1, payload: { identifier: <String>, sequence: <Array<BSON::Document, Hash>> } } or
       #   { type: 0, payload: <BSON::Document, Hash> }
       #
-      # @option options [ true, false ] validating_keys Whether keys should be validated.
+      # @option options [ true, false ] validating_keys Whether keys should be
+      #   validated for being valid document keys (i.e. not begin with $ and
+      #   not contain dots).
       #
       # @api private
       #
@@ -92,7 +93,7 @@ module Mongo
         # https://jira.mongodb.org/browse/RUBY-1591.
         # Note that even without the reordering, the payload is not an exact
         # match to what is sent over the wire because the command as used in
-        # the published eent combines keys from multiple sections of the
+        # the published event combines keys from multiple sections of the
         # payload sent over the wire.
         ordered_command = {}
         skipped_command = {}
@@ -110,7 +111,7 @@ module Mongo
           database_name: global_args[DATABASE_IDENTIFIER],
           command: ordered_command,
           request_id: request_id,
-          reply: sections[0]
+          reply: sections[0],
         )
       end
 
