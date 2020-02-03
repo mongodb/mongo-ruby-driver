@@ -232,14 +232,7 @@ describe Mongo::ClientEncryption do
     end
   end
 
-  shared_context 'encryption/decryption' do
-    let(:data_key) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document.json'))
-    end
-
-    # Represented in as Base64 for simplicity
-    # let(:encrypted_value) { "bwAAAAV2AGIAAAAGASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QT\nYNYHvplIMWjXWlnxAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGI\nJ4pHUwVPSiNqfFTKu3OewGtKV9AA\n" }
-    let(:encrypted_value) { "ASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QTYNYHvplIMWjXWlnx\nAVC2hUwayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGIJ4pHUwVPSiNqfFTK\nu3OewGtKV9A=\n" }
+  describe '#encrypt/decrypt' do
     let(:value) { 'Hello world' }
 
     before do
@@ -248,34 +241,54 @@ describe Mongo::ClientEncryption do
 
       key_vault_collection.insert_one(data_key)
     end
-  end
 
-  describe '#encrypt' do
-    include_context 'encryption/decryption'
+    shared_examples 'an encrypter' do
+      it 'correctly encrypts a string' do
+        encrypted = client_encryption.encrypt(
+          value,
+          {
+            key_id: data_key['_id'].data,
+            algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
+          }
+        )
 
-    it 'returns the correct encrypted string' do
-      encrypted = client_encryption.encrypt(
-        value,
-        {
-          key_id: data_key['_id'].data,
-          algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
-        }
-      )
-
-      expect(encrypted).to be_a_kind_of(BSON::Binary)
-      expect(encrypted.type).to eq(:ciphertext)
-      expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
+        expect(encrypted).to be_a_kind_of(BSON::Binary)
+        expect(encrypted.type).to eq(:ciphertext)
+        expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
+      end
     end
-  end
 
-  describe '#decrypt' do
-    include_context 'encryption/decryption'
+    shared_examples 'a decrypter' do
+      it 'correctly decrypts a string' do
+        encrypted = BSON::Binary.new(Base64.decode64(encrypted_value), :ciphertext)
 
-    it 'returns the correct unencrypted value' do
-      encrypted = BSON::Binary.new(Base64.decode64(encrypted_value), :ciphertext)
+        result = client_encryption.decrypt(encrypted)
+        expect(result).to eq(value)
+      end
+    end
 
-      result = client_encryption.decrypt(encrypted)
-      expect(result).to eq(value)
+    context 'with local KMS providers' do
+      include_context 'with local kms_providers'
+
+      let(:encrypted_value) do
+        "ASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QTYNYHvplIMWjXWlnx\nAVC2hU" +
+        "wayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGIJ4pHUwVPSiNqfFTK\nu3OewGtKV9A=\n"
+      end
+
+      it_behaves_like 'an encrypter'
+      it_behaves_like 'a decrypter'
+    end
+
+    context 'with AWS KMS providers' do
+      include_context 'with AWS kms_providers'
+
+      let(:encrypted_value) do
+        "AQFkgAAAAAAAAAAAAAAAAAACqjx0+rWi18AIVwOm5VBLF1ga9Unvzo8QTAl1\niSa3k9" +
+        "Jk55S26zEpQS/G//rMy+mN6SMYoQURBLJri86g6M1+V/8Fz4Hxw4nJ\nJDqWRF3B9pY=\n"
+      end
+
+      it_behaves_like 'an encrypter'
+      it_behaves_like 'a decrypter'
     end
   end
 end
