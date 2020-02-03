@@ -1,17 +1,17 @@
-# encoding: UTF-8
-require 'spec_helper'
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::Query do
 
   let(:opcode)   { 2004 }
   let(:db)       { SpecConfig.instance.test_db }
-  let(:coll)     { TEST_COLL }
-  let(:ns)       { "#{db}.#{coll}" }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)       { "#{db}.#{collection_name}" }
   let(:selector) { { :name => 'Tyler' } }
   let(:options)     { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, options)
+    described_class.new(db, collection_name, selector, options)
   end
 
   describe '#initialize' do
@@ -66,7 +66,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, options)
+          described_class.new(db, collection_name, selector, options)
         end
 
         it 'returns true' do
@@ -76,7 +76,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, options)
+          described_class.new('tyler', collection_name, selector, options)
         end
 
         it 'returns false' do
@@ -96,7 +96,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, options)
+          described_class.new(db, collection_name, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -106,7 +106,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, :skip => 2)
+          described_class.new(db, collection_name, selector, :skip => 2)
         end
 
         it 'returns false' do
@@ -225,7 +225,7 @@ describe Mongo::Protocol::Query do
       context 'when the namespace contains unicode characters' do
         let(:field) { bytes.to_s[20..40] }
 
-        let(:coll) do
+        let(:collection_name) do
           'områder'
         end
 
