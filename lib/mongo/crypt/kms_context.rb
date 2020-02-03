@@ -18,8 +18,8 @@ module Mongo
     # Wraps a libmongocrypt mongocrypt_kms_ctx_t object. Contains information
     # about making an HTTP request to fetch information about a KMS
     # data key.
-    class KMSContext
-      # Create a new KMSContext object.
+    class KmsContext
+      # Create a new KmsContext object.
       #
       # @param [ FFI::Pointer ] kms_ctx A pointer to a mongocrypt_kms_ctx_t
       #   object. This object is managed by the mongocrypt_ctx_t object that

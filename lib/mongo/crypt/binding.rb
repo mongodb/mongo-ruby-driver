@@ -743,19 +743,19 @@ module Mongo
       # @return [ FFI::Pointer ] A pointer to a mongocrypt_kms_ctx_t object
       attach_function :mongocrypt_ctx_next_kms_ctx, [:pointer], :pointer
 
-      # Return a new KMSContext object needed by a Context object.
+      # Return a new KmsContext object needed by a Context object.
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @return [ Mongo::Crypt::KMSContext | nil ] The KMSContext needed to
-      #   fetch an AWS master key or nil, if no KMSContext is needed
+      # @return [ Mongo::Crypt::KmsContext | nil ] The KmsContext needed to
+      #   fetch an AWS master key or nil, if no KmsContext is needed
       def self.ctx_next_kms_ctx(context)
         kms_ctx_p = mongocrypt_ctx_next_kms_ctx(context.ctx_p)
 
         if kms_ctx_p.null?
           nil
         else
-          KMSContext.new(kms_ctx_p)
+          KmsContext.new(kms_ctx_p)
         end
       end
 
@@ -770,9 +770,9 @@ module Mongo
       attach_function :mongocrypt_kms_ctx_message, [:pointer, :pointer], :bool
 
       # Get the HTTP message needed to fetch the AWS KMS master key from a
-      # KMSContext object.
+      # KmsContext object.
       #
-      # @param [ Mongo::Crypt::KMSContext ] kms_context
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
       #
       # @raise [ Mongo::CryptError ] If the response is not fed successfully
       #
@@ -800,7 +800,7 @@ module Mongo
       # Get the hostname with which to connect over TLS to get information
       # about the AWS master key.
       #
-      # @param [ Mongo::Crypt::KMSContext ] kms_context
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
       #
       # @raise [ Mongo::CryptError ] If the response is not fed successfully
       #
@@ -823,9 +823,9 @@ module Mongo
       # @return [ Integer ] The number of bytes needed
       attach_function :mongocrypt_kms_ctx_bytes_needed, [:pointer], :int
 
-      # Get the number of bytes needed by the KMSContext.
+      # Get the number of bytes needed by the KmsContext.
       #
-      # @param [ Mongo::Crypt::KMSContext ] kms_context
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
       #
       # @return [ Integer ] The number of bytes needed
       def self.kms_ctx_bytes_needed(kms_context)
@@ -843,7 +843,7 @@ module Mongo
 
       # Feed replies from the KMS back to libmongocrypt.
       #
-      # @param [ Mongo::Crypt::KMSContext ] kms_context
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
       # @oaram [ String ] data The data to feed to libmongocrypt
       #
       # @raise [ Mongo::CryptError ] If the response is not fed successfully

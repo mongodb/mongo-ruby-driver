@@ -88,9 +88,9 @@ module Mongo
       end
 
       # Get information about the AWS encryption key and feed it to the the
-      # KMSContext object
+      # KmsContext object
       #
-      # @param [ Mongo::Crypt::KMSContext ] kms_context A KMSContext object
+      # @param [ Mongo::Crypt::KmsContext ] kms_context A KmsContext object
       #   corresponding to one AWS KMS data key. Contains information about
       #   the endpoint at which to establish a TLS connection and the message
       #   to send on that connection.
