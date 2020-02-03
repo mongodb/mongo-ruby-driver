@@ -101,6 +101,7 @@ module Mongo
         socket_timeout = 10
 
         host, port = endpoint.split(':')
+        port ||= 443
 
         # TODO: do some host/port testing
 

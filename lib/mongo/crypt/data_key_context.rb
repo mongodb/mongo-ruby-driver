@@ -127,7 +127,7 @@ module Mongo
         unless endpoint.is_a?(String)
           raise ArgumentError.new(
             "#{endpoint} is an invalid AWS master_key endpoint. " +
-            "The master_key endpoint option must be a String"
+            "The :endpoint key of the :master_key options Hash must be a String"
           )
         end
 

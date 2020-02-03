@@ -35,7 +35,7 @@ module Crypt
       {
         aws: {
           access_key_id: SpecConfig.instance.fle_aws_key,
-          secret_access_key: SpecConfig.instance.fle_aws_secret
+          secret_access_key: SpecConfig.instance.fle_aws_secret,
         }
       }
     end

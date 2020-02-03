@@ -90,105 +90,121 @@ describe Mongo::ClientEncryption do
     context 'with AWS KMS provider' do
       include_context 'with AWS kms_providers'
 
-      # context 'with nil options' do
-      #   let(:options) { nil }
+      context 'with nil options' do
+        let(:options) { nil }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /options cannot be nil/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /options cannot be nil/)
+        end
+      end
 
-      # context 'with empty options' do
-      #   let(:options) { {} }
+      context 'with empty options' do
+        let(:options) { {} }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /options Hash must contain a key named :master_key/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /options Hash must contain a key named :master_key/)
+        end
+      end
 
-      # context 'with nil master key' do
-      #   let(:options) { { master_key: nil } }
+      context 'with nil master key' do
+        let(:options) { { master_key: nil } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /:master_key options cannot be nil/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /:master_key options cannot be nil/)
+        end
+      end
 
-      # context 'with invalid master key' do
-      #   let(:options) { { master_key: 'master-key' } }
+      context 'with invalid master key' do
+        let(:options) { { master_key: 'master-key' } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /master-key is an invalid :master_key option/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /master-key is an invalid :master_key option/)
+        end
+      end
 
-      # context 'with empty master key' do
-      #   let(:options) { { master_key: {} } }
+      context 'with empty master key' do
+        let(:options) { { master_key: {} } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
+        end
+      end
 
-      # context 'with nil region' do
-      #   let(:options) { { master_key: { region: nil, key: 'arn' } } }
+      context 'with nil region' do
+        let(:options) { { master_key: { region: nil, key: 'arn' } } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
+        end
+      end
 
-      # context 'with invalid region' do
-      #   let(:options) { { master_key: { region: 5, key: 'arn' } } }
+      context 'with invalid region' do
+        let(:options) { { master_key: { region: 5, key: 'arn' } } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /region key of the :master_key options Hash must be a String/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /region key of the :master_key options Hash must be a String/)
+        end
+      end
 
-      # context 'with nil key' do
-      #   let(:options) { { master_key: { key: nil, region: 'us-east-1' } } }
+      context 'with nil key' do
+        let(:options) { { master_key: { key: nil, region: 'us-east-1' } } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /key key of the :master_key options Hash cannot be nil/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /key key of the :master_key options Hash cannot be nil/)
+        end
+      end
 
-      # context 'with invalid key' do
-      #   let(:options) { { master_key: { key: 5, region: 'us-east-1' } } }
+      context 'with invalid key' do
+        let(:options) { { master_key: { key: 5, region: 'us-east-1' } } }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       data_key_id
-      #     end.to raise_error(ArgumentError, /key key of the :master_key options Hash must be a String/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /key key of the :master_key options Hash must be a String/)
+        end
+      end
 
-      # context 'with invalid endpoint' do; end
-      # context 'with nil endpoint' do; end
-      # context 'with valid endpoint' do; end
+      context 'with invalid endpoint' do
+        let(:options) { { master_key: { key: 'arn', region: 'us-east-1', endpoint: 5 } } }
+
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /The :endpoint key of the :master_key options Hash must be a String/)
+        end
+      end
+
+      context 'with nil endpoint' do
+        include_examples 'data key creation'
+      end
+
+      context 'with valid endpoint' do
+
+        include_examples 'data key creation'
+      end
 
       let(:options) do
         {
           master_key: {
             region: 'us-east-1',
-            key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'
+            key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
+            endpoint: 'kms.us-east-1.amazonaws.com:443'
           }
         }
       end
