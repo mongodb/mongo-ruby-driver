@@ -141,7 +141,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with nil region' do
-        let(:options) { { master_key: { region: nil, key: cmk_arn } } }
+        let(:options) { { master_key: { region: nil, key: aws_arn } } }
 
         it 'raises an exception' do
           expect do
@@ -151,7 +151,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid region' do
-        let(:options) { { master_key: { region: 5, key: cmk_arn } } }
+        let(:options) { { master_key: { region: 5, key: aws_arn } } }
 
         it 'raises an exception' do
           expect do
@@ -161,7 +161,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with nil key' do
-        let(:options) { { master_key: { key: nil, region: cmk_region } } }
+        let(:options) { { master_key: { key: nil, region: aws_region } } }
 
         it 'raises an exception' do
           expect do
@@ -171,7 +171,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid key' do
-        let(:options) { { master_key: { key: 5, region: cmk_region } } }
+        let(:options) { { master_key: { key: 5, region: aws_region } } }
 
         it 'raises an exception' do
           expect do
@@ -181,7 +181,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid endpoint' do
-        let(:options) { { master_key: { key: cmk_arn, region: cmk_region, endpoint: 5 } } }
+        let(:options) { { master_key: { key: aws_arn, region: aws_region, endpoint: 5 } } }
 
         it 'raises an exception' do
           expect do
@@ -194,8 +194,8 @@ describe Mongo::ClientEncryption do
         let(:options) do
           {
             master_key: {
-              key: cmk_arn,
-              region: cmk_region,
+              key: aws_arn,
+              region: aws_region,
               endpoint: nil
             }
           }
@@ -208,9 +208,9 @@ describe Mongo::ClientEncryption do
         let(:options) do
           {
             master_key: {
-              key: cmk_arn,
-              region: cmk_region,
-              endpoint: cmk_endpoint_host
+              key: aws_arn,
+              region: aws_region,
+              endpoint: aws_endpoint_host
             }
           }
         end
@@ -219,7 +219,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with valid endpoint, no port' do
-        let(:options) { cmk_options }
+        let(:options) { data_key_options }
         include_examples 'it creates a data key'
       end
     end

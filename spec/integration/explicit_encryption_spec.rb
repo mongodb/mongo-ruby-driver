@@ -20,7 +20,10 @@ describe 'Explicit Encryption' do
         client_encryption_opts
       )
 
-      data_key_id = client_encryption.create_data_key
+      data_key_id = client_encryption.create_data_key(
+        kms_provider_name,
+        data_key_options
+      )
 
       encrypted = client_encryption.encrypt(
         value,
@@ -36,34 +39,51 @@ describe 'Explicit Encryption' do
     end
   end
 
-  shared_examples 'it uses AWS client master key' do
-    include_context 'with AWS kms_providers'
-    it_behaves_like 'an explicit encrypter'
-  end
-
-  shared_examples 'it uses local client master key' do
-    include_context 'with local kms_providers'
-    it_behaves_like 'an explicit encrypter'
-  end
-
   context 'value is a string' do
     let(:value) { 'Hello, world!' }
 
-    it_behaves_like 'it uses AWS client master key'
-    it_behaves_like 'it uses local client master key'
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
   end
 
   context 'value is an integer' do
     let(:value) { 42 }
 
-    it_behaves_like 'it uses AWS client master key'
-    it_behaves_like 'it uses local client master key'
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
   end
 
   context 'value is an symbol' do
     let(:value) { BSON::Symbol::Raw.new(:hello_world) }
 
-    it_behaves_like 'it uses AWS client master key'
-    it_behaves_like 'it uses local client master key'
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
   end
 end
