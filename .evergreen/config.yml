@@ -260,8 +260,8 @@ functions:
         working_dir: "src"
         script: |
           cat <<EOT > .env.private
-          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
-          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
+          MONGO_RUBY_DRIVER_AWS_KEY="${SpecConfig.instance.fle_aws_key}"
+          MONGO_RUBY_DRIVER_AWS_SECRET="${SpecConfig.instance.fle_aws_secret}"
           EOT
 
   "delete private environment":

@@ -21,12 +21,6 @@ module Crypt
         "YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk"
     end
 
-    # AWS IAM user access key id
-    let(:fle_aws_key) { ENV['MONGO_RUBY_DRIVER_AWS_KEY'] }
-
-    # AWS IAM user secret access key
-    let(:fle_aws_secret) { ENV['MONGO_RUBY_DRIVER_AWS_SECRET'] }
-
     # Data key id as a binary string
     let(:key_id) { data_key['_id'].data }
 
@@ -40,8 +34,8 @@ module Crypt
     let(:aws_kms_providers) do
       {
         aws: {
-          access_key_id: fle_aws_key,
-          secret_access_key: fle_aws_secret
+          access_key_id: SpecConfig.instance.fle_aws_key,
+          secret_access_key: SpecConfig.instance.fle_aws_secret
         }
       }
     end
@@ -63,6 +57,16 @@ module Crypt
 
   # For tests that require AWS KMS to be configured
   shared_context 'with AWS kms_providers' do
+    before do
+      unless SpecConfig.instance.fle_aws_key && SpecConfig.instance.fle_aws_secret
+        skip(
+          'This test requires the MONGO_RUBY_DRIVER_AWS_KEY and ' +
+          'MONGO_RUBY_DRIVER_AWS_SECRET environment variables to be set with ' +
+          'AWS IAM credentials.'
+        )
+      end
+    end
+
     let(:kms_provider_name) { 'aws' }
     let(:kms_providers) { aws_kms_providers }
 

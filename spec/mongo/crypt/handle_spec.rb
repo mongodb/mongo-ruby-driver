@@ -126,7 +126,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: nil,
-            secret_access_key: fle_aws_secret
+            secret_access_key: SpecConfig.instance.fle_aws_secret
           }
         }
       }
@@ -143,7 +143,7 @@ describe Mongo::Crypt::Handle do
         {
           aws: {
             access_key_id: 5,
-            secret_access_key: fle_aws_secret
+            secret_access_key: SpecConfig.instance.fle_aws_secret
           }
         }
       }
@@ -160,7 +160,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: fle_aws_key,
+            access_key_id: SpecConfig.instance.fle_aws_key,
             secret_access_key: nil
           }
         }
@@ -177,7 +177,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) {
         {
           aws: {
-            access_key_id: fle_aws_key,
+            access_key_id: SpecConfig.instance.fle_aws_key,
             secret_access_key: 5
           }
         }
