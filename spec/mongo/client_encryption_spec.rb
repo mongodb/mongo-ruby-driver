@@ -233,7 +233,8 @@ describe Mongo::ClientEncryption do
   end
 
   describe '#encrypt/decrypt' do
-    let(:value) { 'Hello world' }
+    let(:value) { ssn }
+    let(:encrypted_value) { encrypted_ssn }
 
     before do
       key_vault_collection = client.use(key_vault_db)[key_vault_coll]
@@ -270,22 +271,12 @@ describe Mongo::ClientEncryption do
     context 'with local KMS providers' do
       include_context 'with local kms_providers'
 
-      let(:encrypted_value) do
-        "ASzggCwAAAAAAAAAAAAAAAACk0TG2WPKVdChK2Oay9QTYNYHvplIMWjXWlnx\nAVC2hU" +
-        "wayNZmKBSAVgW0D9tnEMdDdxJn+OxqQq3b9MGIJ4pHUwVPSiNqfFTK\nu3OewGtKV9A=\n"
-      end
-
       it_behaves_like 'an encrypter'
       it_behaves_like 'a decrypter'
     end
 
     context 'with AWS KMS providers' do
       include_context 'with AWS kms_providers'
-
-      let(:encrypted_value) do
-        "AQFkgAAAAAAAAAAAAAAAAAACqjx0+rWi18AIVwOm5VBLF1ga9Unvzo8QTAl1\niSa3k9" +
-        "Jk55S26zEpQS/G//rMy+mN6SMYoQURBLJri86g6M1+V/8Fz4Hxw4nJ\nJDqWRF3B9pY=\n"
-      end
 
       it_behaves_like 'an encrypter'
       it_behaves_like 'a decrypter'
