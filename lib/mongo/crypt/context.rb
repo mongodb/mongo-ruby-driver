@@ -70,7 +70,7 @@ module Mongo
         while true
           case state
           when :error
-            Binding.check_ctx_status
+            Binding.check_ctx_status(self)
           when :ready
             # Finalize the state machine and return the result as a BSON::Document
             return Binding.ctx_finalize(self)
@@ -98,10 +98,12 @@ module Mongo
             mongocrypt_feed(result)
 
             mongocrypt_done
-          else
-            # There is one other state to handle:
-            # - :need_kms
-            raise("State #{state} is not yet supported by Mongo::Crypt::Context")
+          when :need_kms
+            while kms_context = Binding.ctx_next_kms_ctx(self) do
+              @encryption_io.feed_kms(kms_context)
+            end
+
+            Binding.ctx_kms_done(self)
           end
         end
       end
