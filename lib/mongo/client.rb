@@ -655,21 +655,27 @@ module Mongo
         if options[:write_concern] && opts[:write]
           options.delete(:write_concern)
         end
+
+        # If the user specifies new auto_encryption_options, teardown the
+        # existing encryption infrastructure
+        if opts.key?(:auto_encryption_options)
+          should_teardown_encrypter = true
+        end
+
+        # If the new auto_encryption_options are not nil, then set up the
+        # encrypter again with the new options
+        if opts[:auto_encryption_options]
+          should_set_new_encryption_options = true
+        end
+
         options.update(opts)
         @options = options.freeze
+
+        teardown_encrypter if should_teardown_encrypter
+        set_auto_encryption_options if should_set_new_encryption_options
+
         validate_options!
         validate_authentication_options!
-
-        # If the user specifies that auto_encryption_options are now nil, prevent the client
-        # from doing any further auto-encryption by cleaning up the resources related to
-        # auto-encryption.
-        if @options.key?(:auto_encryption_options) && @options[:auto_encryption_options].nil?
-          teardown_encrypter
-        end
-
-        if @options[:auto_encryption_options]
-          set_auto_encryption_options
-        end
       end
     end
 
@@ -727,6 +733,10 @@ module Mongo
         @cluster.disconnect! rescue nil
 
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
+
+        if @options[:auto_encryption_options]
+          set_auto_encryption_options
+        end
       end
 
       true

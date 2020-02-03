@@ -46,8 +46,10 @@ module Mongo
       # @param options [Hash] Additional options for the insertion.
       #
       # @option options :flags [Array] The flags for the insertion message.
-      #
       #   Supported flags: +:continue_on_error+
+      # @option options [ true, false ] validating_keys Whether keys should be
+      #   validated for being valid document keys (i.e. not begin with $ and
+      #   not contain dots).
       def initialize(database, collection, documents, options = {})
         @database = database
         @namespace = "#{database}.#{collection}"

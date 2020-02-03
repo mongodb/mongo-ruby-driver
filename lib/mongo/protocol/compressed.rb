@@ -60,15 +60,13 @@ module Mongo
         @request_id = message.request_id
       end
 
-      # Inflate an OP_COMRESSED message and return the original message.
-      #
-      # @example Inflate a compressed message.
-      #  message.inflate!
+      # Inflates an OP_COMRESSED message and returns the original message.
       #
       # @return [ Protocol::Message ] The inflated message.
       #
       # @since 2.5.0
-      def inflate!
+      # @api private
+      def maybe_inflate
         message = Registry.get(@original_op_code).allocate
         uncompressed_message = Zlib::Inflate.inflate(@compressed_message)
 
