@@ -1,4 +1,6 @@
 shared_examples 'message with a header' do
+  let(:collection_name) { 'test' }
+
   describe 'header' do
     describe 'length' do
       let(:field) { bytes.to_s[0..3] }

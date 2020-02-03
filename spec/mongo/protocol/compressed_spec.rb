@@ -1,8 +1,8 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Protocol::Compressed do
 
-  let(:original_message) { Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { ping: 1 }) }
+  let(:original_message) { Mongo::Protocol::Query.new(SpecConfig.instance.test_db, 'protocol-test', { ping: 1 }) }
   let(:compressor) { 'zlib' }
   let(:level)      { nil }
 
@@ -53,7 +53,6 @@ describe Mongo::Protocol::Compressed do
     end
 
     context 'when the original message is not replyable' do
-      min_server_fcv '3.6'
 
       let(:original_message) do
         Mongo::Protocol::Msg.new([:more_to_come], {}, { ping: 1 })
