@@ -53,11 +53,11 @@ module Crypt
     let(:kms_providers) { local_kms_providers }
 
     let(:data_key) do
-      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document_local.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_local.json'))
     end
 
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map_local.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
     end
   end
 
@@ -67,11 +67,11 @@ module Crypt
     let(:kms_providers) { aws_kms_providers }
 
     let(:data_key) do
-      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/key_document_aws.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_aws.json'))
     end
 
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/mongo/crypt/data/schema_map_aws.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
     end
   end
 end
