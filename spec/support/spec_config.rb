@@ -307,6 +307,16 @@ EOT
     'ruby-driver'.freeze
   end
 
+  # AWS IAM user access key id
+  def fle_aws_key
+    ENV['MONGO_RUBY_DRIVER_AWS_KEY']
+  end
+
+  # AWS IAM user secret access key
+  def fle_aws_secret
+    ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
+  end
+
   # Option hashes
 
   def auth_options

@@ -4,28 +4,21 @@ require 'lite_spec_helper'
 
 describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
+  include_context 'define shared FLE helpers'
 
   let(:mongocrypt) do
-    Mongo::Crypt::Handle.new(
-      {
-        local: { key: Base64.encode64("ru\xfe\x00" * 24) },
-        aws: {
-          access_key_id: ENV['MONGO_RUBY_DRIVER_AWS_KEY'],
-          secret_access_key: ENV['MONGO_RUBY_DRIVER_AWS_SECRET'],
-        }
-      }
-    )
+    Mongo::Crypt::Handle.new(kms_providers)
   end
 
   let(:io) { double("Mongo::Crypt::EncryptionIO") }
 
-  let(:context) { described_class.new(mongocrypt, io, kms_provider, options) }
-  let(:kms_provider) { 'local' }
+  let(:context) { described_class.new(mongocrypt, io, kms_provider_name, options) }
   let(:options) { {} }
 
   describe '#initialize' do
     context 'with invalid kms provider'do
-      let(:kms_provider) { 'invalid' }
+      let(:kms_providers) { local_kms_providers }
+      let(:kms_provider_name) { 'invalid' }
 
       it 'raises an exception' do
         expect do
@@ -35,6 +28,8 @@ describe Mongo::Crypt::DataKeyContext do
     end
 
     context 'with local kms provider and empty options' do
+      include_context 'with local kms_providers'
+
       it 'does not raise an exception' do
         expect do
           context
@@ -43,7 +38,7 @@ describe Mongo::Crypt::DataKeyContext do
     end
 
     context 'with aws kms provider' do
-      let(:kms_provider) { 'aws' }
+      include_context 'with AWS kms_providers'
 
       context 'with empty options' do
         let(:options) { {} }
@@ -147,22 +142,15 @@ describe Mongo::Crypt::DataKeyContext do
     end
   end
 
-  # This is a simple spec just to test that this method works
-  # There should be multiple specs testing the context's state
-  #   depending on how it's initialized, etc.
-  describe '#state' do
-    it 'returns :ready' do
-      expect(context.state).to eq(:ready)
-    end
-  end
-
-  # This is a simple spec just to test the POC case of creating a data key
-  # There should be specs testing each state, as well as integration tests
-  #   to test that the state machine returns the correct result under various
-  #   conditions
   describe '#run_state_machine' do
-    it 'creates a data key' do
-      expect(context.run_state_machine).to be_a_kind_of(Hash)
+    # TODO: test with AWS KMS provider
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      it 'creates a data key' do
+        expect(context.run_state_machine).to be_a_kind_of(Hash)
+      end
     end
   end
 end
