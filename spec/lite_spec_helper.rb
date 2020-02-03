@@ -21,11 +21,6 @@ CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/
 CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 
-require 'mongo'
-require 'pp'
-
-autoload :Benchmark, 'benchmark'
-
 unless ENV['CI']
   begin
     require 'byebug'
@@ -39,6 +34,11 @@ unless ENV['CI']
     end
   end
 end
+
+require 'mongo'
+require 'pp'
+
+autoload :Benchmark, 'benchmark'
 
 if BSON::Environment.jruby?
   require 'concurrent-ruby'
