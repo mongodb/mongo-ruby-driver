@@ -106,12 +106,7 @@ describe Mongo::Operation::Insert::OpMsg do
       end
 
       let!(:expected_payload_1) do
-        {
-            type: 1,
-            payload: { identifier: 'documents',
-                       sequence: op.documents
-            }
-        }
+        Mongo::Protocol::Msg::Section1.new('documents', op.documents)
       end
 
       let(:session) do

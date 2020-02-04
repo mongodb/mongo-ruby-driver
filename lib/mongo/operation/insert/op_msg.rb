@@ -42,7 +42,7 @@ module Mongo
         end
 
         def message(server)
-          section = { type: 1, payload: { identifier: IDENTIFIER, sequence: send(IDENTIFIER) } }
+          section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
           Protocol::Msg.new(flags, { validating_keys: true }, command(server), section)
         end
       end

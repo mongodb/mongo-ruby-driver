@@ -108,12 +108,7 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       let(:expected_payload_1) do
-        {
-            type: 1,
-            payload: { identifier: 'updates',
-                       sequence: updates
-            }
-        }
+        Mongo::Protocol::Msg::Section1.new('updates', updates)
       end
 
       let(:session) do

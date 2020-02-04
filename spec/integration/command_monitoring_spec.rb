@@ -30,6 +30,7 @@ describe 'Command monitoring' do
     expect(succeeded_event.command_name).to eql('ismaster')
     expect(succeeded_event.reply).to be_a(BSON::Document)
     expect(succeeded_event.reply['ismaster']).to eql(true)
+    expect(succeeded_event.reply['ok']).to eq(1)
     expect(succeeded_event.address).to be_a(Mongo::Address)
     expect(succeeded_event.duration).to be_a(Float)
 

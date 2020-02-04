@@ -79,6 +79,9 @@ module Mongo
             Message.deserialize_field(message, buf, field)
           end
         end
+        if message.is_a?(Msg)
+          message.fix_after_deserialization
+        end
         message
       end
 

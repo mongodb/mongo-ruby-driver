@@ -46,11 +46,11 @@ module Mongo
       # @param [ Array<Symbol> ] flags The flag bits. Current supported values
       #   are :more_to_come and :checksum_present.
       # @param [ Hash ] options The options.
-      # @param [ BSON::Document, Hash ] global_args The global arguments,
-      #   becomes a section of payload type 0.
-      # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format
-      #   { type: 1, payload: { identifier: <String>, sequence: <Array<BSON::Document, Hash>> } } or
-      #   { type: 0, payload: <BSON::Document, Hash> }
+      # @param [ BSON::Document, Hash ] main_document The document that will
+      #   become the payload type 0 section. Can contain global args as they
+      #   are defined in the OP_MSG specification.
+      # @param [ Protocol::Msg::Section1 ] sequences Zero or more payload type 1
+      #   sections.
       #
       # @option options [ true, false ] validating_keys Whether keys should be
       #   validated for being valid document keys (i.e. not begin with $ and
@@ -59,11 +59,27 @@ module Mongo
       # @api private
       #
       # @since 2.5.0
-      def initialize(flags, options, global_args, *sections)
+      def initialize(flags, options, main_document, *sequences)
         @flags = flags || []
         @options = options
-        @global_args = global_args
-        @sections = [ { type: 0, payload: global_args } ] + sections
+        unless main_document.is_a?(Hash)
+          raise ArgumentError, "Main document must be a Hash, given: #{main_document.class}"
+        end
+        @main_document = main_document
+        sequences.each_with_index do |section, index|
+          unless section.is_a?(Section1)
+            raise ArgumentError, "All sequences must be Section1 instances, got: #{section} at index #{index}"
+          end
+        end
+        @sequences = sequences
+        @sections = [
+          {type: 0, payload: @main_document}
+        ] + @sequences.map do |section|
+          {type: 1, payload: {
+            identifier: section.identifier,
+            sequence: section.documents,
+          }}
+        end
         @request_id = nil
         super
       end
@@ -89,7 +105,7 @@ module Mongo
       #
       # @since 2.5.0
       def payload
-        # Reorder keys in global_args for better logging - see
+        # Reorder keys in main_document for better logging - see
         # https://jira.mongodb.org/browse/RUBY-1591.
         # Note that even without the reordering, the payload is not an exact
         # match to what is sent over the wire because the command as used in
@@ -108,10 +124,10 @@ module Mongo
 
         BSON::Document.new(
           command_name: ordered_command.keys.first.to_s,
-          database_name: global_args[DATABASE_IDENTIFIER],
+          database_name: @main_document[DATABASE_IDENTIFIER],
           command: ordered_command,
           request_id: request_id,
-          reply: sections[0],
+          reply: @main_document,
         )
       end
 
@@ -144,18 +160,41 @@ module Mongo
         compress_if_possible(command.keys.first, compressor, zlib_compression_level)
       end
 
+      # Reverse-populates the instance variables after deserialization sets
+      # @sections to the list of documents.
+      #
+      # TODO fix deserialization so that this method is not needed.
+      #
+      # @api private
+      def fix_after_deserialization
+        if @sections.nil?
+          raise NotImplementedError, "After deserializations @sections should have been initialized"
+        end
+        if @sections.length != 1
+          raise NotImplementedError, "Deserialization must have produced exactly one section, but it produced #{sections.length} sections"
+        end
+        @main_document = @sections.first
+        @sequences = []
+        @sections = [{type: 0, payload: @main_document}]
+      end
+
+      def documents
+        [@main_document]
+      end
+
       private
 
       def command
-        @command ||= global_args.dup.tap do |cmd|
-          cmd.delete(DATABASE_IDENTIFIER)
-          sections.each do |section|
-            if section[:type] == 1
-              identifier = section[:payload][:identifier]
-              cmd[identifier] ||= []
-              cmd[identifier] += section[:payload][:sequence]
+        @command ||= if @main_document
+          @main_document.dup.tap do |cmd|
+            cmd.delete(DATABASE_IDENTIFIER)
+            @sequences.each do |section|
+              cmd[section.identifier] ||= []
+              cmd[section.identifier] += section.documents
             end
           end
+        else
+          documents.first
         end
       end
 
@@ -165,8 +204,24 @@ module Mongo
         end
       end
 
-      def global_args
-        @global_args ||= (sections[0] || {})
+      # Encapsulates a type 1 OP_MSG section.
+      #
+      # @see https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.rst#sections
+      #
+      # @api private
+      class Section1
+        def initialize(identifier, documents)
+          @identifier, @documents = identifier, documents
+        end
+
+        attr_reader :identifier, :documents
+
+        def ==(other)
+          other.is_a?(Section1) &&
+            identifier == other.identifier && documents == other.documents
+        end
+
+        alias :eql? :==
       end
 
       # The operation code required to specify a OP_MSG message.
@@ -176,19 +231,33 @@ module Mongo
       OP_CODE = 2013
 
       # Available flags for a OP_MSG message.
-      FLAGS = Array.new(16).tap { |arr|
+      FLAGS = Array.new(16).tap do |arr|
         arr[0] = :checksum_present
         arr[1] = :more_to_come
-      }
+      end.freeze
 
       # @!attribute
       # @return [Array<Symbol>] The flags for this message.
       field :flags, BitVector.new(FLAGS)
 
-      # @!attribute
-      # @return [Hash] The sections of payload type 1 or 0.
+      # The sections that will be serialized, or the documents have been
+      # deserialized.
+      #
+      # Usually the sections contain OP_MSG-compliant sections derived
+      # from @main_document and @sequences. The information in @main_document
+      # and @sequences is duplicated in the sections.
+      #
+      # When deserializing Msg instances, sections temporarily is an array
+      # of documents returned in the type 0 section of the OP_MSG wire
+      # protocol message. #fix_after_deserialization method mutates this
+      # object to have sections, @main_document and @sequences be what
+      # they would have been had the Msg instance been constructed using
+      # the constructor (rather than having been deserialized).
+      #
+      # @return [ Array<Hash> | Array<BSON::Document> ] The sections of
+      #   payload type 1 or 0.
+      # @api private
       field :sections, Sections
-      alias :documents :sections
 
       Registry.register(OP_CODE, self)
     end
