@@ -46,7 +46,7 @@ describe Mongo::Crypt::DataKeyContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /master key options cannot be nil/)
+          end.to raise_error(ArgumentError, /options Hash must contain a key named :master_key with a Hash value/)
         end
       end
 
@@ -56,7 +56,7 @@ describe Mongo::Crypt::DataKeyContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /key is an invalid master key option/)
+          end.to raise_error(ArgumentError, /:master_key option must be a Hash/)
         end
       end
 
