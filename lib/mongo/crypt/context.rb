@@ -88,7 +88,7 @@ module Mongo
             filter = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.collection_info(filter)
-            mongocrypt_feed(result)
+            mongocrypt_feed(result||{})
 
             mongocrypt_done
           when :need_mongo_markings
