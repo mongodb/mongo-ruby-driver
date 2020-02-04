@@ -103,6 +103,9 @@ module Crypt
       }
     end
 
+    # TODO: move these to environment variables so they are easily configurable
+    # for community members and update the test README explaining which variables
+    # to set.
     let(:aws_region) { 'us-east-1' }
     let(:aws_arn) { 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0' }
     let(:aws_endpoint_host) { 'kms.us-east-1.amazonaws.com' }
