@@ -12,8 +12,8 @@ describe Mongo::Client do
   let(:encryption_client) do
     new_local_client(
       SpecConfig.instance.addresses,
-      { auto_encryption_options: auto_encryption_options }
-    ).use(db)
+      { auto_encryption_options: auto_encryption_options, database: db }
+    )
   end
 
   let(:db) { 'test'}
