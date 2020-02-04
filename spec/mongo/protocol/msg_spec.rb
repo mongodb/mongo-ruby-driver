@@ -6,11 +6,11 @@ describe Mongo::Protocol::Msg do
   let(:opcode) { 2013 }
   let(:flags)     { [] }
   let(:options)   { {} }
-  let(:global_args)     { { '$db' => SpecConfig.instance.test_db, ping: 1 } }
-  let(:sections)   { [ ] }
+  let(:main_document)     { { '$db' => SpecConfig.instance.test_db, ping: 1 } }
+  let(:sequences)   { [ ] }
 
   let(:message) do
-    described_class.new(flags, options, global_args, *sections)
+    described_class.new(flags, options, main_document, *sequences)
   end
 
   let(:deserialized) do
@@ -19,8 +19,8 @@ describe Mongo::Protocol::Msg do
 
   describe '#initialize' do
 
-    it 'adds the global_args to the sections' do
-      expect(message.sections[0]).to eq(type: 0, payload: global_args)
+    it 'adds the main_document to the sections' do
+      expect(message.sections[0]).to eq(type: 0, payload: main_document)
     end
 
     context 'when flag bits are provided' do
@@ -59,13 +59,13 @@ describe Mongo::Protocol::Msg do
       end
     end
 
-    context 'with user-provided and driver-generated keys in global_args' do
-      let(:global_args) do
+    context 'with user-provided and driver-generated keys in main_document' do
+      let(:main_document) do
         { 'ping' => 1, 'lsid' => '__lsid__', 'a' => 'b', '$clusterTime' => '__ct__',
           'signature' => '__signature__', 'd' => 'f'}
       end
 
-      it 'reorders global_args for better logging' do
+      it 'reorders main_document for better logging' do
         expect(message.payload[:command].keys).to eq(%w(ping a d lsid $clusterTime signature))
       end
     end
@@ -78,7 +78,7 @@ describe Mongo::Protocol::Msg do
       context 'when the fields are equal' do
 
         let(:other) do
-          described_class.new(flags, options, global_args)
+          described_class.new(flags, options, main_document)
         end
 
         it 'returns true' do
@@ -89,7 +89,7 @@ describe Mongo::Protocol::Msg do
       context 'when the flags are not equal' do
 
         let(:other) do
-          described_class.new([:more_to_come], options, global_args)
+          described_class.new([:more_to_come], options, main_document)
         end
 
         it 'returns false' do
@@ -97,10 +97,14 @@ describe Mongo::Protocol::Msg do
         end
       end
 
-      context 'when the global_args are not equal' do
+      context 'when the main_document are not equal' do
+
+        let(:other_main_document) do
+          { '$db'=> SpecConfig.instance.test_db, ismaster: 1 }
+        end
 
         let(:other) do
-          described_class.new(flags, nil, { '$db'=> SpecConfig.instance.test_db, ismaster: 1 })
+          described_class.new(flags, nil, other_main_document)
         end
 
         it 'returns false' do
@@ -158,7 +162,7 @@ describe Mongo::Protocol::Msg do
     let(:flag_bytes) { bytes.to_s[16..19] }
     let(:payload_type) { bytes.to_s[20] }
     let(:payload_bytes) { bytes.to_s[21..-1] }
-    let(:global_args) { { ping: 1 } }
+    let(:main_document) { { ping: 1 } }
 
     include_examples 'message with a header'
 
@@ -205,13 +209,13 @@ describe Mongo::Protocol::Msg do
       end
 
       it 'serializes the global arguments' do
-        expect(payload_bytes).to be_bson(global_args)
+        expect(payload_bytes).to be_bson(main_document)
       end
     end
 
-    context 'when additional sections are provided' do
+    context 'when sequences are provided' do
 
-      let(:sections) do
+      let(:sequences) do
         [ section ]
       end
 
@@ -224,12 +228,13 @@ describe Mongo::Protocol::Msg do
         end
 
         it 'raises an exception' do
-          expect {
-            message.serialize
-          }.to raise_exception(Mongo::Error::UnknownPayloadType)
+          expect do
+            message
+          end.to raise_exception(ArgumentError, /All sequences must be Section1 instances/)
         end
       end
 
+=begin no longer supported
       context 'when a 0 payload type is specified' do
 
         let(:section) do
@@ -265,13 +270,12 @@ describe Mongo::Protocol::Msg do
           expect(section_bytes).to be_bson(section[:payload])
         end
       end
+=end
 
-      context 'when a 1 payload type is specified' do
+      context 'when a payload of type 1 is specified' do
 
         let(:section) do
-          { type: 1,
-            payload: { identifier: 'documents',
-                       sequence: [ { a: 1 } ] } }
+          Mongo::Protocol::Msg::Section1.new('documents', [ { a: 1 } ])
         end
 
         let(:section_payload_type) { bytes.to_s[36] }
@@ -297,23 +301,23 @@ describe Mongo::Protocol::Msg do
 
         context 'when two sections are specified' do
 
-          let(:sections) do
+          let(:sequences) do
             [ section1, section2 ]
           end
 
           let(:section1) do
-            { type: 1,
-              payload: { identifier: 'documents',
-                         sequence: [ { a: 1 } ] } }
+            Mongo::Protocol::Msg::Section1.new('documents', [ { a: 1 } ])
           end
 
           let(:section2) do
-            { type: 1,
-              payload: { identifier: 'updates',
-                         sequence: [ {:q => { :bar => 1 },
-                                      :u => { :$set => { :bar => 2 } },
-                                      :multi => true,
-                                      :upsert => false } ] } }
+            Mongo::Protocol::Msg::Section1.new('updates', [
+              {
+                :q => { :bar => 1 },
+                :u => { :$set => { :bar => 2 } },
+                :multi => true,
+                :upsert => false,
+              }
+            ])
           end
 
           let(:section1_payload_type) { bytes.to_s[36] }
@@ -355,16 +359,16 @@ describe Mongo::Protocol::Msg do
           end
 
           it 'serializes the second section bytes' do
-            expect(section2_bytes).to be_bson(section2[:payload][:sequence][0])
+            expect(section2_bytes).to be_bson(section2.documents[0])
           end
         end
       end
 
+=begin no longer supported
       context 'when the sections are mixed types and payload type 1 comes before type 0' do
 
         let(:section1) do
-          { type: 1,
-            payload: { identifier: 'documents', sequence: [ { 'a' => 1 }]}}
+          Mongo::Protocol::Msg::Section1.new('documents', [ { a: 1 } ])
         end
 
         let(:section2) do
@@ -376,19 +380,20 @@ describe Mongo::Protocol::Msg do
         end
 
         it 'serializes all sections' do
-          expect(deserialized.documents).to eq([ BSON::Document.new(global_args), { 'a' => 1 }, { 'b' => 2 }])
+          expect(deserialized.documents).to eq([ BSON::Document.new(main_document), { 'a' => 1 }, { 'b' => 2 }])
         end
       end
+=end
     end
 
     context 'when the validating_keys option is true with payload 1' do
 
-      let(:sections) do
+      let(:sequences) do
         [ section ]
       end
 
       let(:section) do
-        { type: 1, payload: { identifier: 'documents', sequence: [ { '$b' => 2 } ] } }
+        Mongo::Protocol::Msg::Section1.new('documents', [ { '$b' => 2 } ])
       end
 
       let(:options) do
@@ -404,12 +409,12 @@ describe Mongo::Protocol::Msg do
 
     context 'when the validating_keys option is false with payload 1' do
 
-      let(:sections) do
+      let(:sequences) do
         [ section ]
       end
 
       let(:section) do
-        { type: 1, payload: { identifier: 'documents', sequence: [ { '$b' => 2 } ] } }
+        Mongo::Protocol::Msg::Section1.new('documents', [ { '$b' => 2 } ])
       end
 
       let(:options) do
@@ -427,7 +432,7 @@ describe Mongo::Protocol::Msg do
     context 'when the payload type is valid' do
 
       it 'deserializes the message' do
-        expect(deserialized.documents).to eq([ BSON::Document.new(global_args) ])
+        expect(deserialized.documents).to eq([ BSON::Document.new(main_document) ])
       end
     end
 
@@ -440,9 +445,9 @@ describe Mongo::Protocol::Msg do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           Mongo::Protocol::Message.deserialize(StringIO.new(invalid_payload_message))
-        }.to raise_exception(Mongo::Error::UnknownPayloadType)
+        end.to raise_exception(Mongo::Error::UnknownPayloadType)
       end
     end
   end
@@ -462,19 +467,17 @@ describe Mongo::Protocol::Msg do
     context 'when the contains a payload type 1' do
 
       let(:section) do
-        { type: 1,
-          payload: { identifier: 'documents',
-                     sequence: [ { a: 1 } ] } }
+        Mongo::Protocol::Msg::Section1.new('documents', [ { a: 1 } ])
       end
 
-      let(:global_args) do
+      let(:main_document) do
         { '$db' => SpecConfig.instance.test_db,
           'insert' => 'foo',
           'ordered' => true
         }
       end
 
-      let(:sections) do
+      let(:sequences) do
         [ section ]
       end
 
@@ -482,7 +485,7 @@ describe Mongo::Protocol::Msg do
         {
             'insert' => 'foo',
             'documents' => [{ 'a' => 1 }],
-            'ordered' => true
+            'ordered' => true,
         }
       end
 

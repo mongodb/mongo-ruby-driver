@@ -313,6 +313,8 @@ module Mongo
           #
           # @since 2.5.0
           def self.deserialize(buffer)
+            raise NotImplementedError
+
             start_size = buffer.length
             section_size = buffer.get_int32 # get the size
             end_size = start_size - section_size

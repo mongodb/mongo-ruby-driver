@@ -184,6 +184,9 @@ module Mongo
             deserialize_field(message, buffer, field)
           end
         end
+        if message.is_a?(Msg)
+          message.fix_after_deserialization
+        end
         message.maybe_inflate
       end
 

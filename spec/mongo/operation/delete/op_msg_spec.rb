@@ -101,12 +101,7 @@ describe Mongo::Operation::Delete::OpMsg do
       end
 
       let(:expected_payload_1) do
-        {
-            type: 1,
-            payload: { identifier: 'deletes',
-                       sequence: deletes
-            }
-        }
+        Mongo::Protocol::Msg::Section1.new('deletes', deletes)
       end
 
       let(:session) do
