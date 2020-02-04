@@ -103,8 +103,6 @@ module Mongo
         host, port = endpoint.split(':')
         port ||= 443
 
-        # TODO: do some host/port testing
-
         ssl_socket = Socket::SSL.new(host, port, host, socket_timeout, Socket::PF_INET)
         ssl_socket.write(message)
 
