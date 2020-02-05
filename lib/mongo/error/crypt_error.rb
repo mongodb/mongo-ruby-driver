@@ -17,7 +17,7 @@ module Mongo
       #
       # @param [ Integer | nil ] code The optional libmongocrypt error code
       # @param [ String ] message The error message
-      def initialize(code, message)
+      def initialize(message, code: nil)
         msg = message
         msg += " (libmongocrypt error code #{code})" if code
         super(msg)
