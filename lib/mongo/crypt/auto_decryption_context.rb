@@ -29,8 +29,9 @@ module Mongo
       #   state machine
       # @param [ String ] db_name The name of the database against which
       #   the command is being made
-      # @param [ Hash ] command The command to be encrypted
+      # @param [ BSON::Document ] command The command to be encrypted
       def initialize(mongocrypt, io, command)
+        validate_command(command)
         super(mongocrypt, io)
 
         @command = command
