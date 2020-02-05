@@ -12,16 +12,16 @@ describe Mongo::Client do
   let(:encryption_client) do
     new_local_client(
       SpecConfig.instance.addresses,
-      { auto_encryption_options: auto_encryption_options, database: db }
+      { auto_encryption_options: auto_encryption_options, database: db_name }
     )
   end
 
-  let(:db) { 'test'}
-  let(:coll) { 'users' }
+  let(:db_name) { 'test'}
+  let(:collection_name) { 'users' }
 
   let(:command) do
     {
-      'insert' => coll,
+      'insert' => collection_name,
       'ordered' => true,
       'lsid' => {
         'id' => BSON::Binary.new(Base64.decode64("CzgjT+byRK+FKUWG6QbyjQ==\n"), :uuid)
@@ -48,9 +48,9 @@ describe Mongo::Client do
 
   shared_context 'with jsonSchema validator' do
     before do
-      users_collection = client.use(db)[coll]
+      users_collection = client.use(db_name)[collection_name]
       users_collection.drop
-      client.use(db)[coll,
+      client.use(db_name)[collection_name,
         {
           'validator' => { '$jsonSchema' => schema_map }
         }
@@ -60,7 +60,7 @@ describe Mongo::Client do
 
   shared_context 'without jsonSchema validator' do
     before do
-      users_collection = client.use(db)[coll]
+      users_collection = client.use(db_name)[collection_name]
       users_collection.drop
       users_collection.create
     end
@@ -69,7 +69,7 @@ describe Mongo::Client do
   shared_examples 'a functioning auto encrypter' do
     describe '#encrypt' do
       it 'replaces the ssn field with a BSON::Binary' do
-        result = encryption_client.encrypt(db, command)
+        result = encryption_client.encrypt(db_name, command)
         expect(result).to eq(encrypted_command)
       end
     end
@@ -95,7 +95,7 @@ describe Mongo::Client do
       {
         kms_providers: kms_providers,
         key_vault_namespace: key_vault_namespace,
-        schema_map: { "#{db}.#{coll}": schema_map }
+        schema_map: { "#{db_name}.#{collection_name}": schema_map }
       }
     end
 
@@ -146,7 +146,7 @@ describe Mongo::Client do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = encryption_client.encrypt(db, command)
+          result = encryption_client.encrypt(db_name, command)
           expect(result).to eq(command)
         end
       end
@@ -164,7 +164,7 @@ describe Mongo::Client do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = encryption_client.encrypt(db, command)
+          result = encryption_client.encrypt(db_name, command)
           expect(result).to eq(command)
         end
       end

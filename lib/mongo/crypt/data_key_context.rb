@@ -77,7 +77,7 @@ module Mongo
       # KMS options
       def set_aws_master_key(master_key_opts)
         unless master_key_opts
-          raise ArgumentError.new('The :master_key options cannot be nil')
+          raise ArgumentError.new('The :master_key option cannot be nil')
         end
 
         unless master_key_opts.is_a?(Hash)
@@ -91,28 +91,28 @@ module Mongo
         region = master_key_opts[:region]
         unless region
           raise ArgumentError.new(
-            'The :region key of the :master_key options Hash cannot be nil'
+            'The value of :region option of the :master_key options hash cannot be nil'
           )
         end
 
         unless region.is_a?(String)
           raise ArgumentError.new(
             "#{master_key_opts[:region]} is an invalid AWS master_key region. " +
-            "The :region key of the :master_key options Hash must be a String"
+            "The value of :region option of the :master_key options hash must be a String"
           )
         end
 
         key = master_key_opts[:key]
         unless key
           raise ArgumentError.new(
-            'The :key key of the :master_key options Hash cannot be nil'
+            'The value of :key option of the :master_key options hash cannot be nil'
           )
         end
 
         unless key.is_a?(String)
           raise ArgumentError.new(
             "#{master_key_opts[:key]} is an invalid AWS master_key key. " +
-            "The :key key of the :master_key options Hash must be a String"
+            "The value of :key option of the :master_key options hash must be a String"
           )
         end
 
@@ -127,7 +127,7 @@ module Mongo
         unless endpoint.is_a?(String)
           raise ArgumentError.new(
             "#{endpoint} is an invalid AWS master_key endpoint. " +
-            "The :endpoint key of the :master_key options Hash must be a String"
+            "The value of :endpoint option of the :master_key options hash must be a String"
           )
         end
 
