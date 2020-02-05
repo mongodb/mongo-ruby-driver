@@ -308,25 +308,31 @@ Encryption tests, it may be a good idea to put these lines in your .bash_profile
 or .bashrc file. Otherwise, you can run them in the terminal window where you
 plan to run your tests.
 
-```
-export MONGO_RUBY_DRIVER_AWS_KEY="YOUR-ACCESS-KEY-ID"
-export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
-```
+    **NOTE:** These two variables should be kept secret. Be careful not to write or publish
+    them to a public repo.
+
+
+    ```
+    export MONGO_RUBY_DRIVER_AWS_KEY="YOUR-ACCESS-KEY-ID"
+    export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
+    ```
 
 4. Create a new symmetric Customer Master Key (CMK) by following the "Creating Symmetric CMKs (Console)"
 section of this guide: https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
 5. Store information about your CMK in the following environment variables:
 
+    **NOTE:** This information is not secret.
+
     a. **Region:** Find your AWS region by following this guide: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#using-regions-availability-zones-describe (for example, "us-east-1" or "us-east-2")
 
     b. **Amazon Resource Name (ARN):** Read the following guide to learn more about ARNs
         and how to view your key's ARN: https://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys-console.html
 
-```
-export MONGO_RUBY_DRIVER_AWS_REGION="YOUR-AWS-REGION"
-export MONGO_RUBY_DRIVER_AWS_ARN="YOUR-AWS-ARN"
-```
+    ```
+    export MONGO_RUBY_DRIVER_AWS_REGION="YOUR-AWS-REGION"
+    export MONGO_RUBY_DRIVER_AWS_ARN="YOUR-AWS-ARN"
+    ```
 
 6. Give your IAM user "Key administrator" and "Key user" privileges on your new CMK
 by following the "Using the AWS Management Console Default View" section of this guide:

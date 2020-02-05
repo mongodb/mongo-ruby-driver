@@ -262,6 +262,8 @@ functions:
           cat <<EOT > .env.private
           MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
           MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
+          MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
+          MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}
           EOT
 
   "delete private environment":

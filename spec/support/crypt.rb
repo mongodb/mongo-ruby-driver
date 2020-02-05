@@ -109,7 +109,7 @@ module Crypt
 
     let(:aws_region) { SpecConfig.instance.fle_aws_region }
     let(:aws_arn) { SpecConfig.instance.fle_aws_arn }
-    let(:aws_endpoint_host) { "https://kms.#{aws_region}.amazonaws.com" }
+    let(:aws_endpoint_host) { "kms.#{aws_region}.amazonaws.com" }
     let(:aws_endpoint_port) { 443 }
 
     let(:encrypted_ssn) do
