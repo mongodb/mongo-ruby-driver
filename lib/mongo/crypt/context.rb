@@ -104,6 +104,13 @@ module Mongo
             end
 
             Binding.ctx_kms_done(self)
+          else
+            raise Error::CryptError.new(
+              # TODO: fix CryptError to improve this API -- the first argument
+              # in the initializer should not be optional
+              nil,
+              "State #{state} is not supported by Mongo::Crypt::Context"
+            )
           end
         end
       end
