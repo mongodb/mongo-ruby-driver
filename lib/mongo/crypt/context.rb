@@ -134,15 +134,15 @@ module Mongo
       #
       # @raise [ Mongo::Error::CryptError ] If the command is not a BSON::Document
       def validate_command(command)
+        return if command.is_a?(BSON::Document)
+
         if command.nil?
-          raise Mongo::Error::CryptError.new(
-            "Command must not be nil"
-          )
-        elsif !command.is_a?(BSON::Document)
-          raise Mongo::Error::CryptError.new(
-            "#{command} is an invalid command; command must be a BSON::Document"
-          )
+          message = "Command must not be nil"
+        else
+          message = "#{command} is an invalid command; command must be a BSON::Document"
         end
+
+        raise ArgumentError.new(message)
       end
     end
   end
