@@ -10,7 +10,7 @@ describe Mongo::Error::CryptError do
     context 'with code' do
       let(:error) { described_class.new(message, code: code) }
 
-      it 'properly populates fields' do
+      it 'correctly generates the error message' do
         expect(error.message).to eq("#{message} (libmongocrypt error code #{code})")
       end
     end
@@ -18,7 +18,7 @@ describe Mongo::Error::CryptError do
     context 'with code' do
       let(:error) { described_class.new(message) }
 
-      it 'properly populates fields' do
+      it 'correctly generates the error message' do
         expect(error.message).to eq(message)
       end
     end
