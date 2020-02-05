@@ -66,7 +66,7 @@ describe Mongo::Crypt::DataKeyContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /The :region key of the :master_key options Hash cannot be nil/)
+          end.to raise_error(ArgumentError, /The value of :region option of the :master_key options hash cannot be nil/)
         end
       end
 
@@ -76,7 +76,7 @@ describe Mongo::Crypt::DataKeyContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /The :region key of the :master_key options Hash cannot be nil/)
+          end.to raise_error(ArgumentError, /The value of :region option of the :master_key options hash cannot be nil/)
         end
       end
 
@@ -96,7 +96,7 @@ describe Mongo::Crypt::DataKeyContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /The :key key of the :master_key options Hash cannot be nil/)
+          end.to raise_error(ArgumentError, /The value of :key option of the :master_key options hash cannot be ni/)
         end
       end
 
