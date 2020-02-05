@@ -221,7 +221,7 @@ module Mongo
       # @param [ Mongo::Crypt::Handle ] handle
       # @param [ Method ] log_callback
       #
-      # @raise [ Mongo::CryptError ] If the callback is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the callback is not set successfully
       def self.setopt_log_handler(handle, log_callback)
         check_status(handle) do
           mongocrypt_setopt_log_handler(handle, log_callback, nil)
@@ -251,7 +251,7 @@ module Mongo
       # @param [ String ] aws_access_key The AWS access key
       # @param [ String ] aws_secret_access_key The AWS secret access key
       #
-      # @raise [ Mongo::CryptError ] If the option is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
       def self.setopt_kms_provider_aws(handle,
         aws_access_key, aws_secret_access_key
       )
@@ -284,7 +284,7 @@ module Mongo
       # @param [ Mongo::Crypt::Handle ] handle
       # @param [ String ] raw_master_key The 96-byte local KMS master key
       #
-      # @raise [ Mongo::CryptError ] If the option is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
       def self.setopt_kms_provider_local(handle, raw_master_key)
         Binary.wrap_string(raw_master_key) do |master_key_p|
           check_status(handle) do
@@ -308,7 +308,7 @@ module Mongo
       # @param [ BSON::Document ] schema_map_doc The schema map as a
       #   BSON::Document object
       #
-      # @raise [ Mongo::CryptError ] If the schema map is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the schema map is not set successfully
       def self.setopt_schema_map(handle, schema_map_doc)
         data = schema_map_doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -329,7 +329,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Handle ] handle
       #
-      # @raise [ Mongo::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.init(handle)
         check_status(handle) do
           mongocrypt_init(handle.ref)
@@ -719,7 +719,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] doc The document representing the response
       #
-      # @raise [ Mongo::CryptError ] If the response is not fed successfully
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
       def self.ctx_mongo_feed(context, doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -774,7 +774,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::KmsContext ] kms_context
       #
-      # @raise [ Mongo::CryptError ] If the response is not fed successfully
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
       #
       # @return [ String ] The HTTP message
       def self.kms_ctx_message(kms_context)
@@ -802,7 +802,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::KmsContext ] kms_context
       #
-      # @raise [ Mongo::CryptError ] If the response is not fed successfully
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
       #
       # @return [ String | nil ] The hostname, or nil if none exists
       def self.kms_ctx_endpoint(kms_context)
@@ -846,7 +846,7 @@ module Mongo
       # @param [ Mongo::Crypt::KmsContext ] kms_context
       # @oaram [ String ] data The data to feed to libmongocrypt
       #
-      # @raise [ Mongo::CryptError ] If the response is not fed successfully
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
       def self.kms_ctx_feed(kms_context, bytes)
         check_kms_ctx_status(kms_context) do
           Binary.wrap_string(bytes) do |bytes_p|
@@ -869,7 +869,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::KmsContext ] kms_context
       #
-      # @raise [ Mongo::CryptError ] If the provided block returns false
+      # @raise [ Mongo::Error::CryptError ] If the provided block returns false
       def self.check_kms_ctx_status(kms_context)
         unless yield
           status = Status.new
@@ -891,7 +891,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Mongo::CryptError ] If the operation is unsuccessful
+      # @raise [ Mongo::Error::CryptError ] If the operation is unsuccessful
       def self.ctx_kms_done(context)
         check_ctx_status(context) do
           mongocrypt_ctx_kms_done(context.ctx_p)
@@ -912,7 +912,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Mongo::CryptError ] If the state machine is not successfully
+      # @raise [ Mongo::Error::CryptError ] If the state machine is not successfully
       #   finalized
       def self.ctx_finalize(context)
         binary = Binary.new
@@ -1045,7 +1045,7 @@ module Mongo
       # @param [ Method ] hmac_sha_256_cb A HMAC SHA-256 method
       # @param [ Method ] hmac_hash_cb A SHA-256 hash method
       #
-      # @raise [ Mongo::CryptError ] If the callbacks aren't set successfully
+      # @raise [ Mongo::Error::CryptError ] If the callbacks aren't set successfully
       def self.setopt_crypto_hooks(handle,
         aes_encrypt_cb, aes_decrypt_cb, random_cb,
         hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb

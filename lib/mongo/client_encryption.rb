@@ -40,7 +40,7 @@ module Mongo
     # that key in the KMS collection. The generated key is encrypted with
     # the KMS master key.
     #
-    # @param [ String ] kms_provider The KMS provider to use. Options are
+    # @param [ String ] kms_provider The KMS provider to use. Valid values are
     #   "aws" and "local".
     # @params [ Hash ] options
     #
