@@ -17,7 +17,7 @@ module Mongo
       #
       # @param [ String ] message The error message
       def initialize(message)
-        super(nil, message)
+        super(message)
       end
     end
   end
