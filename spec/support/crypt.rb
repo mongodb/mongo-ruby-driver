@@ -76,14 +76,12 @@ module Crypt
       unless SpecConfig.instance.fle_aws_key &&
         SpecConfig.instance.fle_aws_secret &&
         SpecConfig.instance.fle_aws_region &&
-        SpecConfig.instance.fle_aws_arn &&
-        SpecConfig.instance.fle_aws_endpoint
+        SpecConfig.instance.fle_aws_arn
 
         skip(
           'This test requires the MONGO_RUBY_DRIVER_AWS_KEY, ' +
           'MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, ' +
-          'MONGO_RUBY_DRIVER_AWS_ARN, and MONGO_RUBY_DRIVER_AWS_ENDPOINT ' +
-          'environment variables to be set information from AWS.'
+          'MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS.'
         )
       end
     end
@@ -111,7 +109,7 @@ module Crypt
 
     let(:aws_region) { SpecConfig.instance.fle_aws_region }
     let(:aws_arn) { SpecConfig.instance.fle_aws_arn }
-    let(:aws_endpoint_host) { SpecConfig.instance.fle_aws_endpoint }
+    let(:aws_endpoint_host) { "https://kms.#{aws_region}.amazonaws.com" }
     let(:aws_endpoint_port) { 443 }
 
     let(:encrypted_ssn) do

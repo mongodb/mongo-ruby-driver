@@ -327,11 +327,6 @@ EOT
     ENV['MONGO_RUBY_DRIVER_AWS_ARN']
   end
 
-  # Endpoint at which to fetch AWS customer master key
-  def fle_aws_endpoint
-    ENV['MONGO_RUBY_DRIVER_AWS_ENDPOINT']
-  end
-
   # Option hashes
 
   def auth_options

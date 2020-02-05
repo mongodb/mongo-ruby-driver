@@ -316,11 +316,21 @@ export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
 4. Create a new symmetric Customer Master Key (CMK) by following the "Creating Symmetric CMKs (Console)"
 section of this guide: https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
-5. Give your IAM user "Key administrator" and "Key user" privileges on your new CMK
+5. Store information about your CMK in the following environment variables:
+
+    a. **Region:** Find your AWS region by following this guide: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#using-regions-availability-zones-describe (for example, "us-east-1" or "us-east-2")
+
+    b. **Amazon Resource Name (ARN):** Read the following guide to learn more about ARNs
+        and how to view your key's ARN: https://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys-console.html
+
+```
+export MONGO_RUBY_DRIVER_AWS_REGION="YOUR-AWS-REGION"
+export MONGO_RUBY_DRIVER_AWS_ARN="YOUR-AWS-ARN"
+```
+
+6. Give your IAM user "Key administrator" and "Key user" privileges on your new CMK
 by following the "Using the AWS Management Console Default View" section of this guide:
 https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html
-
-TODO: explain where in the test suite to store CMK information (not yet relevant)
 
 In one terminal, launch MongoDB:
 
