@@ -1115,12 +1115,7 @@ module Mongo
               "Data must be a BSON::Document"
           end
 
-          raise Error::CryptError.new(
-            # TODO: improve CryptError initializer API so that the first argument
-            # of the initializer is not optional
-            nil,
-            message
-          )
+          raise Error::CryptError.new(message)
         end
       end
     end
