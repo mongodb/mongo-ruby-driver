@@ -37,7 +37,7 @@ module Mongo
         @command = command
 
         # Initialize the ctx object for auto encryption
-        Binding.ctx_encrypt_init(self, @db_name, -1, @command)
+        Binding.ctx_encrypt_init(self, @db_name, @command)
       end
     end
   end
