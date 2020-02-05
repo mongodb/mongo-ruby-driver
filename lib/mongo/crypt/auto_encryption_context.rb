@@ -32,9 +32,13 @@ module Mongo
       # @param [ BSON::Document ] command The command to be encrypted
       def initialize(mongocrypt, io, db_name, command)
         if command.nil?
-          raise Mongo::Error::CryptError.new(nil, "Command to encrypt must not be nil")
+          raise Mongo::Error::CryptError.new(
+            "Command must not be nil"
+          )
         elsif !command.is_a?(BSON::Document)
-          raise Mongo::Error::CryptError.new(nil, "#{command} is an invalid command; command must be a BSON::Document")
+          raise Mongo::Error::CryptError.new(
+            "#{command} is an invalid command; command must be a BSON::Document"
+          )
         end
 
         super(mongocrypt, io)

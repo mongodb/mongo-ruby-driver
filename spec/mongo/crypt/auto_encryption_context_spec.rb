@@ -51,7 +51,7 @@ describe Mongo::Crypt::AutoEncryptionContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(Mongo::Error::CryptError, /Command to encrypt must not be nil/)
+          end.to raise_error(Mongo::Error::CryptError, /Command must not be nil/)
         end
       end
 
