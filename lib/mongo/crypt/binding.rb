@@ -1099,8 +1099,6 @@ module Mongo
         end
       end
 
-      private
-
       # Checks that the specified data is a BSON::Document before serializing
       # it to BSON to prevent errors from libmongocrypt
       #

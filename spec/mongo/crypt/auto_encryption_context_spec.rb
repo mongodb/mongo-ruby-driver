@@ -13,12 +13,12 @@ describe Mongo::Crypt::AutoEncryptionContext do
   let(:io) { double("Mongo::ClientEncryption::IO") }
   let(:db_name) { 'admin' }
   let(:command) do
-    {
+    BSON::Document.new({
       "find": "test",
       "filter": {
           "ssn": "457-55-5462"
       }
-    }
+    })
   end
 
   describe '#initialize' do
@@ -33,15 +33,35 @@ describe Mongo::Crypt::AutoEncryptionContext do
 
       context 'with invalid command' do
         let(:command) do
-          {
+          BSON::Document.new({
             incorrect_key: 'value'
-          }
+          })
         end
 
         it 'raises an exception' do
           expect do
             context
           end.to raise_error(/command not supported for auto encryption: incorrect_key/)
+        end
+      end
+
+      context 'with nil command' do
+        let(:command) { nil }
+
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /Command to encrypt must not be nil/)
+        end
+      end
+
+      context 'with non-document command' do
+      let(:command) { 'command-to-encrypt' }
+
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /command-to-encrypt is an invalid command/)
         end
       end
     end
