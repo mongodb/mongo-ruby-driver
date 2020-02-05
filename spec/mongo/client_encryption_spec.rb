@@ -116,7 +116,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /:master_key options cannot be nil/)
+          end.to raise_error(ArgumentError, /The :master_key option cannot be nil/)
         end
       end
 
@@ -136,7 +136,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
+          end.to raise_error(ArgumentError, /The value of :region option of the :master_key options hash cannot be nil/)
         end
       end
 
@@ -146,7 +146,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /region key of the :master_key options Hash cannot be nil/)
+          end.to raise_error(ArgumentError, /The value of :region option of the :master_key options hash cannot be nil/)
         end
       end
 
@@ -156,7 +156,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /region key of the :master_key options Hash must be a String/)
+          end.to raise_error(ArgumentError, /5 is an invalid AWS master_key region. The value of :region option of the :master_key options hash must be a String/)
         end
       end
 
@@ -166,7 +166,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /key key of the :master_key options Hash cannot be nil/)
+          end.to raise_error(ArgumentError, /The value of :key option of the :master_key options hash cannot be nil/)
         end
       end
 
@@ -176,7 +176,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /key key of the :master_key options Hash must be a String/)
+          end.to raise_error(ArgumentError, /5 is an invalid AWS master_key key. The value of :key option of the :master_key options hash must be a String/)
         end
       end
 
@@ -186,7 +186,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The :endpoint key of the :master_key options Hash must be a String/)
+          end.to raise_error(ArgumentError, /5 is an invalid AWS master_key endpoint. The value of :endpoint option of the :master_key options hash must be a String/)
         end
       end
 
