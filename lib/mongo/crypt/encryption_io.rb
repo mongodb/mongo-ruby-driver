@@ -98,6 +98,8 @@ module Mongo
         endpoint = kms_context.endpoint
         message = kms_context.message
 
+        # There is no specific timeout written in the spec. See SPEC-1394
+        # for a discussion and updates on what this timeout should be.
         socket_timeout = 10
 
         host, port = endpoint.split(':')
