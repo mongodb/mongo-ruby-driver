@@ -385,7 +385,7 @@ module Mongo
       # @param [ Context ] context Explicit encryption context
       # @param [ String ] key_id The key id
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_key_id(context, key_id)
         Binary.wrap_string(key_id) do |key_id_p|
           check_ctx_status(context) do
@@ -417,7 +417,7 @@ module Mongo
       #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
       #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_algorithm(context, name)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_algorithm(context.ctx_p, name, -1)
@@ -447,7 +447,7 @@ module Mongo
       # @param [ String ] region The AWS region (e.g. "us-east-2")
       # @param [ String ] arn The master key Amazon Resource Name
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_master_key_aws(context, region, arn)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws(
@@ -479,7 +479,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ String ] endpoint The custom AWS master key endpoint
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_master_key_aws_endpoint(context, endpoint)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws_endpoint(
@@ -506,7 +506,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_master_key_local(context)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
@@ -529,7 +529,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_datakey_init(context)
         check_ctx_status(context) do
           mongocrypt_ctx_datakey_init(context.ctx_p)
@@ -562,7 +562,7 @@ module Mongo
       #   encrypted command is being performed
       # @param [ BSON::Document ] command The command to be encrypted
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_encrypt_init(context, db_name, command)
         validate_document(command)
         data = command.to_bson.to_s
@@ -596,7 +596,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] A BSON document to encrypt
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_explicit_encrypt_init(context, doc)
         validate_document(doc)
         data = doc.to_bson.to_s
@@ -621,7 +621,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] A BSON document to decrypt
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_decrypt_init(context, command)
         validate_document(command)
         data = command.to_bson.to_s
@@ -650,7 +650,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] A BSON document to decrypt
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_explicit_decrypt_init(context, doc)
         validate_document(doc)
         data = doc.to_bson.to_s
