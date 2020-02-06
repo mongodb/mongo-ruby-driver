@@ -73,11 +73,15 @@ module Crypt
   # For tests that require AWS KMS to be configured
   shared_context 'with AWS kms_providers' do
     before do
-      unless SpecConfig.instance.fle_aws_key && SpecConfig.instance.fle_aws_secret
+      unless SpecConfig.instance.fle_aws_key &&
+        SpecConfig.instance.fle_aws_secret &&
+        SpecConfig.instance.fle_aws_region &&
+        SpecConfig.instance.fle_aws_arn
+
         skip(
-          'This test requires the MONGO_RUBY_DRIVER_AWS_KEY and ' +
-          'MONGO_RUBY_DRIVER_AWS_SECRET environment variables to be set with ' +
-          'AWS IAM credentials.'
+          'This test requires the MONGO_RUBY_DRIVER_AWS_KEY, ' +
+          'MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, ' +
+          'MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS.'
         )
       end
     end
@@ -103,12 +107,9 @@ module Crypt
       }
     end
 
-    # TODO: move these to environment variables so they are easily configurable
-    # for community members and update the test README explaining which variables
-    # to set.
-    let(:aws_region) { 'us-east-1' }
-    let(:aws_arn) { 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0' }
-    let(:aws_endpoint_host) { 'kms.us-east-1.amazonaws.com' }
+    let(:aws_region) { SpecConfig.instance.fle_aws_region }
+    let(:aws_arn) { SpecConfig.instance.fle_aws_arn }
+    let(:aws_endpoint_host) { "kms.#{aws_region}.amazonaws.com" }
     let(:aws_endpoint_port) { 443 }
 
     let(:encrypted_ssn) do

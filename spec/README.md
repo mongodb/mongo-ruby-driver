@@ -308,19 +308,35 @@ Encryption tests, it may be a good idea to put these lines in your .bash_profile
 or .bashrc file. Otherwise, you can run them in the terminal window where you
 plan to run your tests.
 
-```
-export MONGO_RUBY_DRIVER_AWS_KEY="YOUR-ACCESS-KEY-ID"
-export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
-```
+    ```
+    export MONGO_RUBY_DRIVER_AWS_KEY="YOUR-ACCESS-KEY-ID"
+    export MONGO_RUBY_DRIVER_AWS_SECRET="YOUR-ACCESS-KEY-SECRET"
+    ```
 
 4. Create a new symmetric Customer Master Key (CMK) by following the "Creating Symmetric CMKs (Console)"
 section of this guide: https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
-5. Give your IAM user "Key administrator" and "Key user" privileges on your new CMK
+5. Store information about your CMK in the following environment variables:
+
+    a. **Region:** Find your AWS region by following this guide: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#using-regions-availability-zones-describe
+    (for example, your region might be "us-east-1" or "ap-south-2").
+
+    b. **Amazon Resource Name (ARN):** Read the following guide to learn more about ARNs
+        and how to view your key's ARN: https://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys-console.html
+
+    Store these two pieces of information in environment variables. If you plan
+    to frequently run Field-Level Encryption tests, it may be a good idea to put
+    these lines in your .bash_profile or .bashrc file. Otherwise, you can run
+    them in the terminal window where you plan to run your tests.
+
+    ```
+    export MONGO_RUBY_DRIVER_AWS_REGION="YOUR-AWS-REGION"
+    export MONGO_RUBY_DRIVER_AWS_ARN="YOUR-AWS-ARN"
+    ```
+
+6. Give your IAM user "Key administrator" and "Key user" privileges on your new CMK
 by following the "Using the AWS Management Console Default View" section of this guide:
 https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html
-
-TODO: explain where in the test suite to store CMK information (not yet relevant)
 
 In one terminal, launch MongoDB:
 
