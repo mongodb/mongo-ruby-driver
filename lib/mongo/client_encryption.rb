@@ -79,7 +79,7 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value
     def encrypt(value, opts={})
-      doc = BSON::Document.new('v': value)
+      doc = { 'v': value }
 
       Crypt::ExplicitEncryptionContext.new(
         @crypt_handle,
@@ -96,7 +96,7 @@ module Mongo
     #
     # @return [ Object ] The decrypted value
     def decrypt(value)
-      doc = BSON::Document.new('v': value)
+      doc = { 'v': value }
 
       result = Crypt::ExplicitDecryptionContext.new(
         @crypt_handle,

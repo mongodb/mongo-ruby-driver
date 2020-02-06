@@ -560,7 +560,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ String ] db_name The name of the database against which the
       #   encrypted command is being performed
-      # @param [ BSON::Document ] command The command to be encrypted
+      # @param [ Hash ] command The command to be encrypted
       #
       # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_encrypt_init(context, db_name, command)
@@ -594,7 +594,7 @@ module Mongo
       # Initialize the Context for explicit encryption
       #
       # @param [ Mongo::Crypt::Context ] context
-      # @param [ BSON::Document ] A BSON document to encrypt
+      # @param [ Hash ] A BSON document to encrypt
       #
       # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_explicit_encrypt_init(context, doc)
@@ -648,7 +648,7 @@ module Mongo
       # Initialize the Context for explicit decryption
       #
       # @param [ Mongo::Crypt::Context ] context
-      # @param [ BSON::Document ] A BSON document to decrypt
+      # @param [ Hash ] A BSON document to decrypt
       #
       # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_explicit_decrypt_init(context, doc)
@@ -1099,14 +1099,16 @@ module Mongo
         end
       end
 
-      # Checks that the specified data is a BSON::Document before serializing
+      # Checks that the specified data is a Hash before serializing
       # it to BSON to prevent errors from libmongocrypt
+      #
+      # @note All BSON::Document instances are also Hash instances
       #
       # @param [ Object ] data The data to be passed to libmongocrypt
       #
-      # @raise [ Mongo::Error::CryptError ] If the data is not a BSON::Document
+      # @raise [ Mongo::Error::CryptError ] If the data is not a Hash
       def self.validate_document(data)
-        return if data.is_a?(BSON::Document)
+        return if data.is_a?(Hash)
 
         if data.nil?
           message = "Attempted to pass nil data to libmongocrypt. " +

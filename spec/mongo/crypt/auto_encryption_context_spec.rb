@@ -13,12 +13,12 @@ describe Mongo::Crypt::AutoEncryptionContext do
   let(:io) { double("Mongo::ClientEncryption::IO") }
   let(:db_name) { 'admin' }
   let(:command) do
-    BSON::Document.new({
+    {
       "find": "test",
       "filter": {
           "ssn": "457-55-5462"
       }
-    })
+    }
   end
 
   describe '#initialize' do
@@ -33,9 +33,9 @@ describe Mongo::Crypt::AutoEncryptionContext do
 
       context 'with invalid command' do
         let(:command) do
-          BSON::Document.new({
+          {
             incorrect_key: 'value'
-          })
+          }
         end
 
         it 'raises an exception' do

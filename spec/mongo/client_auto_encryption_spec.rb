@@ -20,7 +20,7 @@ describe Mongo::Client do
   let(:collection_name) { 'users' }
 
   let(:command) do
-    BSON::Document.new(
+    {
       'insert' => collection_name,
       'ordered' => true,
       'lsid' => {
@@ -32,7 +32,7 @@ describe Mongo::Client do
           '_id' => BSON::ObjectId('5e16516e781d8a89b94df6df')
         }
       ]
-    )
+    }
   end
 
   let(:encrypted_command) do

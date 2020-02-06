@@ -73,7 +73,7 @@ module Mongo
           )
         end
 
-        Binding.setopt_schema_map(self, BSON::Document.new(@schema_map))
+        Binding.setopt_schema_map(self, @schema_map)
       end
 
       # Send the logs from libmongocrypt to the Mongo::Logger

@@ -18,6 +18,14 @@ describe 'Mongo::Crypt::Binding' do
         end
       end
 
+      context 'with Hash data' do
+        it 'does not raise an exception' do
+          expect do
+            Mongo::Crypt::Binding.validate_document({})
+          end.not_to raise_error
+        end
+      end
+
       context 'with nil data' do
         it 'raises an exception' do
           expect do

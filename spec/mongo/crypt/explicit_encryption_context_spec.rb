@@ -11,7 +11,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
   let(:logger) { nil }
 
   let(:io) { double("Mongo::ClientEncryption::IO") }
-  let(:value) { BSON::Document.new('v': 'Hello, world!') }
+  let(:value) { { 'v': 'Hello, world!' } }
 
   let(:options) do
     {
