@@ -134,9 +134,9 @@ module Mongo
       # provided mongocrypt_binary_t object.
       def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
         response_length_p, status_p, decrypt: false)
-        key = Binary.from_pointer(key_binary_p).to_string
-        iv = Binary.from_pointer(iv_binary_p).to_string
-        input = Binary.from_pointer(input_binary_p).to_string
+        key = Binary.from_pointer(key_binary_p).to_s
+        iv = Binary.from_pointer(iv_binary_p).to_s
+        input = Binary.from_pointer(input_binary_p).to_s
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
           output = Hooks.aes(key, iv, input, decrypt: decrypt)
@@ -150,8 +150,8 @@ module Mongo
       # mongocrypt_binary_t object.
       def do_hmac_sha(digest_name, key_binary_p, input_binary_p,
         output_binary_p, status_p)
-        key = Binary.from_pointer(key_binary_p).to_string
-        input = Binary.from_pointer(input_binary_p).to_string
+        key = Binary.from_pointer(key_binary_p).to_s
+        input = Binary.from_pointer(input_binary_p).to_s
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
           Hooks.hmac_sha(digest_name, key, input)
@@ -201,7 +201,7 @@ module Mongo
       end
 
       def hmac_hash(_, input_binary_p, output_binary_p, status_p)
-        input = Binary.from_pointer(input_binary_p).to_string
+        input = Binary.from_pointer(input_binary_p).to_s
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
           Hooks.hash_sha256(input)
