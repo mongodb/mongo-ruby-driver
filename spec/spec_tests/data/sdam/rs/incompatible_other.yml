@@ -1,4 +1,4 @@
-description: "Compatible topology with incompatible other"
+description: "Incompatible other"
 uri: "mongodb://a,b/?replicaSet=rs"
 phases:
   - responses:
