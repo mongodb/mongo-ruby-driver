@@ -15,9 +15,10 @@ describe 'Auto Encryption' do
           key_vault_namespace: 'admin.datakeys',
           schema_map: schema_map,
           bypass_auto_encryption: bypass_auto_encryption
-        }
+        },
+        database: 'auto-encryption'
       ),
-    ).use('auto-encryption')
+    )
   end
 
   let(:client) do
@@ -71,8 +72,8 @@ describe 'Auto Encryption' do
 
   before(:each) do
     client[:users].drop
-    client[:datakeys].drop
-    client[:datakeys].insert_one(local_data_key)
+    client.use(:admin)[:datakeys].drop
+    client.use(:admin)[:datakeys].insert_one(local_data_key)
   end
 
   describe '#insert_one' do
