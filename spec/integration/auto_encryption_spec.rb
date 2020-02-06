@@ -34,11 +34,11 @@ describe 'Auto Encryption' do
   end
 
   let(:local_data_key) do
-    BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document.json'))
+    BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_local.json'))
   end
 
   let(:json_schema) do
-    BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map.json'))
+    BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
   end
 
   shared_context 'bypass auto encryption' do

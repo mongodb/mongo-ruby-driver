@@ -160,7 +160,7 @@ module Mongo
       #
       # @return [ true ] Always true
       def teardown_encrypter
-        #@mongocryptd_client.close if @mongocryptd_client
+        @mongocryptd_client.close if @mongocryptd_client
 
         @mongocryptd_client = nil
         @key_vault_client = nil
