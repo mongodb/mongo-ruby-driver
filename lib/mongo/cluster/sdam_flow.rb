@@ -76,63 +76,6 @@ class Mongo::Cluster
     end
 
     def server_description_changed
-      if updated_desc.me_mismatch? && updated_desc.primary? &&
-        (topology.unknown? || topology.replica_set?)
-      then
-        # When the driver receives a description claiming to be a primary,
-        # we are obligated by spec tests to add and remove hosts in that
-        # description even if it also has a me mismatch. The me mismatch
-        # scenario though presents a number of problems:
-        #
-        # 1. Effectively, the server's address changes, meaning we cannot
-        # update the description of the server whose description change we
-        # are processing (instead servers are added and removed), but we
-        # behave to an extent as if we are updating the description, which
-        # causes a bunch of awkwardness.
-        # 2. The server for which we are processing the response will be
-        # removed from topology, which may cause the current thread to terminate
-        # prior to running the entire sdam flow. To deal with this we separate
-        # the removal event publication from actually removing the server
-        # from topology, which again complicates the flow.
-
-        # Primary-with-me-mismatch response could be the first one we receive
-        # when the topology is still unknown. Change to RS without primary
-        # in this case.
-        if topology.unknown?
-          @topology = Topology::ReplicaSetNoPrimary.new(
-            topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-            topology.monitoring, self)
-        end
-
-        servers = add_servers_from_desc(updated_desc)
-        # Spec tests require us to remove servers based on data in descrptions
-        # with me mismatches. The driver will be more resilient if it only
-        # removed servers from descriptions with matching mes.
-        remove_servers_not_in_desc(updated_desc)
-
-        servers.each do |server|
-          server.start_monitoring
-        end
-
-        # The rest of sdam flow assumes the server being removed is not the one
-        # whose description we are processing, and publishes description update
-        # event. Since we are removing the server whose response we are
-        # processing, do not publish description change event but mark it
-        # published (by assigning to @previous_desc).
-        log_warn(
-          "Removing server #{updated_desc.address} (self-identified as #{updated_desc.me}) due to me mismatch"
-        )
-        do_remove(updated_desc.address.to_s)
-        @previous_desc = updated_desc
-
-        # We may have removed the current primary, check if there is a primary.
-        check_if_has_primary
-        # Publish topology change event.
-        commit_changes
-        disconnect_servers
-        return
-      end
-
       @previous_server_descriptions = servers_list.map do |server|
         [server.address.to_s, server.description]
       end

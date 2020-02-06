@@ -370,8 +370,11 @@ module Mongo
 
       # Get the me field value.
       #
-      # @example Get the me field value.
-      #   description.me
+      # @note The value in me field may differ from the server description's
+      #   address. This can happen, for example, in split horizon configurations.
+      #   The SDAM spec only requires removing servers whose me does not match
+      #   their address in some of the situations (e.g. when the server in
+      #   question is an RS member but not a primary).
       #
       # @return [ String ] The me field.
       #

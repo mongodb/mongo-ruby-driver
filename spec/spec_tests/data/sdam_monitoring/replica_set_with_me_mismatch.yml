@@ -1,6 +1,7 @@
 description: "Monitoring a topology that is a replica set with a me mismatch in first response"
 uri: "mongodb://a,b/"
 phases: 
+  # phase 1 - initial events
   -
     responses: []
     outcome:
@@ -37,7 +38,8 @@ phases:
           server_opening_event: 
             topologyId: "42"
             address: "b:27017"
-  # phase 1 - server is a primary with mismatched me
+  
+  # phase 2 - server is a primary with mismatched me
   - 
     responses: 
       - 
@@ -48,28 +50,38 @@ phases:
           setName: "rs"
           setVersion: 1
           me: "aa:27017"
-          primary: "aa:27017"
+          primary: "a:27017"
           hosts: 
-            - "aa:27017"
+            - "a:27017"
           minWireVersion: 0
           maxWireVersion: 4
     outcome: 
       events: 
-        # TODO see about having the opening event precede the closing event.
         - 
-          server_closed_event: 
+          server_description_changed_event: 
             topologyId: "42"
             address: "a:27017"
+            previousDescription: 
+              address: "a:27017"
+              arbiters: []
+              hosts: []
+              passives: []
+              type: "Unknown"
+            newDescription: 
+              address: "a:27017"
+              arbiters: []
+              hosts: 
+                - "a:27017"
+              passives: []
+              primary: "a:27017"
+              setName: "rs"
+              type: "RSPrimary"
         - 
           server_closed_event: 
             topologyId: "42"
             address: "b:27017"
         - 
-          server_opening_event: 
-            topologyId: "42"
-            address: "aa:27017"
-        - 
-          topology_description_changed_event: 
+          topology_description_changed_event:
             topologyId: "42"
             previousDescription: 
               topologyType: "Unknown"
@@ -85,75 +97,15 @@ phases:
                   hosts: []
                   passives: []
             newDescription:
-              topologyType: "ReplicaSetNoPrimary"
-              setName: rs
-              servers: 
-                - 
-                  address: "aa:27017"
-                  arbiters: []
-                  hosts: []
-                  passives: []
-
-  # phaes 2 - response from new primary from new address
-  - 
-    responses: 
-      - 
-        - "aa:27017"
-        - 
-          ok: 1
-          ismaster: true
-          setName: "rs"
-          setVersion: 1
-          primary: "aa:27017"
-          me: "aa:27017"
-          hosts: 
-            - "aa:27017"
-          minWireVersion: 0
-          maxWireVersion: 4
-    outcome: 
-      events: 
-        - 
-          server_description_changed_event: 
-            topologyId: "42"
-            address: "aa:27017"
-            previousDescription: 
-              address: "aa:27017"
-              arbiters: []
-              hosts: []
-              passives: []
-              type: "Unknown"
-            newDescription: 
-              address: "aa:27017"
-              arbiters: []
-              hosts: 
-                - "aa:27017"
-              passives: []
-              primary: "aa:27017"
-              setName: "rs"
-              type: "RSPrimary"
-        - 
-          topology_description_changed_event: 
-            topologyId: "42"
-            previousDescription: 
-              topologyType: "ReplicaSetNoPrimary"
-              setName: rs
-              servers: 
-                - 
-                  address: "aa:27017"
-                  arbiters: []
-                  hosts: []
-                  passives: []
-                  type: "Unknown"
-            newDescription:
               topologyType: "ReplicaSetWithPrimary"
-              setName: "rs"
+              setName: rs
               servers: 
                 - 
-                  address: "aa:27017"
+                  address: "a:27017"
                   arbiters: []
                   hosts: 
-                    - "aa:27017"
+                    - "a:27017"
                   passives: []
-                  primary: "aa:27017"
+                  primary: "a:27017"
                   setName: "rs"
                   type: "RSPrimary"
