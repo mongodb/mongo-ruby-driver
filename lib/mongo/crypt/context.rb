@@ -127,23 +127,6 @@ module Mongo
       def mongocrypt_feed(doc)
         Binding.ctx_mongo_feed(self, doc)
       end
-
-      # Validate that the command is a BSON::Document instance
-      #
-      # @param [ Object ] command
-      #
-      # @raise [ Mongo::Error::CryptError ] If the command is not a BSON::Document
-      def validate_command(command)
-        return if command.is_a?(BSON::Document)
-
-        if command.nil?
-          message = "Command must not be nil"
-        else
-          message = "#{command} is an invalid command; command must be a BSON::Document"
-        end
-
-        raise ArgumentError.new(message)
-      end
     end
   end
 end

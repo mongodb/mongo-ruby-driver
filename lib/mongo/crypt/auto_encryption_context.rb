@@ -31,8 +31,6 @@ module Mongo
       #   the command is being made
       # @param [ BSON::Document ] command The command to be encrypted
       def initialize(mongocrypt, io, db_name, command)
-        validate_command(command)
-
         super(mongocrypt, io)
 
         @db_name = db_name
