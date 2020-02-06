@@ -44,6 +44,26 @@ describe Mongo::Crypt::AutoEncryptionContext do
           end.to raise_error(/command not supported for auto encryption: incorrect_key/)
         end
       end
+
+      context 'with nil command' do
+        let(:command) { nil }
+
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /Attempted to pass nil data to libmongocrypt/)
+        end
+      end
+
+      context 'with non-document command' do
+      let(:command) { 'command-to-encrypt' }
+
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(Mongo::Error::CryptError, /Attempted to pass invalid data to libmongocrypt/)
+        end
+      end
     end
 
     context 'with local KMS providers' do

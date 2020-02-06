@@ -310,6 +310,7 @@ module Mongo
       #
       # @raise [ Mongo::Error::CryptError ] If the schema map is not set successfully
       def self.setopt_schema_map(handle, schema_map_doc)
+        validate_document(schema_map_doc)
         data = schema_map_doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_status(handle) do
@@ -384,7 +385,7 @@ module Mongo
       # @param [ Context ] context Explicit encryption context
       # @param [ String ] key_id The key id
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_key_id(context, key_id)
         Binary.wrap_string(key_id) do |key_id_p|
           check_ctx_status(context) do
@@ -416,7 +417,7 @@ module Mongo
       #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
       #   - "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_algorithm(context, name)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_algorithm(context.ctx_p, name, -1)
@@ -446,7 +447,7 @@ module Mongo
       # @param [ String ] region The AWS region (e.g. "us-east-2")
       # @param [ String ] arn The master key Amazon Resource Name
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_master_key_aws(context, region, arn)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws(
@@ -478,7 +479,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ String ] endpoint The custom AWS master key endpoint
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_master_key_aws_endpoint(context, endpoint)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws_endpoint(
@@ -505,7 +506,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Error::CryptError ] If the operation failed
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_master_key_local(context)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
@@ -528,7 +529,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_datakey_init(context)
         check_ctx_status(context) do
           mongocrypt_ctx_datakey_init(context.ctx_p)
@@ -557,13 +558,17 @@ module Mongo
       # Initialize the Context for auto-encryption
       #
       # @param [ Mongo::Crypt::Context ] context
+      # @param [ String ] db_name The name of the database against which the
+      #   encrypted command is being performed
+      # @param [ Hash ] command The command to be encrypted
       #
-      # @raise [ Error::CryptError ] If initialization fails
-      def self.ctx_encrypt_init(context, db_name, an_int, command)
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
+      def self.ctx_encrypt_init(context, db_name, command)
+        validate_document(command)
         data = command.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
-            mongocrypt_ctx_encrypt_init(context.ctx_p, db_name, an_int, data_p)
+            mongocrypt_ctx_encrypt_init(context.ctx_p, db_name, -1, data_p)
           end
         end
       end
@@ -589,10 +594,11 @@ module Mongo
       # Initialize the Context for explicit encryption
       #
       # @param [ Mongo::Crypt::Context ] context
-      # @param [ BSON::Document ] A BSON document to encrypt
+      # @param [ Hash ] A BSON document to encrypt
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_explicit_encrypt_init(context, doc)
+        validate_document(doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
@@ -615,8 +621,9 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] A BSON document to decrypt
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_decrypt_init(context, command)
+        validate_document(command)
         data = command.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
@@ -641,10 +648,11 @@ module Mongo
       # Initialize the Context for explicit decryption
       #
       # @param [ Mongo::Crypt::Context ] context
-      # @param [ BSON::Document ] A BSON document to decrypt
+      # @param [ Hash ] A BSON document to decrypt
       #
-      # @raise [ Error::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.ctx_explicit_decrypt_init(context, doc)
+        validate_document(doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
@@ -721,6 +729,7 @@ module Mongo
       #
       # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
       def self.ctx_mongo_feed(context, doc)
+        validate_document(doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
@@ -1088,6 +1097,28 @@ module Mongo
           mongocrypt_ctx_status(context.ctx_p, status.ref)
           status.raise_crypt_error
         end
+      end
+
+      # Checks that the specified data is a Hash before serializing
+      # it to BSON to prevent errors from libmongocrypt
+      #
+      # @note All BSON::Document instances are also Hash instances
+      #
+      # @param [ Object ] data The data to be passed to libmongocrypt
+      #
+      # @raise [ Mongo::Error::CryptError ] If the data is not a Hash
+      def self.validate_document(data)
+        return if data.is_a?(Hash)
+
+        if data.nil?
+          message = "Attempted to pass nil data to libmongocrypt. " +
+            "Data must be a Hash"
+        else
+          message = "Attempted to pass invalid data to libmongocrypt: #{data} " +
+            "Data must be a Hash"
+        end
+
+        raise Error::CryptError.new(message)
       end
     end
   end
