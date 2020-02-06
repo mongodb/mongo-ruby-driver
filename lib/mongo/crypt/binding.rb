@@ -1106,17 +1106,17 @@ module Mongo
       #
       # @raise [ Mongo::Error::CryptError ] If the data is not a BSON::Document
       def self.validate_document(data)
-        unless data.is_a?(BSON::Document)
-          if data.nil?
-            message = "Attempted to pass nil data to libmongocrypt. " +
-              "Data must be a BSON::Document"
-          else
-            message = "Attempted to pass invalid data to libmongocrypt: #{data} " +
-              "Data must be a BSON::Document"
-          end
+        return if data.is_a?(BSON::Document)
 
-          raise Error::CryptError.new(message)
+        if data.nil?
+          message = "Attempted to pass nil data to libmongocrypt. " +
+            "Data must be a BSON::Document"
+        else
+          message = "Attempted to pass invalid data to libmongocrypt: #{data} " +
+            "Data must be a BSON::Document"
         end
+
+        raise Error::CryptError.new(message)
       end
     end
   end
