@@ -221,7 +221,7 @@ module Mongo
       # @param [ Mongo::Crypt::Handle ] handle
       # @param [ Method ] log_callback
       #
-      # @raise [ Mongo::CryptError ] If the callback is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the callback is not set successfully
       def self.setopt_log_handler(handle, log_callback)
         check_status(handle) do
           mongocrypt_setopt_log_handler(handle, log_callback, nil)
@@ -251,7 +251,7 @@ module Mongo
       # @param [ String ] aws_access_key The AWS access key
       # @param [ String ] aws_secret_access_key The AWS secret access key
       #
-      # @raise [ Mongo::CryptError ] If the option is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
       def self.setopt_kms_provider_aws(handle,
         aws_access_key, aws_secret_access_key
       )
@@ -284,7 +284,7 @@ module Mongo
       # @param [ Mongo::Crypt::Handle ] handle
       # @param [ String ] raw_master_key The 96-byte local KMS master key
       #
-      # @raise [ Mongo::CryptError ] If the option is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
       def self.setopt_kms_provider_local(handle, raw_master_key)
         Binary.wrap_string(raw_master_key) do |master_key_p|
           check_status(handle) do
@@ -308,7 +308,7 @@ module Mongo
       # @param [ BSON::Document ] schema_map_doc The schema map as a
       #   BSON::Document object
       #
-      # @raise [ Mongo::CryptError ] If the schema map is not set successfully
+      # @raise [ Mongo::Error::CryptError ] If the schema map is not set successfully
       def self.setopt_schema_map(handle, schema_map_doc)
         data = schema_map_doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -329,7 +329,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Handle ] handle
       #
-      # @raise [ Mongo::CryptError ] If initialization fails
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
       def self.init(handle)
         check_status(handle) do
           mongocrypt_init(handle.ref)
@@ -719,7 +719,7 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       # @param [ BSON::Document ] doc The document representing the response
       #
-      # @raise [ Mongo::Crypt::Error ] If the response is not fed successfully
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
       def self.ctx_mongo_feed(context, doc)
         data = doc.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
@@ -736,6 +736,168 @@ module Mongo
       # @return [ Boolean ] A boolean indicating the success of the operation
       attach_function :mongocrypt_ctx_mongo_done, [:pointer], :bool
 
+      # Return a pointer to a mongocrypt_kms_ctx_t object or NULL.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @return [ FFI::Pointer ] A pointer to a mongocrypt_kms_ctx_t object
+      attach_function :mongocrypt_ctx_next_kms_ctx, [:pointer], :pointer
+
+      # Return a new KmsContext object needed by a Context object.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @return [ Mongo::Crypt::KmsContext | nil ] The KmsContext needed to
+      #   fetch an AWS master key or nil, if no KmsContext is needed
+      def self.ctx_next_kms_ctx(context)
+        kms_ctx_p = mongocrypt_ctx_next_kms_ctx(context.ctx_p)
+
+        if kms_ctx_p.null?
+          nil
+        else
+          KmsContext.new(kms_ctx_p)
+        end
+      end
+
+      # Get the message needed to fetch the AWS KMS master key.
+      #
+      # @param [ FFI::Pointer ] kms Pointer to the mongocrypt_kms_ctx_t object
+      # @param [ FFI::Pointer ] msg (outparam) Pointer to a mongocrypt_binary_t
+      #   object that will have the location of the message written to it by
+      #   libmongocrypt
+      #
+      # @return [ Boolean ] Whether the operation is successful
+      attach_function :mongocrypt_kms_ctx_message, [:pointer, :pointer], :bool
+
+      # Get the HTTP message needed to fetch the AWS KMS master key from a
+      # KmsContext object.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      #
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
+      #
+      # @return [ String ] The HTTP message
+      def self.kms_ctx_message(kms_context)
+        binary = Binary.new
+
+        check_kms_ctx_status(kms_context) do
+          mongocrypt_kms_ctx_message(kms_context.kms_ctx_p, binary.ref)
+        end
+
+        return binary.to_string
+      end
+
+      # Get the hostname with which to connect over TLS to get information about
+      # the AWS master key.
+      #
+      # @param [ FFI::Pointer ] kms A pointer to a mongocrypt_kms_ctx_t object
+      # @param [ FFI::Pointer ] endpoint (out param) A pointer to which the
+      #   endpoint string will be written by libmongocrypt
+      #
+      # @return [ Boolean ] Whether the operation was successful
+      attach_function :mongocrypt_kms_ctx_endpoint, [:pointer, :pointer], :bool
+
+      # Get the hostname with which to connect over TLS to get information
+      # about the AWS master key.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      #
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
+      #
+      # @return [ String | nil ] The hostname, or nil if none exists
+      def self.kms_ctx_endpoint(kms_context)
+        ptr = FFI::MemoryPointer.new(:pointer, 1)
+
+        check_kms_ctx_status(kms_context) do
+          mongocrypt_kms_ctx_endpoint(kms_context.kms_ctx_p, ptr)
+        end
+
+        str_ptr = ptr.read_pointer
+        str_ptr.null? ? nil : str_ptr.read_string.force_encoding('UTF-8')
+      end
+
+      # Get the number of bytes needed by the KMS context.
+      #
+      # @param [ FFI::Pointer ] kms The mongocrypt_kms_ctx_t object
+      #
+      # @return [ Integer ] The number of bytes needed
+      attach_function :mongocrypt_kms_ctx_bytes_needed, [:pointer], :int
+
+      # Get the number of bytes needed by the KmsContext.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      #
+      # @return [ Integer ] The number of bytes needed
+      def self.kms_ctx_bytes_needed(kms_context)
+        mongocrypt_kms_ctx_bytes_needed(kms_context.kms_ctx_p)
+      end
+
+      # Feed replies from the KMS back to libmongocrypt.
+      #
+      # @param [ FFI::Pointer ] kms A pointer to the mongocrypt_kms_ctx_t object
+      # @param [ FFI::Pointer ] bytes A pointer to a mongocrypt_binary_t
+      #   object that references the response from the KMS
+      #
+      # @return [ Boolean ] Whether the operation was successful
+      attach_function :mongocrypt_kms_ctx_feed, [:pointer, :pointer], :bool
+
+      # Feed replies from the KMS back to libmongocrypt.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      # @oaram [ String ] data The data to feed to libmongocrypt
+      #
+      # @raise [ Mongo::Error::CryptError ] If the response is not fed successfully
+      def self.kms_ctx_feed(kms_context, bytes)
+        check_kms_ctx_status(kms_context) do
+          Binary.wrap_string(bytes) do |bytes_p|
+            mongocrypt_kms_ctx_feed(kms_context.kms_ctx_p, bytes_p)
+          end
+        end
+      end
+
+      # Write status information about the mongocrypt_kms_ctx_t object
+      # to the mongocrypt_status_t object.
+      #
+      # @param [ FFI::Pointer ] kms A pointer to the mongocrypt_kms_ctx_t object
+      # @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t object
+      #
+      # @return [ Boolean ] Whether the operation was successful
+      attach_function :mongocrypt_kms_ctx_status, [:pointer, :pointer], :bool
+
+      # If the provided block returns false, raise a CryptError with the
+      # status information from the provided KmsContext object.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      #
+      # @raise [ Mongo::Error::CryptError ] If the provided block returns false
+      def self.check_kms_ctx_status(kms_context)
+        unless yield
+          status = Status.new
+
+          mongocrypt_kms_ctx_status(kms_context.kms_ctx_p, status.ref)
+          status.raise_crypt_error
+        end
+      end
+
+      # Indicate to libmongocrypt that it will receive no more replies from
+      # mongocrypt_kms_ctx_t objects.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      #
+      # @return [ Boolean ] Whether the operation was successful
+      attach_function :mongocrypt_ctx_kms_done, [:pointer], :bool
+
+      # Indicate to libmongocrypt that it will receive no more KMS replies.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation is unsuccessful
+      def self.ctx_kms_done(context)
+        check_ctx_status(context) do
+          mongocrypt_ctx_kms_done(context.ctx_p)
+        end
+      end
+
       # Perform the final encryption or decryption and return a BSON document
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
@@ -750,7 +912,7 @@ module Mongo
       #
       # @param [ Mongo::Crypt::Context ] context
       #
-      # @raise [ Mongo::Crypt::Error ] If the state machine is not successfully
+      # @raise [ Mongo::Error::CryptError ] If the state machine is not successfully
       #   finalized
       def self.ctx_finalize(context)
         binary = Binary.new
@@ -883,7 +1045,7 @@ module Mongo
       # @param [ Method ] hmac_sha_256_cb A HMAC SHA-256 method
       # @param [ Method ] hmac_hash_cb A SHA-256 hash method
       #
-      # @raise [ Mongo::CryptError ] If the callbacks aren't set successfully
+      # @raise [ Mongo::Error::CryptError ] If the callbacks aren't set successfully
       def self.setopt_crypto_hooks(handle,
         aes_encrypt_cb, aes_decrypt_cb, random_cb,
         hmac_sha_512_cb, hmac_sha_256_cb, hmac_hash_cb

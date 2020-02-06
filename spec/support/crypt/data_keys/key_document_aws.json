@@ -3,16 +3,16 @@
       "$numberInt": "1"
   },
   "_id": {
-      "$binary": {
-          "base64": "cnx9Lm2vTJuwd6QUXn2uDQ==",
-          "subType": "04"
-      }
+    "$binary": {
+        "base64": "AWSAAAAAAAAAAAAAAAAAAA==",
+        "subType": "04"
+    }
   },
   "masterKey": {
        "provider": "aws",
-       "region": "us-east-2",
-       "key": "arn:aws:kms:us-east-2:947766748115:key/b87d5b05-1c5e-4a72-8658-68488dc35fd1",
-       "endpoint": "kms.us-east-2.amazonaws.com:443"
+       "region": "us-east-1",
+       "key": "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
+       "endpoint": "kms.us-east-1.amazonaws.com:443"
   },
   "updateDate": {
       "$date": {
@@ -20,14 +20,14 @@
       }
   },
   "keyMaterial": {
-      "$binary": {
-          "base64": "AQICAHg7TC/PwOwYBL8TFuYFqUTpOEpe0g57g630jehnqsa0wgF8HgTsXWna\nwwo86JesrbhXAAAAwjCBvwYJKoZIhvcNAQcGoIGxMIGuAgEAMIGoBgkqhkiG\n9w0BBwEwHgYJYIZIAWUDBAEuMBEEDB5qwN4YcVjn/ey8eAIBEIB7koeHtngk\nO+kydJn93KrrNSjY7Qc3BhE7wbYFTj+bd7EeX7B3+OKGeeDRuiiX1JHDAEWG\nNZjvOBdbMZX6sDnZyoygh5d+GANCTHt31lCa5O0nKLBaFsyxzhfukCZ/RN/L\nYFYp5uXxD7QrLBbsctjqbaTmSMF5zlf23HTP",
-          "subType": "00"
-      }
+    "$binary": {
+        "base64": "AQICAHhQNmWG2CzOm1dq3kWLM+iDUZhEqnhJwH9wZVpuZ94A8gEqnsxXlR51T5EbEVezUqqKAAAAwjCBvwYJKoZIhvcNAQcGoIGxMIGuAgEAMIGoBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDHa4jo6yp0Z18KgbUgIBEIB74sKxWtV8/YHje5lv5THTl0HIbhSwM6EqRlmBiFFatmEWaeMk4tO4xBX65eq670I5TWPSLMzpp8ncGHMmvHqRajNBnmFtbYxN3E3/WjxmdbOOe+OXpnGJPcGsftc7cB2shRfA4lICPnE26+oVNXT6p0Lo20nY5XC7jyCO",
+        "subType": "00"
+    }
   },
   "creationDate": {
       "$date": {
           "$numberLong": "1557827033449"
       }
-  }
+   }
 }

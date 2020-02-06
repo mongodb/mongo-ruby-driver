@@ -86,6 +86,40 @@ module Mongo
 
         return response.first
       end
+
+      # Get information about the AWS encryption key and feed it to the the
+      # KmsContext object
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context A KmsContext object
+      #   corresponding to one AWS KMS data key. Contains information about
+      #   the endpoint at which to establish a TLS connection and the message
+      #   to send on that connection.
+      def feed_kms(kms_context)
+        endpoint = kms_context.endpoint
+        message = kms_context.message
+
+        # There is no specific timeout written in the spec. See SPEC-1394
+        # for a discussion and updates on what this timeout should be.
+        socket_timeout = 10
+
+        host, port = endpoint.split(':')
+        port ||= 443
+
+        ssl_socket = Socket::SSL.new(host, port, host, socket_timeout, Socket::PF_INET)
+        ssl_socket.write(message)
+
+        num_bytes_needed = kms_context.bytes_needed
+
+        while num_bytes_needed > 0
+          bytes = []
+          while !ssl_socket.eof?
+            bytes << ssl_socket.readbyte
+          end
+
+          kms_context.feed(bytes.pack('C*'))
+          num_bytes_needed = kms_context.bytes_needed
+        end
+      end
     end
   end
 end

@@ -199,7 +199,7 @@ describe Mongo::Client do
         end
 
         let(:schema_map) do
-          JSON.parse(File.read('spec/support/crypt/schema_maps/schema_map.json'))
+          JSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
         end
 
         let(:bypass_auto_encryption) { true }

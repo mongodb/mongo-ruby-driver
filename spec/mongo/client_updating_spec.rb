@@ -33,7 +33,7 @@ describe Mongo::Client do
 
     describe '#with' do
       it 'updates auto encryption options' do
-        new_client = client.with({ auto_encryption_options: new_auto_encryption_options })
+        new_client = client.with(auto_encryption_options: new_auto_encryption_options)
         expect(new_client.encryption_options[:key_vault_namespace]).to eq('new.namespace')
       end
 

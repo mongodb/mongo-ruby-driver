@@ -35,10 +35,18 @@ module Crypt
       {
         aws: {
           access_key_id: SpecConfig.instance.fle_aws_key,
-          secret_access_key: SpecConfig.instance.fle_aws_secret
+          secret_access_key: SpecConfig.instance.fle_aws_secret,
         }
       }
     end
+
+    # Key vault database and collection names
+    let(:key_vault_db) { 'admin' }
+    let(:key_vault_coll) { 'datakeys' }
+    let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
+
+    # Example value to encrypt
+    let(:ssn) { '123-456-7890' }
   end
 
   # For tests that require local KMS to be configured
@@ -52,6 +60,13 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
+    end
+
+    let(:data_key_options) { {} }
+
+    let(:encrypted_ssn) do
+      "ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68Ft" +
+      "tXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"
     end
   end
 
@@ -76,6 +91,29 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
+    end
+
+    let(:data_key_options) do
+      {
+        master_key: {
+          region: aws_region,
+          key: aws_arn,
+          endpoint: "#{aws_endpoint_host}:#{aws_endpoint_port}"
+        }
+      }
+    end
+
+    # TODO: move these to environment variables so they are easily configurable
+    # for community members and update the test README explaining which variables
+    # to set.
+    let(:aws_region) { 'us-east-1' }
+    let(:aws_arn) { 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0' }
+    let(:aws_endpoint_host) { 'kms.us-east-1.amazonaws.com' }
+    let(:aws_endpoint_port) { 443 }
+
+    let(:encrypted_ssn) do
+      "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
+      "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
     end
   end
 end
