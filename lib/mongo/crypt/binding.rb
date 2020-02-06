@@ -1112,10 +1112,10 @@ module Mongo
 
         if data.nil?
           message = "Attempted to pass nil data to libmongocrypt. " +
-            "Data must be a BSON::Document"
+            "Data must be a Hash"
         else
           message = "Attempted to pass invalid data to libmongocrypt: #{data} " +
-            "Data must be a BSON::Document"
+            "Data must be a Hash"
         end
 
         raise Error::CryptError.new(message)
