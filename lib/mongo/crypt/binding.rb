@@ -1106,7 +1106,7 @@ module Mongo
       #
       # @raise [ Mongo::Error::CryptError ] If the data is not a BSON::Document
       def self.validate_document(data)
-        unless data.is_a?(Hash) || data.is_a?(BSON::Document)
+        unless data.is_a?(BSON::Document)
           if data.nil?
             message = "Attempted to pass nil data to libmongocrypt. " +
               "Data must be a BSON::Document"

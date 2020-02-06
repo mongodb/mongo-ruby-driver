@@ -16,7 +16,7 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
   end
 
   let(:value) do
-    { 'v': BSON::Binary.new(encrypted_data, :ciphertext) }
+    BSON::Document.new('v': BSON::Binary.new(encrypted_data, :ciphertext))
   end
 
   describe '#initialize' do
