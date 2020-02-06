@@ -11,13 +11,16 @@
 module Mongo
   class Error
 
-    # An error related to spawning mongocryptd for field-level encrpytion
-    class MongocryptdSpawnError < CryptError
-      # Create a new MongocryptdSpawnError
+    # An error related to field-level encryption
+    class CryptError < Mongo::Error
+      # Create a new CryptError
       #
+      # @param [ Integer | nil ] code The optional libmongocrypt error code
       # @param [ String ] message The error message
-      def initialize(message)
-        super(nil, message)
+      def initialize(message, code: nil)
+        msg = message
+        msg += " (libmongocrypt error code #{code})" if code
+        super(msg)
       end
     end
   end
