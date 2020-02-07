@@ -129,6 +129,107 @@ describe 'Auto Encryption' do
     end
   end
 
+  describe '#count' do
+    shared_examples 'it performs encrypted count' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'encrypts the command and finds the documents' do
+        count = encryption_client[:users].count(ssn: ssn)
+        count.should == 2
+      end
+
+      context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          count = encryption_client[:users].count(ssn: ssn)
+          count.should == 0
+        end
+      end
+    end
+
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted count'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted count'
+      end
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted count'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted count'
+      end
+    end
+  end
+
+  describe '#distinct' do
+    shared_examples 'it performs encrypted distinct' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'decrypts the SSN field' do
+        values = encryption_client[:users].distinct(:ssn)
+        values.length.should == 1
+        values.should include(ssn)
+      end
+
+      context 'with bypass_auto_encryption=true' do
+        it 'still decrypts the SSN field' do
+          values = encryption_client[:users].distinct(:ssn)
+          values.length.should == 1
+          values.should include(ssn)
+        end
+      end
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted distinct'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted distinct'
+      end
+    end
+
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted distinct'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted distinct'
+      end
+    end
+  end
+
   describe '#insert_one' do
     let(:client_collection) { client[:users] }
 
