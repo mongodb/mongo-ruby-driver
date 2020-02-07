@@ -63,6 +63,72 @@ describe 'Auto Encryption' do
     client.use(:admin)[:datakeys].insert_one(data_key)
   end
 
+  describe '#aggregate' do
+    shared_examples 'it performs encrypted aggregation' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'encrypts the command and decrypts the response' do
+        document = encryption_client[:users].aggregate([
+          { '$match' => { 'ssn' => ssn } }
+        ]).first
+
+        document.should_not be_nil
+        document['ssn'].should == ssn
+      end
+
+      context 'when bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          document = encryption_client[:users].aggregate([
+            { '$match' => { 'ssn' => ssn } }
+          ]).first
+
+          document.should be_nil
+        end
+
+        it 'does auto decrypt the response' do
+          document = encryption_client[:users].aggregate([
+            { '$match' => { 'ssn' => encrypted_ssn_binary } }
+          ]).first
+
+          document.should_not be_nil
+          document['ssn'].should == ssn
+        end
+      end
+    end
+
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted aggregation'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted aggregation'
+      end
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted aggregation'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted aggregation'
+      end
+    end
+  end
+
   describe '#insert_one' do
     let(:client_collection) { client[:users] }
 
