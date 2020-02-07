@@ -462,3 +462,11 @@ Then, any of the standard RSpec invocations will work:
 To have the test suite report its current configuration, run:
 
     rake spec:config
+
+## Color Output
+
+The test suite uses color output by default. To view the output in `less`
+with color, use the `-R` option:
+
+    rake 2>&1 | tee rake.log
+    less -R rake.log
