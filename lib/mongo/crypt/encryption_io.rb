@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'uri'
+
 module Mongo
   module Crypt
 
@@ -95,29 +97,50 @@ module Mongo
       #   the endpoint at which to establish a TLS connection and the message
       #   to send on that connection.
       def feed_kms(kms_context)
-        endpoint = kms_context.endpoint
-        message = kms_context.message
+        with_ssl_socket(kms_context.endpoint) do |ssl_socket|
+          ssl_socket.puts(kms_context.message)
 
+          bytes_needed = kms_context.bytes_needed
+
+          while bytes_needed > 0 do
+            bytes = ssl_socket.sysread(bytes_needed)
+            kms_context.feed(bytes)
+            bytes_needed = kms_context.bytes_needed
+          end
+        end
+      end
+
+      private
+
+      def with_ssl_socket(endpoint)
         # There is no specific timeout written in the spec. See SPEC-1394
         # for a discussion and updates on what this timeout should be.
         socket_timeout = 10
+        default_port = 443
 
-        host, port = endpoint.split(':')
-        port ||= 443
+        unless endpoint.start_with?('https://') || endpoint.start_with?('//')
+          endpoint = "//#{endpoint}"
+        end
 
-        ssl_socket = Socket::SSL.new(host, port, host, socket_timeout, Socket::PF_INET)
-        ssl_socket.write(message)
+        begin
+          uri = ::URI.parse(endpoint)
 
-        num_bytes_needed = kms_context.bytes_needed
+          tcp_socket = TCPSocket.open(uri.host, uri.port || default_port)
+          tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+          ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
+          ssl_socket.sync_close = true # tcp_socket will be closed when ssl_socket is closed
 
-        while num_bytes_needed > 0
-          bytes = []
-          while !ssl_socket.eof?
-            bytes << ssl_socket.readbyte
+          Timeout.timeout(socket_timeout, Error::SocketTimeoutError) do
+            ssl_socket.connect
           end
 
-          kms_context.feed(bytes.pack('C*'))
-          num_bytes_needed = kms_context.bytes_needed
+          yield(ssl_socket)
+        rescue => e
+          raise Error::KmsError.new(
+            "Error decrypting data key. #{e.class}: #{e.message}"
+          )
+        ensure
+          ssl_socket.sysclose
         end
       end
     end
