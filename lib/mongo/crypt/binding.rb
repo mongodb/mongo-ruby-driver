@@ -793,7 +793,7 @@ module Mongo
           mongocrypt_kms_ctx_message(kms_context.kms_ctx_p, binary.ref)
         end
 
-        return binary.to_string
+        return binary.to_s
       end
 
       # Get the hostname with which to connect over TLS to get information about

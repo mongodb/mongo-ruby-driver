@@ -6,14 +6,16 @@ describe 'Auto Encryption' do
   require_libmongocrypt
   require_enterprise
 
+  include_context 'define shared FLE helpers'
+
   let(:encryption_client) do
     new_local_client(
       SpecConfig.instance.addresses,
       SpecConfig.instance.test_options.merge(
         auto_encryption_options: {
-          kms_providers: { local: { key: "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk" } },
-          key_vault_namespace: 'admin.datakeys',
-          schema_map: schema_map,
+          kms_providers: kms_providers,
+          key_vault_namespace: key_vault_namespace,
+          schema_map: local_schema,
           bypass_auto_encryption: bypass_auto_encryption
         },
         database: 'auto-encryption'
@@ -25,45 +27,30 @@ describe 'Auto Encryption' do
     authorized_client.use('auto-encryption')
   end
 
-  let(:ssn) { '123-456-7890' }
-
   let(:bypass_auto_encryption) { false }
 
-  let(:encrypted_ssn) do
-    BSON::Binary.new(Base64.decode64("ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68FttXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"), :ciphertext)
-  end
-
-  let(:local_data_key) do
-    BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_local.json'))
-  end
-
-  let(:json_schema) do
-    BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
+  let(:encrypted_ssn_binary) do
+    BSON::Binary.new(Base64.decode64(encrypted_ssn), :ciphertext)
   end
 
   shared_context 'bypass auto encryption' do
-    let(:schema_map) { { "auto-encryption.users" => json_schema } }
     let(:bypass_auto_encryption) { true }
-
-    before do
-      client[:users].create
-    end
   end
 
   shared_context 'jsonSchema validator on collection' do
-    let(:schema_map) { nil }
+    let(:local_schema) { nil }
 
     before do
       client[:users,
         {
-          'validator' => { '$jsonSchema' => json_schema }
+          'validator' => { '$jsonSchema' => schema_map }
         }
       ].create
     end
   end
 
   shared_context 'schema map in client options' do
-    let(:schema_map) { { "auto-encryption.users" => json_schema } }
+    let(:local_schema) { { "auto-encryption.users" => schema_map } }
 
     before do
       client[:users].create
@@ -73,16 +60,14 @@ describe 'Auto Encryption' do
   before(:each) do
     client[:users].drop
     client.use(:admin)[:datakeys].drop
-    client.use(:admin)[:datakeys].insert_one(local_data_key)
+    client.use(:admin)[:datakeys].insert_one(data_key)
   end
 
   describe '#insert_one' do
     let(:client_collection) { client[:users] }
 
-    context 'with validator' do
-      include_context 'jsonSchema validator on collection'
-
-      it 'encrypts the command' do
+    shared_examples 'it performs encrypted inserts' do
+      it 'encrypts the ssn field' do
         result = encryption_client[:users].insert_one(ssn: ssn)
         expect(result).to be_ok
         expect(result.inserted_ids.length).to eq(1)
@@ -91,26 +76,11 @@ describe 'Auto Encryption' do
 
         document = client_collection.find(_id: id).first
         document.should_not be_nil
-        expect(document['ssn']).to eq(encrypted_ssn)
+        expect(document['ssn']).to eq(encrypted_ssn_binary)
       end
     end
 
-    context 'with schema map' do
-      include_context 'schema map in client options'
-
-      it 'encrypts the command' do
-        result = encryption_client[:users].insert_one(ssn: ssn)
-        expect(result).to be_ok
-        expect(result.inserted_ids.length).to eq(1)
-
-        id = result.inserted_ids.first
-
-        document = client[:users].find(_id: id).first
-        expect(document['ssn']).to eq(encrypted_ssn)
-      end
-    end
-
-    context 'with bypass_auto_encryption=true' do
+    shared_examples 'it obeys bypass_auto_encryption option' do
       include_context 'bypass auto encryption'
 
       it 'does not encrypt the command' do
@@ -124,44 +94,86 @@ describe 'Auto Encryption' do
         expect(document['ssn']).to eq(ssn)
       end
     end
-  end
 
-  describe '#find' do
-    shared_context 'with encrypted ssn document' do
-      before do
-        client[:users].insert_one(ssn: encrypted_ssn)
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted inserts'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted inserts'
+        it_behaves_like 'it obeys bypass_auto_encryption option'
       end
     end
 
-    context 'with validator' do
-      include_context 'jsonSchema validator on collection'
-      include_context 'with encrypted ssn document'
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted inserts'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted inserts'
+        it_behaves_like 'it obeys bypass_auto_encryption option'
+      end
+    end
+  end
+
+  describe '#find' do
+    shared_examples 'it performs encrypted finds' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
 
       it 'encrypts the command and decrypts the response' do
         document = encryption_client[:users].find(ssn: ssn).first
         document.should_not be_nil
         expect(document['ssn']).to eq(ssn)
       end
-    end
 
-    context 'with schema map' do
-      include_context 'schema map in client options'
-      include_context 'with encrypted ssn document'
+      context 'when bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
 
-      it 'encrypts the command and decrypts the response' do
-        document = encryption_client[:users].find(ssn: ssn).first
-        expect(document['ssn']).to eq(ssn)
+        it 'does not encrypt the command' do
+          document = encryption_client[:users].find(ssn: ssn).first
+          expect(document).to be_nil
+        end
       end
     end
 
-    context 'with bypass_auto_encryption=true' do
-      include_context 'bypass auto encryption'
-      include_context 'with encrypted ssn document'
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
 
-      it 'finds nothing' do
-        document = encryption_client[:users].find(ssn: ssn).first
-        expect(document).to be_nil
-      end
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted finds'
+     end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted finds'
+     end
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs encrypted finds'
+     end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs encrypted finds'
+     end
     end
   end
 end
