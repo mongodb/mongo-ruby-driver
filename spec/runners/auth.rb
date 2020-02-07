@@ -13,7 +13,20 @@
 # limitations under the License.
 RSpec::Matchers.define :have_blank_credentials do
   match do |client|
-    %i(auth_mech auth_mech_properties auth_source password user).all? do |key|
+    # The "null credential" definition in auth spec tests readme at
+    # https://github.com/mongodb/specifications/blob/master/source/auth/tests/README.rst
+    # is as follows:
+    #
+    # credential: If null, the credential must not be considered configured
+    # for the the purpose of deciding if the driver should authenticate to the
+    # topology.
+    #
+    # Ruby driver authenticates if :user or :auth_mech client options are set.
+    #
+    # Note that this is a different test from "no auth-related options are
+    # set on the client". Options like password or auth source are preserved
+    # by the client if set, but do not trigger authentication.
+    %i(auth_mech user).all? do |key|
       client.options[key].nil?
     end
   end

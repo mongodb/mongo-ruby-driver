@@ -215,4 +215,30 @@ describe 'Auth' do
       end
     end
   end
+
+  context 'when only auth source is specified' do
+    require_no_auth
+
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses, auth_source: 'foo')
+    end
+
+    it 'does not authenticate' do
+      expect(Mongo::Auth::User).not_to receive(:new)
+      client.database.command(ping: 1)
+    end
+  end
+
+  context 'when only auth mechanism is specified' do
+    require_x509_auth
+
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses, auth_mech: :mongodb_x509)
+    end
+
+    it 'authenticates' do
+      expect(Mongo::Auth::User).to receive(:new).and_call_original
+      client.database.command(ping: 1)
+    end
+  end
 end
