@@ -112,6 +112,16 @@ module Mongo
 
       private
 
+      # Provide an SSL socket to be used for KMS calls in a block API
+      #
+      # @param [ String ] endpoint The URI at which to connect the SSL socket
+      # @param [ Proc ] block The block to execute
+      #
+      # @raise [ Mongo::Error::KmsError ] If the socket times out or raises
+      #   an exception
+      #
+      # @note The socket is always closed when the provided block has finished
+      #   executing
       def with_ssl_socket(endpoint)
         # There is no specific timeout written in the spec. See SPEC-1394
         # for a discussion and updates on what this timeout should be.
@@ -125,10 +135,13 @@ module Mongo
         begin
           uri = ::URI.parse(endpoint)
 
+          # Create TCPSocket and set nodelay option
           tcp_socket = TCPSocket.open(uri.host, uri.port || default_port)
           tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+
           ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
           ssl_socket.sync_close = true # tcp_socket will be closed when ssl_socket is closed
+          ssl_socket.hostname = uri.host # perform SNI
 
           Timeout.timeout(socket_timeout, Error::SocketTimeoutError) do
             ssl_socket.connect
