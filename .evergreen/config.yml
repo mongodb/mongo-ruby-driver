@@ -606,6 +606,9 @@ axes:
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
         run_on: ubuntu1604-test
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-test
       - id: rhel70
         display_name: "RHEL 7.0"
         run_on: rhel70-small
