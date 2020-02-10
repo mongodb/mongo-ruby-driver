@@ -98,12 +98,9 @@ module Mongo
         with_ssl_socket(kms_context.endpoint) do |ssl_socket|
           ssl_socket.puts(kms_context.message)
 
-          bytes_needed = kms_context.bytes_needed
-
-          while bytes_needed > 0 do
-            bytes = ssl_socket.sysread(bytes_needed)
+          while kms_context.bytes_needed > 0 do
+            bytes = ssl_socket.sysread(kms_context.bytes_needed)
             kms_context.feed(bytes)
-            bytes_needed = kms_context.bytes_needed
           end
         end
       end
