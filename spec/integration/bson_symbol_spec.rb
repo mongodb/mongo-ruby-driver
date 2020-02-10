@@ -20,6 +20,15 @@ describe 'Symbol encoding to BSON' do
   end
 
   it 'round-trips symbol values' do
+    buffer = BSON::ByteBuffer.new(serialized)
+    Hash.from_bson(buffer).should == hash
+  end
+
+  it 'round-trips symbol values using the same byte buffer' do
+    if BSON::Environment.jruby?
+      pending 'https://jira.mongodb.org/browse/RUBY-2128'
+    end
+
     Hash.from_bson(hash.to_bson).should == hash
   end
 end
