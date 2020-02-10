@@ -21,7 +21,7 @@ kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p ${PRINCIPAL}
 
 echo "Install dependencies"
 export BUNDLE_GEMFILE=gemfiles/enterprise_auth.gemfile
-bundle install --gemfile="$BUNDLE_GEMFILE"
+bundle_install
 
 echo "Running tests"
 bundle exec rspec spec/enterprise_auth -fd

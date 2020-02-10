@@ -183,11 +183,18 @@ EOH
   fi
 }
 
+bundle_install() {
+  #which bundle
+  #bundle --version
+  args=--quiet
+  if test -n "$BUNDLE_GEMFILE"; then
+    args="$args --gemfile=$BUNDLE_GEMFILE"
+  fi
+  bundle install $args
+}
+
 install_deps() {
-  echo "Installing all gem dependencies"
-  which bundle
-  bundle --version
-  bundle install
+  bundle_install
   bundle exec rake clean
 }
 
