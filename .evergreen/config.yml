@@ -434,7 +434,7 @@ pre:
   - func: "fetch source"
   - func: "create expansions"
   - func: "prepare resources"
-  - func: "windows fix"
+  #- func: "windows fix"
   - func: "fix absolute paths"
   - func: "init test-results"
   - func: "make files executable"
