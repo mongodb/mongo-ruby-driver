@@ -223,6 +223,22 @@ describe Mongo::ClientEncryption do
         include_examples 'it creates a data key'
       end
 
+      context 'when socket connect errors out' do
+        let(:options) { data_key_options }
+
+        before do
+          allow_any_instance_of(OpenSSL::SSL::SSLSocket)
+            .to receive(:connect)
+            .and_raise('Error while connecting to socket')
+        end
+
+        it 'raises a KmsError' do
+          expect do
+            data_key_id
+          end.to raise_error(Mongo::Error::KmsError, /Error while connecting to socket/)
+        end
+      end
+
       context 'with valid endpoint, including https://' do
         let(:options) do
           {
