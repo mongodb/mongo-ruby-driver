@@ -134,7 +134,7 @@ setup_ruby() {
     if true; then
 
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/e7cf68d7146c09d54dfbe241c04aad3e3eadbb10/mongo_ruby_driver_toolchain_`host_arch |tr - _`_e7cf68d7146c09d54dfbe241c04aad3e3eadbb10_19_12_27_00_47_13.tar.gz
+    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
 
@@ -226,8 +226,13 @@ prepare_server_from_url() {
 }
 
 install_mlaunch() {
-  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" 'mtools[mlaunch]==1.5.3'
-  export PATH="$pythonpath/bin":$PATH
-  export PYTHONPATH="$pythonpath"
+  find /opt/python/ |grep bin/python$
+  export PATH=/opt/python/3.7/bin:$PATH
+  python -V
+  python3 -V
+  pip install --user virtualenv
+  venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+  virtualenv -p python3 $venvpath
+  . $venvpath/bin/activate
+  pip install 'mtools[mlaunch]'
 }

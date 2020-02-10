@@ -12,8 +12,8 @@ setup_ruby
 
 install_deps
 
-arch=rhel70
-version=4.2.0
+arch=`host_arch`
+version=4.2.3
 prepare_server $arch $version
 
 install_mlaunch
