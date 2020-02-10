@@ -299,9 +299,9 @@ describe 'Client authentication options' do
         let(:credentials) { "#{user}:password@" }
 
         it 'raises an exception on client creation' do
-          expect {
+          expect do
             client
-          }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
+          end.to raise_error(Mongo::Auth::InvalidConfiguration, /Password is not supported/)
         end
       end
     end
@@ -325,9 +325,9 @@ describe 'Client authentication options' do
         let(:client_opts) { { auth_mech: :mongodb_x509, user: user, password: 'password' } }
 
         it 'raises an exception on client creation' do
-          expect {
+          expect do
             client
-          }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
+          end.to raise_error(Mongo::Auth::InvalidConfiguration, /Password is not supported/)
         end
       end
     end
@@ -346,9 +346,9 @@ describe 'Client authentication options' do
         let(:credentials) { '@' }
 
         it 'raises an exception' do
-          expect {
+          expect do
             client
-          }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
+          end.to raise_error(Mongo::Auth::InvalidConfiguration, /Empty username is not supported/)
         end
       end
     end
@@ -365,9 +365,9 @@ describe 'Client authentication options' do
         let(:client_opts) { { user: '', password: '' } }
 
         it 'raises an exception' do
-          expect {
+          expect do
             client
-          }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
+          end.to raise_error(Mongo::Auth::InvalidConfiguration, /Empty username is not supported/)
         end
       end
     end
