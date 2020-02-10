@@ -74,9 +74,6 @@ tests:
     -
         description: "Acknowledged with w as 0 and journal true"
         uri: "mongodb://localhost/?w=0&journal=true"
-        # Ruby allows w=0 with journal=true.
-        # The spec says this SHOULD be disallowed - not a requirement.
-        # https://jira.mongodb.org/browse/SPEC-1460
-        valid: true
+        valid: false
         warning: false
         writeConcern: { w: 0, journal: true }
