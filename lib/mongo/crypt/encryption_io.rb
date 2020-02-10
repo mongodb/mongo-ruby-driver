@@ -144,9 +144,7 @@ module Mongo
 
           yield(ssl_socket)
         rescue => e
-          raise Error::KmsError.new(
-            "Error decrypting data key. #{e.class}: #{e.message}"
-          )
+          raise Error::KmsError, "Error decrypting data key. #{e.class}: #{e.message}"
         ensure
           ssl_socket.sysclose
         end
