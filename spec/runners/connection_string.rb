@@ -374,9 +374,9 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
           context 'when the uri is invalid', unless: test.valid? do
 
             it 'raises an error' do
-              expect{
+              expect do
                 test.uri
-              }.to raise_exception(Mongo::Error::InvalidURI)
+              end.to raise_exception(Mongo::Error::InvalidURI)
             end
           end
 
