@@ -223,6 +223,26 @@ describe Mongo::ClientEncryption do
         include_examples 'it creates a data key'
       end
 
+      context 'with invalid endpoint' do
+        let(:options) do
+          {
+            master_key: {
+              key: aws_arn,
+              region: aws_region,
+              endpoint: "https://#{aws_endpoint_host}:#{aws_endpoint_port}"
+            }
+          }
+        end
+
+        it 'raises an exception' do
+          # RUBY-2129: This error message could be more specific and inform the user
+          # that there is a problem with their KMS endpoint
+          expect do
+            data_key_id
+          end.to raise_error(Mongo::Error::KmsError, /nodename nor servname provided, or not known/)
+        end
+      end
+
       context 'when socket connect errors out' do
         let(:options) { data_key_options }
 
@@ -237,34 +257,6 @@ describe Mongo::ClientEncryption do
             data_key_id
           end.to raise_error(Mongo::Error::KmsError, /Error while connecting to socket/)
         end
-      end
-
-      context 'with valid endpoint, including https://' do
-        let(:options) do
-          {
-            master_key: {
-              key: aws_arn,
-              region: aws_region,
-              endpoint: "https://#{aws_endpoint_host}"
-            }
-          }
-        end
-
-        include_examples 'it creates a data key'
-      end
-
-      context 'with valid endpoint, including https:// and port' do
-        let(:options) do
-          {
-            master_key: {
-              key: aws_arn,
-              region: aws_region,
-              endpoint: "https://#{aws_endpoint_host}:#{aws_endpoint_port}"
-            }
-          }
-        end
-
-        include_examples 'it creates a data key'
       end
     end
 

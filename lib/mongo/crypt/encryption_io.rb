@@ -20,6 +20,12 @@ module Mongo
     #
     # @api private
     class EncryptionIO
+
+      # Timeout used for SSL socket connection, reading, and writing.
+      # There is no specific timeout written in the spec. See SPEC-1394
+      # for a discussion and updates on what this timeout should be.
+      SOCKET_TIMEOUT = 10
+
       # Creates a new EncryptionIO object with information about how to connect
       # to the key vault.
       #
@@ -96,11 +102,23 @@ module Mongo
       #   to send on that connection.
       def feed_kms(kms_context)
         with_ssl_socket(kms_context.endpoint) do |ssl_socket|
-          ssl_socket.puts(kms_context.message)
 
-          while kms_context.bytes_needed > 0 do
-            bytes = ssl_socket.sysread(kms_context.bytes_needed)
+          Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
+            'Socket write operation timed out'
+          ) do
+            ssl_socket.syswrite(kms_context.message)
+          end
+
+          bytes_needed = kms_context.bytes_needed
+          while bytes_needed > 0 do
+            bytes = Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
+              'Socket read operation timed out'
+            ) do
+              ssl_socket.sysread(bytes_needed)
+            end
+
             kms_context.feed(bytes)
+            bytes_needed = kms_context.bytes_needed
           end
         end
       end
@@ -118,27 +136,23 @@ module Mongo
       # @note The socket is always closed when the provided block has finished
       #   executing
       def with_ssl_socket(endpoint)
-        # There is no specific timeout written in the spec. See SPEC-1394
-        # for a discussion and updates on what this timeout should be.
-        socket_timeout = 10
-        default_port = 443
-
-        unless endpoint.start_with?('https://') || endpoint.start_with?('//')
-          endpoint = "//#{endpoint}"
-        end
+        host, port = endpoint.split(':')
+        port ||= 443 # Default port for AWS KMS API
 
         begin
-          uri = ::URI.parse(endpoint)
-
           # Create TCPSocket and set nodelay option
-          tcp_socket = TCPSocket.open(uri.host, uri.port || default_port)
+          tcp_socket = TCPSocket.open(host, port)
           tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
 
           ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
           ssl_socket.sync_close = true # tcp_socket will be closed when ssl_socket is closed
-          ssl_socket.hostname = uri.host # perform SNI
+          ssl_socket.hostname = "#{host}:#{port}" # perform SNI
 
-          Timeout.timeout(socket_timeout, Error::SocketTimeoutError) do
+          Timeout.timeout(
+            SOCKET_TIMEOUT,
+            Error::SocketTimeoutError,
+            'Socket connection timed out'
+          ) do
             ssl_socket.connect
           end
 
@@ -146,7 +160,9 @@ module Mongo
         rescue => e
           raise Error::KmsError, "Error decrypting data key. #{e.class}: #{e.message}"
         ensure
-          ssl_socket.sysclose
+          # If there is an error during socket creation, the
+          # ssl_socket object won't exist in this scope
+          ssl_socket.sysclose if ssl_socket
         end
       end
     end
