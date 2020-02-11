@@ -158,56 +158,6 @@ module Mongo
         end
       end
 
-      # Perform AES encryption
-      def aes_encrypt(_, key_binary_p, iv_binary_p, input_binary_p,
-        output_binary_p, response_length_p, status_p)
-        do_aes(
-          key_binary_p,
-          iv_binary_p,
-          input_binary_p,
-          output_binary_p,
-          response_length_p,
-          status_p
-        )
-      end
-
-      # Perform AES decryption
-      def aes_decrypt(_, key_binary_p, iv_binary_p, input_binary_p,
-        output_binary_p, response_length_p, status_p)
-        do_aes(
-          key_binary_p,
-          iv_binary_p,
-          input_binary_p,
-          output_binary_p,
-          response_length_p,
-          status_p,
-          decrypt: true
-        )
-      end
-
-      # Generate a string of random bytes
-      def random(_, output_binary_p, num_bytes, status_p)
-        write_binary_string_and_set_status(output_binary_p, status_p) do
-          Hooks.random(num_bytes)
-        end
-      end
-
-      def hmac_sha_512(_, key_binary_p, input_binary_p, output_binary_p, status_p)
-        do_hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
-      end
-
-      def hmac_sha_256(_, key_binary_p, input_binary_p, output_binary_p, status_p)
-        do_hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
-      end
-
-      def hmac_hash(_, input_binary_p, output_binary_p, status_p)
-        input = Binary.from_pointer(input_binary_p).to_s
-
-        write_binary_string_and_set_status(output_binary_p, status_p) do
-          Hooks.hash_sha256(input)
-        end
-      end
-
       # We are buildling libmongocrypt without crypto functions to remove the
       # external dependency on OpenSSL. This method binds native Ruby crypto
       # methods to the underlying mongocrypt_t object so that libmongocrypt can
@@ -216,16 +166,64 @@ module Mongo
       # Every crypto binding ignores its first argument, which is an option
       # mongocrypt_ctx_t object and is not required to use crypto hooks.
       def set_crypto_hooks
+        @aes_encrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+          output_binary_p, response_length_p, status_p|
+          do_aes(
+            key_binary_p,
+            iv_binary_p,
+            input_binary_p,
+            output_binary_p,
+            response_length_p,
+            status_p
+          )
+        end
+
+        @aes_decrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+          output_binary_p, response_length_p, status_p|
+          do_aes(
+            key_binary_p,
+            iv_binary_p,
+            input_binary_p,
+            output_binary_p,
+            response_length_p,
+            status_p,
+            decrypt: true
+          )
+        end
+
+        @random = Proc.new do |_, output_binary_p, num_bytes, status_p|
+          write_binary_string_and_set_status(output_binary_p, status_p) do
+            Hooks.random(num_bytes)
+          end
+        end
+
+        @hmac_sha_512 = Proc.new do |_, key_binary_p, input_binary_p,
+          output_binary_p, status_p|
+          do_hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
+        end
+
+        @hmac_sha_256 = Proc.new do |_, key_binary_p, input_binary_p,
+          output_binary_p, status_p|
+          do_hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
+        end
+
+        @hmac_hash = Proc.new do |_, input_binary_p, output_binary_p, status_p|
+          input = Binary.from_pointer(input_binary_p).to_s
+
+          write_binary_string_and_set_status(output_binary_p, status_p) do
+            Hooks.hash_sha256(input)
+          end
+        end
 
         Binding.setopt_crypto_hooks(
-                    self,
-                    method(:aes_encrypt),
-                    method(:aes_decrypt),
-                    method(:random),
-                    method(:hmac_sha_512),
-                    method(:hmac_sha_256),
-                    method(:hmac_hash),
-                  )
+          self,
+          @aes_encrypt,
+          @aes_decrypt,
+          @random,
+          @hmac_sha_512,
+          @hmac_sha_256,
+          @hmac_hash,
+        )
       end
 
       # Validate the kms_providers option and use it to set the KMS provider
