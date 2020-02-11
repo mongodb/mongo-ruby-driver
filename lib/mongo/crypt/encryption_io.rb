@@ -20,6 +20,12 @@ module Mongo
     #
     # @api private
     class EncryptionIO
+
+      # Timeout used for SSL socket connection, reading, and writing.
+      # There is no specific timeout written in the spec. See SPEC-1394
+      # for a discussion and updates on what this timeout should be.
+      SOCKET_TIMEOUT = 10
+
       # Creates a new EncryptionIO object with information about how to connect
       # to the key vault.
       #
@@ -95,29 +101,75 @@ module Mongo
       #   the endpoint at which to establish a TLS connection and the message
       #   to send on that connection.
       def feed_kms(kms_context)
-        endpoint = kms_context.endpoint
-        message = kms_context.message
+        with_ssl_socket(kms_context.endpoint) do |ssl_socket|
 
-        # There is no specific timeout written in the spec. See SPEC-1394
-        # for a discussion and updates on what this timeout should be.
-        socket_timeout = 10
-
-        host, port = endpoint.split(':')
-        port ||= 443
-
-        ssl_socket = Socket::SSL.new(host, port, host, socket_timeout, Socket::PF_INET)
-        ssl_socket.write(message)
-
-        num_bytes_needed = kms_context.bytes_needed
-
-        while num_bytes_needed > 0
-          bytes = []
-          while !ssl_socket.eof?
-            bytes << ssl_socket.readbyte
+          Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
+            'Socket write operation timed out'
+          ) do
+            ssl_socket.syswrite(kms_context.message)
           end
 
-          kms_context.feed(bytes.pack('C*'))
-          num_bytes_needed = kms_context.bytes_needed
+          bytes_needed = kms_context.bytes_needed
+          while bytes_needed > 0 do
+            bytes = Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
+              'Socket read operation timed out'
+            ) do
+              ssl_socket.sysread(bytes_needed)
+            end
+
+            kms_context.feed(bytes)
+            bytes_needed = kms_context.bytes_needed
+          end
+        end
+      end
+
+      private
+
+      # Provide an SSL socket to be used for KMS calls in a block API
+      #
+      # @param [ String ] endpoint The URI at which to connect the SSL socket
+      # @param [ Proc ] block The block to execute
+      #
+      # @raise [ Mongo::Error::KmsError ] If the socket times out or raises
+      #   an exception
+      #
+      # @note The socket is always closed when the provided block has finished
+      #   executing
+      def with_ssl_socket(endpoint)
+        host, port = endpoint.split(':')
+        port ||= 443 # Default port for AWS KMS API
+
+        begin
+          # Create TCPSocket and set nodelay option
+          tcp_socket = TCPSocket.open(host, port)
+          tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+
+          ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
+          ssl_socket.sync_close = true # tcp_socket will be closed when ssl_socket is closed
+          ssl_socket.hostname = "#{host}:#{port}" # perform SNI
+
+          Timeout.timeout(
+            SOCKET_TIMEOUT,
+            Error::SocketTimeoutError,
+            'Socket connection timed out'
+          ) do
+            ssl_socket.connect
+          end
+
+          yield(ssl_socket)
+        rescue => e
+          raise Error::KmsError, "Error decrypting data key. #{e.class}: #{e.message}"
+        ensure
+          # If there is an error during socket creation, the
+          # ssl_socket object won't exist in this scope and this line will
+          # raise an exception
+          Timeout.timeout(
+            SOCKET_TIMEOUT,
+            Error::SocketTimeoutError,
+            'Socket close timed out'
+          ) do
+            ssl_socket.sysclose rescue nil
+          end
         end
       end
     end
