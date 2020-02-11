@@ -776,7 +776,7 @@ buildvariants:
     mongodb-version: ['3.4', '3.6', '4.0']
     topology: '*'
     storage-engine: mmapv1
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -788,7 +788,7 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: ["4.0", "4.2"]
     topology: [replica-set, sharded-cluster]
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -945,7 +945,7 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: "4.2"
     topology: standalone
-    os: rhel70
+    os: ubuntu1604
   display_name: "X.509 Tests"
   tasks:
     - name: "x509-tests"
