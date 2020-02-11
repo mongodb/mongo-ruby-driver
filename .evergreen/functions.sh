@@ -190,6 +190,7 @@ bundle_install() {
   if test -n "$BUNDLE_GEMFILE"; then
     args="$args --gemfile=$BUNDLE_GEMFILE"
   fi
+  echo "Running bundle install $args"
   bundle install $args
 }
 
