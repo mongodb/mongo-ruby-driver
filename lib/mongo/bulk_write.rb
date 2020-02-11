@@ -203,17 +203,17 @@ module Mongo
 
     def delete_one(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
-      Operation::Delete.new(spec).bulk_execute(server)
+      Operation::Delete.new(spec).bulk_execute(server, client)
     end
 
     def delete_many(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents)
-      Operation::Delete.new(spec).bulk_execute(server)
+      Operation::Delete.new(spec).bulk_execute(server, client)
     end
 
     def insert_one(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
-      Operation::Insert.new(spec).bulk_execute(server)
+      Operation::Insert.new(spec).bulk_execute(server, client)
     end
 
     def update_one(documents, server, operation_id, session, txn_num)

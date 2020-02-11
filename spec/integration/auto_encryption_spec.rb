@@ -182,35 +182,33 @@ describe 'Auto Encryption' do
     it_behaves_like 'an encrypted command'
   end
 
-  describe '#insert_one' do
-    let(:client_collection) { client[:users] }
-
+  describe '#delete_one' do
     shared_examples 'it performs an encrypted command' do
-      it 'encrypts the ssn field' do
-        result = encryption_client[:users].insert_one(ssn: ssn)
-        expect(result).to be_ok
-        expect(result.inserted_ids.length).to eq(1)
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
 
-        id = result.inserted_ids.first
-
-        document = client_collection.find(_id: id).first
-        document.should_not be_nil
-        expect(document['ssn']).to eq(encrypted_ssn_binary)
+      it 'encrypts the SSN field' do
+        result = encryption_client[:users].delete_one(ssn: ssn)
+        expect(result.deleted_count).to eq(1)
       end
     end
 
-    shared_examples 'it obeys bypass_auto_encryption option' do
-      include_context 'bypass auto encryption'
+    it_behaves_like 'an encrypted command'
+  end
 
-      it 'does not encrypt the command' do
-        result = encryption_client[:users].insert_one(ssn: ssn)
-        expect(result).to be_ok
-        expect(result.inserted_ids.length).to eq(1)
+  describe '#delete_many' do
+    shared_examples 'it performs an encrypted command' do
+      before do
+        client[:users].insert_many([
+          { ssn: encrypted_ssn_binary },
+          { ssn: encrypted_ssn_binary }
+        ])
+      end
 
-        id = result.inserted_ids.first
-
-        document = client[:users].find(_id: id).first
-        expect(document['ssn']).to eq(ssn)
+      it 'decrypts the SSN field' do
+        result = encryption_client[:users].delete_many(ssn: ssn)
+        expect(result.deleted_count).to eq(2)
       end
     end
 
@@ -236,6 +234,57 @@ describe 'Auto Encryption' do
           document = encryption_client[:users].find(ssn: ssn).first
           expect(document).to be_nil
         end
+      end
+    end
+
+    it_behaves_like 'an encrypted command'
+  end
+
+  describe '#insert_one' do
+    let(:client_collection) { client[:users] }
+
+    shared_examples 'it performs an encrypted command' do
+      it 'encrypts the ssn field' do
+        result = encryption_client[:users].insert_one(ssn: ssn)
+        expect(result).to be_ok
+        expect(result.inserted_ids.length).to eq(1)
+
+        id = result.inserted_ids.first
+
+        document = client_collection.find(_id: id).first
+        document.should_not be_nil
+        expect(document['ssn']).to eq(encrypted_ssn_binary)
+      end
+    end
+
+    # TODO: fix this
+    shared_examples 'it obeys bypass_auto_encryption option' do
+      include_context 'bypass auto encryption'
+
+      it 'does not encrypt the command' do
+        result = encryption_client[:users].insert_one(ssn: ssn)
+        expect(result).to be_ok
+        expect(result.inserted_ids.length).to eq(1)
+
+        id = result.inserted_ids.first
+
+        document = client[:users].find(_id: id).first
+        expect(document['ssn']).to eq(ssn)
+      end
+    end
+
+    it_behaves_like 'an encrypted command'
+  end
+
+  describe '#update_one' do
+    shared_examples 'it performs an encrypted command' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'encrypts the ssn field' do
+        result = encryption_client[:users].find(ssn: ssn).update_one(ssn: '098-765-4321')
+        expect(result.n).to eq(1)
       end
     end
 

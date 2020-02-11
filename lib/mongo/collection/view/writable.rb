@@ -175,7 +175,7 @@ module Mongo
                   :coll_name => collection.name,
                   :write_concern => write_concern,
                   :session => session
-              ).execute(server)
+              ).execute(server, client)
             end
           end
         end
@@ -206,7 +206,7 @@ module Mongo
                   :write_concern => write_concern,
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server)
+              ).execute(server, client)
             end
           end
         end
@@ -341,7 +341,7 @@ module Mongo
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server)
+              ).execute(server, client)
             end
           end
         end

@@ -75,6 +75,8 @@ module Mongo
       #
       # @return [ Hash ] The marked command
       def mark_command(cmd)
+        byebug
+
         begin
           response = @mongocryptd_client.database.command(cmd)
         rescue Error::NoServerAvailable => e
