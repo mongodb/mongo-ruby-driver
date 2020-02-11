@@ -63,8 +63,38 @@ describe 'Auto Encryption' do
     client.use(:admin)[:datakeys].insert_one(data_key)
   end
 
+  shared_examples 'an encrypted command' do
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs an encrypted command'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs an encrypted command'
+      end
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      context 'with validator' do
+        include_context 'jsonSchema validator on collection'
+        it_behaves_like 'it performs an encrypted command'
+      end
+
+      context 'with schema map' do
+        include_context 'schema map in client options'
+        it_behaves_like 'it performs an encrypted command'
+      end
+    end
+  end
+
   describe '#aggregate' do
-    shared_examples 'it performs encrypted aggregation' do
+    shared_examples 'it performs an encrypted command' do
       before do
         client[:users].insert_one(ssn: encrypted_ssn_binary)
       end
@@ -100,37 +130,11 @@ describe 'Auto Encryption' do
       end
     end
 
-    context 'with AWS KMS provider' do
-      include_context 'with AWS kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted aggregation'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted aggregation'
-      end
-    end
-
-    context 'with local KMS provider' do
-      include_context 'with local kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted aggregation'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted aggregation'
-      end
-    end
+    it_behaves_like 'an encrypted command'
   end
 
   describe '#count' do
-    shared_examples 'it performs encrypted count' do
+    shared_examples 'it performs an encrypted command' do
       before do
         client[:users].insert_one(ssn: encrypted_ssn_binary)
         client[:users].insert_one(ssn: encrypted_ssn_binary)
@@ -151,37 +155,11 @@ describe 'Auto Encryption' do
       end
     end
 
-    context 'with AWS KMS provider' do
-      include_context 'with AWS kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted count'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted count'
-      end
-    end
-
-    context 'with local KMS provider' do
-      include_context 'with local kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted count'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted count'
-      end
-    end
+    it_behaves_like 'an encrypted command'
   end
 
   describe '#distinct' do
-    shared_examples 'it performs encrypted distinct' do
+    shared_examples 'it performs an encrypted command' do
       before do
         client[:users].insert_one(ssn: encrypted_ssn_binary)
       end
@@ -201,39 +179,13 @@ describe 'Auto Encryption' do
       end
     end
 
-    context 'with local KMS provider' do
-      include_context 'with local kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted distinct'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted distinct'
-      end
-    end
-
-    context 'with AWS KMS provider' do
-      include_context 'with AWS kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted distinct'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted distinct'
-      end
-    end
+    it_behaves_like 'an encrypted command'
   end
 
   describe '#insert_one' do
     let(:client_collection) { client[:users] }
 
-    shared_examples 'it performs encrypted inserts' do
+    shared_examples 'it performs an encrypted command' do
       it 'encrypts the ssn field' do
         result = encryption_client[:users].insert_one(ssn: ssn)
         expect(result).to be_ok
@@ -262,39 +214,11 @@ describe 'Auto Encryption' do
       end
     end
 
-    context 'with AWS KMS provider' do
-      include_context 'with AWS kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted inserts'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted inserts'
-        it_behaves_like 'it obeys bypass_auto_encryption option'
-      end
-    end
-
-    context 'with local KMS provider' do
-      include_context 'with local kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted inserts'
-      end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted inserts'
-        it_behaves_like 'it obeys bypass_auto_encryption option'
-      end
-    end
+    it_behaves_like 'an encrypted command'
   end
 
   describe '#find' do
-    shared_examples 'it performs encrypted finds' do
+    shared_examples 'it performs an encrypted command' do
       before do
         client[:users].insert_one(ssn: encrypted_ssn_binary)
       end
@@ -315,32 +239,6 @@ describe 'Auto Encryption' do
       end
     end
 
-    context 'with AWS KMS provider' do
-      include_context 'with AWS kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted finds'
-     end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted finds'
-     end
-    end
-
-    context 'with local KMS provider' do
-      include_context 'with local kms_providers'
-
-      context 'with validator' do
-        include_context 'jsonSchema validator on collection'
-        it_behaves_like 'it performs encrypted finds'
-     end
-
-      context 'with schema map' do
-        include_context 'schema map in client options'
-        it_behaves_like 'it performs encrypted finds'
-     end
-    end
+    it_behaves_like 'an encrypted command'
   end
 end
