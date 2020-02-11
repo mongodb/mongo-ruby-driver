@@ -63,7 +63,7 @@ module Mongo
                   :db_name => database.name,
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server)
+              ).execute(server, client)
             end
           end.first['value']
         end
@@ -144,7 +144,7 @@ module Mongo
                   :db_name => database.name,
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server)
+              ).execute(server, client)
             end
           end.first['value']
           value unless value.nil? || value.empty?
@@ -250,7 +250,7 @@ module Mongo
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server)
+              ).execute(server, client)
             end
           end
         end
@@ -295,7 +295,7 @@ module Mongo
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session
-              ).execute(server)
+              ).execute(server, client)
             end
           end
         end

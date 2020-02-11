@@ -171,6 +171,8 @@ describe 'Auto Encryption' do
       end
 
       context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
         it 'still decrypts the SSN field' do
           values = encryption_client[:users].distinct(:ssn)
           values.length.should == 1
@@ -192,6 +194,15 @@ describe 'Auto Encryption' do
         result = encryption_client[:users].delete_one(ssn: ssn)
         expect(result.deleted_count).to eq(1)
       end
+
+      context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the SSN field' do
+          result = encryption_client[:users].delete_one(ssn: ssn)
+          expect(result.deleted_count).to eq(0)
+        end
+      end
     end
 
     it_behaves_like 'an encrypted command'
@@ -209,6 +220,15 @@ describe 'Auto Encryption' do
       it 'decrypts the SSN field' do
         result = encryption_client[:users].delete_many(ssn: ssn)
         expect(result.deleted_count).to eq(2)
+      end
+
+      context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the SSN field' do
+          result = encryption_client[:users].delete_many(ssn: ssn)
+          expect(result.deleted_count).to eq(0)
+        end
       end
     end
 
@@ -239,6 +259,67 @@ describe 'Auto Encryption' do
 
     it_behaves_like 'an encrypted command'
   end
+
+  describe '#find_one_and_delete' do
+    shared_examples 'it performs an encrypted command' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'encrypts the command and decrypts the response' do
+        result = encryption_client[:users].find_one_and_delete(ssn: ssn)
+        expect(result['ssn']).to eq(ssn)
+      end
+
+      context 'when bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          result = encryption_client[:users].find_one_and_delete(ssn: ssn)
+          expect(result).to be_nil
+        end
+
+        it 'still decrypts the command' do
+          result = encryption_client[:users].find_one_and_delete(ssn: encrypted_ssn_binary)
+          expect(result['ssn']).to eq(ssn)
+        end
+      end
+    end
+
+    it_behaves_like 'an encrypted command'
+  end
+
+  describe '#find_one_and_replace' do
+    shared_examples 'it performs an encrypted command' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'encrypts the command and decrypts the response' do
+        result = encryption_client[:users].find_one_and_replace({ ssn: ssn }, { ssn: '098-765-4321' }, :return_document => :after)
+        expect(result['ssn']).to eq('098-765-4321')
+      end
+
+      context 'when bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          result = encryption_client[:users].find_one_and_replace({ ssn: ssn }, { random: 'blah' }, :return_document => :after)
+          expect(result).to be_nil
+        end
+
+        # TODO: clean up this whole section
+        # it 'still decrypts the command' do
+        #   result = encryption_client[:users].find_one_and_replace({ ssn: encrypted_ssn_binary }, { ssn: '098-765-4321' }, :return_document => :after)
+        #   expect(result['ssn']).to eq('098-765-4321')
+        # end
+      end
+    end
+
+    it_behaves_like 'an encrypted command'
+  end
+
+  # TODO: find_one_and_update
 
   describe '#insert_one' do
     let(:client_collection) { client[:users] }
@@ -276,6 +357,33 @@ describe 'Auto Encryption' do
     it_behaves_like 'an encrypted command'
   end
 
+  describe '#replace_one' do
+    shared_examples 'it performs an encrypted command' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary)
+      end
+
+      it 'encrypts the ssn field' do
+        result = encryption_client[:users].replace_one({ ssn: ssn }, { ssn: '098-765-4321' })
+        expect(result.modified_count).to eq(1)
+
+        find_result = encryption_client[:users].find(ssn: '098-765-4321')
+        expect(find_result.count).to eq(1)
+      end
+
+      context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          result = encryption_client[:users].replace_one({ ssn: ssn }, { ssn: '098-765-4321' })
+          expect(result.modified_count).to eq(0)
+        end
+      end
+    end
+
+    it_behaves_like 'an encrypted command'
+  end
+
   describe '#update_one' do
     shared_examples 'it performs an encrypted command' do
       before do
@@ -283,8 +391,50 @@ describe 'Auto Encryption' do
       end
 
       it 'encrypts the ssn field' do
-        result = encryption_client[:users].find(ssn: ssn).update_one(ssn: '098-765-4321')
+        result = encryption_client[:users].update_one({ ssn: ssn }, { ssn: '098-765-4321' })
         expect(result.n).to eq(1)
+
+        find_result = encryption_client[:users].find(ssn: '098-765-4321')
+        expect(find_result.count).to eq(1)
+      end
+
+      context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          result = encryption_client[:users].update_one({ ssn: ssn }, { ssn: '098-765-4321' })
+          expect(result.n).to eq(0)
+        end
+      end
+    end
+
+    it_behaves_like 'an encrypted command'
+  end
+
+  describe '#update_many' do
+    shared_examples 'it performs an encrypted command' do
+      before do
+        client[:users].insert_one(ssn: encrypted_ssn_binary, age: 25)
+        client[:users].insert_one(ssn: encrypted_ssn_binary, age: 43)
+      end
+
+      it 'encrypts the ssn field' do
+        result = encryption_client[:users].update_many({ ssn: ssn }, { "$inc" => { :age =>  1 } })
+        expect(result.n).to eq(2)
+
+        updated_documents = encryption_client[:users].find(ssn: ssn)
+        ages = updated_documents.map { |doc| doc['age'] }
+        expect(ages).to include(26)
+        expect(ages).to include(44)
+      end
+
+      context 'with bypass_auto_encryption=true' do
+        include_context 'bypass auto encryption'
+
+        it 'does not encrypt the command' do
+          result = encryption_client[:users].update_many({ ssn: ssn }, { "$inc" => { :age =>  1 } })
+          expect(result.n).to eq(0)
+        end
       end
     end
 

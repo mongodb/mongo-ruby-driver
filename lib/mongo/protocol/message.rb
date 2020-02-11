@@ -151,7 +151,8 @@ module Mongo
       private def merge_sections
         cmd = if @sections.length > 1
           cmd = @sections.detect { |section| section[:type] == 0 }[:payload]
-          cmd.merge(documents:
+          identifier = @sections.detect { |section| section[:type] == 1}[:payload][:identifier]
+          cmd.merge(identifier.to_sym =>
             @sections.select { |section| section[:type] == 1 }.
               map { |section| section[:payload][:sequence] }.
               inject([]) { |arr, documents| arr + documents }
