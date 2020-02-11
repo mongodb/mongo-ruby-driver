@@ -161,8 +161,15 @@ module Mongo
           raise Error::KmsError, "Error decrypting data key. #{e.class}: #{e.message}"
         ensure
           # If there is an error during socket creation, the
-          # ssl_socket object won't exist in this scope
-          ssl_socket.sysclose if ssl_socket
+          # ssl_socket object won't exist in this scope and this line will
+          # raise an exception
+          Timeout.timeout(
+            SOCKET_TIMEOUT,
+            Error::SocketTimeoutError,
+            'Socket close timed out'
+          ) do
+            ssl_socket.sysclose rescue nil
+          end
         end
       end
     end

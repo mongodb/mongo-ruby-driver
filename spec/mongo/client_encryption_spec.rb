@@ -258,6 +258,22 @@ describe Mongo::ClientEncryption do
           end.to raise_error(Mongo::Error::KmsError, /Error while connecting to socket/)
         end
       end
+
+      context 'when socket connect errors out' do
+        let(:options) { data_key_options }
+
+        before do
+          allow_any_instance_of(OpenSSL::SSL::SSLSocket)
+            .to receive(:sysclose)
+            .and_raise('Error while closing socket')
+        end
+
+        it 'does not raise an exception' do
+          expect do
+            data_key_id
+          end.not_to raise_error
+        end
+      end
     end
 
     context 'with local KMS provider' do
