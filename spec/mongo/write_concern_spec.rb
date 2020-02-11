@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::WriteConcern do
 
@@ -193,6 +193,18 @@ describe Mongo::WriteConcern do
         it 'converts keys to symbols' do
           expect(wc).to be_a(Mongo::WriteConcern::Unacknowledged)
           expect(wc.options[:w]).to eq(0)
+        end
+
+        context 'and j is true' do
+          let(:options) do
+            { 'w' => 0, j: true }
+          end
+
+          it 'raises an exception' do
+            expect do
+              wc
+            end.to raise_error(Mongo::Error::InvalidWriteConcern, /:j cannot be true when :w is 0/)
+          end
         end
       end
     end

@@ -302,6 +302,14 @@ module Mongo
       if @uri_options[:ssl_cert]
         @uri_options[:ssl_key] = @uri_options[:ssl_cert]
       end
+
+      if uri_options[:write_concern] && !uri_options[:write_concern].empty?
+        begin
+          WriteConcern.get(uri_options[:write_concern])
+        rescue Error::InvalidWriteConcern => e
+          raise_invalid_error_no_fmt!("#{e.class}: #{e}")
+        end
+      end
     end
 
     # Get the credentials provided in the URI.

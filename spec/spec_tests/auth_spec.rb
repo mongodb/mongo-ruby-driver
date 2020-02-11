@@ -15,9 +15,9 @@ describe 'Auth' do
 
           context 'when the auth configuration is invalid', unless: test.valid? do
             it 'raises an error' do
-              expect {
+              expect do
                 test.client
-            }.to raise_error(Mongo::Auth::InvalidConfiguration)
+              end.to raise_error(Mongo::Auth::InvalidConfiguration)
             end
           end
 

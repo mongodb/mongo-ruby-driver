@@ -1,0 +1,27 @@
+description: "Discovered single mongos"
+
+# Ruby driver performs topology discovery by default.
+# This test verifies that a URI with just a server address results in
+# the sharded topology if the server replies that it is a mongos.
+# As part of https://jira.mongodb.org/browse/SPEC-1248 this test can be
+# adjusted to use directConnection=false option, at which point it will
+# apply to all drivers.
+uri: "mongodb://a"
+
+phases:
+
+  - responses:
+    -
+      - "a:27017"
+      -
+        ok: 1
+        ismaster: true
+        msg: "isdbgrid"
+    
+    outcome:
+      servers:
+        "a:27017":
+          type: "Mongos"
+          setName:
+      topologyType: "Sharded"
+      setName:

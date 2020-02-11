@@ -1019,12 +1019,12 @@ module Mongo
       # Set crypto hooks on the provided mongocrypt object
       #
       # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
-      # @param [ Method ] An AES encryption method
-      # @param [ Method ] An AES decryption method
-      # @param [ Method ] A random method
-      # @param [ Method ] A HMAC SHA-512 method
-      # @param [ Method ] A HMAC SHA-256 method
-      # @param [ Method ] A SHA-256 hash method
+      # @param [ Proc ] An AES encryption method
+      # @param [ Proc ] An AES decryption method
+      # @param [ Proc ] A random method
+      # @param [ Proc ] A HMAC SHA-512 method
+      # @param [ Proc ] A HMAC SHA-256 method
+      # @param [ Proc ] A SHA-256 hash method
       # @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
       #   that may have been set when hooks were enabled.
       #

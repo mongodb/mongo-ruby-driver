@@ -880,9 +880,9 @@ describe Mongo::URI do
           let(:password) { 's3kr4t' }
 
           it 'does not allow a client to be created' do
-            expect {
+            expect do
               new_local_client_nmio(string)
-            }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
+            end.to raise_error(Mongo::Auth::InvalidConfiguration, /Password is not supported/)
           end
         end
 
@@ -925,9 +925,9 @@ describe Mongo::URI do
         end
 
         it 'does not allow a client to be created with default auth mechanism' do
-          expect {
+          expect do
             new_local_client_nmio(string)
-          }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
+          end.to raise_error(Mongo::Auth::InvalidConfiguration, /Empty username is not supported/)
         end
       end
     end

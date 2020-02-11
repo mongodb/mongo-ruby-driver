@@ -148,6 +148,14 @@ module Constraints
     end
   end
 
+  def require_x509_auth
+    before(:all) do
+      unless SpecConfig.instance.x509_auth?
+        skip "X.509 auth required"
+      end
+    end
+  end
+
   def require_no_x509_auth
     before(:all) do
       if SpecConfig.instance.x509_auth?
