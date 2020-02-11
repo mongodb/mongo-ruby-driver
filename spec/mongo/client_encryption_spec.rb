@@ -239,7 +239,7 @@ describe Mongo::ClientEncryption do
           # that there is a problem with their KMS endpoint
           expect do
             data_key_id
-          end.to raise_error(Mongo::Error::KmsError, /nodename nor servname provided, or not known/)
+          end.to raise_error(Mongo::Error::KmsError, /SocketError/)
         end
       end
 
