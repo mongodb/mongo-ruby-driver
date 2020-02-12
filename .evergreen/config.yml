@@ -744,10 +744,10 @@ buildvariants:
     mongodb-version: "4.2"
     topology: "*"
     compressor: 'zlib'
-    os: rhel70
+    os: ubuntu1604
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "zlib-noauth"
@@ -757,10 +757,10 @@ buildvariants:
     mongodb-version: "3.6"
     topology: "*"
     compressor: 'zlib'
-    os: rhel70
+    os: ubuntu1604
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "ruby-head"
