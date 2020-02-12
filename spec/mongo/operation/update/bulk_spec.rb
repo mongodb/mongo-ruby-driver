@@ -98,7 +98,7 @@ describe Mongo::Operation::Update do
         end
 
         it 'updates the document' do
-          op.bulk_execute(authorized_primary)
+          op.bulk_execute(authorized_primary, client: nil)
           expect(authorized_collection.find(field: 'blah').count).to eq(1)
         end
       end
@@ -122,7 +122,7 @@ describe Mongo::Operation::Update do
         end
 
         it 'updates the documents' do
-          op.bulk_execute(authorized_primary)
+          op.bulk_execute(authorized_primary, client: nil)
           expect(authorized_collection.find(field: 'blah').count).to eq(2)
         end
       end
@@ -154,7 +154,7 @@ describe Mongo::Operation::Update do
         context 'when write concern is acknowledged' do
 
           it 'aborts after first error' do
-            failing_update.bulk_execute(authorized_primary)
+            failing_update.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
         end
@@ -166,7 +166,7 @@ describe Mongo::Operation::Update do
           end
 
           it 'aborts after first error' do
-            failing_update.bulk_execute(authorized_primary)
+            failing_update.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
         end
@@ -199,7 +199,7 @@ describe Mongo::Operation::Update do
         context 'when write concern is acknowledged' do
 
           it 'does not abort after first error' do
-            failing_update.bulk_execute(authorized_primary)
+            failing_update.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
         end
@@ -211,7 +211,7 @@ describe Mongo::Operation::Update do
           end
 
           it 'does not abort after first error' do
-            failing_update.bulk_execute(authorized_primary)
+            failing_update.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
         end
