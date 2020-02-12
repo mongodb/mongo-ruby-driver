@@ -1,4 +1,13 @@
+detected_arch=
+
 host_arch() {
+  if test -z "$detected_arch"; then
+    detected_arch=`_detect_arch`
+  fi
+  echo "$detected_arch"
+}
+
+_detect_arch() {
   local arch
   arch=
   if test -f /etc/debian_version; then
@@ -9,17 +18,20 @@ host_arch() {
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
       arch="debian$release"
     elif lsb_release -i |grep -q Ubuntu; then
-      release=`lsb_release -r |awk '{print $2}' |tr -d .`
-      arch="ubuntu$release"
+      if test "`uname -m`" = ppc64le; then
+        release=`lsb_release -r |awk '{print $2}' |tr -d .`
+        arch="ubuntu$release-ppc"
+      else
+        release=`lsb_release -r |awk '{print $2}' |tr -d .`
+        arch="ubuntu$release"
+      fi
     else
       echo 'Unknown Debian flavor' 1>&2
       return 1
     fi
   elif test -f /etc/redhat-release; then
     # RHEL or CentOS
-    if test "`uname -m`" = s390x; then
-      arch=rhel72-s390x
-    elif test "`uname -m`" = ppc64le; then
+    if test "`uname -m`" = ppc64le; then
       arch=rhel71-ppc
     elif lsb_release -i |grep -q RedHat; then
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
@@ -32,6 +44,7 @@ host_arch() {
     echo 'Unknown distro' 1>&2
     return 1
   fi
+  echo "Detected arch: $arch" 1>&2
   echo $arch
 }
 
