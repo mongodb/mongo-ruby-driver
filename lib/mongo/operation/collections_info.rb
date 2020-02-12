@@ -39,9 +39,9 @@ module Mongo
       #           Mongo::Operation::ListCollections::Result ] The operation result.
       #
       # @since 2.0.0
-      def execute(server, client)
+      def execute(server, client:)
         if server.features.list_collections_enabled?
-          return Operation::ListCollections.new(spec).execute(server, client)
+          return Operation::ListCollections.new(spec).execute(server, client: client)
         end
 
         super

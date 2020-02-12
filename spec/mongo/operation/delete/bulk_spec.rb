@@ -99,7 +99,7 @@ describe Mongo::Operation::Delete do
         end
 
         it 'deletes the document from the database' do
-          op.bulk_execute(authorized_primary)
+          op.bulk_execute(authorized_primary, client: nil)
           expect(authorized_collection.find.count).to eq(1)
         end
       end
@@ -122,7 +122,7 @@ describe Mongo::Operation::Delete do
         end
 
         it 'deletes the documents from the database' do
-          op.bulk_execute(authorized_primary)
+          op.bulk_execute(authorized_primary, client: nil)
           expect(authorized_collection.find.count).to eq(0)
         end
       end
@@ -157,7 +157,7 @@ describe Mongo::Operation::Delete do
           end
 
           it 'aborts after first error' do
-            failing_delete.bulk_execute(authorized_primary)
+            failing_delete.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(2)
           end
         end
@@ -169,7 +169,7 @@ describe Mongo::Operation::Delete do
           end
 
           it 'aborts after first error' do
-            failing_delete.bulk_execute(authorized_primary)
+            failing_delete.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(2)
           end
         end
@@ -205,7 +205,7 @@ describe Mongo::Operation::Delete do
           end
 
           it 'does not abort after first error' do
-            failing_delete.bulk_execute(authorized_primary)
+            failing_delete.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -217,7 +217,7 @@ describe Mongo::Operation::Delete do
           end
 
           it 'does not abort after first error' do
-            failing_delete.bulk_execute(authorized_primary)
+            failing_delete.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(1)
           end
         end

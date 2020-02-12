@@ -22,7 +22,7 @@ describe Mongo::Operation::RemoveUser do
     context 'when user removal was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary)
+        operation.execute(root_authorized_primary, client: nil)
       end
 
       it 'removes the user from the database' do
@@ -33,12 +33,12 @@ describe Mongo::Operation::RemoveUser do
     context 'when removal was not successful' do
 
       before do
-        operation.execute(root_authorized_primary)
+        operation.execute(root_authorized_primary, client: nil)
       end
 
       it 'raises an exception' do
         expect {
-          operation.execute(root_authorized_primary)
+          operation.execute(root_authorized_primary, client: nil)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

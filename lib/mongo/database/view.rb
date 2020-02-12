@@ -165,7 +165,7 @@ module Mongo
       end
 
       def send_initial_query(server, session, options = {})
-        initial_query_op(session, options).execute(server, client)
+        initial_query_op(session, options).execute(server, client: client)
       end
     end
   end

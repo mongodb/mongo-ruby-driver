@@ -148,6 +148,11 @@ module Mongo
         self
       end
 
+      def maybe_encrypt(client)
+        # Do nothing if the Message subclass has not implemented this method
+        self
+      end
+
       private def merge_sections
         cmd = if @sections.length > 1
           cmd = @sections.detect { |section| section[:type] == 0 }[:payload]

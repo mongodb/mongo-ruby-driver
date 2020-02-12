@@ -35,7 +35,7 @@ describe Mongo::Operation::UpdateUser do
     context 'when user update was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary)
+        operation.execute(root_authorized_primary, client: nil)
       end
 
       it 'updates the user in the database' do

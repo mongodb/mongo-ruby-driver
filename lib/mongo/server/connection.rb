@@ -401,7 +401,7 @@ module Mongo
         @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
       end
 
-      def deliver(message, client)
+      def deliver(message, client:)
         begin
           super
         # Important: timeout errors are not handled here

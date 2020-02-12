@@ -50,7 +50,7 @@ module Mongo
               db_name: database.name,
               session: session,
               write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client)
+            ).execute(next_primary(nil, session), client: client)
           end
         end
 
@@ -87,7 +87,7 @@ module Mongo
               db_name: database.name,
               session: session,
               write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client)
+            ).execute(next_primary(nil, session), client: client)
           end
         end
 
@@ -113,7 +113,7 @@ module Mongo
               db_name: database.name,
               session: session,
               write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client)
+            ).execute(next_primary(nil, session), client: client)
           end
         end
 
@@ -142,7 +142,7 @@ module Mongo
               user_name: name,
               db_name: database.name,
               session: session
-            ).execute(next_primary(nil, session), client)
+            ).execute(next_primary(nil, session), client: client)
           end
         end
 

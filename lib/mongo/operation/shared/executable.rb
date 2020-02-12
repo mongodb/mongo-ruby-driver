@@ -34,7 +34,7 @@ module Mongo
         end
       end
 
-      def execute(server, client)
+      def execute(server, client:)
         do_execute(server, client).tap do |result|
           validate_result(result, server)
         end

@@ -95,7 +95,7 @@ module Mongo
 
         def send_initial_query(server, session = nil)
           validate_collation!(server, collation)
-          initial_query_op(server, session).execute(server, client)
+          initial_query_op(server, session).execute(server, client: client)
         end
       end
     end

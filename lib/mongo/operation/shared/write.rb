@@ -32,7 +32,7 @@ module Mongo
       # @return [ Mongo::Operation::Result ] The operation result.
       #
       # @since 2.5.2
-      def execute(server, client)
+      def execute(server, client:)
         validate!
         op = if server.features.op_msg_enabled?
             self.class::OpMsg.new(spec)
@@ -41,7 +41,7 @@ module Mongo
           else
             self.class::Command.new(spec)
           end
-        result = op.execute(server, client)
+        result = op.execute(server, client: client)
         validate_result(result, server)
       end
 
@@ -57,9 +57,9 @@ module Mongo
       #           Mongo::Operation::Update::BulkResult ] The bulk result.
       #
       # @since 2.5.2
-      def bulk_execute(server, client)
+      def bulk_execute(server, client: client)
         if server.features.op_msg_enabled?
-          self.class::OpMsg.new(spec).execute(server, client).bulk_result
+          self.class::OpMsg.new(spec).execute(server, client: client).bulk_result
         else
           self.class::Command.new(spec).execute(server).bulk_result
         end

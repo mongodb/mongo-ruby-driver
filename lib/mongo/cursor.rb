@@ -269,7 +269,7 @@ module Mongo
 
       unregister
       read_with_one_retry do
-        kill_cursors_operation.execute(@server)
+        kill_cursors_operation.execute(@server, client: client)
       end
 
       nil
@@ -331,7 +331,7 @@ module Mongo
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
-      process(get_more_operation.execute(@server))
+      process(get_more_operation.execute(@server, client: client))
     end
 
     private

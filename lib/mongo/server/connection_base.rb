@@ -107,12 +107,12 @@ module Mongo
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
         message = messages.first
-        deliver(message, client)
+        deliver(message, client: client)
       end
 
       private
 
-      def deliver(message, client)
+      def deliver(message, client:)
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
@@ -138,7 +138,7 @@ module Mongo
             total_duration = Time.now - start
             command_completed(result, address, operation_id, message.payload, total_duration)
           end
-          if client
+          if client && result
             result = result.maybe_decrypt(client)
           end
           result

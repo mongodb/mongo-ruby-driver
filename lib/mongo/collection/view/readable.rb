@@ -155,7 +155,7 @@ module Mongo
                                      :options => {:limit => -1},
                                      :read => read_pref,
                                      :session => session
-              ).execute(server, collection.client)
+              ).execute(server, client: collection.client)
             end.n.to_i
           end
         end
@@ -222,7 +222,7 @@ module Mongo
                 db_name: database.name,
                 read: read_pref,
                 session: session
-              ).execute(server)
+              ).execute(server, client: collection.client)
             end.n.to_i
           end
         end
@@ -267,7 +267,7 @@ module Mongo
                                         :options => {:limit => -1},
                                         :read => read_pref,
                                         :session => session
-                                       }).execute(server, collection.client)
+                                       }).execute(server, client: collection.client)
             end.first['values']
           end
         end

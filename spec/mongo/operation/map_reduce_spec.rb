@@ -97,7 +97,7 @@ describe Mongo::Operation::MapReduce do
     context 'when the map/reduce succeeds' do
 
       let(:response) do
-        op.execute(authorized_primary)
+        op.execute(authorized_primary, client: nil)
       end
 
       it 'returns the response' do
@@ -117,7 +117,7 @@ describe Mongo::Operation::MapReduce do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary)
+          op.execute(authorized_primary, client: nil)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
