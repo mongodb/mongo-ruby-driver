@@ -485,7 +485,7 @@ axes:
       - id: "latest"
         display_name: "latest"
         variables:
-           VERSION: "4.3.3"
+           VERSION: "latest"
       - id: "4.0"
         display_name: "4.0"
         variables:
@@ -718,7 +718,7 @@ buildvariants:
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "single-mongos"
@@ -731,7 +731,7 @@ buildvariants:
     os: rhel70
   display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "partial-auth-ssl"
