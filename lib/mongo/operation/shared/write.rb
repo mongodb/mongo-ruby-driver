@@ -57,7 +57,7 @@ module Mongo
       #           Mongo::Operation::Update::BulkResult ] The bulk result.
       #
       # @since 2.5.2
-      def bulk_execute(server, client: client)
+      def bulk_execute(server, client:)
         if server.features.op_msg_enabled?
           self.class::OpMsg.new(spec).execute(server, client: client).bulk_result
         else
