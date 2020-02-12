@@ -785,7 +785,7 @@ buildvariants:
     os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 - matrix_name: "activesupport"
   matrix_spec:
