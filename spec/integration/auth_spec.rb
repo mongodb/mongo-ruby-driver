@@ -220,7 +220,8 @@ describe 'Auth' do
     require_no_auth
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses, auth_source: 'foo')
+      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.ssl_options.merge(
+        auth_source: 'foo'))
     end
 
     it 'does not authenticate' do
