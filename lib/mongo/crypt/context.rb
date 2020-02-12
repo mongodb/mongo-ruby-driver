@@ -88,6 +88,8 @@ module Mongo
             filter = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.collection_info(filter)
+            # RUBY-2133: per libmongocrypt integration guidelines, do not
+            # feed an empty result to libmongocrypt
             mongocrypt_feed(result||{})
 
             mongocrypt_done
@@ -128,9 +130,6 @@ module Mongo
       #
       # @return [ BSON::Document ] BSON document containing the result.
       def mongocrypt_feed(doc)
-        unless doc.is_a?(Hash)
-          raise ArgumentError, "Document must be a Hash, given #{doc.class}: #{doc.inspect}"
-        end
         Binding.ctx_mongo_feed(self, doc)
       end
     end
