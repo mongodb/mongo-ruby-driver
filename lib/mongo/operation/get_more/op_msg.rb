@@ -19,9 +19,11 @@ module Mongo
       # Execute the operation.
       #
       # @example
-      #   operation.execute(server)
+      #   operation.execute(server, client: nil)
       #
       # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Client ] client The client to be used to perform
+      #   auto-encryption (optional).
       #
       # @return [ Mongo::Operation::GetMore::Result ] The operation result.
       #
