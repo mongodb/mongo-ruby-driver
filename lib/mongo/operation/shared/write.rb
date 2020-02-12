@@ -28,8 +28,9 @@ module Mongo
       #   operation.execute(server, client: nil)
       #
       # @param [ Mongo::Server ] server The server to send the operation to.
-      # @param [ Mongo::Client ] client The client to be used to perform
-      #   auto-encryption (optional).
+      # @param [ Mongo::Client ] client The client that will be used to
+      #   perform auto-encryption if it is necessary to encrypt the command
+      #   being executed (optional).
       #
       # @return [ Mongo::Operation::Result ] The operation result.
       #
@@ -50,9 +51,12 @@ module Mongo
       # Execute the bulk write operation.
       #
       # @example
-      #   operation.bulk_execute(server)
+      #   operation.bulk_execute(server, client: nil)
       #
       # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Client ] client The client that will be used to
+      #   perform auto-encryption if it is necessary to encrypt the command
+      #   being executed (optional).
       #
       # @return [ Mongo::Operation::Delete::BulkResult,
       #           Mongo::Operation::Insert::BulkResult,
@@ -63,7 +67,7 @@ module Mongo
         if server.features.op_msg_enabled?
           self.class::OpMsg.new(spec).execute(server, client: client).bulk_result
         else
-          self.class::Command.new(spec).execute(server).bulk_result
+          self.class::Command.new(spec).execute(server, client: client).bulk_result
         end
       end
 

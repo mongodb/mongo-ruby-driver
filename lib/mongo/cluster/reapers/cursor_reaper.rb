@@ -139,7 +139,7 @@ module Mongo
             else
               Cursor::Builder::OpKillCursors.update_cursors(op_spec, active_cursors_copy.to_a)
               if Cursor::Builder::OpKillCursors.get_cursors_list(op_spec).size > 0
-                Operation::KillCursors.new(op_spec).execute(server)
+                Operation::KillCursors.new(op_spec).execute(server, client: nil)
               end
             end
           end
