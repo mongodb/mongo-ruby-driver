@@ -158,7 +158,7 @@ module Mongo
                   session: session
                  }
           spec[:write_concern] = write_concern if server.features.collation_enabled?
-          Operation::CreateIndex.new(spec).execute(server, client: nil)
+          Operation::CreateIndex.new(spec).execute(server, client: client)
         end
       end
 
