@@ -192,6 +192,7 @@ module Mongo
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
+          # This will be investigtated in RUBY-2119
           if enc_cmd['txnNumber'].is_a?(Integer) && cmd[:txnNumber].is_a?(BSON::Int64)
             enc_cmd['txnNumber'] = BSON::Int64.new(enc_cmd[:txnNumber])
           end
