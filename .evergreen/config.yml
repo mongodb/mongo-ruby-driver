@@ -626,7 +626,7 @@ buildvariants:
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "ruby-mid"
@@ -635,10 +635,10 @@ buildvariants:
     ruby: [ruby-2.4, ruby-2.5]
     mongodb-version: "4.0"
     topology: "*"
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "mongo"
@@ -647,10 +647,10 @@ buildvariants:
     ruby: "ruby-2.7"
     mongodb-version: "*"
     topology: "*"
-    os: rhel70
+    os: ubuntu1204
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "single-mongos"
@@ -660,10 +660,10 @@ buildvariants:
     mongodb-version: ["4.2", latest]
     topology: "sharded-cluster"
     single-mongos: single-mongos
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "partial-auth-ssl"
@@ -672,10 +672,10 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: "*"
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+     - name: "test-mlaunch"
 
 -
   matrix_name: "no-retry-reads"
@@ -684,10 +684,10 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: "*"
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "no-retry-writes"
@@ -696,10 +696,10 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: [replica-set, sharded-cluster]
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: mmapv1
@@ -711,7 +711,7 @@ buildvariants:
     os: ubuntu1604
   display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
   tasks:
-     - name: "test-mlaunch"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "lint"
@@ -723,7 +723,7 @@ buildvariants:
     os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   tasks:
-     - name: "test-mlaunch"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "jruby-auth"
@@ -744,7 +744,7 @@ buildvariants:
     ruby: "jruby-9.2"
     mongodb-version: "2.6"
     topology: "*"
-    os: ubuntu1604
+    os: ubuntu1204
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
     - name: "test-mlaunch"
@@ -757,10 +757,10 @@ buildvariants:
     mongodb-version: "4.2"
     topology: "*"
     compressor: 'zlib'
-    os: rhel70
+    os: ubuntu1604
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "zlib-noauth"
@@ -770,10 +770,10 @@ buildvariants:
     mongodb-version: "3.6"
     topology: "*"
     compressor: 'zlib'
-    os: rhel70
+    os: ubuntu1604
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "ruby-head"
@@ -785,7 +785,7 @@ buildvariants:
     os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 - matrix_name: "activesupport"
   matrix_spec:
@@ -793,10 +793,10 @@ buildvariants:
     mongodb-version: '4.0'
     topology: replica-set
     as: as
-    os: rhel70
+    os: ubuntu1604
   display_name: "AS ${mongodb-version} ${topology} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 - matrix_name: "bson"
   matrix_spec:
@@ -804,10 +804,10 @@ buildvariants:
     mongodb-version: '4.2'
     topology: replica-set
     bson: "*"
-    os: rhel70
+    os: ubuntu1604
   display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "3.6-with-3.4-fcv"
@@ -816,10 +816,10 @@ buildvariants:
     ruby: ["ruby-2.5"]
     mongodb-version: '3.6'
     topology: replica-set
-    os: rhel70
+    os: ubuntu1604
   display_name: "3.6 Replica Set with 3.4 FCV"
   tasks:
-    - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "local-tls"
