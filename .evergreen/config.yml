@@ -96,6 +96,20 @@ functions:
       params:
         file: src/expansion.yml
 
+  "export FLE AWS credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
+          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
+          MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
+          MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
+          EOT
+
   "prepare resources":
     - command: shell.exec
       params:
@@ -209,20 +223,6 @@ functions:
     - command: expansions.update
       params:
         file: mo-expansion.yml
-
-  "export FLE AWS credentials":
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          cat <<EOT > .env.private
-          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
-          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
-          MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
-          MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
-          EOT
 
   "delete private environment":
     - command: shell.exec
