@@ -485,7 +485,7 @@ axes:
       - id: "latest"
         display_name: "latest"
         variables:
-           VERSION: "latest"
+           VERSION: "4.3.3"
       - id: "4.0"
         display_name: "4.0"
         variables:
