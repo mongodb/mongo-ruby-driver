@@ -59,6 +59,9 @@ if test "$TOPOLOGY" = replica_set; then
   fi
 elif test "$TOPOLOGY" = sharded_cluster; then
   args="$args --replicaset --sharded 2 --name ruby-driver-rs"
+  if test -z "$SINGLE_MONGOS"; then
+    args="$args --mongos 2"
+  fi
 else
   args="$args --single"
 fi
