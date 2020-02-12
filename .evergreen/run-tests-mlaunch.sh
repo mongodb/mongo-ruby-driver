@@ -72,7 +72,25 @@ echo "Running specs"
 which bundle
 bundle --version
 
-export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000$uri_options"
+if test "$TOPOLOGY" = sharded_cluster; then
+  if test -n "$SINGLE_MONGOS"; then
+    # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
+    # when executing against a multi-sharded mongos.
+    # At the same time, due to pinning in sharded transactions,
+    # it is beneficial to test a single shard to ensure that server
+    # monitoring and selection are working correctly and recover the driver's
+    # ability to operate in reasonable time after errors and fail points trigger
+    # on a single shard
+    echo Restricting to a single mongos
+    hosts=localhost:27017
+  else
+    hosts=localhost:27017,localhost:27018
+  fi
+else
+  hosts=localhost:27017
+fi
+
+export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 bundle exec rake spec:prepare
 
 if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
@@ -81,7 +99,7 @@ if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
   bundle exec rake spec:wait_for_sessions
 fi
 
-export MONGODB_URI="mongodb://localhost:27017/?appName=test-suite$uri_options"
+export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
 bundle exec rake spec:ci
 test_status=$?
 echo "TEST STATUS"
