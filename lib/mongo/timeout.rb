@@ -38,8 +38,8 @@ module Mongo
         # Jruby Timeout::timeout method does not support passing nil arguments.
         # Remove the nil arguments before passing them along to the core
         # Timeout::timeout method.
-        args = [sec, klass, message].compact
-        ::Timeout.timeout(*args) do
+        optional_args = [klass, message].compact
+        ::Timeout.timeout(sec, *optional_args) do
           yield
         end
       end
