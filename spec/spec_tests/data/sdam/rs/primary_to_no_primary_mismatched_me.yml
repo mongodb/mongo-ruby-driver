@@ -42,8 +42,7 @@ phases:
       maxWireVersion: 6
   outcome:
     # Hosts from primary description (c:27017 and d:27017) added to the topoolgy.
-    # Hosts not in primary description (a:27017 and b:27017) are removed from
-    # the topology.
+    # Hosts not in primary description (a:27017 and b:27017) removed from the topology.
     servers:
       c:27017:
         type: Unknown
