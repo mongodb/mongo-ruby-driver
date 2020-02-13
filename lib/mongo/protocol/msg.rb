@@ -182,6 +182,19 @@ module Mongo
         [@main_document]
       end
 
+      # Possibly encrypt this message with libmongocrypt. Message will only be
+      # encrypted if the specified client exists, that client has been given
+      # auto-encryption options, the client has not been instructed to bypass
+      # auto-encryption, and mongocryptd determines that this message is
+      # eligible for encryption. A message is eligible for encryption if it
+      # represents one of the command types whitelisted by libmongocrypt and it
+      # contains data that is required to be encrypted by a local or remote json schema.
+      #
+      # @param [ Mongo::Client | nil ] client The client used to make the original
+      #   command. This client may have auto-encryption options specified.
+      #
+      # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
+      #   message if encryption was not possible or necessary.
       def maybe_encrypt(client)
         # TODO verify compression happens later, i.e. when this method runs
         # the message is not compressed.
@@ -202,6 +215,18 @@ module Mongo
         end
       end
 
+      # Possibly decrypt this message with libmongocrypt. Message will only be
+      # decrypted if the specified client exists, that client has been given
+      # auto-encryption options, and this message is eligible for decryption.
+      # A message is eligible for decryption if it represents one of the command
+      # types whitelisted by libmongocrypt and it contains data that is required
+      # to be encrypted by a local or remote json schema.
+      #
+      # @param [ Mongo::Client | nil ] client The client used to make the original
+      #   command. This client may have auto-encryption options specified.
+      #
+      # @return [ Mongo::Protocol::Msg ] The decryption message, or the original
+      #   message if decryption was not possible or necessary.
       def maybe_decrypt(client)
         if client && client.encryption_options
           cmd = merge_sections
