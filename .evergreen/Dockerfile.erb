@@ -2,11 +2,10 @@
 
 <%
 
-host_arch = 'debian92'
-toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{host_arch}/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_#{host_arch.gsub('-', '_')}_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz"
-python_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-python-driver-toolchain/#{host_arch}/ba92de2700c04ee2d4f82c3ffdfc33105140cb04/mongo_python_driver_toolchain_#{host_arch.gsub('-', '_')}_ba92de2700c04ee2d4f82c3ffdfc33105140cb04_19_11_14_15_33_33.tar.gz"
+toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{@distro}/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_#{@distro.gsub('-', '_')}_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz"
+python_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-python-driver-toolchain/#{@distro}/ba92de2700c04ee2d4f82c3ffdfc33105140cb04/mongo_python_driver_toolchain_#{@distro.gsub('-', '_')}_ba92de2700c04ee2d4f82c3ffdfc33105140cb04_19_11_14_15_33_33.tar.gz"
 server_version = '4.3.3'
-server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#{host_arch}-#{server_version}.tgz"
+server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#{@distro}-#{server_version}.tgz"
 server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
