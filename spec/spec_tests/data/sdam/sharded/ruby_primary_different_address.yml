@@ -1,4 +1,4 @@
-description: RS Primary whose address differs from client address but no me mismatch
+description: RS Primary in forced sharded topology with a different address from client but no me mismatch
 uri: mongodb://localhost:27017/?connect=sharded
 phases:
 -
