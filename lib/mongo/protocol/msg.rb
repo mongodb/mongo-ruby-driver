@@ -186,7 +186,7 @@ module Mongo
       # encrypted if the specified client exists, that client has been given
       # auto-encryption options, the client has not been instructed to bypass
       # auto-encryption, and mongocryptd determines that this message is
-      # elligible for encryption.
+      # eligible for encryption.
       #
       # @param [ Mongo::Client | nil ] client The client used to make the original
       #   command. This client may have auto-encryption options specified.
