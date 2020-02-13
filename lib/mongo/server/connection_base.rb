@@ -99,7 +99,7 @@ module Mongo
       # @return [ Protocol::Message | nil ] The reply if needed.
       #
       # @since 2.0.0
-      def dispatch(messages, operation_id = nil)
+      def dispatch(messages, operation_id = nil, client = nil)
         # The monitoring code does not correctly handle multiple messages,
         # and the driver internally does not send more than one message at
         # a time ever. Thus prohibit multiple message use for now.
@@ -107,12 +107,12 @@ module Mongo
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
         message = messages.first
-        deliver(message)
+        deliver(message, client)
       end
 
       private
 
-      def deliver(message)
+      def deliver(message, client)
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
@@ -137,6 +137,9 @@ module Mongo
           else
             total_duration = Time.now - start
             command_completed(result, address, operation_id, message.payload, total_duration)
+          end
+          if client && result
+            result = result.maybe_decrypt(client)
           end
           result
         end

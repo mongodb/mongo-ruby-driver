@@ -99,7 +99,7 @@ describe Mongo::Operation::Insert do
       end
 
       let(:inserted_ids) do
-        op.bulk_execute(authorized_primary).inserted_ids
+        op.bulk_execute(authorized_primary, client: nil).inserted_ids
       end
 
       let(:collection_ids) do
@@ -128,7 +128,7 @@ describe Mongo::Operation::Insert do
       context 'when the insert succeeds' do
 
         let(:response) do
-          op.bulk_execute(authorized_primary)
+          op.bulk_execute(authorized_primary, client: nil)
         end
 
         it 'inserts the documents into the database' do
@@ -146,7 +146,7 @@ describe Mongo::Operation::Insert do
         end
 
         let(:response) do
-          op.bulk_execute(authorized_primary)
+          op.bulk_execute(authorized_primary, client: nil)
         end
 
         it 'inserts the documents into the database' do
@@ -183,7 +183,7 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'aborts after first error' do
-            failing_insert.bulk_execute(authorized_primary)
+            failing_insert.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -197,7 +197,7 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'aborts after first error' do
-            failing_insert.bulk_execute(authorized_primary)
+            failing_insert.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -228,7 +228,7 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'does not abort after first error' do
-            failing_insert.bulk_execute(authorized_primary)
+            failing_insert.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(2)
           end
         end
@@ -243,7 +243,7 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'does not after first error' do
-            failing_insert.bulk_execute(authorized_primary)
+            failing_insert.bulk_execute(authorized_primary, client: nil)
             expect(authorized_collection.find.count).to eq(2)
           end
         end

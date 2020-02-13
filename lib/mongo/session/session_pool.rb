@@ -113,9 +113,14 @@ module Mongo
       def end_sessions
         while !@queue.empty?
           server = ServerSelector.get(mode: :primary_preferred).select_server(@cluster)
-          Operation::Command.new(
-              :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
-              :db_name => Database::ADMIN).execute(server)
+          op = Operation::Command.new(
+            selector: {
+              endSessions: @queue.shift(10_000).map(&:session_id),
+            },
+            db_name: Database::ADMIN,
+          )
+          # end_sessions does not take a client as an argument
+          op.execute(server, client: nil)
         end
       rescue Mongo::Error, Error::AuthError
       end

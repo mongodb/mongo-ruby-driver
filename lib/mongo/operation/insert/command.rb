@@ -32,8 +32,8 @@ module Mongo
 
         private
 
-        def get_result(server)
-          Result.new(dispatch_message(server), @ids)
+        def get_result(server, client)
+          Result.new(dispatch_message(server, client), @ids)
         end
 
         def selector(server)

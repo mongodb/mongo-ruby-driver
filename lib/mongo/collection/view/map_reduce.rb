@@ -239,7 +239,7 @@ module Mongo
             server = cluster.next_primary(nil, session)
           end
           validate_collation!(server)
-          initial_query_op(session).execute(server)
+          initial_query_op(session).execute(server, client: client)
         end
 
         def fetch_query_spec
@@ -259,7 +259,7 @@ module Mongo
         end
 
         def send_fetch_query(server, session)
-          fetch_query_op(server, session).execute(server)
+          fetch_query_op(server, session).execute(server, client: client)
         end
 
         def validate_collation!(server)

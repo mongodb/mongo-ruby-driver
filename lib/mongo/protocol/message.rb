@@ -140,6 +140,39 @@ module Mongo
         self
       end
 
+      def maybe_decrypt(client)
+        # TODO determine if we should be decrypting data coming from pre-4.2
+        # servers, potentially using legacy wire protocols. If so we need
+        # to implement decryption for those wire protocols as our current
+        # encryption/decryption code is OP_MSG-specific.
+        self
+      end
+
+      def maybe_encrypt(client)
+        # Do nothing if the Message subclass has not implemented this method
+        self
+      end
+
+      private def merge_sections
+        cmd = if @sections.length > 1
+          cmd = @sections.detect { |section| section[:type] == 0 }[:payload]
+          identifier = @sections.detect { |section| section[:type] == 1}[:payload][:identifier]
+          cmd.merge(identifier.to_sym =>
+            @sections.select { |section| section[:type] == 1 }.
+              map { |section| section[:payload][:sequence] }.
+              inject([]) { |arr, documents| arr + documents }
+          )
+        elsif @sections.first[:payload]
+          @sections.first[:payload]
+        else
+          @sections.first
+        end
+        if cmd.nil?
+          raise "The command should never be nil here"
+        end
+        cmd
+      end
+
       # Serializes message into bytes that can be sent on the wire
       #
       # @param buffer [String] buffer where the message should be inserted
@@ -153,7 +186,11 @@ module Mongo
 
       alias_method :to_s, :serialize
 
-      # Deserializes messages from an IO stream
+      # Deserializes messages from an IO stream.
+      #
+      # This method returns decompressed messages (i.e. if the message on the
+      # wire was OP_COMPRESSED, this method would typically return the OP_MSG
+      # message that is the result of decompression).
       #
       # @param [ Integer ] max_message_size The max message size.
       # @param [ IO ] io Stream containing a message

@@ -103,7 +103,7 @@ describe Mongo::Operation::Delete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary)
+          delete.execute(authorized_primary, client: nil)
         end
 
         it 'deletes the documents from the database' do
@@ -123,7 +123,7 @@ describe Mongo::Operation::Delete do
 
         it 'raises an exception' do
           expect {
-            delete.execute(authorized_primary)
+            delete.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -147,7 +147,7 @@ describe Mongo::Operation::Delete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary)
+          delete.execute(authorized_primary, client: nil)
         end
 
         it 'deletes the documents from the database' do
@@ -166,13 +166,13 @@ describe Mongo::Operation::Delete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary)
+          delete.execute(authorized_primary, client: nil)
         end
 
         it 'does not delete any documents' do
 
           expect {
-            op.execute(authorized_primary)
+            op.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::OperationFailure)
 
           expect(authorized_collection.find.count).to eq(2)
@@ -187,7 +187,7 @@ describe Mongo::Operation::Delete do
 
         it 'raises an error' do
           expect {
-            op.execute(authorized_primary)
+            op.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
@@ -211,7 +211,7 @@ describe Mongo::Operation::Delete do
       end
 
       let(:result) do
-        delete.execute(authorized_primary)
+        delete.execute(authorized_primary, client: nil)
       end
 
       before do

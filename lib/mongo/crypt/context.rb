@@ -88,7 +88,9 @@ module Mongo
             filter = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.collection_info(filter)
-            mongocrypt_feed(result)
+            # RUBY-2133: per libmongocrypt integration guidelines, do not
+            # feed an empty result to libmongocrypt
+            mongocrypt_feed(result||{})
 
             mongocrypt_done
           when :need_mongo_markings
@@ -123,7 +125,10 @@ module Mongo
       end
 
       # Feeds the result of a Mongo operation back to libmongocrypt.
-      # The result param should be a BSON::Document.
+      #
+      # @param [ Hash ] doc BSON document to feed.
+      #
+      # @return [ BSON::Document ] BSON document containing the result.
       def mongocrypt_feed(doc)
         Binding.ctx_mongo_feed(self, doc)
       end

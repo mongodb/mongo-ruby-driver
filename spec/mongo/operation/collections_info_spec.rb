@@ -31,7 +31,7 @@ describe Mongo::Operation::CollectionsInfo do
     end
 
     let(:info) do
-      docs = op.execute(authorized_primary).documents
+      docs = op.execute(authorized_primary, client: nil).documents
       docs.collect { |info| info['name'].sub("#{SpecConfig.instance.test_db}.", '') }
     end
 

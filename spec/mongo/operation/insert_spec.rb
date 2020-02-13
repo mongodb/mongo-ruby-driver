@@ -83,7 +83,7 @@ describe Mongo::Operation::Insert do
       end
 
       let(:inserted_ids) do
-        insert.execute(authorized_primary).inserted_ids
+        insert.execute(authorized_primary, client: nil).inserted_ids
       end
 
       let(:collection_ids) do
@@ -112,7 +112,7 @@ describe Mongo::Operation::Insert do
       context 'when the insert succeeds' do
 
         let!(:response) do
-          insert.execute(authorized_primary)
+          insert.execute(authorized_primary, client: nil)
         end
 
         it 'reports the correct written count' do
@@ -144,8 +144,8 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(authorized_primary)
-            failing_insert.execute(authorized_primary)
+            failing_insert.execute(authorized_primary, client: nil)
+            failing_insert.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -163,7 +163,7 @@ describe Mongo::Operation::Insert do
         end
 
         let!(:response) do
-          insert.execute(authorized_primary)
+          insert.execute(authorized_primary, client: nil)
         end
 
         it 'reports the correct written count' do
@@ -195,8 +195,8 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(authorized_primary)
-            failing_insert.execute(authorized_primary)
+            failing_insert.execute(authorized_primary, client: nil)
+            failing_insert.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -221,8 +221,8 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(authorized_primary)
-            failing_insert.execute(authorized_primary)
+            failing_insert.execute(authorized_primary, client: nil)
+            failing_insert.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
 
@@ -236,13 +236,13 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            insert.execute(authorized_primary)
+            insert.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
 
         it 'does not insert the document' do
           expect {
-            insert.execute(authorized_primary)
+            insert.execute(authorized_primary, client: nil)
           }.to raise_error(Mongo::Error::MaxBSONSize)
           expect(authorized_collection.find.count).to eq(0)
         end
@@ -273,7 +273,7 @@ describe Mongo::Operation::Insert do
       end
 
       let(:response) do
-        op.execute(authorized_primary)
+        op.execute(authorized_primary, client: nil)
       end
 
       it 'uses op codes instead of write commands' do

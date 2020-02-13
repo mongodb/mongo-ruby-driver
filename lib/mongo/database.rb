@@ -170,12 +170,13 @@ module Mongo
 
       client.send(:with_session, opts) do |session|
         server = selector.select_server(cluster, nil, session)
-        Operation::Command.new({
+        op = Operation::Command.new(
           :selector => operation.dup,
           :db_name => name,
           :read => selector,
           :session => session
-        }).execute(server)
+        )
+        op.execute(server, client: client)
       end
     end
 
@@ -206,7 +207,7 @@ module Mongo
             :db_name => name,
             :read => preference,
             :session => session
-          }).execute(server)
+          }).execute(server, client: client)
         end
       end
     end
@@ -231,7 +232,7 @@ module Mongo
           db_name: name,
           write_concern: write_concern,
           session: session
-        }).execute(next_primary(nil, session))
+        }).execute(next_primary(nil, session), client: client)
       end
     end
 

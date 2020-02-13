@@ -31,17 +31,20 @@ module Mongo
       # Execute the operation.
       #
       # @example
-      #   operation.execute(server)
+      #   operation.execute(server, client: nil)
       #
       # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Client ] client The client that will be used to
+      #   perform auto-encryption if it is necessary to encrypt the command
+      #   being executed (optional).
       #
       # @return [ Mongo::Operation::CollectionsInfo::Result,
       #           Mongo::Operation::ListCollections::Result ] The operation result.
       #
       # @since 2.0.0
-      def execute(server)
+      def execute(server, client:)
         if server.features.list_collections_enabled?
-          return Operation::ListCollections.new(spec).execute(server)
+          return Operation::ListCollections.new(spec).execute(server, client: client)
         end
 
         super

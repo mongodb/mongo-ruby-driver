@@ -20,7 +20,7 @@ describe Mongo::Operation::CreateIndex do
       end
 
       let(:response) do
-        operation.execute(authorized_primary)
+        operation.execute(authorized_primary, client: nil)
       end
 
       it 'returns ok' do
@@ -43,12 +43,12 @@ describe Mongo::Operation::CreateIndex do
       end
 
       before do
-        operation.execute(authorized_primary)
+        operation.execute(authorized_primary, client: nil)
       end
 
       it 'raises an exception' do
         expect {
-          second_operation.execute(authorized_primary)
+          second_operation.execute(authorized_primary, client: nil)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

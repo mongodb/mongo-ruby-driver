@@ -373,8 +373,16 @@ EOT
   # Base test options.
   def base_test_options
     {
-      max_pool_size: 1,
+      # Automatic encryption tests require a minimum of two connections,
+      # because the driver checks out a connection to build a command,
+      # and then may need to encrypt the command which could require a
+      # query to key vault connection triggered from libmongocrypt.
+      # In the worst case using FLE may end up doubling the number of
+      # connections that the driver uses at any one time.
+      max_pool_size: 2,
+
       heartbeat_frequency: 20,
+
       # The test suite seems to perform a number of operations
       # requiring server selection. Hence a timeout of 1 here,
       # together with e.g. a misconfigured replica set,
@@ -382,6 +390,7 @@ EOT
       # failing.
       # Server selection timeout of 1 is insufficient for evergreen.
       server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 4.01 : 2.01),
+
       wait_queue_timeout: 2,
       connect_timeout: 3,
       max_idle_time: 5

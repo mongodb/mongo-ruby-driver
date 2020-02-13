@@ -389,6 +389,7 @@ module Mongo
     #   - Automatic encryption is an enterprise only feature that only applies to operations on a collection.
     #   - Automatic encryption is not supported for operations on a database or view.
     #   - Automatic encryption requires the authenticated user to have the listCollections privilege.
+    #   - At worst, automatic encryption may double the number of connections used by the Client at any one time.
     #   - If automatic encryption fails on an operation, use a MongoClient configured with bypass_auto_encryption: true
     #     and use ClientEncryption.encrypt to manually encrypt values.
     #

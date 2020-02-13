@@ -578,7 +578,7 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute(server)
+            Operation::Command.new(spec).execute(server, client: @client)
           end
         end
       ensure
@@ -622,7 +622,7 @@ module Mongo
               db_name: 'admin',
               session: self,
               txn_num: txn_num
-            ).execute(server)
+            ).execute(server, client: @client)
           end
         end
 
