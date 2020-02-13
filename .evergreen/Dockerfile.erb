@@ -31,41 +31,11 @@ RUN tar -xC /opt -zf python-toolchain.tar.gz
 
 RUN apt-get install -y libyaml-0-2 gcc make
 
-#RUN curl --retry 3 -sfL <%= toolchain_url %> -o toolchain.tar.gz
-
-#RUN tar -xC /opt -zf toolchain.tar.gz
-
-#ENV PATH="/opt/rubies/<%= ruby %>/bin:${PATH}"
-
-#RUN echo $PATH
-
-#RUN env
-#RUN find /opt/rubies/<%= ruby %>/bin
-
-#RUN curl --retry 3 -sfL <%= server_url %> -o <%= server_archive_basename %>
-
-#RUN tar zxf <%= server_archive_basename %>
-#RUN mv <%= server_extracted_dir %> /opt/mongodb
-
-#RUN modprobe zram
-#RUN zramctl -f -s 10g
-#RUN mkfs.xfs /dev/zram0
-#RUN mkdir /app
-#RUN mount /dev/zram0 /app
+RUN apt-get install -y lsb-release python libsnmp30
 
 WORKDIR /app
 
-#COPY Gemfile *.gemspec ./
-#COPY gemfiles gemfiles
-#COPY lib/mongo/version.rb lib/mongo/version.rb
-
-#RUN bundle install
-
-RUN apt-get install -y lsb-release python libsnmp30
-
 COPY . .
-
-#RUN bundle install
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs
 
