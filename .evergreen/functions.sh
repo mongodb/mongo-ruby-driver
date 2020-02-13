@@ -1,4 +1,13 @@
+detected_arch=
+
 host_arch() {
+  if test -z "$detected_arch"; then
+    detected_arch=`_detect_arch`
+  fi
+  echo "$detected_arch"
+}
+
+_detect_arch() {
   local arch
   arch=
   if test -f /etc/debian_version; then
@@ -9,17 +18,20 @@ host_arch() {
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
       arch="debian$release"
     elif lsb_release -i |grep -q Ubuntu; then
-      release=`lsb_release -r |awk '{print $2}' |tr -d .`
-      arch="ubuntu$release"
+      if test "`uname -m`" = ppc64le; then
+        release=`lsb_release -r |awk '{print $2}' |tr -d .`
+        arch="ubuntu$release-ppc"
+      else
+        release=`lsb_release -r |awk '{print $2}' |tr -d .`
+        arch="ubuntu$release"
+      fi
     else
       echo 'Unknown Debian flavor' 1>&2
       return 1
     fi
   elif test -f /etc/redhat-release; then
     # RHEL or CentOS
-    if test "`uname -m`" = s390x; then
-      arch=rhel72-s390x
-    elif test "`uname -m`" = ppc64le; then
+    if test "`uname -m`" = ppc64le; then
       arch=rhel71-ppc
     elif lsb_release -i |grep -q RedHat; then
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
@@ -32,6 +44,7 @@ host_arch() {
     echo 'Unknown distro' 1>&2
     return 1
   fi
+  echo "Detected arch: $arch" 1>&2
   echo $arch
 }
 
@@ -134,7 +147,7 @@ setup_ruby() {
     if true; then
 
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/e7cf68d7146c09d54dfbe241c04aad3e3eadbb10/mongo_ruby_driver_toolchain_`host_arch |tr - _`_e7cf68d7146c09d54dfbe241c04aad3e3eadbb10_19_12_27_00_47_13.tar.gz
+    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
 
@@ -183,11 +196,19 @@ EOH
   fi
 }
 
+bundle_install() {
+  #which bundle
+  #bundle --version
+  args=--quiet
+  if test -n "$BUNDLE_GEMFILE"; then
+    args="$args --gemfile=$BUNDLE_GEMFILE"
+  fi
+  echo "Running bundle install $args"
+  bundle install $args
+}
+
 install_deps() {
-  echo "Installing all gem dependencies"
-  which bundle
-  bundle --version
-  bundle install
+  bundle_install
   bundle exec rake clean
 }
 
@@ -218,8 +239,13 @@ prepare_server_from_url() {
 }
 
 install_mlaunch() {
-  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" -v 'mtools[mlaunch]==1.5.3'
-  export PATH="$pythonpath/bin":$PATH
-  export PYTHONPATH="$pythonpath"
+  find /opt/python/ |grep bin/python$
+  export PATH=/opt/python/3.7/bin:$PATH
+  python -V
+  python3 -V
+  pip install --user virtualenv
+  venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+  virtualenv -p python3 $venvpath
+  . $venvpath/bin/activate
+  pip install 'mtools[mlaunch]'
 }

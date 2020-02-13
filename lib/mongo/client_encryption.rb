@@ -49,6 +49,10 @@ module Mongo
     #   - :region [ String ] The The AWS region of the master key (required).
     #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
     #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
+    #     endpoint should be a host name with an optional port number separated
+    #     by a colon (e.g. "kms.us-east-1.amazonaws.com" or
+    #     "kms.us-east-1.amazonaws.com:443"). An endpoint in any other format
+    #     will not be properly parsed.
     #
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id

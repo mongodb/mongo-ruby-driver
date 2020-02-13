@@ -64,7 +64,7 @@ functions:
            PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
            PREPARE_SHELL: |
               set -o errexit
-              set -o xtrace
+              #set -o xtrace
               export DRIVERS_TOOLS="$DRIVERS_TOOLS"
               export MONGO_ORCHESTRATION_HOME="$MONGO_ORCHESTRATION_HOME"
               export MONGODB_BINARIES="$MONGODB_BINARIES"
@@ -434,7 +434,7 @@ pre:
   - func: "fetch source"
   - func: "create expansions"
   - func: "prepare resources"
-  - func: "windows fix"
+  #- func: "windows fix"
   - func: "fix absolute paths"
   - func: "init test-results"
   - func: "make files executable"
@@ -606,6 +606,9 @@ axes:
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
         run_on: ubuntu1604-test
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-test
       - id: rhel70
         display_name: "RHEL 7.0"
         run_on: rhel70-small
@@ -770,10 +773,10 @@ buildvariants:
   matrix_name: mmapv1
   matrix_spec:
     ruby: "ruby-2.6"
-    mongodb-version: [3.4, 3.6, 4.0]
+    mongodb-version: ['3.4', '3.6', '4.0']
     topology: '*'
     storage-engine: mmapv1
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -785,7 +788,7 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: ["4.0", "4.2"]
     topology: [replica-set, sharded-cluster]
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -942,7 +945,7 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: "4.2"
     topology: standalone
-    os: rhel70
+    os: ubuntu1604
   display_name: "X.509 Tests"
   tasks:
     - name: "x509-tests"

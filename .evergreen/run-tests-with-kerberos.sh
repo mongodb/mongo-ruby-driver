@@ -9,7 +9,7 @@ set_env_vars
 setup_ruby
 
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
-bundle install --gemfile="$BUNDLE_GEMFILE"
+bundle_install
 
 export MONGODB_URI='mongodb://localhost:27017'
 
