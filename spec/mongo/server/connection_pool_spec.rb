@@ -487,7 +487,7 @@ describe Mongo::Server::ConnectionPool do
           expect {
             pool.check_out
             pool.check_out
-          }.to raise_error(Timeout::Error)
+          }.to raise_error(::Timeout::Error)
           expect(pool.size).to eq(1)
         end
       end

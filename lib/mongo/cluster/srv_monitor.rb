@@ -87,7 +87,7 @@ module Mongo
         rescue Resolv::ResolvTimeout => e
           log_warn("SRV monitor: timed out trying to resolve hostname #{@srv_uri.query_hostname}: #{e.class}: #{e}")
           return
-        rescue Timeout::Error
+        rescue ::Timeout::Error
           log_warn("SRV monitor: timed out trying to resolve hostname #{@srv_uri.query_hostname} (timeout=#{timeout})")
           return
         rescue Resolv::ResolvError => e

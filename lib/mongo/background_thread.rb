@@ -122,7 +122,7 @@ module Mongo
             @thread.join
           end
           break
-        rescue Timeout::Error
+        rescue ::Timeout::Error
         end
       end
 
