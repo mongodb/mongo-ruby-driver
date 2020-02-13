@@ -26,6 +26,14 @@ class Runner
     @env = Hash[ARGV.map do |arg|
       arg.split('=')
     end]
+
+    @ruby = ENV['RVM_RUBY']
+    unless @ruby
+      raise "RVM_RUBY option must be set"
+    end
+    unless @ruby =~ /^j?ruby-/
+      raise "RVM_RUBY option is not in expected format: #{@ruby}"
+    end
   end
 
   def create_dockerfile
