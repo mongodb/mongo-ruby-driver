@@ -138,7 +138,7 @@ the top of the driver source tree:
 
     mlaunch init --single --dir /tmp/mdb-ssl --sslMode requireSSL \
       --sslPEMKeyFile `pwd`/spec/support/certificates/server.pem \
-      --sslCAFile `pwd`/spec/support/certificates/ca.pem \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
       --sslClientCertificate `pwd`/spec/support/certificates/client.pem
 
 To test that the driver works when the server's certificate is signed by an
@@ -147,7 +147,7 @@ server certificate bundle:
 
     mlaunch init --single --dir /tmp/mdb-ssl --sslMode requireSSL \
       --sslPEMKeyFile `pwd`/spec/support/certificates/server-second-level-bundle.pem \
-      --sslCAFile `pwd`/spec/support/certificates/ca.pem \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
       --sslClientCertificate `pwd`/spec/support/certificates/client.pem
 
 The driver's test suite is configured to verify certificates by default.
@@ -173,7 +173,7 @@ case a standalone server can be started as follows:
 
     mlaunch init --single --dir /tmp/mdb-ssl --sslMode requireSSL \
       --sslPEMKeyFile `pwd`/spec/support/certificates/server.pem \
-      --sslCAFile `pwd`/spec/support/certificates/ca.pem \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
       --sslAllowConnectionsWithoutCertificates \
       --sslAllowInvalidCertificates
 
