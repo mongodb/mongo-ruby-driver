@@ -1,3 +1,5 @@
+# This test was used during Ruby driver SDAM implementation.
+# It is not worthwhile to upstream it to specifications repo.
 description: Primary whose address differs from client address but no me mismatch
 uri: mongodb://localhost:27017/?replicaSet=rs
 phases:
