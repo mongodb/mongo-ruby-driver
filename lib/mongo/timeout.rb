@@ -15,14 +15,14 @@
 module Mongo
   module Timeout
 
-    # A wrapper around Ruby core's Timeout#timeout method that provides
+    # A wrapper around Ruby core's Timeout::timeout method that provides
     # a standardized API for Ruby versions older and newer than 2.4.0,
     # which is when the third argument was introduced.
     #
     # @param [ Numeric ] sec The number of seconds before timeout.
-    # @param [ Class ] klass The error class to raise on timeout, optional.
-    #   When no error class is provided, StandardError is raised.
-    # @param [ String ] message The error message passed to the error raised
+    # @param [ Class ] klass The exception class to raise on timeout, optional.
+    #   When no error exception is provided, Timeout::Error is raised.
+    # @param [ String ] message The error message passed to the exception raised
     #   on timeout, optional. When no error message is provided, the default
     #   error message is "execution expired".
     #
@@ -35,7 +35,11 @@ module Mongo
           yield
         end
       else
-        ::Timeout.timeout(sec, klass, message) do
+        # Jruby Timeout::timeout method does not support passing nil arguments.
+        # Remove the nil arguments before passing them along to the core
+        # Timeout::timeout method.
+        args = [sec, klass, message].compact
+        ::Timeout.timeout(*args) do
           yield
         end
       end

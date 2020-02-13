@@ -6,7 +6,7 @@ describe Mongo::Timeout do
     let(:custom_error_class) { Mongo::Error::SocketTimeoutError }
     let(:custom_error_message) { 'socket timed out' }
 
-    context 'Older than Ruby 2.4.0' do
+    context 'Ruby version older than 2.4.0' do
       before do
         unless RUBY_VERSION < '2.4.0'
           skip 'This test requires a Ruby version older than 2.4.0'
@@ -19,7 +19,7 @@ describe Mongo::Timeout do
             Mongo::Timeout.timeout(0.1) do
               sleep 1
             end
-          end.to raise_error(StandardError, default_error_message)
+          end.to raise_error(::Timeout::Error, default_error_message)
         end
       end
 
@@ -57,7 +57,7 @@ describe Mongo::Timeout do
             Mongo::Timeout.timeout(0.1) do
               sleep 1
             end
-          end.to raise_error(StandardError, default_error_message)
+          end.to raise_error(::Timeout::Error, default_error_message)
         end
       end
 
