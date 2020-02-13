@@ -13,11 +13,22 @@
 # limitations under the License.
 
 module Mongo
-
-  # TODO: documentation
   module Timeout
 
-    # TODO: documentation
+    # A wrapper around Ruby core's Timeout#timeout method that provides
+    # a standardized API for Ruby versions older and newer than 2.4.0,
+    # which is when the third argument was introduced.
+    #
+    # @param [ Numeric ] sec The number of seconds before timeout.
+    # @param [ Class ] klass The error class to raise on timeout, optional.
+    #   When no error class is provided, StandardError is raised.
+    # @param [ String ] message The error message passed to the error raised
+    #   on timeout, optional. When no error message is provided, the default
+    #   error message is "execution expired".
+    #
+    # @note Ruby versions older than 2.4.0 do not support specifying a custom
+    #   error message, and any error message passed in as an argument will be
+    #   ignored.
     def timeout(sec, klass=nil, message=nil)
       if RUBY_VERSION < '2.4.0'
         ::Timeout.timeout(sec, klass) do
@@ -30,6 +41,5 @@ module Mongo
       end
     end
     module_function :timeout
-
   end
 end
