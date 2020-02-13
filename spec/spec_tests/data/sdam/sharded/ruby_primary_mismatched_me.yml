@@ -1,4 +1,4 @@
-description: RS Primary w/mismatched me
+description: RS Primary in forced sharded topology with me mismatch
 uri: mongodb://localhost:27017/?connect=sharded
 phases:
 -
