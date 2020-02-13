@@ -1,0 +1,76 @@
+# erb spec/Dockerfile.erb >spec/Dockerfile &&  cat spec/Dockerfile && docker build -t test-driver  -f spec/Dockerfile .&& docker run -ti --tmpfs /tmpfs:exec test-driver
+
+<%
+
+host_arch = 'debian92'
+toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{host_arch}/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_#{host_arch.gsub('-', '_')}_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz"
+python_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-python-driver-toolchain/#{host_arch}/ba92de2700c04ee2d4f82c3ffdfc33105140cb04/mongo_python_driver_toolchain_#{host_arch.gsub('-', '_')}_ba92de2700c04ee2d4f82c3ffdfc33105140cb04_19_11_14_15_33_33.tar.gz"
+ruby = @env['RVM_RUBY']
+unless ruby
+  raise "RVM_RUBY must be set in environment"
+end
+unless ruby =~ /^j?ruby-/
+  raise "RVM_RUBY is not in expected format: #{ruby}"
+end
+server_version = '4.3.3'
+
+server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#{host_arch}-#{server_version}.tgz"
+server_archive_basename = File.basename(server_url)
+server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
+
+%>
+
+FROM debian:stretch
+
+RUN apt-get update
+
+RUN apt-get install -y curl
+
+RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
+RUN tar -xC /opt -zf python-toolchain.tar.gz
+
+RUN apt-get install -y libyaml-0-2 gcc make
+
+#RUN curl --retry 3 -sfL <%= toolchain_url %> -o toolchain.tar.gz
+
+#RUN tar -xC /opt -zf toolchain.tar.gz
+
+#ENV PATH="/opt/rubies/<%= ruby %>/bin:${PATH}"
+
+#RUN echo $PATH
+
+#RUN env
+#RUN find /opt/rubies/<%= ruby %>/bin
+
+#RUN curl --retry 3 -sfL <%= server_url %> -o <%= server_archive_basename %>
+
+#RUN tar zxf <%= server_archive_basename %>
+#RUN mv <%= server_extracted_dir %> /opt/mongodb
+
+#RUN modprobe zram
+#RUN zramctl -f -s 10g
+#RUN mkfs.xfs /dev/zram0
+#RUN mkdir /app
+#RUN mount /dev/zram0 /app
+
+WORKDIR /app
+
+#COPY Gemfile *.gemspec ./
+#COPY gemfiles gemfiles
+#COPY lib/mongo/version.rb lib/mongo/version.rb
+
+#RUN bundle install
+
+RUN apt-get install -y lsb-release python libsnmp30
+
+COPY . .
+
+#RUN bundle install
+
+ENV MONGO_ORCHESTRATION_HOME=/tmpfs
+
+<% @env.each do |k, v| %>
+ENV <%= k %>=<%= v %>
+<% end %>
+
+CMD bash -x .evergreen/run-tests-mlaunch.sh

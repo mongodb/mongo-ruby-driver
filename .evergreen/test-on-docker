@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'erb'
+
+class Runner
+  def run
+    process_arguments
+    create_dockerfile
+    create_image
+    run_tests
+  end
+
+  private
+
+  def process_arguments
+    @options = {}
+    OptionParser.new do |opts|
+      opts.banner = "Usage: test-on-docker [-d distro] [evergreen_key=value ...]"
+
+      opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
+        @options[:distro] = v
+      end
+    end.parse!
+
+    @env = Hash[ARGV.map do |arg|
+      arg.split('=')
+    end]
+  end
+
+  def create_dockerfile
+    template_path = File.join(File.dirname(__FILE__), 'Dockerfile.erb')
+    result = ERB.new(File.read(template_path)).result(binding)
+    File.open(File.join(File.dirname(__FILE__), 'Dockerfile'), 'w') do |f|
+      f << result
+    end
+  end
+
+  def create_image
+    run_command(%w(docker build -t test-driver  -f .evergreen/Dockerfile .))
+  end
+
+  def run_tests
+    run_command(%w(docker run -ti --tmpfs /tmpfs:exec test-driver))
+  end
+
+  def run_command(cmd)
+    if pid = fork
+      Process.wait(pid)
+      unless $?.exitstatus == 0
+        raise "Process exited with code #{$?.exitstatus}"
+      end
+    else
+      exec(*cmd)
+    end
+  end
+end
+
+Runner.new.run
