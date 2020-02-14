@@ -16,9 +16,9 @@ describe 'Client with auto encryption #reconnect' do
             key_vault_namespace: key_vault_namespace,
             key_vault_client: key_vault_client_option,
             schema_map: { 'auto_encryption.users': schema_map }
-          }
-        },
-        database: 'auto_encryption'
+          },
+          database: 'auto_encryption'
+        }
       )
     )
   end
