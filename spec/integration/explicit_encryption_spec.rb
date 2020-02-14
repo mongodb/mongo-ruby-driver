@@ -13,13 +13,19 @@ describe 'Explicit Encryption' do
     }
   end
 
-  shared_examples 'an explicit encrypter' do
-    it 'encrypts and decrypts the value' do
-      client_encryption = Mongo::ClientEncryption.new(
-        client,
-        client_encryption_opts
-      )
+  let(:client_encryption) do
+    Mongo::ClientEncryption.new(
+      client,
+      client_encryption_opts
+    )
+  end
 
+  before do
+    client.use(key_vault_db)[key_vault_coll].drop
+  end
+
+  shared_examples 'an explicit encrypter' do
+    it 'encrypts and decrypts the value using key_id' do
       data_key_id = client_encryption.create_data_key(
         kms_provider_name,
         data_key_options
@@ -29,6 +35,25 @@ describe 'Explicit Encryption' do
         value,
         {
           key_id: data_key_id,
+          algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
+        }
+      )
+
+      decrypted = client_encryption.decrypt(encrypted)
+      expect(decrypted).to eq(value)
+      expect(decrypted).to be_a_kind_of(value.class)
+    end
+
+    it 'encrypts and decrypts the value using key_alt_name' do
+      data_key_id = client_encryption.create_data_key(
+        kms_provider_name,
+        data_key_options.merge(key_alt_names: [key_alt_name])
+      )
+
+      encrypted = client_encryption.encrypt(
+        value,
+        {
+          key_alt_name: key_alt_name,
           algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
         }
       )
