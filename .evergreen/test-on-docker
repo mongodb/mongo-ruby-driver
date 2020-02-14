@@ -67,15 +67,15 @@ class Runner
     @options[:distro]
   end
 
+  BASE_IMAGES = {
+    'debian92' => 'debian:stretch',
+    'ubuntu1404' => 'ubuntu:trusty',
+    'ubuntu1604' => 'ubuntu:xenial',
+    'ubuntu1804' => 'ubuntu:bionic',
+  }.freeze
+
   def base_image
-    case distro
-    when 'debian92'
-      'debian:stretch'
-    when 'ubuntu1804'
-      'ubuntu:bionic'
-    else
-      raise "Unknown distro: #{distro}"
-    end
+    BASE_IMAGES[distro] or raise "Unknown distro: #{distro}"
   end
 end
 
