@@ -36,6 +36,8 @@ module Mongo
       #   - :region [ String ] The The AWS region of the master key (required).
       #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
       #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
+      # @option [ Array ] :key_alt_names An optional array of strings, specifying
+      #   alternate names for the new data key.
       def initialize(mongocrypt, io, kms_provider, options={})
         super(mongocrypt, io)
 
@@ -68,6 +70,7 @@ module Mongo
           )
         end
 
+        set_key_alt_names(options[:key_alt_names]) if options[:key_alt_names]
         initialize_ctx
       end
 
@@ -132,6 +135,22 @@ module Mongo
         end
 
         Binding.ctx_setopt_master_key_aws_endpoint(self, endpoint)
+      end
+
+      # Set the alt names option on the context
+      def set_key_alt_names(key_alt_names)
+        unless key_alt_names.is_a?(Array)
+          raise ArgumentError.new, 'The :key_alt_names option must be an Array'
+        end
+
+        unless key_alt_names.all? { |key_alt_name| key_alt_name.is_a?(String) }
+          raise ArgumentError.new(
+            "#{key_alt_names} contains an invalid alternate key name. All " +
+            "values of the :key_alt_names option Array must be a String"
+          )
+        end
+
+        Binding.ctx_setopt_key_alt_names(self, key_alt_names)
       end
 
       # Initializes the underlying mongocrypt_ctx_t object

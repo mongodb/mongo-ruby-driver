@@ -382,7 +382,7 @@ module Mongo
 
       # Sets the key id option on an explicit encryption context.
       #
-      # @param [ Context ] context Explicit encryption context
+      # @param [ Mongo::Crypt::Context ] context Explicit encryption context
       # @param [ String ] key_id The key id
       #
       # @raise [ Mongo::Error::CryptError ] If the operation failed
@@ -390,6 +390,42 @@ module Mongo
         Binary.wrap_string(key_id) do |key_id_p|
           check_ctx_status(context) do
             mongocrypt_ctx_setopt_key_id(context.ctx_p, key_id_p)
+          end
+        end
+      end
+
+      # Set a key_alt_name on data key creation or explicit encryption
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] binary A pointer to a mongocrypt_binary_t
+      #   object that references a BSON document in the format
+      #   { "keyAltName": <BSON UTF8 value> }
+      #
+      # @ return [ Boolean ] Whether the key alt name was successfully set
+      #
+      # @note Do not initialize ctx before calling this method
+      # @return [ Boolean ] Whether the option was successfully set
+      attach_function(
+        :mongocrypt_ctx_setopt_key_alt_name,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      # Set key_alt_names on data key creation
+      #
+      # @param [ Mongo::Crypt::Context ] context A DataKeyContext
+      # @param [ Array ] key_alt_names An array of string key_alt_names
+      #
+      # @raise [ Mongo::Error::CryptError ] If any of the key alt names are
+      #   not accepted
+      def self.ctx_setopt_key_alt_names(context, key_alt_names)
+        key_alt_names.each do |key_alt_name|
+          alt_name_binary = { :keyAltName => key_alt_name }.to_bson.to_s
+
+          Binary.wrap_string(alt_name_binary) do |alt_name_p|
+            check_ctx_status(context) do
+              mongocrypt_ctx_setopt_key_alt_name(context.ctx_p, alt_name_p)
+            end
           end
         end
       end
