@@ -71,10 +71,13 @@ class Runner
   end
 
   BASE_IMAGES = {
+    'debian81' => 'debian:jessie',
     'debian92' => 'debian:stretch',
     'ubuntu1404' => 'ubuntu:trusty',
     'ubuntu1604' => 'ubuntu:xenial',
     'ubuntu1804' => 'ubuntu:bionic',
+    'rhel62' => 'centos:6',
+    'rhel70' => 'centos:7',
   }.freeze
 
   def base_image
