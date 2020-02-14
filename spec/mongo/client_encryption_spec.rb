@@ -347,18 +347,35 @@ describe Mongo::ClientEncryption do
     end
 
     shared_examples 'an encrypter' do
-      it 'correctly encrypts a string' do
-        encrypted = client_encryption.encrypt(
+      let(:encrypted) do
+        client_encryption.encrypt(
           value,
           {
-            key_id: data_key['_id'].data,
+            key_id: key_id,
+            key_alt_name: key_alt_name,
             algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
           }
         )
+      end
 
-        expect(encrypted).to be_a_kind_of(BSON::Binary)
-        expect(encrypted.type).to eq(:ciphertext)
-        expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
+      context 'with key_id option' do
+        let(:key_alt_name) { nil }
+
+        it 'correctly encrypts a string' do
+          expect(encrypted).to be_a_kind_of(BSON::Binary)
+          expect(encrypted.type).to eq(:ciphertext)
+          expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
+        end
+      end
+
+      context 'with key_alt_name option' do
+        let(:key_id) { nil }
+
+        it 'correctly encrypts a string' do
+          expect(encrypted).to be_a_kind_of(BSON::Binary)
+          expect(encrypted.type).to eq(:ciphertext)
+          expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
+        end
       end
     end
 
