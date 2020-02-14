@@ -9,17 +9,14 @@ def standard_dependencies
     # rspec-mocks-diag instead of rspec-mocks
     #gem 'rspec', '~> 3.0'
     gem 'rspec-core', '~> 3.0'
-    gem 'mime-types', '~> 1.25'
     gem 'activesupport'
     gem 'rake'
-    gem 'httparty'
 
     gem 'byebug', platforms: :mri
 
     # for benchmark tests
-    gem 'yajl-ruby', require: 'yajl', platforms: :mri
+    gem 'yajl-ruby', require: 'yajl', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
-    gem 'timers'
   end
 
   group :testing do
@@ -37,7 +34,7 @@ def standard_dependencies
   end
 
   group :development do
-    gem 'ruby-prof', :platforms => :mri
+    gem 'ruby-prof', platforms: :mri
     gem 'pry-rescue'
     gem 'pry-nav'
   end
