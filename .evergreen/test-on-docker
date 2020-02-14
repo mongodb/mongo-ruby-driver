@@ -63,7 +63,7 @@ class Runner
   end
 
   def distro
-    @options[:distro]
+    @options[:distro] || 'ubuntu1604'
   end
 
   BASE_IMAGES = {
