@@ -1,0 +1,104 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'erb'
+
+class Runner
+  def run
+    process_arguments
+    create_dockerfile
+    create_image
+    run_tests
+  end
+
+  private
+
+  def process_arguments
+    @options = {}
+    OptionParser.new do |opts|
+      opts.banner = "Usage: test-on-docker [-d distro] [evergreen_key=value ...]"
+
+      opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
+        @options[:distro] = v
+      end
+
+      opts.on('-s', '--script=SCRIPT', 'Test script to invoke') do |v|
+        @options[:script] = v
+      end
+    end.parse!
+
+    @env = Hash[ARGV.map do |arg|
+      arg.split('=')
+    end]
+
+    @env['RVM_RUBY'] ||= 'ruby-2.7'
+    unless ruby =~ /^j?ruby-/
+      raise "RVM_RUBY option is not in expected format: #{ruby}"
+    end
+
+    @env['MONGODB_VERSION'] ||= '4.2'
+  end
+
+  def create_dockerfile
+    template_path = File.join(File.dirname(__FILE__), 'Dockerfile.erb')
+    result = ERB.new(File.read(template_path)).result(binding)
+    File.open(File.join(File.dirname(__FILE__), 'Dockerfile'), 'w') do |f|
+      f << result
+    end
+  end
+
+  def create_image
+    run_command(%w(docker build -t test-driver  -f .evergreen/Dockerfile .))
+  end
+
+  def run_tests
+    run_command(%w(docker run -ti --tmpfs /tmpfs:exec test-driver))
+  end
+
+  def run_command(cmd)
+    if pid = fork
+      Process.wait(pid)
+      unless $?.exitstatus == 0
+        raise "Process exited with code #{$?.exitstatus}"
+      end
+    else
+      exec(*cmd)
+    end
+  end
+
+  def distro
+    @options[:distro] || 'ubuntu1604'
+  end
+
+  BASE_IMAGES = {
+    'debian81' => 'debian:jessie',
+    'debian92' => 'debian:stretch',
+    'ubuntu1404' => 'ubuntu:trusty',
+    'ubuntu1604' => 'ubuntu:xenial',
+    'ubuntu1804' => 'ubuntu:bionic',
+    'rhel62' => 'centos:6',
+    'rhel70' => 'centos:7',
+  }.freeze
+
+  def base_image
+    BASE_IMAGES[distro] or raise "Unknown distro: #{distro}"
+  end
+
+  def ruby
+    @env['RVM_RUBY']
+  end
+
+  def server_version
+    @env['MONGODB_VERSION']
+  end
+
+  def script
+    @options[:script] || '.evergreen/run-tests-mlaunch.sh'
+  end
+
+  def debian?
+    distro =~ /debian|ubuntu/
+  end
+end
+
+Runner.new.run

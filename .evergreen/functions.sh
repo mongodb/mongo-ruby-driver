@@ -16,6 +16,9 @@ _detect_arch() {
       arch=ubuntu1604-arm
     elif lsb_release -i |grep -q Debian; then
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
+      # In docker, release is something like 9.11.
+      # In evergreen, release is 9.2.
+      release=`echo $release |sed -e 's/^9.*/92/'`
       arch="debian$release"
     elif lsb_release -i |grep -q Ubuntu; then
       if test "`uname -m`" = ppc64le; then
