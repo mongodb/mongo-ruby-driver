@@ -22,7 +22,16 @@ setup_ruby
 
 arch=`host_arch`
 
-url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
+if test "$MONGODB_VERSION" = 2.6; then
+  # The only OS which has Python toolchain for Python 3.6+ and
+  # which has MongoDB 2.6 server builds for it is rhel62.
+  # Unfortunately running it in Docker on a Debian 10 host crashes.
+  # Try the generic Linux binary since we aren't using any enterprise
+  # features pre FLE which requires 4.2 server.
+  url=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.12.tgz
+else
+  url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
+fi
 
 prepare_server_from_url $url
 
@@ -35,7 +44,9 @@ export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
 args="--setParameter enableTestCommands=1"
-args="$args --setParameter diagnosticDataCollectionEnabled=false"
+if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
+  args="$args --setParameter diagnosticDataCollectionEnabled=false"
+fi
 uri_options=
 if test "$TOPOLOGY" = replica_set; then
   args="$args --replicaset --name ruby-driver-rs"
