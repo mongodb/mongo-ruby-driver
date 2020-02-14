@@ -23,16 +23,14 @@ describe 'Client with auto encryption #reconnect' do
     )
   end
 
+  let(:unencrypted_client) { authorized_client.use(:auto_encryption) }
+
   let(:mongocryptd_client) { client.mongocryptd_client }
   let(:key_vault_client) { client.key_vault_client }
-  let(:admin_client) { authorized_client.use(:admin) }
   let(:data_key_id) { data_key['_id'] }
 
   shared_examples 'a functioning client' do
     it 'can perform an encrypted find command' do
-      # Make sure that the client is actually decrypting
-      expect(client).to receive(:decrypt).and_call_original
-
       doc = client[:users].find(ssn: ssn).first
       expect(doc).not_to be_nil
       expect(doc['ssn']).to eq(ssn)
@@ -74,11 +72,17 @@ describe 'Client with auto encryption #reconnect' do
 
   shared_examples 'an auto-encryption client that reconnects properly' do
     before do
-      admin_client[:datakeys].drop
-      admin_client[:datakeys].insert_one(data_key)
+      authorized_client.use(:admin)[:datakeys].drop
+      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
 
-      client[:users].drop
-      client[:users].insert_one(ssn: ssn)
+      unencrypted_client[:users].drop
+      # Use a client without auto_encryption_options to insert an
+      # encrypted document into the collection; this ensures that the
+      # client with auto_encryption_options must perform decryption
+      # to properly read the document.
+      unencrypted_client[:users].insert_one(
+        ssn: BSON::Binary.new(Base64.decode64(encrypted_ssn), :ciphertext)
+      )
     end
 
     context 'after reconnecting without closing main client' do
