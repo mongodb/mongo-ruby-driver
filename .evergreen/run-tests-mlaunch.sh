@@ -68,6 +68,9 @@ if test -n "$MMAPV1"; then
   args="$args --storageEngine mmapv1"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
+if test "$AUTH" = auth; then
+  args="$args --auth --username bob --password pwd123"
+fi
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 echo "Running specs"
@@ -90,6 +93,10 @@ if test "$TOPOLOGY" = sharded_cluster; then
   fi
 else
   hosts=localhost:27017
+fi
+
+if test "$AUTH" = auth; then
+  hosts="bob:pwd123@$hosts"
 fi
 
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
