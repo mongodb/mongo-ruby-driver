@@ -234,7 +234,8 @@ describe 'Auth' do
     require_x509_auth
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses, auth_mech: :mongodb_x509)
+      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.ssl_options.merge(
+        auth_mech: :mongodb_x509))
     end
 
     it 'authenticates' do
