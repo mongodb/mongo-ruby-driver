@@ -283,16 +283,6 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-fle-tests.sh
 
-  "run local tls tests":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-local-tls-tests.sh
-
   "run enterprise auth tests":
     - command: shell.exec
       type: test
@@ -388,9 +378,6 @@ tasks:
     - name: "test-mlaunch"
       commands:
         - func: "run tests via mlaunch"
-    - name: "local-tls-tests"
-      commands:
-        - func: "run local tls tests"
     - name: "enterprise-auth-tests"
       commands:
         - func: "run enterprise auth tests"
@@ -820,17 +807,6 @@ buildvariants:
   display_name: "3.6 Replica Set with 3.4 FCV"
   tasks:
     - name: "test-mlaunch"
-
--
-  matrix_name: "local-tls"
-  matrix_spec:
-    ruby: "*"
-    mongodb-version: ['4.0', '4.2']
-    topology: standalone
-    os: ubuntu1604
-  display_name: "Local TLS ${mongodb-version} ${ruby}"
-  tasks:
-    - name: "local-tls-tests"
 
 -
   matrix_name: "enterprise-auth-tests-ubuntu"
