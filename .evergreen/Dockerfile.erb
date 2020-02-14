@@ -1,5 +1,8 @@
 # erb spec/Dockerfile.erb >spec/Dockerfile &&  cat spec/Dockerfile && docker build -t test-driver  -f spec/Dockerfile .&& docker run -ti --tmpfs /tmpfs:exec test-driver
 
+# Python toolchain as of this writing is available on rhel62, debian92 and
+# ubuntu1604.
+
 <%
 
 toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz"
@@ -13,14 +16,18 @@ server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
 FROM <%= base_image %>
 
-RUN apt-get update
+<% if debian? %>
 
-RUN apt-get install -y curl
+  ENV DEBIAN_FRONTEND=noninteractive
+
+  RUN apt-get update
+
+  RUN apt-get install -y curl
+
+<% end %>
 
 RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
 RUN tar -xC /opt -zf python-toolchain.tar.gz
-
-ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre
 

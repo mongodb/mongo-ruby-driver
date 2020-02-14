@@ -95,6 +95,10 @@ class Runner
   def script
     @options[:script] || '.evergreen/run-tests-mlaunch.sh'
   end
+
+  def debian?
+    distro =~ /debian|ubuntu/
+  end
 end
 
 Runner.new.run
