@@ -71,6 +71,25 @@ fi
 if test "$AUTH" = auth; then
   args="$args --auth --username bob --password pwd123"
 fi
+if test "$SSL" = ssl; then
+  args="$args --sslMode requireSSL"\
+" --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
+" --sslCAFile spec/support/certificates/ca.crt"\
+" --sslClientCertificate spec/support/certificates/client.pem"
+
+  if echo $RVM_RUBY |grep -q jruby; then
+    # JRuby does not grok chained certificate bundles -
+    # https://github.com/jruby/jruby-openssl/issues/181
+    client_pem=client.pem
+  else
+    client_pem=client-second-level-bundle.pem
+  fi
+  
+  uri_options="$uri_options&"\
+"tlsCAFile=spec/support/certificates/ca.crt&"\
+"tlsCertificateKeyFile=spec/support/certificates/$client_pem"
+fi
+
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 echo "Running specs"
