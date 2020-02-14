@@ -5,7 +5,6 @@
 
 <%
 
-toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz"
 python_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-python-driver-toolchain/#{distro}/ba92de2700c04ee2d4f82c3ffdfc33105140cb04/mongo_python_driver_toolchain_#{distro.gsub('-', '_')}_ba92de2700c04ee2d4f82c3ffdfc33105140cb04_19_11_14_15_33_33.tar.gz"
 server_version = '4.3.3'
 server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#{distro}-#{server_version}.tgz"
@@ -26,8 +25,8 @@ FROM <%= base_image %>
 
 <% end %>
 
-RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
-RUN tar -xC /opt -zf python-toolchain.tar.gz
+#RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
+#RUN tar -xC /opt -zf python-toolchain.tar.gz
 
 RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre
 

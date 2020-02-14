@@ -16,7 +16,7 @@ arch=`host_arch`
 version=4.2.3
 prepare_server $arch $version
 
-install_mlaunch
+install_mlaunch_pip
 
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"

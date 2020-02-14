@@ -150,9 +150,9 @@ setup_ruby() {
     if true; then
 
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz
+    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
-    export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+    export PATH=`pwd`/rubies/$RVM_RUBY/bin:`pwd`/rubies/python/3/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
     #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
@@ -241,8 +241,8 @@ prepare_server_from_url() {
   export PATH="$BINDIR":$PATH
 }
 
-install_mlaunch() {
-  export PATH=/opt/python/3.7/bin:$PATH
+install_mlaunch_virtualenv() {
+  #export PATH=/opt/python/3.7/bin:$PATH
   python -V
   python3 -V
   #pip3 install --user virtualenv
@@ -250,4 +250,17 @@ install_mlaunch() {
   virtualenv -p python3 $venvpath
   . $venvpath/bin/activate
   pip install 'mtools[mlaunch]'
+}
+
+install_mlaunch_pip() {
+  python -V
+  python3 -V
+  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
+  # The scripts in a python installation have shebangs pointing to the
+  # prefix, which doesn't work for us because we unpack toolchain to a
+  # different directory than prefix used for building. Work around this by
+  # explicitly running pip3 with python.
+  python3 `which pip3` install -t "$pythonpath" 'mtools[mlaunch]'
+  export PATH="$pythonpath/bin":$PATH
+  export PYTHONPATH="$pythonpath"
 }
