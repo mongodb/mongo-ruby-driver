@@ -56,6 +56,14 @@ describe 'Auto Encryption' do
     end
   end
 
+  shared_context 'schema map specifying keyAltNames in client options' do
+    let(:local_schema) { { "auto_encryption.users" => schema_map_key_alt_names } }
+
+    before do
+      client[:users].create
+    end
+  end
+
   shared_context 'encrypted document in collection' do
     before do
       client[:users].insert_one(ssn: encrypted_ssn_binary)
@@ -88,6 +96,11 @@ describe 'Auto Encryption' do
         include_context 'schema map in client options'
         it_behaves_like 'it performs an encrypted command'
       end
+
+      context 'with schema map specifying keyAltNames' do
+        include_context 'schema map specifying keyAltNames in client options'
+        it_behaves_like 'it performs an encrypted command'
+      end
     end
 
     context 'with local KMS provider' do
@@ -100,6 +113,11 @@ describe 'Auto Encryption' do
 
       context 'with schema map' do
         include_context 'schema map in client options'
+        it_behaves_like 'it performs an encrypted command'
+      end
+
+      context 'with schema map specifying keyAltNames' do
+        include_context 'schema map specifying keyAltNames in client options'
         it_behaves_like 'it performs an encrypted command'
       end
     end

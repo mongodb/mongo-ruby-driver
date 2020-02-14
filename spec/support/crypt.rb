@@ -65,6 +65,10 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
     end
 
+    let(:schema_map_key_alt_names) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local_key_alt_names.json'))
+    end
+
     let(:data_key_options) { {} }
 
     let(:encrypted_ssn) do
@@ -98,6 +102,10 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
+    end
+
+    let(:schema_map_key_alt_names) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
     end
 
     let(:data_key_options) do
