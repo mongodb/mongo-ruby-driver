@@ -27,12 +27,9 @@ class Runner
       arg.split('=')
     end]
 
-    @ruby = @env['RVM_RUBY']
-    unless @ruby
-      raise "RVM_RUBY option must be set"
-    end
-    unless @ruby =~ /^j?ruby-/
-      raise "RVM_RUBY option is not in expected format: #{@ruby}"
+    @env['RVM_RUBY'] ||= 'ruby-2.7'
+    unless ruby =~ /^j?ruby-/
+      raise "RVM_RUBY option is not in expected format: #{ruby}"
     end
   end
 
@@ -76,6 +73,10 @@ class Runner
 
   def base_image
     BASE_IMAGES[distro] or raise "Unknown distro: #{distro}"
+  end
+
+  def ruby
+    @env['RVM_RUBY']
   end
 end
 
