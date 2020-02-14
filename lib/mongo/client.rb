@@ -57,6 +57,7 @@ module Mongo
       :auto_encryption_options,
       :cleanup,
       :compressors,
+      :direct_connection,
       :connect,
       :connect_timeout,
       :database,
@@ -205,7 +206,6 @@ module Mongo
     #   connection string is also provided, these options take precedence over any
     #   analogous options present in the URI string.
     #
-    #
     # @option options [ String, Symbol ] :app_name Application name that is
     #   printed to the mongod logs upon establishing a connection in server
     #   versions >= 3.4.
@@ -217,7 +217,11 @@ module Mongo
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the
     #   driver only supports 'zlib'.
-    # @option options [ Symbol ] :connect The connection method to use. This
+    # @option options [ true | false ] :direct_connection Whether to connect
+    #   directly to the specified seed, bypassing topology discovery. Exactly
+    #   one seed must be provided.
+    # @option options [ Symbol ] :connect Deprecated - use :direct_connection
+    #   option instead of this option. The connection method to use. This
     #   forces the cluster to behave in the specified way instead of
     #   auto-discovering. One of :direct, :replica_set, :sharded
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to

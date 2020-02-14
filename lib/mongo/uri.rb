@@ -544,6 +544,7 @@ module Mongo
     uri_option 'tlsinsecure', :ssl_verify, :type => :inverse_bool
 
     # Topology options
+    uri_option 'directconnection', :direct_connection, type: :bool
     uri_option 'connect', :connect, type: :symbol
 
     # Auth Options
