@@ -20,8 +20,6 @@ set_env_vars
 
 setup_ruby
 
-install_deps
-
 arch=`host_arch`
 
 desired_version=$MONGODB_VERSION
@@ -91,6 +89,8 @@ if test "$SSL" = ssl; then
 fi
 
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+
+install_deps
 
 echo "Running specs"
 which bundle
