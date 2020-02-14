@@ -23,23 +23,22 @@ module Mongo
       # Create a new ExplicitEncryptionContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
-      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t.
+      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
       # @param [ ClientEncryption::IO ] io A instance of the IO class
       #   that implements driver I/O methods required to run the
-      #   state machine.
-      # @param [ BSON::Document ] doc A document to encrypt.
+      #   state machine
+      # @param [ BSON::Document ] doc A document to encrypt
       # @param [ Hash ] options
       #
-      # @option [ String ] :key_id The UUID of the data key that
-      #   will be used to encrypt the value.
-      # @option [ String ] :key_alt_name The alternate name of the data key
+      # @option options [ String ] :key_id The UUID of the data key that
+      #   will be used to encrypt the value
+      # @option options [ String ] :key_alt_name The alternate name of the data key
       #   that will be used to encrypt the value.
-      # @option [ String ] :algorithm The algorithm used to encrypt the
+      # @option options [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random".
+      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
       #
-      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options
-      #   are provided.
+      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
       def initialize(mongocrypt, io, doc, options={})
         super(mongocrypt, io)
 
@@ -66,7 +65,6 @@ module Mongo
           unless options[:key_alt_name].is_a?(String)
             raise ArgumentError.new(':key_alt_name option must be a String')
           end
-
           Binding.ctx_setopt_key_alt_names(self, [options[:key_alt_name]])
         end
 
