@@ -13,9 +13,6 @@ Use the following command:
     ./.evergreen/run-on-docker -d debian92 RVM_RUBY=ruby-2.7
 
 The `-d` option specifies the distro to use. This must be one of the
-Evergreen-recognized distros.
-
-The arguments are the environment variables as would be set by Evergreen
-configuration (i.e. `config.yml` in this directory). The Ruby version must
-be explicitly specified; other environment variables may also be specified
-to invoke various test suite configurations.
+Evergreen-recognized distros. The arguments are the environment variables as
+would be set by Evergreen configuration (i.e. `config.yml` in this directory).
+All arguments are optional.
