@@ -53,7 +53,7 @@ module Mongo
     #     by a colon (e.g. "kms.us-east-1.amazonaws.com" or
     #     "kms.us-east-1.amazonaws.com:443"). An endpoint in any other format
     #     will not be properly parsed.
-    # @option [ Array ] :key_alt_names An optional array of strings, specifying
+    # @option [ Array ] :key_alt_names An optional array of strings specifying
     #   alternate names for the new data key.
     #
     # @return [ String ] Base64-encoded UUID string representing the

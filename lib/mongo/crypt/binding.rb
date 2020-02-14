@@ -394,30 +394,31 @@ module Mongo
         end
       end
 
-      # Set a key_alt_name on data key creation or explicit encryption
+      # When creating a data key, set an alternate name on that key. When
+      # performing explicit encryption, specifying which data key to use for
+      # encryption based on its keyAltName field.
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
       # @param [ FFI::Pointer ] binary A pointer to a mongocrypt_binary_t
       #   object that references a BSON document in the format
       #   { "keyAltName": <BSON UTF8 value> }
       #
-      # @ return [ Boolean ] Whether the key alt name was successfully set
+      # @return [ Boolean ] Whether the alternative name was successfully set
       #
       # @note Do not initialize ctx before calling this method
-      # @return [ Boolean ] Whether the option was successfully set
       attach_function(
         :mongocrypt_ctx_setopt_key_alt_name,
         [:pointer, :pointer],
         :bool
       )
 
-      # Set key_alt_names on data key creation
+      # Set multiple alternate key names on data key creation
       #
       # @param [ Mongo::Crypt::Context ] context A DataKeyContext
-      # @param [ Array ] key_alt_names An array of string key_alt_names
+      # @param [ Array ] key_alt_names An array of alternate key names as strings
       #
-      # @raise [ Mongo::Error::CryptError ] If any of the key alt names are
-      #   not accepted
+      # @raise [ Mongo::Error::CryptError ] If any of the alternate names are
+      #   not valid UTF8 strings
       def self.ctx_setopt_key_alt_names(context, key_alt_names)
         key_alt_names.each do |key_alt_name|
           alt_name_binary = { :keyAltName => key_alt_name }.to_bson.to_s
