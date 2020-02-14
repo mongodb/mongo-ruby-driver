@@ -16,3 +16,8 @@ The `-d` option specifies the distro to use. This must be one of the
 Evergreen-recognized distros. The arguments are the environment variables as
 would be set by Evergreen configuration (i.e. `config.yml` in this directory).
 All arguments are optional.
+
+By default the entire test suite is run (using mlaunch to launch the server);
+to specify another script, use `-s` option:
+
+    ./.evergreen/run-on-docker -s .evergreen/run-enterprise-auth-tests.sh

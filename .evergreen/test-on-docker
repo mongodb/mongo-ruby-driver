@@ -21,6 +21,10 @@ class Runner
       opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
         @options[:distro] = v
       end
+
+      opts.on('-s', '--script=SCRIPT', 'Test script to invoke') do |v|
+        @options[:script] = v
+      end
     end.parse!
 
     @env = Hash[ARGV.map do |arg|
@@ -83,6 +87,10 @@ class Runner
 
   def server_version
     @env['MONGODB_VERSION']
+  end
+
+  def script
+    @options[:script] || '.evergreen/run-tests-mlaunch.sh'
   end
 end
 

@@ -20,19 +20,22 @@ RUN apt-get install -y curl
 RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
 RUN tar -xC /opt -zf python-toolchain.tar.gz
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre
 
 # ubuntu1604: libcurl3
-RUN apt-get install -y lsb-release python libsnmp30 libcurl3
+RUN apt-get install -y lsb-release python libsnmp30 libcurl3 krb5-user
 
 WORKDIR /app
 
 COPY . .
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs
+ENV PROJECT_DIRECTORY=/app
 
 <% @env.each do |k, v| %>
 ENV <%= k %>=<%= v %>
 <% end %>
 
-CMD bash -x .evergreen/run-tests-mlaunch.sh
+CMD bash -x <%= script %>
