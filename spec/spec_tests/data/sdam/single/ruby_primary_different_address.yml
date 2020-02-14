@@ -1,12 +1,11 @@
-description: RS Primary w/mismatched me
+description: RS Primary in forced single topology with a different address from client but no me mismatch
 uri: mongodb://localhost:27017/?connect=direct
 phases:
 -
   responses:
   -
     - localhost:27017
-    - me: a:27017
-      hosts:
+    - hosts:
       - a:27017
       - b:27017
       ismaster: true
