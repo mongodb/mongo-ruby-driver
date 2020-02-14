@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'open-uri'
+
+desired_version, arch = ARGV
+if arch.nil?
+  STDERR.puts "Usage: get-mongodb-download-url desired-version arch"
+  exit 1
+end
+
+info = JSON.load(open('http://downloads.mongodb.org/current.json').read)
+version = info['versions'].detect { |version| version['version'].start_with?(desired_version) }
+if version.nil?
+  info = JSON.load(URI.open('http://downloads.mongodb.org/full.json').read)
+  versions = info['versions'].select { |version| version['version'].start_with?(desired_version) }
+  # Get rid of rc, beta etc. versions.
+  versions.delete_if { |version| version['version'].include?('-') }
+  # Versions are ordered with newest first, take the first one i.e. the most
+  # recent one.
+  version = versions.first
+  if version.nil?
+    STDERR.puts "Error: no version #{desired_version}"
+    exit 2
+  end
+end
+dl = version['downloads'].detect { |dl| dl['archive']['url'].index("enterprise-#{arch}") }
+unless dl
+  STDERR.puts "Error: no download for #{arch} for #{version['version']}"
+  exit 2
+end
+url = dl['archive']['url']
+
+puts url

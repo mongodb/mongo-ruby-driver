@@ -22,18 +22,7 @@ setup_ruby
 
 arch=`host_arch`
 
-desired_version=$MONGODB_VERSION
-prog=`cat <<-EOT
-import urllib, json
-url = 'http://downloads.mongodb.org/current.json'
-info = json.load(urllib.urlopen(url))
-info = [i for i in info['versions'] if i['version'].startswith('$MONGODB_VERSION')][0]
-info = [i for i in info['downloads'] if i['archive']['url'].find('enterprise-$arch') > 0][0]
-url = info['archive']['url']
-print(url)
-EOT`
-
-url=`python -c "$prog"`
+url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
 
 prepare_server_from_url $url
 
