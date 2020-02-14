@@ -1,6 +1,6 @@
 description: "Discover arbiters"
 
-uri: "mongodb://a/?replicaSet=rs"
+uri: "mongodb://a/?directConnection=false"
 
 phases: [
 

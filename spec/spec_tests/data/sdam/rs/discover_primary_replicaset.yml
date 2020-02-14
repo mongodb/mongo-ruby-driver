@@ -1,6 +1,6 @@
 description: "Replica set discovery from primary"
 
-uri: "mongodb://a/?directConnection=false"
+uri: "mongodb://a/?replicaSet=rs"
 
 phases: [
 
