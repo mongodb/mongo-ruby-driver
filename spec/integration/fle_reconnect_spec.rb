@@ -5,34 +5,35 @@ describe 'Client with auto encryption #reconnect' do
   require_enterprise
 
   include_context 'define shared FLE helpers'
-  include_context 'with local kms_providers'
 
   let(:client) do
     new_local_client(
       SpecConfig.instance.addresses,
-      {
-        auto_encryption_options: {
-          kms_providers: kms_providers,
-          key_vault_namespace: 'admin.datakeys',
-          key_vault_client: key_vault_client_option
+      SpecConfig.instance.test_options.merge(
+        {
+          auto_encryption_options: {
+            kms_providers: kms_providers,
+            key_vault_namespace: key_vault_namespace,
+            key_vault_client: key_vault_client_option,
+            schema_map: { 'auto_encryption.users': schema_map }
+          },
+          database: 'auto_encryption'
         }
-      }
+      )
     )
   end
 
+  let(:unencrypted_client) { authorized_client.use(:auto_encryption) }
+
   let(:mongocryptd_client) { client.mongocryptd_client }
   let(:key_vault_client) { client.key_vault_client }
-
-  before do
-    client['test'].insert_one('testk' => 'testv')
-    key_vault_client['datakeys'].insert_one('key_id' => 'key_material')
-  end
+  let(:data_key_id) { data_key['_id'] }
 
   shared_examples 'a functioning client' do
-    it 'can perform a find command' do
-      doc = client['test'].find('testk' => 'testv').first
+    it 'can perform an encrypted find command' do
+      doc = client[:users].find(ssn: ssn).first
       expect(doc).not_to be_nil
-      expect(doc['testk']).to eq('testv')
+      expect(doc['ssn']).to eq(ssn)
     end
   end
 
@@ -63,13 +64,27 @@ describe 'Client with auto encryption #reconnect' do
 
   shared_examples 'a functioning key vault client' do
     it 'can perform a find command' do
-      doc = key_vault_client['datakeys'].find('key_id' => 'key_material').first
+      doc = key_vault_client.use(key_vault_db)[key_vault_coll].find(_id: data_key_id).first
       expect(doc).not_to be_nil
-      expect(doc['key_id']).to eq('key_material')
+      expect(doc['_id']).to eq(data_key_id)
     end
   end
 
   shared_examples 'an auto-encryption client that reconnects properly' do
+    before do
+      authorized_client.use(:admin)[:datakeys].drop
+      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+
+      unencrypted_client[:users].drop
+      # Use a client without auto_encryption_options to insert an
+      # encrypted document into the collection; this ensures that the
+      # client with auto_encryption_options must perform decryption
+      # to properly read the document.
+      unencrypted_client[:users].insert_one(
+        ssn: BSON::Binary.new(Base64.decode64(encrypted_ssn), :ciphertext)
+      )
+    end
+
     context 'after reconnecting without closing main client' do
       before do
         client.reconnect
@@ -171,7 +186,15 @@ describe 'Client with auto encryption #reconnect' do
   context 'with default key vault client option' do
     let(:key_vault_client_option) { nil }
 
-    it_behaves_like 'an auto-encryption client that reconnects properly'
+    context 'with AWS KMS providers' do
+      include_context 'with AWS kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
+    context 'with local KMS providers' do
+      include_context 'with local kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
   end
 
   context 'with custom key vault client option' do
@@ -179,6 +202,14 @@ describe 'Client with auto encryption #reconnect' do
       Mongo::Client.new(SpecConfig.instance.addresses).use(:test)
     end
 
-    it_behaves_like 'an auto-encryption client that reconnects properly'
+    context 'with AWS KMS providers' do
+      include_context 'with AWS kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
+    context 'with local KMS providers' do
+      include_context 'with local kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
   end
 end
