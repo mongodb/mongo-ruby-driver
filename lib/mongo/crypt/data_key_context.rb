@@ -146,7 +146,7 @@ module Mongo
         unless key_alt_names.all? { |key_alt_name| key_alt_name.is_a?(String) }
           raise ArgumentError.new(
             "#{key_alt_names} contains an invalid alternate key name. All " +
-            "values of the :key_alt_names option Array must be a String"
+            "values of the :key_alt_names option Array must be Strings"
           )
         end
 

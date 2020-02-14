@@ -54,7 +54,7 @@ describe Mongo::Crypt::DataKeyContext do
         it 'does raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /All values of the :key_alt_names option Array must be a String/)
+          end.to raise_error(ArgumentError, /All values of the :key_alt_names option Array must be Strings/)
         end
       end
 
