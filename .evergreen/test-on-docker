@@ -27,7 +27,7 @@ class Runner
       arg.split('=')
     end]
 
-    @ruby = ENV['RVM_RUBY']
+    @ruby = @env['RVM_RUBY']
     unless @ruby
       raise "RVM_RUBY option must be set"
     end
@@ -60,6 +60,21 @@ class Runner
       end
     else
       exec(*cmd)
+    end
+  end
+
+  def distro
+    @options[:distro]
+  end
+
+  def base_image
+    case distro
+    when 'debian92'
+      'debian:stretch'
+    when 'ubuntu1804'
+      'ubuntu:bionic'
+    else
+      raise "Unknown distro: #{distro}"
     end
   end
 end
