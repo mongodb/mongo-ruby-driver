@@ -16,7 +16,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 . `dirname "$0"`/functions.sh
 
 set_home
-set_fcv
 set_env_vars
 
 setup_ruby
@@ -94,6 +93,9 @@ else
 fi
 
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
+
+set_fcv
+
 bundle exec rake spec:prepare
 
 if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
