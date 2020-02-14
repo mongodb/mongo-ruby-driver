@@ -43,7 +43,7 @@ prepare_server_from_url $url
 install_mlaunch
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
-# makes its long available through log collecting machinery
+# makes its log available through log collecting machinery
 
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
