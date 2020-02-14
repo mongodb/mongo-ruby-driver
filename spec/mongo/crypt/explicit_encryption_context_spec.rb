@@ -16,24 +16,35 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
   let(:options) do
     {
       key_id: key_id,
+      key_alt_name: key_alt_name,
       algorithm: algorithm
     }
   end
 
   describe '#initialize' do
     shared_examples 'a functioning ExplicitEncryptionContext' do
-      context 'with nil key_id option' do
+      context 'with nil key_id and key_alt_name options' do
         let(:key_id) { nil }
+        let(:key_alt_name) { nil }
 
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(ArgumentError, /:key_id option must not be nil/)
+          end.to raise_error(ArgumentError, /:key_id and :key_alt_name options cannot both be nil/)
+        end
+      end
+
+      context 'with both key_id and key_alt_name options' do
+        it 'raises an exception' do
+          expect do
+            context
+          end.to raise_error(ArgumentError, /:key_id and :key_alt_name options cannot both be present/)
         end
       end
 
       context 'with invalid key_id' do
         let(:key_id) { 'random string' }
+        let(:key_alt_name) { nil }
 
         it 'raises an exception' do
           expect do
@@ -42,27 +53,70 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
         end
       end
 
-      context 'with nil algorithm' do
-        let(:algorithm) { nil }
-
-        it 'raises exception' do
-          expect do
-            context
-          end.to raise_error(Mongo::Error::CryptError, /passed null algorithm/)
-        end
-      end
-
-      context 'with invalid algorithm' do
-        let(:algorithm) { 'unsupported-algorithm' }
+      context 'with invalid key_alt_name' do
+        let(:key_id) { nil }
+        let(:key_alt_name) { 5 }
 
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(Mongo::Error::CryptError, /unsupported algorithm/)
+          end.to raise_error(ArgumentError, /key_alt_name option must be a String/)
         end
       end
 
-      context 'with valid options' do
+      context 'with valid key_alt_name' do
+        let(:key_id) { nil }
+
+        context 'with nil algorithm' do
+          let(:algorithm) { nil }
+
+          it 'raises exception' do
+            expect do
+              context
+            end.to raise_error(Mongo::Error::CryptError, /passed null algorithm/)
+          end
+        end
+
+        context 'with invalid algorithm' do
+          let(:algorithm) { 'unsupported-algorithm' }
+
+          it 'raises an exception' do
+            expect do
+              context
+            end.to raise_error(Mongo::Error::CryptError, /unsupported algorithm/)
+          end
+        end
+
+        it 'initializes context' do
+          expect do
+            context
+          end.not_to raise_error
+        end
+      end
+
+      context 'with valid key_id' do
+        let(:key_alt_name) { nil }
+
+        context 'with nil algorithm' do
+          let(:algorithm) { nil }
+
+          it 'raises exception' do
+            expect do
+              context
+            end.to raise_error(Mongo::Error::CryptError, /passed null algorithm/)
+          end
+        end
+
+        context 'with invalid algorithm' do
+          let(:algorithm) { 'unsupported-algorithm' }
+
+          it 'raises an exception' do
+            expect do
+              context
+            end.to raise_error(Mongo::Error::CryptError, /unsupported algorithm/)
+          end
+        end
+
         it 'initializes context' do
           expect do
             context
@@ -97,6 +151,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
           " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
       end
 
+      let(:key_alt_name) { nil }
       let(:logger) do
         ::Logger.new($stdout).tap do |logger|
           logger.level = ::Logger::DEBUG

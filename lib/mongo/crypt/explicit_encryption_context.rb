@@ -23,36 +23,56 @@ module Mongo
       # Create a new ExplicitEncryptionContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
-      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
+      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t.
       # @param [ ClientEncryption::IO ] io A instance of the IO class
       #   that implements driver I/O methods required to run the
-      #   state machine
-      # @param [ BSON::Document ] doc A document to encrypt
+      #   state machine.
+      # @param [ BSON::Document ] doc A document to encrypt.
       # @param [ Hash ] options
       #
-      # @option options [ String ] :key_id The UUID of the data key that
-      #   will be used to encrypt the value
-      # @option options [ String ] :algorithm The algorithm used to encrypt the
+      # @option [ String ] :key_id The UUID of the data key that
+      #   will be used to encrypt the value.
+      # @option [ String ] :key_alt_name The alternate name of the data key
+      #   that will be used to encrypt the value.
+      # @option [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random".
       #
-      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
+      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options
+      #   are provided.
       def initialize(mongocrypt, io, doc, options={})
         super(mongocrypt, io)
 
-        unless options[:key_id]
-          raise ArgumentError.new(':key_id option must not be nil')
+        if options[:key_id].nil? && options[:key_alt_name].nil?
+          raise ArgumentError.new(
+            'The :key_id and :key_alt_name options cannot both be nil. ' +
+            'Specify a :key_id option or :key_alt_name option (but not both)'
+          )
         end
 
-        @options = options
+        if options[:key_id] && options[:key_alt_name]
+          raise ArgumentError.new(
+            'The :key_id and :key_alt_name options cannot both be present. ' +
+            'Identify the data key by specifying its id with the :key_id ' +
+            'option or specifying its alternate name with the :key_alt_name option'
+          )
+        end
 
-        # Set the key id option on the mongocrypt_ctx_t object and raises
-        # an exception if the key_id option is somehow invalid.
-        Binding.ctx_setopt_key_id(self, @options[:key_id])
+        # Set the key id or key alt name option on the mongocrypt_ctx_t object
+        # and raise an exception if the key_id or key_alt_name is invalid.
+        if options[:key_id]
+          Binding.ctx_setopt_key_id(self, options[:key_id])
+        elsif options[:key_alt_name]
+          unless options[:key_alt_name].is_a?(String)
+            raise ArgumentError.new(':key_alt_name option must be a String')
+          end
+
+          Binding.ctx_setopt_key_alt_names(self, [options[:key_alt_name]])
+        end
 
         # Set the algorithm option on the mongocrypt_ctx_t object and raises
         # an exception if the algorithm is invalid.
-        Binding.ctx_setopt_algorithm(self, @options[:algorithm])
+        Binding.ctx_setopt_algorithm(self, options[:algorithm])
 
         # Initializes the mongocrypt_ctx_t object for explicit encryption and
         # passes in the value to be encrypted.

@@ -24,6 +24,9 @@ module Crypt
     # Data key id as a binary string
     let(:key_id) { data_key['_id'].data }
 
+    # Data key alternate name
+    let(:key_alt_name) { 'ssn_encryption_key' }
+
     # Deterministic encryption algorithm
     let(:algorithm) { 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
 
