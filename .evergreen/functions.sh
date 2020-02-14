@@ -242,7 +242,6 @@ prepare_server_from_url() {
 }
 
 install_mlaunch() {
-  #find /opt/python/ |grep bin/python$
   export PATH=/opt/python/3.7/bin:$PATH
   python -V
   python3 -V
