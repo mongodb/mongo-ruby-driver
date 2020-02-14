@@ -38,15 +38,15 @@ module Mongo
       #
       # @param [ Hash ] options
       #
-      # @option [ Mongo::Client ] :key_vault_client A client connected
+      # @option options [ Mongo::Client ] :key_vault_client A client connected
       #   to the MongoDB instance containing the encryption key vault.
-      # @option [ String ] :key_vault_namespace The namespace of the key
+      # @option options [ String ] :key_vault_namespace The namespace of the key
       #   vault in the format database.collection.
-      # @option [ Hash | nil ] :schema_map The JSONSchema of the collection(s)
+      # @option options [ Hash | nil ] :schema_map The JSONSchema of the collection(s)
       #   with encrypted fields.
-      # @option [ Boolean | nil ] :bypass_auto_encryption When true, disables
+      # @option options [ Boolean | nil ] :bypass_auto_encryption When true, disables
       #   auto-encryption. Default is false.
-      # @option [ Hash | nil ] :extra_options Options related to spawning
+      # @option options [ Hash | nil ] :extra_options Options related to spawning
       #   mongocryptd. These are set to default values if no option is passed in.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly

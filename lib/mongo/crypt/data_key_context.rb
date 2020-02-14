@@ -31,12 +31,12 @@ module Mongo
       #   "aws" and "local".
       # @param [ Hash ] options Data key creation options.
       #
-      # @option [ Hash ] :master_key A Hash of options related to the AWS
+      # @option options [ Hash ] :master_key A Hash of options related to the AWS
       #   KMS provider option. Required if kms_provider is "aws".
       #   - :region [ String ] The The AWS region of the master key (required).
       #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
       #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
-      # @option [ Array<String> ] :key_alt_names An optional array of strings specifying
+      # @option options [ Array<String> ] :key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
       def initialize(mongocrypt, io, kms_provider, options={})
         super(mongocrypt, io)
