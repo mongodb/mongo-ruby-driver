@@ -1,4 +1,4 @@
-description: "Discover arbiters"
+description: "Discover arbiters with replicaSet URI option"
 
 uri: "mongodb://a/?replicaSet=rs"
 

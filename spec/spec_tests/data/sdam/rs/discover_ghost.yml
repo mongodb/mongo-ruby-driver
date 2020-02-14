@@ -1,6 +1,6 @@
 description: "Ghost discovered"
 
-uri: "mongodb://a,b/?replicaSet=rs"
+uri: "mongodb://b/?directConnection=false"
 
 phases: [
 
@@ -21,21 +21,15 @@ phases: [
 
             servers: {
 
-                "a:27017": {
-
-                    type: "Unknown",
-                    setName:
-                },
-
                 "b:27017": {
 
                     type: "RSGhost",
                     setName:
                 }
             },
-            topologyType: "ReplicaSetNoPrimary",
+            topologyType: "Unknown",
             logicalSessionTimeoutMinutes: null,
-            setName: "rs"
+            setName:
         }
     }
 ]

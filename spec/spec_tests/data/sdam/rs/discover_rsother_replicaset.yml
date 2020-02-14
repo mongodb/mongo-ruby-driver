@@ -1,4 +1,4 @@
-description: "RSOther discovered"
+description: "Discover RSOther with replicaSet URI option"
 
 uri: "mongodb://a,b/?replicaSet=rs"
 
