@@ -421,11 +421,11 @@ module Mongo
       #   not valid UTF8 strings
       def self.ctx_setopt_key_alt_names(context, key_alt_names)
         key_alt_names.each do |key_alt_name|
-          alt_name_binary = { :keyAltName => key_alt_name }.to_bson.to_s
+          key_alt_name_bson = { :keyAltName => key_alt_name }.to_bson.to_s
 
-          Binary.wrap_string(alt_name_binary) do |alt_name_p|
+          Binary.wrap_string(key_alt_name_bson) do |key_alt_name_p|
             check_ctx_status(context) do
-              mongocrypt_ctx_setopt_key_alt_name(context.ctx_p, alt_name_p)
+              mongocrypt_ctx_setopt_key_alt_name(context.ctx_p, key_alt_name_p)
             end
           end
         end
