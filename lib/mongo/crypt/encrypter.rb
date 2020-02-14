@@ -26,9 +26,9 @@ module Mongo
       #
       # @param options [ Hash ] options
       #
-      # @option [ Mongo::Client ] :key_vault_client A client connected
+      # @option options [ Mongo::Client ] :key_vault_client A client connected
       #   to the MongoDB instance containing the encryption key vault.
-      # @option [ String ] :key_vault_namespace The namespace of the key
+      # @option options [ String ] :key_vault_namespace The namespace of the key
       #   vault in the format database.collection.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly

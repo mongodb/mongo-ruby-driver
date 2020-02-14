@@ -13,9 +13,62 @@ describe Mongo::Crypt::DataKeyContext do
   let(:io) { double("Mongo::Crypt::EncryptionIO") }
 
   let(:context) { described_class.new(mongocrypt, io, kms_provider_name, options) }
-  let(:options) { {} }
+  let(:base_options) { {} }
+  let(:options) { base_options }
 
   describe '#initialize' do
+    shared_examples 'it properly sets key_alt_names' do
+      context 'with one key_alt_names' do
+        let(:options) { base_options.merge(key_alt_names: ['keyAltName1']) }
+
+        it 'does not raise an exception' do
+          expect do
+            context
+          end.not_to raise_error
+        end
+      end
+
+      context 'with multiple key_alt_names' do
+        let(:options) { base_options.merge(key_alt_names: ['keyAltName1', 'keyAltName2']) }
+
+        it 'does not raise an exception' do
+          expect do
+            context
+          end.not_to raise_error
+        end
+      end
+
+      context 'with empty key_alt_names' do
+        let(:options) { base_options.merge(key_alt_names: []) }
+
+        it 'does not raise an exception' do
+          expect do
+            context
+          end.not_to raise_error
+        end
+      end
+
+      context 'with invalid key_alt_names' do
+        let(:options) { base_options.merge(key_alt_names: ['keyAltName1', 3]) }
+
+        it 'does raises an exception' do
+          expect do
+            context
+          end.to raise_error(ArgumentError, /All values of the :key_alt_names option Array must be Strings/)
+        end
+      end
+
+      context 'with non-array key_alt_names' do
+        let(:options) { base_options.merge(key_alt_names: "keyAltName1") }
+
+        it 'does raises an exception' do
+          expect do
+            context
+          end.to raise_error(ArgumentError, /key_alt_names option must be an Array/)
+        end
+      end
+    end
+
     context 'with invalid kms provider'do
       let(:kms_providers) { local_kms_providers }
       let(:kms_provider_name) { 'invalid' }
@@ -30,6 +83,8 @@ describe Mongo::Crypt::DataKeyContext do
     context 'with local kms provider and empty options' do
       include_context 'with local kms_providers'
 
+      it_behaves_like 'it properly sets key_alt_names'
+
       it 'does not raise an exception' do
         expect do
           context
@@ -39,6 +94,10 @@ describe Mongo::Crypt::DataKeyContext do
 
     context 'with aws kms provider' do
       include_context 'with AWS kms_providers'
+
+      let(:base_options) { { master_key: { region: 'us-east-2', key: 'arn' } } }
+
+      it_behaves_like 'it properly sets key_alt_names'
 
       context 'with empty options' do
         let(:options) { {} }
@@ -121,8 +180,6 @@ describe Mongo::Crypt::DataKeyContext do
       end
 
       context 'with valid options' do
-        let(:options) { { master_key: { region: 'us-east-2', key: 'arn' } } }
-
         it 'does not raise an exception' do
           expect do
             context

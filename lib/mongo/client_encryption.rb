@@ -44,7 +44,7 @@ module Mongo
     #   "aws" and "local".
     # @params [ Hash ] options
     #
-    # @option [ Hash ] :master_key Information about the AWS master key. Required
+    # @option options [ Hash ] :master_key Information about the AWS master key. Required
     #   if kms_provider is "aws".
     #   - :region [ String ] The The AWS region of the master key (required).
     #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
@@ -53,6 +53,8 @@ module Mongo
     #     by a colon (e.g. "kms.us-east-1.amazonaws.com" or
     #     "kms.us-east-1.amazonaws.com:443"). An endpoint in any other format
     #     will not be properly parsed.
+    # @option options [ Array<String> ] :key_alt_names An optional array of strings specifying
+    #   alternate names for the new data key.
     #
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
@@ -72,24 +74,24 @@ module Mongo
     # Encrypts a value using the specified encryption key and algorithm
     #
     # @param [ Object ] value The value to encrypt
-    # @param [ Hash ] opts
+    # @param [ Hash ] options
     #
-    # @option [ String ] :key_id The base64-encoded UUID of the encryption
+    # @option options [ String ] :key_id The base64-encoded UUID of the encryption
     #   key as it is stored in the key vault collection
-    # @option [ String ] :algorithm The algorithm used to encrypt the value.
+    # @option options [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
     #
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value
-    def encrypt(value, opts={})
+    def encrypt(value, options={})
       doc = { 'v': value }
 
       Crypt::ExplicitEncryptionContext.new(
         @crypt_handle,
         @encryption_io,
         doc,
-        opts
+        options
       ).run_state_machine['v']
     end
 

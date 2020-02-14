@@ -73,8 +73,9 @@ describe Mongo::ClientEncryption do
 
   describe '#create_data_key' do
     let(:data_key_id) { client_encryption.create_data_key(kms_provider_name, options) }
+    let(:key_alt_names) { nil }
 
-    shared_examples 'it creates a data key' do
+    shared_examples 'it creates a data key' do |with_key_alt_names: false|
       it 'returns the data key id and inserts it into the key vault collection' do
         expect(data_key_id).to be_a_kind_of(String)
         expect(data_key_id.bytesize).to eq(16)
@@ -84,11 +85,59 @@ describe Mongo::ClientEncryption do
         )
 
         expect(documents.count).to eq(1)
+
+        if with_key_alt_names
+          expect(documents.first['keyAltNames']).to match_array(key_alt_names)
+        else
+          expect(documents.first['keyAltNames']).to be_nil
+        end
+      end
+    end
+
+    shared_examples 'it supports key_alt_names' do
+      let(:options) { base_options.merge(key_alt_names: key_alt_names) }
+
+      context 'with one value in key_alt_names' do
+        let(:key_alt_names) { ['keyAltName1'] }
+        it_behaves_like 'it creates a data key', **{ with_key_alt_names: true }
+      end
+
+      context 'with multiple values in key_alt_names' do
+        let(:key_alt_names) { ['keyAltName1', 'keyAltName2'] }
+        it_behaves_like 'it creates a data key', **{ with_key_alt_names: true }
+      end
+
+      context 'with empty key_alt_names' do
+        let(:key_alt_names) { [] }
+        it_behaves_like 'it creates a data key'
+      end
+
+      context 'with invalid key_alt_names option' do
+        let(:key_alt_names) { 'keyAltName1' }
+
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /key_alt_names option must be an Array/)
+        end
+      end
+
+      context 'with invalid key_alt_names values' do
+        let(:key_alt_names) { ['keyAltNames1', 3] }
+
+        it 'raises an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(ArgumentError, /values of the :key_alt_names option Array must be Strings/)
+        end
       end
     end
 
     context 'with AWS KMS provider' do
       include_context 'with AWS kms_providers'
+
+      let(:base_options) { { master_key: { region: aws_region, key: aws_arn } } }
+      it_behaves_like 'it supports key_alt_names'
 
       context 'with nil options' do
         let(:options) { nil }
@@ -201,7 +250,7 @@ describe Mongo::ClientEncryption do
           }
         end
 
-        include_examples 'it creates a data key'
+        it_behaves_like 'it creates a data key'
       end
 
       context 'with valid endpoint, no port' do
@@ -215,12 +264,12 @@ describe Mongo::ClientEncryption do
           }
         end
 
-        include_examples 'it creates a data key'
+        it_behaves_like 'it creates a data key'
       end
 
       context 'with valid endpoint' do
         let(:options) { data_key_options }
-        include_examples 'it creates a data key'
+        it_behaves_like 'it creates a data key'
       end
 
       context 'with invalid endpoint' do
@@ -279,8 +328,10 @@ describe Mongo::ClientEncryption do
     context 'with local KMS provider' do
       include_context 'with local kms_providers'
       let(:options) { {} }
+      let(:base_options) { {} }
 
-      include_examples 'it creates a data key'
+      it_behaves_like 'it supports key_alt_names'
+      it_behaves_like 'it creates a data key'
     end
   end
 

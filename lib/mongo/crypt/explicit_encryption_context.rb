@@ -30,9 +30,9 @@ module Mongo
       # @param [ BSON::Document ] doc A document to encrypt
       # @param [ Hash ] options
       #
-      # @option [ String ] :key_id The UUID of the data key that
+      # @option options [ String ] :key_id The UUID of the data key that
       #   will be used to encrypt the value
-      # @option [ String ] :algorithm The algorithm used to encrypt the
+      # @option options [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
       #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
       #

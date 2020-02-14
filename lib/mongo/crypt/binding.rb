@@ -382,7 +382,7 @@ module Mongo
 
       # Sets the key id option on an explicit encryption context.
       #
-      # @param [ Context ] context Explicit encryption context
+      # @param [ Mongo::Crypt::Context ] context Explicit encryption context
       # @param [ String ] key_id The key id
       #
       # @raise [ Mongo::Error::CryptError ] If the operation failed
@@ -390,6 +390,43 @@ module Mongo
         Binary.wrap_string(key_id) do |key_id_p|
           check_ctx_status(context) do
             mongocrypt_ctx_setopt_key_id(context.ctx_p, key_id_p)
+          end
+        end
+      end
+
+      # When creating a data key, set an alternate name on that key. When
+      # performing explicit encryption, specifying which data key to use for
+      # encryption based on its keyAltName field.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object
+      # @param [ FFI::Pointer ] binary A pointer to a mongocrypt_binary_t
+      #   object that references a BSON document in the format
+      #   { "keyAltName": <BSON UTF8 value> }
+      #
+      # @return [ Boolean ] Whether the alternative name was successfully set
+      #
+      # @note Do not initialize ctx before calling this method
+      attach_function(
+        :mongocrypt_ctx_setopt_key_alt_name,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      # Set multiple alternate key names on data key creation
+      #
+      # @param [ Mongo::Crypt::Context ] context A DataKeyContext
+      # @param [ Array ] key_alt_names An array of alternate key names as strings
+      #
+      # @raise [ Mongo::Error::CryptError ] If any of the alternate names are
+      #   not valid UTF8 strings
+      def self.ctx_setopt_key_alt_names(context, key_alt_names)
+        key_alt_names.each do |key_alt_name|
+          key_alt_name_bson = { :keyAltName => key_alt_name }.to_bson.to_s
+
+          Binary.wrap_string(key_alt_name_bson) do |key_alt_name_p|
+            check_ctx_status(context) do
+              mongocrypt_ctx_setopt_key_alt_name(context.ctx_p, key_alt_name_p)
+            end
           end
         end
       end

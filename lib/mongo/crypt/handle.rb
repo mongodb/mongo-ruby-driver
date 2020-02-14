@@ -32,9 +32,9 @@ module Mongo
       #   96-byte, base64 encoded string.
       # @param [ Hash ] options A hash of options
       #
-      # @option [ Hash | nil ] :schema_map A hash representing the JSON schema
+      # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
       #   of the collection that stores auto encrypted documents.
-      # @option [ Logger ] :logger A Logger object to which libmongocrypt logs
+      # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       def initialize(kms_providers, options={})
         # FFI::AutoPointer uses a custom release strategy to automatically free
