@@ -78,9 +78,14 @@ module Mongo
     #
     # @option options [ String ] :key_id The base64-encoded UUID of the encryption
     #   key as it is stored in the key vault collection
+    # @option options [ String ] :key_alt_name The alternate name for the
+    #   encryption key.
     # @option options [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
     #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+    #
+    # @note The :key_id and :key_alt_name options are mutually exclusive. Only
+    #   one is required to perform explicit encryption.
     #
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value

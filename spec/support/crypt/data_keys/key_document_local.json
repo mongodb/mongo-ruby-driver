@@ -27,5 +27,5 @@
             "$numberLong": "1557827033449"
         }
     },
-    "keyAltNames": [ "local" ]
+    "keyAltNames": [ "ssn_encryption_key" ]
 }
