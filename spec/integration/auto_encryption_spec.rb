@@ -444,11 +444,7 @@ describe 'Auto Encryption' do
     end
 
     context 'encrypting using key alt name' do
-      let(:local_schema) { { "auto_encryption.users" => schema_map_key_alt_names } }
-
-      before do
-        client[:users].create
-      end
+      include_context 'schema map in client options'
 
       let(:query) { { ssn: ssn, altname: key_alt_name } }
 

@@ -75,7 +75,7 @@ module Crypt
   shared_context 'with local kms_providers and key alt names' do
     include_context 'with local kms_providers'
 
-    let(:schema_map_key_alt_names) do
+    let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local_key_alt_names.json'))
     end
   end
@@ -107,10 +107,6 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
     end
 
-    let(:schema_map_key_alt_names) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
-    end
-
     let(:data_key_options) do
       {
         master_key: {
@@ -135,7 +131,7 @@ module Crypt
   shared_context 'with AWS kms_providers and key alt names' do
     include_context 'with AWS kms_providers'
 
-    let(:schema_map_key_alt_names) do
+    let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
     end
   end
