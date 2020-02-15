@@ -458,8 +458,8 @@ describe 'Auto Encryption' do
 
           document = client[:users].find(_id: id).first
           document.should_not be_nil
-          # auto encryption with key alt names only works with random
-          # encryption
+          # Auto-encryption with key alt names only works with random encryption,
+          # so it will not generate the same result on every test run.
           expect(document['ssn']).to be_a_kind_of(BSON::Binary)
         end
       end
@@ -474,8 +474,8 @@ describe 'Auto Encryption' do
 
           document = client[:users].find(_id: id).first
           document.should_not be_nil
-          # auto encryption with key alt names only works with random
-          # encryption
+          # Auto-encryption with key alt names only works with random encryption,
+          # so it will not generate the same result on every test run.
           expect(document['ssn']).to be_a_kind_of(BSON::Binary)
         end
       end
