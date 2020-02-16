@@ -26,7 +26,7 @@ setup_ruby
 
 prepare_server $arch
 
-install_mlaunch_pip
+install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery

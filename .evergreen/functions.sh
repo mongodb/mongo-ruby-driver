@@ -291,6 +291,25 @@ install_mlaunch_pip() {
   export PYTHONPATH="$pythonpath"
 }
 
+install_mlaunch_git() {
+  repo=$1
+  branch=$2
+  python -V || true
+  python3 -V
+  which pip3
+  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
+  # The scripts in a python installation have shebangs pointing to the
+  # prefix, which doesn't work for us because we unpack toolchain to a
+  # different directory than prefix used for building. Work around this by
+  # explicitly running pip3 with python.
+  python3 `which pip3` install -t "$pythonpath" psutil pymongo
+  export PATH="$pythonpath/bin":$PATH
+  export PYTHONPATH="$pythonpath"
+  git clone $repo mlaunch
+  cd mlaunch
+  git checkout origin/$branch
+}
+
 show_local_instructions() {
   echo To test this configuration locally:
   params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY STRESS_SPEC=true"
