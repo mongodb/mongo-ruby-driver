@@ -147,7 +147,10 @@ setup_ruby() {
 
     #rvm reinstall $RVM_RUBY
   else
-    if true; then
+    if test "$USE_OPT_TOOLCHAIN" = 1; then
+      # nothing, also PATH is already set
+      :
+    elif true; then
 
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz

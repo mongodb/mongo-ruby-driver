@@ -22,6 +22,10 @@ class Runner
         @options[:distro] = v
       end
 
+      opts.on('-p', '--preload', 'Preload Ruby toolchain and server binaries in docker') do |v|
+        @options[:preload] = v
+      end
+
       opts.on('-s', '--script=SCRIPT', 'Test script to invoke') do |v|
         @options[:script] = v
       end
@@ -98,6 +102,10 @@ class Runner
 
   def debian?
     distro =~ /debian|ubuntu/
+  end
+
+  def preload?
+    !!@options[:preload]
   end
 end
 

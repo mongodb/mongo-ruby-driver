@@ -11,6 +11,11 @@ server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#
 server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
+toolchain_upper='f11598d091441ffc8d746aacfdc6c26741a3e629' 
+toolchain_lower='5e46f2793e8e866f36eda2c5_20_02_14_19_18_18' 
+
+ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{toolchain_upper}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{toolchain_upper}_#{toolchain_lower}.tar.gz"
+
 %>
 
 FROM <%= base_image %>
@@ -32,6 +37,16 @@ RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre
 
 # ubuntu1604: libcurl3
 RUN apt-get install -y lsb-release python libsnmp30 libcurl3 krb5-user
+
+<% if preload? %>
+
+  WORKDIR /app
+  RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
+  RUN tar -xC /opt -zf ruby-toolchain.tar.gz
+  ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
+  ENV USE_OPT_TOOLCHAIN=1
+
+<% end %>
 
 WORKDIR /app
 
