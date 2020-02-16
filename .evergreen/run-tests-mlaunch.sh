@@ -26,7 +26,7 @@ setup_ruby
 
 prepare_server $arch
 
-install_mlaunch_pip
+install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -82,7 +82,10 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+mlaunch='python3 -m mtools.mlaunch.mlaunch'
+mlaunch=mlaunch
+
+eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
 
