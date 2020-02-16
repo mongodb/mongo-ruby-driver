@@ -22,18 +22,7 @@ setup_ruby
 
 arch=`host_arch`
 
-if test "$MONGODB_VERSION" = 2.6; then
-  # The only OS which has Python toolchain for Python 3.6+ and
-  # which has MongoDB 2.6 server builds for it is rhel62.
-  # Unfortunately running it in Docker on a Debian 10 host crashes.
-  # Try the generic Linux binary since we aren't using any enterprise
-  # features pre FLE which requires 4.2 server.
-  url=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.12.tgz
-else
-  url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
-fi
-
-prepare_server_from_url $url
+prepare_server $arch
 
 install_mlaunch_pip
 

@@ -46,6 +46,11 @@ RUN apt-get install -y lsb-release python libsnmp30 libcurl3 krb5-user
   ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
   ENV USE_OPT_TOOLCHAIN=1
 
+  RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
+  RUN tar xfz <%= File.basename(server_download_url) %>
+  RUN mv mongo*/ /opt/mongodb
+  ENV USE_OPT_MONGODB=1
+
 <% end %>
 
 WORKDIR /app

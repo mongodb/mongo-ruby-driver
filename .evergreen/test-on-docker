@@ -3,6 +3,8 @@
 require 'optparse'
 require 'erb'
 
+load File.join(File.dirname(__FILE__), 'tools.rb')
+
 class Runner
   def run
     process_arguments
@@ -106,6 +108,10 @@ class Runner
 
   def preload?
     !!@options[:preload]
+  end
+
+  def server_download_url
+    @server_download_url ||= ServerVersionRegistry.new(server_version, distro).download_url
   end
 end
 

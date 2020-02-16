@@ -13,8 +13,7 @@ setup_ruby
 install_deps
 
 arch=`host_arch`
-version=4.2.3
-prepare_server $arch $version
+prepare_server $arch
 
 install_mlaunch_pip
 
