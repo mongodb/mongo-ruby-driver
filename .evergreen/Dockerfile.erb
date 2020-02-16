@@ -55,6 +55,16 @@ RUN apt-get install -y lsb-release python libsnmp30 libcurl3 krb5-user
 
 WORKDIR /app
 
+<% if preload? %>
+
+  COPY Gemfile .
+  COPY gemfiles gemfiles
+  COPY *.gemspec .
+  COPY lib/mongo/version.rb lib/mongo/version.rb
+  RUN bundle install
+
+<% end %>
+
 COPY . .
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs
