@@ -33,10 +33,17 @@ FROM <%= base_image %>
 #RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
 #RUN tar -xC /opt -zf python-toolchain.tar.gz
 
-RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre
-
+# Ruby runtime dependencies: libyaml-0-2
+# Compiling ruby libraries: gcc make
+# JRuby: openjdk-8-jre
+# Server dependencies: libsnmp30 libcurl3
+# Determining OS we are running on: lsb-release
+# Kerberos testing: krb5-user
+# Installing mlaunch from git: git
+#
 # ubuntu1604: libcurl3
-RUN apt-get install -y lsb-release python libsnmp30 libcurl3 krb5-user
+RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre git \
+  lsb-release libsnmp30 libcurl3 krb5-user
 
 <% if preload? %>
 
