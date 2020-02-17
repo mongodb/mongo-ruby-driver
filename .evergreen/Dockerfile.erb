@@ -72,6 +72,11 @@ FROM <%= base_image %>
 <% if preload? %>
 
   WORKDIR /app
+
+  RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
+  RUN tar xfz <%= File.basename(server_download_url) %>
+  RUN mv mongo*/ /opt/mongodb
+  ENV USE_OPT_MONGODB=1
   
   <% unless ruby_head? %>
     
@@ -81,11 +86,6 @@ FROM <%= base_image %>
     ENV USE_OPT_TOOLCHAIN=1
   
   <% end %>
-
-  RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
-  RUN tar xfz <%= File.basename(server_download_url) %>
-  RUN mv mongo*/ /opt/mongodb
-  ENV USE_OPT_MONGODB=1
 
 <% end %>
 
