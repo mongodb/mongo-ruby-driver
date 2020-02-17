@@ -443,6 +443,26 @@ describe 'Auto Encryption' do
       end
     end
 
+    context 'with schema_map client option pointing to wrong collection' do
+      let(:local_schema) { { 'wrong_db.wrong_coll' => schema_map } }
+
+      include_context 'with local kms_providers'
+
+      it 'does not raise an exception but doesn\'t encrypt either' do
+        expect do
+          result
+        end.not_to raise_error
+
+        expect(result).to be_ok
+        id = result.inserted_ids.first
+
+        document = client[:users].find(_id: id).first
+        document.should_not be_nil
+        # Document was not encrypted
+        expect(document['ssn']).to eq(ssn)
+      end
+    end
+
     context 'encrypting using key alt name' do
       include_context 'schema map in client options'
 
