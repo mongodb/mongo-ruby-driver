@@ -79,7 +79,9 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+mlaunch='python3 -m mtools.mlaunch.mlaunch'
+
+eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
 
