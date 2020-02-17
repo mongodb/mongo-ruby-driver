@@ -40,13 +40,9 @@ FROM <%= base_image %>
 # Determining OS we are running on: lsb-release
 # Kerberos testing: krb5-user
 # Installing mlaunch from git: git
-#
-# ubuntu1604: libcurl3
 
-RUN apt-cache search libsnmp
-
-# ubuntu1204 only has openjdk-7-jre
-<% unless %w(ubuntu1204).include?(distro) %>
+# ubuntu1204, ubuntu1404 only have openjdk-7-jre
+<% unless %w(ubuntu1204 ubuntu1404).include?(distro) %>
   RUN apt-get install -y openjdk-8-jre
 <% end %>
 
@@ -56,6 +52,7 @@ RUN apt-cache search libsnmp
   RUN apt-get install -y libsnmp30
 <% end %>
 
+# ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
 RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 krb5-user
 
 <% if preload? %>
