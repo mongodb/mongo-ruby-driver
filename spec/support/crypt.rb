@@ -64,12 +64,19 @@ module Crypt
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
     end
-
     let(:data_key_options) { {} }
 
     let(:encrypted_ssn) do
       "ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68Ft" +
       "tXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"
+    end
+  end
+
+  shared_context 'with local kms_providers and key alt names' do
+    include_context 'with local kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local_key_alt_names.json'))
     end
   end
 
@@ -118,6 +125,14 @@ module Crypt
     let(:encrypted_ssn) do
       "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
       "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
+    end
+  end
+
+  shared_context 'with AWS kms_providers and key alt names' do
+    include_context 'with AWS kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
     end
   end
 end
