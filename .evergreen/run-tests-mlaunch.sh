@@ -16,12 +16,9 @@ set -o errexit  # Exit the script with error if any of the commands fail
 . `dirname "$0"`/functions.sh
 
 set_home
-set_fcv
 set_env_vars
 
 setup_ruby
-
-install_deps
 
 arch=`host_arch`
 
@@ -59,6 +56,9 @@ if test "$TOPOLOGY" = replica_set; then
   fi
 elif test "$TOPOLOGY" = sharded_cluster; then
   args="$args --replicaset --sharded 2 --name ruby-driver-rs"
+  if test -z "$SINGLE_MONGOS"; then
+    args="$args --mongos 2"
+  fi
 else
   args="$args --single"
 fi
@@ -66,13 +66,62 @@ if test -n "$MMAPV1"; then
   args="$args --storageEngine mmapv1"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
+if test "$AUTH" = auth; then
+  args="$args --auth --username bob --password pwd123"
+fi
+if test "$SSL" = ssl; then
+  args="$args --sslMode requireSSL"\
+" --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
+" --sslCAFile spec/support/certificates/ca.crt"\
+" --sslClientCertificate spec/support/certificates/client.pem"
+
+  if echo $RVM_RUBY |grep -q jruby; then
+    # JRuby does not grok chained certificate bundles -
+    # https://github.com/jruby/jruby-openssl/issues/181
+    client_pem=client.pem
+  else
+    client_pem=client-second-level-bundle.pem
+  fi
+  
+  uri_options="$uri_options&"\
+"tlsCAFile=spec/support/certificates/ca.crt&"\
+"tlsCertificateKeyFile=spec/support/certificates/$client_pem"
+fi
+
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+
+install_deps
 
 echo "Running specs"
 which bundle
 bundle --version
 
-export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000$uri_options"
+if test "$TOPOLOGY" = sharded_cluster; then
+  if test -n "$SINGLE_MONGOS"; then
+    # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
+    # when executing against a multi-sharded mongos.
+    # At the same time, due to pinning in sharded transactions,
+    # it is beneficial to test a single shard to ensure that server
+    # monitoring and selection are working correctly and recover the driver's
+    # ability to operate in reasonable time after errors and fail points trigger
+    # on a single shard
+    echo Restricting to a single mongos
+    hosts=localhost:27017
+  else
+    hosts=localhost:27017,localhost:27018
+  fi
+else
+  hosts=localhost:27017
+fi
+
+if test "$AUTH" = auth; then
+  hosts="bob:pwd123@$hosts"
+fi
+
+export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
+
+set_fcv
+
 bundle exec rake spec:prepare
 
 if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
@@ -81,7 +130,7 @@ if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
   bundle exec rake spec:wait_for_sessions
 fi
 
-export MONGODB_URI="mongodb://localhost:27017/?appName=test-suite$uri_options"
+export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
 bundle exec rake spec:ci
 test_status=$?
 echo "TEST STATUS"
