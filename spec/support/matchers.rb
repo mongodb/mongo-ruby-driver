@@ -35,3 +35,9 @@ RSpec::Matchers.define :be_bson_sequence do |array|
     actual == array.map(&:to_bson).join
   end
 end
+
+RSpec::Matchers.define :be_ciphertext do
+  match do |object|
+    object.is_a?(BSON::Binary) && object.type == :ciphertext
+  end
+end

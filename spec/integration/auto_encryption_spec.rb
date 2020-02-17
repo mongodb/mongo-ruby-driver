@@ -460,7 +460,7 @@ describe 'Auto Encryption' do
           document.should_not be_nil
           # Auto-encryption with key alt names only works with random encryption,
           # so it will not generate the same result on every test run.
-          expect(document['ssn']).to be_a_kind_of(BSON::Binary)
+          expect(document['ssn']).to be_ciphertext
         end
       end
 
