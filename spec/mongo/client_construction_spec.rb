@@ -170,7 +170,6 @@ describe Mongo::Client do
     context 'when providing options' do
       context 'with auto_encryption_options' do
         require_libmongocrypt
-        min_server_version '4.2'
 
         let(:client) { new_local_client_nmio([SpecConfig.instance.addresses.first], client_opts) }
 

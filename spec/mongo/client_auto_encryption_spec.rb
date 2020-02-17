@@ -48,6 +48,7 @@ describe Mongo::Client do
 
   shared_context 'with jsonSchema validator' do
     min_server_version '4.2'
+    require_enterprise
 
     before do
       users_collection = client.use(db_name)[collection_name]
