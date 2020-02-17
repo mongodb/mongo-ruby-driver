@@ -298,6 +298,12 @@ install_mlaunch_git() {
   python3 -V
   which pip3
   
+  if ! virtualenv --version; then
+    python3 `which pip3` install --user virtualenv
+    export PATH=$HOME/.local/bin:$PATH
+    virtualenv --version
+  fi
+  
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
   virtualenv -p python3 $venvpath
   . $venvpath/bin/activate
