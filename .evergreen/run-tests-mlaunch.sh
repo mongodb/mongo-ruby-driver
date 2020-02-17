@@ -80,6 +80,7 @@ if test "$SSL" = ssl; then
 fi
 
 mlaunch='python3 -m mtools.mlaunch.mlaunch'
+mlaunch=mlaunch
 
 eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
