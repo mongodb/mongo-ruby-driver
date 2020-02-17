@@ -88,9 +88,7 @@ module Mongo
             filter = Binding.ctx_mongo_op(self)
 
             result = @encryption_io.collection_info(filter)
-            # RUBY-2133: per libmongocrypt integration guidelines, do not
-            # feed an empty result to libmongocrypt
-            mongocrypt_feed(result||{})
+            mongocrypt_feed(result) if result
 
             mongocrypt_done
           when :need_mongo_markings
