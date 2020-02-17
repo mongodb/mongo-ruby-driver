@@ -47,6 +47,7 @@ FROM <%= base_image %>
   # Determining OS we are running on: lsb-release
   # Kerberos testing: krb5-user
   # Installing mlaunch from git: git
+  # ruby-head archive: bzip2
 
   # ubuntu1204, ubuntu1404 only have openjdk-7-jre
   <% unless %w(ubuntu1204 ubuntu1404).include?(distro) %>
@@ -60,7 +61,7 @@ FROM <%= base_image %>
   <% end %>
 
   # ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
-  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 krb5-user
+  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 krb5-user bzip2
 
 <% else %>
 
