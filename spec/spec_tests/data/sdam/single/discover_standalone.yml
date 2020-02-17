@@ -1,4 +1,4 @@
-description: "Discovered standalone"
+description: "Discover standalone"
 
 uri: "mongodb://a/?directConnection=false"
 

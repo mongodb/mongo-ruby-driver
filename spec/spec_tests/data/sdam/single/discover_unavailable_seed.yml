@@ -1,4 +1,4 @@
-description: "Discovered unavailable seed"
+description: "Discover unavailable seed"
 
 uri: "mongodb://a/?directConnection=false"
 

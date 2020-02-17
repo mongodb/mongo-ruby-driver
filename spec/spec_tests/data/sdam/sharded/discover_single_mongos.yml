@@ -1,4 +1,4 @@
-description: "Discovered single mongos"
+description: "Discover single mongos"
 
 uri: "mongodb://a/?directConnection=false"
 
