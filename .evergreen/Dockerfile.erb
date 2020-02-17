@@ -72,10 +72,15 @@ FROM <%= base_image %>
 <% if preload? %>
 
   WORKDIR /app
-  RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
-  RUN tar -xC /opt -zf ruby-toolchain.tar.gz
-  ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
-  ENV USE_OPT_TOOLCHAIN=1
+  
+  <% unless ruby_head? %>
+    
+    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
+    RUN tar -xC /opt -zf ruby-toolchain.tar.gz
+    ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
+    ENV USE_OPT_TOOLCHAIN=1
+  
+  <% end %>
 
   RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
   RUN tar xfz <%= File.basename(server_download_url) %>
@@ -86,7 +91,7 @@ FROM <%= base_image %>
 
 WORKDIR /app
 
-<% if preload? %>
+<% if preload? && !ruby_head? %>
 
   COPY Gemfile .
   COPY gemfiles gemfiles
