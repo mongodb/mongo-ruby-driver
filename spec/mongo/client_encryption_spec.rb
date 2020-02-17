@@ -362,8 +362,7 @@ describe Mongo::ClientEncryption do
         let(:key_alt_name) { nil }
 
         it 'correctly encrypts a string' do
-          expect(encrypted).to be_a_kind_of(BSON::Binary)
-          expect(encrypted.type).to eq(:ciphertext)
+          expect(encrypted).to be_ciphertext
           expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
         end
       end
@@ -372,8 +371,7 @@ describe Mongo::ClientEncryption do
         let(:key_id) { nil }
 
         it 'correctly encrypts a string' do
-          expect(encrypted).to be_a_kind_of(BSON::Binary)
-          expect(encrypted.type).to eq(:ciphertext)
+          expect(encrypted).to be_ciphertext
           expect(encrypted.data).to eq(Base64.decode64(encrypted_value))
         end
       end
