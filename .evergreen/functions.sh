@@ -39,6 +39,9 @@ _detect_arch() {
     elif lsb_release -i |grep -q RedHat; then
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
       arch="rhel$release"
+    elif lsb_release -i |grep -q CentOS; then
+      release=`lsb_release -r |awk '{print $2}' |cut -c 1 |sed -e s/7/70/ -e s/6/62/`
+      arch="rhel$release"
     else
       echo 'Unknown RHEL flavor' 1>&2
       return 1
