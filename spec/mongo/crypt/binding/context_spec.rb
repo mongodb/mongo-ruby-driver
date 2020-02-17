@@ -55,7 +55,6 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'mongocrypt_ctx_t bindings' do
     require_libmongocrypt
-  min_server_version '4.2'
     fails_on_jruby
 
     let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }

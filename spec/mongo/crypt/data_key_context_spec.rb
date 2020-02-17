@@ -4,7 +4,6 @@ require 'lite_spec_helper'
 
 describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
-  min_server_version '4.2'
   include_context 'define shared FLE helpers'
 
   let(:mongocrypt) do

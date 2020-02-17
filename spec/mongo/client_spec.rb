@@ -843,8 +843,6 @@ describe Mongo::Client do
 
   describe '#spawn_mongocryptd' do
     require_libmongocrypt
-    min_server_version '4.2'
-    require_enterprise
 
     let(:client) do
       new_local_client_nmio(

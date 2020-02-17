@@ -9,7 +9,6 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'mongocrypt_t binding' do
     require_libmongocrypt
-  min_server_version '4.2'
 
     after do
       Mongo::Crypt::Binding.mongocrypt_destroy(mongocrypt)
