@@ -886,7 +886,7 @@ buildvariants:
     # Until we stop installing bson from master, don't test on jruby
     ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
     topology: standalone
-    mongodb-version: "4.2"
+    mongodb-version: ["4.2", "4.0"]
     os: rhel70
     bson: master
   display_name: "FLE Tests: ${ruby}"
