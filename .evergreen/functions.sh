@@ -190,12 +190,11 @@ setup_ruby() {
     ruby --version
 
     # Ensure we're using the right ruby
-    python - <<EOH
-ruby = "${RVM_RUBY}".split("-")[0]
-version = "${RVM_RUBY}".split("-")[1]
-assert(ruby in "`ruby --version`")
-assert(version in "`ruby --version`")
-EOH
+    ruby_name=`echo $RVM_RUBY |awk -F- '{print $1}'`
+    ruby_version=`echo $RVM_RUBY |awk -F- '{print $2}' |cut -c 1-3`
+    
+    ruby -v |fgrep $ruby_name
+    ruby -v |fgrep $ruby_version
 
     # We shouldn't need to update rubygems, and there is value in
     # testing on whatever rubygems came with each supported ruby version
