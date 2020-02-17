@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Client do
   require_libmongocrypt
+  min_server_version '4.2'
   require_enterprise
   clean_slate
 
@@ -47,9 +48,6 @@ describe Mongo::Client do
   end
 
   shared_context 'with jsonSchema validator' do
-    min_server_version '4.2'
-    require_enterprise
-
     before do
       users_collection = client.use(db_name)[collection_name]
       users_collection.drop
