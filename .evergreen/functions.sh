@@ -270,7 +270,7 @@ prepare_server_from_url() {
 
 install_mlaunch_virtualenv() {
   #export PATH=/opt/python/3.7/bin:$PATH
-  python -V
+  python -V || true
   python3 -V
   #pip3 install --user virtualenv
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
@@ -280,7 +280,7 @@ install_mlaunch_virtualenv() {
 }
 
 install_mlaunch_pip() {
-  python -V
+  python -V || true
   python3 -V
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
   # The scripts in a python installation have shebangs pointing to the
