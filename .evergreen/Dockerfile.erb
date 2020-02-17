@@ -31,8 +31,12 @@ FROM <%= base_image %>
 
 <% end %>
 
-#RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
-#RUN tar -xC /opt -zf python-toolchain.tar.gz
+<% if ruby_head? %>
+
+  RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
+  RUN tar -xC /opt -zf python-toolchain.tar.gz
+
+<% end %>
 
 <% if debian? %>
 

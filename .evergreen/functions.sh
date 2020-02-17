@@ -141,6 +141,12 @@ setup_ruby() {
   fi
 
   if [ "$RVM_RUBY" == "ruby-head" ]; then
+    # When we use ruby-head, we do not install the Ruby toolchain.
+    # But we still need Python 3.6+ to run mlaunch.
+    # Since the ruby-head tests are run on ubuntu1604, we can use the
+    # globally installed Python toolchain.
+    export PATH=/opt/python/3.7/bin:$PATH
+
     # 12.04, 14.04 and 16.04 are good
     wget -O ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
     tar xf ruby-head.tar.bz2

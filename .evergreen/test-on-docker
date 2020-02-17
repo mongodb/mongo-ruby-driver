@@ -95,6 +95,10 @@ class Runner
     @env['RVM_RUBY']
   end
 
+  def ruby_head?
+    ruby == 'ruby-head'
+  end
+
   def server_version
     @env['MONGODB_VERSION']
   end
