@@ -1,16 +1,21 @@
-# erb spec/Dockerfile.erb >spec/Dockerfile &&  cat spec/Dockerfile && docker build -t test-driver  -f spec/Dockerfile .&& docker run -ti --tmpfs /tmpfs:exec test-driver
-
 # Python toolchain as of this writing is available on rhel62, debian92 and
 # ubuntu1604.
+#
+# To run rhel62 in docker, host system must be configured to emulate syscalls:
+# https://github.com/CentOS/sig-cloud-instance-images/issues/103
 
 <%
 
-toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz"
 python_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-python-driver-toolchain/#{distro}/ba92de2700c04ee2d4f82c3ffdfc33105140cb04/mongo_python_driver_toolchain_#{distro.gsub('-', '_')}_ba92de2700c04ee2d4f82c3ffdfc33105140cb04_19_11_14_15_33_33.tar.gz"
 server_version = '4.3.3'
 server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#{distro}-#{server_version}.tgz"
 server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
+
+toolchain_upper='f11598d091441ffc8d746aacfdc6c26741a3e629' 
+toolchain_lower='5e46f2793e8e866f36eda2c5_20_02_14_19_18_18' 
+
+ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{toolchain_upper}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{toolchain_upper}_#{toolchain_lower}.tar.gz"
 
 %>
 
@@ -26,15 +31,75 @@ FROM <%= base_image %>
 
 <% end %>
 
-RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
-RUN tar -xC /opt -zf python-toolchain.tar.gz
+<% if ruby_head? %>
 
-RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre
+  RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
+  RUN tar -xC /opt -zf python-toolchain.tar.gz
 
-# ubuntu1604: libcurl3
-RUN apt-get install -y lsb-release python libsnmp30 libcurl3 krb5-user
+<% end %>
+
+<% if debian? %>
+
+  # Ruby runtime dependencies: libyaml-0-2
+  # Compiling ruby libraries: gcc make
+  # JRuby: openjdk-8-jre
+  # Server dependencies: libsnmp30 libcurl3
+  # Determining OS we are running on: lsb-release
+  # Kerberos testing: krb5-user
+  # Installing mlaunch from git: git
+  # ruby-head archive: bzip2
+
+  # ubuntu1204, ubuntu1404 only have openjdk-7-jre
+  <% unless %w(ubuntu1204 ubuntu1404).include?(distro) %>
+    RUN apt-get install -y openjdk-8-jre
+  <% end %>
+
+  <% if %w(ubuntu1204).include?(distro) %>
+    RUN apt-get install -y libsnmp15
+  <% else %>
+    RUN apt-get install -y libsnmp30
+  <% end %>
+
+  # ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
+  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 krb5-user bzip2
+
+<% else %>
+
+  RUN yum install -y redhat-lsb-core which
+
+<% end %>
+
+<% if preload? %>
+
+  WORKDIR /app
+
+  RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
+  RUN tar xfz <%= File.basename(server_download_url) %>
+  RUN mv mongo*/ /opt/mongodb
+  ENV USE_OPT_MONGODB=1
+  
+  <% unless ruby_head? %>
+    
+    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
+    RUN tar -xC /opt -zf ruby-toolchain.tar.gz
+    ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
+    ENV USE_OPT_TOOLCHAIN=1
+  
+  <% end %>
+
+<% end %>
 
 WORKDIR /app
+
+<% if preload? && !ruby_head? %>
+
+  COPY Gemfile .
+  COPY gemfiles gemfiles
+  COPY *.gemspec .
+  COPY lib/mongo/version.rb lib/mongo/version.rb
+  RUN bundle install
+
+<% end %>
 
 COPY . .
 

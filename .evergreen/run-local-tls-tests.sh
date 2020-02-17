@@ -27,7 +27,7 @@ arch=`host_arch`
 version=4.0.16
 prepare_server $arch $version
 
-install_mlaunch
+install_mlaunch_pip
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery

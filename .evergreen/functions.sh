@@ -39,6 +39,9 @@ _detect_arch() {
     elif lsb_release -i |grep -q RedHat; then
       release=`lsb_release -r |awk '{print $2}' |tr -d .`
       arch="rhel$release"
+    elif lsb_release -i |grep -q CentOS; then
+      release=`lsb_release -r |awk '{print $2}' |cut -c 1 |sed -e s/7/70/ -e s/6/62/`
+      arch="rhel$release"
     else
       echo 'Unknown RHEL flavor' 1>&2
       return 1
@@ -138,8 +141,14 @@ setup_ruby() {
   fi
 
   if [ "$RVM_RUBY" == "ruby-head" ]; then
+    # When we use ruby-head, we do not install the Ruby toolchain.
+    # But we still need Python 3.6+ to run mlaunch.
+    # Since the ruby-head tests are run on ubuntu1604, we can use the
+    # globally installed Python toolchain.
+    export PATH=/opt/python/3.7/bin:$PATH
+
     # 12.04, 14.04 and 16.04 are good
-    wget -O ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
+    curl -fLo ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
     tar xf ruby-head.tar.bz2
     export PATH=`pwd`/ruby-head/bin:`pwd`/ruby-head/lib/ruby/gems/2.6.0/bin:$PATH
     ruby --version
@@ -147,12 +156,15 @@ setup_ruby() {
 
     #rvm reinstall $RVM_RUBY
   else
-    if true; then
+    if test "$USE_OPT_TOOLCHAIN" = 1; then
+      # nothing, also PATH is already set
+      :
+    elif true; then
 
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_f11598d091441ffc8d746aacfdc6c26741a3e629_20_02_01_23_51_34.tar.gz
+    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
-    export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+    export PATH=`pwd`/rubies/$RVM_RUBY/bin:`pwd`/rubies/python/3/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
     #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
@@ -178,12 +190,11 @@ setup_ruby() {
     ruby --version
 
     # Ensure we're using the right ruby
-    python - <<EOH
-ruby = "${RVM_RUBY}".split("-")[0]
-version = "${RVM_RUBY}".split("-")[1]
-assert(ruby in "`ruby --version`")
-assert(version in "`ruby --version`")
-EOH
+    ruby_name=`echo $RVM_RUBY |awk -F- '{print $1}'`
+    ruby_version=`echo $RVM_RUBY |awk -F- '{print $2}' |cut -c 1-3`
+    
+    ruby -v |fgrep $ruby_name
+    ruby -v |fgrep $ruby_version
 
     # We shouldn't need to update rubygems, and there is value in
     # testing on whatever rubygems came with each supported ruby version
@@ -225,9 +236,24 @@ kill_jruby() {
 
 prepare_server() {
   arch=$1
-  version=$2
+  
+  if test -n "$USE_OPT_MONGODB"; then
+    export BINDIR=/opt/mongodb/bin
+    export PATH=$BINDIR:$PATH
+    return
+  fi
 
-  url=http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-$arch-$version.tgz
+  if test "$MONGODB_VERSION" = 2.6; then
+    # The only OS which has Python toolchain for Python 3.6+ and
+    # which has MongoDB 2.6 server builds for it is rhel62.
+    # Unfortunately running it in Docker on a Debian 10 host crashes.
+    # Try the generic Linux binary since we aren't using any enterprise
+    # features pre FLE which requires 4.2 server.
+    url=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.12.tgz
+  else
+    url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
+  fi
+
   prepare_server_from_url $url
 }
 
@@ -241,13 +267,26 @@ prepare_server_from_url() {
   export PATH="$BINDIR":$PATH
 }
 
-install_mlaunch() {
-  export PATH=/opt/python/3.7/bin:$PATH
-  python -V
+install_mlaunch_virtualenv() {
+  #export PATH=/opt/python/3.7/bin:$PATH
+  python -V || true
   python3 -V
   #pip3 install --user virtualenv
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
   virtualenv -p python3 $venvpath
   . $venvpath/bin/activate
   pip install 'mtools[mlaunch]'
+}
+
+install_mlaunch_pip() {
+  python -V || true
+  python3 -V
+  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
+  # The scripts in a python installation have shebangs pointing to the
+  # prefix, which doesn't work for us because we unpack toolchain to a
+  # different directory than prefix used for building. Work around this by
+  # explicitly running pip3 with python.
+  python3 `which pip3` install -t "$pythonpath" 'mtools[mlaunch]'
+  export PATH="$pythonpath/bin":$PATH
+  export PYTHONPATH="$pythonpath"
 }

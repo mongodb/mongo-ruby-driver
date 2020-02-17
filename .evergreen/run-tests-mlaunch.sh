@@ -22,22 +22,9 @@ setup_ruby
 
 arch=`host_arch`
 
-desired_version=$MONGODB_VERSION
-prog=`cat <<-EOT
-import urllib, json
-url = 'http://downloads.mongodb.org/current.json'
-info = json.load(urllib.urlopen(url))
-info = [i for i in info['versions'] if i['version'].startswith('$MONGODB_VERSION')][0]
-info = [i for i in info['downloads'] if i['archive']['url'].find('enterprise-$arch') > 0][0]
-url = info['archive']['url']
-print(url)
-EOT`
+prepare_server $arch
 
-url=`python -c "$prog"`
-
-prepare_server_from_url $url
-
-install_mlaunch
+install_mlaunch_pip
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -46,7 +33,9 @@ export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
 args="--setParameter enableTestCommands=1"
-args="$args --setParameter diagnosticDataCollectionEnabled=false"
+if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
+  args="$args --setParameter diagnosticDataCollectionEnabled=false"
+fi
 uri_options=
 if test "$TOPOLOGY" = replica_set; then
   args="$args --replicaset --name ruby-driver-rs"

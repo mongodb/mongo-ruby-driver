@@ -3,6 +3,8 @@
 require 'optparse'
 require 'erb'
 
+load File.join(File.dirname(__FILE__), 'tools.rb')
+
 class Runner
   def run
     process_arguments
@@ -20,6 +22,10 @@ class Runner
 
       opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
         @options[:distro] = v
+      end
+
+      opts.on('-p', '--preload', 'Preload Ruby toolchain and server binaries in docker') do |v|
+        @options[:preload] = v
       end
 
       opts.on('-s', '--script=SCRIPT', 'Test script to invoke') do |v|
@@ -73,6 +79,7 @@ class Runner
   BASE_IMAGES = {
     'debian81' => 'debian:jessie',
     'debian92' => 'debian:stretch',
+    'ubuntu1204' => 'ubuntu:precise',
     'ubuntu1404' => 'ubuntu:trusty',
     'ubuntu1604' => 'ubuntu:xenial',
     'ubuntu1804' => 'ubuntu:bionic',
@@ -88,6 +95,10 @@ class Runner
     @env['RVM_RUBY']
   end
 
+  def ruby_head?
+    ruby == 'ruby-head'
+  end
+
   def server_version
     @env['MONGODB_VERSION']
   end
@@ -98,6 +109,14 @@ class Runner
 
   def debian?
     distro =~ /debian|ubuntu/
+  end
+
+  def preload?
+    !!@options[:preload]
+  end
+
+  def server_download_url
+    @server_download_url ||= ServerVersionRegistry.new(server_version, distro).download_url
   end
 end
 

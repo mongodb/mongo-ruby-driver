@@ -21,3 +21,18 @@ By default the entire test suite is run (using mlaunch to launch the server);
 to specify another script, use `-s` option:
 
     ./.evergreen/run-on-docker -s .evergreen/run-enterprise-auth-tests.sh
+
+### Toolchain and Server Preloading
+
+The docker test runner supports preloading Ruby interpreters and server
+binaries in the docker image, which reduces the runtime of subsequent
+test runs. To turn on preloading, use `-p` option:
+
+    ./.evergreen/run-on-docker -p
+
+### rhel62
+
+To run rhel62 distro in docker, host system must be configured to [emulate
+syscalls](https://github.com/CentOS/sig-cloud-instance-images/issues/103).
+Note that this defeats one of the patches for the Spectre set of processor
+vulnerabilities.
