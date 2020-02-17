@@ -54,7 +54,7 @@ module Mongo
       def dispatch_message(server, client)
         server.with_connection do |connection|
           message = build_message(server)
-          message = message.maybe_encrypt(client)
+          message = message.maybe_encrypt(client, server)
           connection.dispatch([ message ], operation_id, client)
         end
       end

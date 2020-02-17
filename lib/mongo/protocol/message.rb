@@ -148,7 +148,7 @@ module Mongo
         self
       end
 
-      def maybe_encrypt(client)
+      def maybe_encrypt(client, server)
         # Do nothing if the Message subclass has not implemented this method
         self
       end

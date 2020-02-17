@@ -8,6 +8,7 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'helper methods' do
     require_libmongocrypt
+  min_server_version '4.2'
 
     describe '#validate_document' do
       context 'with BSON::Document data' do

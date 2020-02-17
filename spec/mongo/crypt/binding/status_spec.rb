@@ -8,6 +8,7 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'mongocrypt_status_t binding' do
     require_libmongocrypt
+  min_server_version '4.2'
 
     let(:status) { Mongo::Crypt::Binding.mongocrypt_status_new }
     let(:message) { "Operation unauthorized" }

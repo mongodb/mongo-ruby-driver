@@ -8,6 +8,7 @@ end
 describe 'Mongo::Crypt::Binding' do
   describe 'binary_t bindings' do
     require_libmongocrypt
+  min_server_version '4.2'
 
     let(:bytes) { [104, 101, 108, 108, 111] }
 

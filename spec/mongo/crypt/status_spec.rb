@@ -7,6 +7,7 @@ end
 
 describe Mongo::Crypt::Status do
   require_libmongocrypt
+  min_server_version '4.2'
 
   let(:status) { described_class.new }
 

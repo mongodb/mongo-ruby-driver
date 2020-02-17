@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe 'Explicit Encryption' do
   require_libmongocrypt
+  min_server_version '4.2'
   include_context 'define shared FLE helpers'
 
   let(:client) { ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses) }

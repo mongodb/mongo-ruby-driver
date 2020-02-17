@@ -7,6 +7,7 @@ end
 
 describe Mongo::Crypt::Binary do
   require_libmongocrypt
+  min_server_version '4.2'
 
   let(:data) { 'I love Ruby' }
   let(:binary) { described_class.from_data(data) }

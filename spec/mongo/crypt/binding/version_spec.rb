@@ -7,6 +7,7 @@ end
 
 describe 'Mongo::Crypt::Binding' do
   require_libmongocrypt
+  min_server_version '4.2'
 
   describe '#mongocrypt_version' do
     let(:version) { Mongo::Crypt::Binding.mongocrypt_version(nil) }
