@@ -42,8 +42,21 @@ FROM <%= base_image %>
 # Installing mlaunch from git: git
 #
 # ubuntu1604: libcurl3
-RUN apt-get install -y libyaml-0-2 gcc make openjdk-8-jre git \
-  lsb-release libsnmp30 libcurl3 krb5-user
+
+RUN apt-cache search libsnmp
+
+# ubuntu1204 only has openjdk-7-jre
+<% unless %w(ubuntu1204).include?(distro) %>
+  RUN apt-get install -y openjdk-8-jre
+<% end %>
+
+<% if %w(ubuntu1204).include?(distro) %>
+  RUN apt-get install -y libsnmp15
+<% else %>
+  RUN apt-get install -y libsnmp30
+<% end %>
+
+RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 krb5-user
 
 <% if preload? %>
 
