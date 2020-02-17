@@ -889,6 +889,6 @@ buildvariants:
     mongodb-version: ["4.2", "4.0"]
     os: rhel70
     bson: master
-  display_name: "FLE Tests: ${ruby}"
+  display_name: "FLE Tests: #{mongodb-version} ${ruby}"
   tasks:
     - name: "fle-tests"
