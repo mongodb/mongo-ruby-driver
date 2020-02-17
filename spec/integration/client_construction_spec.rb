@@ -136,7 +136,6 @@ describe 'Client construction' do
 
   context 'with auto encryption options'do
     require_libmongocrypt
-    min_server_version '4.2'
     let(:options) { { auto_encryption_options: auto_encryption_options } }
 
     let(:auto_encryption_options) do
