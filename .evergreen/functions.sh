@@ -314,6 +314,7 @@ install_mlaunch_git() {
   cd mlaunch
   git checkout origin/$branch
   python3 setup.py install
+  cd ..
 }
 
 show_local_instructions() {
