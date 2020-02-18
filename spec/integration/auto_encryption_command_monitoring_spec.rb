@@ -69,6 +69,7 @@ describe 'Auto Encryption' do
       encryption_client[:users].count(ssn: ssn)
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
     end
   end
@@ -79,6 +80,7 @@ describe 'Auto Encryption' do
     it 'has encrypted data in command monitoring' do
       encryption_client[:users].distinct(:ssn)
 
+      # Command started event does not contain any data to be encrypted
       # Command succeeded event occurs before ssn is decrypted
       expect(succeeded_event.reply["values"].first).to be_ciphertext
     end
@@ -91,6 +93,7 @@ describe 'Auto Encryption' do
       encryption_client[:users].delete_one(ssn: ssn)
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
   end
@@ -102,6 +105,7 @@ describe 'Auto Encryption' do
       encryption_client[:users].delete_many(ssn: ssn)
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
   end
@@ -177,6 +181,7 @@ describe 'Auto Encryption' do
       encryption_client[:users].insert_one(ssn: ssn)
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["documents"].first["ssn"]).to be_ciphertext
     end
   end
@@ -191,6 +196,7 @@ describe 'Auto Encryption' do
       )
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
       expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
     end
@@ -203,6 +209,7 @@ describe 'Auto Encryption' do
       encryption_client[:users].update_one({ ssn: ssn }, { ssn: '555-555-5555' })
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
       expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
     end
@@ -216,6 +223,7 @@ describe 'Auto Encryption' do
       encryption_client[:users].update_many({ ssn: ssn }, { "$inc" => { :age => 1 } })
 
       # Command started event occurs after ssn is encrypted
+      # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
   end
