@@ -4,7 +4,7 @@ require 'json'
 
 describe 'Auto Encryption' do
   require_libmongocrypt
-  min_server_version '4.2'
+  min_server_fcv '4.2'
   require_enterprise
 
   include_context 'define shared FLE helpers'

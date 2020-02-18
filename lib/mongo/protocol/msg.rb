@@ -195,15 +195,15 @@ module Mongo
       #
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
       #   message if encryption was not possible or necessary.
-      def maybe_encrypt(client, server)
+      def maybe_encrypt(server, client)
         # TODO verify compression happens later, i.e. when this method runs
         # the message is not compressed.
         if client && client.encryption_options && !client.encryption_options[:bypass_auto_encryption]
           if server.max_wire_version < 8
             raise Error::CryptError.new(
-              "Cannot perform encryption against a server with MongoDB wire " +
-              "version less than 8. Currently connected to server with wire " +
-              "version #{server.max_wire_version}"
+              "Cannot perform encryption against a MongoDB server older than " +
+              "4.2 (wire version less than 8). Currently connected to server " +
+              "with max wire version #{server.max_wire_version}}"
             )
           end
 

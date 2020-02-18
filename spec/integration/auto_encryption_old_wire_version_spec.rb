@@ -41,7 +41,7 @@ describe 'Auto Encryption' do
     it 'raises an exception when trying to encrypt' do
       expect do
         encryption_client[:users].find(ssn: ssn).first
-      end.to raise_error(Mongo::Error::CryptError, /Cannot perform encryption against a server with MongoDB wire version less than 8/)
+      end.to raise_error(Mongo::Error::CryptError, /Cannot perform encryption against a MongoDB server older than 4.2/)
     end
 
     context 'with bypass_auto_encryption=true' do
