@@ -116,7 +116,7 @@ module Mongo
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
-        buffer = serialize(message)
+        buffer = serialize(message, client)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
           command_started(address, operation_id, message.payload,
@@ -145,10 +145,19 @@ module Mongo
         end
       end
 
-      def serialize(message, buffer = BSON::ByteBuffer.new)
+      def serialize(message, client, buffer = BSON::ByteBuffer.new)
         start_size = 0
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
-        final_message.serialize(buffer, max_bson_object_size)
+
+        max_message_size = max_bson_object_size
+        if client && client.encryption_options && !client.encryption_options[:bypass_auto_encryption]
+          # From client-side encryption spec: Because automatic encryption
+          # increases the size of commands, the driver MUST split bulk writes
+          # at a reduced size limit before undergoing automatic encryption.
+          max_message_size = 2097152
+        end
+
+        final_message.serialize(buffer, max_message_size)
         if max_message_size &&
           (buffer.length - start_size) > max_message_size
         then
