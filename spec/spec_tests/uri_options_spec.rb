@@ -1,20 +1,18 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe 'Uri Options' do
   include Mongo::ConnectionString
+
+  # Since the tests issue global assertions on Mongo::Logger,
+  # we need to close all clients/stop monitoring to avoid monitoring
+  # threads warning and interfering with these assertions
+  clean_slate_for_all_if_possible
 
   URI_OPTIONS_TESTS.each do |file|
 
     spec = Mongo::ConnectionString::Spec.new(file)
 
     context(spec.description) do
-
-      before(:all) do
-        # Since the tests issue global assertions on Mongo::Logger,
-        # we need to close all clients/stop monitoring to avoid monitoring
-        # threads warning and interfering with these assertions
-        ClientRegistry.instance.close_all_clients
-      end
 
       spec.tests.each do |test|
         context "#{test.description}" do
