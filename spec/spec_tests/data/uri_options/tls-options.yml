@@ -1,7 +1,7 @@
 tests:
     -
         description: "Valid required tls options are parsed correctly"
-        uri: "mongodb://example.com/?tls=true&tlsCAFile=ca.pem&tlsCertificateKeyFile=cert.pem&tlsCertificateKeyFilePassword=hunter2"
+        uri: "mongodb://example.com/?tls=true&tlsCAFile=ca.pem&tlsCertificateKeyFile=cert.pem"
         valid: true
         warning: false
         hosts: ~
@@ -10,6 +10,14 @@ tests:
             tls: true
             tlsCAFile: "ca.pem"
             tlsCertificateKeyFile: "cert.pem"
+    -
+        description: "Valid tlsCertificateKeyFilePassword is parsed correctly"
+        uri: "mongodb://example.com/?tlsCertificateKeyFilePassword=hunter2"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
             tlsCertificateKeyFilePassword: "hunter2"
     -  
         description: "Invalid tlsAllowInvalidCertificates causes a warning"
@@ -63,8 +71,8 @@ tests:
         options:
             tlsInsecure: true
     -  
-        description: "Invalid tlsAllowInsecure causes a warning"
-        uri: "mongodb://example.com/?tlsAllowInsecure=invalid"
+        description: "Invalid tlsInsecure causes a warning"
+        uri: "mongodb://example.com/?tlsInsecure=invalid"
         valid: true
         warning: true
         hosts: ~
@@ -87,6 +95,22 @@ tests:
         auth: ~
         options: {}
     -
+        description: "tlsAllowInvalidCertificates and tlsInsecure both present (and true) raises an error"
+        uri: "mongodb://example.com/?tlsAllowInvalidCertificates=true&tlsInsecure=true"
+        valid: false
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "tlsAllowInvalidCertificates and tlsInsecure both present (and false) raises an error"
+        uri: "mongodb://example.com/?tlsAllowInvalidCertificates=false&tlsInsecure=false"
+        valid: false
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
         description: "tlsInsecure and tlsAllowInvalidHostnames both present (and true) raises an error"
         uri: "mongodb://example.com/?tlsInsecure=true&tlsAllowInvalidHostnames=true"
         valid: false
@@ -97,6 +121,22 @@ tests:
     -
         description: "tlsInsecure and tlsAllowInvalidHostnames both present (and false) raises an error"
         uri: "mongodb://example.com/?tlsInsecure=false&tlsAllowInvalidHostnames=false"
+        valid: false
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "tlsAllowInvalidHostnames and tlsInsecure both present (and true) raises an error"
+        uri: "mongodb://example.com/?tlsAllowInvalidHostnames=true&tlsInsecure=true"
+        valid: false
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "tlsAllowInvalidHostnames and tlsInsecure both present (and false) raises an error"
+        uri: "mongodb://example.com/?tlsAllowInvalidHostnames=false&tlsInsecure=false"
         valid: false
         warning: false
         hosts: ~
@@ -119,6 +159,22 @@ tests:
         auth: ~
         options: {}
     -
+        description: "ssl=true and tls=true doesn't warn"
+        uri: "mongodb://example.com/?ssl=true&tls=true"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "ssl=false and tls=false doesn't warn"
+        uri: "mongodb://example.com/?ssl=false&tls=false"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
         description: "tls=false and ssl=true raises error"
         uri: "mongodb://example.com/?tls=false&ssl=true"
         valid: false
@@ -134,4 +190,19 @@ tests:
         hosts: ~
         auth: ~
         options: {}
-
+    -
+        description: "ssl=false and tls=true raises error"
+        uri: "mongodb://example.com/?ssl=false&tls=true"
+        valid: false
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "ssl=true and tls=false raises error"
+        uri: "mongodb://example.com/?ssl=true&tls=false"
+        valid: false
+        warning: false
+        hosts: ~
+        auth: ~
+        options: {}
