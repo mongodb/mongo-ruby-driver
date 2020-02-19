@@ -297,7 +297,17 @@ install_mlaunch_git() {
   branch=$2
   python -V || true
   python3 -V || true
+  which pip || true
   which pip3 || true
+  
+  if which pip3 >/dev/null 2>&1; then
+    pip=pip3
+  elif which pip >/dev/null 2>&1; then
+    pip=pip
+  else
+    echo Neither pip nor pip3 are available 1>&2
+    exit 3
+  fi
   
   if false; then
     if ! virtualenv --version; then
@@ -318,13 +328,7 @@ install_mlaunch_git() {
     python3 setup.py install
     cd ..
   else
-    if which python3; then
-      python=python3
-      pip3 install --user virtualenv
-    else
-      python=python
-      pip install --user virtualenv
-    fi
+    eval $pip install --user virtualenv
     export PATH=$HOME/.local/bin:$PATH
     
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
