@@ -145,7 +145,7 @@ setup_ruby() {
     # But we still need Python 3.6+ to run mlaunch.
     # Since the ruby-head tests are run on ubuntu1604, we can use the
     # globally installed Python toolchain.
-    export PATH=/opt/python/3.7/bin:$PATH
+    #export PATH=/opt/python/3.7/bin:$PATH
 
     # 12.04, 14.04 and 16.04 are good
     curl -fLo ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
@@ -164,7 +164,8 @@ setup_ruby() {
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
-    export PATH=`pwd`/rubies/$RVM_RUBY/bin:`pwd`/rubies/python/3/bin:$PATH
+    export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+    #export PATH=`pwd`/rubies/python/3/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
     #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
@@ -243,7 +244,7 @@ prepare_server() {
     return
   fi
 
-  if test "$MONGODB_VERSION" = 2.6; then
+  if false && test "$MONGODB_VERSION" = 2.6; then
     # The only OS which has Python toolchain for Python 3.6+ and
     # which has MongoDB 2.6 server builds for it is rhel62.
     # Unfortunately running it in Docker on a Debian 10 host crashes.
@@ -270,7 +271,7 @@ prepare_server_from_url() {
 install_mlaunch_virtualenv() {
   #export PATH=/opt/python/3.7/bin:$PATH
   python -V || true
-  python3 -V
+  python3 -V || true
   #pip3 install --user virtualenv
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
   virtualenv -p python3 $venvpath
@@ -280,7 +281,7 @@ install_mlaunch_virtualenv() {
 
 install_mlaunch_pip() {
   python -V || true
-  python3 -V
+  python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
   # The scripts in a python installation have shebangs pointing to the
   # prefix, which doesn't work for us because we unpack toolchain to a
@@ -295,26 +296,49 @@ install_mlaunch_git() {
   repo=$1
   branch=$2
   python -V || true
-  python3 -V
-  which pip3
+  python3 -V || true
+  which pip3 || true
   
-  if ! virtualenv --version; then
-    python3 `which pip3` install --user virtualenv
+  if false; then
+    if ! virtualenv --version; then
+      python3 `which pip3` install --user virtualenv
+      export PATH=$HOME/.local/bin:$PATH
+      virtualenv --version
+    fi
+    
+    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+    virtualenv -p python3 $venvpath
+    . $venvpath/bin/activate
+    
+    pip3 install psutil pymongo
+    
+    git clone $repo mlaunch
+    cd mlaunch
+    git checkout origin/$branch
+    python3 setup.py install
+    cd ..
+  else
+    if which python3; then
+      python=python3
+      pip3 install --user virtualenv
+    else
+      python=python
+      pip install --user virtualenv
+    fi
     export PATH=$HOME/.local/bin:$PATH
-    virtualenv --version
+    
+    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+    virtualenv $venvpath
+    . $venvpath/bin/activate
+  
+    pip install psutil pymongo
+    
+    git clone $repo mlaunch
+    cd mlaunch
+    git checkout origin/$branch
+    python setup.py install
+    cd ..
   fi
-  
-  venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-  virtualenv -p python3 $venvpath
-  . $venvpath/bin/activate
-  
-  pip3 install psutil pymongo
-  
-  git clone $repo mlaunch
-  cd mlaunch
-  git checkout origin/$branch
-  python3 setup.py install
-  cd ..
 }
 
 show_local_instructions() {

@@ -36,8 +36,8 @@ RUN echo 1
 
 <% if ruby_head? %>
 
-  RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
-  RUN tar -xC /opt -zf python-toolchain.tar.gz
+  #RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
+  #RUN tar -xC /opt -zf python-toolchain.tar.gz
 
 <% end %>
 
@@ -85,7 +85,8 @@ RUN echo 1
     
     RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
     RUN tar -xC /opt -zf ruby-toolchain.tar.gz
-    ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
+    ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH
+    #ENV PATH=/opt/rubies/python/3/bin:$PATH
     ENV USE_OPT_TOOLCHAIN=1
   
   <% end %>
@@ -101,6 +102,12 @@ WORKDIR /app
   COPY *.gemspec .
   COPY lib/mongo/version.rb lib/mongo/version.rb
   RUN bundle install
+
+<% end %>
+
+<% if preload? %>
+
+  RUN apt install -y python3-pip
 
 <% end %>
 
