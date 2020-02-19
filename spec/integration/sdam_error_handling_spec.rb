@@ -250,6 +250,7 @@ describe 'SDAM error handling' do
     shared_examples_for 'marks server unknown and clears connection pool' do
       context 'via object inspection' do
         let(:expect_server_state_change) do
+          server.summary.should =~ /unknown/i
           expect(server).to be_unknown
         end
 
