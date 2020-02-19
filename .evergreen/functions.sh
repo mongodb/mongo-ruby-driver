@@ -163,7 +163,8 @@ setup_ruby() {
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
-    export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+    RUBIES_PREFIX=`pwd`/rubies
+    export PATH=$RUBIES_PREFIX/$RVM_RUBY/bin:$PATH
     #export PATH=`pwd`/rubies/python/3/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
@@ -347,6 +348,19 @@ install_mlaunch_git() {
       python setup.py install
     )
   fi
+}
+
+install_mongo_manager() {
+  git clone https://github.com/p-mongo/mongo-manager
+  (export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+    cd mongo-manager &&
+    gem build *.gemspec &&
+    gem install --no-document *.gem)
+}
+
+mongo_manager_stop() {
+  (export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+    mongo-manager stop --dir "$dbdir")
 }
 
 show_local_instructions() {
