@@ -659,17 +659,18 @@ module Mongo
 
         # If the user specifies new auto_encryption_options, teardown the
         # existing encryption infrastructure
-        if opts.key?(:auto_encryption_options)
+        if opts.key?(:auto_encryption_options) || opts.key?(:database)
           should_teardown_encrypter = true
         end
 
+        options.update(opts)
+
         # If the new auto_encryption_options are not nil, then set up the
         # encrypter again with the new options
-        if opts[:auto_encryption_options]
+        if options[:auto_encryption_options]
           should_set_new_encryption_options = true
         end
 
-        options.update(opts)
         @options = options.freeze
 
         teardown_encrypter if should_teardown_encrypter
