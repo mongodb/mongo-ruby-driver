@@ -90,7 +90,7 @@ fi
 
 #eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
-mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR"
+mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR" $args
 
 install_deps
 
