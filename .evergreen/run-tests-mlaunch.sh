@@ -26,7 +26,13 @@ setup_ruby
 
 prepare_server $arch
 
-install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
+#install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
+
+git clone https://github.com/p-mongo/mongo-manager
+cd mongo-manager
+gem build *.gemspec
+gem install --no-document *.gem
+cd ..
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -79,10 +85,12 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-mlaunch='python3 -m mtools.mlaunch.mlaunch'
-mlaunch=mlaunch
+#mlaunch='python3 -m mtools.mlaunch.mlaunch'
+#mlaunch=mlaunch
 
-eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+#eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+
+mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR"
 
 install_deps
 
