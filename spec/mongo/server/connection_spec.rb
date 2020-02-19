@@ -889,7 +889,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
         before do
           expect(message).to receive(:replyable?) { false }
-          connection.send(:deliver, message, client: nil)
+          connection.send(:deliver, message, nil)
 
           connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end
