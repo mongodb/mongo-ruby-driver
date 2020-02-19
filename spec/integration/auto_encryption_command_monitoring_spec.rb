@@ -46,6 +46,10 @@ describe 'Auto Encryption' do
     end
   end
 
+  before do
+    encryption_client.spawn_mongocryptd
+  end
+
   describe '#aggregate' do
     let(:command_name) { 'aggregate' }
 
