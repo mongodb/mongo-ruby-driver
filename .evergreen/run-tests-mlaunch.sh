@@ -40,11 +40,12 @@ cd ..
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
-args="--setParameter enableTestCommands=1"
+ptargs="--setParameter enableTestCommands=1"
 if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
-  args="$args --setParameter diagnosticDataCollectionEnabled=false"
+  ptargs="$ptargs --setParameter diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
+args=
 if test "$TOPOLOGY" = replica_set; then
   args="$args --replicaset --name ruby-driver-rs"
   if test -z "$MMAPV1"; then
@@ -52,12 +53,12 @@ if test "$TOPOLOGY" = replica_set; then
     export HAVE_ARBITER=1
   fi
 elif test "$TOPOLOGY" = sharded_cluster; then
-  args="$args --replicaset --sharded 2 --name ruby-driver-rs"
+  args="$args --sharded 1"
   if test -z "$SINGLE_MONGOS"; then
     args="$args --mongos 2"
   fi
 else
-  args="$args --single"
+  : #args="$args --single"
 fi
 if test -n "$MMAPV1"; then
   args="$args --storageEngine mmapv1"
@@ -84,6 +85,8 @@ if test "$SSL" = ssl; then
 "tlsCAFile=spec/support/certificates/ca.crt&"\
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
+
+args="$args -- $ptargs"
 
 #mlaunch='python3 -m mtools.mlaunch.mlaunch'
 #mlaunch=mlaunch
