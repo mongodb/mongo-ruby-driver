@@ -15,7 +15,8 @@
 module Mongo
   module Crypt
 
-    # A module that encapsulates auto-encryption functionality
+    # A module included in Client that encapsulates auto-encryption
+    # functionality.
     #
     # @api private
     module AutoEncrypter
