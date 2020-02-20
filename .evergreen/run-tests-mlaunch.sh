@@ -147,6 +147,6 @@ echo ${test_status}
 
 kill_jruby
 
-mlaunch stop --dir "$dbdir"
+mongo-manager stop --dir "$dbdir"
 
 exit ${test_status}
