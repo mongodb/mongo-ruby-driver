@@ -753,6 +753,7 @@ module Mongo
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
         if @options[:auto_encryption_options]
+          teardown_encrypter
           set_auto_encryption_options
         end
       end

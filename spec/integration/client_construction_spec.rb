@@ -136,6 +136,8 @@ describe 'Client construction' do
 
   context 'with auto encryption options'do
     require_libmongocrypt
+    clean_slate
+
     let(:options) { { auto_encryption_options: auto_encryption_options } }
 
     let(:auto_encryption_options) do

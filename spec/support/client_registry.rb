@@ -232,6 +232,9 @@ class ClientRegistry
         }
           cluster.disconnect!
         end
+
+        # Ensure that clients created for auto-encryption are closed
+        client.teardown_encrypter
       end
 
       @local_clients = []

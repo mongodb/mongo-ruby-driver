@@ -5,6 +5,8 @@ describe 'Auto Encryption' do
   require_enterprise
   min_server_fcv '4.2'
 
+  clean_slate
+
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'
 

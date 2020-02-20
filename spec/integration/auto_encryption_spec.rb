@@ -7,6 +7,8 @@ describe 'Auto Encryption' do
   min_server_fcv '4.2'
   require_enterprise
 
+  clean_slate
+
   include_context 'define shared FLE helpers'
 
   let(:encryption_client) do

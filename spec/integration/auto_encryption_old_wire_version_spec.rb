@@ -4,6 +4,8 @@ describe 'Auto Encryption' do
   require_libmongocrypt
   max_server_version '4.0'
 
+  clean_slate
+
   include_context 'define shared FLE helpers'
 
   let(:encryption_client) do
