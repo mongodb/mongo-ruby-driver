@@ -634,7 +634,7 @@ buildvariants:
     ruby: "ruby-2.7"
     mongodb-version: "*"
     topology: "*"
-    os: rhel70
+    os: ubuntu1204
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
      - name: "test-mlaunch"
@@ -731,7 +731,7 @@ buildvariants:
     ruby: "jruby-9.2"
     mongodb-version: "2.6"
     topology: "*"
-    os: rhel70
+    os: ubuntu1204
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
     - name: "test-mlaunch"
