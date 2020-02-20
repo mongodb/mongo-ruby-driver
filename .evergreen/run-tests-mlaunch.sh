@@ -47,8 +47,8 @@ fi
 uri_options=
 args=
 if test "$TOPOLOGY" = replica_set; then
-  args="$args --replicaset --name ruby-driver-rs"
-  if test -z "$MMAPV1"; then
+  args="$args --replica-set ruby-driver-rs"
+  if false && test -z "$MMAPV1"; then
     args="$args --arbiter"
     export HAVE_ARBITER=1
   fi
