@@ -5,6 +5,8 @@ describe 'Client with auto encryption #reconnect' do
   min_server_fcv '4.2'
   require_enterprise
 
+  # Diagnostics of leaked background threads only, these tests do not
+  # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
   clean_slate
 
   include_context 'define shared FLE helpers'

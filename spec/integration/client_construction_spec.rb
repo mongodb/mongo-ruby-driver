@@ -136,6 +136,9 @@ describe 'Client construction' do
 
   context 'with auto encryption options'do
     require_libmongocrypt
+
+    # Diagnostics of leaked background threads only, these tests do not
+    # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
     clean_slate
 
     let(:options) { { auto_encryption_options: auto_encryption_options } }
