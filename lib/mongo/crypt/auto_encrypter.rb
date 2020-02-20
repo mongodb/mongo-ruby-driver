@@ -77,11 +77,6 @@ module Mongo
           server_selection_timeout: 1,
         )
 
-        # Tests fail with live background threads if the @mongocryptd client is not closed at the
-        # end of every test run. Better to write one line registering it as a local client than to
-        # do it separately in every test.
-        ClientRegistry.instance.register_local_client(@mongocryptd_client) if defined?(ClientRegistry)
-
         @encryption_io = EncryptionIO.new(
           client: self,
           mongocryptd_client: @mongocryptd_client,
