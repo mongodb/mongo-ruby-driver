@@ -61,11 +61,11 @@ else
   : #args="$args --single"
 fi
 if test -n "$MMAPV1"; then
-  args="$args --storageEngine mmapv1"
+  ptargs="$ptargs --storageEngine mmapv1"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
 if test "$AUTH" = auth; then
-  args="$args --auth --username bob --password pwd123"
+  args="$args --user bob --password pwd123"
 fi
 if test "$SSL" = ssl; then
   args="$args --sslMode requireSSL"\
