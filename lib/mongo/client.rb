@@ -748,12 +748,11 @@ module Mongo
       addresses = cluster.addresses.map(&:to_s)
 
       @connect_lock.synchronize do
-        @cluster.disconnect! rescue nil
+        close rescue nil
 
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
         if @options[:auto_encryption_options]
-          teardown_encrypter
           set_auto_encryption_options
         end
       end
