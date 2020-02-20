@@ -42,7 +42,7 @@ mkdir -p "$dbdir"
 
 ptargs="--setParameter enableTestCommands=1"
 if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
-  ptargs="$ptargs --setParameter diagnosticDataCollectionEnabled=false"
+  : #ptargs="$ptargs --setParameter diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
 args=
