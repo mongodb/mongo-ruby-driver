@@ -730,9 +730,8 @@ module Mongo
     # @since 2.1.0
     def close
       @connect_lock.synchronize do
-        @cluster.disconnect!
+        do_close
       end
-      teardown_encrypter
       true
     end
 
@@ -748,7 +747,7 @@ module Mongo
       addresses = cluster.addresses.map(&:to_s)
 
       @connect_lock.synchronize do
-        close rescue nil
+        do_close rescue nil
 
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
@@ -906,6 +905,12 @@ module Mongo
       opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
 
       setup_encrypter(opts_copy)
+    end
+
+    # Implementation for #close, assumes the connect lock is already acquired.
+    def do_close
+      @cluster.disconnect!
+      teardown_encrypter
     end
 
     # If options[:session] is set, validates that session and returns it.
