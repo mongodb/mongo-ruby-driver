@@ -107,7 +107,7 @@ ENV MONGO_ORCHESTRATION_HOME=/tmpfs
 ENV PROJECT_DIRECTORY=/app
 
 <% @env.each do |k, v| %>
-ENV <%= k %>=<%= v %>
+ENV <%= k %>="<%= v %>"
 <% end %>
 
 CMD bash -x <%= script %>
