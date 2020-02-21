@@ -224,13 +224,28 @@ class ClientRegistry
   def close_local_clients
     @lock.synchronize do
       @local_clients.each do |client|
+        # If this client shares cluster with any of the global clients,
+        # do not disconnect the cluster so that the global clients continue
+        # working into the next test(s).
+        # If this client does not share cluster with any global clients,
+        # this client can be closed completely via the #close method.
+        #
+        # Clients can also have slaved auto encryption objects (mongocryptd
+        # client and key vault client) which also need to be cleaned up.
+        # These slaved objects are always unique to the client which hosts
+        # them - they are never shared between clients. Therefore, we
+        # always tear down encryption objects for each local client here.
+        # This is done either as part of #close if #close is invoked, or
+        # explicitly if #close is not invoked due to cluster sharing.
         cluster = client.cluster
-        # Disconnect this cluster if and only if it is not shared with
-        # any of the global clients we know about.
         if @global_clients.none? { |name, global_client|
           cluster.object_id == global_client.cluster.object_id
         }
-          cluster.disconnect!
+          # Cluster not shared, disconnect cluster and clean up encryption.
+          client.close
+        else
+          # Cluster is shared, clean up encryption only.
+          client.teardown_encrypter
         end
       end
 

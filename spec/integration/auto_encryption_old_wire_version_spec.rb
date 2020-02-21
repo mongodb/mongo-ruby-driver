@@ -4,6 +4,10 @@ describe 'Auto Encryption' do
   require_libmongocrypt
   max_server_version '4.0'
 
+  # Diagnostics of leaked background threads only, these tests do not
+  # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
+  clean_slate
+
   include_context 'define shared FLE helpers'
 
   let(:encryption_client) do

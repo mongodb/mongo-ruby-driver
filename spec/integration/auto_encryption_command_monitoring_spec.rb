@@ -5,6 +5,10 @@ describe 'Auto Encryption' do
   require_enterprise
   min_server_fcv '4.2'
 
+  # Diagnostics of leaked background threads only, these tests do not
+  # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
+  clean_slate
+
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'
 
