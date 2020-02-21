@@ -85,6 +85,8 @@ describe 'SRV Monitoring' do
     let(:client) do
       new_local_client(uri,
         server_selection_timeout: 3.16,
+        timeout: 8.11,
+        connect_timeout: 8.12,
         resolv_options: {
           nameserver: 'localhost',
           nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
