@@ -18,7 +18,7 @@ module Mongo
   # provides an API for explicitly encrypting and decrypting values,
   # and creating data keys.
   class ClientEncryption
-    include Crypt::Encrypter
+    include Crypt::ExplicitEncrypter
 
     # Create a new ClientEncryption object with the provided options.
     #
