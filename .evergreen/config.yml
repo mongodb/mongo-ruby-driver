@@ -632,9 +632,21 @@ buildvariants:
   matrix_spec:
     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
     ruby: "ruby-2.6"
-    mongodb-version: ['2.6', '3.0', '3.2', '3.4']
+    mongodb-version: ['2.6', '3.0']
     topology: "*"
     os: ubuntu1204
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  tasks:
+     - name: "test-mlaunch"
+
+-
+  matrix_name: "mongo-mid"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+    ruby: "ruby-2.6"
+    mongodb-version: ['3.2', '3.4']
+    topology: "*"
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
      - name: "test-mlaunch"
