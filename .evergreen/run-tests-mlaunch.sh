@@ -40,12 +40,12 @@ cd ..
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
+args=
 ptargs="--setParameter enableTestCommands=1"
 if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
-  : #ptargs="$ptargs --setParameter diagnosticDataCollectionEnabled=false"
+  args="$args --mongod-arg=--setParameter=diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
-args=
 if test "$TOPOLOGY" = replica_set; then
   args="$args --replica-set ruby-driver-rs"
   if false && test -z "$MMAPV1"; then
@@ -68,10 +68,10 @@ if test "$AUTH" = auth; then
   args="$args --user bob --password pwd123"
 fi
 if test "$SSL" = ssl; then
-  args="$args --sslMode requireSSL"\
-" --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
-" --sslCAFile spec/support/certificates/ca.crt"\
-" --sslClientCertificate spec/support/certificates/client.pem"
+  args="$args --tls-mode requireTLS"\
+" --tls-certificate-key-file spec/support/certificates/server-second-level-bundle.pem"\
+" --tls-ca-file spec/support/certificates/ca.crt"
+  #ptargs="$ptargs --sslClientCertificate spec/support/certificates/client.pem"
 
   if echo $RVM_RUBY |grep -q jruby; then
     # JRuby does not grok chained certificate bundles -
