@@ -18,8 +18,6 @@ module Mongo
   # provides an API for explicitly encrypting and decrypting values,
   # and creating data keys.
   class ClientEncryption
-    include Crypt::ExplicitEncrypter
-
     # Create a new ClientEncryption object with the provided options.
     #
     # @param [ Mongo::Client ] key_vault_client A Mongo::Client
@@ -33,7 +31,7 @@ module Mongo
     #   configuration information. Valid hash keys are :local or :aws. There
     #   may be more than one KMS provider specified.
     def initialize(key_vault_client, options = {})
-      setup_encrypter(options.merge(key_vault_client: key_vault_client))
+      @encrypter = Crypt::ExplicitEncrypter.new(options.merge(key_vault_client: key_vault_client))
     end
 
     # Generates a data key used for encryption/decryption and stores
@@ -60,13 +58,13 @@ module Mongo
     #   data key _id
     def create_data_key(kms_provider, options={})
       data_key_document = Crypt::DataKeyContext.new(
-        @crypt_handle,
-        @encryption_io,
+        @encrypter.crypt_handle,
+        @encrypter.encryption_io,
         kms_provider,
         options
       ).run_state_machine
 
-      insert_result = @encryption_io.insert(data_key_document)
+      insert_result = @encrypter.encryption_io.insert(data_key_document)
 
       return insert_result.inserted_id.data
     end
@@ -93,8 +91,8 @@ module Mongo
       doc = { 'v': value }
 
       Crypt::ExplicitEncryptionContext.new(
-        @crypt_handle,
-        @encryption_io,
+        @encrypter.crypt_handle,
+        @encrypter.encryption_io,
         doc,
         options
       ).run_state_machine['v']
@@ -110,8 +108,8 @@ module Mongo
       doc = { 'v': value }
 
       result = Crypt::ExplicitDecryptionContext.new(
-        @crypt_handle,
-        @encryption_io,
+        @encrypter.crypt_handle,
+        @encrypter.encryption_io,
         doc,
       ).run_state_machine['v']
     end

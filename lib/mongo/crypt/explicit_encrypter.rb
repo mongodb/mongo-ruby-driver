@@ -18,10 +18,9 @@ module Mongo
     # TODO: documentation
     #
     # @api private
-    module ExplicitEncrypter
-      include Encrypter
+    class ExplicitEncrypter < Encrypter
       # TODO: documentation
-      def setup_encrypter(options = {})
+      def initialize(options = {})
         super(options)
 
         @encryption_io = EncryptionIO.new(key_vault_collection: build_key_vault_collection)

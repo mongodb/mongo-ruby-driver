@@ -21,7 +21,26 @@ module Mongo
   class Client
     extend Forwardable
     include Loggable
-    include Crypt::AutoEncrypter
+
+    def teardown_encrypter
+      return
+    end
+
+    def set_auto_encryption_options
+      return
+    end
+
+    def encryption_options
+      {}
+    end
+
+    def encrypt(_, cmd)
+      return cmd
+    end
+
+    def decrypt(cmd)
+      return cmd
+    end
 
     # The options that do not affect the behavior of a cluster and its
     # subcomponents.
@@ -900,14 +919,14 @@ module Mongo
 
     # Provides some default encryption options and sets up data necessary
     # for auto-encryption
-    def set_auto_encryption_options
-      opts_copy = @options[:auto_encryption_options].dup
+    # def set_auto_encryption_options
+    #   opts_copy = @options[:auto_encryption_options].dup
 
-      opts_copy[:extra_options] ||= {}
-      opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
+    #   opts_copy[:extra_options] ||= {}
+    #   opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
 
-      setup_encrypter(opts_copy)
-    end
+    #   setup_encrypter(opts_copy)
+    # end
 
     # Implementation for #close, assumes the connect lock is already acquired.
     def do_close

@@ -19,8 +19,7 @@ module Mongo
     # functionality.
     #
     # @api private
-    module AutoEncrypter
-      include Encrypter
+    class AutoEncrypter < Encrypter
 
       attr_reader :mongocryptd_client
       attr_reader :key_vault_client

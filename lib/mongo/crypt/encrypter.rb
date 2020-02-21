@@ -18,8 +18,10 @@ module Mongo
     # A module that encapsulates client-side-encryption functionality
     #
     # @api private
-    module Encrypter
+    class Encrypter
       attr_reader :encryption_options
+      attr_reader :crypt_handle
+      attr_reader :encryption_io
 
       # Set up encryption-related options and instance variables
       # on the class that includes this module.
@@ -34,6 +36,16 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def setup_encrypter(options = {})
+        @encryption_options = options.dup.freeze
+
+        validate_key_vault_namespace!
+        validate_key_vault_client!
+
+        @crypt_handle = Crypt::Handle.new(options[:kms_providers], schema_map: options[:schema_map])
+        @encryption_io = EncryptionIO.new(key_vault_collection: build_key_vault_collection)
+      end
+
+      def initialize(options = {})
         @encryption_options = options.dup.freeze
 
         validate_key_vault_namespace!
