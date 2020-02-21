@@ -581,6 +581,13 @@ describe Mongo::Socket::SSL, retry: 3 do
           end
 
           it 'fails' do
+            # This test provides a second level client certificate to the
+            # server *without* providing the intermediate certificate.
+            # If the server performs certificate verification, it will
+            # reject the connection (seen from the driver as a SocketError)
+            # and the test will succeed. If the server does not perform
+            # certificate verification, it will accept the connection,
+            # no SocketError will be raised and the test will fail.
             connection
             expect do
               connection.connect!
