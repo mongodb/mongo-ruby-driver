@@ -63,7 +63,16 @@ module Mongo
     def alive?
       sock_arr = [ @socket ]
       if Kernel::select(sock_arr, nil, sock_arr, 0)
-        eof?
+        # The eof? call is supposed to return immediately since select
+        # indicated the socket is readable. However, if @socket is an SSL
+        # socket, eof? can block anyway - see RUBY-2140.
+        begin
+          Timeout.timeout(0.1) do
+            eof?
+          end
+        rescue ::Timeout::Error
+          true
+        end
       else
         true
       end
