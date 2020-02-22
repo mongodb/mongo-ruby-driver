@@ -20,10 +20,10 @@ describe Mongo::Socket::SSL, retry: 3 do
   end
 
   let(:socket) do
-    resolver.socket(socket_timeout, options)
+    resolver.socket(socket_timeout, ssl_options)
   end
 
-  let(:options) do
+  let(:ssl_options) do
     SpecConfig.instance.ssl_options
   end
 
@@ -82,7 +82,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when a certificate and key are provided as strings' do
 
-      let(:options) do
+      let(:ssl_options) do
         {
           :ssl => true,
           :ssl_cert_string => cert_string,
@@ -99,7 +99,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     context 'when certificate and an encrypted key are provided as strings' do
       require_local_tls
 
-      let(:options) do
+      let(:ssl_options) do
         {
           :ssl => true,
           :ssl_cert_string => cert_string,
@@ -116,7 +116,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when a certificate and key are provided as objects' do
 
-      let(:options) do
+      let(:ssl_options) do
         {
           :ssl => true,
           :ssl_cert_object => cert_object,
@@ -132,7 +132,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when the certificate is specified using both a file and a PEM-encoded string' do
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_cert_string => 'This is a random string, not a PEM-encoded certificate'
         )
@@ -146,7 +146,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when the certificate is specified using both a file and an object' do
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_cert_object => 'This is a string, not a certificate'
         )
@@ -160,7 +160,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when the certificate is specified using both a PEM-encoded string and an object' do
 
-      let(:options) do
+      let(:ssl_options) do
         {
           :ssl => true,
           :ssl_cert_string => cert_string,
@@ -178,7 +178,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when the key is specified using both a file and a PEM-encoded string' do
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_key_string => 'This is a normal string, not a PEM-encoded key'
         )
@@ -192,7 +192,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when the key is specified using both a file and an object' do
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_cert_object => 'This is a string, not a key'
         )
@@ -206,7 +206,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when the key is specified using both a PEM-encoded string and an object' do
 
-      let(:options) do
+      let(:ssl_options) do
         {
           :ssl => true,
           :ssl_cert => SpecConfig.instance.client_cert_path,
@@ -224,7 +224,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when a certificate is passed, but it is not of the right type' do
 
-      let(:options) do
+      let(:ssl_options) do
         cert = "This is a string, not an X.509 Certificate"
         {
           :ssl => true,
@@ -256,7 +256,7 @@ describe Mongo::Socket::SSL, retry: 3 do
               host_name,
               30,
               ::Socket::PF_INET,
-              options.merge(ssl_verify: false, ssl_verify_hostname: true)
+              ssl_options.merge(ssl_verify: false, ssl_verify_hostname: true)
             )
           rescue => e
             error = e
@@ -276,7 +276,7 @@ describe Mongo::Socket::SSL, retry: 3 do
               host_name,
               30,
               ::Socket::PF_INET,
-              options.merge(ssl_verify: false, ssl_verify_hostname: false)
+              ssl_options.merge(ssl_verify: false, ssl_verify_hostname: false)
             )
           }.not_to raise_error
         end
@@ -288,7 +288,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'when a key is passed, but it is not of the right type' do
 
-        let(:options) do
+        let(:ssl_options) do
           key = "This is a string not a key"
           {
               :ssl => true,
@@ -315,7 +315,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'when a key is passed, but it is not of the right type' do
 
-        let(:options) do
+        let(:ssl_options) do
           key = "This is a string not a key"
           {
               :ssl => true,
@@ -349,7 +349,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when a bad certificate is provided' do
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_key => COMMAND_MONITORING_TESTS.first
         )
@@ -384,7 +384,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'as a path to a file' do
 
-        let(:options) do
+        let(:ssl_options) do
           super().merge(
             :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
             :ssl_verify => true
@@ -398,7 +398,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'as a string containing the PEM-encoded certificate' do
 
-        let(:options) do
+        let(:ssl_options) do
           super().merge(
             :ssl_ca_cert_string => ca_cert_string,
             :ssl_verify => true
@@ -411,7 +411,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'as an array of Certificate objects' do
-        let(:options) do
+        let(:ssl_options) do
           cert = [OpenSSL::X509::Certificate.new(ca_cert_string)]
           super().merge(
             :ssl_ca_cert_object => cert,
@@ -426,7 +426,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'both as a file and a PEM-encoded parameter' do
 
-        let(:options) do
+        let(:ssl_options) do
           super().merge(
             :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
             :ssl_ca_cert_string => 'This is a string, not a certificate',
@@ -442,7 +442,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'both as a file and as object parameter' do
 
-        let(:options) do
+        let(:ssl_options) do
           super().merge(
             :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
             :ssl_ca_cert_object => 'This is a string, not an array of certificates',
@@ -457,7 +457,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'both as a PEM-encoded string and as object parameter' do
 
-        let(:options) do
+        let(:ssl_options) do
           cert = File.read(SpecConfig.instance.local_ca_cert_path)
           super().merge(
             :ssl_ca_cert_string => cert,
@@ -480,11 +480,11 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
+        Mongo::Server::Connection.new(server, ssl_options.merge(socket_timeout: 2))
       end
 
       context 'as a file' do
-        let(:options) do
+        let(:ssl_options) do
           SpecConfig.instance.test_options.merge(
             ssl: true,
             ssl_cert: SpecConfig.instance.client_cert_path,
@@ -511,11 +511,11 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
+        Mongo::Server::Connection.new(server, ssl_options.merge(socket_timeout: 2))
       end
 
       context 'as a file' do
-        let(:options) do
+        let(:ssl_options) do
           SpecConfig.instance.test_options.merge(
             ssl: true,
             ssl_cert: SpecConfig.instance.client_cert_path,
@@ -537,7 +537,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     context 'when a CA certificate is not provided' do
       require_local_tls
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_verify => true
         )
@@ -566,12 +566,12 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
+        Mongo::Server::Connection.new(server, ssl_options.merge(socket_timeout: 2))
       end
 
       context 'as a path to a file' do
         context 'standalone' do
-          let(:options) do
+          let(:ssl_options) do
             SpecConfig.instance.test_options.merge(
               ssl_cert: SpecConfig.instance.second_level_cert_path,
               ssl_key: SpecConfig.instance.second_level_key_path,
@@ -600,7 +600,7 @@ describe Mongo::Socket::SSL, retry: 3 do
           # https://github.com/jruby/jruby-openssl/issues/181
           only_mri
 
-          let(:options) do
+          let(:ssl_options) do
             SpecConfig.instance.test_options.merge(
               ssl: true,
               ssl_cert: SpecConfig.instance.second_level_cert_bundle_path,
@@ -621,7 +621,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
       context 'as a string' do
         context 'standalone' do
-          let(:options) do
+          let(:ssl_options) do
             SpecConfig.instance.test_options.merge(
               ssl_cert: nil,
               ssl_cert_string: File.read(SpecConfig.instance.second_level_cert_path),
@@ -645,7 +645,7 @@ describe Mongo::Socket::SSL, retry: 3 do
           # https://github.com/jruby/jruby-openssl/issues/181
           only_mri
 
-          let(:options) do
+          let(:ssl_options) do
             SpecConfig.instance.test_options.merge(
               ssl: true,
               ssl_cert: nil,
@@ -675,11 +675,11 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
+        Mongo::Server::Connection.new(server, ssl_options.merge(socket_timeout: 2))
       end
 
-      let(:options) do
-        SpecConfig.instance.test_options.merge(
+      let(:ssl_options) do
+        SpecConfig.instance.ssl_options.merge(
           ssl: true,
           ssl_cert: SpecConfig.instance.client_pem_path,
           ssl_key: SpecConfig.instance.client_pem_path,
@@ -699,7 +699,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     context 'when ssl_verify is not specified' do
       require_local_tls
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path
         ).tap { |options| options.delete(:ssl_verify) }
@@ -713,7 +713,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     context 'when ssl_verify is true' do
       require_local_tls
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
           :ssl_verify => true
@@ -727,7 +727,7 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when ssl_verify is false' do
 
-      let(:options) do
+      let(:ssl_options) do
         super().merge(
           :ssl_ca_cert => 'invalid',
           :ssl_verify => false
