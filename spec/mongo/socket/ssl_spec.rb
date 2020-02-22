@@ -347,13 +347,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
     end
 
-    context 'when a bad certificate is provided' do
-
-      let(:ssl_options) do
-        super().merge(
-          :ssl_key => COMMAND_MONITORING_TESTS.first
-        )
-      end
+    context 'when a bad certificate/key is provided' do
 
       let(:expected_exception) do
         if SpecConfig.instance.jruby?
@@ -372,10 +366,38 @@ describe Mongo::Socket::SSL, retry: 3 do
         end
       end
 
-      it 'raises an exception' do
-        expect do
-          socket
-        end.to raise_exception(expected_exception)
+      shared_examples_for 'raises an exception' do
+        it 'raises an exception' do
+          expect do
+            socket
+          end.to raise_exception(expected_exception)
+        end
+      end
+
+      context 'when a bad certificate is provided' do
+
+        let(:ssl_options) do
+          super().merge(
+            :ssl_cert => COMMAND_MONITORING_TESTS.first,
+            :ssl_key => nil,
+          )
+        end
+
+        it_behaves_like 'raises an exception'
+      end
+
+      context 'when a bad key is provided' do
+        # On JRuby the key does not appear to be parsed
+        only_mri
+
+        let(:ssl_options) do
+          super().merge(
+            :ssl_cert => nil,
+            :ssl_key => COMMAND_MONITORING_TESTS.first,
+          )
+        end
+
+        it_behaves_like 'raises an exception'
       end
     end
 
