@@ -475,7 +475,9 @@ module Mongo
       remove_instance_variable('@monitoring')
 
       if @options[:auto_encryption_options]
-        set_auto_encryption_options
+        @connect_lock.synchronize do
+          set_auto_encryption_options
+        end
       end
 
       yield(self) if block_given?
