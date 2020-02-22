@@ -20,7 +20,7 @@ describe Mongo::Socket::SSL, retry: 3 do
   end
 
   let(:socket) do
-    resolver.socket(socket_timeout, ssl_options)
+    resolver.socket(socket_timeout, ssl_options, connect_timeout: 2.4)
   end
 
   let(:ssl_options) do
