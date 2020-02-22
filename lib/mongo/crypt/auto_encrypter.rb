@@ -51,16 +51,8 @@ module Mongo
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
-      def setup_encrypter(options = {})
+      def initialize(options = {})
         opts = set_default_options(options.dup)
-
-        unless opts[:key_vault_client]
-          # If no key vault client is passed in, create one by copying the
-          # Mongo::Client used for encryption. Update options so that key vault
-          # client does not perform auto-encryption/decryption, and keep a reference
-          # to it so it is destroyed later.
-          opts[:key_vault_client] = self.with({ auto_encryption_options: nil })
-        end
 
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
@@ -78,7 +70,7 @@ module Mongo
         )
 
         @encryption_io = EncryptionIO.new(
-          client: self,
+          client: opts[:client],
           mongocryptd_client: @mongocryptd_client,
           key_vault_collection: build_key_vault_collection
         )

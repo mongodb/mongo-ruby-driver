@@ -23,23 +23,37 @@ module Mongo
     include Loggable
 
     def teardown_encrypter
-      return
+      @encrypter.teardown_encrypter if @encrypter
+      @encrypter = nil
     end
 
     def set_auto_encryption_options
-      return
+      raise "must tear down encrypter first" if @encrypter
+
+      opts_copy = @options[:auto_encryption_options].dup
+
+      opts_copy[:extra_options] ||= {}
+      opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
+      opts_copy[:key_vault_client] ||= self
+      opts_copy[:client] ||= self
+
+      @encrypter = Crypt::AutoEncrypter.new(opts_copy)
     end
 
     def encryption_options
-      {}
+      @encrypter ? @encrypter.encryption_options : {}
     end
 
-    def encrypt(_, cmd)
-      return cmd
+    def encrypt(db_name, cmd)
+      @encrypter ? @encrypter.encrypt(db_name, cmd) : cmd
     end
 
     def decrypt(cmd)
-      return cmd
+      @encrypter ? @encrypter.decrypt(cmd) : cmd
+    end
+
+    def spawn_mongocryptd
+      @encrypter.spawn_mongocryptd if @encrypter
     end
 
     # The options that do not affect the behavior of a cluster and its
@@ -139,6 +153,8 @@ module Mongo
 
     # @return [ Hash ] options The configuration options.
     attr_reader :options
+
+    attr_reader :encrypter
 
     # Delegate command and collections execution to the current database.
     def_delegators :@database, :command, :collections
@@ -920,10 +936,6 @@ module Mongo
     # Provides some default encryption options and sets up data necessary
     # for auto-encryption
     # def set_auto_encryption_options
-    #   opts_copy = @options[:auto_encryption_options].dup
-
-    #   opts_copy[:extra_options] ||= {}
-    #   opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
 
     #   setup_encrypter(opts_copy)
     # end
