@@ -35,6 +35,8 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     end
 
     describe '#start' do
+      # Test uses global assertions
+      clean_slate
 
       let(:query) do
         conversation.start(nil)
