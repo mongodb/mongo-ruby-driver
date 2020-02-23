@@ -1,4 +1,5 @@
 require 'singleton'
+require 'pathname'
 
 class SpecConfig
   include Singleton

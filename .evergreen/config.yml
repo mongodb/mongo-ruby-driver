@@ -529,6 +529,9 @@ axes:
   - id: "os"
     display_name: OS
     values:
+      - id: ubuntu1204
+        display_name: "Ubuntu 12.04"
+        run_on: ubuntu1204-test
       - id: ubuntu1404
         display_name: "Ubuntu 14.04"
         run_on: ubuntu1404-test
