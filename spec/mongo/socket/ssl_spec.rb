@@ -349,55 +349,84 @@ describe Mongo::Socket::SSL, retry: 3 do
 
     context 'when a bad certificate/key is provided' do
 
-      let(:expected_exception) do
-        if SpecConfig.instance.jruby?
-          # java.lang.ClassCastException: org.bouncycastle.asn1.DERApplicationSpecific cannot be cast to org.bouncycastle.asn1.ASN1Sequence
-          # https://github.com/jruby/jruby-openssl/issues/171
-          Exception
-        else
-          # mri
-          if RUBY_VERSION >= '2.4.0'
-            # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
-            OpenSSL::OpenSSLError
-          else
-            # ArgumentError: Could not parse PKey: no start line
-            ArgumentError
-          end
-        end
-      end
-
       shared_examples_for 'raises an exception' do
         it 'raises an exception' do
           expect do
             socket
-          end.to raise_exception(expected_exception)
+          end.to raise_exception(*expected_exception)
         end
       end
 
-      context 'when a bad certificate is provided' do
-
-        let(:ssl_options) do
-          super().merge(
-            :ssl_cert => COMMAND_MONITORING_TESTS.first,
-            :ssl_key => nil,
-          )
-        end
-
-        it_behaves_like 'raises an exception'
-      end
-
-      context 'when a bad key is provided' do
-        # On JRuby the key does not appear to be parsed
+      context 'mri' do
         only_mri
 
-        let(:ssl_options) do
-          super().merge(
-            :ssl_cert => nil,
-            :ssl_key => COMMAND_MONITORING_TESTS.first,
-          )
+        context 'when a bad certificate is provided' do
+
+          let(:expected_exception) do
+            if RUBY_VERSION >= '2.4.0'
+              # OpenSSL::X509::CertificateError: nested asn1 error
+              [OpenSSL::OpenSSLError, /asn1 error/i]
+            else
+              [ArgumentError, /asn1 error/i]
+            end
+          end
+
+          let(:ssl_options) do
+            super().merge(
+              :ssl_cert => COMMAND_MONITORING_TESTS.first,
+              :ssl_key => nil,
+            )
+          end
+
+          it_behaves_like 'raises an exception'
         end
 
-        it_behaves_like 'raises an exception'
+        context 'when a bad key is provided' do
+
+          let(:expected_exception) do
+            if RUBY_VERSION >= '2.4.0'
+              # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
+              [OpenSSL::OpenSSLError, /Could not parse PKey/]
+            else
+              # ArgumentError: Could not parse PKey: no start line
+              [ArgumentError, /Could not parse PKey/]
+            end
+          end
+
+          let(:ssl_options) do
+            super().merge(
+              :ssl_cert => nil,
+              :ssl_key => COMMAND_MONITORING_TESTS.first,
+            )
+          end
+
+          it_behaves_like 'raises an exception'
+        end
+      end
+
+      context 'jruby' do
+        require_jruby
+
+        # On JRuby the key does not appear to be parsed, therefore only
+        # specifying the bad certificate produces an error.
+
+        context 'when a bad certificate is provided' do
+
+          let(:ssl_options) do
+            super().merge(
+              :ssl_cert => COMMAND_MONITORING_TESTS.first,
+              :ssl_key => nil,
+            )
+          end
+
+          let(:expected_exception) do
+            # java.lang.ClassCastException: org.bouncycastle.asn1.DERApplicationSpecific cannot be cast to org.bouncycastle.asn1.ASN1Sequence
+            # OpenSSL::X509::CertificateError: parsing issue: malformed PEM data: no header found
+            [OpenSSL::OpenSSLError, /malformed pem data/i]
+          end
+
+          it_behaves_like 'raises an exception'
+        end
       end
     end
 
