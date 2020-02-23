@@ -58,7 +58,7 @@ class ClusterTools
       raise ArgumentError, 'Value must be true or false'
     end
 
-    direct_client_for_each_server do |client|
+    direct_client_for_each_data_bearing_server do |client|
       client.use(:admin).database.command(setParameter: 1, enableElectionHandoff: value)
     end
   end
@@ -147,7 +147,7 @@ class ClusterTools
     existing_primary_address = existing_primary.address
 
     target = admin_client.cluster.servers_list.detect do |server|
-      server.address != existing_primary_address
+      !server.arbiter? && server.address != existing_primary_address
     end
 
     cfg = get_rs_config
@@ -279,6 +279,7 @@ class ClusterTools
 
   def unfreeze_all
     admin_client.cluster.servers_list.each do |server|
+      next if server.arbiter?
       client = direct_client(server.address)
       # Primary refuses to be unfrozen with this message:
       # cannot freeze node when primary or running for election. state: Primary (95)
@@ -353,8 +354,9 @@ class ClusterTools
     admin_client.cluster.servers_list.each(&block)
   end
 
-  def direct_client_for_each_server(&block)
+  def direct_client_for_each_data_bearing_server(&block)
     each_server do |server|
+      next if server.arbiter?
       yield direct_client(server.address)
     end
   end
