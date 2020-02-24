@@ -112,5 +112,3 @@ ENV PROJECT_DIRECTORY=/app
 <% @env.each do |k, v| %>
 ENV <%= k %>="<%= v %>"
 <% end %>
-
-#CMD bash -x <%= script %>
