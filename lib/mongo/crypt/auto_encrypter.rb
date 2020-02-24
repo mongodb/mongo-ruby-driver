@@ -57,9 +57,13 @@ module Mongo
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
-        super(opts)
+        @encryption_options = opts.freeze
+
+        validate_key_vault_namespace!
+        validate_key_vault_client!
 
         @key_vault_client = opts[:key_vault_client]
+        @crypt_handle = Crypt::Handle.new(opts[:kms_providers], schema_map: opts[:schema_map])
 
         # Set server selection timeout to 1 to prevent the client waiting for a
         # long timeout before spawning mongocryptd
