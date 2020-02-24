@@ -278,9 +278,9 @@ describe Mongo::Collection do
           require_topology :replica_set
 
           let(:client_options) do
-            {
+            SpecConfig.instance.auth_options.merge(
               read: { mode: :primary_preferred },
-            }
+            )
           end
 
           let(:subscriber) { EventSubscriber.new }

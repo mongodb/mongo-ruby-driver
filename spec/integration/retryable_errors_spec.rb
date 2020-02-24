@@ -24,7 +24,7 @@ describe 'Failing retryable operations' do
     end
 
     after do
-      ClusterTools.instance.direct_client_for_each_server do |client|
+      ClusterTools.instance.direct_client_for_each_data_bearing_server do |client|
         client.use(:admin).database.command(clear_fail_point_command)
       end
     end
@@ -62,7 +62,7 @@ describe 'Failing retryable operations' do
           server.monitor.stop!
         end
 
-        ClusterTools.instance.direct_client_for_each_server do |client|
+        ClusterTools.instance.direct_client_for_each_data_bearing_server do |client|
           client.use(:admin).database.command(fail_point_command)
         end
       end
