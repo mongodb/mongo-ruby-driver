@@ -20,12 +20,14 @@ module Mongo
     #
     # @api private
     class ExplicitEncrypter
-      include EncrypterHelper
       # TODO: documentation
       def initialize(options)
         @options = options.dup.freeze
 
-        @encryption_io = EncryptionIO.new(key_vault_collection: key_vault_collection)
+        @encryption_io = EncryptionIO.new(
+          key_vault_namespace: @options[:key_vault_namespace],
+          key_vault_client: @options[:key_vault_client]
+        )
         @crypt_handle = Handle.new(@options[:kms_providers])
       end
 

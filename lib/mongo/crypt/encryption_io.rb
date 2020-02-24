@@ -38,10 +38,15 @@ module Mongo
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
-      def initialize(client: nil, mongocryptd_client: nil, key_vault_collection:)
+      def initialize(
+        client: nil,
+        mongocryptd_client: nil,
+        key_vault_namespace:,
+        key_vault_client:
+      )
         @client = client
         @mongocryptd_client = mongocryptd_client
-        @key_vault_collection = key_vault_collection
+        @key_vault_collection = key_vault_collection(key_vault_namespace, key_vault_client)
       end
 
       # Query for keys in the key vault collection using the provided
@@ -124,6 +129,32 @@ module Mongo
       end
 
       private
+
+      def key_vault_collection(key_vault_namespace, key_vault_client)
+        unless key_vault_namespace
+          raise ArgumentError.new('The :key_vault_namespace option cannot be nil')
+        end
+
+        unless key_vault_namespace.split('.').length == 2
+          raise ArgumentError.new(
+            "#{key_vault_namespace} is an invalid key vault namespace." +
+            "The :key_vault_namespace option must be in the format database.collection"
+          )
+        end
+
+        unless key_vault_client
+          raise ArgumentError.new('The :key_vault_client option cannot be nil')
+        end
+
+        unless key_vault_client.is_a?(Client)
+          raise ArgumentError.new(
+            'The :key_vault_client option must be an instance of Mongo::Client'
+          )
+        end
+
+        key_vault_db, key_vault_coll = key_vault_namespace.split('.')
+        key_vault_client.use(key_vault_db)[key_vault_coll]
+      end
 
       # Provide an SSL socket to be used for KMS calls in a block API
       #
