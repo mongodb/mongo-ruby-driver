@@ -154,6 +154,7 @@ module Mongo
     # @return [ Hash ] options The configuration options.
     attr_reader :options
 
+    # TODO: documentation
     attr_reader :encrypter
 
     # Delegate command and collections execution to the current database.

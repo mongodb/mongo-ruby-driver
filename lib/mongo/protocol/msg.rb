@@ -198,7 +198,7 @@ module Mongo
       def maybe_encrypt(server, client)
         # TODO verify compression happens later, i.e. when this method runs
         # the message is not compressed.
-        if client && client.encryption_options && !client.encryption_options[:bypass_auto_encryption]
+        if client && client.encrypter && client.encrypter.should_encrypt
           if server.max_wire_version < 8
             raise Error::CryptError.new(
               "Cannot perform encryption against a MongoDB server older than " +
@@ -209,7 +209,7 @@ module Mongo
 
           db_name = @main_document[DATABASE_IDENTIFIER]
           cmd = merge_sections
-          enc_cmd = client.encrypt(db_name, cmd)
+          enc_cmd = client.encrypter.encrypt(db_name, cmd)
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
@@ -236,9 +236,9 @@ module Mongo
       # @return [ Mongo::Protocol::Msg ] The decryption message, or the original
       #   message if decryption was not possible or necessary.
       def maybe_decrypt(client)
-        if client && client.encryption_options
+        if client && client.encrypter
           cmd = merge_sections
-          enc_cmd = client.decrypt(cmd)
+          enc_cmd = client.encrypter.decrypt(cmd)
           Msg.new(@flags, @options, enc_cmd)
         else
           self

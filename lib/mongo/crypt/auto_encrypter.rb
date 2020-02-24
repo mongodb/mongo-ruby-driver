@@ -79,6 +79,10 @@ module Mongo
         )
       end
 
+      def should_encrypt
+        !@options[:bypass_auto_encryption]
+      end
+
       # Encrypt a database command
       #
       # @param [ String ] database_name The name of the database on which the
