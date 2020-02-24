@@ -15,12 +15,14 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 . `dirname "$0"`/functions.sh
 
+arch=`host_arch`
+
+show_local_instructions
+
 set_home
 set_env_vars
 
 setup_ruby
-
-arch=`host_arch`
 
 prepare_server $arch
 
