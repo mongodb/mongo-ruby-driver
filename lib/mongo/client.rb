@@ -41,7 +41,7 @@ module Mongo
     end
 
     def encryption_options
-      @encrypter ? @encrypter.encryption_options : {}
+      @encrypter ? @encrypter.options : {}
     end
 
     def encrypt(db_name, cmd)

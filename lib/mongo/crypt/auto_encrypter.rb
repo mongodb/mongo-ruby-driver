@@ -19,10 +19,11 @@ module Mongo
     # functionality.
     #
     # @api private
-    class AutoEncrypter < Encrypter
+    class AutoEncrypter
 
       attr_reader :mongocryptd_client
       attr_reader :key_vault_client
+      attr_reader :options
 
       # A Hash of default values for the :extra_options option
       DEFAULT_EXTRA_OPTIONS = Options::Redacted.new({
@@ -57,10 +58,7 @@ module Mongo
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
         mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
-        @encryption_options = opts.freeze
-
-        validate_key_vault_namespace!
-        validate_key_vault_client!
+        @options = opts.freeze
 
         @key_vault_client = opts[:key_vault_client]
         @crypt_handle = Crypt::Handle.new(opts[:kms_providers], schema_map: opts[:schema_map])
@@ -68,7 +66,7 @@ module Mongo
         # Set server selection timeout to 1 to prevent the client waiting for a
         # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
-          @encryption_options[:mongocryptd_uri],
+          @options[:mongocryptd_uri],
           monitoring_io: mongocryptd_client_monitoring_io,
           server_selection_timeout: 1,
         )
@@ -76,7 +74,8 @@ module Mongo
         @encryption_io = EncryptionIO.new(
           client: opts[:client],
           mongocryptd_client: @mongocryptd_client,
-          key_vault_collection: build_key_vault_collection
+          key_vault_namespace: @options[:key_vault_namespace],
+          key_vault_client: @key_vault_client
         )
       end
 
@@ -122,15 +121,15 @@ module Mongo
       # @raise [ ArgumentError ] Raises an exception if no encryption options
       #   have been provided
       def spawn_mongocryptd
-        unless @encryption_options
+        unless @options
           raise ArgumentError.new(
             'Cannot spawn mongocryptd process without setting ' +
             'auto encryption options on the client.'
           )
         end
 
-        mongocryptd_spawn_args = @encryption_options[:mongocryptd_spawn_args]
-        mongocryptd_spawn_path = @encryption_options[:mongocryptd_spawn_path]
+        mongocryptd_spawn_args = @options[:mongocryptd_spawn_args]
+        mongocryptd_spawn_path = @options[:mongocryptd_spawn_path]
 
         begin
           Process.spawn(
@@ -155,7 +154,7 @@ module Mongo
 
         @mongocryptd_client = nil
         @key_vault_client = nil
-        @encryption_options = nil
+        @options = nil
 
         true
       end
