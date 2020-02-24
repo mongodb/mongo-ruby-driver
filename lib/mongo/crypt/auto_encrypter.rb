@@ -52,7 +52,7 @@ module Mongo
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
-      def initialize(options = {})
+      def initialize(options)
         opts = set_default_options(options.dup)
 
         mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
@@ -75,7 +75,12 @@ module Mongo
           client: opts[:client],
           mongocryptd_client: @mongocryptd_client,
           key_vault_namespace: @options[:key_vault_namespace],
-          key_vault_client: @key_vault_client
+          key_vault_client: @key_vault_client,
+          options: {
+            mongocryptd_spawn_args: @options[:mongocryptd_spawn_args],
+            mongocryptd_spawn_path: @options[:mongocryptd_spawn_path],
+            mongocryptd_bypass_spawn: @options[:mongocryptd_bypass_spawn]
+          }
         )
       end
 
@@ -112,44 +117,6 @@ module Mongo
         ).run_state_machine
       end
 
-      # Spawn a new mongocryptd process using the mongocryptd_spawn_path
-      # and mongocryptd_spawn_args passed in through the extra auto
-      # encrypt options. Stdout and Stderr of this new process are written
-      # to /dev/null.
-      #
-      # @note To capture the mongocryptd logs, add "--logpath=/path/to/logs"
-      #   to auto_encryption_options -> extra_options -> mongocrpytd_spawn_args
-      #
-      # @return [ Integer ] The process id of the spawned process
-      #
-      # @raise [ ArgumentError ] Raises an exception if no encryption options
-      #   have been provided
-      def spawn_mongocryptd
-        unless @options
-          raise ArgumentError.new(
-            'Cannot spawn mongocryptd process without setting ' +
-            'auto encryption options on the client.'
-          )
-        end
-
-        mongocryptd_spawn_args = @options[:mongocryptd_spawn_args]
-        mongocryptd_spawn_path = @options[:mongocryptd_spawn_path]
-
-        begin
-          Process.spawn(
-            mongocryptd_spawn_path,
-            *mongocryptd_spawn_args,
-            [:out, :err]=>'/dev/null'
-          )
-        rescue Errno::ENOENT => e
-          raise Error::MongocryptdSpawnError.new(
-            "Failed to spawn mongocryptd at the path \"#{mongocryptd_spawn_path}\" " +
-            "with arguments #{mongocryptd_spawn_args}. Received error " +
-            "#{e.class}: \"#{e.message}\""
-          )
-        end
-      end
-
       # Close the resources created by the AutoEncrypter
       #
       # @return [ true ] Always true
@@ -173,7 +140,7 @@ module Mongo
       def set_default_options(options)
         opts = options.dup
 
-        extra_options = opts.delete(:extra_options)
+        extra_options = opts.delete(:extra_options) || Options::Redacted.new
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
         has_timeout_string_arg = extra_options[:mongocryptd_spawn_args].any? do |elem|
@@ -188,8 +155,9 @@ module Mongo
         end
 
         opts[:bypass_auto_encryption] ||= false
+        opts[:key_vault_client] ||= opts[:client]
 
-        opts.merge(extra_options)
+        Options::Redacted.new(opts).merge(extra_options)
       end
     end
   end

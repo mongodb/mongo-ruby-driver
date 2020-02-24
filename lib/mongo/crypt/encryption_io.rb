@@ -42,11 +42,13 @@ module Mongo
         client: nil,
         mongocryptd_client: nil,
         key_vault_namespace:,
-        key_vault_client:
+        key_vault_client:,
+        options: {}
       )
         @client = client
         @mongocryptd_client = mongocryptd_client
         @key_vault_collection = key_vault_collection(key_vault_namespace, key_vault_client)
+        @options = options
       end
 
       # Query for keys in the key vault collection using the provided
@@ -89,9 +91,9 @@ module Mongo
         begin
           response = @mongocryptd_client.database.command(cmd)
         rescue Error::NoServerAvailable => e
-          raise e if @client.encryption_options[:mongocryptd_bypass_spawn]
+          raise e if @options[:mongocryptd_bypass_spawn]
 
-          @client.spawn_mongocryptd
+          spawn_mongocryptd
           response = @mongocryptd_client.database.command(cmd)
         end
 
@@ -154,6 +156,44 @@ module Mongo
 
         key_vault_db, key_vault_coll = key_vault_namespace.split('.')
         key_vault_client.use(key_vault_db)[key_vault_coll]
+      end
+
+      # Spawn a new mongocryptd process using the mongocryptd_spawn_path
+      # and mongocryptd_spawn_args passed in through the extra auto
+      # encrypt options. Stdout and Stderr of this new process are written
+      # to /dev/null.
+      #
+      # @note To capture the mongocryptd logs, add "--logpath=/path/to/logs"
+      #   to auto_encryption_options -> extra_options -> mongocrpytd_spawn_args
+      #
+      # @return [ Integer ] The process id of the spawned process
+      #
+      # @raise [ ArgumentError ] Raises an exception if no encryption options
+      #   have been provided
+      def spawn_mongocryptd
+        mongocryptd_spawn_args = @options[:mongocryptd_spawn_args]
+        mongocryptd_spawn_path = @options[:mongocryptd_spawn_path]
+
+        unless mongocryptd_spawn_args && mongocryptd_spawn_path
+          raise ArgumentError.new(
+            'Cannot spawn mongocryptd process without providing options for ' +
+            'mongocryptd_spawn_args and mongocryptd_spawn_path'
+          )
+        end
+
+        begin
+          Process.spawn(
+            mongocryptd_spawn_path,
+            *mongocryptd_spawn_args,
+            [:out, :err]=>'/dev/null'
+          )
+        rescue Errno::ENOENT => e
+          raise Error::MongocryptdSpawnError.new(
+            "Failed to spawn mongocryptd at the path \"#{mongocryptd_spawn_path}\" " +
+            "with arguments #{mongocryptd_spawn_args}. Received error " +
+            "#{e.class}: \"#{e.message}\""
+          )
+        end
       end
 
       # Provide an SSL socket to be used for KMS calls in a block API
