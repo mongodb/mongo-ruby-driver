@@ -894,7 +894,7 @@ module Mongo
 
     private
 
-    # TODO: documentation
+    # Create a new encrypter object using the client's auto encryption options
     def build_encrypter
       @encrypter = Crypt::AutoEncrypter.new(
         @options[:auto_encryption_options].merge(client: self)
@@ -917,13 +917,6 @@ module Mongo
         default_options[:retry_writes] = true
       end
     end
-
-    # Provides some default encryption options and sets up data necessary
-    # for auto-encryption
-    # def build_encrypter
-
-    #   setup_encrypter(opts_copy)
-    # end
 
     # Implementation for #close, assumes the connect lock is already acquired.
     def do_close
