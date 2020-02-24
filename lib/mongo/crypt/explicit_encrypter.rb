@@ -15,19 +15,18 @@
 module Mongo
   module Crypt
 
-    # TODO: documentation
+    # An ExplicitEncrypter is an object that performs explicit encryption
+    # operations and handles all associated options and instance variables.
     #
     # @api private
-    class ExplicitEncrypter < Encrypter
+    class ExplicitEncrypter
+      include EncrypterHelper
       # TODO: documentation
-      def initialize(options={})
-        @encryption_options = options.dup.freeze
+      def initialize(options)
+        @options = options.dup.freeze
 
-        validate_key_vault_namespace!
-        validate_key_vault_client!
-
-        @encryption_io = EncryptionIO.new(key_vault_collection: build_key_vault_collection)
-        @crypt_handle = Handle.new(options[:kms_providers])
+        @encryption_io = EncryptionIO.new(key_vault_collection: key_vault_collection)
+        @crypt_handle = Handle.new(@options[:kms_providers])
       end
 
       def create_and_insert_data_key(kms_provider, options)

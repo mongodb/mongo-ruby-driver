@@ -80,7 +80,8 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value
     def encrypt(value, options={})
-      @encrypter.encrypt({ v: value }, options)['v']
+      doc = { 'v': value }
+      @encrypter.encrypt(doc, options)['v']
     end
 
     # Decrypts a value that has already been encrypted
@@ -90,7 +91,8 @@ module Mongo
     #
     # @return [ Object ] The decrypted value
     def decrypt(value)
-      @encrypter.decrypt(v: value)['v']
+      doc = { 'v': value }
+      @encrypter.decrypt(doc)['v']
     end
   end
 end
