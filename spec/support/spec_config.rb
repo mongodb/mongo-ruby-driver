@@ -340,8 +340,11 @@ EOT
       {
         user: user,
         password: password,
-        auth_source: auth_source,
-      }
+      }.tap do |options|
+        if auth_source
+          options[:auth_source] = auth_source
+        end
+      end
     end
   end
 
