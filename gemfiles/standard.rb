@@ -15,7 +15,7 @@ def standard_dependencies
     gem 'byebug', platforms: :mri
 
     # for benchmark tests
-    gem 'yajl-ruby', require: 'yajl', platforms: :mri, require: false
+    gem 'yajl-ruby', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
   end
 
