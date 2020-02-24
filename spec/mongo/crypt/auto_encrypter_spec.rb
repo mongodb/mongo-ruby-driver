@@ -87,7 +87,7 @@ describe Mongo::Crypt::AutoEncrypter do
   end
 
   after do
-    auto_encrypter.teardown_encrypter
+    auto_encrypter.close
   end
 
   context 'with schema map in auto encryption commands' do

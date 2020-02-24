@@ -120,7 +120,7 @@ module Mongo
       # Close the resources created by the AutoEncrypter
       #
       # @return [ true ] Always true
-      def teardown_encrypter
+      def close
         @mongocryptd_client.close if @mongocryptd_client
 
         @mongocryptd_client = nil

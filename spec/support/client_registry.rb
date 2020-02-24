@@ -245,7 +245,7 @@ class ClientRegistry
           client.close
         else
           # Cluster is shared, clean up encryption only.
-          client.teardown_encrypter
+          client.close_encrypter
         end
       end
 

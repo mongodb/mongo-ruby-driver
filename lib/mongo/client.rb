@@ -120,7 +120,8 @@ module Mongo
     # @return [ Hash ] options The configuration options.
     attr_reader :options
 
-    # TODO: documentation
+    # @return [ Mongo::Crypt::AutoEncrypter ] The object that encapsulates
+    #   auto-encryption behavior
     attr_reader :encrypter
 
     # Delegate command and collections execution to the current database.
@@ -681,7 +682,7 @@ module Mongo
         # If the user specifies new auto_encryption_options, teardown the
         # existing encryption infrastructure
         if opts.key?(:auto_encryption_options)
-          should_teardown_encrypter = true
+          should_close_encrypter = true
         end
 
         # If the new auto_encryption_options are not nil, then set up the
@@ -693,7 +694,7 @@ module Mongo
         options.update(opts)
         @options = options.freeze
 
-        teardown_encrypter if should_teardown_encrypter
+        close_encrypter if should_close_encrypter
         build_encrypter if should_set_new_encryption_options
 
         validate_options!
@@ -739,10 +740,14 @@ module Mongo
       true
     end
 
-    # TODO: documentation
-    def teardown_encrypter
-      @encrypter.teardown_encrypter if @encrypter
+    # Close encrypter and clean up auto-encryption resources.
+    #
+    # @return [ true ] Always true.
+    def close_encrypter
+      @encrypter.close if @encrypter
       @encrypter = nil
+
+      true
     end
 
     # Reconnect the client.
@@ -923,7 +928,7 @@ module Mongo
     # Implementation for #close, assumes the connect lock is already acquired.
     def do_close
       @cluster.disconnect!
-      teardown_encrypter
+      close_encrypter
     end
 
     # If options[:session] is set, validates that session and returns it.
