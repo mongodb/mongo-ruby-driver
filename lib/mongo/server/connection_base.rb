@@ -150,7 +150,7 @@ module Mongo
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
 
         max_bson_size = max_bson_object_size
-        if client && client.encryption_options && !client.encryption_options[:bypass_auto_encryption]
+        if client && client.encrypter && client.encrypter.should_encrypt
           # From client-side encryption spec: Because automatic encryption
           # increases the size of commands, the driver MUST split bulk writes
           # at a reduced size limit before undergoing automatic encryption.

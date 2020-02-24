@@ -22,27 +22,6 @@ module Mongo
     extend Forwardable
     include Loggable
 
-    def teardown_encrypter
-      @encrypter.teardown_encrypter if @encrypter
-      @encrypter = nil
-    end
-
-    def encryption_options
-      @encrypter ? @encrypter.options : {}
-    end
-
-    def encrypt(db_name, cmd)
-      @encrypter ? @encrypter.encrypt(db_name, cmd) : cmd
-    end
-
-    def decrypt(cmd)
-      @encrypter ? @encrypter.decrypt(cmd) : cmd
-    end
-
-    def spawn_mongocryptd
-      @encrypter.spawn_mongocryptd if @encrypter
-    end
-
     # The options that do not affect the behavior of a cluster and its
     # subcomponents.
     #
@@ -758,6 +737,12 @@ module Mongo
         do_close
       end
       true
+    end
+
+    # TODO: documentation
+    def teardown_encrypter
+      @encrypter.teardown_encrypter if @encrypter
+      @encrypter = nil
     end
 
     # Reconnect the client.
