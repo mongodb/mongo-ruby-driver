@@ -27,19 +27,6 @@ module Mongo
       @encrypter = nil
     end
 
-    def set_auto_encryption_options
-      raise "must tear down encrypter first" if @encrypter
-
-      opts_copy = @options[:auto_encryption_options].dup
-
-      opts_copy[:extra_options] ||= {}
-      opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
-      opts_copy[:key_vault_client] ||= self
-      opts_copy[:client] ||= self
-
-      @encrypter = Crypt::AutoEncrypter.new(opts_copy)
-    end
-
     def encryption_options
       @encrypter ? @encrypter.options : {}
     end
@@ -512,7 +499,7 @@ module Mongo
 
       if @options[:auto_encryption_options]
         @connect_lock.synchronize do
-          set_auto_encryption_options
+          build_encrypter
         end
       end
 
@@ -728,7 +715,7 @@ module Mongo
         @options = options.freeze
 
         teardown_encrypter if should_teardown_encrypter
-        set_auto_encryption_options if should_set_new_encryption_options
+        build_encrypter if should_set_new_encryption_options
 
         validate_options!
         validate_authentication_options!
@@ -790,7 +777,7 @@ module Mongo
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
         if @options[:auto_encryption_options]
-          set_auto_encryption_options
+          build_encrypter
         end
       end
 
@@ -917,6 +904,13 @@ module Mongo
 
     private
 
+    # TODO: documentation
+    def build_encrypter
+      @encrypter = Crypt::AutoEncrypter.new(
+        @options[:auto_encryption_options].merge(client: self)
+      )
+    end
+
     # Generate default client options based on the URI and options
     # passed into the Client constructor.
     def default_options(options)
@@ -936,7 +930,7 @@ module Mongo
 
     # Provides some default encryption options and sets up data necessary
     # for auto-encryption
-    # def set_auto_encryption_options
+    # def build_encrypter
 
     #   setup_encrypter(opts_copy)
     # end

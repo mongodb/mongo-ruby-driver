@@ -55,8 +55,8 @@ module Mongo
       def initialize(options)
         opts = set_default_options(options.dup)
 
-        mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
-        mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
+        # mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
+        # mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
 
         @options = opts.freeze
 
@@ -67,7 +67,7 @@ module Mongo
         # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
           @options[:mongocryptd_uri],
-          monitoring_io: mongocryptd_client_monitoring_io,
+          monitoring_io: @options[:client].options[:monitoring_io],
           server_selection_timeout: 1,
         )
 
