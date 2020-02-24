@@ -30,9 +30,9 @@ prepare_server $arch
 
 git clone https://github.com/p-mongo/mongo-manager
 cd mongo-manager
-gem build *.gemspec
-gem install --no-document *.gem
-cd ..
+(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+  gem build *.gemspec &&
+  gem install --no-document *.gem)
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -93,7 +93,8 @@ args="$args -- $ptargs"
 
 #eval $mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
-mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR" $args
+(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+  mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR" $args)
 
 install_deps
 
@@ -147,6 +148,7 @@ echo ${test_status}
 
 kill_jruby
 
-mongo-manager stop --dir "$dbdir"
+(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+  mongo-manager stop --dir "$dbdir")
 
 exit ${test_status}
