@@ -350,6 +350,7 @@ install_mongo_manager() {
   git clone https://github.com/p-mongo/mongo-manager
   (export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
     cd mongo-manager &&
+    git checkout origin/next &&
     gem build *.gemspec &&
     gem install --no-document *.gem)
 }
