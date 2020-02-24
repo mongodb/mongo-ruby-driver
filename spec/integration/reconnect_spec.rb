@@ -54,9 +54,7 @@ describe 'Client after reconnect' do
   context 'SRV monitor thread' do
 
     let(:uri) do
-      "mongodb+srv://test1.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}&tlsInsecure=true".tap do |uri|
-        puts "Constructed URI: #{uri}"
-      end
+      "mongodb+srv://test1.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}"
     end
 
     # Debug logging to troubleshoot failures in Evergreen
@@ -68,8 +66,8 @@ describe 'Client after reconnect' do
 
     let(:client) do
       ClientRegistry.instance.register_local_client(
-        Mongo::Client.new(uri, server_selection_timeout: 3.86,
-          logger: logger))
+        Mongo::Client.new(uri, SpecConfig.instance.ssl_options.merge(
+          server_selection_timeout: 3.86, logger: logger)))
     end
 
     let(:wait_for_discovery) do
