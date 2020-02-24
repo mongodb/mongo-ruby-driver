@@ -21,10 +21,14 @@ chains. The server and the client sides have their own intermediate certificates
 - `bundle` - these files contain the leaf certificates followed by intermediate
 certificates up to the CA certificates, but do not include the CA certificates.
 
+## Generation
+
 Keep in mind the following important notes:
 
 - In multi-ca.crt, the Ruby driver CA certificate must be last (the first
 certificate must be an unrelated certificate).
+- All server certificates should have `localhost.test.build.10gen.cc` in
+the Subject Alternate Name field for testing SRV monitoring.
 
 ## Tools
 
