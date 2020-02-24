@@ -113,7 +113,17 @@ WORKDIR /app
 
 COPY . .
 
-ENV MONGO_ORCHESTRATION_HOME=/tmpfs
+<% if mmapv1? %>
+
+  ENV MONGO_ORCHESTRATION_HOME=/tmp/mo
+  RUN mkdir $MONGO_ORCHESTRATION_HOME
+
+<% else %>
+
+  ENV MONGO_ORCHESTRATION_HOME=/tmpfs
+
+<% end %>
+
 ENV PROJECT_DIRECTORY=/app
 
 <% @env.each do |k, v| %>

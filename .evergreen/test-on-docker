@@ -118,6 +118,10 @@ class Runner
   def server_download_url
     @server_download_url ||= ServerVersionRegistry.new(server_version, distro).download_url
   end
+
+  def mmapv1?
+    %w(yes true 1).include?(@env['MMAPV1']&.downcase)
+  end
 end
 
 Runner.new.run
