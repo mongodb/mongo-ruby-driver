@@ -30,7 +30,7 @@ module Mongo
     # @option options [ Hash ] :kms_providers A hash of key management service
     #   configuration information. Valid hash keys are :local or :aws. There
     #   may be more than one KMS provider specified.
-    def initialize(key_vault_client, options = {})
+    def initialize(key_vault_client, options={})
       @encrypter = Crypt::ExplicitEncrypter.new(options.merge(key_vault_client: key_vault_client))
     end
 
@@ -57,16 +57,8 @@ module Mongo
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
     def create_data_key(kms_provider, options={})
-      data_key_document = Crypt::DataKeyContext.new(
-        @encrypter.crypt_handle,
-        @encrypter.encryption_io,
-        kms_provider,
-        options
-      ).run_state_machine
-
-      insert_result = @encrypter.encryption_io.insert(data_key_document)
-
-      return insert_result.inserted_id.data
+      insert_result = @encrypter.create_and_insert_data_key(kms_provider, options)
+      insert_result.inserted_id.data
     end
 
     # Encrypts a value using the specified encryption key and algorithm
@@ -88,14 +80,7 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value
     def encrypt(value, options={})
-      doc = { 'v': value }
-
-      Crypt::ExplicitEncryptionContext.new(
-        @encrypter.crypt_handle,
-        @encrypter.encryption_io,
-        doc,
-        options
-      ).run_state_machine['v']
+      @encrypter.encrypt({ v: value }, options)['v']
     end
 
     # Decrypts a value that has already been encrypted
@@ -105,13 +90,7 @@ module Mongo
     #
     # @return [ Object ] The decrypted value
     def decrypt(value)
-      doc = { 'v': value }
-
-      result = Crypt::ExplicitDecryptionContext.new(
-        @encrypter.crypt_handle,
-        @encrypter.encryption_io,
-        doc,
-      ).run_state_machine['v']
+      @encrypter.decrypt(v: value)['v']
     end
   end
 end

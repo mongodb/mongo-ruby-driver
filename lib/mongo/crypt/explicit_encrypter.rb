@@ -30,15 +30,32 @@ module Mongo
         @crypt_handle = Handle.new(options[:kms_providers])
       end
 
-      def create_data_key(kms_provider, options={})
+      def create_and_insert_data_key(kms_provider, options)
+        data_key_document = Crypt::DataKeyContext.new(
+          @crypt_handle,
+          @encryption_io,
+          kms_provider,
+          options
+        ).run_state_machine
+
+        @encryption_io.insert(data_key_document)
       end
 
-      def encrypt(value, options={})
-
+      def encrypt(doc, options)
+        Crypt::ExplicitEncryptionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          doc,
+          options
+        ).run_state_machine
       end
 
-      def decrypt(value)
-
+      def decrypt(doc)
+        result = Crypt::ExplicitDecryptionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          doc,
+        ).run_state_machine
       end
     end
   end
