@@ -51,7 +51,7 @@ else
   args="$args --single"
 fi
 if test -n "$MMAPV1"; then
-  args="$args --storageEngine mmapv1"
+  args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
 if test "$AUTH" = auth; then
