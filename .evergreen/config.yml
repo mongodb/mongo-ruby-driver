@@ -233,16 +233,6 @@ functions:
         script: |
           rm -f .env.private
 
-  "run tests":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
-
   "run tests via mlaunch":
     - command: shell.exec
       type: test
@@ -370,11 +360,6 @@ post:
 
 tasks:
 
-    - name: "test"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-        - func: "run tests"
-        #- func: "cleanup mo"
     - name: "test-mlaunch"
       commands:
         - func: "run tests via mlaunch"
