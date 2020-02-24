@@ -310,7 +310,7 @@ install_mlaunch_git() {
     python3 setup.py install
     cd ..
   else
-    pip install --user virtualenv
+    pip install --user 'virtualenv==13'
     export PATH=$HOME/.local/bin:$PATH
     
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
