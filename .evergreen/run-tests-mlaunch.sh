@@ -15,12 +15,14 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 . `dirname "$0"`/functions.sh
 
+arch=`host_arch`
+
+show_local_instructions
+
 set_home
 set_env_vars
 
 setup_ruby
-
-arch=`host_arch`
 
 prepare_server $arch
 
@@ -120,7 +122,11 @@ if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
 fi
 
 export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
-bundle exec rake spec:ci
+if test -n "$TEST_CMD"; then
+  eval $TEST_CMD
+else
+  bundle exec rake spec:ci
+fi
 test_status=$?
 echo "TEST STATUS"
 echo ${test_status}

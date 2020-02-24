@@ -58,7 +58,7 @@ class Runner
   end
 
   def run_tests
-    run_command(%w(docker run -ti --tmpfs /tmpfs:exec test-driver))
+    run_command(%w(docker run -ti --tmpfs /tmpfs:exec test-driver) + script.split(/\s+/))
   end
 
   def run_command(cmd)
@@ -104,7 +104,7 @@ class Runner
   end
 
   def script
-    @options[:script] || '.evergreen/run-tests-mlaunch.sh'
+    @options[:script] || 'bash -x .evergreen/run-tests-mlaunch.sh'
   end
 
   def debian?
