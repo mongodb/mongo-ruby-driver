@@ -39,8 +39,11 @@ module Mongo
       #
       # @param [ Hash ] options
       #
-      # @option options [ Mongo::Client ] :key_vault_client A client connected
-      #   to the MongoDB instance containing the encryption key vault.
+      # @option options [ Mongo::Client ] :client A client connected to the
+      #   encrypted collection.
+      # @option options [ Mongo::Client | nil ] :key_vault_client A client connected
+      #   to the MongoDB instance containing the encryption key vault; optional.
+      #   If not provided, will default to :client option.
       # @option options [ String ] :key_vault_namespace The namespace of the key
       #   vault in the format database.collection.
       # @option options [ Hash | nil ] :schema_map The JSONSchema of the collection(s)
@@ -53,48 +56,47 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def initialize(options)
-        opts = set_default_options(options.dup)
+        @options = set_default_options(options).freeze
 
-        # mongocryptd_client_monitoring_io = opts.delete(:mongocryptd_client_monitoring_io)
-        # mongocryptd_client_monitoring_io = true if mongocryptd_client_monitoring_io.nil?
+        @crypt_handle = Crypt::Handle.new(
+          @options[:kms_providers],
+          schema_map: @options[:schema_map]
+        )
 
-        @options = opts.freeze
-
-        @crypt_handle = Crypt::Handle.new(opts[:kms_providers], schema_map: opts[:schema_map])
-        @key_vault_client = opts[:key_vault_client]
+        @key_vault_client = @options[:key_vault_client]
 
         # Set server selection timeout to 1 to prevent the client waiting for a
         # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
-          @options[:mongocryptd_uri],
+          @options[:extra_options][:mongocryptd_uri],
           monitoring_io: @options[:client].options[:monitoring_io],
           server_selection_timeout: 1,
         )
 
         @encryption_io = EncryptionIO.new(
-          client: opts[:client],
+          client: @options[:client],
           mongocryptd_client: @mongocryptd_client,
           key_vault_namespace: @options[:key_vault_namespace],
           key_vault_client: @key_vault_client,
-          options: {
-            mongocryptd_spawn_args: @options[:mongocryptd_spawn_args],
-            mongocryptd_spawn_path: @options[:mongocryptd_spawn_path],
-            mongocryptd_bypass_spawn: @options[:mongocryptd_bypass_spawn]
-          }
+          mongocryptd_options: @options[:extra_options]
         )
       end
 
+      # Whether this encrypter should perform encryption (returns false if
+      # the :bypass_auto_encryption option is set to true).
+      #
+      # @return [ Boolean ] Whether to perform encryption.
       def should_encrypt
         !@options[:bypass_auto_encryption]
       end
 
-      # Encrypt a database command
+      # Encrypt a database command.
       #
       # @param [ String ] database_name The name of the database on which the
-      #   command is being run
-      # @param [ Hash ] command The command to be encrypted
+      #   command is being run.
+      # @param [ Hash ] command The command to be encrypted.
       #
-      # @return [ BSON::Document ] The encrypted command
+      # @return [ BSON::Document ] The encrypted command.
       def encrypt(database_name, command)
         AutoEncryptionContext.new(
           @crypt_handle,
@@ -104,11 +106,11 @@ module Mongo
         ).run_state_machine
       end
 
-      # Decrypt a database command
+      # Decrypt a database command.
       #
-      # @param [ Hash ] command The command with encrypted fields
+      # @param [ Hash ] command The command with encrypted fields.
       #
-      # @return [ BSON::Document ] The decrypted command
+      # @return [ BSON::Document ] The decrypted command.
       def decrypt(command)
         AutoDecryptionContext.new(
           @crypt_handle,
@@ -117,9 +119,9 @@ module Mongo
         ).run_state_machine
       end
 
-      # Close the resources created by the AutoEncrypter
+      # Close the resources created by the AutoEncrypter.
       #
-      # @return [ true ] Always true
+      # @return [ true ] Always true.
       def close
         @mongocryptd_client.close if @mongocryptd_client
 
@@ -132,11 +134,12 @@ module Mongo
 
       private
 
-      # Sets the following default options:
-      # - default values for all extra_options
+      # Returns a new set of options with the following changes:
+      # - sets default values for all extra_options
       # - adds --idleShtudownTimeoutSecs=60 to extra_options[:mongocryptd_spawn_args]
       #   if not already present
       # - sets bypass_auto_encryption to false
+      # - sets default key vault client
       def set_default_options(options)
         opts = options.dup
 
@@ -157,7 +160,7 @@ module Mongo
         opts[:bypass_auto_encryption] ||= false
         opts[:key_vault_client] ||= opts[:client]
 
-        Options::Redacted.new(opts).merge(extra_options)
+        Options::Redacted.new(opts).merge(extra_options: extra_options)
       end
     end
   end

@@ -30,25 +30,29 @@ module Mongo
       # to the key vault.
       #
       # @param [ Mongo::Client ] client: The client used to connect to the collection
-      #   that stores the encrypted documents, defaults to nil
+      #   that stores the encrypted documents, defaults to nil.
       # @param [ Mongo::Client ] mongocryptd_client: The client connected to mongocryptd,
-      #   defaults to nil
-      # @param [ Mongo::Collection ] key_vault_collection: The Collection object
-      #   representing the database collection storing the encryption data keys
+      #   defaults to nil.
+      # @param [ Mongo::Client ] key_vault_client: The client connected to the
+      #   key vault collection.
+      # @param [ String ] key_vault_namespace: The key vault namespace in the format
+      #   db_name.collection_name.
+      # @param [ Hash ] mongocryptd_options: Options related to mongocryptd.
+      #
+      # @option mongocryptd_options [ Boolean ] :mongocryptd_bypass_spawn
+      # @option mongocryptd_options [ String ] :mongocryptd_spawn_path
+      # @option mongocryptd_options [ Array<String> ] :mongocryptd_spawn_args
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
       def initialize(
-        client: nil,
-        mongocryptd_client: nil,
-        key_vault_namespace:,
-        key_vault_client:,
-        options: {}
+        client: nil, mongocryptd_client: nil, key_vault_namespace:,
+        key_vault_client:, mongocryptd_options: {}
       )
         @client = client
         @mongocryptd_client = mongocryptd_client
         @key_vault_collection = key_vault_collection(key_vault_namespace, key_vault_client)
-        @options = options
+        @options = mongocryptd_options
       end
 
       # Query for keys in the key vault collection using the provided
@@ -66,7 +70,7 @@ module Mongo
       # @param [ Hash ] document
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
-      def insert(document)
+      def insert_data_key(document)
         @key_vault_collection.insert_one(document)
       end
 
@@ -132,6 +136,8 @@ module Mongo
 
       private
 
+      # Use the provided key vault client and namespace to construct a
+      # Mongo::Collection object representing the key vault collection.
       def key_vault_collection(key_vault_namespace, key_vault_client)
         unless key_vault_namespace
           raise ArgumentError.new('The :key_vault_namespace option cannot be nil')

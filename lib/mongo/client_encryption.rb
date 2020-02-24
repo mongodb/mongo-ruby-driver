@@ -31,7 +31,11 @@ module Mongo
     #   configuration information. Valid hash keys are :local or :aws. There
     #   may be more than one KMS provider specified.
     def initialize(key_vault_client, options={})
-      @encrypter = Crypt::ExplicitEncrypter.new(options.merge(key_vault_client: key_vault_client))
+      @encrypter = Crypt::ExplicitEncrypter.new(
+        key_vault_client,
+        options[:key_vault_namespace],
+        options[:kms_providers]
+      )
     end
 
     # Generates a data key used for encryption/decryption and stores
@@ -57,8 +61,10 @@ module Mongo
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
     def create_data_key(kms_provider, options={})
-      insert_result = @encrypter.create_and_insert_data_key(kms_provider, options)
-      insert_result.inserted_id.data
+      @encrypter.create_and_insert_data_key(
+        kms_provider,
+        options
+      ).inserted_id.data
     end
 
     # Encrypts a value using the specified encryption key and algorithm
