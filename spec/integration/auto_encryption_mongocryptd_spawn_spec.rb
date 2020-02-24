@@ -27,9 +27,30 @@ describe 'Auto Encryption' do
       )
     end
 
+    let(:server_selector) { double("ServerSelector") }
+    let(:cluster) { double("Cluster") }
+
     before do
       authorized_client.use(:admin)[:datakeys].drop
       authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+
+      allow(server_selector).to receive(:name)
+      allow(server_selector).to receive(:server_selection_timeout)
+      allow(server_selector).to receive(:local_threshold)
+      allow(cluster).to receive(:summary)
+
+      allow_any_instance_of(Mongo::Database)
+        .to receive(:command)
+        .with({
+          'insert' => 'users',
+          '$db' => 'auto_encryption',
+          'ordered' => true,
+          'lsid' => kind_of(Hash),
+          'documents' => kind_of(Array),
+          'jsonSchema' => kind_of(Hash),
+          'isRemoteSchema' => false
+        })
+        .and_raise(Mongo::Error::NoServerAvailable.new(server_selector, cluster))
     end
 
     it 'raises an exception when trying to perform auto encryption' do
