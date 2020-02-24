@@ -28,11 +28,7 @@ prepare_server $arch
 
 #install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
 
-git clone https://github.com/p-mongo/mongo-manager
-cd mongo-manager
-(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
-  gem build *.gemspec &&
-  gem install --no-document *.gem)
+install_mongo_manager
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -148,7 +144,6 @@ echo ${test_status}
 
 kill_jruby
 
-(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
-  mongo-manager stop --dir "$dbdir")
+mongo_manager_stop
 
 exit ${test_status}

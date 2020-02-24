@@ -18,17 +18,21 @@ install_deps
 
 prepare_server $arch
 
-install_mlaunch_pip
+#install_mlaunch_pip
+
+install_mongo_manager
 
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
-mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
-  --sslMode requireSSL \
-  --sslPEMKeyFile spec/support/certificates/server.pem \
-  --sslCAFile spec/support/certificates/ca.crt \
-  --sslClientCertificate spec/support/certificates/client.pem \
-  --auth --username bootstrap --password bootstrap \
-  --setParameter enableTestCommands=1
+
+(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+  mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR" \
+    --tls-mode requireTLS \
+    --tls-certificate-key-file spec/support/certificates/server.pem \
+    --tls-ca-file spec/support/certificates/ca.crt \
+    --user bootstrap --password bootstrap \
+    -- --setParameter enableTestCommands=1
+)
 
 create_user_cmd="`cat <<'EOT'
   db.getSiblingDB("$external").runCommand(
@@ -65,6 +69,6 @@ echo ${test_status}
 
 kill_jruby
 
-mlaunch stop --dir "$dbdir"
+mongo_manager_stop
 
 exit ${test_status}

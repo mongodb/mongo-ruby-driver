@@ -346,6 +346,19 @@ install_mlaunch_git() {
   fi
 }
 
+install_mongo_manager() {
+  git clone https://github.com/p-mongo/mongo-manager
+  (export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+    cd mongo-manager &&
+    gem build *.gemspec &&
+    gem install --no-document *.gem)
+}
+
+mongo_manager_stop() {
+  (export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+    mongo-manager stop --dir "$dbdir")
+}
+
 show_local_instructions() {
   echo To test this configuration locally:
   params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY STRESS_SPEC=true"
