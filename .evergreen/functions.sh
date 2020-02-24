@@ -265,9 +265,9 @@ install_mlaunch_virtualenv() {
   python3 -V || true
   #pip3 install --user virtualenv
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-  virtualenv -p python3 $venvpath
+  virtualenv $venvpath
   . $venvpath/bin/activate
-  pip install 'mtools[mlaunch]'
+  pip install 'mtools-legacy[mlaunch]'
 }
 
 install_mlaunch_pip() {
@@ -278,7 +278,7 @@ install_mlaunch_pip() {
   # prefix, which doesn't work for us because we unpack toolchain to a
   # different directory than prefix used for building. Work around this by
   # explicitly running pip3 with python.
-  python3 `which pip3` install -t "$pythonpath" 'mtools[mlaunch]'
+  pip install -t "$pythonpath" 'mtools-legacy[mlaunch]'
   export PATH="$pythonpath/bin":$PATH
   export PYTHONPATH="$pythonpath"
 }
@@ -290,15 +290,6 @@ install_mlaunch_git() {
   python3 -V || true
   which pip || true
   which pip3 || true
-  
-  if which pip3 >/dev/null 2>&1; then
-    pip=pip3
-  elif which pip >/dev/null 2>&1; then
-    pip=pip
-  else
-    echo Neither pip nor pip3 are available 1>&2
-    exit 3
-  fi
   
   if false; then
     if ! virtualenv --version; then
@@ -319,7 +310,7 @@ install_mlaunch_git() {
     python3 setup.py install
     cd ..
   else
-    eval $pip install --user virtualenv
+    pip install --user virtualenv
     export PATH=$HOME/.local/bin:$PATH
     
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
@@ -329,10 +320,10 @@ install_mlaunch_git() {
     pip install psutil pymongo
     
     git clone $repo mlaunch
-    cd mlaunch
-    git checkout origin/$branch
-    python setup.py install
-    cd ..
+    (cd mlaunch &&
+      git checkout origin/$branch &&
+      python setup.py install
+    )
   fi
 }
 
