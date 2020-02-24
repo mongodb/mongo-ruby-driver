@@ -8,6 +8,14 @@ module LiteConstraints
     end
   end
 
+  def require_jruby
+    before(:all) do
+      unless BSON::Environment.jruby?
+        skip "JRuby required, we have #{SpecConfig.instance.platform}"
+      end
+    end
+  end
+
   # This is for marking tests that fail on jruby that should
   # in principle work (as opposed to being fundamentally incompatible
   # with jruby).

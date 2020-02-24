@@ -857,10 +857,10 @@ buildvariants:
     ruby: "jruby-9.2"
     mongodb-version: "4.2"
     topology: "*"
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "jruby-noauth"
@@ -869,10 +869,10 @@ buildvariants:
     ruby: "jruby-9.2"
     mongodb-version: "2.6"
     topology: "*"
-    os: rhel70
+    os: ubuntu1604
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   tasks:
-     - name: "test"
+    - name: "test-mlaunch"
 
 -
   matrix_name: "zlib-auth"
