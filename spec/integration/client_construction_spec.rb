@@ -141,15 +141,16 @@ describe 'Client construction' do
     # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
     clean_slate
 
+    include_context 'define shared FLE helpers'
+    include_context 'with local kms_providers'
+
     let(:options) { { auto_encryption_options: auto_encryption_options } }
 
     let(:auto_encryption_options) do
       {
         key_vault_client: key_vault_client,
-        key_vault_namespace: 'database.collection',
-        kms_providers: {
-          local: { key: Base64.encode64('ruby' * 24) },
-        }
+        key_vault_namespace: key_vault_namespace,
+        kms_providers: kms_providers
       }
     end
 
@@ -160,21 +161,16 @@ describe 'Client construction' do
         ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], options)
       end
 
-      after do
-        client.teardown_encrypter
-      end
-
       it 'creates a working key vault client' do
-        key_vault_client = client.encryption_options['key_vault_client']
-        expect(key_vault_client.encryption_options).to be_nil
+        key_vault_client = client.encrypter.key_vault_client
 
         result = key_vault_client[:test].insert_one(test: 1)
         expect(result).to be_ok
       end
 
       it 'creates a key vault client with a different cluster from the existing client' do
-        key_vault_client = client.encryption_options['key_vault_client']
-        expect(key_vault_client.cluster).not_to eq(client.cluster)
+        key_vault_client = client.encrypter.key_vault_client
+        expect(key_vault_client.cluster).to eq(client.cluster)
       end
     end
   end
