@@ -39,6 +39,10 @@ describe 'Auto Encryption' do
       allow(server_selector).to receive(:local_threshold)
       allow(cluster).to receive(:summary)
 
+      # Raise a server selection error on intent-to-encrypt commands to mock
+      # what would happen if mongocryptd hadn't already been spawned. It is
+      # necessary to mock this behavior because it is likely that another test
+      # will have already spawned mongocryptd, causing this test to fail.
       allow_any_instance_of(Mongo::Database)
         .to receive(:command)
         .with({
