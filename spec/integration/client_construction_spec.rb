@@ -136,6 +136,8 @@ describe 'Client construction' do
 
   context 'with auto encryption options'do
     require_libmongocrypt
+    require_enterprise
+    min_server_fcv '4.2'
 
     # Diagnostics of leaked background threads only, these tests do not
     # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
@@ -168,7 +170,7 @@ describe 'Client construction' do
         expect(result).to be_ok
       end
 
-      it 'creates a key vault client with a different cluster from the existing client' do
+      it 'creates a key vault client with the same cluster as the existing client' do
         key_vault_client = client.encrypter.key_vault_client
         expect(key_vault_client.cluster).to eq(client.cluster)
       end
