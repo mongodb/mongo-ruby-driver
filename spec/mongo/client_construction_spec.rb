@@ -299,10 +299,10 @@ describe Mongo::Client do
               expect(encryption_options[:kms_providers]).to be_a_kind_of(Hash)
               expect(encryption_options[:schema_map]).to eq(schema_map)
               expect(encryption_options[:bypass_auto_encryption]).to eq(bypass_auto_encryption)
-              expect(encryption_options[:mongocryptd_uri]).to eq(mongocryptd_uri)
-              expect(encryption_options[:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
-              expect(encryption_options[:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
-              expect(encryption_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+              expect(encryption_options[:extra_options][:mongocryptd_uri]).to eq(mongocryptd_uri)
+              expect(encryption_options[:extra_options][:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
+              expect(encryption_options[:extra_options][:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
+              expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
 
               expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
             end
@@ -326,10 +326,10 @@ describe Mongo::Client do
               end
 
               it 'sets extra options to defaults' do
-                expect(encryption_options[:mongocryptd_uri]).to eq('mongodb://localhost:27020')
-                expect(encryption_options[:mongocryptd_bypass_spawn]).to be false
-                expect(encryption_options[:mongocryptd_spawn_path]).to eq('mongocryptd')
-                expect(encryption_options[:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
+                expect(encryption_options[:extra_options][:mongocryptd_uri]).to eq('mongodb://localhost:27020')
+                expect(encryption_options[:extra_options][:mongocryptd_bypass_spawn]).to be false
+                expect(encryption_options[:extra_options][:mongocryptd_spawn_path]).to eq('mongocryptd')
+                expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(['--idleShutdownTimeoutSecs=60'])
               end
             end
 
@@ -337,7 +337,7 @@ describe Mongo::Client do
               let(:mongocryptd_spawn_args) { ['--otherArgument=true'] }
 
               it 'adds a default value to mongocryptd_spawn_args' do
-                expect(encryption_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args + ['--idleShutdownTimeoutSecs=60'])
+                expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args + ['--idleShutdownTimeoutSecs=60'])
               end
             end
 
@@ -345,7 +345,7 @@ describe Mongo::Client do
               let(:mongocryptd_spawn_args) { ['--idleShutdownTimeoutSecs', 100] }
 
               it 'does not modify mongocryptd_spawn_args' do
-                expect(encryption_options[:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+                expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
               end
             end
 
