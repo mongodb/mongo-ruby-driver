@@ -80,10 +80,7 @@ module Mongo
       #
       # @return [ Hash ] The collection information
       def collection_info(filter)
-        result = @client.database.list_collections
-
-        name = filter['name']
-        result.find { |r| r['name'] == name }
+        @client.database.list_collections(filter).first
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
