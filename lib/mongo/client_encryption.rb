@@ -64,7 +64,7 @@ module Mongo
       @encrypter.create_and_insert_data_key(
         kms_provider,
         options
-      ).inserted_id.data
+      )
     end
 
     # Encrypts a value using the specified encryption key and algorithm
@@ -86,8 +86,7 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value
     def encrypt(value, options={})
-      doc = { 'v': value }
-      @encrypter.encrypt(doc, options)['v']
+      @encrypter.encrypt(value, options)
     end
 
     # Decrypts a value that has already been encrypted
@@ -97,8 +96,7 @@ module Mongo
     #
     # @return [ Object ] The decrypted value
     def decrypt(value)
-      doc = { 'v': value }
-      @encrypter.decrypt(doc)['v']
+      @encrypter.decrypt(value)
     end
   end
 end

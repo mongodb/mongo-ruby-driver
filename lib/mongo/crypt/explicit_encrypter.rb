@@ -38,8 +38,13 @@ module Mongo
         )
       end
 
-      # Create a new data key using the specified kms_provider and options, and
-      # insert the new key into the key vault collection.
+      # Generates a data key used for encryption/decryption and stores
+      # that key in the KMS collection. The generated key is encrypted with
+      # the KMS master key.
+      #
+      # @param [ String ] kms_provider The KMS provider to use. Valid values are
+      #   "aws" and "local".
+      # @params [ Hash ] options
       #
       # @option options [ Hash ] :master_key Information about the AWS master key. Required
       #   if kms_provider is "aws".
@@ -53,8 +58,8 @@ module Mongo
       # @option options [ Array<String> ] :key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
       #
-      # @return [ Mongo::Result ] The response wrapper for the insert response
-      #   from the database.
+      # @return [ String ] Base64-encoded UUID string representing the
+      #   data key _id
       def create_and_insert_data_key(kms_provider, options)
         data_key_document = Crypt::DataKeyContext.new(
           @crypt_handle,
@@ -63,12 +68,12 @@ module Mongo
           options
         ).run_state_machine
 
-        @encryption_io.insert_data_key(data_key_document)
+        @encryption_io.insert_data_key(data_key_document).inserted_id.data
       end
 
-      # Encrypts a document using the specified encryption key and algorithm
+      # Encrypts a value using the specified encryption key and algorithm
       #
-      # @param [ Hash ] doc The document to encrypt
+      # @param [ Object ] value The value to encrypt
       # @param [ Hash ] options
       #
       # @option options [ String ] :key_id The base64-encoded UUID of the encryption
@@ -82,29 +87,29 @@ module Mongo
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
       #   one is required to perform explicit encryption.
       #
-      # @return [ Hash ] A document with the value at the 'v' key replaced by
-      #   its encrypted equivalent.
-      def encrypt(doc, options)
+      # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
+      #   representing the encrypted value
+      def encrypt(value, options)
         Crypt::ExplicitEncryptionContext.new(
           @crypt_handle,
           @encryption_io,
-          doc,
+          { 'v': value },
           options
-        ).run_state_machine
+        ).run_state_machine['v']
       end
 
-      # Decrypts a document with an encrypted value.
+      # Decrypts a value that has already been encrypted
       #
-      # @param [ Hash ] doc The document to decrypt.
+      # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)
+      #   that will be decrypted
       #
-      # @return [ Hash ] The document where the encrypted value is replaced by
-      #   its plaintext equivalent.
-      def decrypt(doc)
+      # @return [ Object ] The decrypted value
+      def decrypt(value)
         result = Crypt::ExplicitDecryptionContext.new(
           @crypt_handle,
           @encryption_io,
-          doc,
-        ).run_state_machine
+          { 'v': value },
+        ).run_state_machine['v']
       end
     end
   end
