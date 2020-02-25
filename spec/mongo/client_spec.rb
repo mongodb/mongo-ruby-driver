@@ -840,6 +840,4 @@ describe Mongo::Client do
       end
     end
   end
-
-  end
 end
