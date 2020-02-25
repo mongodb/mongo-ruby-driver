@@ -82,7 +82,23 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+# mlaunch frequently fails to provision sharded clusters with authentication -
+# see https://github.com/rueckstiess/mtools/issues/691.
+# Give it 5 attempts.
+ok=false
+for i in `seq 5`; do
+  if mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args; then
+    ok=true
+    break
+  fi
+  mlaunch stop --dir "$dbdir" || true
+  rm -rf "$dbdir"
+done
+
+if ! $ok; then
+  echo mlaunch failed to provision the desired deployment 1>&2
+  exit 5
+fi
 
 install_deps
 
