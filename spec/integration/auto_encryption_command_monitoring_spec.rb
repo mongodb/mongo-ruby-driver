@@ -182,12 +182,22 @@ describe 'Auto Encryption' do
   describe '#insert_one' do
     let(:command_name) { 'insert' }
 
-    it 'has encrypted data in command monitoring' do
+    before do
       encryption_client[:users].insert_one(ssn: ssn)
+    end
 
+    it 'has encrypted data in command monitoring' do
       # Command started event occurs after ssn is encrypted
       # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["documents"].first["ssn"]).to be_ciphertext
+    end
+
+    it 'performs command monitoring for key vault client as well' do
+      key_vault_find_event = subscriber.started_events.find do |event|
+        event.command_name == 'find' && event.database_name == 'admin'
+      end
+
+      expect(key_vault_find_event).not_to be_nil
     end
   end
 
