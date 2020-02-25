@@ -130,8 +130,8 @@ module Mongo
     #   collection in the database.
     #
     # @since 2.0.5
-    def list_collections
-      View.new(self).list_collections
+    def list_collections(filter={})
+      View.new(self).list_collections(filter)
     end
 
     # Get all the non-system collections that belong to this database.
