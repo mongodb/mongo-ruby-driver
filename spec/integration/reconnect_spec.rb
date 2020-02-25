@@ -134,7 +134,10 @@ describe 'Client after reconnect' do
 
       let(:client) do
         ClientRegistry.instance.register_local_client(
-          Mongo::Client.new(uri, server_selection_timeout: 3.89,
+          Mongo::Client.new(uri,
+            timeout: 5,
+            connect_timeout: 5,
+            server_selection_timeout: 3.89,
             resolv_options: {
               nameserver: 'localhost',
               nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
