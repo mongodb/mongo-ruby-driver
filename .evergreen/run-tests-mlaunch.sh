@@ -43,7 +43,7 @@ if test "$TOPOLOGY" = replica_set; then
   args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
   export HAVE_ARBITER=1
 elif test "$TOPOLOGY" = sharded_cluster; then
-  args="$args --replicaset --sharded 2 --name ruby-driver-rs"
+  args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
   if test -z "$SINGLE_MONGOS"; then
     args="$args --mongos 2"
   fi
