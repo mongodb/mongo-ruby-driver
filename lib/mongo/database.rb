@@ -126,6 +126,9 @@ module Mongo
     #   information hash per collection, depends on the MongoDB server
     #   version that fulfills the request.
     #
+    # @param [ Hash ] filter A filter on the collections returned by
+    #   this command.
+    #
     # @return [ Array<Hash> ] Array of information hashes, one for each
     #   collection in the database.
     #
