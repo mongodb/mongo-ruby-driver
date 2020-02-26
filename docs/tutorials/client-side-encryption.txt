@@ -1,0 +1,64 @@
+.. _client-side-encryption:
+
+======================
+Client-Side Encryption
+======================
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+New in MongoDB 4.2, client-side encryption allows administrators and developers
+to encrypt specific fields in MongoDB documents before inserting them into the
+database.
+
+With client-side encryption, developers can encrypt fields client-side without
+any server-side configuration or directives. Client-side field-level encryption
+supports workloads where applications must guarantee that unauthorized parties,
+including server administrators, cannot read the encrypted data.
+
+Installation
+------------
+
+Client-side encryption requires the installation of additional packages.
+
+libmongocrypt
+~~~~~~~~~~~~~
+
+Libmongocrypt is a C library that the driver uses to perform much of the
+client-side encryption functionality. To use client-side encryption, you must
+have the libmongocrypt binary on your machine.
+
+To download a pre-built binary (recommended):
+- Download a tarball of all libmongocrypt variations from this link:
+    https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz
+- Unzip the file you downloaded. You will see a list of folders, each
+    corresponding to an operating system. Find the folder that matches
+    your operating system and open it.
+- Inside that folder, open the folder called "nocrypto." In either the
+    lib or lb64 folder, you will find the libmongocrypt.so or
+    libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
+- Move that file to wherever you want to keep it on your machine. You may delete
+    the other files included in the tarball.
+
+To build from source:
+- Follow the instructions in the README on the libmongocrypt GitHub repo:
+    https://github.com/mongodb/libmongocrypt.
+
+mongocryptd
+~~~~~~~~~~~
+
+Mongocryptd is a daemon that tells the driver which fields to encrypt in a
+given operation. It is only required for automatic encryption, which is an
+enterprise-only feature. If you only intend to use explicit encryption, you may
+skip this step.
+
+Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
+(versions 4.2 and newer). If you must install mongocryptd separately, follow
+the installation instructions on this page:
+https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation.
+
