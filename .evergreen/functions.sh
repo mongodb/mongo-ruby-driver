@@ -219,7 +219,9 @@ bundle_install() {
     args="$args --gemfile=$BUNDLE_GEMFILE"
   fi
   echo "Running bundle install $args"
-  bundle install $args
+  # Sometimes bundler fails for no apparent reason, run it again then.
+  # The failures happen on both MRI and JRuby and have different manifestatinons.
+  bundle install $args || bundle install $args
 }
 
 install_deps() {
