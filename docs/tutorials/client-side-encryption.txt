@@ -1,0 +1,180 @@
+.. _client-side-encryption:
+
+======================
+Client-Side Encryption
+======================
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+New in MongoDB 4.2, client-side encryption allows administrators and developers
+to encrypt specific fields in MongoDB documents before inserting them into the
+database.
+
+With client-side encryption, developers can encrypt fields client-side without
+any server-side configuration or directives. Client-side field-level encryption
+supports workloads where applications must guarantee that unauthorized parties,
+including server administrators, cannot read the encrypted data.
+
+Installation
+------------
+
+Client-side encryption requires the installation of additional packages.
+
+libmongocrypt
+~~~~~~~~~~~~~
+
+Libmongocrypt is a C library used by the driver for client-side encryption.
+To use client-side encryption, you must install the libmongocrypt binary
+on the machine running your Ruby program.
+
+To download a pre-built binary:
+
+- Download a tarball of all libmongocrypt variations `here <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
+
+- Extract the file you downloaded. You will see a list of directories, each
+  corresponding to an operating system. Find the directory that matches your
+  operating system and open it.
+
+- Inside that folder, open the folder called "nocrypto." In either the
+  lib or lb64 folder, you will find the libmongocrypt.so or
+  libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
+
+- Move that file to wherever you want to keep it on your machine. You may delete
+  the other files included in the tarball.
+
+To build the binary from source:
+
+- Follow the instructions in the README in the `libmongocrypt GitHub repo <https://github.com/mongodb/libmongocrypt>`_.
+
+Once you have the libmongocrypt binary on your machine, specify the path to the
+binary using the LIBMONGOCRYPT_PATH environment variable. It is recommended that
+you add this variable to your rc files. For example:
+
+.. code-block:: bash
+
+  export LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt.so
+
+mongocryptd
+~~~~~~~~~~~
+
+Mongocryptd is a daemon that tells the driver which fields to encrypt in a
+given operation. It is only required for automatic encryption, which is an
+enterprise-only feature. If you only intend to use explicit encryption, you may
+skip this step.
+
+Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
+(versions 4.2 and newer). If you must install mongocryptd separately, follow
+the `installation instructions in the MongoDB manual <https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation>`_.
+
+Automatic Encryption
+--------------------
+
+Automatic encryption is a feature that allows users to configure a
+``Mongo::Client`` instance to always encrypt specific document fields when
+performing database operations. Once the ``Mongo::Client`` is configured, it
+will automatically encrypt any field that requires encryption before writing
+it to the database, and it will automatically decrypt those fields when reading
+them. Automatic encryption is an enterprise-only feature.
+
+The following example provides a demonstration of auto-encryption using a local
+master key.
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  # Generate a local encryption master key
+  # To reuse this master key, persist it to a file or environment variable
+  # on your machine.
+  local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
+
+  kms_providers = {
+    local: {
+      key: local_master_key
+    }
+  }
+
+  # Create an encryption data key and insert it into the key vault collection
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    {
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: kms_providers
+    }
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+
+  # Create a schema map
+  schema_map = {
+    'encryption_db.encryption_coll': {
+      properties: {
+        encrypted_field: {
+          encrypt: {
+            keyId: [BSON::Binary.new(data_key_id, :uuid)],
+            bsonType: "string",
+            algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+          }
+        }
+      },
+      bsonType: "object"
+    }
+  }
+
+  # Configure the client for automatic encryption
+  client = Mongo::Client.new(
+    ['localhost:27017'],
+    auto_encryption_options: {
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: kms_providers,
+      schema_map: schema_map
+    }
+  )
+
+  collection = client.use(:encryption_db)[:encryption_coll]
+  collection.drop # Make sure there is no data in the collection
+
+  # The string "sensitive data" will be encrypted and stored in the database
+  # as ciphertext
+  collection.insert_one(encrypted_field: 'sensitive data')
+
+  # The data is decrypted before being returned to the user
+  collection.find(encrypted_field: 'sensitive data').first['encrypted_field']
+  # => "sensitive data"
+
+  # A client with no auto_encryption_options is unable to decrypt the data
+  client_no_encryption = Mongo::Client.new(['localhost:27017'])
+  client_no_encryption.use(:encryption_db)[:encryption_coll].find.first['encrypted_field']
+  # => <BSON::Binary...>
+
+For more information about creating an encryption master key, creating a data key,
+or creating a schema map, see later sections of this tutorial.
+
+.. seealso::
+  `Creating A Master Key`_,
+  `Creating A Data Key`_,
+  `Creating A Schema Map`_,
+
+Explicit Encryption
+-------------------
+Documentation for explicit encryption will be provided soon.
+
+Creating a Master Key
+---------------------
+Documentation coming soon.
+
+Creating a Data Key
+-------------------
+Documentation coming soon.
+
+Creating a Schema Map
+---------------------
+Documentation coming soon.
