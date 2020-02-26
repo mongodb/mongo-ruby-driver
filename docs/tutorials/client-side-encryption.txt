@@ -9,7 +9,7 @@ Client-Side Encryption
 .. contents:: On this page
    :local:
    :backlinks: none
-   :depth: 1
+   :depth: 2
    :class: singlecol
 
 New in MongoDB 4.2, client-side encryption allows administrators and developers
@@ -50,8 +50,7 @@ To download a pre-built binary (recommended):
 
 To build from source:
 
-- Follow the instructions in the README on the libmongocrypt GitHub repo:
-  https://github.com/mongodb/libmongocrypt.
+- Follow the instructions in the README on the `libmongocrypt GitHub repo <https://github.com/mongodb/libmongocrypt>`_.
 
 mongocryptd
 ~~~~~~~~~~~
@@ -63,6 +62,69 @@ skip this step.
 
 Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
 (versions 4.2 and newer). If you must install mongocryptd separately, follow
-the installation instructions on this page:
-https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation.
+the `installation instructions in the MongoDB manual <https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation>`_.
+
+Automatic Encryption
+--------------------
+
+Automatic encryption is a feature that allows users to configure a
+``Mongo::Client`` instance to always encrypt specific data fields when performing
+document operations. Once the ``Mongo::Client`` is configured, the experience of
+using it is unchanged, but it automatically encrypts fields when writing data to
+the database and automatically decrypts fields when reading data. Automatic
+encryption is an enterprise feature.
+
+Creating a Master Key
+~~~~~~~~~~~~~~~~~~~~~
+
+The first step to configuting an auto-encryption client is to create an encryption
+master key and set up the key management service (KMS) that you plan to use. You may
+either set up a local master key or use Amazon's AWS Key Management Service. In
+both cases, you must set up the ``:kms_providers`` option, which you will use to
+create encryption data keys and configure the ``Mongo::Client`` instance used
+to encrypt data.
+
+1. Local KMS Setup
+To set up local KMS information, you must generate a new master key. A local
+master key is a Base64-encoded 96-byte string.
+
+.. code-block:: ruby
+
+  require 'base64'
+  require 'securerandom'
+
+  key = Base64.encode64(SecureRandom.random_bytes(96))
+  kms_providers = {
+    local: {
+      key: key
+    }
+  }
+
+1. AWS KMS Setup
+To use the AWS KMS provider, create an encryption master key in the AWS Key
+Management Service. For more information, read the
+`Amazon Web Services KMS section in the MongoDB Manual <https://docs.mongodb.com/manual/core/security-client-side-encryption-key-management/#field-level-encryption-aws-kms>`_.
+
+Locate the access key and secret access key for the IAM user who has permissions
+to use your AWS master key, and use that information to create the ``:kms_providers``
+option:
+
+.. code-block:: ruby
+
+  kms_providers = {
+    aws: {
+      access_key_id: "YOUR AWS ACCESS KEY ID",
+      secret_access_key: "YOUR AWS SECRET ACCESS KEY"
+    }
+  }
+
+Creating a Data Key
+~~~~~~~~~~~~~~~~~~~
+
+It is necessary to 
+
+
+Explicit Encryption
+-------------------
+Documentation for explicit encryption will be provided soon.
 
