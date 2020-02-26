@@ -145,8 +145,13 @@ describe Mongo::Collection::View::Builder::FindCommand do
         expect(selector['tailable']).to be true
       end
 
-      it 'maps oplog replay' do
+      it 'maps oplog_replay' do
         expect(selector['oplogReplay']).to be true
+      end
+
+      it 'warns when using oplog_replay' do
+        client.should receive(:log_warn).with('oplogReplay is deprecated and ignored by MongoDB 4.4 and later')
+        selector
       end
 
       it 'maps no cursor timeout' do

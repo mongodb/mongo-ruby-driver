@@ -101,6 +101,9 @@ module Mongo
                 collection.read_concern)
             end
             command = Options::Mapper.transform_documents(convert_flags(options), MAPPINGS, document)
+            if command['oplogReplay']
+              log_warn("oplogReplay is deprecated and ignored by MongoDB 4.4 and later")
+            end
             convert_limit_and_batch_size(command)
             command
           end
@@ -134,6 +137,10 @@ module Mongo
             Flags.map_flags(options).reduce(opts) do |o, key|
               o.merge!(key => true)
             end
+          end
+
+          def log_warn(*args)
+            database.client.log_warn(*args)
           end
         end
       end
