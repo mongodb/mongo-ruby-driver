@@ -158,21 +158,21 @@ returns its Base64-encoded 16-byte UUID.
 
 *Option 1: Create a data key using a local master key*
 
-  .. code-block::ruby
+.. code-block:: ruby
 
-    data_key_id = client_encryption.create_data_key('local')
+  data_key_id = client_encryption.create_data_key('local')
 
 *Option 2: Create a data key using an AWS master key*
 
-  .. code-block::ruby
+.. code-block:: ruby
 
-    data_key_id = client_encryption.create_data_key(
-      'aws',
-      {
-        region: "YOUR AWS REGION",
-        key: "MASTER KEY ARN"
-      }
-    )
+  data_key_id = client_encryption.create_data_key(
+    'aws',
+    {
+      region: "YOUR AWS REGION",
+      key: "MASTER KEY ARN"
+    }
+  )
 
 Creating a Schema Map
 ~~~~~~~~~~~~~~~~~~~~~
