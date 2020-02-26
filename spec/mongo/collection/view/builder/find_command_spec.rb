@@ -1,11 +1,17 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Collection::View::Builder::FindCommand do
+
+  let(:client) do
+    new_local_client_nmio(['127.0.0.1:27017'])
+  end
+
+  let(:base_collection) { client['find-command-spec'] }
 
   describe '#specification' do
 
     let(:view) do
-      Mongo::Collection::View.new(authorized_collection, filter, options)
+      Mongo::Collection::View.new(base_collection, filter, options)
     end
 
     let(:builder) do
@@ -68,7 +74,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
 
       it 'maps the collection name' do
-        expect(selector['find']).to eq(authorized_collection.name)
+        expect(selector['find']).to eq(base_collection.name)
       end
 
       it 'maps the filter' do
@@ -465,7 +471,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
     context 'when the collection has a read concern defined' do
 
       let(:collection) do
-        authorized_collection.with(read_concern: { level: 'invalid' })
+        base_collection.with(read_concern: { level: 'invalid' })
       end
 
       let(:view) do
@@ -479,7 +485,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       context 'when explain is called for the find' do
 
         let(:collection) do
-          authorized_collection.with(read_concern: { level: 'invalid' })
+          base_collection.with(read_concern: { level: 'invalid' })
         end
 
         let(:view) do
