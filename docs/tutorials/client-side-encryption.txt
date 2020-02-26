@@ -157,9 +157,9 @@ For more information about creating an encryption master key, creating a data ke
 or creating a schema map, see later sections of this tutorial.
 
 .. seealso::
-  :manual:`Creating A Master Key</tutorials/client-side-encryption#creating-a-master-key>`
-  :manual:`Creating A Data Key</tutorials/client-side-encryption#creating-a-data-key>`,
-  :manual:`Creating A Schema Map</tutorials/client-side-encryption#creating-a-schema-map>`,
+  `Creating A Master Key`_,
+  `Creating A Data Key`_,
+  `Creating A Schema Map`_,
 
 Explicit Encryption
 -------------------
