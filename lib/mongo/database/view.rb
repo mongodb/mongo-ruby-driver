@@ -78,10 +78,18 @@ module Mongo
       # @example Get info on each collection.
       #   database.list_collections
       #
+      # @param [ Hash ] options
+      #
+      # @option options [ Hash ] :filter A filter on the collections returned.
+      #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+      #   for more information and usage.
+      #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
       # @since 2.0.5
-      def list_collections(filter={})
+      def list_collections(**options)
+        filter = options[:filter] || {}
+
         session = client.send(:get_session)
         collections_info(session, ServerSelector.primary, { filter: filter })
       end

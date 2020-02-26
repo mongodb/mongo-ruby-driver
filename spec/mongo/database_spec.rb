@@ -185,6 +185,8 @@ describe Mongo::Database do
         before do
           database[:anothercol].drop
           database[:anothercol].create
+
+          expect(database.collections.length).to be > 1
         end
 
         let(:result) do

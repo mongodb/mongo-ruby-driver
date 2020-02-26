@@ -127,14 +127,15 @@ module Mongo
     #   version that fulfills the request.
     #
     # @param [ Hash ] filter A filter on the collections returned by
-    #   this command.
+    #   this command. See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for documentation on the filter option.
     #
     # @return [ Array<Hash> ] Array of information hashes, one for each
     #   collection in the database.
     #
     # @since 2.0.5
     def list_collections(filter={})
-      View.new(self).list_collections(filter)
+      View.new(self).list_collections(filter: filter)
     end
 
     # Get all the non-system collections that belong to this database.
