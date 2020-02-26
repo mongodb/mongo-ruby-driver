@@ -34,8 +34,14 @@ install_mlaunch_pip
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
+mongo_version=`echo $MONGODB_VERSION |tr -d .`
+
 args="--setParameter enableTestCommands=1"
-if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
+# diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
+# and mlaunch does not support specifying mongod-only parameters:
+# https://github.com/rueckstiess/mtools/issues/696
+# Pass it to 3.4 and newer servers where it is accepted by all daemons.
+if test $mongo_version -ge 34; then
   args="$args --setParameter diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
