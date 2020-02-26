@@ -88,8 +88,6 @@ module Mongo
       #
       # @since 2.0.5
       def list_collections(**options)
-        filter = options[:filter] || {}
-
         session = client.send(:get_session)
         collections_info(session, ServerSelector.primary, options)
       end
