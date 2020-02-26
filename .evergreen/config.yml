@@ -387,14 +387,14 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
-      - id: "4.0"
-        display_name: "4.0"
-        variables:
-          VERSION: "4.0"
       - id: "4.2"
         display_name: "4.2"
         variables:
           VERSION: "4.2"
+      - id: "4.0"
+        display_name: "4.0"
+        variables:
+          VERSION: "4.0"
       - id: "3.6"
         display_name: "3.6"
         variables:
@@ -440,6 +440,14 @@ axes:
         variables:
            TOPOLOGY: "sharded_cluster"
 
+  - id: "single-mongos"
+    display_name: Single Mongos
+    values:
+      - id: "single-mongos"
+        display_name: Single Mongos
+        variables:
+          SINGLE_MONGOS: 'true'
+
   - id: "auth-and-ssl"
     display_name: Authentication and SSL
     values:
@@ -466,29 +474,27 @@ axes:
 
   - id: "ruby"
     display_name: Ruby Version
-    # Local TLS tests run on all Ruby versions, thus no versions should be
-    # listed here (uncommented) that are not supported.
     values:
-      - id: "ruby-2.3"
-        display_name: ruby-2.3
-        variables:
-           RVM_RUBY: "ruby-2.3"
-      - id: "ruby-2.4"
-        display_name: ruby-2.4
-        variables:
-           RVM_RUBY: "ruby-2.4"
-      - id: "ruby-2.5"
-        display_name: ruby-2.5
-        variables:
-           RVM_RUBY: "ruby-2.5"
-      - id: "ruby-2.6"
-        display_name: ruby-2.6
-        variables:
-           RVM_RUBY: "ruby-2.6"
       - id: "ruby-2.7"
         display_name: ruby-2.7
         variables:
            RVM_RUBY: "ruby-2.7"
+      - id: "ruby-2.6"
+        display_name: ruby-2.6
+        variables:
+           RVM_RUBY: "ruby-2.6"
+      - id: "ruby-2.5"
+        display_name: ruby-2.5
+        variables:
+           RVM_RUBY: "ruby-2.5"
+      - id: "ruby-2.4"
+        display_name: ruby-2.4
+        variables:
+           RVM_RUBY: "ruby-2.4"
+      - id: "ruby-2.3"
+        display_name: ruby-2.3
+        variables:
+           RVM_RUBY: "ruby-2.3"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
@@ -501,18 +507,18 @@ axes:
   - id: "os"
     display_name: OS
     values:
-      - id: ubuntu1204
-        display_name: "Ubuntu 12.04"
-        run_on: ubuntu1204-test
-      - id: ubuntu1404
-        display_name: "Ubuntu 14.04"
-        run_on: ubuntu1404-test
-      - id: ubuntu1604
-        display_name: "Ubuntu 16.04"
-        run_on: ubuntu1604-test
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-test
+      - id: ubuntu1604
+        display_name: "Ubuntu 16.04"
+        run_on: ubuntu1604-test
+      - id: ubuntu1404
+        display_name: "Ubuntu 14.04"
+        run_on: ubuntu1404-test
+      - id: ubuntu1204
+        display_name: "Ubuntu 12.04"
+        run_on: ubuntu1204-test
       - id: rhel70
         display_name: "RHEL 7.0"
         run_on: rhel70-small
@@ -560,22 +566,14 @@ axes:
   - id: bson
     display_name: BSON
     values:
-      - id: min
-        display_name: min
-        variables:
-          BSON: min
       - id: master
         display_name: master
         variables:
           BSON: master
-
-  - id: "single-mongos"
-    display_name: Single Mongos
-    values:
-      - id: "single-mongos"
-        display_name: Single Mongos
+      - id: min
+        display_name: min
         variables:
-          SINGLE_MONGOS: 'true'
+          BSON: min
 
   - id: storage-engine
     display_name: Storage Engine
