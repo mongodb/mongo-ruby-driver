@@ -48,9 +48,16 @@ To download a pre-built binary (recommended):
 - Move that file to wherever you want to keep it on your machine. You may delete
   the other files included in the tarball.
 
-To build from source:
+To build binary from source:
 
 - Follow the instructions in the README on the `libmongocrypt GitHub repo <https://github.com/mongodb/libmongocrypt>`_.
+
+Once you have the libmongocrypt binary on your machine, specify the path to the
+binary using the LIBMONGOCRYPT_PATH environment variable. It is recommended that
+you add this variable to your rc files. For example:
+
+.. code-block:: bash
+  export LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt.so
 
 mongocryptd
 ~~~~~~~~~~~
