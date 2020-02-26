@@ -198,7 +198,7 @@ module Mongo
       def maybe_encrypt(server, client)
         # TODO verify compression happens later, i.e. when this method runs
         # the message is not compressed.
-        if client && client.encrypter && client.encrypter.should_encrypt
+        if client && client.encrypter && client.encrypter.encrypt?
           if server.max_wire_version < 8
             raise Error::CryptError.new(
               "Cannot perform encryption against a MongoDB server older than " +

@@ -86,7 +86,7 @@ module Mongo
       # the :bypass_auto_encryption option is set to true).
       #
       # @return [ Boolean ] Whether to perform encryption.
-      def should_encrypt
+      def encrypt?
         !@options[:bypass_auto_encryption]
       end
 
