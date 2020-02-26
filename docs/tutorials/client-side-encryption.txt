@@ -35,24 +35,23 @@ have the libmongocrypt binary on your machine.
 
 To download a pre-built binary (recommended):
 
-- Download a tarball of all libmongocrypt variations from this `AWS bucket
-<https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
+- Download a tarball of all libmongocrypt variations from this `AWS bucket <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
 
 - Unzip the file you downloaded. You will see a list of folders, each
-corresponding to an operating system. Find the folder that matches your
-operating system and open it.
+  corresponding to an operating system. Find the folder that matches your
+  operating system and open it.
 
 - Inside that folder, open the folder called "nocrypto." In either the
-lib or lb64 folder, you will find the libmongocrypt.so or
-libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
+  lib or lb64 folder, you will find the libmongocrypt.so or
+  libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
 
 - Move that file to wherever you want to keep it on your machine. You may delete
-the other files included in the tarball.
+  the other files included in the tarball.
 
 To build from source:
 
 - Follow the instructions in the README on the libmongocrypt GitHub repo:
-    https://github.com/mongodb/libmongocrypt.
+  https://github.com/mongodb/libmongocrypt.
 
 mongocryptd
 ~~~~~~~~~~~
