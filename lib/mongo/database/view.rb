@@ -91,7 +91,7 @@ module Mongo
         filter = options[:filter] || {}
 
         session = client.send(:get_session)
-        collections_info(session, ServerSelector.primary, { filter: filter })
+        collections_info(session, ServerSelector.primary, options)
       end
 
       # Create the new database view.

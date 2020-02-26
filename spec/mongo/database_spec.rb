@@ -190,7 +190,7 @@ describe Mongo::Database do
         end
 
         let(:result) do
-          database.list_collections(name: 'anothercol').map do |info|
+          database.list_collections(filter: { name: 'anothercol' }).map do |info|
             info['name']
           end
         end
