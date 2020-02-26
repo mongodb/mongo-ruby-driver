@@ -9,7 +9,7 @@ Client-Side Encryption
 .. contents:: On this page
    :local:
    :backlinks: none
-   :depth: 2
+   :depth: 1
    :class: singlecol
 
 New in MongoDB 4.2, client-side encryption allows administrators and developers
@@ -69,13 +69,92 @@ Automatic Encryption
 
 Automatic encryption is a feature that allows users to configure a
 ``Mongo::Client`` instance to always encrypt specific data fields when performing
-document operations. Once the ``Mongo::Client`` is configured, the experience of
-using it is unchanged, but it automatically encrypts fields when writing data to
-the database and automatically decrypts fields when reading data. Automatic
-encryption is an enterprise feature.
+document operations. Once the ``Mongo::Client`` is configured, it can be used
+to read and write data in a typical manner. However, a properly configured client
+will automatically encrypt data when writing to the database and automatically
+decrypt data when reading. Automatic encryption is an enterprise-only feature
+and is only applied to operations on a collection.
+
+The following example provides a demonstration of auto-encryption using a local
+master key. See the later sections of this tutorial for more information on
+creating a master key, creating a data key, and creating a schema map.
+
+.. code-block:: ruby
+
+  require 'base64'
+  require 'bson'
+  require 'securerandom'
+
+  # Generate a local encryption master key
+  local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
+
+  kms_providers = {
+    local: {
+      key: local_master_key
+    }
+  }
+
+  # Create an encryption data key and insert it into the key vault collection
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    {
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: kms_providers
+    }
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+
+  # Create schema map
+  schema_map = {
+    'encryption_db.encryption_coll': {
+      properties: {
+        encrypted_field: {
+          encrypt: {
+            keyId: [BSON::Binary.new(data_key_id, :uuid)],
+            bsonType: "string",
+            algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+          }
+        }
+      },
+      bsonType: "object"
+    }
+  }
+
+  # Configure client for automatic encryption
+  client = Mongo::Client.new(
+    ['localhost:27017'],
+    auto_encryption_options: {
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: kms_providers,
+      schema_map: schema_map
+    }
+  )
+
+  collection = client.use(:encryption_db)[:encryption_coll]
+  collection.drop
+
+  # The string "sensitive data" will be encrypted and stored in the database
+  # as ciphertext
+  collection.insert_one(encrypted_field: 'sensitive data')
+
+  # The data is decrypted before being returned to the user
+  collection.find(encrypted_field: 'sensitive data').first['encrypted_field']
+  # => "sensitive data"
+
+  # A client with no auto_encryption_options is unable to decrypt the data
+  client_no_encryption = Mongo::Client.new(['localhost:27017'])
+  client_no_encryption.use(:encryption_db)[:encryption_coll].find.first['encrypted_field']
+  # => <BSON::Binary...>
+
+Explicit Encryption
+-------------------
+Documentation for explicit encryption will be provided soon.
 
 Creating a Master Key
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 The first step to configuting an auto-encryption client is to create an encryption
 master key and set up the key management service (KMS) that you plan to use. You may
@@ -121,7 +200,7 @@ option:
   }
 
 Creating a Data Key
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 To perform automatic encryption, you must first generate an encryption data key,
 which is encrypted using the master key generated in the previous step. This
@@ -175,16 +254,8 @@ returns its Base64-encoded 16-byte UUID.
   )
 
 Creating a Schema Map
-~~~~~~~~~~~~~~~~~~~~~
-
-Configuring ``Mongo::Client``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A Complete Example
-~~~~~~~~~~~~~~~~~~
+---------------------
 
 
-Explicit Encryption
--------------------
-Documentation for explicit encryption will be provided soon.
+
 
