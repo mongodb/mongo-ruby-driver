@@ -35,10 +35,10 @@ on the machine running your Ruby program.
 
 To download a pre-built binary:
 
-- Download a tarball of all libmongocrypt variations from this `AWS bucket <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
+- Download a tarball of all libmongocrypt variations `here <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
 
-- Unzip the file you downloaded. You will see a list of folders, each
-  corresponding to an operating system. Find the folder that matches your
+- Extract the file you downloaded. You will see a list of directories, each
+  corresponding to an operating system. Find the directory that matches your
   operating system and open it.
 
 - Inside that folder, open the folder called "nocrypto." In either the
@@ -48,9 +48,9 @@ To download a pre-built binary:
 - Move that file to wherever you want to keep it on your machine. You may delete
   the other files included in the tarball.
 
-To build binary from source:
+To build the binary from source:
 
-- Follow the instructions in the README on the `libmongocrypt GitHub repo <https://github.com/mongodb/libmongocrypt>`_.
+- Follow the instructions in the README in the `libmongocrypt GitHub repo <https://github.com/mongodb/libmongocrypt>`_.
 
 Once you have the libmongocrypt binary on your machine, specify the path to the
 binary using the LIBMONGOCRYPT_PATH environment variable. It is recommended that
@@ -90,6 +90,8 @@ master key.
   require 'mongo'
 
   # Generate a local encryption master key
+  # To reuse this master key, persist it to a file or environment variable
+  # on your machine.
   local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
 
   kms_providers = {
@@ -111,7 +113,7 @@ master key.
 
   data_key_id = client_encryption.create_data_key('local')
 
-  # Create schema map
+  # Create a schema map
   schema_map = {
     'encryption_db.encryption_coll': {
       properties: {
@@ -127,7 +129,7 @@ master key.
     }
   }
 
-  # Configure client for automatic encryption
+  # Configure the client for automatic encryption
   client = Mongo::Client.new(
     ['localhost:27017'],
     auto_encryption_options: {
