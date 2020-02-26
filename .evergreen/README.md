@@ -22,6 +22,11 @@ to specify another script, use `-s` option:
 
     ./.evergreen/run-on-docker -s .evergreen/run-enterprise-auth-tests.sh
 
+To perform override just the test command (but maintaining the setup performed
+by Evergreen shell scripts), use TEST_CMD:
+
+    ./.evergreen/run-on-docker TEST_CMD='rspec spec/mongo/auth'
+
 ### Toolchain and Server Preloading
 
 The docker test runner supports preloading Ruby interpreters and server

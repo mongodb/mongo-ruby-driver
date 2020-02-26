@@ -26,7 +26,7 @@ setup_ruby
 
 prepare_server $arch
 
-install_mlaunch_pip
+install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -34,19 +34,22 @@ install_mlaunch_pip
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
+mongo_version=`echo $MONGODB_VERSION |tr -d .`
+
 args="--setParameter enableTestCommands=1"
-if ! test "$MONGODB_VERSION" = 2.6 && ! test "$MONGODB_VERSION" = 3.0; then
+# diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
+# and mlaunch does not support specifying mongod-only parameters:
+# https://github.com/rueckstiess/mtools/issues/696
+# Pass it to 3.4 and newer servers where it is accepted by all daemons.
+if test $mongo_version -ge 34; then
   args="$args --setParameter diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
 if test "$TOPOLOGY" = replica_set; then
-  args="$args --replicaset --name ruby-driver-rs"
-  if test -z "$MMAPV1"; then
-    args="$args --arbiter"
-    export HAVE_ARBITER=1
-  fi
+  args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
+  export HAVE_ARBITER=1
 elif test "$TOPOLOGY" = sharded_cluster; then
-  args="$args --replicaset --sharded 2 --name ruby-driver-rs"
+  args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
   if test -z "$SINGLE_MONGOS"; then
     args="$args --mongos 2"
   fi
@@ -54,7 +57,7 @@ else
   args="$args --single"
 fi
 if test -n "$MMAPV1"; then
-  args="$args --storageEngine mmapv1"
+  args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
 if test "$AUTH" = auth; then
@@ -79,7 +82,23 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+# mlaunch frequently fails to provision sharded clusters with authentication -
+# see https://github.com/rueckstiess/mtools/issues/691.
+# Give it 5 attempts.
+ok=false
+for i in `seq 5`; do
+  if mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args; then
+    ok=true
+    break
+  fi
+  mlaunch stop --dir "$dbdir" || true
+  rm -rf "$dbdir"
+done
+
+if ! $ok; then
+  echo mlaunch failed to provision the desired deployment 1>&2
+  exit 5
+fi
 
 install_deps
 

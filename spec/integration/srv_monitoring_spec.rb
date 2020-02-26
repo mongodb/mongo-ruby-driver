@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'SRV Monitoring' do
+  clean_slate_for_all
+
   context 'with SRV lookups mocked at Resolver' do
     let(:srv_result) do
       double('srv result').tap do |result|
@@ -84,14 +86,16 @@ describe 'SRV Monitoring' do
 
     let(:client) do
       new_local_client(uri,
-        server_selection_timeout: 3.16,
-        timeout: 8.11,
-        connect_timeout: 8.12,
-        resolv_options: {
-          nameserver: 'localhost',
-          nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
-        },
-        logger: logger,
+        SpecConfig.instance.ssl_options.merge(
+          server_selection_timeout: 3.16,
+          timeout: 8.11,
+          connect_timeout: 8.12,
+          resolv_options: {
+            nameserver: 'localhost',
+            nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
+          },
+          logger: logger,
+        ),
       )
     end
 
@@ -354,6 +358,8 @@ describe 'SRV Monitoring' do
           # Covers both NoPrimary and WithPrimary replica sets
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
 
+          # give the thread another moment to stop
+          sleep 0.1
           expect(client.cluster.srv_monitor).not_to be_running
         end
       end

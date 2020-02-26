@@ -203,11 +203,11 @@ describe Mongo::Collection do
     end
 
     let(:database) do
-      Mongo::Database.new(client, :test)
+      Mongo::Database.new(client, SpecConfig.instance.test_db)
     end
 
     let(:collection) do
-      database.collection(:users)
+      database.collection('test-collection')
     end
 
     let(:new_collection) do
@@ -241,12 +241,9 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a read preference set' do
-        clean_slate_on_evergreen
 
         let(:client) do
-          authorized_client.with(SpecConfig.instance.auth_options.merge(
-            client_options
-          )).tap do |client|
+          authorized_client.with(client_options).tap do |client|
             expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
               mode: :primary_preferred))
           end
@@ -278,9 +275,7 @@ describe Mongo::Collection do
           require_topology :replica_set
 
           let(:client_options) do
-            SpecConfig.instance.auth_options.merge(
-              read: { mode: :primary_preferred },
-            )
+            {read: { mode: :primary_preferred }}
           end
 
           let(:subscriber) { EventSubscriber.new }

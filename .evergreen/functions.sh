@@ -145,7 +145,7 @@ setup_ruby() {
     # But we still need Python 3.6+ to run mlaunch.
     # Since the ruby-head tests are run on ubuntu1604, we can use the
     # globally installed Python toolchain.
-    export PATH=/opt/python/3.7/bin:$PATH
+    #export PATH=/opt/python/3.7/bin:$PATH
 
     # 12.04, 14.04 and 16.04 are good
     curl -fLo ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
@@ -164,7 +164,8 @@ setup_ruby() {
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
     curl --retry 3 -fL $toolchain_url |tar zxf -
-    export PATH=`pwd`/rubies/$RVM_RUBY/bin:`pwd`/rubies/python/3/bin:$PATH
+    export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+    #export PATH=`pwd`/rubies/python/3/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
     #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
@@ -218,7 +219,9 @@ bundle_install() {
     args="$args --gemfile=$BUNDLE_GEMFILE"
   fi
   echo "Running bundle install $args"
-  bundle install $args
+  # Sometimes bundler fails for no apparent reason, run it again then.
+  # The failures happen on both MRI and JRuby and have different manifestatinons.
+  bundle install $args || bundle install $args
 }
 
 install_deps() {
@@ -243,16 +246,15 @@ prepare_server() {
     return
   fi
 
-  if test "$MONGODB_VERSION" = 2.6; then
-    # The only OS which has Python toolchain for Python 3.6+ and
-    # which has MongoDB 2.6 server builds for it is rhel62.
-    # Unfortunately running it in Docker on a Debian 10 host crashes.
-    # Try the generic Linux binary since we aren't using any enterprise
-    # features pre FLE which requires 4.2 server.
-    url=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.12.tgz
+  if test $MONGODB_VERSION = latest; then
+    # Test on the most recent published 4.3 release.
+    # https://jira.mongodb.org/browse/RUBY-1724
+    download_version=4.3
   else
-    url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
+    download_version=$MONGODB_VERSION
   fi
+  
+  url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
 
   prepare_server_from_url $url
 }
@@ -270,25 +272,69 @@ prepare_server_from_url() {
 install_mlaunch_virtualenv() {
   #export PATH=/opt/python/3.7/bin:$PATH
   python -V || true
-  python3 -V
+  python3 -V || true
   #pip3 install --user virtualenv
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-  virtualenv -p python3 $venvpath
+  virtualenv $venvpath
   . $venvpath/bin/activate
-  pip install 'mtools[mlaunch]'
+  pip install 'mtools-legacy[mlaunch]'
 }
 
 install_mlaunch_pip() {
   python -V || true
-  python3 -V
+  python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
   # The scripts in a python installation have shebangs pointing to the
   # prefix, which doesn't work for us because we unpack toolchain to a
   # different directory than prefix used for building. Work around this by
   # explicitly running pip3 with python.
-  python3 `which pip3` install -t "$pythonpath" 'mtools[mlaunch]'
+  pip install -t "$pythonpath" 'mtools-legacy[mlaunch]'
   export PATH="$pythonpath/bin":$PATH
   export PYTHONPATH="$pythonpath"
+}
+
+install_mlaunch_git() {
+  repo=$1
+  branch=$2
+  python -V || true
+  python3 -V || true
+  which pip || true
+  which pip3 || true
+  
+  if false; then
+    if ! virtualenv --version; then
+      python3 `which pip3` install --user virtualenv
+      export PATH=$HOME/.local/bin:$PATH
+      virtualenv --version
+    fi
+    
+    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+    virtualenv -p python3 $venvpath
+    . $venvpath/bin/activate
+    
+    pip3 install psutil pymongo
+    
+    git clone $repo mlaunch
+    cd mlaunch
+    git checkout origin/$branch
+    python3 setup.py install
+    cd ..
+  else
+    pip install --user 'virtualenv==13'
+    export PATH=$HOME/.local/bin:$PATH
+    
+    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+    virtualenv $venvpath
+    . $venvpath/bin/activate
+  
+    pip install psutil pymongo
+    
+    git clone $repo mlaunch
+    (cd mlaunch &&
+      git checkout origin/$branch &&
+      python setup.py install
+    )
+  fi
 }
 
 show_local_instructions() {

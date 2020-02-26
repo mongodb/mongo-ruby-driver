@@ -36,8 +36,18 @@ RUN echo 1
 
 <% if ruby_head? %>
 
-  RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
-  RUN tar -xC /opt -zf python-toolchain.tar.gz
+  # To use current versions of mlaunch, Python 3.6+ is required.
+  # Most distros ship with older Pythons, therefore we need to install
+  # a newer Python from somewhere. This section installs the Python
+  # toolhcain which comes with recent Pythons.
+  # Alternatively, Ruby toolchain compiles its own copy of Python 3 but
+  # this is currently incomplete in that on older distros with old OpenSSL,
+  # the built Python has no ssl module and hence practically is unusable.
+  # Currently Ruby driver uses mtools-legacy which supports Python 2,
+  # avoiding this entire issue for the time being.
+
+  #RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
+  #RUN tar -xC /opt -zf python-toolchain.tar.gz
 
 <% end %>
 
@@ -51,6 +61,7 @@ RUN echo 1
   # Kerberos testing: krb5-user
   # Installing mlaunch from git: git
   # ruby-head archive: bzip2
+  # nio4r on JRuby: libgmp-dev
 
   # ubuntu1204, ubuntu1404 only have openjdk-7-jre
   <% unless %w(ubuntu1204 ubuntu1404).include?(distro) %>
@@ -64,7 +75,8 @@ RUN echo 1
   <% end %>
 
   # ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
-  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 krb5-user bzip2
+  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 \
+    krb5-user bzip2 libgmp-dev
 
 <% else %>
 
@@ -73,6 +85,8 @@ RUN echo 1
 <% end %>
 
 <% if preload? %>
+
+  RUN apt-get install -y python-pip
 
   WORKDIR /app
 
@@ -85,7 +99,8 @@ RUN echo 1
     
     RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
     RUN tar -xC /opt -zf ruby-toolchain.tar.gz
-    ENV PATH=/opt/rubies/<%= ruby %>/bin:/opt/rubies/python/3/bin:$PATH
+    ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH
+    #ENV PATH=/opt/rubies/python/3/bin:$PATH
     ENV USE_OPT_TOOLCHAIN=1
   
   <% end %>
@@ -112,5 +127,3 @@ ENV PROJECT_DIRECTORY=/app
 <% @env.each do |k, v| %>
 ENV <%= k %>="<%= v %>"
 <% end %>
-
-#CMD bash -x <%= script %>
