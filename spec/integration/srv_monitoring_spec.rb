@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'SRV Monitoring' do
+  clean_slate_for_all
+
   context 'with SRV lookups mocked at Resolver' do
     let(:srv_result) do
       double('srv result').tap do |result|
