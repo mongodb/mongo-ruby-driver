@@ -30,18 +30,29 @@ module Mongo
       # to the key vault.
       #
       # @param [ Mongo::Client ] client: The client used to connect to the collection
-      #   that stores the encrypted documents, defaults to nil
+      #   that stores the encrypted documents, defaults to nil.
       # @param [ Mongo::Client ] mongocryptd_client: The client connected to mongocryptd,
-      #   defaults to nil
-      # @param [ Mongo::Collection ] key_vault_collection: The Collection object
-      #   representing the database collection storing the encryption data keys
+      #   defaults to nil.
+      # @param [ Mongo::Client ] key_vault_client: The client connected to the
+      #   key vault collection.
+      # @param [ String ] key_vault_namespace: The key vault namespace in the format
+      #   db_name.collection_name.
+      # @param [ Hash ] mongocryptd_options: Options related to mongocryptd.
+      #
+      # @option mongocryptd_options [ Boolean ] :mongocryptd_bypass_spawn
+      # @option mongocryptd_options [ String ] :mongocryptd_spawn_path
+      # @option mongocryptd_options [ Array<String> ] :mongocryptd_spawn_args
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
-      def initialize(client: nil, mongocryptd_client: nil, key_vault_collection:)
+      def initialize(
+        client: nil, mongocryptd_client: nil, key_vault_namespace:,
+        key_vault_client:, mongocryptd_options: {}
+      )
         @client = client
         @mongocryptd_client = mongocryptd_client
-        @key_vault_collection = key_vault_collection
+        @key_vault_collection = key_vault_collection(key_vault_namespace, key_vault_client)
+        @options = mongocryptd_options
       end
 
       # Query for keys in the key vault collection using the provided
@@ -59,7 +70,7 @@ module Mongo
       # @param [ Hash ] document
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
-      def insert(document)
+      def insert_data_key(document)
         @key_vault_collection.insert_one(document)
       end
 
@@ -84,9 +95,9 @@ module Mongo
         begin
           response = @mongocryptd_client.database.command(cmd)
         rescue Error::NoServerAvailable => e
-          raise e if @client.encryption_options[:mongocryptd_bypass_spawn]
+          raise e if @options[:mongocryptd_bypass_spawn]
 
-          @client.spawn_mongocryptd
+          spawn_mongocryptd
           response = @mongocryptd_client.database.command(cmd)
         end
 
@@ -124,6 +135,72 @@ module Mongo
       end
 
       private
+
+      # Use the provided key vault client and namespace to construct a
+      # Mongo::Collection object representing the key vault collection.
+      def key_vault_collection(key_vault_namespace, key_vault_client)
+        unless key_vault_namespace
+          raise ArgumentError.new('The :key_vault_namespace option cannot be nil')
+        end
+
+        unless key_vault_namespace.split('.').length == 2
+          raise ArgumentError.new(
+            "#{key_vault_namespace} is an invalid key vault namespace." +
+            "The :key_vault_namespace option must be in the format database.collection"
+          )
+        end
+
+        unless key_vault_client
+          raise ArgumentError.new('The :key_vault_client option cannot be nil')
+        end
+
+        unless key_vault_client.is_a?(Client)
+          raise ArgumentError.new(
+            'The :key_vault_client option must be an instance of Mongo::Client'
+          )
+        end
+
+        key_vault_db, key_vault_coll = key_vault_namespace.split('.')
+        key_vault_client.use(key_vault_db)[key_vault_coll]
+      end
+
+      # Spawn a new mongocryptd process using the mongocryptd_spawn_path
+      # and mongocryptd_spawn_args passed in through the extra auto
+      # encrypt options. Stdout and Stderr of this new process are written
+      # to /dev/null.
+      #
+      # @note To capture the mongocryptd logs, add "--logpath=/path/to/logs"
+      #   to auto_encryption_options -> extra_options -> mongocrpytd_spawn_args
+      #
+      # @return [ Integer ] The process id of the spawned process
+      #
+      # @raise [ ArgumentError ] Raises an exception if no encryption options
+      #   have been provided
+      def spawn_mongocryptd
+        mongocryptd_spawn_args = @options[:mongocryptd_spawn_args]
+        mongocryptd_spawn_path = @options[:mongocryptd_spawn_path]
+
+        unless mongocryptd_spawn_args && mongocryptd_spawn_path
+          raise ArgumentError.new(
+            'Cannot spawn mongocryptd process without providing options for ' +
+            'mongocryptd_spawn_args and mongocryptd_spawn_path'
+          )
+        end
+
+        begin
+          Process.spawn(
+            mongocryptd_spawn_path,
+            *mongocryptd_spawn_args,
+            [:out, :err]=>'/dev/null'
+          )
+        rescue Errno::ENOENT => e
+          raise Error::MongocryptdSpawnError.new(
+            "Failed to spawn mongocryptd at the path \"#{mongocryptd_spawn_path}\" " +
+            "with arguments #{mongocryptd_spawn_args}. Received error " +
+            "#{e.class}: \"#{e.message}\""
+          )
+        end
+      end
 
       # Provide an SSL socket to be used for KMS calls in a block API
       #

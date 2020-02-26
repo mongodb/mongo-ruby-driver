@@ -13,6 +13,7 @@ describe 'Auto Encryption' do
   include_context 'with local kms_providers'
 
   let(:subscriber) { EventSubscriber.new }
+  let(:db_name) { 'auto_encryption' }
 
   let(:encryption_client) do
     new_local_client(
@@ -23,7 +24,7 @@ describe 'Auto Encryption' do
           key_vault_namespace: key_vault_namespace,
           schema_map: { "auto_encryption.users" => schema_map },
         },
-        database: 'auto_encryption'
+        database: db_name
       ),
     ).tap do |client|
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -40,13 +41,13 @@ describe 'Auto Encryption' do
 
   let(:started_event) do
     subscriber.started_events.find do |event|
-      event.command_name == command_name
+      event.command_name == command_name && event.database_name == db_name
     end
   end
 
   let(:succeeded_event) do
     subscriber.succeeded_events.find do |event|
-      event.command_name == command_name
+      event.command_name == command_name && event.database_name == db_name
     end
   end
 
@@ -181,12 +182,22 @@ describe 'Auto Encryption' do
   describe '#insert_one' do
     let(:command_name) { 'insert' }
 
-    it 'has encrypted data in command monitoring' do
+    before do
       encryption_client[:users].insert_one(ssn: ssn)
+    end
 
+    it 'has encrypted data in command monitoring' do
       # Command started event occurs after ssn is encrypted
       # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["documents"].first["ssn"]).to be_ciphertext
+    end
+
+    it 'performs command monitoring for key vault client as well' do
+      key_vault_find_event = subscriber.started_events.find do |event|
+        event.command_name == 'find' && event.database_name == 'admin'
+      end
+
+      expect(key_vault_find_event).not_to be_nil
     end
   end
 

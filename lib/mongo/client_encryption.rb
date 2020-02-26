@@ -18,8 +18,6 @@ module Mongo
   # provides an API for explicitly encrypting and decrypting values,
   # and creating data keys.
   class ClientEncryption
-    include Crypt::Encrypter
-
     # Create a new ClientEncryption object with the provided options.
     #
     # @param [ Mongo::Client ] key_vault_client A Mongo::Client
@@ -32,8 +30,12 @@ module Mongo
     # @option options [ Hash ] :kms_providers A hash of key management service
     #   configuration information. Valid hash keys are :local or :aws. There
     #   may be more than one KMS provider specified.
-    def initialize(key_vault_client, options = {})
-      setup_encrypter(options.merge(key_vault_client: key_vault_client))
+    def initialize(key_vault_client, options={})
+      @encrypter = Crypt::ExplicitEncrypter.new(
+        key_vault_client,
+        options[:key_vault_namespace],
+        options[:kms_providers]
+      )
     end
 
     # Generates a data key used for encryption/decryption and stores
@@ -59,16 +61,10 @@ module Mongo
     # @return [ String ] Base64-encoded UUID string representing the
     #   data key _id
     def create_data_key(kms_provider, options={})
-      data_key_document = Crypt::DataKeyContext.new(
-        @crypt_handle,
-        @encryption_io,
+      @encrypter.create_and_insert_data_key(
         kms_provider,
         options
-      ).run_state_machine
-
-      insert_result = @encryption_io.insert(data_key_document)
-
-      return insert_result.inserted_id.data
+      )
     end
 
     # Encrypts a value using the specified encryption key and algorithm
@@ -90,14 +86,7 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value
     def encrypt(value, options={})
-      doc = { 'v': value }
-
-      Crypt::ExplicitEncryptionContext.new(
-        @crypt_handle,
-        @encryption_io,
-        doc,
-        options
-      ).run_state_machine['v']
+      @encrypter.encrypt(value, options)
     end
 
     # Decrypts a value that has already been encrypted
@@ -107,13 +96,7 @@ module Mongo
     #
     # @return [ Object ] The decrypted value
     def decrypt(value)
-      doc = { 'v': value }
-
-      result = Crypt::ExplicitDecryptionContext.new(
-        @crypt_handle,
-        @encryption_io,
-        doc,
-      ).run_state_machine['v']
+      @encrypter.decrypt(value)
     end
   end
 end

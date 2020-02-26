@@ -21,7 +21,6 @@ module Mongo
   class Client
     extend Forwardable
     include Loggable
-    include Crypt::AutoEncrypter
 
     # The options that do not affect the behavior of a cluster and its
     # subcomponents.
@@ -120,6 +119,10 @@ module Mongo
 
     # @return [ Hash ] options The configuration options.
     attr_reader :options
+
+    # @return [ Mongo::Crypt::AutoEncrypter ] The object that encapsulates
+    #   auto-encryption behavior
+    attr_reader :encrypter
 
     # Delegate command and collections execution to the current database.
     def_delegators :@database, :command, :collections
@@ -476,7 +479,7 @@ module Mongo
 
       if @options[:auto_encryption_options]
         @connect_lock.synchronize do
-          set_auto_encryption_options
+          build_encrypter
         end
       end
 
@@ -679,7 +682,7 @@ module Mongo
         # If the user specifies new auto_encryption_options, teardown the
         # existing encryption infrastructure
         if opts.key?(:auto_encryption_options)
-          should_teardown_encrypter = true
+          should_close_encrypter = true
         end
 
         # If the new auto_encryption_options are not nil, then set up the
@@ -691,8 +694,8 @@ module Mongo
         options.update(opts)
         @options = options.freeze
 
-        teardown_encrypter if should_teardown_encrypter
-        set_auto_encryption_options if should_set_new_encryption_options
+        close_encrypter if should_close_encrypter
+        build_encrypter if should_set_new_encryption_options
 
         validate_options!
         validate_authentication_options!
@@ -737,6 +740,16 @@ module Mongo
       true
     end
 
+    # Close encrypter and clean up auto-encryption resources.
+    #
+    # @return [ true ] Always true.
+    def close_encrypter
+      @encrypter.close if @encrypter
+      @encrypter = nil
+
+      true
+    end
+
     # Reconnect the client.
     #
     # @example Reconnect the client.
@@ -754,7 +767,7 @@ module Mongo
         @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
         if @options[:auto_encryption_options]
-          set_auto_encryption_options
+          build_encrypter
         end
       end
 
@@ -881,6 +894,13 @@ module Mongo
 
     private
 
+    # Create a new encrypter object using the client's auto encryption options
+    def build_encrypter
+      @encrypter = Crypt::AutoEncrypter.new(
+        @options[:auto_encryption_options].merge(client: self)
+      )
+    end
+
     # Generate default client options based on the URI and options
     # passed into the Client constructor.
     def default_options(options)
@@ -898,21 +918,10 @@ module Mongo
       end
     end
 
-    # Provides some default encryption options and sets up data necessary
-    # for auto-encryption
-    def set_auto_encryption_options
-      opts_copy = @options[:auto_encryption_options].dup
-
-      opts_copy[:extra_options] ||= {}
-      opts_copy[:extra_options][:mongocryptd_client_monitoring_io] = self.options[:monitoring_io]
-
-      setup_encrypter(opts_copy)
-    end
-
     # Implementation for #close, assumes the connect lock is already acquired.
     def do_close
       @cluster.disconnect!
-      teardown_encrypter
+      close_encrypter
     end
 
     # If options[:session] is set, validates that session and returns it.

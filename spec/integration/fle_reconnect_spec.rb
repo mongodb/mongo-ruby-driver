@@ -30,8 +30,8 @@ describe 'Client with auto encryption #reconnect' do
 
   let(:unencrypted_client) { authorized_client.use(:auto_encryption) }
 
-  let(:mongocryptd_client) { client.mongocryptd_client }
-  let(:key_vault_client) { client.key_vault_client }
+  let(:mongocryptd_client) { client.encrypter.mongocryptd_client }
+  let(:key_vault_client) { client.encrypter.key_vault_client }
   let(:data_key_id) { data_key['_id'] }
 
   shared_examples 'a functioning client' do
@@ -43,10 +43,6 @@ describe 'Client with auto encryption #reconnect' do
   end
 
   shared_examples 'a functioning mongocryptd client' do
-    before do
-      client.spawn_mongocryptd
-    end
-
     it 'can perform a schemaRequiresEncryption command' do
       # A schemaRequiresEncryption command; mongocryptd should respond that
       # this command requires encryption.

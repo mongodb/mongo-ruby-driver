@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Client do
+describe Mongo::Crypt::AutoEncrypter do
   require_libmongocrypt
   min_server_fcv '4.2'
   require_enterprise
@@ -8,16 +8,13 @@ describe Mongo::Client do
 
   include_context 'define shared FLE helpers'
 
-  let(:client) { authorized_client }
-
-  let(:encryption_client) do
-    new_local_client(
-      SpecConfig.instance.addresses,
-      { auto_encryption_options: auto_encryption_options, database: db_name }
-    )
+  let(:auto_encrypter) do
+    described_class.new(auto_encryption_options.merge(client: authorized_client.use(:auto_encryption)))
   end
 
-  let(:db_name) { 'test'}
+  let(:client) { authorized_client }
+
+  let(:db_name) { 'auto_encryption' }
   let(:collection_name) { 'users' }
 
   let(:command) do
@@ -70,14 +67,14 @@ describe Mongo::Client do
   shared_examples 'a functioning auto encrypter' do
     describe '#encrypt' do
       it 'replaces the ssn field with a BSON::Binary' do
-        result = encryption_client.encrypt(db_name, command)
+        result = auto_encrypter.encrypt(db_name, command)
         expect(result).to eq(encrypted_command)
       end
     end
 
     describe '#decrypt' do
       it 'returns the unencrypted document' do
-        result = encryption_client.decrypt(encrypted_command)
+        result = auto_encrypter.decrypt(encrypted_command)
         expect(result).to eq(command)
       end
     end
@@ -87,6 +84,10 @@ describe Mongo::Client do
     key_vault_collection = client.use(key_vault_db)[key_vault_coll]
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
+  end
+
+  after do
+    auto_encrypter.close
   end
 
   context 'with schema map in auto encryption commands' do
@@ -147,14 +148,14 @@ describe Mongo::Client do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = encryption_client.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = encryption_client.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command)
           expect(result).to eq(command)
         end
       end
@@ -165,14 +166,14 @@ describe Mongo::Client do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = encryption_client.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = encryption_client.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command)
           expect(result).to eq(command)
         end
       end
