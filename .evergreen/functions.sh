@@ -246,7 +246,15 @@ prepare_server() {
     return
   fi
 
-  url=`$(dirname $0)/get-mongodb-download-url $MONGODB_VERSION $arch`
+  if test $MONGODB_VERSION = latest; then
+    # Test on the most recent published 4.3 release.
+    # https://jira.mongodb.org/browse/RUBY-1724
+    download_version=4.3
+  else
+    download_version=$MONGODB_VERSION
+  fi
+  
+  url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
 
   prepare_server_from_url $url
 }
