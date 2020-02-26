@@ -145,6 +145,8 @@ describe Mongo::Operation::Update::OpMsg do
         end
 
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
+          # Mocks on features are incompatible with linting
+          skip_if_linting
 
           let(:expected_global_args) do
             global_args.dup.tap do |args|
