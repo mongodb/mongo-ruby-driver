@@ -358,6 +358,8 @@ describe 'SRV Monitoring' do
           # Covers both NoPrimary and WithPrimary replica sets
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
 
+          # give the thread another moment to stop
+          sleep 0.1
           expect(client.cluster.srv_monitor).not_to be_running
         end
       end
