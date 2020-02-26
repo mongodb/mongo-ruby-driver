@@ -29,11 +29,11 @@ Client-side encryption requires the installation of additional packages.
 libmongocrypt
 ~~~~~~~~~~~~~
 
-Libmongocrypt is a C library that the driver uses to perform much of the
-client-side encryption functionality. To use client-side encryption, you must
-have the libmongocrypt binary on your machine.
+Libmongocrypt is a C library used by the driver for client-side encryption.
+To use client-side encryption, you must install the libmongocrypt binary
+on the machine running your Ruby program.
 
-To download a pre-built binary (recommended):
+To download a pre-built binary:
 
 - Download a tarball of all libmongocrypt variations from this `AWS bucket <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
 
@@ -57,6 +57,7 @@ binary using the LIBMONGOCRYPT_PATH environment variable. It is recommended that
 you add this variable to your rc files. For example:
 
 .. code-block:: bash
+
   export LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt.so
 
 mongocryptd
@@ -75,22 +76,18 @@ Automatic Encryption
 --------------------
 
 Automatic encryption is a feature that allows users to configure a
-``Mongo::Client`` instance to always encrypt specific data fields when performing
-document operations. Once the ``Mongo::Client`` is configured, it can be used
-to read and write data in a typical manner. However, a properly configured client
-will automatically encrypt data when writing to the database and automatically
-decrypt data when reading. Automatic encryption is an enterprise-only feature
-and is only applied to operations on a collection.
+``Mongo::Client`` instance to always encrypt specific document fields when
+performing database operations. Once the ``Mongo::Client`` is configured, it
+will automatically encrypt any field that requires encryption before writing
+it to the database, and it will automatically decrypt those fields when reading
+them. Automatic encryption is an enterprise-only feature.
 
 The following example provides a demonstration of auto-encryption using a local
-master key. See the later sections of this tutorial for more information on
-creating a master key, creating a data key, and creating a schema map.
+master key.
 
 .. code-block:: ruby
 
-  require 'base64'
-  require 'bson'
-  require 'securerandom'
+  require 'mongo'
 
   # Generate a local encryption master key
   local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
@@ -141,7 +138,7 @@ creating a master key, creating a data key, and creating a schema map.
   )
 
   collection = client.use(:encryption_db)[:encryption_coll]
-  collection.drop
+  collection.drop # Make sure there is no data in the collection
 
   # The string "sensitive data" will be encrypted and stored in the database
   # as ciphertext
@@ -156,113 +153,26 @@ creating a master key, creating a data key, and creating a schema map.
   client_no_encryption.use(:encryption_db)[:encryption_coll].find.first['encrypted_field']
   # => <BSON::Binary...>
 
+For more information about creating an encryption master key, creating a data key,
+or creating a schema map, see later sections of this tutorial.
+
+.. seealso::
+  :manual:`Creating A Master Key</tutorials/client-side-encryption#creating-a-master-key>`
+  :manual:`Creating A Data Key</tutorials/client-side-encryption#creating-a-data-key>`,
+  :manual:`Creating A Schema Map</tutorials/client-side-encryption#creating-a-schema-map>`,
+
 Explicit Encryption
 -------------------
 Documentation for explicit encryption will be provided soon.
 
 Creating a Master Key
 ---------------------
-
-The first step to configuting an auto-encryption client is to create an encryption
-master key and set up the key management service (KMS) that you plan to use. You may
-either set up a local master key or use Amazon's AWS Key Management Service. In
-both cases, you must set up the ``:kms_providers`` option, which you will use to
-create encryption data keys and configure the ``Mongo::Client`` instance used
-to encrypt data.
-
-*Option 1: Local KMS Setup*
-
-To set up local KMS information, you must generate a new master key. A local
-master key is a Base64-encoded 96-byte string.
-
-.. code-block:: ruby
-
-  require 'base64'
-  require 'securerandom'
-
-  key = Base64.encode64(SecureRandom.random_bytes(96))
-  kms_providers = {
-    local: {
-      key: key
-    }
-  }
-
-*Option 2: AWS KMS Setup*
-
-To use the AWS KMS provider, create an encryption master key in the AWS Key
-Management Service. For more information, read the
-`Amazon Web Services KMS section in the MongoDB Manual <https://docs.mongodb.com/manual/core/security-client-side-encryption-key-management/#field-level-encryption-aws-kms>`_.
-
-Locate the access key and secret access key for the IAM user who has permissions
-to use your AWS master key, and use that information to create the ``:kms_providers``
-option:
-
-.. code-block:: ruby
-
-  kms_providers = {
-    aws: {
-      access_key_id: "YOUR AWS ACCESS KEY ID",
-      secret_access_key: "YOUR AWS SECRET ACCESS KEY"
-    }
-  }
+Documentation coming soon.
 
 Creating a Data Key
 -------------------
-
-To perform automatic encryption, you must first generate an encryption data key,
-which is encrypted using the master key generated in the previous step. This
-data key will be used to encrypt fields in your MongoDB documents.
-
-The generated data key will be stored in the key vault collection. This collection
-can be located on the same database as the collection in which you want to store
-encrypted data.
-
-To generate the data key, use an instance of the ``Mongo::ClientEncryption``
-class. This object takes an instance of ``Mongo::Client``, which it will use to
-connect to the key vault collection. It also takes two options:
-``:key_vault_namespace``, which is the namespace of the key vault collection
-in the format `"database.collection"`, and ``:kms_providers``, which is a ``Hash``
-of KMS options. See the `Creating a Master Key <Creating a Master Key>`_ section
-for more information about the ``:kms_providers`` option.
-
-.. code-block:: ruby
-
-  key_vault_client = Mongo::Client.new(['localhost:27017'])
-
-  client_encryption = Mongo::ClientEncryption.new(
-    key_vault_client,
-    {
-      key_vault_namespace: 'admin.datakeys',
-      kms_providers: kms_providers
-    }
-  )
-
-Once you have created a ``Mongo::ClientEncryption`` instance, you can use it
-to create an encryption data key by calling the ``create_data_key`` method. This
-method generates a new data key, inserts it into the key vault client, and
-returns its Base64-encoded 16-byte UUID.
-
-*Option 1: Create a data key using a local master key*
-
-.. code-block:: ruby
-
-  data_key_id = client_encryption.create_data_key('local')
-
-*Option 2: Create a data key using an AWS master key*
-
-.. code-block:: ruby
-
-  data_key_id = client_encryption.create_data_key(
-    'aws',
-    {
-      region: "YOUR AWS REGION",
-      key: "MASTER KEY ARN"
-    }
-  )
+Documentation coming soon.
 
 Creating a Schema Map
 ---------------------
-
-
-
-
+Documentation coming soon.
