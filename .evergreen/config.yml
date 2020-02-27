@@ -868,7 +868,7 @@ buildvariants:
   - matrix_name: "fle-tests-4.2"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
       topology: standalone
       mongodb-version: ["4.2"]
       os: rhel70
@@ -879,7 +879,7 @@ buildvariants:
   - matrix_name: "fle-tests-4.0"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-2.6]
+      ruby: [ruby-2.6, jruby-9.2]
       topology: standalone
       mongodb-version: ["4.0"]
       os: rhel70
