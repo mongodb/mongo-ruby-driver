@@ -252,7 +252,7 @@ Local Master Key
 A local master key is a Base64-encoded, 96-byte string. It should be persisted
 on your machine as an environment variable or in a text file.
 
-.. note::
+.. warning::
 
   Using a local master key is insecure and not recommended if you plan
   to use client-side encryption in production.
@@ -270,7 +270,7 @@ AWS Master Key
 ~~~~~~~~~~~~~~
 It is recommended that you use Amazon's Key Management Service to create and
 store your master key. To do so, follow steps 1 and 2 of the
-:ecosystem:`"Convert to a Remote Master Key" section</use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
+:manual:`"Convert to a Remote Master Key" section<ecosystem/use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
 in the MongoDB Client-Side Encryption documentation.
 
 For more information about creating a master key, see the MongoDB manual.
