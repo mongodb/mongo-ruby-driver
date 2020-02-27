@@ -156,7 +156,7 @@ describe 'Connection pool timing test' do
         # when trying to perform operations during primary change
         sleep 1
 
-        @primary_chane_start = Time.now
+        @primary_change_start = Time.now
         ClusterTools.instance.change_primary
         @primary_change_end = Time.now
 
@@ -174,7 +174,7 @@ describe 'Connection pool timing test' do
           t.join
         end
       end.not_to raise_error
-      puts "[Connection Pool Timing] Duration before primary change: #{@primary_chane_start - start}. "\
+      puts "[Connection Pool Timing] Duration before primary change: #{@primary_change_start - start}. "\
         "Duration after primary change: #{Time.now - @primary_change_end}"
     end
   end
