@@ -27,6 +27,7 @@ module Mongo
     #
     # @since 2.1.0
     CRUD_OPTIONS = [
+      :auto_encryption_options,
       :database,
       :read, :read_concern,
       :write, :write_concern,
@@ -669,6 +670,8 @@ module Mongo
     #
     # @api private
     def update_options(new_options)
+      old_options = @options
+
       validate_new_options!(new_options).tap do |opts|
         # Our options are frozen
         options = @options.dup
@@ -679,23 +682,17 @@ module Mongo
           options.delete(:write_concern)
         end
 
-        # If the user specifies new auto_encryption_options, teardown the
-        # existing encryption infrastructure
-        if opts.key?(:auto_encryption_options)
-          should_close_encrypter = true
-        end
-
-        # If the new auto_encryption_options are not nil, then set up the
-        # encrypter again with the new options
-        if opts[:auto_encryption_options]
-          should_set_new_encryption_options = true
-        end
-
         options.update(opts)
         @options = options.freeze
 
-        close_encrypter if should_close_encrypter
-        build_encrypter if should_set_new_encryption_options
+        auto_encryption_options_changed =
+          @options[:auto_encryption_options] != old_options[:auto_encryption_options]
+
+        if @options[:auto_encryption_options] && auto_encryption_options_changed
+          build_encrypter
+        elsif @options[:auto_encryption_options].nil?
+          @encrypter = nil
+        end
 
         validate_options!
         validate_authentication_options!
