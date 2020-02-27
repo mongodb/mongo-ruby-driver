@@ -688,6 +688,12 @@ module Mongo
         auto_encryption_options_changed =
           @options[:auto_encryption_options] != old_options[:auto_encryption_options]
 
+        # If there are new auto_encryption_options, create a new encrypter.
+        # Otherwise, allow the new client to share an encrypter with the
+        # original client.
+        #
+        # If auto_encryption_options are nil, set @encrypter to nil, but do not
+        # close the encrypter because it may still be used by the original client.
         if @options[:auto_encryption_options] && auto_encryption_options_changed
           build_encrypter
         elsif @options[:auto_encryption_options].nil?
