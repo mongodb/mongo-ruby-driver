@@ -89,7 +89,7 @@ module Mongo
       # @since 2.0.5
       def list_collections(**options)
         session = client.send(:get_session)
-        collections_info(session, ServerSelector.primary, options)
+        collections_info(session, ServerSelector.primary, **options)
       end
 
       # Create the new database view.

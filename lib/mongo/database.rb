@@ -137,7 +137,7 @@ module Mongo
     #
     # @since 2.0.5
     def list_collections(**options)
-      View.new(self).list_collections(options)
+      View.new(self).list_collections(**options)
     end
 
     # Get all the non-system collections that belong to this database.
