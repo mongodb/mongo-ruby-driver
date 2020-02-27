@@ -1,4 +1,4 @@
-description: "Ghost discovered"
+description: "Discover ghost with directConnection URI option"
 
 uri: "mongodb://b/?directConnection=false"
 

@@ -1,4 +1,4 @@
-description: "Hidden discovered"
+description: "Discover hidden with directConnection URI option"
 
 uri: "mongodb://a/?directConnection=false"
 

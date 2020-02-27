@@ -1,4 +1,4 @@
-description: "Replica set discovery from primary"
+description: "Discover primary with directConnection URI option"
 
 uri: "mongodb://a/?directConnection=false"
 

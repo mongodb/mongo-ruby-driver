@@ -1,4 +1,4 @@
-description: "Discover passives"
+description: "Discover passives with directConnection URI option"
 
 uri: "mongodb://a/?directConnection=false"
 

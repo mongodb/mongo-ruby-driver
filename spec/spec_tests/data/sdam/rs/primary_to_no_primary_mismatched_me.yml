@@ -1,55 +1,79 @@
-description: Primary to no primary with mismatched me
-uri: mongodb://a/?replicaSet=rs
+description: "Primary to no primary with mismatched me"
 
-phases:
--
-  responses:
-  -
-    - a:27017
-    - ok: 1
-      ismaster: true
-      hosts:
-      - a:27017
-      - b:27017
-      me: a:27017
-      setName: rs
-      minWireVersion: 0
-      maxWireVersion: 6
-  outcome:
-    servers:
-      a:27017:
-        type: RSPrimary
-        setName: rs
-      b:27017:
-        type: Unknown
-        setName: 
-    topologyType: ReplicaSetWithPrimary
-    logicalSessionTimeoutMinutes: 
-    setName: rs
+uri: "mongodb://a/?replicaSet=rs"
 
--
-  responses:
-  -
-    - a:27017
-    - ok: 1
-      ismaster: true
-      hosts:
-      - c:27017
-      - d:27017
-      me: c:27017
-      setName: rs
-      minWireVersion: 0
-      maxWireVersion: 6
-  outcome:
-    # Hosts from primary description (c:27017 and d:27017) added to the topoolgy.
-    # Hosts not in primary description (a:27017 and b:27017) removed from the topology.
-    servers:
-      c:27017:
-        type: Unknown
-        setName: 
-      d:27017:
-        type: Unknown
-        setName: 
-    topologyType: ReplicaSetNoPrimary
-    logicalSessionTimeoutMinutes: 
-    setName: rs
+phases: [
+
+    {
+        responses: [
+
+                ["a:27017", {
+
+                    ok: 1,
+                    ismaster: true,
+                    hosts: ["a:27017", "b:27017"],
+                    me: "a:27017",
+                    setName: "rs",
+                    minWireVersion: 0,
+                    maxWireVersion: 6
+                }]
+        ],
+
+        outcome: {
+
+            servers: {
+
+                "a:27017": {
+
+                    type: "RSPrimary",
+                    setName: "rs"
+                },
+
+                "b:27017": {
+
+                    type: "Unknown",
+                    setName:
+                }
+            },
+            topologyType: "ReplicaSetWithPrimary",
+            logicalSessionTimeoutMinutes: null,
+            setName: "rs"
+        }
+    },
+    {
+        responses: [
+
+                ["a:27017", {
+
+                    ok: 1,
+                    ismaster: true,
+                    hosts: ["c:27017", "d:27017"],
+                    me : "c:27017",
+                    setName: "rs",
+                    minWireVersion: 0,
+                    maxWireVersion: 6
+                }]
+        ],
+
+        outcome: {
+
+            servers: {
+
+                "c:27017": {
+
+                    type: "Unknown",
+                    setName:
+                },
+
+                "d:27017": {
+
+                    type: "Unknown",
+                    setName:
+                }
+            },
+            topologyType: "ReplicaSetNoPrimary",
+            logicalSessionTimeoutMinutes: null,
+            setName: "rs"
+        }
+    }
+]

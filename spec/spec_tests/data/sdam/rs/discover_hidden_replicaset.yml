@@ -1,29 +1,30 @@
-description: "Discover RSOther with directConnection URI option"
+description: "Discover hidden with replicaSet URI option"
 
-uri: "mongodb://b/?directConnection=false"
+uri: "mongodb://a/?replicaSet=rs"
 
 phases: [
 
     {
         responses: [
 
-                ["b:27017", {
+                ["a:27017", {
 
                     ok: 1,
                     ismaster: false,
-                    secondary: false,
+                    secondary: true,
+                    hidden: true,
                     hosts: ["c:27017", "d:27017"],
                     setName: "rs",
                     minWireVersion: 0,
                     maxWireVersion: 6
-                }]
+                }],
         ],
 
         outcome: {
 
             servers: {
 
-                "b:27017": {
+                "a:27017": {
 
                     type: "RSOther",
                     setName: "rs"
