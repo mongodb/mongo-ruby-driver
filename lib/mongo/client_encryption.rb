@@ -46,8 +46,8 @@ module Mongo
     #   "aws" and "local".
     # @params [ Hash ] options
     #
-    # @option options [ Hash ] :master_key Information about the AWS master key. Required
-    #   if kms_provider is "aws".
+    # @option options [ Hash ] :master_key Information about the AWS master key.
+    #   Required if kms_provider is "aws".
     #   - :region [ String ] The The AWS region of the master key (required).
     #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
     #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
@@ -55,11 +55,10 @@ module Mongo
     #     by a colon (e.g. "kms.us-east-1.amazonaws.com" or
     #     "kms.us-east-1.amazonaws.com:443"). An endpoint in any other format
     #     will not be properly parsed.
-    # @option options [ Array<String> ] :key_alt_names An optional array of strings specifying
-    #   alternate names for the new data key.
+    # @option options [ Array<String> ] :key_alt_names An optional array of
+    #   strings specifying alternate names for the new data key.
     #
-    # @return [ String ] Base64-encoded UUID string representing the
-    #   data key _id
+    # @return [ String ] The 16-byte UUID of the new data key as a binary string.
     def create_data_key(kms_provider, options={})
       @encrypter.create_and_insert_data_key(
         kms_provider,
@@ -67,34 +66,34 @@ module Mongo
       )
     end
 
-    # Encrypts a value using the specified encryption key and algorithm
+    # Encrypts a value using the specified encryption key and algorithm.
     #
-    # @param [ Object ] value The value to encrypt
+    # @param [ Object ] value The value to encrypt.
     # @param [ Hash ] options
     #
-    # @option options [ String ] :key_id The base64-encoded UUID of the encryption
-    #   key as it is stored in the key vault collection
+    # @option options [ String ] :key_id The UUID of the encryption
+    #   key as it is stored in the key vault collection.
     # @option options [ String ] :key_alt_name The alternate name for the
     #   encryption key.
     # @option options [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-    #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+    #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random".
     #
     # @note The :key_id and :key_alt_name options are mutually exclusive. Only
     #   one is required to perform explicit encryption.
     #
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
-    #   representing the encrypted value
+    #   representing the encrypted value.
     def encrypt(value, options={})
       @encrypter.encrypt(value, options)
     end
 
-    # Decrypts a value that has already been encrypted
+    # Decrypts a value that has already been encrypted.
     #
     # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)
-    #   that will be decrypted
+    #   that will be decrypted.
     #
-    # @return [ Object ] The decrypted value
+    # @return [ Object ] The decrypted value.
     def decrypt(value)
       @encrypter.decrypt(value)
     end
