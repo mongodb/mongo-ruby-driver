@@ -11,6 +11,20 @@ describe Mongo::Crypt::EncryptionIO do
   end
 
   describe '#spawn_mongocryptd' do
+    context 'no spawn path' do
+      let(:mongocryptd_options) do
+        {
+          mongocryptd_spawn_args: ['test'],
+        }
+      end
+
+      it 'fails with an exception' do
+        lambda do
+          subject.send(:spawn_mongocryptd)
+        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_path/)
+      end
+    end
+
     context 'no spawn args' do
       let(:mongocryptd_options) do
         {
@@ -21,7 +35,7 @@ describe Mongo::Crypt::EncryptionIO do
       it 'fails with an exception' do
         lambda do
           subject.send(:spawn_mongocryptd)
-        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process without providing.*mongocryptd_spawn_args/)
+        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_args/)
       end
     end
 
@@ -36,7 +50,7 @@ describe Mongo::Crypt::EncryptionIO do
       it 'fails with an exception' do
         lambda do
           subject.send(:spawn_mongocryptd)
-        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process without providing.*mongocryptd_spawn_args/)
+        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_args/)
       end
     end
 
@@ -45,6 +59,19 @@ describe Mongo::Crypt::EncryptionIO do
         {
           mongocryptd_spawn_path: 'echo',
           mongocryptd_spawn_args: ['hi'],
+        }
+      end
+
+      it 'spawns' do
+        subject.send(:spawn_mongocryptd)
+      end
+    end
+
+    context '-- for args to emulate no args' do
+      let(:mongocryptd_options) do
+        {
+          mongocryptd_spawn_path: 'echo',
+          mongocryptd_spawn_args: ['--'],
         }
       end
 

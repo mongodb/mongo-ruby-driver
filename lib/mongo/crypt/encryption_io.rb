@@ -177,12 +177,17 @@ module Mongo
         mongocryptd_spawn_args = @options[:mongocryptd_spawn_args]
         mongocryptd_spawn_path = @options[:mongocryptd_spawn_path]
 
+        unless mongocryptd_spawn_path
+          raise ArgumentError.new(
+            'Cannot spawn mongocryptd process when no :mongocryptd_spawn_path option is provided'
+          )
+        end
+
         if mongocryptd_spawn_path.nil? ||
           mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
         then
           raise ArgumentError.new(
-            'Cannot spawn mongocryptd process without providing options for ' +
-            'mongocryptd_spawn_args and mongocryptd_spawn_path'
+            'Cannot spawn mongocryptd process when no :mongocryptd_spawn_args option is provided. To start mongocryptd without arguments, pass "--" for :mongocryptd_spawn_args'
           )
         end
 
