@@ -241,7 +241,7 @@ or creating a schema map, see later sections of this tutorial.
 
 Creating a Master Key
 ---------------------
-Both auto encryption and explicit encryption require an encryption master key.
+Both automatic encryption and explicit encryption require an encryption master key.
 This master key is used to encrypt data keys, which are in turn used to encrypt
 user data. The master key can be generated in one of two ways: by creating a
 local key, or by creating a key in the Amazon Web Services Key Management
@@ -281,17 +281,17 @@ For more information about creating a master key, see the MongoDB manual.
 
 Creating a Data Key
 -------------------
-Once you have created a master key, call the ``#create_data_key`` method on an
-instance of the ``Mongo::ClientEncryption`` class. This method generates a new
-data key and inserts it into the key vault collection, which is the MongoDB
-collection in which you choose to store your data keys. The ``#create_data_key``
-method returns the UUID of the newly-created data key.
+Once you have created a master key, create a data key by calling the
+``#create_data_key`` method on an instance of the ``Mongo::ClientEncryption``
+class. This method generates a new data key and inserts it into the key vault
+collection, which is the MongoDB collection in which you choose to store your
+data keys. The ``#create_data_key`` method returns the UUID of the newly-created data key.
 
 Create a Data Key Using a Local Master Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have created a local master key, you may use it to generate a new data
-key using the following code snippet:
+key with the following code snippet:
 
 .. code-block:: ruby
 
@@ -381,8 +381,8 @@ is a Hash that provides the ``Mongo::Client`` with information about which
 fields to automatically encrypt and decrypt.
 
 The code snippet at the top of this tutorial demonstrates creating a schema
-map using a Ruby ``Hash``. While this possible, schema maps can grow quite
-large and it is unweildy to include them in your Ruby code. Instead, it is
+map using a Ruby ``Hash``. While this will work, schema maps can grow quite
+large and it could be unweildy to include them in your Ruby code. Instead, it is
 recommended that you store them in a separate JSON (JavaScript Object Notation)
 file.
 
