@@ -868,8 +868,7 @@ buildvariants:
   - matrix_name: "fle-tests"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      # Until we stop installing bson from master, don't test on jruby
-      ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
+      ruby: '*'
       topology: standalone
       mongodb-version: ["4.2", "4.0"]
       os: rhel70
