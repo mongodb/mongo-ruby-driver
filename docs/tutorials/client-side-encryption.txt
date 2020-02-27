@@ -270,14 +270,14 @@ AWS Master Key
 ~~~~~~~~~~~~~~
 It is recommended that you use Amazon's Key Management Service to create and
 store your master key. To do so, follow steps 1 and 2 of the
-:manual:`"Convert to a Remote Master Key" section<ecosystem/use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
+:manual:`"Convert to a Remote Master Key" section</ecosystem/use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
 in the MongoDB Client-Side Encryption documentation.
 
 For more information about creating a master key, see the MongoDB manual.
 
 .. seealso::
 
-  :ecosystem:`Create a Master Key </use-cases/client-side-field-level-encryption-guide/#a-create-a-master-key>`
+  :manual:`Create a Master Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#a-create-a-master-key>`
 
 Creating a Data Key
 -------------------
@@ -366,7 +366,7 @@ For more information about creating a data key, see the MongoDB manual.
 
 .. seealso::
 
-  :ecosystem:`Create a Data Encryption Key </use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
+  :manual:`Create a Data Encryption Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
 
 Creating a Schema Map
 ---------------------
@@ -396,7 +396,7 @@ Before creating the JSON file, Base64-encode the UUID of the your data key.
   Base64.encode64(data_key_id)
 
 Then, create a new JSON file containing your schema map in the extended JSON
-format defined by the :manual:`Extended JSON v2 Documentation`<reference/mongodb-extended-json>`.
+format defined by the :manual:`Extended JSON v2 Documentation`</reference/mongodb-extended-json>`.
 Note that:
   * ``encryption_db`` and ``encryption_coll`` should be replaced with the
     names of the database and collection where you plan to store encrypted data.
@@ -440,4 +440,4 @@ For more information about schema maps, see the MongoDB manual.
 
 .. seealso::
 
-  :ecosystem:`Specify Encrypted Fields Using JSON Schema`<use-cases/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`
+  :manual:`Specify Encrypted Fields Using JSON Schema`</ecosystem/use-cases/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`
