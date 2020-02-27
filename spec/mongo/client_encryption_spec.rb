@@ -283,12 +283,20 @@ describe Mongo::ClientEncryption do
           }
         end
 
-        it 'raises an exception' do
+        let(:expected_message) do
           # RUBY-2129: This error message could be more specific and inform the user
           # that there is a problem with their KMS endpoint
+          if BSON::Environment.jruby?
+            /getservbyname.* failed/
+          else
+            /SocketError/
+          end
+        end
+
+        it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(Mongo::Error::KmsError, /SocketError/)
+          end.to raise_error(Mongo::Error::KmsError, expected_message)
         end
       end
 
