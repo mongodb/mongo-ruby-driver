@@ -1,2 +1,4 @@
 /.git
 /yard-docs
+Gemfile.lock
+gemfiles/*.lock
