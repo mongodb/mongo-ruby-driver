@@ -19,6 +19,17 @@ describe Mongo::Cluster::SocketReaper do
 
   describe '#execute' do
 
+    before do
+      # Ensure all servers are discovered
+      cluster.servers_list.each do |server|
+        server.scan!
+      end
+
+      # Stop the reaper that is attached to the cluster, since it
+      # runs the same code we are running and can interfere with our assertions
+      cluster.instance_variable_get('@periodic_executor').stop!
+    end
+
     it 'calls close_idle_sockets on each connection pool in the cluster' do
       RSpec::Mocks.with_temporary_scope do
         cluster.servers.each do |s|
