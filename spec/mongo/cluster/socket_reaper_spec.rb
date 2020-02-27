@@ -19,14 +19,14 @@ describe Mongo::Cluster::SocketReaper do
 
   describe '#execute' do
 
-    before do
-      cluster.servers.each do |s|
-        expect(s.pool).to receive(:close_idle_sockets).and_call_original
-      end
-    end
-
     it 'calls close_idle_sockets on each connection pool in the cluster' do
-      reaper.execute
+      RSpec::Mocks.with_temporary_scope do
+        cluster.servers.each do |s|
+          expect(s.pool).to receive(:close_idle_sockets).and_call_original
+        end
+
+        reaper.execute
+      end
     end
   end
 end
