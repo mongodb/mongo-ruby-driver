@@ -111,14 +111,14 @@ class Mongo::Cluster
       when Topology::Sharded
         unless updated_desc.unknown? || updated_desc.mongos?
           log_warn(
-            "Removing server #{updated_desc.address.to_s} because it is a #{updated_desc.server_type.to_s.upcase} and not a MONGOS"
+            "Removing server #{updated_desc.address.to_s} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected SHARDED"
           )
           remove
         end
       when Topology::ReplicaSetWithPrimary
         if updated_desc.standalone? || updated_desc.mongos?
           log_warn(
-            "Removing server #{updated_desc.address.to_s} because it is a #{updated_desc.server_type.to_s.upcase} and not a replica set member"
+            "Removing server #{updated_desc.address.to_s} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected a replica set member"
           )
           remove
           check_if_has_primary
@@ -132,7 +132,7 @@ class Mongo::Cluster
       when Topology::ReplicaSetNoPrimary
         if updated_desc.standalone? || updated_desc.mongos?
           log_warn(
-            "Removing server #{updated_desc.address.to_s} because it is a #{updated_desc.server_type.to_s.upcase} and not a replica set member"
+            "Removing server #{updated_desc.address.to_s} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected a replica set member"
           )
           remove
         elsif updated_desc.primary?
