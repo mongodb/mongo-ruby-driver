@@ -241,12 +241,203 @@ or creating a schema map, see later sections of this tutorial.
 
 Creating a Master Key
 ---------------------
-Documentation coming soon.
+Both auto encryption and explicit encryption require an encryption master key.
+This master key is used to encrypt data keys, which are in turn used to encrypt
+user data. The master key can be generated in one of two ways: by creating a
+local key, or by creating a key in the Amazon Web Services Key Management
+Service (AWS KMS).
+
+Local Master Key
+~~~~~~~~~~~~~~~~
+A local master key is a Base64-encoded, 96-byte string. It should be persisted
+on your machine as an environment variable or in a text file.
+
+.. note::
+
+  Using a local master key is insecure and not recommended if you plan
+  to use client-side encryption in production.
+
+Run the following code to generate a local master key using Ruby:
+
+.. code-block:: ruby
+
+  require 'base64'
+  require 'securerandom'
+
+  local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
+
+AWS Master Key
+~~~~~~~~~~~~~~
+It is recommended that you use Amazon's Key Management Service to create and
+store your master key. To do so, follow steps 1 and 2 of the
+:ecosystem:`"Convert to a Remote Master Key" section</use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
+in the MongoDB Client-Side Encryption documentation.
+
+For more information about creating a master key, see the MongoDB manual.
+
+.. seealso::
+
+  :ecosystem:`Create a Master Key </use-cases/client-side-field-level-encryption-guide/#a-create-a-master-key>`
 
 Creating a Data Key
 -------------------
-Documentation coming soon.
+Once you have created a master key, call the ``#create_data_key`` method on an
+instance of the ``Mongo::ClientEncryption`` class. This method generates a new
+data key and inserts it into the key vault collection, which is the MongoDB
+collection in which you choose to store your data keys. The ``#create_data_key``
+method returns the UUID of the newly-created data key.
+
+Create a Data Key Using a Local Master Key
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have created a local master key, you may use it to generate a new data
+key using the following code snippet:
+
+.. code-block:: ruby
+
+  # A Mongo::Client instance that will be used to connect to the key vault
+  # collection. Replace the server address with the address of the MongoDB
+  # server where you would like to store your key vault collection.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    {
+      # Replace with the database and collection names for your key vault collection
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: {
+        local: {
+          key: local_master_key
+        }
+      }
+    }
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+
+See the `Local Master Key`_ section for more information about generating a new
+local master key.
+
+Create a Data Key Using an AWS Master Key
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have created an AWS master key, note the access key ID and the secret access
+key of the IAM user that has permissions to use the key. Additionally, note
+the AWS region and the Amazon Resource Number (ARN) of your master key. You will
+use that information to generate a data key.
+
+.. code-block:: ruby
+
+  # A Mongo::Client instance that will be used to connect to the key vault
+  # collection. Replace the server address with the address of the MongoDB
+  # server where you would like to store your key vault collection.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    {
+      # Replace with the database and collection names for your key vault collection
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: {
+        aws: {
+          access_key_id: 'IAM-ACCESS-KEY-ID',
+          secret_access_key: 'IAM-SECRET-ACCESS-KEY'
+        }
+      }
+    }
+  )
+
+  data_key_id = client_encryption.create_data_key(
+    'aws',
+    {
+      master_key: {
+        region: 'REGION-OF-YOUR-MASTER-KEY',
+        key: 'ARN-OF-YOUR-MASTER-KEY'
+      }
+
+    }
+  )
+
+See the `AWS Master Key`_ section of this tutorial  for more information about
+generating a new master key on AWS and finding the information you need to
+create data keys.
+
+For more information about creating a data key, see the MongoDB manual.
+
+.. seealso::
+
+  :ecosystem:`Create a Data Encryption Key </use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
 
 Creating a Schema Map
 ---------------------
-Documentation coming soon.
+
+.. note::
+
+  Schema maps are only used in automatic encryption.
+
+Once you have created a data key, you can use it to encrypt and decrypt data
+during automatic encryption by referencing it in a schema map. A schema map
+is a Hash that provides the ``Mongo::Client`` with information about which
+fields to automatically encrypt and decrypt.
+
+The code snippet at the top of this tutorial demonstrates creating a schema
+map using a Ruby ``Hash``. While this possible, schema maps can grow quite
+large and it is unweildy to include them in your Ruby code. Instead, it is
+recommended that you store them in a separate JSON (JavaScript Object Notation)
+file.
+
+Before creating the JSON file, Base64-encode the UUID of the your data key.
+
+.. code-block:: ruby
+
+  require 'base64'
+
+  # Take note of the Base64-encoded uuid
+  Base64.encode64(data_key_id)
+
+Then, create a new JSON file containing your schema map in the extended JSON
+format defined by the :manual:`Extended JSON v2 Documentation`<reference/mongodb-extended-json>`.
+Note that:
+  * ``encryption_db`` and ``encryption_coll`` should be replaced with the
+    names of the database and collection where you plan to store encrypted data.
+  * ``encrypted_field`` should be replaced with the name of the field you want to encrypt.
+  * ``"bsonType": "string"`` should be replaced with the data type you intend to
+    encrypt, such as ``"bsonType": "integer"`` or ``"bsonType": "symbol"``.
+
+.. code-block:: json
+
+  {
+    "encryption_db.encryption_coll": {
+      "properties": {
+        "encrypted_field": {
+          "encrypt": {
+            "keyId": [{
+              "$binary": {
+                "base64": "YOUR-BASE64-ENCODED-DATA-KEY-ID",
+                "subType": "04"
+              }
+            }],
+            "bsonType": "string",
+            "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+          }
+        }
+      },
+      "bsonType": "object"
+    }
+  }
+
+When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
+``BSON::ExtJSON`` module in the ``bson`` Ruby gem.
+
+.. code-block:: ruby
+
+  require 'bson'
+
+  # schema_map is a Ruby Hash
+  schema_map = BSON::ExtJSON.parse(File.open('/path/to/your/file.json'))
+
+For more information about schema maps, see the MongoDB manual.
+
+.. seealso::
+
+  :ecosystem:`Specify Encrypted Fields Using JSON Schema`<use-cases/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`
