@@ -180,6 +180,26 @@ describe Mongo::Database do
       it 'returns a list of the collections info' do
         expect(result).to include('acol')
       end
+
+      context 'with more than one collection' do
+        before do
+          database[:anothercol].drop
+          database[:anothercol].create
+
+          expect(database.collections.length).to be > 1
+        end
+
+        let(:result) do
+          database.list_collections(filter: { name: 'anothercol' }).map do |info|
+            info['name']
+          end
+        end
+
+        it 'can filter by collection name' do
+          expect(result.length).to eq(1)
+          expect(result.first).to eq('anothercol')
+        end
+      end
     end
 
     context 'server 2.6' do
