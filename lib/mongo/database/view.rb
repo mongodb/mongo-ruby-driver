@@ -78,12 +78,18 @@ module Mongo
       # @example Get info on each collection.
       #   database.list_collections
       #
+      # @param [ Hash ] options
+      #
+      # @option options [ Hash ] :filter A filter on the collections returned.
+      #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+      #   for more information and usage.
+      #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
       # @since 2.0.5
-      def list_collections
+      def list_collections(**options)
         session = client.send(:get_session)
-        collections_info(session, ServerSelector.primary)
+        collections_info(session, ServerSelector.primary, **options)
       end
 
       # Create the new database view.
@@ -157,7 +163,10 @@ module Mongo
             cursor: batch_size ? { batchSize: batch_size } : {} },
           db_name: @database.name,
           session: session
-        }.tap { |spec| spec[:selector][:nameOnly] = true if options[:name_only] }
+        }.tap do |spec|
+          spec[:selector][:nameOnly] = true if options[:name_only]
+          spec[:selector][:filter] = options[:filter] if options[:filter]
+        end
       end
 
       def initial_query_op(session, options = {})
