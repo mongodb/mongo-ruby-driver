@@ -156,7 +156,7 @@ describe 'Connection pool timing test' do
         # when trying to perform operations during primary change
         sleep 1
 
-        @primary_chane_start = Time.now
+        @primary_change_start = Time.now
         ClusterTools.instance.change_primary
         @primary_change_end = Time.now
 
@@ -166,7 +166,10 @@ describe 'Connection pool timing test' do
       threads
     end
 
-    it 'does not error' do
+    # On JRuby, sometimes the following error is produced indicating
+    # possible data corruption or an interpreter bug:
+    # RSpec::Expectations::ExpectationNotMetError: expected no Exception, got #<Mongo::Error::OperationFailure: Invalid ns [ruby-driver.] (73) (on localhost:27018, modern retry, attempt 1) (on localhost:27018, modern retry, attempt 1)>
+    it 'does not error', retry: (BSON::Environment.jruby? ? 3 : 1) do
       threads
       start = Time.now
       expect do
@@ -174,7 +177,7 @@ describe 'Connection pool timing test' do
           t.join
         end
       end.not_to raise_error
-      puts "[Connection Pool Timing] Duration before primary change: #{@primary_chane_start - start}. "\
+      puts "[Connection Pool Timing] Duration before primary change: #{@primary_change_start - start}. "\
         "Duration after primary change: #{Time.now - @primary_change_end}"
     end
   end

@@ -254,7 +254,8 @@ module Mongo
           BSON::Document.new(
             :_id => BSON::ObjectId.new,
             :chunkSize => Chunk::DEFAULT_SIZE,
-            :uploadDate => Time.now.utc,
+            # MongoDB stores times with millisecond precision
+            :uploadDate => Time.now.utc.round(3),
             :contentType => DEFAULT_CONTENT_TYPE
           )
         end
