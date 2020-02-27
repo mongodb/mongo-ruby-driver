@@ -397,6 +397,7 @@ Before creating the JSON file, Base64-encode the UUID of the your data key.
 
 Then, create a new JSON file containing your schema map in the extended JSON
 format defined by the :manual:`Extended JSON v2 Documentation`</reference/mongodb-extended-json>`.
+
 Note that:
 
 * ``encryption_db`` and ``encryption_coll`` should be replaced with the
