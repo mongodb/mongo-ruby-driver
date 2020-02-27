@@ -87,7 +87,7 @@ module Mongo
           when :need_mongo_collinfo
             filter = Binding.ctx_mongo_op(self)
 
-            result = @encryption_io.collection_info(filter)
+            result = @encryption_io.collection_info(@db_name, filter)
             mongocrypt_feed(result) if result
 
             mongocrypt_done

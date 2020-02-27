@@ -79,8 +79,8 @@ module Mongo
       # @param [ Hash ] filter
       #
       # @return [ Hash ] The collection information
-      def collection_info(filter)
-        @client.database.list_collections(filter: filter).first
+      def collection_info(db_name, filter)
+        @client.use(db_name).database.list_collections(filter: filter).first
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
