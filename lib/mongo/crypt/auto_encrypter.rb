@@ -15,8 +15,14 @@
 module Mongo
   module Crypt
 
-    # A module included in Client that encapsulates auto-encryption
-    # functionality.
+    # An AutoEcnrypter is an object that encapsulates the behavior of
+    # automatic encryption. It controls all resources associated with
+    # auto-encryption, including the libmongocrypt handle, key vault client
+    # object, mongocryptd client object, and encryption I/O.
+    #
+    # The AutoEncrypter is kept as an instance on a Mongo::Client. Client
+    # objects with the same auto_encryption_options Hash may share
+    # AutoEncrypters.
     #
     # @api private
     class AutoEncrypter
