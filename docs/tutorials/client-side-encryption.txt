@@ -398,11 +398,12 @@ Before creating the JSON file, Base64-encode the UUID of the your data key.
 Then, create a new JSON file containing your schema map in the extended JSON
 format defined by the :manual:`Extended JSON v2 Documentation`</reference/mongodb-extended-json>`.
 Note that:
-  * ``encryption_db`` and ``encryption_coll`` should be replaced with the
-    names of the database and collection where you plan to store encrypted data.
-  * ``encrypted_field`` should be replaced with the name of the field you want to encrypt.
-  * ``"bsonType": "string"`` should be replaced with the data type you intend to
-    encrypt, such as ``"bsonType": "integer"`` or ``"bsonType": "symbol"``.
+
+* ``encryption_db`` and ``encryption_coll`` should be replaced with the
+  names of the database and collection where you plan to store encrypted data.
+* ``encrypted_field`` should be replaced with the name of the field you want to encrypt.
+* ``"bsonType": "string"`` should be replaced with the data type you intend to
+  encrypt, such as ``"bsonType": "integer"`` or ``"bsonType": "symbol"``.
 
 .. code-block:: json
 
