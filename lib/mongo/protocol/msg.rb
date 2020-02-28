@@ -35,7 +35,7 @@ module Mongo
       # moved to the end of the hash for better logging.
       #
       # @api private
-      INTERNAL_KEYS = Set.new(%w($clusterTime lsid signature txnNumber)).freeze
+      INTERNAL_KEYS = Set.new(%w($clusterTime lsid signature txnNumber $db)).freeze
 
       # Creates a new OP_MSG protocol message
       #
