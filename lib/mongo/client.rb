@@ -406,7 +406,7 @@ module Mongo
     #     view.
     #   - Automatic encryption requires the authenticated user to have the
     #     listCollections privilege.
-    #   - At worst, automatic encryption may double the number of connections
+    #   - At worst, automatic encryption may triple the number of connections
     #     used by the Client at any one time.
     #   - If automatic encryption fails on an operation, use a MongoClient
     #     configured with bypass_auto_encryption: true and use
