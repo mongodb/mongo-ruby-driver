@@ -383,7 +383,7 @@ EOT
       # query to key vault connection triggered from libmongocrypt.
       # In the worst case using FLE may end up doubling the number of
       # connections that the driver uses at any one time.
-      max_pool_size: 2,
+      max_pool_size: 3,
 
       heartbeat_frequency: 20,
 

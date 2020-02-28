@@ -49,9 +49,13 @@ module Mongo
         client: nil, mongocryptd_client: nil, key_vault_namespace:,
         key_vault_client:, mongocryptd_options: {}
       )
+        validate_key_vault_client!(key_vault_client)
+        validate_key_vault_namespace!(key_vault_namespace)
+
         @client = client
         @mongocryptd_client = mongocryptd_client
-        @key_vault_collection = key_vault_collection(key_vault_namespace, key_vault_client)
+        @key_vault_db, @key_vault_coll = key_vault_namespace.split('.')
+        @key_vault_client = key_vault_client
         @options = mongocryptd_options
       end
 
@@ -62,7 +66,7 @@ module Mongo
       #
       # @return [ Array<BSON::Document> ] The query results
       def find_keys(filter)
-        @key_vault_collection.find(filter).to_a
+        key_vault_collection.find(filter).to_a
       end
 
       # Insert a document into the key vault collection
@@ -71,7 +75,7 @@ module Mongo
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
       def insert_data_key(document)
-        @key_vault_collection.insert_one(document)
+        key_vault_collection.insert_one(document)
       end
 
       # Get collection info for a collection matching the provided filter
@@ -133,9 +137,19 @@ module Mongo
 
       private
 
-      # Use the provided key vault client and namespace to construct a
-      # Mongo::Collection object representing the key vault collection.
-      def key_vault_collection(key_vault_namespace, key_vault_client)
+      def validate_key_vault_client!(key_vault_client)
+        unless key_vault_client
+          raise ArgumentError.new('The :key_vault_client option cannot be nil')
+        end
+
+        unless key_vault_client.is_a?(Client)
+          raise ArgumentError.new(
+            'The :key_vault_client option must be an instance of Mongo::Client'
+          )
+        end
+      end
+
+      def validate_key_vault_namespace!(key_vault_namespace)
         unless key_vault_namespace
           raise ArgumentError.new('The :key_vault_namespace option cannot be nil')
         end
@@ -146,19 +160,13 @@ module Mongo
             "The :key_vault_namespace option must be in the format database.collection"
           )
         end
+      end
 
-        unless key_vault_client
-          raise ArgumentError.new('The :key_vault_client option cannot be nil')
-        end
-
-        unless key_vault_client.is_a?(Client)
-          raise ArgumentError.new(
-            'The :key_vault_client option must be an instance of Mongo::Client'
-          )
-        end
-
-        key_vault_db, key_vault_coll = key_vault_namespace.split('.')
-        key_vault_client.use(key_vault_db)[key_vault_coll]
+      # Use the provided key vault client and namespace to construct a
+      # Mongo::Collection object representing the key vault collection.
+      def key_vault_collection
+        @key_vault_collection ||=
+          @key_vault_client.use(@key_vault_db)[@key_vault_coll]
       end
 
       # Spawn a new mongocryptd process using the mongocryptd_spawn_path
