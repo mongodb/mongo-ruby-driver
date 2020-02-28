@@ -486,7 +486,7 @@ describe Mongo::Protocol::Msg do
             'insert' => 'foo',
             'documents' => [{ 'a' => 1 }],
             'ordered' => true,
-            '$db' => SpecConfig.instance.test_db
+            '$db' => SpecConfig.instance.test_db,
         }
       end
 

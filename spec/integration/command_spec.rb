@@ -47,7 +47,7 @@ describe 'Command' do
 
       let(:expected_payload) do
         {
-          'command' => {'commitTransaction' => 1, '$db' => 'admin',},
+          'command' => {'commitTransaction' => 1, '$db' => 'admin'},
           'command_name' => 'commitTransaction',
           'database_name' => 'admin',
           'request_id' => 42,
@@ -124,14 +124,8 @@ describe 'Command' do
       end
 
       let(:expected_payload) do
-        command = if ClusterConfig.instance.fcv_ish < '3.6'
-          { 'find' => 'collection_name' }
-        else
-          { 'find' => 'collection_name', '$db' => 'foo' }
-        end
-
         {
-          'command' => command,
+          'command' => { 'find' => 'collection_name', '$db' => 'foo' },
           'command_name' => 'find',
           'database_name' => 'foo',
           'request_id' => 42,
