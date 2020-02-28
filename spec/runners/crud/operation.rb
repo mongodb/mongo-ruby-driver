@@ -28,7 +28,7 @@ module Mongo
         @crud_test = crud_test
         @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
-        @arguments = spec['arguments'] || {}
+        @arguments = BSON::ExtJSON.parse_obj(spec['arguments']) || {}
         @outcome = Outcome.new(outcome_spec || spec)
       end
 

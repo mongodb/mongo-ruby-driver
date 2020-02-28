@@ -80,7 +80,7 @@ EOT
         expect(expected_events.length).to be > i
         expect(actual_events.length).to be > i
 
-        expectation = expected_events[i]
+        expectation = BSON::ExtJSON.parse_obj(expected_events[i], mode: :bson)
         actual_event = actual_events[i]['command_started_event'].dup
 
         expect(expectation.keys).to eq(%w(command_started_event))
@@ -104,16 +104,17 @@ EOT
         expected_presence = expected_command.select { |k, v| !v.nil? }
         expected_absence = expected_command.select { |k, v| v.nil? }
 
+        expect_equality = true
+
         expected_presence.each do |k, v|
-          expect(k => actual_command[k]).to eq(k => v)
+          expect(actual_command[k]).to match_event(v)
         end
 
         expected_absence.each do |k, v|
           expect(actual_command).not_to have_key(k)
         end
 
-        # this compares remaining fields in events after command is removed
-        expect(actual_event).to eq(expected_event)
+        expect(actual_event).to match_event(expected_event)
       end
 
       private
@@ -183,7 +184,7 @@ EOT
 
         # This should produce a meaningful error message,
         # even though we do not actually require that expected[k] == actual[k]
-        expect({k => expected[k]}).to eq({k => actual[k]})
+        expect({k => BSON::ExtJSON.parse_obj(expected[k])}).to eq({k => actual[k]})
       end
     end
   end
