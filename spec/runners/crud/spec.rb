@@ -23,6 +23,10 @@ module Mongo
         @data = BSON::ExtJSON.parse_obj(@spec['data'])
         @tests = @spec['tests']
 
+        # Introduced with Client-Side Encryption tests
+        @json_schema = BSON::ExtJSON.parse_obj(@spec['json_schema'])
+        @key_vault_data = BSON::ExtJSON.parse_obj(@spec['key_vault_data'])
+
         @requirements = if run_on = @spec['runOn']
           run_on.map do |spec|
             Requirement.new(spec)
@@ -40,6 +44,10 @@ module Mongo
       attr_reader :description
 
       attr_reader :requirements
+
+      attr_reader :json_schema
+
+      attr_reader :key_vault_data
 
       def collection_name
         # Older spec tests do not specify a collection name, thus

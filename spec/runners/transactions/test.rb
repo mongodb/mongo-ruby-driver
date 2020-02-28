@@ -51,7 +51,7 @@ module Mongo
       def initialize(crud_spec, data, test)
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
-        @data = data
+        @data = BSON::ExtJSON.parse_obj(data)
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         @session_options = if opts = test['sessionOptions']
@@ -180,8 +180,8 @@ module Mongo
 
         @results = {
           results: results,
-          contents: @collection.with(
-          read: {mode: 'primary'},
+          contents: @result_collection.with(
+            read: {mode: 'primary'},
             read_concern: { level: 'local' },
           ).find.to_a,
           events: actual_events,
@@ -198,9 +198,23 @@ module Mongo
           direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
+        if @spec.key_vault_data && !@spec.key_vault_data.empty?
+          key_vault_coll = support_client.use(:admin)[:datakeys].with(write: { w: :majority })
+          key_vault_coll.drop
+          key_vault_coll.insert_many(@spec.key_vault_data)
+        end
+
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
         coll.drop
-        support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
+        if @spec.json_schema
+          support_client.command(
+            create: @spec.collection_name,
+            validator: { '$jsonSchema' => @spec.json_schema },
+            writeConcern: { w: :majority }
+          )
+        else
+          support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
+        end
 
         coll.insert_many(@data) unless @data.empty?
 
@@ -213,6 +227,7 @@ module Mongo
         admin_support_client.command(@fail_point) if @fail_point
 
         @collection = test_client[@spec.collection_name]
+        @result_collection = support_client.use(@spec.database_name)[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})
