@@ -124,8 +124,14 @@ describe 'Command' do
       end
 
       let(:expected_payload) do
+        command = if ClusterConfig.instance.fcv_ish < '3.6'
+          { 'find' => 'collection_name' }
+        else
+          { 'find' => 'collection_name', '$db' => 'foo' }
+        end
+
         {
-          'command' => {'find' => 'collection_name', '$db' => 'foo',},
+          'command' => command,
           'command_name' => 'find',
           'database_name' => 'foo',
           'request_id' => 42,
