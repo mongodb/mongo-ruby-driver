@@ -97,6 +97,10 @@ module Mongo
       #
       # @return [ Hash ] The marked command
       def mark_command(cmd)
+        unless @mongocryptd_client
+          raise ArgumentError, 'mark_command requires mongocryptd_client to have been passed to the constructor, but it was not'
+        end
+
         begin
           response = @mongocryptd_client.database.command(cmd)
         rescue Error::NoServerAvailable => e

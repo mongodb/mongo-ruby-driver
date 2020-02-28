@@ -32,9 +32,14 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(server_selector, cluster=nil, msg=nil)
-        msg ||= "No #{server_selector.name} server is available in cluster: #{cluster.summary} " +
-                "with timeout=#{server_selector.server_selection_timeout}, " +
-                "LT=#{server_selector.local_threshold}"
+        unless msg
+          msg = "No #{server_selector.name} server is available"
+          if cluster
+            msg += " in cluster: #{cluster.summary}"
+          end
+          msg += " with timeout=#{server_selector.server_selection_timeout}, " +
+            "LT=#{server_selector.local_threshold}"
+        end
 
         super(msg)
       end
