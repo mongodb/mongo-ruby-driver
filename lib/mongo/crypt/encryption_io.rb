@@ -54,7 +54,7 @@ module Mongo
 
         @client = client
         @mongocryptd_client = mongocryptd_client
-        @key_vault_db, @key_vault_coll = key_vault_namespace.split('.')
+        @key_vault_db_name, @key_vault_coll_name = key_vault_namespace.split('.')
         @key_vault_client = key_vault_client
         @options = mongocryptd_options
       end
@@ -166,7 +166,7 @@ module Mongo
       # Mongo::Collection object representing the key vault collection.
       def key_vault_collection
         @key_vault_collection ||=
-          @key_vault_client.use(@key_vault_db)[@key_vault_coll]
+          @key_vault_client.use(@key_vault_db_name)[@key_vault_coll_name]
       end
 
       # Spawn a new mongocryptd process using the mongocryptd_spawn_path
