@@ -491,7 +491,6 @@ describe Mongo::Protocol::Msg do
       end
 
       it 'creates a payload with the command' do
-        byebug
         expect(message.payload[:command_name]).to eq('insert')
         expect(message.payload[:database_name]).to eq(SpecConfig.instance.test_db)
         expect(message.payload[:command]).to eq(expected_command_doc)
