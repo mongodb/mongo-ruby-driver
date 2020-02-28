@@ -43,6 +43,10 @@ module Mongo
       # @option mongocryptd_options [ String ] :mongocryptd_spawn_path
       # @option mongocryptd_options [ Array<String> ] :mongocryptd_spawn_args
       #
+      # @note When being used for auto encryption, all arguments are required.
+      #   When being used for explicit encryption, only the key_vault_namespace
+      #   and key_vault_client arguments are required.
+      #
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format
       def initialize(
