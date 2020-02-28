@@ -99,7 +99,7 @@ module Mongo
             address,
             payload[:request_id],
             operation_id,
-            payload[:command],
+            payload[:command].merge('$db' => payload[:database_name]),
             socket_object_id: socket_object_id,
             connection_id: connection_id,
           )
