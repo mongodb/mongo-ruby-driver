@@ -256,9 +256,7 @@ module Mongo
         end
 
         master_key = kms_providers[:local][:key]
-        raw_master_key = Base64.decode64(master_key)
-
-        Binding.setopt_kms_provider_local(self, raw_master_key)
+        Binding.setopt_kms_provider_local(self, master_key)
       end
 
       # Validate and set the aws KMS provider information on the underlying
