@@ -100,6 +100,10 @@ EOT
         expected_command = expected_event.delete('command')
         actual_command = actual_event.delete('command')
 
+        unless expected_command['$db']
+          actual_command.delete('$db')
+        end
+
         # Hash#compact is ruby 2.4+
         expected_presence = expected_command.select { |k, v| !v.nil? }
         expected_absence = expected_command.select { |k, v| v.nil? }
