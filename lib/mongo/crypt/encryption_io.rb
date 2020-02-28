@@ -177,8 +177,10 @@ module Mongo
       # Use the provided key vault client and namespace to construct a
       # Mongo::Collection object representing the key vault collection.
       def key_vault_collection
-        @key_vault_collection ||=
-          @key_vault_client.use(@key_vault_db_name)[@key_vault_coll_name]
+        @key_vault_collection ||= @key_vault_client.with(
+          database: @key_vault_db_name,
+          read_concern: { level: :majority }
+        )[@key_vault_coll_name]
       end
 
       # Spawn a new mongocryptd process using the mongocryptd_spawn_path
