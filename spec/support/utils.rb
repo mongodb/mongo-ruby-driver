@@ -103,20 +103,6 @@ module Utils
     events = events.map do |e|
       command = e.command.dup
 
-      # Convert txnNumber field from a BSON integer to an extended JSON int64
-      if command['txnNumber']
-        command['txnNumber'] = {
-          '$numberLong' => int64_value(command['txnNumber']).to_s
-        }
-      end
-
-      # Fake $code for map/reduce commands
-      %w(map reduce).each do |key|
-        if command[key].is_a?(String)
-          command[key] = {'$code' => command[key]}
-        end
-      end
-
       if command['readConcern']
         # The spec test use an afterClusterTime value of 42 to indicate that we need to assert
         # that the field exists in the actual read concern rather than comparing the value, so
