@@ -377,13 +377,15 @@ EOT
   # Base test options.
   def base_test_options
     {
-      # Automatic encryption tests require a minimum of two connections,
-      # because the driver checks out a connection to build a command,
-      # and then may need to encrypt the command which could require a
-      # query to key vault connection triggered from libmongocrypt.
-      # In the worst case using FLE may end up doubling the number of
+      # Automatic encryption tests require a minimum of three connections:
+      # - The driver checks out a connection to build a command.
+      # - It may need to encrypt the command, which could require a query to
+      #   the key vault collection triggered by libmongocrypt.
+      # - If the key vault client has auto encryption options, it will also
+      #   attempt to encrypt this query, resulting in a third connection.
+      # In the worst case using FLE may end up tripling the number of
       # connections that the driver uses at any one time.
-      max_pool_size: 2,
+      max_pool_size: 3,
 
       heartbeat_frequency: 20,
 
