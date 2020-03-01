@@ -76,7 +76,7 @@ functions:
             export TOPOLOGY=${TOPOLOGY}
             export COMPRESSOR=${COMPRESSOR}
             export RVM_RUBY="${RVM_RUBY}"
-            export MONGODB_VERSION=${VERSION}
+            export MONGODB_VERSION=${MONGODB_VERSION}
             export FCV=${FCV}
             export MONGO_RUBY_DRIVER_LINT=${LINT}
             export RETRY_READS=${RETRY_READS}
@@ -288,35 +288,35 @@ axes:
       - id: "latest"
         display_name: "latest"
         variables:
-           VERSION: "latest"
+          MONGODB_VERSION: "latest"
       - id: "4.2"
         display_name: "4.2"
         variables:
-          VERSION: "4.2"
+          MONGODB_VERSION: "4.2"
       - id: "4.0"
         display_name: "4.0"
         variables:
-          VERSION: "4.0"
+          MONGODB_VERSION: "4.0"
       - id: "3.6"
         display_name: "3.6"
         variables:
-           VERSION: "3.6"
+          MONGODB_VERSION: "3.6"
       - id: "3.4"
         display_name: "3.4"
         variables:
-           VERSION: "3.4"
+          MONGODB_VERSION: "3.4"
       - id: "3.2"
         display_name: "3.2"
         variables:
-           VERSION: "3.2"
+          MONGODB_VERSION: "3.2"
       - id: "3.0"
         display_name: "3.0"
         variables:
-           VERSION: "3.0"
+          MONGODB_VERSION: "3.0"
       - id: "2.6"
         display_name: "2.6"
         variables:
-           VERSION: "2.6"
+          MONGODB_VERSION: "2.6"
 
   - id: fcv
     display_name: FCV
