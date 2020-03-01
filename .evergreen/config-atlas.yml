@@ -293,15 +293,6 @@ functions:
           ${PREPARE_SHELL}
           AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
 
-  "fix absolute paths":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          for filename in $(find ${DRIVERS_TOOLS} -name \*.json); do
-            perl -p -i -e "s|ABSOLUTE_PATH_REPLACEMENT_TOKEN|${DRIVERS_TOOLS}|g" $filename
-          done
-
   "windows fix":
     - command: shell.exec
       params:
@@ -331,7 +322,6 @@ functions:
 pre:
   - func: "fetch source"
   - func: "windows fix"
-  - func: "fix absolute paths"
   - func: "init test-results"
   - func: "make files executable"
 
