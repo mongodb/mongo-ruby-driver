@@ -112,20 +112,6 @@ functions:
           MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
           EOT
 
-  "prepare resources":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          rm -rf $DRIVERS_TOOLS
-          if [ "${project}" = "drivers-tools" ]; then
-            # If this was a patch build, doing a fresh clone would not actually test the patch
-            cp -R ${PROJECT_DIRECTORY}/ $DRIVERS_TOOLS
-          else
-            git clone git://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
-          fi
-          echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
-
   "exec script" :
     - command: shell.exec
       type: test
@@ -318,7 +304,6 @@ functions:
 pre:
   - func: "fetch source"
   - func: "create expansions"
-  - func: "prepare resources"
   - func: "fix absolute paths"
 
 post:

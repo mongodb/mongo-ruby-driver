@@ -90,20 +90,6 @@ functions:
       params:
         file: src/expansion.yml
 
-  "prepare resources":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          rm -rf $DRIVERS_TOOLS
-          if [ "${project}" = "drivers-tools" ]; then
-            # If this was a patch build, doing a fresh clone would not actually test the patch
-            cp -R ${PROJECT_DIRECTORY}/ $DRIVERS_TOOLS
-          else
-            git clone git://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
-          fi
-          echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
-
   "upload release":
     - command: s3.put
       params:
@@ -381,7 +367,6 @@ functions:
 
 pre:
   - func: "fetch source"
-  - func: "prepare resources"
   - func: "windows fix"
   - func: "fix absolute paths"
   - func: "init test-results"
