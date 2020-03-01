@@ -243,7 +243,7 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-mlaunch.sh
 
-  "run tests with kerberos":
+  "run kerberos unit tests":
     - command: shell.exec
       type: test
       params:
@@ -251,7 +251,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          KERBEROS=1 .evergreen/run-tests-with-kerberos.sh
+          KERBEROS=1 .evergreen/run-tests-kerberos-unit.sh
 
   "run field level encryption tests":
     - command: shell.exec
@@ -358,7 +358,7 @@ tasks:
         - func: "run enterprise auth tests"
     - name: "kerberos-tests"
       commands:
-        - func: "run tests with kerberos"
+        - func: "run kerberos unit tests"
     - name: "fle-tests"
       commands:
         - func: "bootstrap mongo-orchestration"
