@@ -358,7 +358,6 @@ tasks:
         - func: "run enterprise auth tests"
     - name: "kerberos-tests"
       commands:
-        - func: "bootstrap mongo-orchestration"
         - func: "run tests with kerberos"
     - name: "fle-tests"
       commands:
