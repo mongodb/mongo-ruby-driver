@@ -137,16 +137,6 @@ functions:
         permissions: public-read
         content_type: ${content_type|application/x-gzip}
         display_name: "mongodb-logs.tar.gz"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: ${DRIVERS_TOOLS}/.evergreen/orchestration/server.log
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-orchestration.log
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|text/plain}
-        display_name: "orchestration.log"
 
   "upload working dir":
     - command: archive.targz_pack
@@ -201,17 +191,6 @@ functions:
       params:
         file: ./src/tmp/rspec.xml
 
-  "bootstrap mongo-orchestration":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
-    # run-orchestration generates expansion file with the MONGODB_URI for the cluster
-    - command: expansions.update
-      params:
-        file: mo-expansion.yml
-
   "delete private environment":
     - command: shell.exec
       type: test
@@ -264,34 +243,6 @@ functions:
 
             KERBEROS=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-tests-enterprise-auth.sh
 
-  "cleanup mo":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          cd "$MONGO_ORCHESTRATION_HOME"
-          # source the mongo-orchestration virtualenv if it exists
-          if [ -f venv/bin/activate ]; then
-            . venv/bin/activate
-          elif [ -f venv/Scripts/activate ]; then
-            . venv/Scripts/activate
-          fi
-          mongo-orchestration stop
-
-  "cleanup mo if running":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          cd "$MONGO_ORCHESTRATION_HOME"
-          # source the mongo-orchestration virtualenv if it exists
-          if [ -f venv/bin/activate ]; then
-            . venv/bin/activate
-          elif [ -f venv/Scripts/activate ]; then
-            . venv/Scripts/activate
-          fi
-          mongo-orchestration stop || true
-
   "fix absolute paths":
     - command: shell.exec
       params:
@@ -313,7 +264,6 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
-  - func: "cleanup mo if running"
 
 tasks:
 
