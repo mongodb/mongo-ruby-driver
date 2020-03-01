@@ -85,6 +85,7 @@ functions:
               export SINGLE_MONGOS="${SINGLE_MONGOS}"
               export BSON="${BSON}"
               export MMAPV1="${MMAPV1}"
+              export FLE="${FLE}"
 
               export STRESS_SPEC=true
            EOT
@@ -253,16 +254,6 @@ functions:
           ${PREPARE_SHELL}
           KERBEROS=1 .evergreen/run-tests-kerberos-unit.sh
 
-  "run field level encryption tests":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-fle-tests.sh
-
   "run enterprise auth tests":
     - command: shell.exec
       type: test
@@ -356,14 +347,13 @@ tasks:
     - name: "enterprise-auth-tests"
       commands:
         - func: "run enterprise auth tests"
-    - name: "kerberos-tests"
+    - name: "test-kerberos"
       commands:
         - func: "run kerberos unit tests"
-    - name: "fle-tests"
+    - name: "test-fle"
       commands:
-        - func: "bootstrap mongo-orchestration"
         - func: "export FLE AWS credentials"
-        - func: "run field level encryption tests"
+        - func: "run tests via mlaunch"
 
 axes:
   - id: "mongodb-version"
@@ -574,6 +564,14 @@ axes:
         run_on: ubuntu1604-test
         variables:
           MMAPV1: 'true'
+
+  - id: "fle"
+    display_name: FLE
+    values:
+      - id: "fle"
+        display_name: FLE
+        variables:
+          FLE: true
 
 buildvariants:
   - matrix_name: "mongo-4.2"
@@ -845,7 +843,7 @@ buildvariants:
   # Enterprise auth tests on debian are omitted due to segfaults:
   # https://jira.mongodb.org/browse/RUBY-1534
 
-  - matrix_name: "kerberos-tests"
+  - matrix_name: "test-kerberos"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "ruby-2.6"
@@ -854,7 +852,7 @@ buildvariants:
       os: rhel70
     display_name: "Kerberos Tests"
     tasks:
-      - name: "kerberos-tests"
+      - name: "test-kerberos"
 
   - matrix_name: "fle-tests-4.2"
     matrix_spec:
@@ -863,9 +861,10 @@ buildvariants:
       topology: standalone
       mongodb-version: ["4.2"]
       os: rhel70
+      fle: fle
     display_name: "FLE Tests: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "fle-tests"
+      - name: "test-fle"
 
   - matrix_name: "fle-tests-4.0"
     matrix_spec:
@@ -874,9 +873,10 @@ buildvariants:
       topology: standalone
       mongodb-version: ["4.0"]
       os: rhel70
+      fle: fle
     display_name: "FLE Tests: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "fle-tests"
+      - name: "test-fle"
 
   - matrix_name: "fle-tests-latest"
     matrix_spec:
@@ -885,6 +885,7 @@ buildvariants:
       topology: standalone
       mongodb-version: [latest]
       os: rhel70
+      fle: fle
     display_name: "FLE Tests: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "fle-tests"
+      - name: "test-fle"

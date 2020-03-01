@@ -158,6 +158,14 @@ EOT
     --eval "$create_user_cmd"
 fi
 
+if test -n "$FLE"; then
+  curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+  tar xf libmongocrypt-all.tar.gz
+
+  export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
+  test -f "$LIBMONGOCRYPT_PATH"
+fi
+
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 set_fcv
