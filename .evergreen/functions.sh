@@ -105,7 +105,11 @@ set_env_vars() {
     export ROOT_USER_PWD="pwd123"
   fi
 
-  export MONGODB_URI
+  if test -n "$MONGODB_URI"; then
+    export MONGODB_URI
+  else
+    unset MONGODB_URI
+  fi
 
   export CI=evergreen
 
