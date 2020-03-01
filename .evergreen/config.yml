@@ -436,7 +436,7 @@ axes:
       - id: "zlib"
         display_name: Zlib
         variables:
-           COMPRESSOR: "zlib"
+          COMPRESSOR: "zlib"
 
   - id: retry-reads
     display_name: Retry Reads
