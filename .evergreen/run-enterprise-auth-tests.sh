@@ -24,4 +24,4 @@ export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle_install
 
 echo "Running tests"
-bundle exec rspec spec/enterprise_auth -fd
+bundle exec rspec spec/enterprise_auth
