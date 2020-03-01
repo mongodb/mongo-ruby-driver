@@ -251,7 +251,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          KERBEROS_REQUIRED=1 .evergreen/run-tests-with-kerberos.sh
+          KERBEROS=1 .evergreen/run-tests-with-kerberos.sh
 
   "run field level encryption tests":
     - command: shell.exec
@@ -284,7 +284,7 @@ functions:
                  IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
             esac
 
-            KERBEROS_REQUIRED=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
+            KERBEROS=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
 
   "cleanup mo":
     - command: shell.exec
