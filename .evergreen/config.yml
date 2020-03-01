@@ -315,21 +315,11 @@ functions:
             perl -p -i -e "s|ABSOLUTE_PATH_REPLACEMENT_TOKEN|${DRIVERS_TOOLS}|g" $filename
           done
 
-  "install dependencies":
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          file="${PROJECT_DIRECTORY}/.evergreen/install-dependencies.sh"
-          [ -f $file ] && sh $file || echo "$file not available, skipping"
-
 pre:
   - func: "fetch source"
   - func: "create expansions"
   - func: "prepare resources"
   - func: "fix absolute paths"
-  - func: "install dependencies"
 
 post:
   - func: "delete private environment"
