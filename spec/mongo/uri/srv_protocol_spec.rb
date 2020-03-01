@@ -1,7 +1,7 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::URI::SRVProtocol do
-  clean_slate_for_all
+  clean_slate_for_all_if_possible
 
   let(:scheme) { 'mongodb+srv://' }
   let(:uri) { described_class.new(string) }
