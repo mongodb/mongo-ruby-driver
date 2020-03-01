@@ -97,7 +97,6 @@ set_env_vars() {
     add_uri_option compressors=zlib
   fi
 
-  TOPOLOGY=${TOPOLOGY:-server}
   DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
   if [ "$AUTH" != "noauth" ]; then

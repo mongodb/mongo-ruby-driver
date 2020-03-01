@@ -35,10 +35,10 @@ if test $mongo_version -ge 34; then
   args="$args --setParameter diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
-if test "$TOPOLOGY" = replica_set; then
+if test "$TOPOLOGY" = replica-set; then
   args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
   export HAVE_ARBITER=1
-elif test "$TOPOLOGY" = sharded_cluster; then
+elif test "$TOPOLOGY" = sharded-cluster; then
   args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
   if test -z "$SINGLE_MONGOS"; then
     args="$args --mongos 2"
@@ -102,7 +102,7 @@ echo "Running specs"
 which bundle
 bundle --version
 
-if test "$TOPOLOGY" = sharded_cluster; then
+if test "$TOPOLOGY" = sharded-cluster; then
   if test -n "$SINGLE_MONGOS"; then
     # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
     # when executing against a multi-sharded mongos.
@@ -162,7 +162,7 @@ set_fcv
 
 bundle exec rake spec:prepare
 
-if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
+if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
   # wait for it to spring into existence
   bundle exec rake spec:wait_for_sessions
