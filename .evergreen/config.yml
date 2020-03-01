@@ -17,7 +17,7 @@ timeout:
   - command: shell.exec
     params:
       script: |
-        ls -la
+        true
 
 functions:
   "fetch source":
