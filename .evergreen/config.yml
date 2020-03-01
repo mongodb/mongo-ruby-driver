@@ -200,7 +200,7 @@ functions:
         script: |
           rm -f .env.private
 
-  "run tests via mlaunch":
+  "run tests":
     - command: shell.exec
       type: test
       params:
@@ -208,7 +208,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-mlaunch.sh
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
   "run kerberos unit tests":
     - command: shell.exec
@@ -269,7 +269,7 @@ tasks:
 
     - name: "test-mlaunch"
       commands:
-        - func: "run tests via mlaunch"
+        - func: "run tests"
     - name: "enterprise-auth-tests"
       commands:
         - func: "run enterprise auth tests"
@@ -279,7 +279,7 @@ tasks:
     - name: "test-fle"
       commands:
         - func: "export FLE AWS credentials"
-        - func: "run tests via mlaunch"
+        - func: "run tests"
 
 axes:
   - id: "mongodb-version"
