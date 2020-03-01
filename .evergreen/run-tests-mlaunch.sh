@@ -63,13 +63,19 @@ fi
 if test "$AUTH" = auth; then
   args="$args --auth --username bob --password pwd123"
 fi
+if test "$AUTH" = x509; then
+  args="$args --auth --username bootstrap --password bootstrap"
+fi
 if test "$SSL" = ssl; then
   args="$args --sslMode requireSSL"\
 " --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
 " --sslCAFile spec/support/certificates/ca.crt"\
 " --sslClientCertificate spec/support/certificates/client.pem"
 
-  if echo $RVM_RUBY |grep -q jruby; then
+  if test "$AUTH" = x509; then
+    client_pem=client-x509.pem
+    uri_options="$uri_options&authMechanism=MONGODB-X509"
+  elif echo $RVM_RUBY |grep -q jruby; then
     # JRuby does not grok chained certificate bundles -
     # https://github.com/jruby/jruby-openssl/issues/181
     client_pem=client.pem
@@ -126,6 +132,30 @@ fi
 
 if test "$AUTH" = auth; then
   hosts="bob:pwd123@$hosts"
+fi
+
+if test "$AUTH" = x509; then
+  create_user_cmd="`cat <<'EOT'
+    db.getSiblingDB("$external").runCommand(
+      {
+        createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
+        roles: [
+             { role: "dbAdminAnyDatabase", db: "admin" },
+             { role: "readWriteAnyDatabase", db: "admin" },
+             { role: "userAdminAnyDatabase", db: "admin" },
+             { role: "clusterAdmin", db: "admin" },
+        ],
+        writeConcern: { w: "majority" , wtimeout: 5000 },
+      }
+    )
+EOT
+  `"
+
+  "$BINDIR"/mongo --tls \
+    --tlsCAFile spec/support/certificates/ca.crt \
+    --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
+    -u bootstrap -p bootstrap \
+    --eval "$create_user_cmd"
 fi
 
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"

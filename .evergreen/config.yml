@@ -253,16 +253,6 @@ functions:
           ${PREPARE_SHELL}
           KERBEROS_REQUIRED=1 .evergreen/run-tests-with-kerberos.sh
 
-  "run tests with X.509 authentication":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          .evergreen/run-x509-tests.sh
-
   "run field level encryption tests":
     - command: shell.exec
       type: test
@@ -370,9 +360,6 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests with kerberos"
-    - name: "x509-tests"
-      commands:
-        - func: "run tests with X.509 authentication"
     - name: "fle-tests"
       commands:
         - func: "bootstrap mongo-orchestration"
@@ -454,23 +441,28 @@ axes:
       - id: "auth-and-ssl"
         display_name: Auth SSL
         variables:
-           AUTH: "auth"
-           SSL: "ssl"
+          AUTH: "auth"
+          SSL: "ssl"
       - id: "auth-and-nossl"
         display_name: Auth NoSSL
         variables:
-           AUTH: "auth"
-           SSL: "nossl"
+          AUTH: "auth"
+          SSL: "nossl"
       - id: "noauth-and-ssl"
         display_name: NoAuth SSL
         variables:
-           AUTH: "noauth"
-           SSL: "ssl"
+          AUTH: "noauth"
+          SSL: "ssl"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
         variables:
-           AUTH: "noauth"
-           SSL: "nossl"
+          AUTH: "noauth"
+          SSL: "nossl"
+      - id: "x509"
+        display_name: X.509
+        variables:
+          AUTH: "x509"
+          SSL: "ssl"
 
   - id: "ruby"
     display_name: Ruby Version
@@ -478,31 +470,31 @@ axes:
       - id: "ruby-2.7"
         display_name: ruby-2.7
         variables:
-           RVM_RUBY: "ruby-2.7"
+          RVM_RUBY: "ruby-2.7"
       - id: "ruby-2.6"
         display_name: ruby-2.6
         variables:
-           RVM_RUBY: "ruby-2.6"
+          RVM_RUBY: "ruby-2.6"
       - id: "ruby-2.5"
         display_name: ruby-2.5
         variables:
-           RVM_RUBY: "ruby-2.5"
+          RVM_RUBY: "ruby-2.5"
       - id: "ruby-2.4"
         display_name: ruby-2.4
         variables:
-           RVM_RUBY: "ruby-2.4"
+          RVM_RUBY: "ruby-2.4"
       - id: "ruby-2.3"
         display_name: ruby-2.3
         variables:
-           RVM_RUBY: "ruby-2.3"
+          RVM_RUBY: "ruby-2.3"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
-           RVM_RUBY: "ruby-head"
+          RVM_RUBY: "ruby-head"
       - id: "jruby-9.2"
         display_name: jruby-9.2
         variables:
-           RVM_RUBY: "jruby-9.2"
+          RVM_RUBY: "jruby-9.2"
 
   - id: "os"
     display_name: OS
@@ -729,6 +721,17 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "x509-tests"
+    matrix_spec:
+      auth-and-ssl: "x509"
+      ruby: "ruby-2.6"
+      mongodb-version: "4.2"
+      topology: standalone
+      os: ubuntu1604
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
   - matrix_name: "jruby-auth"
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
@@ -818,17 +821,6 @@ buildvariants:
     display_name: "3.6 Replica Set with 3.4 FCV"
     tasks:
       - name: "test-mlaunch"
-
-  - matrix_name: "x509-tests"
-    matrix_spec:
-      auth-and-ssl: "auth-and-ssl"
-      ruby: "ruby-2.6"
-      mongodb-version: "4.2"
-      topology: standalone
-      os: ubuntu1604
-    display_name: "X.509 Tests"
-    tasks:
-      - name: "x509-tests"
 
   - matrix_name: "enterprise-auth-tests-ubuntu"
     matrix_spec:
