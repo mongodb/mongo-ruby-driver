@@ -1,9 +1,4 @@
-require 'mongo'
-require 'support/lite_constraints'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe 'kerberos authentication' do
   require_mongo_kerberos
