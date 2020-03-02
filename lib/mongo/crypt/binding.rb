@@ -282,11 +282,11 @@ module Mongo
       # Set local KMS provider options on the Mongo::Crypt::Handle object
       #
       # @param [ Mongo::Crypt::Handle ] handle
-      # @param [ String ] raw_master_key The 96-byte local KMS master key
+      # @param [ String ] master_key The 96-byte local KMS master key
       #
       # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
-      def self.setopt_kms_provider_local(handle, raw_master_key)
-        Binary.wrap_string(raw_master_key) do |master_key_p|
+      def self.setopt_kms_provider_local(handle, master_key)
+        Binary.wrap_string(master_key) do |master_key_p|
           check_status(handle) do
             mongocrypt_setopt_kms_provider_local(handle.ref, master_key_p)
           end
