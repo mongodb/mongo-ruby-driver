@@ -310,18 +310,24 @@ module Utils
     uri
   end
 
-  # Return whether the two objects are equal, given the possible presence of
-  # $$type matchers.
+  # Client-Side encryption tests introduce the $$type syntax for determining
+  # equality in command started events. The $$type key specifies which type of
+  # BSON object is expected in the result. If the $$type key is present, only
+  # check the class of the result.
   def match_with_type?(expected, actual)
     if expected.is_a?(Hash) && expected.key?('$$type')
       case expected['$$type']
       when 'binData'
-        actual.is_a?(BSON::Binary)
+        expected_class = BSON::Binary
+        expected_key = '$binary'
       when 'long'
-        actual.key?('$numberLong')
+        expected_class = BSON::Int64
+        expected_key = '$numberLong'
       else
         raise "Tests do not currently support matching against $$type #{v['$$type']}"
       end
+
+      actual.is_a?(expected_class) || actual.key?(expected_key)
     elsif expected.is_a?(Hash) && actual.is_a?(Hash)
       expected.keys.all? do |key|
         match_with_type?(expected[key], actual[key])
