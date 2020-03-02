@@ -179,7 +179,7 @@ module Mongo
       end
 
       def download(fs_bucket, context)
-        stream = fs_bucket.open_download_stream(BSON::ObjectId.from_string(arguments['id']['$oid']))
+        stream = fs_bucket.open_download_stream(BSON::ObjectId.from_string(arguments['id'].to_s))
         stream.read
       end
 
@@ -190,8 +190,7 @@ module Mongo
 
       def map_reduce(collection, context)
         view = Mongo::Collection::View.new(collection)
-        args = JSON.parse(arguments.to_json)
-        mr = Mongo::Collection::View::MapReduce.new(view, args['map']['$code'], args['reduce']['$code'])
+        mr = Mongo::Collection::View::MapReduce.new(view, arguments['map'].javascript, arguments['reduce'].javascript)
         mr.to_a
       end
 
