@@ -28,10 +28,21 @@ esac
 
 export IP_ADDR=$IP_ADDR
 
-# Note that .env.private is supposed to be in Dotenv format which supports
-# multi-line values. Currently all values set for Kerberos tests are
-# single-line hence this isn't an issue.
-. ./.env.private
+# Note that:
+#
+# 1. .env.private is supposed to be in Dotenv format which supports
+#    multi-line values. Currently all values set for Kerberos tests are
+#    single-line hence this isn't an issue.
+#
+# 2. The database for Kerberos is $external. This means the file cannot be
+#    simply sourced into the shell, as that would expand $external as a
+#    variable.
+cat ./.env.private |
+  while read line; do
+    k=`echo "$line" |awk -F= '{print $1}'`
+    v=`echo "$line" |awk -F= '{print $2}'`
+    eval $k="'"$v"'"
+  done
 
 echo "Setting krb5 config file"
 touch ${PROJECT_DIRECTORY}/.evergreen/krb5.conf.empty
