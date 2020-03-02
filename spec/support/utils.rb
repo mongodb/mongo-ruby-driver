@@ -309,4 +309,30 @@ module Utils
 
     uri
   end
+
+  # Return whether the two objects are equal, given the possible presence of
+  # $$type matchers.
+  def match_with_type?(expected, actual)
+    if expected.is_a?(Hash) && expected.key?('$$type')
+      case expected['$$type']
+      when 'binData'
+        actual.is_a?(BSON::Binary)
+      when 'long'
+        actual.key?('$numberLong')
+      else
+        raise "Tests do not currently support matching against $$type #{v['$$type']}"
+      end
+    elsif expected.is_a?(Hash) && actual.is_a?(Hash)
+      expected.keys.all? do |key|
+        match_with_type?(expected[key], actual[key])
+      end
+    elsif expected.is_a?(Array) && actual.is_a?(Array)
+      expected.map.with_index do |_, idx|
+        match_with_type?(expected[idx], actual[idx])
+      end.all?(true)
+    else
+      return expected == actual
+    end
+  end
+  module_function :match_with_type?
 end
