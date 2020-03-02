@@ -35,7 +35,7 @@ module Mongo
       # moved to the end of the hash for better logging.
       #
       # @api private
-      INTERNAL_KEYS = Set.new(%w($clusterTime lsid signature txnNumber $db)).freeze
+      INTERNAL_KEYS = Set.new(%w($clusterTime lsid signature txnNumber)).freeze
 
       # Creates a new OP_MSG protocol message
       #
@@ -250,6 +250,7 @@ module Mongo
       def command
         @command ||= if @main_document
           @main_document.dup.tap do |cmd|
+            cmd.delete(DATABASE_IDENTIFIER)
             @sequences.each do |section|
               cmd[section.identifier] ||= []
               cmd[section.identifier] += section.documents

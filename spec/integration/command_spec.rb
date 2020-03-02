@@ -47,7 +47,7 @@ describe 'Command' do
 
       let(:expected_payload) do
         {
-          'command' => {'commitTransaction' => 1, '$db' => 'admin'},
+          'command' => {'commitTransaction' => 1},
           'command_name' => 'commitTransaction',
           'database_name' => 'admin',
           'request_id' => 42,
@@ -75,7 +75,6 @@ describe 'Command' do
               'commitTransaction' => 1,
               'lsid' => session.session_id,
               'txnNumber' => BSON::Int64.new(123),
-              '$db' => 'admin',
             },
             'command_name' => 'commitTransaction',
             'database_name' => 'admin',
@@ -96,7 +95,6 @@ describe 'Command' do
             'command' => {
               'commitTransaction' => 1,
               'writeConcern' => {'w' => 'majority'},
-              '$db' => 'admin',
             },
             'command_name' => 'commitTransaction',
             'database_name' => 'admin',
@@ -125,7 +123,7 @@ describe 'Command' do
 
       let(:expected_payload) do
         {
-          'command' => { 'find' => 'collection_name', '$db' => 'foo' },
+          'command' => {'find' => 'collection_name'},
           'command_name' => 'find',
           'database_name' => 'foo',
           'request_id' => 42,
