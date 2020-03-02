@@ -20,7 +20,7 @@ module Mongo
 
         @spec = YAML.load(contents)
         @description = File.basename(test_path)
-        @data = @spec['data']
+        @data = BSON::ExtJSON.parse_obj(@spec['data'])
         @tests = @spec['tests']
 
         # Introduced with Client-Side Encryption tests

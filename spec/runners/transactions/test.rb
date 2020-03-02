@@ -51,7 +51,8 @@ module Mongo
       def initialize(crud_spec, data, test)
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
-        @data = BSON::ExtJSON.parse_obj(data)
+
+        @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         @session_options = if opts = test['sessionOptions']
@@ -194,23 +195,33 @@ module Mongo
           direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
+        # Insert data into the key vault collection if required to do so by
+        # the tests.
         if @spec.key_vault_data && !@spec.key_vault_data.empty?
-          key_vault_coll = support_client.use(:admin)[:datakeys].with(write: { w: :majority })
+          key_vault_coll = support_client
+            .use(:admin)[:datakeys]
+            .with(write: { w: :majority })
+
           key_vault_coll.drop
           key_vault_coll.insert_many(@spec.key_vault_data)
         end
 
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
         coll.drop
-        if @spec.json_schema
-          support_client.command(
-            create: @spec.collection_name,
-            validator: { '$jsonSchema' => @spec.json_schema },
-            writeConcern: { w: :majority }
-          )
+
+        # Place a jsonSchema validator on the collection if required to do so
+        # by the tests.
+        collection_validator = if @spec.json_schema
+          { '$jsonSchema' => @spec.json_schema }
         else
-          support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
+          {}
         end
+
+        support_client.command(
+          create: @spec.collection_name,
+          validator: collection_validator,
+          writeConcern: { w: :majority }
+        )
 
         coll.insert_many(@data) unless @data.empty?
 
@@ -223,6 +234,9 @@ module Mongo
         admin_support_client.command(@fail_point) if @fail_point
 
         @collection = test_client[@spec.collection_name]
+
+        # Client-side encryption tests require the use of a separate client
+        # without auto_encryption_options for querying results.
         @result_collection = support_client.use(@spec.database_name)[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
