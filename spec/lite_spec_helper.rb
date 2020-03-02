@@ -123,7 +123,9 @@ RSpec.configure do |config|
 
   if SpecConfig.instance.ci?
     unless BSON::Environment.jruby?
-      Rfc::Rif.output_object_space_stats = true
+      if defined?(Rfc)
+        Rfc::Rif.output_object_space_stats = true
+      end
     end
   end
 
