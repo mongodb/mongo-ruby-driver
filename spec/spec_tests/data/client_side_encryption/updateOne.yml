@@ -154,6 +154,7 @@ tests:
         result:
           errorContains: "$rename between two encrypted fields must have the same metadata or both be unencrypted"
   - description: "an invalid update (no $ operators) is validated and errors"
+    skipReason: "The Ruby Driver supports this kind of update command"
     clientOptions:
       autoEncryptOpts:
         kmsProviders:

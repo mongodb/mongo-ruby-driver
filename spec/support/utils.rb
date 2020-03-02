@@ -104,6 +104,8 @@ module Utils
         if opts[:auto_encryption_options][:kms_providers][:local]
           opts[:auto_encryption_options][:kms_providers][:local] =
             BSON::ExtJSON.parse_obj(local_kms_providers)
+          opts[:auto_encryption_options][:kms_providers][:local]['key'] =
+            opts[:auto_encryption_options][:kms_providers][:local]['key'].data
         end
 
         if opts[:auto_encryption_options] && opts[:auto_encryption_options][:key_vault_namespace].nil?

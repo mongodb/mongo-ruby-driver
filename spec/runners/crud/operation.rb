@@ -190,7 +190,8 @@ module Mongo
 
       def map_reduce(collection, context)
         view = Mongo::Collection::View.new(collection)
-        mr = Mongo::Collection::View::MapReduce.new(view, arguments['map']['$code'], arguments['reduce']['$code'])
+        args = JSON.parse(arguments.to_json)
+        mr = Mongo::Collection::View::MapReduce.new(view, args['map']['$code'], args['reduce']['$code'])
         mr.to_a
       end
 
