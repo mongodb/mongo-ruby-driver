@@ -57,8 +57,7 @@ end
 Encoding.default_external = Encoding::UTF_8
 
 autoload :Timecop, 'timecop'
-
-require 'ice_nine'
+autoload :IceNine, 'ice_nine'
 
 require 'support/matchers'
 require 'support/lite_constraints'
