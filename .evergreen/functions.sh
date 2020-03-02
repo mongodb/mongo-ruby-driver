@@ -82,10 +82,6 @@ add_uri_option() {
 }
 
 set_env_vars() {
-  AUTH=${AUTH:-noauth}
-  SSL=${SSL:-nossl}
-  MONGODB_URI=${MONGODB_URI:-}
-
   # drivers-evergreen-tools do not set tls parameter in URI when the
   # deployment uses TLS, repair this
   if test "$SSL" = ssl && ! echo $MONGODB_URI |grep -q tls=; then
@@ -97,15 +93,18 @@ set_env_vars() {
     add_uri_option compressors=zlib
   fi
 
-  TOPOLOGY=${TOPOLOGY:-server}
   DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
-  if [ "$AUTH" != "noauth" ]; then
+  if test -n "$AUTH"; then
     export ROOT_USER_NAME="bob"
     export ROOT_USER_PWD="pwd123"
   fi
 
-  export MONGODB_URI
+  if test -n "$MONGODB_URI"; then
+    export MONGODB_URI
+  else
+    unset MONGODB_URI
+  fi
 
   export CI=evergreen
 
@@ -373,5 +372,5 @@ show_local_instructions() {
   if test -n "$MMAPV1"; then
     params="$params MMAPV1=$MMAPV1"
   fi
-  echo ./.evergreen/test-on-docker -d $arch $params
+  echo ./.evergreen/test-on-docker -d $arch $params -s "$0"
 }

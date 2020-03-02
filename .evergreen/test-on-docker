@@ -104,7 +104,7 @@ class Runner
   end
 
   def script
-    @options[:script] || 'bash -x .evergreen/run-tests-mlaunch.sh'
+    @options[:script] || 'bash -x .evergreen/run-tests.sh'
   end
 
   def debian?

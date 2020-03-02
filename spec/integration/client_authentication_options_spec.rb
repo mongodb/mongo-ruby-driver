@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe 'Client authentication options' do
   let(:uri) { "mongodb://#{credentials}127.0.0.1:27017/#{options}" }

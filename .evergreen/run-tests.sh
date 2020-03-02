@@ -3,16 +3,6 @@
 set -o xtrace   # Write all commands first to stderr
 set -o errexit  # Exit the script with error if any of the commands fail
 
-# Supported/used environment variables:
-#       AUTH                    Set to enable authentication. Values are: "auth" / "noauth" (default)
-#       SSL                     Set to enable SSL. Values are "ssl" / "nossl" (default)
-#       MONGODB_URI             Set the suggested connection MONGODB_URI (including credentials and topology info)
-#       TOPOLOGY                Allows you to modify variables and the MONGODB_URI based on test topology
-#                               Supported values: "server", "replica_set", "sharded_cluster"
-#       RVM_RUBY                Define the Ruby version to test with, using its RVM identifier.
-#                               For example: "ruby-2.3" or "jruby-9.1"
-#       DRIVER_TOOLS            Path to driver tools.
-
 . `dirname "$0"`/functions.sh
 
 arch=`host_arch`
@@ -45,10 +35,10 @@ if test $mongo_version -ge 34; then
   args="$args --setParameter diagnosticDataCollectionEnabled=false"
 fi
 uri_options=
-if test "$TOPOLOGY" = replica_set; then
+if test "$TOPOLOGY" = replica-set; then
   args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
   export HAVE_ARBITER=1
-elif test "$TOPOLOGY" = sharded_cluster; then
+elif test "$TOPOLOGY" = sharded-cluster; then
   args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
   if test -z "$SINGLE_MONGOS"; then
     args="$args --mongos 2"
@@ -63,13 +53,19 @@ fi
 if test "$AUTH" = auth; then
   args="$args --auth --username bob --password pwd123"
 fi
+if test "$AUTH" = x509; then
+  args="$args --auth --username bootstrap --password bootstrap"
+fi
 if test "$SSL" = ssl; then
   args="$args --sslMode requireSSL"\
 " --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
 " --sslCAFile spec/support/certificates/ca.crt"\
 " --sslClientCertificate spec/support/certificates/client.pem"
 
-  if echo $RVM_RUBY |grep -q jruby; then
+  if test "$AUTH" = x509; then
+    client_pem=client-x509.pem
+    uri_options="$uri_options&authMechanism=MONGODB-X509"
+  elif echo $RVM_RUBY |grep -q jruby; then
     # JRuby does not grok chained certificate bundles -
     # https://github.com/jruby/jruby-openssl/issues/181
     client_pem=client.pem
@@ -106,7 +102,7 @@ echo "Running specs"
 which bundle
 bundle --version
 
-if test "$TOPOLOGY" = sharded_cluster; then
+if test "$TOPOLOGY" = sharded-cluster; then
   if test -n "$SINGLE_MONGOS"; then
     # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
     # when executing against a multi-sharded mongos.
@@ -128,13 +124,45 @@ if test "$AUTH" = auth; then
   hosts="bob:pwd123@$hosts"
 fi
 
+if test "$AUTH" = x509; then
+  create_user_cmd="`cat <<'EOT'
+    db.getSiblingDB("$external").runCommand(
+      {
+        createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
+        roles: [
+             { role: "dbAdminAnyDatabase", db: "admin" },
+             { role: "readWriteAnyDatabase", db: "admin" },
+             { role: "userAdminAnyDatabase", db: "admin" },
+             { role: "clusterAdmin", db: "admin" },
+        ],
+        writeConcern: { w: "majority" , wtimeout: 5000 },
+      }
+    )
+EOT
+  `"
+
+  "$BINDIR"/mongo --tls \
+    --tlsCAFile spec/support/certificates/ca.crt \
+    --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
+    -u bootstrap -p bootstrap \
+    --eval "$create_user_cmd"
+fi
+
+if test -n "$FLE"; then
+  curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+  tar xf libmongocrypt-all.tar.gz
+
+  export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
+  test -f "$LIBMONGOCRYPT_PATH"
+fi
+
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 set_fcv
 
 bundle exec rake spec:prepare
 
-if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
+if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
   # wait for it to spring into existence
   bundle exec rake spec:wait_for_sessions
