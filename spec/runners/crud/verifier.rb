@@ -180,10 +180,13 @@ EOT
           return
         end
 
-        # This should produce a meaningful error message,
-        # even though we do not actually require that expected[k] == actual[k]
-        # expect({k => BSON::ExtJSON.parse_obj(expected[k])}).to eq({k => actual[k]})
-        expect({k => expected[k]}).to eq({k => actual[k]})
+        if expected[k].is_a?(Time)
+          expect({k => expected[k].utc.to_s}).to eq({k => actual[k].utc.to_s})
+        else
+          # This should produce a meaningful error message,
+          # even though we do not actually require that expected[k] == actual[k]
+          expect({k => expected[k]}).to eq({k => actual[k]})
+        end
       end
     end
   end
