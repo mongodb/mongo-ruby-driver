@@ -78,7 +78,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) do
         {
           local: {
-            key: Base64.encode64('ruby' * 23) # NOT 96 bytes
+            key: 'ruby' * 23 # NOT 96 bytes
           }
         }
       end

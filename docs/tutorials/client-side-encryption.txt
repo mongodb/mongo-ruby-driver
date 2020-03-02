@@ -92,7 +92,7 @@ master key.
   # Generate a local encryption master key
   # To reuse this master key, persist it to a file or environment variable
   # on your machine.
-  local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
+  local_master_key = SecureRandom.random_bytes(96)
 
   kms_providers = {
     local: {
@@ -182,7 +182,7 @@ and then decrypting it after reading it from the database.
   # Generate a local encryption master key
   # To reuse this master key, persist it to a file or environment variable
   # on your machine.
-  local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
+  local_master_key = SecureRandom.random_bytes(96)
 
   kms_providers = {
     local: {
@@ -249,7 +249,7 @@ Service (AWS KMS).
 
 Local Master Key
 ~~~~~~~~~~~~~~~~
-A local master key is a Base64-encoded, 96-byte string. It should be persisted
+A local master key is a 96-byte binary string. It should be persisted
 on your machine as an environment variable or in a text file.
 
 .. warning::
@@ -261,10 +261,9 @@ Run the following code to generate a local master key using Ruby:
 
 .. code-block:: ruby
 
-  require 'base64'
   require 'securerandom'
 
-  local_master_key = Base64.encode64(SecureRandom.random_bytes(96))
+  local_master_key = SecureRandom.random_bytes(96)
 
 AWS Master Key
 ~~~~~~~~~~~~~~
