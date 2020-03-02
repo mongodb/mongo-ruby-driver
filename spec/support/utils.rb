@@ -230,9 +230,13 @@ module Utils
   module_function :int64_value
 
   URI_OPTION_MAP = {
-    :auth_source => 'authsource',
-    :replica_set => 'replicaSet',
-    :auth_mech => 'authMechanism',
+    app_name: 'appName',
+    auth_mech: 'authMechanism',
+    auth_source: 'authsource',
+    replica_set: 'replicaSet',
+    ssl_ca_cert: 'tlsCAFile',
+    ssl_cert: 'tlsCertificateKeyFile',
+    ssl_key: 'tlsCertificateKeyFile',
   }.freeze
 
   module_function def create_mongodb_uri(address_strs, **opts)
