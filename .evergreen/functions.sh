@@ -82,10 +82,6 @@ add_uri_option() {
 }
 
 set_env_vars() {
-  AUTH=${AUTH:-noauth}
-  SSL=${SSL:-nossl}
-  MONGODB_URI=${MONGODB_URI:-}
-
   # drivers-evergreen-tools do not set tls parameter in URI when the
   # deployment uses TLS, repair this
   if test "$SSL" = ssl && ! echo $MONGODB_URI |grep -q tls=; then
@@ -99,7 +95,7 @@ set_env_vars() {
 
   DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
-  if [ "$AUTH" != "noauth" ]; then
+  if test -n "$AUTH"; then
     export ROOT_USER_NAME="bob"
     export ROOT_USER_PWD="pwd123"
   fi

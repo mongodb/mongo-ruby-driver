@@ -353,17 +353,12 @@ axes:
         display_name: Auth NoSSL
         variables:
           AUTH: "auth"
-          SSL: "nossl"
       - id: "noauth-and-ssl"
         display_name: NoAuth SSL
         variables:
-          AUTH: "noauth"
           SSL: "ssl"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
-        variables:
-          AUTH: "noauth"
-          SSL: "nossl"
       - id: "x509"
         display_name: X.509
         variables:
