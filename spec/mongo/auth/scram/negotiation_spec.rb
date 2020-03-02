@@ -1,13 +1,11 @@
 require 'spec_helper'
 
-# This test should set cleanup: false on all clients, because due to
-# https://jira.mongodb.org/browse/RUBY-1772 we may be getting connections
-# established after the client is closed which screws up our assertions on
-# the auth calls. When 1772 is fixed, the cleanup should happen on existing
-# connections and thus should no longer interfere with auth assertions.
+# max_pool_size is set to 1 to force a single connection being used for
+# all operations in a client.
 
 describe 'SCRAM-SHA auth mechanism negotiation' do
   min_server_fcv '4.0'
+  # Test uses global assertions
   clean_slate
 
   let(:create_user!) do
@@ -47,7 +45,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       new_local_client(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(opts).update(cleanup: false)
+        SpecConfig.instance.test_options.merge(opts).update(max_pool_size: 1)
       )
     end
 
@@ -194,19 +192,25 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             :scram
           end
 
-          it 'authenticates successfully' do
+          before do
             create_user!
+          end
 
-            mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
-              # copy mechanism here rather than whole user
-              # in case something mutates mechanism later
-              mechanism = user.mechanism
-              m.call(user)
+          it 'authenticates successfully' do
+            RSpec::Mocks.with_temporary_scope do
+              mechanism = nil
+              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+                # copy mechanism here rather than whole user
+                # in case something mutates mechanism later
+                mechanism = user.mechanism
+                m.call(user)
+              end
+
+              expect do
+                result
+              end.not_to raise_error
+              expect(mechanism).to eq(:scram)
             end
-
-            expect { result }.not_to raise_error
-            expect(mechanism).to eq(:scram)
           end
         end
 
@@ -216,19 +220,23 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             :scram256
           end
 
-          it 'authenticates successfully with SCRAM-SHA-256' do
+          before do
             create_user!
+          end
 
-            mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
-              # copy mechanism here rather than whole user
-              # in case something mutates mechanism later
-              mechanism = user.mechanism
-              m.call(user)
+          it 'authenticates successfully with SCRAM-SHA-256' do
+            RSpec::Mocks.with_temporary_scope do
+              mechanism = nil
+              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+                # copy mechanism here rather than whole user
+                # in case something mutates mechanism later
+                mechanism = user.mechanism
+                m.call(user)
+              end
+
+              expect { result }.not_to raise_error
+              expect(mechanism).to eq(:scram256)
             end
-
-            expect { result }.not_to raise_error
-            expect(mechanism).to eq(:scram256)
           end
         end
       end
@@ -318,7 +326,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     let(:client) do
-      new_local_client(uri, SpecConfig.instance.ssl_options.merge(cleanup: false))
+      new_local_client(uri, SpecConfig.instance.ssl_options.merge(max_pool_size: 1))
     end
 
     context 'when the user exists' do
@@ -463,20 +471,24 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             :scram
           end
 
-          it 'authenticates successfully' do
+          before do
             create_user!
             expect(user.mechanism).to eq(:scram)
+          end
 
-            mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
-              # copy mechanism here rather than whole user
-              # in case something mutates mechanism later
-              mechanism = user.mechanism
-              m.call(user)
+          it 'authenticates successfully' do
+            RSpec::Mocks.with_temporary_scope do
+              mechanism = nil
+              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+                # copy mechanism here rather than whole user
+                # in case something mutates mechanism later
+                mechanism = user.mechanism
+                m.call(user)
+              end
+
+              expect { result }.not_to raise_error
+              expect(mechanism).to eq(:scram)
             end
-
-            expect { result }.not_to raise_error
-            expect(mechanism).to eq(:scram)
           end
         end
 
@@ -486,19 +498,23 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             :scram256
           end
 
-          it 'authenticates successfully with SCRAM-SHA-256' do
+          before do
             create_user!
+          end
 
-            mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
-              # copy mechanism here rather than whole user
-              # in case something mutates mechanism later
-              mechanism = user.mechanism
-              m.call(user)
+          it 'authenticates successfully with SCRAM-SHA-256' do
+            RSpec::Mocks.with_temporary_scope do
+              mechanism = nil
+              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+                # copy mechanism here rather than whole user
+                # in case something mutates mechanism later
+                mechanism = user.mechanism
+                m.call(user)
+              end
+
+              expect { result }.not_to raise_error
+              expect(mechanism).to eq(:scram256)
             end
-
-            expect { result }.not_to raise_error
-            expect(mechanism).to eq(:scram256)
           end
         end
       end

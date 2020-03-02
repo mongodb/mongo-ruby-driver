@@ -1,7 +1,8 @@
 require 'spec_helper'
 
-# fails intermittently on jruby in Evergreen
-describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
+describe Mongo::Auth::SCRAM::Conversation do
+  # Test uses global assertions
+  clean_slate
 
   let(:conversation) do
     described_class.new(user, mechanism)
@@ -35,8 +36,6 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     end
 
     describe '#start' do
-      # Test uses global assertions
-      clean_slate
 
       let(:query) do
         conversation.start(nil)
@@ -407,10 +406,10 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             conversation.continue(continue_reply, connection)
             conversation.finalize(reply, connection)
-          }.to raise_error(Mongo::Error::InvalidSignature)
+          end.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
     end
