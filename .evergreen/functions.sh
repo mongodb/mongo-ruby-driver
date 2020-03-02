@@ -372,5 +372,5 @@ show_local_instructions() {
   if test -n "$MMAPV1"; then
     params="$params MMAPV1=$MMAPV1"
   fi
-  echo ./.evergreen/test-on-docker -d $arch $params
+  echo ./.evergreen/test-on-docker -d $arch $params -s "$0"
 }
