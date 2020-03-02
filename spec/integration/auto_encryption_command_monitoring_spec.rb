@@ -52,7 +52,7 @@ describe 'Auto Encryption' do
   end
 
   let(:key_vault_list_collections_event) do
-    subscriber.succeeded_events.find do |event|
+    subscriber.started_events.find do |event|
       event.command_name == 'listCollections' && event.database_name == key_vault_db
     end
   end
@@ -60,6 +60,7 @@ describe 'Auto Encryption' do
   shared_examples 'it has an encrypted key_vault_client' do
     it 'registers a listCollections event on the key vault client' do
       expect(key_vault_list_collections_event).not_to be_nil
+      expect(key_vault_list_collections_event.command['$db']).to eq(key_vault_db)
     end
   end
 
