@@ -85,7 +85,8 @@ functions:
            # See what we've done
            cat expansion.yml
 
-    # Load the expansion file to make an evergreen variable with the current unique version
+    # Load the expansion file to make an evergreen variable with the current
+    # unique version
     - command: expansions.update
       params:
         file: src/expansion.yml
