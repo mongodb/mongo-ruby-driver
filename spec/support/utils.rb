@@ -341,7 +341,7 @@ module Utils
 
       same_values = expected.map.with_index do |_, idx|
         match_with_type?(expected[idx], actual[idx])
-      end.all?(true)
+      end.all?
 
       same_length && same_values
     else
