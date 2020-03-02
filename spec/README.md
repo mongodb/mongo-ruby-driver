@@ -269,6 +269,23 @@ To run the test suite against such a server, run:
 
     MONGODB_URI="mongodb://localhost:27017/?authMechanism=MONGODB-X509&tls=true&tlsCAFile=spec/support/certificates/ca.crt&tlsCertificateKeyFile=spec/support/certificates/client-x509.pem" rake
 
+## Kerberos
+
+The Kerberos-related functionality is packaged in a separate gem,
+`mongo_kerberos`. The driver test suite includes a number of unit tests that
+are skipped by default. To run them as part of the test suite, use the
+provided gemfile as follows:
+
+    export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
+    bundle install
+    export KERBEROS=1
+    rake
+
+Note that running the full test suite requires a MongoDB deployment. It is
+possible to run just the Kerberos-related unit tests without provisioning a
+MongoDB deployment; consult .evergreen/run-tests-kerberos-unit.sh for the
+full list of relevant test files.
+
 ## Field-Level Encryption
 
 Install libmongocrypt on your machine:
