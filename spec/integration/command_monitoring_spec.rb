@@ -21,6 +21,7 @@ describe 'Command monitoring' do
     started_event = started_events.first
     expect(started_event.command_name).to eql('ismaster')
     expect(started_event.address).to be_a(Mongo::Address)
+    expect(started_event.command).to have_key('$db')
 
     succeeded_events = subscriber.succeeded_events.select do |event|
       event.command_name == 'ismaster'
