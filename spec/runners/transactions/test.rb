@@ -71,11 +71,13 @@ module Mongo
           Operation.new(self, op)
         end
 
-        @expectations = test['expectations']
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'])
+
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
-        @expected_results = @operations.map do |o|
+
+        expected_results = @operations.map do |o|
           # We check both o.key('error') and o['error'] to provide a better
           # error message in case error: false is ever needed in the tests
           if o.key?('error')
@@ -97,6 +99,8 @@ module Mongo
             end
           end
         end
+
+        @expected_results = BSON::ExtJSON.parse_obj(expected_results)
       end
 
       attr_reader :outcome
