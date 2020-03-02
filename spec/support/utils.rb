@@ -87,36 +87,9 @@ module Utils
     uri = Mongo::URI.new('mongodb://localhost')
     spec_test_options.reduce({}) do |opts, (name, value)|
       if name == 'autoEncryptOpts'
-        local_kms_providers = value['kmsProviders']['local']
-        schema_map = value['schemaMap']
-
         opts.merge!(
-          auto_encryption_options: Utils.snakeize_hash(value)
+          auto_encryption_options: convert_auto_encryption_client_options(value)
         )
-
-        if opts[:auto_encryption_options][:kms_providers][:aws]
-          opts[:auto_encryption_options][:kms_providers][:aws] = {
-            access_key_id: SpecConfig.instance.fle_aws_key,
-            secret_access_key: SpecConfig.instance.fle_aws_secret,
-          }
-        end
-
-        if opts[:auto_encryption_options][:kms_providers][:local]
-          opts[:auto_encryption_options][:kms_providers][:local] =
-            BSON::ExtJSON.parse_obj(local_kms_providers)
-          opts[:auto_encryption_options][:kms_providers][:local]['key'] =
-            opts[:auto_encryption_options][:kms_providers][:local]['key'].data
-        end
-
-        if opts[:auto_encryption_options] && opts[:auto_encryption_options][:key_vault_namespace].nil?
-          opts[:auto_encryption_options][:key_vault_namespace] = 'admin.datakeys'
-        else
-          opts[:auto_encryption_options][:key_vault_namespace] = opts[:auto_encryption_options][:key_vault_namespace].to_s
-        end
-
-        if schema_map
-          opts[:auto_encryption_options][:schema_map] = BSON::ExtJSON.parse_obj(schema_map, mode: :bson)
-        end
       else
         uri.send(:add_uri_option, name, value.to_s, opts)
       end
@@ -125,6 +98,37 @@ module Utils
     end
   end
   module_function :convert_client_options
+
+  private def convert_auto_encryption_client_options(opts)
+    auto_encrypt_opts = Utils.snakeize_hash(opts)
+
+    if opts['kmsProviders']['aws']
+      # The tests require that AWS credentials be filled in by the driver.
+      auto_encrypt_opts[:kms_providers][:aws] = {
+        access_key_id: SpecConfig.instance.fle_aws_key,
+        secret_access_key: SpecConfig.instance.fle_aws_secret,
+      }
+    end
+
+    if opts['kmsProviders']['local']
+      auto_encrypt_opts[:kms_providers][:local] = {
+        key: BSON::ExtJSON.parse_obj(opts['kmsProviders']['local']['key']).data
+      }
+    end
+
+    if opts['keyVaultNamespace']
+      auto_encrypt_opts[:key_vault_namespace] = opts['keyVaultNamespace']
+    else
+      auto_encrypt_opts[:key_vault_namespace] = 'admin.datakeys'
+    end
+
+    if opts['schemaMap']
+      auto_encrypt_opts[:schema_map] = BSON::ExtJSON.parse_obj(opts['schemaMap'])
+    end
+
+    auto_encrypt_opts
+  end
+  module_function :convert_auto_encryption_client_options
 
   def order_hash(hash)
     Hash[hash.to_a.sort]
