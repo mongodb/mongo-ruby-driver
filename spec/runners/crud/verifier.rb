@@ -151,7 +151,7 @@ EOT
             end
           end
         else
-          expect(actual).to eq(expected)
+          expect(actual).to eq(BSON::ExtJSON.parse_obj(expected))
         end
       end
 
