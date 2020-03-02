@@ -41,7 +41,7 @@ module Mongo
       end
 
       def collection_name
-        @collection && @collection['name']
+        @result_collection && @result_collection['name']
       end
 
       # The expected result of running an operation.
