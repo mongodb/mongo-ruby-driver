@@ -45,8 +45,11 @@ module Mongo
 
       attr_reader :requirements
 
+      # @return [ Hash ] The jsonSchema collection validator.
       attr_reader :json_schema
 
+      # @return [ Array<Hash> ] Data to insert into the key vault before
+      #   running each test.
       attr_reader :key_vault_data
 
       def collection_name
