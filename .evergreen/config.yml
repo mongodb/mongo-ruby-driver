@@ -113,6 +113,24 @@ functions:
           MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
           EOT
 
+  "export Kerberos credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          SASL_HOST="${sasl_host}"
+          SASL_PORT="${sasl_port}"
+          SASL_USER="${sasl_user}"
+          SASL_PASS="${sasl_pass}"
+          SASL_DB="${sasl_db}"
+          PRINCIPAL="${principal}"
+          KERBEROS_DB="${kerberos_db}"
+          KEYTAB_BASE64="${keytab_base64}"
+          EOT
+
   "exec script" :
     - command: shell.exec
       type: test
@@ -247,21 +265,8 @@ functions:
         shell: bash
         working_dir: "src"
         script: |
-            # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-            case "$OS" in
-              cygwin*)
-                 IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
-                 ;;
-
-              darwin)
-                 IP_ADDR=`dig ${sasl_host} +short | tail -1`
-                 ;;
-
-              *)
-                 IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
-            esac
-
-            IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-tests-enterprise-auth.sh
+          ${PREPARE_SHELL}
+          .evergreen/run-tests-enterprise-auth.sh
 
 pre:
   - func: "fetch source"
@@ -282,6 +287,7 @@ tasks:
         - func: "run tests"
     - name: "enterprise-auth-tests"
       commands:
+        - func: "export Kerberos credentials"
         - func: "run enterprise auth tests"
     - name: "test-kerberos"
       commands:
