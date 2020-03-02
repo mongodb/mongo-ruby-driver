@@ -762,7 +762,6 @@ buildvariants:
 
   - matrix_name: "enterprise-auth-tests-ubuntu"
     matrix_spec:
-      auth-and-ssl: "auth-and-ssl"
       # Ruby 2.7, 2.6, 2.5, and 2.4 segfault
       ruby: ["ruby-2.3", "jruby-9.2"]
     display_name: "Enterprise Auth Ubuntu ${ruby}"
@@ -773,7 +772,6 @@ buildvariants:
 
   - matrix_name: "enterprise-auth-tests-rhel"
     matrix_spec:
-      auth-and-ssl: "auth-and-ssl"
       # Ruby 2.6 and 2.5 segfault
       ruby: ["ruby-2.3", "ruby-2.4"]
       os: rhel70
