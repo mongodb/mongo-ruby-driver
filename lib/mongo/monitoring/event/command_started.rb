@@ -99,7 +99,12 @@ module Mongo
             address,
             payload[:request_id],
             operation_id,
-            payload[:command],
+            # All op_msg  payloads have a $db field. Legacy payloads do not
+            # have a $db field. To emulate op_msg when publishing command
+            # monitoring events for legacy servers, add $db to the payload,
+            # copying the database name. Note that the database name is also
+            # available as a top-level attribute on the command started event.
+            payload[:command].merge('$db' => payload[:database_name]),
             socket_object_id: socket_object_id,
             connection_id: connection_id,
           )
