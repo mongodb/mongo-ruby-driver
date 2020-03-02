@@ -39,6 +39,8 @@ require 'mongo'
 require 'pp'
 
 autoload :Benchmark, 'benchmark'
+autoload :Timecop, 'timecop'
+autoload :IceNine, 'ice_nine'
 
 if BSON::Environment.jruby?
   require 'concurrent-ruby'
@@ -55,9 +57,6 @@ unless SpecConfig.instance.client_debug?
   Mongo::Logger.logger.level = Logger::INFO
 end
 Encoding.default_external = Encoding::UTF_8
-
-autoload :Timecop, 'timecop'
-autoload :IceNine, 'ice_nine'
 
 require 'support/matchers'
 require 'support/lite_constraints'
