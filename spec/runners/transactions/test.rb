@@ -48,7 +48,9 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.6.0
-      def initialize(crud_spec, data, test)
+      def initialize(crud_spec, data, test, **options)
+        @parse_bson = options[:parse_bson] || false
+
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
 

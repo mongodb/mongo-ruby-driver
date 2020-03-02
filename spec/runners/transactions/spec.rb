@@ -16,9 +16,14 @@ module Mongo
   module Transactions
 
     class Spec < Mongo::CRUD::Spec
+      def initialize(test_path, **options)
+        @options = options
+        super(test_path)
+      end
+
       def tests
         @tests.map do |test|
-          Mongo::Transactions::TransactionsTest.new(self, @data, test)
+          Mongo::Transactions::TransactionsTest.new(self, @data, test, **@options)
         end
       end
     end
