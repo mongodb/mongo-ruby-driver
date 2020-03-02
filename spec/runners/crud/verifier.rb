@@ -34,12 +34,7 @@ module Mongo
           expect(actual_collection_data).to be_empty
         else
           expect(actual_collection_data).not_to be nil
-          expected_collection_data.each do |doc|
-            expect(actual_collection_data).to include(doc)
-          end
-          actual_collection_data.each do |doc|
-            expect(expected_collection_data).to include(doc)
-          end
+          expect(actual_collection_data).to match_event(expected_collection_data)
         end
       end
 

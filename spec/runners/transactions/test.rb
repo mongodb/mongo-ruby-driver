@@ -74,7 +74,7 @@ module Mongo
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'])
 
         if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
+          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome']))
         end
 
         expected_results = @operations.map do |o|

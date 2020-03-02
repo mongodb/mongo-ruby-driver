@@ -336,13 +336,21 @@ module Utils
 
       actual.is_a?(expected_class) || actual.key?(expected_key)
     elsif expected.is_a?(Hash) && actual.is_a?(Hash)
-      expected.keys.all? do |key|
+      same_keys = (expected.keys - actual.keys).empty?
+
+      same_values = expected.keys.all? do |key|
         match_with_type?(expected[key], actual[key])
       end
+
+      same_keys && same_values
     elsif expected.is_a?(Array) && actual.is_a?(Array)
-      expected.map.with_index do |_, idx|
+      same_length = expected.length == actual.length
+
+      same_values = expected.map.with_index do |_, idx|
         match_with_type?(expected[idx], actual[idx])
       end.all?(true)
+
+      same_length && same_values
     else
       return expected == actual
     end
