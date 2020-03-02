@@ -42,7 +42,7 @@ RSpec::Matchers.define :be_ciphertext do
   end
 end
 
-RSpec::Matchers.define :match_event do |event|
+RSpec::Matchers.define :match_with_type do |event|
   match do |actual|
     Utils.match_with_type?(event, actual)
   end
