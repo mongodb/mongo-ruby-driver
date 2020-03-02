@@ -37,11 +37,11 @@ module Mongo
       #
       # @return [ Array<Hash> ] The list of documents expected to be in the collection.
       def collection_data
-        @result_collection && @result_collection['data']
+        # @result_collection && @result_collection['data']
       end
 
       def collection_name
-        @result_collection && @result_collection['name']
+        # @result_collection && @result_collection['name']
       end
 
       # The expected result of running an operation.
