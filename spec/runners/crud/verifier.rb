@@ -99,10 +99,6 @@ EOT
         expected_presence = expected_command.select { |k, v| !v.nil? }
         expected_absence = expected_command.select { |k, v| v.nil? }
 
-        if expected_presence['txnNumber']
-          expected_presence['txnNumber'] = JSON.parse(expected_presence['txnNumber'].to_json)
-        end
-
         expected_presence.each do |k, v|
           expect(actual_command[k]).to match_with_type(v)
         end

@@ -48,7 +48,9 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.6.0
-      def initialize(crud_spec, data, test)
+      def initialize(crud_spec, data, test, **options)
+        @parse_bson = options[:parse_bson] || false
+
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
 
@@ -71,13 +73,21 @@ module Mongo
           Operation.new(self, op)
         end
 
-        @expectations = BSON::ExtJSON.parse_obj(test['expectations'])
-
-        if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome']))
+        @expectations = if @parse_bson
+          BSON::ExtJSON.parse_obj(test['expectations'])
+        else
+          test['expectations']
         end
 
-        expected_results = @operations.map do |o|
+        if test['outcome']
+          @outcome = if @parse_bson
+            Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome']))
+          else
+            Mongo::CRUD::Outcome.new(test['outcome'])
+          end
+        end
+
+        @expected_results = @operations.map do |o|
           # We check both o.key('error') and o['error'] to provide a better
           # error message in case error: false is ever needed in the tests
           if o.key?('error')
@@ -100,7 +110,7 @@ module Mongo
           end
         end
 
-        @expected_results = BSON::ExtJSON.parse_obj(expected_results)
+        @expected_results = BSON::ExtJSON.parse_obj(@expected_results) if @parse_bson
       end
 
       attr_reader :outcome

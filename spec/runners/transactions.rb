@@ -17,11 +17,11 @@ require 'runners/transactions/operation'
 require 'runners/transactions/spec'
 require 'runners/transactions/test'
 
-def define_transactions_spec_tests(test_paths)
+def define_transactions_spec_tests(test_paths, **options)
 
   test_paths.each do |file|
 
-    spec = Mongo::Transactions::Spec.new(file)
+    spec = Mongo::Transactions::Spec.new(file, **options)
 
     context(spec.description) do
       require_wired_tiger
