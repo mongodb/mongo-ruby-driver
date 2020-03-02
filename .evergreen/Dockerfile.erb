@@ -86,7 +86,11 @@ RUN echo 2
 
 <% if preload? %>
 
-  RUN apt-get install -y python-pip
+  <% if debian? %>
+
+    RUN apt-get install -y python-pip
+
+  <% end %>
 
   WORKDIR /app
 
