@@ -34,7 +34,7 @@ module Mongo
           expect(actual_collection_data).to be_empty
         else
           expect(actual_collection_data).not_to be nil
-          expect(actual_collection_data).to match_event(expected_collection_data)
+          expect(actual_collection_data).to match_with_type(expected_collection_data)
         end
       end
 
@@ -100,14 +100,14 @@ EOT
         expected_absence = expected_command.select { |k, v| v.nil? }
 
         expected_presence.each do |k, v|
-          expect(actual_command[k]).to match_event(v)
+          expect(actual_command[k]).to match_with_type(v)
         end
 
         expected_absence.each do |k, v|
           expect(actual_command).not_to have_key(k)
         end
 
-        expect(actual_event).to match_event(expected_event)
+        expect(actual_event).to match_with_type(expected_event)
       end
 
       private
