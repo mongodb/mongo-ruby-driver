@@ -7,6 +7,10 @@ set -e
 
 . `dirname "$0"`/functions.sh
 
+arch=`host_arch`
+
+show_local_instructions
+
 set_env_vars
 
 setup_ruby
