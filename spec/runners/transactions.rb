@@ -28,7 +28,6 @@ def define_transactions_spec_tests(test_paths, **options)
 
       define_spec_tests_with_requirements(spec) do |req|
         spec.tests.each do |test|
-
           before do
             if test.multiple_mongoses?
               if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length == 1
