@@ -47,7 +47,10 @@ describe 'Command' do
 
       let(:expected_payload) do
         {
-          'command' => {'commitTransaction' => 1},
+          'command' => {
+            'commitTransaction' => 1,
+            '$db' => 'admin',
+          },
           'command_name' => 'commitTransaction',
           'database_name' => 'admin',
           'request_id' => 42,
@@ -75,6 +78,7 @@ describe 'Command' do
               'commitTransaction' => 1,
               'lsid' => session.session_id,
               'txnNumber' => BSON::Int64.new(123),
+              '$db' => 'admin',
             },
             'command_name' => 'commitTransaction',
             'database_name' => 'admin',
@@ -93,6 +97,7 @@ describe 'Command' do
         let(:expected_payload) do
           {
             'command' => {
+              '$db' => 'admin',
               'commitTransaction' => 1,
               'writeConcern' => {'w' => 'majority'},
             },
@@ -121,17 +126,46 @@ describe 'Command' do
         )
       end
 
-      let(:expected_payload) do
-        {
-          'command' => {'find' => 'collection_name'},
-          'command_name' => 'find',
-          'database_name' => 'foo',
-          'request_id' => 42,
-        }
+      context 'OP_MSG-capable servers' do
+        min_server_fcv '3.6'
+
+        let(:expected_payload) do
+          {
+            'command' => {
+              '$db' => 'foo',
+              'find' => 'collection_name',
+            },
+            'command_name' => 'find',
+            'database_name' => 'foo',
+            'request_id' => 42,
+          }
+        end
+
+        it 'returns expected payload' do
+          expect(payload).to eq(expected_payload)
+        end
       end
 
-      it 'returns expected payload' do
-        expect(payload).to eq(expected_payload)
+      # Servers using legacy wire protocol message do not have $db in payload.
+      # $db is added to the payload later when the command monitoring event is
+      # published.
+      context 'pre-OP_MSG servers' do
+        max_server_version '3.4'
+
+        let(:expected_payload) do
+          {
+            'command' => {
+              'find' => 'collection_name',
+            },
+            'command_name' => 'find',
+            'database_name' => 'foo',
+            'request_id' => 42,
+          }
+        end
+
+        it 'returns expected payload' do
+          expect(payload).to eq(expected_payload)
+        end
       end
     end
 
