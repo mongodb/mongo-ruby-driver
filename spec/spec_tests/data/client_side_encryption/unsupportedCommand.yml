@@ -22,4 +22,4 @@ tests:
           reduce: { $code:  "function sum(key, values) { return values.reduce((acc, x) => acc + x); }" }
           out: { inline: 1 }
         result:
-          errorContains: "command not supported for auto encryption: mapReduce"
+          errorContains: "command not supported for auto encryption: mapreduce"
