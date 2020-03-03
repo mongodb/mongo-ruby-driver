@@ -52,7 +52,8 @@ describe 'Auto Encryption' do
           'lsid' => kind_of(Hash),
           'documents' => kind_of(Array),
           'jsonSchema' => kind_of(Hash),
-          'isRemoteSchema' => false
+          'isRemoteSchema' => false,
+          'txnNumber' => kind_of(BSON::Int64)
         })
         .and_raise(Mongo::Error::NoServerAvailable.new(server_selector, cluster))
     end
@@ -69,10 +70,6 @@ describe 'Auto Encryption' do
 
   context 'prose tests' do
     context 'via mongocryptdBypassSpawn' do
-      let(:schema_map) do
-        File.read(File.join(File.dirname(__FILE__), '../support/crypt/external/external-schema.json'))
-      end
-
       let(:client) do
         new_local_client(
           SpecConfig.instance.addresses,
@@ -87,15 +84,15 @@ describe 'Auto Encryption' do
                 mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
               },
             },
-            database: 'auto_encryption'
+            database: :db
           ),
         )
       end
 
       it 'does not spawn' do
         lambda do
-          client.insert_one(encrypted: 'test')
-        end.should raise_error(/foo/)
+          client[:coll].insert_one(encrypted: 'test')
+        end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:27090 UNKNOWN/)
       end
     end
 
@@ -112,7 +109,7 @@ describe 'Auto Encryption' do
                 mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
               },
             },
-            database: 'auto_encryption'
+            database: :db
           ),
         )
       end
@@ -123,7 +120,7 @@ describe 'Auto Encryption' do
 
       it 'does not spawn' do
         lambda do
-          client.insert_one(encrypted: 'test')
+          client[:coll].insert_one(encrypted: 'test')
         end.should_not raise_error
         lambda do
           mongocryptd_client.database.command(ismaster: 1)

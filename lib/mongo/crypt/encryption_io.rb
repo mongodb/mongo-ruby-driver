@@ -48,7 +48,7 @@ module Mongo
       #   and key_vault_client arguments are required.
       #
       # @note This class expects that the key_vault_client and key_vault_namespace
-      #   options are not nil and are in the correct format
+      #   options are not nil and are in the correct format.
       def initialize(
         client: nil, mongocryptd_client: nil, key_vault_namespace:,
         key_vault_client:, mongocryptd_options: {}
@@ -88,6 +88,10 @@ module Mongo
       #
       # @return [ Hash ] The collection information
       def collection_info(db_name, filter)
+        unless @client
+          raise ArgumentError, 'collection_info requires client to have been passed to the constructor, but it was not'
+        end
+
         @client.use(db_name).database.list_collections(filter: filter).first
       end
 
@@ -195,15 +199,18 @@ module Mongo
 
         unless mongocryptd_spawn_path
           raise ArgumentError.new(
-            'Cannot spawn mongocryptd process when no :mongocryptd_spawn_path option is provided'
+            'Cannot spawn mongocryptd process when no ' +
+            ':mongocryptd_spawn_path option is provided'
           )
         end
 
-        if mongocryptd_spawn_path.nil? ||
-          mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
+        if mongocryptd_spawn_path.nil? || mongocryptd_spawn_args.nil? ||
+          mongocryptd_spawn_args.empty?
         then
           raise ArgumentError.new(
-            'Cannot spawn mongocryptd process when no :mongocryptd_spawn_args option is provided. To start mongocryptd without arguments, pass "--" for :mongocryptd_spawn_args'
+            'Cannot spawn mongocryptd process when no :mongocryptd_spawn_args ' +
+            'option is provided. To start mongocryptd without arguments, pass ' +
+            '"--" for :mongocryptd_spawn_args'
           )
         end
 
