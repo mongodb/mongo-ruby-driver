@@ -24,7 +24,7 @@ module Crypt
     let(:local_master_key) { Base64.decode64(local_master_key_b64) }
 
     # Data key id as a binary string
-    let(:key_id) { data_key['_id'].data }
+    let(:key_id) { data_key['_id'] }
 
     # Data key alternate name
     let(:key_alt_name) { 'ssn_encryption_key' }

@@ -49,7 +49,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
         it 'raises an exception' do
           expect do
             context
-          end.to raise_error(Mongo::Error::CryptError, /expected 16 byte UUID/)
+          end.to raise_error(ArgumentError, /Expected the :key_id option to be a BSON::Binary object/)
         end
       end
 

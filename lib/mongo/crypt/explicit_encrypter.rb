@@ -68,7 +68,7 @@ module Mongo
           options
         ).run_state_machine
 
-        @encryption_io.insert_data_key(data_key_document).inserted_id.data
+        @encryption_io.insert_data_key(data_key_document).inserted_id
       end
 
       # Encrypts a value using the specified encryption key and algorithm
