@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Error::NoServerAvailable do
   describe 'message' do
@@ -17,6 +17,16 @@ describe Mongo::Error::NoServerAvailable do
 
     it 'is correct' do
       expect(error.message).to eq('No primary server is available in cluster: #<Cluster topology=Unknown[127.0.0.1:27017] servers=[#<Server address=127.0.0.1:27017 UNKNOWN>]> with timeout=30, LT=0.015')
+    end
+
+    context 'when cluster is nil' do
+      let(:error) do
+        Mongo::Error::NoServerAvailable.new(selector, nil)
+      end
+
+      it 'is correct' do
+        expect(error.message).to eq('No primary server is available with timeout=30, LT=0.015')
+      end
     end
   end
 end

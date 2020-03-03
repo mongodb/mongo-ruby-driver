@@ -80,4 +80,57 @@ describe Mongo::Crypt::EncryptionIO do
       end
     end
   end
+
+  describe '#mark_command' do
+    let(:mock_client) do
+      double('mongocryptd client').tap do |client|
+        database = double('mock database')
+        expect(database).to receive(:command).and_raise(Mongo::Error::NoServerAvailable.new(Mongo::ServerSelector::Primary.new, nil, 'test message'))
+        allow(database).to receive(:command).and_return([])
+        expect(client).to receive(:database).at_least(:once).and_return(database)
+      end
+    end
+
+    let(:base_options) do
+      {
+        mongocryptd_spawn_path: 'echo',
+        mongocryptd_spawn_args: ['--'],
+      }
+    end
+
+    let(:subject) do
+      described_class.new(
+        mongocryptd_client: mock_client,
+        key_vault_namespace: 'foo.bar',
+        key_vault_client: authorized_client,
+        mongocryptd_options: mongocryptd_options,
+      )
+    end
+
+    context ':mongocryptd_bypass_spawn not given' do
+      let(:mongocryptd_options) do
+        base_options
+      end
+
+      it 'spawns' do
+        expect(subject).to receive(:spawn_mongocryptd)
+        subject.mark_command({})
+      end
+    end
+
+    context ':mongocryptd_bypass_spawn given' do
+      let(:mongocryptd_options) do
+        base_options.merge(
+          mongocryptd_bypass_spawn: true,
+        )
+      end
+
+      it 'does not spawn' do
+        expect(subject).not_to receive(:spawn_mongocryptd)
+        lambda do
+          subject.mark_command({})
+        end.should raise_error(Mongo::Error::NoServerAvailable, /test message/)
+      end
+    end
+  end
 end
