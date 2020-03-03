@@ -28,7 +28,11 @@ module Mongo
         @crud_test = crud_test
         @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
-        @arguments = spec['arguments'] || {}
+        if spec['arguments']
+          @arguments = BSON::ExtJSON.parse_obj(spec['arguments'])
+        else
+          @arguments = {}
+        end
         @outcome = Outcome.new(outcome_spec || spec)
       end
 
@@ -179,7 +183,7 @@ module Mongo
       end
 
       def download(fs_bucket, context)
-        stream = fs_bucket.open_download_stream(BSON::ObjectId.from_string(arguments['id']['$oid']))
+        stream = fs_bucket.open_download_stream(arguments['id'])
         stream.read
       end
 
@@ -190,7 +194,7 @@ module Mongo
 
       def map_reduce(collection, context)
         view = Mongo::Collection::View.new(collection)
-        mr = Mongo::Collection::View::MapReduce.new(view, arguments['map']['$code'], arguments['reduce']['$code'])
+        mr = Mongo::Collection::View::MapReduce.new(view, arguments['map'].javascript, arguments['reduce'].javascript)
         mr.to_a
       end
 
