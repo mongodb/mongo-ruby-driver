@@ -201,9 +201,10 @@ module Mongo
         if client && client.encrypter && client.encrypter.encrypt?
           if server.max_wire_version < 8
             raise Error::CryptError.new(
-              "Auto-encryption requires a minimum MongoDB version of 4.2 " +
-              "(wire version less than 8). Currently connected to server " +
-              "with max wire version #{server.max_wire_version}}"
+              "Cannot perform encryption against a MongoDB server older than " +
+              "4.2 (wire version less than 8). Currently connected to server " +
+              "with max wire version #{server.max_wire_version}} " +
+              "(Auto-encryption requires a minimum MongoDB version of 4.2)"
             )
           end
 
