@@ -204,8 +204,8 @@ module Mongo
           )
         end
 
-        if mongocryptd_spawn_path.nil? || mongocryptd_spawn_args.nil? ||
-          mongocryptd_spawn_args.empty?
+        if mongocryptd_spawn_path.nil? ||
+          mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
         then
           raise ArgumentError.new(
             'Cannot spawn mongocryptd process when no :mongocryptd_spawn_args ' +
