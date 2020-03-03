@@ -459,7 +459,7 @@ describe Mongo::Protocol::Msg do
       it 'creates a payload with the command' do
         expect(message.payload[:command_name]).to eq('ping')
         expect(message.payload[:database_name]).to eq(SpecConfig.instance.test_db)
-        expect(message.payload[:command]).to eq('ping' => 1)
+        expect(message.payload[:command]).to eq('ping' => 1, '$db' => SpecConfig.instance.test_db)
         expect(message.payload[:request_id]).to eq(message.request_id)
       end
     end
@@ -483,9 +483,10 @@ describe Mongo::Protocol::Msg do
 
       let(:expected_command_doc) do
         {
-            'insert' => 'foo',
-            'documents' => [{ 'a' => 1 }],
-            'ordered' => true,
+          'insert' => 'foo',
+          'documents' => [{ 'a' => 1 }],
+          'ordered' => true,
+          '$db' => SpecConfig.instance.test_db,
         }
       end
 
