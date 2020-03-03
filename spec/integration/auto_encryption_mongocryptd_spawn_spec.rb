@@ -45,16 +45,17 @@ describe 'Auto Encryption' do
       # will have already spawned mongocryptd, causing this test to fail.
       allow_any_instance_of(Mongo::Database)
         .to receive(:command)
-        .with({
-          'insert' => 'users',
-          '$db' => 'auto_encryption',
-          'ordered' => true,
-          'lsid' => kind_of(Hash),
-          'documents' => kind_of(Array),
-          'jsonSchema' => kind_of(Hash),
-          'isRemoteSchema' => false,
-          'txnNumber' => kind_of(BSON::Int64)
-        })
+        .with(
+          hash_including(
+            'insert' => 'users',
+            '$db' => 'auto_encryption',
+            'ordered' => true,
+            'lsid' => kind_of(Hash),
+            'documents' => kind_of(Array),
+            'jsonSchema' => kind_of(Hash),
+            'isRemoteSchema' => false,
+          )
+        )
         .and_raise(Mongo::Error::NoServerAvailable.new(server_selector, cluster))
     end
 
@@ -115,7 +116,7 @@ describe 'Auto Encryption' do
       end
 
       let(:mongocryptd_client) do
-        new_local_client(['localhost:27090'])
+        new_local_client(['localhost:27090'], server_selection_timeout: 1)
       end
 
       it 'does not spawn' do
