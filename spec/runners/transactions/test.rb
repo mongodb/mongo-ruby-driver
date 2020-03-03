@@ -48,17 +48,9 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.6.0
-      def initialize(crud_spec, data, test, **options)
-        # Client-side encryption tests require test data in extended JSON format
-        # to be parsed into BSON objects before being compared to results.
-        # Transaction tests expect results to remain in extended JSON format.
-        # This option specifies whether the test should parse expected results
-        # into BSON.
-        @parse_bson = options[:parse_bson] || false
-
+      def initialize(crud_spec, data, test)
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
-
         @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})

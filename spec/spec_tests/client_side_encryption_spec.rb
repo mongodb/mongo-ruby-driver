@@ -9,5 +9,5 @@ describe 'Client-Side Encryption' do
       skip "SPEC-2147: tests only work on single server"
     end
   end
-  define_transactions_spec_tests(CLIENT_SIDE_ENCRYPTION_TESTS, **{ parse_bson: true })
+  define_transactions_spec_tests(CLIENT_SIDE_ENCRYPTION_TESTS)
 end

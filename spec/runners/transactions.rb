@@ -17,17 +17,18 @@ require 'runners/transactions/operation'
 require 'runners/transactions/spec'
 require 'runners/transactions/test'
 
-def define_transactions_spec_tests(test_paths, **options)
+def define_transactions_spec_tests(test_paths)
 
   test_paths.each do |file|
 
-    spec = Mongo::Transactions::Spec.new(file, **options)
+    spec = Mongo::Transactions::Spec.new(file)
 
     context(spec.description) do
       require_wired_tiger
 
       define_spec_tests_with_requirements(spec) do |req|
         spec.tests.each do |test|
+
           before do
             if test.multiple_mongoses?
               if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length == 1
