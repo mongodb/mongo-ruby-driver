@@ -103,13 +103,6 @@ module Utils
     events = events.map do |e|
       command = e.command.dup
 
-      # Convert txnNumber field from a BSON integer to an extended JSON int64
-      if command['txnNumber']
-        command['txnNumber'] = {
-          '$numberLong' => int64_value(command['txnNumber']).to_s
-        }
-      end
-
       # Fake $code for map/reduce commands
       %w(map reduce).each do |key|
         if command[key].is_a?(String)
@@ -136,7 +129,7 @@ module Utils
       end
 
       # The spec tests use 42 as a placeholder value for any getMore cursorId.
-      command['getMore'] = { '$numberLong' => '42' } if command['getMore']
+      command['getMore'] = command['getMore'].class.new(42) if command['getMore']
 
       # Remove fields if empty
       #command.delete('filter') if command['filter'] && command['filter'].empty?
