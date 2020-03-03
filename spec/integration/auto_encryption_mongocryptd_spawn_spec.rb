@@ -45,15 +45,17 @@ describe 'Auto Encryption' do
       # will have already spawned mongocryptd, causing this test to fail.
       allow_any_instance_of(Mongo::Database)
         .to receive(:command)
-        .with({
-          'insert' => 'users',
-          '$db' => 'auto_encryption',
-          'ordered' => true,
-          'lsid' => kind_of(Hash),
-          'documents' => kind_of(Array),
-          'jsonSchema' => kind_of(Hash),
-          'isRemoteSchema' => false
-        })
+        .with(
+          hash_including(
+            'insert' => 'users',
+            '$db' => 'auto_encryption',
+            'ordered' => true,
+            'lsid' => kind_of(Hash),
+            'documents' => kind_of(Array),
+            'jsonSchema' => kind_of(Hash),
+            'isRemoteSchema' => false,
+          )
+        )
         .and_raise(Mongo::Error::NoServerAvailable.new(server_selector, cluster))
     end
 
@@ -64,6 +66,67 @@ describe 'Auto Encryption' do
         Mongo::Error::MongocryptdSpawnError,
         /Failed to spawn mongocryptd at the path "echo hello world" with arguments/
       )
+    end
+  end
+
+  context 'prose tests' do
+    context 'via mongocryptdBypassSpawn' do
+      let(:client) do
+        new_local_client(
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.test_options.merge(
+            auto_encryption_options: {
+              kms_providers: kms_providers,
+              key_vault_namespace: 'admin.datakeys',
+              schema_map: { 'db.coll' => schema_map },
+              extra_options: {
+                mongocryptd_bypass_spawn: true,
+                mongocryptd_uri: "mongodb://localhost:27090/db?serverSelectionTimeoutMS=1000",
+                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
+              },
+            },
+            database: :db
+          ),
+        )
+      end
+
+      it 'does not spawn' do
+        lambda do
+          client[:coll].insert_one(encrypted: 'test')
+        end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:27090 UNKNOWN/)
+      end
+    end
+
+    context 'via bypassAutoEncryption' do
+      let(:client) do
+        new_local_client(
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.test_options.merge(
+            auto_encryption_options: {
+              kms_providers: kms_providers,
+              key_vault_namespace: 'admin.datakeys',
+              bypass_auto_encryption: true,
+              extra_options: {
+                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
+              },
+            },
+            database: :db
+          ),
+        )
+      end
+
+      let(:mongocryptd_client) do
+        new_local_client(['localhost:27090'], server_selection_timeout: 1)
+      end
+
+      it 'does not spawn' do
+        lambda do
+          client[:coll].insert_one(encrypted: 'test')
+        end.should_not raise_error
+        lambda do
+          mongocryptd_client.database.command(ismaster: 1)
+        end.should raise_error(Mongo::Error::NoServerAvailable)
+      end
     end
   end
 end
