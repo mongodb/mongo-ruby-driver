@@ -211,9 +211,26 @@ setup_ruby() {
 }
 
 bundle_install() {
+  args=--quiet
+  
+  # On JRuby we can test against bson master but not in a conventional way.
+  # See https://jira.mongodb.org/browse/RUBY-2156
+  if echo $RVM_RUBY |grep -q jruby && test "$BSON" = master; then
+    unset BUNDLE_GEMFILE
+    git clone https://github.com/mongodb/bson-ruby
+    (cd bson-ruby &&
+      bundle install &&
+      rake compile &&
+      gem build *.gemspec &&
+      gem install *.gem)
+    
+    # TODO redirect output of bundle install to file.
+    # Then we don't have to see it in evergreen output.
+    args=
+  fi
+
   #which bundle
   #bundle --version
-  args=--quiet
   if test -n "$BUNDLE_GEMFILE"; then
     args="$args --gemfile=$BUNDLE_GEMFILE"
   fi
