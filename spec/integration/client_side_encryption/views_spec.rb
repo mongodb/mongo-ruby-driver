@@ -11,7 +11,7 @@ describe 'Client-Side Encryption' do
     let(:client) do
       new_local_client(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(database: :db)
+        SpecConfig.instance.test_options
       )
     end
 
@@ -29,14 +29,14 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.database.view.drop
-      client.database.command(create: 'view', viewOn: 'coll')
+      client.use(:db)[:view].drop
+      client.use(:db).database.command(create: "view", viewOn: "coll")
     end
 
     it 'does not perform encryption on views' do
       expect do
-        client_encrypted.database.view.insert_one({})
-      end.to raise_error(/blah/)
+        client_encrypted[:view].insert_one({})
+      end.to raise_error(Mongo::Error::CryptError, /cannot auto encrypt a view/)
     end
   end
 end
