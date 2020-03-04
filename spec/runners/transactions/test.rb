@@ -180,8 +180,8 @@ module Mongo
 
         @results = {
           results: results,
-          contents: @collection.with(
-          read: {mode: 'primary'},
+          contents: @result_collection.with(
+            read: {mode: 'primary'},
             read_concern: { level: 'local' },
           ).find.to_a,
           events: actual_events,
@@ -198,9 +198,33 @@ module Mongo
           direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
+        # Insert data into the key vault collection if required to do so by
+        # the tests.
+        if @spec.key_vault_data && !@spec.key_vault_data.empty?
+          key_vault_coll = support_client
+            .use(:admin)[:datakeys]
+            .with(write: { w: :majority })
+
+          key_vault_coll.drop
+          key_vault_coll.insert_many(@spec.key_vault_data)
+        end
+
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
         coll.drop
-        support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
+
+        # Place a jsonSchema validator on the collection if required to do so
+        # by the tests.
+        collection_validator = if @spec.json_schema
+          { '$jsonSchema' => @spec.json_schema }
+        else
+          {}
+        end
+
+        support_client.command(
+          create: @spec.collection_name,
+          validator: collection_validator,
+          writeConcern: { w: :majority }
+        )
 
         coll.insert_many(@data) unless @data.empty?
 
@@ -213,6 +237,10 @@ module Mongo
         admin_support_client.command(@fail_point) if @fail_point
 
         @collection = test_client[@spec.collection_name]
+
+        # Client-side encryption tests require the use of a separate client
+        # without auto_encryption_options for querying results.
+        @result_collection = support_client.use(@spec.database_name)[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})
