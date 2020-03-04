@@ -12,14 +12,14 @@ describe 'Connections' do
   let(:server) { client.cluster.servers.first }
 
   describe '#connect!' do
-    # On JRuby 9.2.7.0, this line:
-    # expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
-    # ... appears to produce a moment in which Mongo::Socket#write is undefined
-    # entirely, resulting in this failure:
-    # RSpec::Expectations::ExpectationNotMetError: expected Mongo::Error::SocketError, got #<NameError: undefined method `write' for class `Mongo::Socket'>
-    fails_on_jruby
-
     context 'network error during handshake' do
+      # On JRuby 9.2.7.0, this line:
+      # expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+      # ... appears to produce a moment in which Mongo::Socket#write is undefined
+      # entirely, resulting in this failure:
+      # RSpec::Expectations::ExpectationNotMetError: expected Mongo::Error::SocketError, got #<NameError: undefined method `write' for class `Mongo::Socket'>
+      fails_on_jruby
+
       let(:connection) do
         Mongo::Server::Connection.new(server, server.options)
       end
