@@ -8,6 +8,7 @@ describe 'BSON object size' do
     document = { key: 'a' * (max_size - 15) }
     expect(document.to_bson.length).to eq(max_size)
 
+    # This raises an error
     client.use(:db)[:coll].insert_one(document)
   end
 end
