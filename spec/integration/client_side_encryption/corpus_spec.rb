@@ -56,6 +56,10 @@ describe 'Client-Side Encryption' do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus.json'))
     end
 
+    let(:corpus_encrypted_expected) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus_encrypted.json'))
+    end
+
     let(:corpus_copied) do
       doc = BSON::Document.new
       corpus.each do |key, value|
@@ -72,20 +76,30 @@ describe 'Client-Side Encryption' do
 
           options = if value['identifier'] == 'id'
             {
-              
+
             }
           elsif value['identifier'] == 'altname'
             {
               key_alt_name: value['kms']
             }
           end
-          doc[key] = client_encryption.encrypt(
-            value['value'],
-            {
-              key_id: ,
-              algorithm: value['algo']
-            }
-          )
+
+          begin
+            doc[key] = client_encryption.encrypt(
+              value['value'],
+              {
+                key_id: key_id,
+                algorithm: value['algo']
+              }
+            )
+          rescue => e
+            if value['allowed']
+              raise "Unexpected error occured in client-side encryption " +
+                "corpus tests: #{e.class}, #{e.message}"
+            end
+
+            doc[key] = value['value']
+          end
         end
       end
 
@@ -103,6 +117,14 @@ describe 'Client-Side Encryption' do
       client.use(:admin)[:datakeys].drop
       client.use(:admin)[:datakeys].insert_one(local_data_key)
       client.use(:admin)[:datakeys].insert_one(aws_data_key)
+    end
+
+    shared_examples 'something' do
+      it 'does a thing' do
+        result = client_encrypted[:coll].insert_one(corpus_copied)
+        corpus_decrypted = client_encrypted[:coll].find(_id: result.inserted_id).first
+        expect(corpus_decrypted).to eq(corpus)
+      end
     end
   end
 end
