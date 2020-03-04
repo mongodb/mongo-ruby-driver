@@ -159,8 +159,7 @@ module Mongo
         # @since 2.0.0
         def connect!
           unless @socket
-            socket = address.socket(socket_timeout, ssl_options,
-              connect_timeout: address.connect_timeout)
+            socket = address.socket(socket_timeout, ssl_options, address.options)
             handshake!(socket)
             @socket = socket
           end
