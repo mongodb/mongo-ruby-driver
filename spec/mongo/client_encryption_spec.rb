@@ -7,7 +7,9 @@ describe Mongo::ClientEncryption do
   include_context 'define shared FLE helpers'
 
   let(:client) do
-    new_local_client(SpecConfig.instance.addresses.first)
+    ClientRegistry.instance.new_local_client(
+      [SpecConfig.instance.addresses.first]
+    )
   end
 
   let(:client_encryption) do
