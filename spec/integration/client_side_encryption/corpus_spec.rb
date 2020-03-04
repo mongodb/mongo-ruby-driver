@@ -162,11 +162,6 @@ describe 'Client-Side Encryption' do
         expect(corpus_decrypted.keys).to eq(corpus.keys)
 
         corpus_decrypted.each do |key, doc|
-          if doc['value'].is_a?(Time)
-            expect(doc['value'].to_s).to eq(corpus[key]['value'].to_s)
-            next
-          end
-
           expect(doc).to eq(corpus[key])
         end
 
