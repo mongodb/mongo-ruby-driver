@@ -3,6 +3,9 @@ require 'spec_helper'
 describe 'Client-Side Encryption' do
   describe 'Prose tests: External Key Vault Test' do
     require_libmongocrypt
+    require_enterprise
+    min_server_fcv '4.2'
+
     include_context 'define shared FLE helpers'
 
     let(:client) do
