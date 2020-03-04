@@ -42,8 +42,15 @@ RSpec::Matchers.define :be_ciphertext do
   end
 end
 
+
 RSpec::Matchers.define :match_with_type do |event|
   match do |actual|
     Utils.match_with_type?(event, actual)
+  end
+end
+
+RSpec::Matchers.define :be_uuid do
+  match do |object|
+    object.is_a?(BSON::Binary) && object.type == :uuid
   end
 end
