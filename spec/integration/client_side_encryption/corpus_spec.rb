@@ -177,6 +177,8 @@ describe 'Client-Side Encryption' do
 
         # Check that the actual encrypted document matches the expected
         # encrypted document.
+        expect(corpus_encrypted_actual.keys).to eq(corpus_encrypted_expected.keys)
+
         corpus_encrypted_actual.each do |key, value|
           # If it was deterministically encrypted, test the encrypted values
           # for equality.
