@@ -67,7 +67,7 @@ describe 'Client-Side Encryption' do
       # As per the instructions of the prose spec, corpus_copied is a copy of
       # the corpus BSON::Document that encrypts all fields that are meant to
       # be explicitly encrypted. corpus is a document containing many
-      # sub-documents, each with a value to encrypt and inforrmation about how
+      # sub-documents, each with a value to encrypt and information about how
       # to encrypt that value.
       corpus_copied = BSON::Document.new
       corpus.each do |key, doc|
@@ -111,7 +111,7 @@ describe 'Client-Side Encryption' do
             # should be copied over without being encrypted.
             if doc['allowed']
               raise "Unexpected error occured in client-side encryption " +
-                "corpus tests: #{e.class}, #{e.message}"
+                "corpus tests: #{e.class}: #{e.message}"
             end
 
             corpus_copied[key] = doc
@@ -159,7 +159,7 @@ describe 'Client-Side Encryption' do
         # Ensure that corpus_decrypted is the same as the original corpus
         # document by checking that they have the same set of keys, and that
         # they have the same values at those keys (improved diagnostics).
-        expect(corpus_decrypted.keys - corpus.keys).to be_empty
+        expect(corpus_decrypted.keys).to eq(corpus.keys)
 
         corpus_decrypted.each do |key, doc|
           if doc['value'].is_a?(Time)
