@@ -12,7 +12,7 @@ describe 'Client-Side Encryption' do
       )
     end
 
-    let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json'), mode: :bson) }
+    let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json')) }
     let(:local_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-local.json')) }
     let(:aws_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-aws.json')) }
 
@@ -57,35 +57,38 @@ describe 'Client-Side Encryption' do
     end
 
     let(:corpus_encrypted_expected) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus_encrypted.json'), mode: :bson)
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus_encrypted.json'))
     end
 
     let(:corpus_copied) do
-      doc = BSON::Document.new
-      corpus.each do |key, value|
+      # As per the instructions of the prose spec, corpus_copied is a copy of
+      # the corpus BSON::Document that encrypts all fields that are meant to
+      # be explicitly encrypted. corpus is a document containing many
+      # sub-documents, each with a value to encrypt and inforrmation about how
+      # to encrypt that value.
+      corpus_copied = BSON::Document.new
+      corpus.each do |key, doc|
         if ['_id', 'altname_aws', 'altname_local'].include?(key)
-          doc[key] = value
+          corpus_copied[key] = doc
           next
         end
 
-        if value['method'] == 'auto'
-          doc[key] = value
-        elsif value['method'] == 'explicit'
-          options = {}
-
-          options = if value['identifier'] == 'id'
-            key_id = if value['kms'] == 'local'
-              BSON::Binary.new(Base64.decode64('LOCALAAAAAAAAAAAAAAAAA=='), :uuid)
+        if doc['method'] == 'auto'
+          corpus_copied[key] = doc
+        elsif doc['method'] == 'explicit'
+          options = if doc['identifier'] == 'id'
+            key_id = if doc['kms'] == 'local'
+              'LOCALAAAAAAAAAAAAAAAAA=='
             else
-              BSON::Binary.new(Base64.decode64('AWSAAAAAAAAAAAAAAAAAAA=='), :uuid)
+              'AWSAAAAAAAAAAAAAAAAAAA=='
             end
 
-            { key_id: key_id }
-          elsif value['identifier'] == 'altname'
-            { key_alt_name: value['kms'] }
+            { key_id: BSON::Binary.new(Base64.decode64(key_id), :uuid) }
+          elsif doc['identifier'] == 'altname'
+            { key_alt_name: doc['kms'] }
           end
 
-          algorithm = if value['algo'] == 'rand'
+          algorithm = if doc['algo'] == 'rand'
             'AEAD_AES_256_CBC_HMAC_SHA_512-Random'
           else
             'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
@@ -93,23 +96,27 @@ describe 'Client-Side Encryption' do
 
           begin
             encrypted_value = client_encryption.encrypt(
-              value['value'],
+              doc['value'],
               options.merge({ algorithm: algorithm })
             )
 
-            doc[key] = value.merge('value' => encrypted_value)
+            corpus_copied[key] = doc.merge('value' => encrypted_value)
           rescue => e
-            if value['allowed']
+            # If doc['allowed'] is true, it means that this field should have
+            # been encrypted without error, and thus that this error is unexpected.
+            # If doc['allowed'] is false, this error was expected and the value
+            # should be copied over without being encrypted.
+            if doc['allowed']
               raise "Unexpected error occured in client-side encryption " +
                 "corpus tests: #{e.class}, #{e.message}"
             end
 
-            doc[key] = value
+            corpus_copied[key] = doc
           end
         end
       end
 
-      doc
+      corpus_copied
     end
 
     before do
@@ -136,25 +143,55 @@ describe 'Client-Side Encryption' do
       let(:local_schema_map) { { 'db.coll' => test_schema_map } }
     end
 
-    shared_examples 'something' do
-      it 'does a thing' do
-        result = client_encrypted[:coll].insert_one(corpus_copied)
-        corpus_decrypted = client_encrypted[:coll].find(_id: result.inserted_id).first
+    shared_examples 'a functioning encrypter' do
+      it 'properly encrypts and decrypts a document' do
+        corpus_encrypted_id = client_encrypted[:coll]
+          .insert_one(corpus_copied)
+          .inserted_id
 
-        corpus_decrypted.each do |key, value|
-          next if value['value'].is_a?(Time) # TODO: deal with this
-          expect(value).to eq(corpus[key])
+        corpus_decrypted = client_encrypted[:coll]
+          .find(_id: corpus_encrypted_id)
+          .first
+
+        # Ensure that corpus_decrypted is the same as the original corpus
+        # document by checking that they have the same set of keys, and that
+        # they have the same values at those keys (improved diagnostics).
+        expect(corpus_decrypted.keys - corpus.keys).to be_empty
+
+        corpus_decrypted.each do |key, doc|
+          if doc['value'].is_a?(Time)
+            expect(doc['value'].utc.to_s).to eq(corpus[key]['value'].utc.to_s)
+            next
+          end
+
+          expect(doc).to eq(corpus[key])
         end
-        # expect(corpus_decrypted).to eq(corpus)
-        corpus_encrypted_actual = client.use(:db)[:coll].find(_id: result.inserted_id).first
 
-        corpus_encrypted_expected.each do |key, value|
+        corpus_encrypted_actual = client
+          .use(:db)[:coll]
+          .find(_id: corpus_encrypted_id)
+          .first
+
+        # Check that the actual encrypted document matches the expected
+        # encrypted document.
+        corpus_encrypted_actual.each do |key, value|
+          # If it was deterministically encrypted, test the encrypted values
+          # for equality.
           if value['algo'] == 'det'
-            expect(value['value']).to eq(corpus_encrypted_actual[key]['value'])
-          elsif value['algo'] == 'rand' && value['allowed']
-            expect(value['value']).not_to eq(corpus_encrypted_actual[key]['value'])
-          elsif !value['allowed']
-            expect(value['value']).to eq(corpus[key]['value'])
+            expect(value['value']).to eq(corpus_encrypted_expected[key]['value'])
+          else
+            # If the document was randomly encrypted, the two encrypted values
+            # will not be equal. Ensure that they are equal when decrypted.
+            if value['allowed']
+              actual_decrypted_value = client_encryption.decrypt(value['value'])
+              expected_decrypted_value = client_encryption.decrypt(corpus_encrypted_expected[key]['value'])
+
+              expect(actual_decrypted_value).to eq(expected_decrypted_value)
+            else
+              # If 'allowed' was false, the value was never encrypted; ensure
+              # that it is equal to the original, unencrypted value.
+              expect(value['value']).to eq(corpus[key]['value'])
+            end
           end
         end
       end
@@ -165,12 +202,12 @@ describe 'Client-Side Encryption' do
 
       context 'with collection validator' do
         include_context 'with jsonSchema collection validator'
-        it_behaves_like 'something'
+        it_behaves_like 'a functioning encrypter'
       end
 
       context 'with schema map' do
         include_context 'with local schema map'
-        it_behaves_like 'something'
+        it_behaves_like 'a functioning encrypter'
       end
     end
 
@@ -179,12 +216,12 @@ describe 'Client-Side Encryption' do
 
       context 'with collection validator' do
         include_context 'with jsonSchema collection validator'
-        it_behaves_like 'something'
+        it_behaves_like 'a functioning encrypter'
       end
 
       context 'with schema map' do
         include_context 'with local schema map'
-        it_behaves_like 'something'
+        it_behaves_like 'a functioning encrypter'
       end
     end
   end
