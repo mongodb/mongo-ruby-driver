@@ -120,6 +120,57 @@ describe 'Connections' do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
         end
       end
+
+      describe 'number of sockets created' do
+
+        let(:connection) do
+          Mongo::Server::Connection.new(server, server.options)
+        end
+
+        before do
+          server
+        end
+
+        shared_examples_for 'is 1 per connection' do
+          it 'is 1 per connection' do
+            # Instantiating a connection object should not create any sockets
+            RSpec::Mocks.with_temporary_scope do
+              expect(socket_cls).not_to receive(:new)
+
+              connection
+            end
+
+            # When the connection connects, exactly one socket should be created
+            # (and subsequently connected)
+            RSpec::Mocks.with_temporary_scope do
+              expect(socket_cls).to receive(:new).and_call_original
+
+              connection.connect!
+            end
+          end
+        end
+
+        let(:socket_cls) { ::Socket }
+
+        it_behaves_like 'is 1 per connection'
+
+        context 'connection to Unix domain socket' do
+          # Server does not allow Unix socket connections when TLS is enabled
+          require_no_tls
+
+          let(:port) { SpecConfig.instance.any_port }
+
+          let(:client) do
+            new_local_client(["/tmp/mongodb-#{port}.sock"], connect: :direct).tap do |client|
+              stop_monitoring(client)
+            end
+          end
+
+          let(:socket_cls) { ::UNIXSocket }
+
+          it_behaves_like 'is 1 per connection'
+        end
+      end
     end
 
     describe 'wire protocol version range update' do
