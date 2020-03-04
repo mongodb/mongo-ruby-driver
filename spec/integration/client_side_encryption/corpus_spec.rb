@@ -12,7 +12,7 @@ describe 'Client-Side Encryption' do
       )
     end
 
-    let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json')) }
+    let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json'), mode: :bson) }
     let(:local_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-local.json')) }
     let(:aws_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-aws.json')) }
 
@@ -29,7 +29,7 @@ describe 'Client-Side Encryption' do
               },
             },
             key_vault_namespace: 'admin.datakeys',
-            schema_map: { 'db.coll' => test_schema_map },
+            schema_map: local_schema_map,
           },
           database: :db,
         )
@@ -57,7 +57,7 @@ describe 'Client-Side Encryption' do
     end
 
     let(:corpus_encrypted_expected) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus_encrypted.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus_encrypted.json'), mode: :bson)
     end
 
     let(:corpus_copied) do
@@ -114,15 +114,26 @@ describe 'Client-Side Encryption' do
 
     before do
       client.use(:db)[:coll].drop
-      client.use(:db)[:coll,
-        {
-          'validator' => { '$jsonSchema' => schema_map }
-        }
-      ].create
 
       client.use(:admin)[:datakeys].drop
       client.use(:admin)[:datakeys].insert_one(local_data_key)
       client.use(:admin)[:datakeys].insert_one(aws_data_key)
+    end
+
+    shared_context 'with jsonSchema collection validator' do
+      let(:local_schema_map) { nil }
+
+      before do
+        client.use(:db)[:coll,
+          {
+            'validator' => { '$jsonSchema' => test_schema_map }
+          }
+        ].create
+      end
+    end
+
+    shared_context 'with local schema map' do
+      let(:local_schema_map) { { 'db.coll' => test_schema_map } }
     end
 
     shared_examples 'something' do
@@ -152,7 +163,29 @@ describe 'Client-Side Encryption' do
     context 'with local KMS provider' do
       include_context 'with local kms_providers'
 
-      it_behaves_like 'something'
+      context 'with collection validator' do
+        include_context 'with jsonSchema collection validator'
+        it_behaves_like 'something'
+      end
+
+      context 'with schema map' do
+        include_context 'with local schema map'
+        it_behaves_like 'something'
+      end
+    end
+
+    context 'with AWS KMS provider' do
+      include_context 'with AWS kms_providers'
+
+      context 'with collection validator' do
+        include_context 'with jsonSchema collection validator'
+        it_behaves_like 'something'
+      end
+
+      context 'with schema map' do
+        include_context 'with local schema map'
+        it_behaves_like 'something'
+      end
     end
   end
 end
