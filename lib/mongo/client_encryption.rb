@@ -58,7 +58,8 @@ module Mongo
     # @option options [ Array<String> ] :key_alt_names An optional array of
     #   strings specifying alternate names for the new data key.
     #
-    # @return [ String ] The 16-byte UUID of the new data key as a binary string.
+    # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
+    #   BSON::Binary object with type :uuid.
     def create_data_key(kms_provider, options={})
       @encrypter.create_and_insert_data_key(
         kms_provider,
@@ -71,8 +72,9 @@ module Mongo
     # @param [ Object ] value The value to encrypt.
     # @param [ Hash ] options
     #
-    # @option options [ String ] :key_id The UUID of the encryption
-    #   key as it is stored in the key vault collection.
+    # @option options [ BSON::Binary ] :key_id A BSON::Binary object of type :uuid
+    #   representing the UUID of the encryption key as it is stored in the key
+    #   vault collection.
     # @option options [ String ] :key_alt_name The alternate name for the
     #   encryption key.
     # @option options [ String ] :algorithm The algorithm used to encrypt the value.

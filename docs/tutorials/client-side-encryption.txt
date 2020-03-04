@@ -284,7 +284,8 @@ Once you have created a master key, create a data key by calling the
 ``#create_data_key`` method on an instance of the ``Mongo::ClientEncryption``
 class. This method generates a new data key and inserts it into the key vault
 collection, which is the MongoDB collection in which you choose to store your
-data keys. The ``#create_data_key`` method returns the UUID of the newly-created data key.
+data keys. The ``#create_data_key`` method returns id of the newly-created
+data key in the form of a BSON::Binary object.
 
 Create a Data Key Using a Local Master Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

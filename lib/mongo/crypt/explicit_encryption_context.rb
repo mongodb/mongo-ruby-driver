@@ -30,8 +30,8 @@ module Mongo
       # @param [ BSON::Document ] doc A document to encrypt
       # @param [ Hash ] options
       #
-      # @option options [ String ] :key_id The UUID of the data key that
-      #   will be used to encrypt the value
+      # @option options [ BSON::Binary ] :key_id A BSON::Binary object of type
+      #   :uuid representing the UUID of the data key to use for encryption.
       # @option options [ String ] :key_alt_name The alternate name of the data key
       #   that will be used to encrypt the value.
       # @option options [ String ] :algorithm The algorithm used to encrypt the
@@ -60,7 +60,15 @@ module Mongo
         # Set the key id or key alt name option on the mongocrypt_ctx_t object
         # and raise an exception if the key_id or key_alt_name is invalid.
         if options[:key_id]
-          Binding.ctx_setopt_key_id(self, options[:key_id])
+          unless options[:key_id].is_a?(BSON::Binary) &&
+            options[:key_id].type == :uuid
+              raise ArgumentError.new(
+                "Expected the :key_id option to be a BSON::Binary object with " +
+                "type :uuid. #{options[:key_id]} is an invalid :key_id option"
+              )
+          end
+
+          Binding.ctx_setopt_key_id(self, options[:key_id].data)
         elsif options[:key_alt_name]
           unless options[:key_alt_name].is_a?(String)
             raise ArgumentError.new(':key_alt_name option must be a String')
