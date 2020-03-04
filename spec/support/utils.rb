@@ -86,11 +86,49 @@ module Utils
   def convert_client_options(spec_test_options)
     uri = Mongo::URI.new('mongodb://localhost')
     spec_test_options.reduce({}) do |opts, (name, value)|
-      uri.send(:add_uri_option, name, value.to_s, opts)
+      if name == 'autoEncryptOpts'
+        opts.merge!(
+          auto_encryption_options: convert_auto_encryption_client_options(value)
+        )
+      else
+        uri.send(:add_uri_option, name, value.to_s, opts)
+      end
+
       opts
     end
   end
   module_function :convert_client_options
+
+  private def convert_auto_encryption_client_options(opts)
+    auto_encrypt_opts = Utils.snakeize_hash(opts)
+
+    if opts['kmsProviders']['aws']
+      # The tests require that AWS credentials be filled in by the driver.
+      auto_encrypt_opts[:kms_providers][:aws] = {
+        access_key_id: SpecConfig.instance.fle_aws_key,
+        secret_access_key: SpecConfig.instance.fle_aws_secret,
+      }
+    end
+
+    if opts['kmsProviders']['local']
+      auto_encrypt_opts[:kms_providers][:local] = {
+        key: BSON::ExtJSON.parse_obj(opts['kmsProviders']['local']['key']).data
+      }
+    end
+
+    if opts['keyVaultNamespace']
+      auto_encrypt_opts[:key_vault_namespace] = opts['keyVaultNamespace']
+    else
+      auto_encrypt_opts[:key_vault_namespace] = 'admin.datakeys'
+    end
+
+    if opts['schemaMap']
+      auto_encrypt_opts[:schema_map] = BSON::ExtJSON.parse_obj(opts['schemaMap'])
+    end
+
+    auto_encrypt_opts
+  end
+  module_function :convert_auto_encryption_client_options
 
   def order_hash(hash)
     Hash[hash.to_a.sort]
@@ -271,4 +309,44 @@ module Utils
 
     uri
   end
+
+  # Client-Side encryption tests introduce the $$type syntax for determining
+  # equality in command started events. The $$type key specifies which type of
+  # BSON object is expected in the result. If the $$type key is present, only
+  # check the class of the result.
+  def match_with_type?(expected, actual)
+    if expected.is_a?(Hash) && expected.key?('$$type')
+      case expected['$$type']
+      when 'binData'
+        expected_class = BSON::Binary
+        expected_key = '$binary'
+      when 'long'
+        expected_class = BSON::Int64
+        expected_key = '$numberLong'
+      else
+        raise "Tests do not currently support matching against $$type #{v['$$type']}"
+      end
+
+      actual.is_a?(expected_class) || actual.key?(expected_key)
+    elsif expected.is_a?(Hash) && actual.is_a?(Hash)
+      same_keys = (expected.keys - actual.keys).empty?
+
+      same_values = expected.keys.all? do |key|
+        match_with_type?(expected[key], actual[key])
+      end
+
+      same_keys && same_values
+    elsif expected.is_a?(Array) && actual.is_a?(Array)
+      same_length = expected.length == actual.length
+
+      same_values = expected.map.with_index do |_, idx|
+        match_with_type?(expected[idx], actual[idx])
+      end.all?
+
+      same_length && same_values
+    else
+      return expected == actual
+    end
+  end
+  module_function :match_with_type?
 end

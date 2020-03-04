@@ -42,7 +42,7 @@ module Mongo
           ok &&= cc.fcv_ish >= short_min_server_version
         end
         if max_server_version
-          ok &&= cc.server_version <= max_server_version
+          ok &&= cc.short_server_version <= max_server_version
         end
         if topologies
           ok &&= topologies.include?(cc.topology)

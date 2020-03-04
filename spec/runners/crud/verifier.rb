@@ -34,12 +34,7 @@ module Mongo
           expect(actual_collection_data).to be_empty
         else
           expect(actual_collection_data).not_to be nil
-          expected_collection_data.each do |doc|
-            expect(actual_collection_data).to include(doc)
-          end
-          actual_collection_data.each do |doc|
-            expect(expected_collection_data).to include(doc)
-          end
+          expect(actual_collection_data).to match_with_type(expected_collection_data)
         end
       end
 
@@ -105,15 +100,14 @@ EOT
         expected_absence = expected_command.select { |k, v| v.nil? }
 
         expected_presence.each do |k, v|
-          expect(k => actual_command[k]).to eq(k => v)
+          expect(actual_command[k]).to match_with_type(v)
         end
 
         expected_absence.each do |k, v|
           expect(actual_command).not_to have_key(k)
         end
 
-        # this compares remaining fields in events after command is removed
-        expect(actual_event).to eq(expected_event)
+        expect(actual_event).to match_with_type(expected_event)
       end
 
       private
@@ -181,9 +175,13 @@ EOT
           return
         end
 
-        # This should produce a meaningful error message,
-        # even though we do not actually require that expected[k] == actual[k]
-        expect({k => expected[k]}).to eq({k => actual[k]})
+        if expected[k].is_a?(Time)
+          expect({k => expected[k].utc.to_s}).to eq({k => actual[k].utc.to_s})
+        else
+          # This should produce a meaningful error message,
+          # even though we do not actually require that expected[k] == actual[k]
+          expect({k => expected[k]}).to eq({k => actual[k]})
+        end
       end
     end
   end
