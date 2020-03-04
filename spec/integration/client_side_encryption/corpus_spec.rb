@@ -12,7 +12,7 @@ describe 'Client-Side Encryption' do
       )
     end
 
-    let(:schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json')) }
+    let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json')) }
     let(:local_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-local.json')) }
     let(:aws_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-aws.json')) }
 
@@ -29,7 +29,7 @@ describe 'Client-Side Encryption' do
               },
             },
             key_vault_namespace: 'admin.datakeys',
-            schema_map: test_schema_map,
+            schema_map: { 'db.coll' => test_schema_map },
           },
           database: :db,
         )
@@ -53,7 +53,7 @@ describe 'Client-Side Encryption' do
     end
 
     let(:corpus) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus.json'), mode: :bson)
     end
 
     let(:corpus_encrypted_expected) do
@@ -65,40 +65,46 @@ describe 'Client-Side Encryption' do
       corpus.each do |key, value|
         if ['_id', 'altname_aws', 'altname_local'].include?(key)
           doc[key] = value
+          next
         end
 
         if value['method'] == 'auto'
           doc[key] = value
-        end
-
-        if value['method'] == 'explicit'
+        elsif value['method'] == 'explicit'
           options = {}
 
           options = if value['identifier'] == 'id'
-            {
+            key_id = if value['kms'] == 'local'
+              BSON::Binary.new(Base64.decode64('LOCALAAAAAAAAAAAAAAAAA=='), :uuid)
+            else
+              BSON::Binary.new(Base64.decode64('AWSAAAAAAAAAAAAAAAAAAA=='), :uuid)
+            end
 
-            }
+            { key_id: key_id }
           elsif value['identifier'] == 'altname'
-            {
-              key_alt_name: value['kms']
-            }
+            { key_alt_name: value['kms'] }
+          end
+
+          algorithm = if value['algo'] == 'rand'
+            'AEAD_AES_256_CBC_HMAC_SHA_512-Random'
+          else
+            'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'
           end
 
           begin
-            doc[key] = client_encryption.encrypt(
+            encrypted_value = client_encryption.encrypt(
               value['value'],
-              {
-                key_id: key_id,
-                algorithm: value['algo']
-              }
+              options.merge({ algorithm: algorithm })
             )
+
+            doc[key] = value.merge('value' => encrypted_value)
           rescue => e
             if value['allowed']
               raise "Unexpected error occured in client-side encryption " +
                 "corpus tests: #{e.class}, #{e.message}"
             end
 
-            doc[key] = value['value']
+            doc[key] = value
           end
         end
       end
@@ -123,8 +129,30 @@ describe 'Client-Side Encryption' do
       it 'does a thing' do
         result = client_encrypted[:coll].insert_one(corpus_copied)
         corpus_decrypted = client_encrypted[:coll].find(_id: result.inserted_id).first
-        expect(corpus_decrypted).to eq(corpus)
+
+        corpus_decrypted.each do |key, value|
+          next if value['value'].is_a?(Time) # TODO: deal with this
+          expect(value).to eq(corpus[key])
+        end
+        # expect(corpus_decrypted).to eq(corpus)
+        corpus_encrypted_actual = client.use(:db)[:coll].find(_id: result.inserted_id).first
+
+        corpus_encrypted_expected.each do |key, value|
+          if value['algo'] == 'det'
+            expect(value['value']).to eq(corpus_encrypted_actual[key]['value'])
+          elsif value['algo'] == 'rand' && value['allowed']
+            expect(value['value']).not_to eq(corpus_encrypted_actual[key]['value'])
+          elsif !value['allowed']
+            expect(value['value']).to eq(corpus[key]['value'])
+          end
+        end
       end
+    end
+
+    context 'with local KMS provider' do
+      include_context 'with local kms_providers'
+
+      it_behaves_like 'something'
     end
   end
 end
