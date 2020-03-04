@@ -140,11 +140,12 @@ module Mongo
 
     # Get a socket for the provided address, given the options.
     #
-    # The address the socket connects to is determined by the algorithm described in the
-    # #intialize_resolver! documentation. Each time this method is called, #initialize_resolver!
-    # will be called, meaning that a new hostname lookup will occur. This is done so that any
-    # changes to which addresses the hostname resolves to will be picked up even if a socket has
-    # been connected to it before.
+    # The address the socket connects to is determined by the algorithm
+    # described in the #intialize_resolver! documentation. Each time this
+    # method is called, #initialize_resolver! will be called, meaning that
+    # a new hostname lookup will occur. This is done so that any changes in
+    # which addresses the hostname resolves to will be picked up even if
+    # a socket has been connected to it before.
     #
     # @example Get a socket.
     #   address.socket(5, :ssl => true)
@@ -155,7 +156,8 @@ module Mongo
     #
     # @option options [ Float ] :connect_timeout Connect timeout.
     #
-    # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP, Mongo::Socket::Unix ] The socket.
+    # @return [ Mongo::Socket::SSL | Mongo::Socket::TCP | Mongo::Socket::Unix ]
+    #   The socket.
     #
     # @since 2.0.0
     def socket(socket_timeout, ssl_options = {}, options = {})
