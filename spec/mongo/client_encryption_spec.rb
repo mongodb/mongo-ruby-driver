@@ -77,12 +77,9 @@ describe Mongo::ClientEncryption do
 
     shared_examples 'it creates a data key' do |with_key_alt_names: false|
       it 'returns the data key id and inserts it into the key vault collection' do
-        expect(data_key_id).to be_a_kind_of(String)
-        expect(data_key_id.bytesize).to eq(16)
+        expect(data_key_id).to be_uuid
 
-        documents = client.use(key_vault_db)[key_vault_coll].find(
-          _id: BSON::Binary.new(data_key_id, :uuid)
-        )
+        documents = client.use(key_vault_db)[key_vault_coll].find(_id: data_key_id)
 
         expect(documents.count).to eq(1)
 
