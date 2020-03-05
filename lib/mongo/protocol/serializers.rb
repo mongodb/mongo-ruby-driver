@@ -342,8 +342,10 @@ module Mongo
         def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
           start_size = buffer.length
           value.to_bson(buffer, validating_keys)
-          if max_bson_size && buffer.length - start_size > max_bson_size
-            raise Error::MaxBSONSize.new(max_bson_size)
+          serialized_size = buffer.length - start_size
+          if max_bson_size && serialized_size > max_bson_size
+            raise Error::MaxBSONSize,
+              "The document exceeds maximum allowed BSON object size after serialization. Serialized size: #{serialized_size} bytes, maximum allowed size: #{max_bson_size} bytes"
           end
         end
 
