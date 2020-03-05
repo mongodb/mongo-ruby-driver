@@ -55,7 +55,7 @@ describe 'Client-Side Encryption' do
 
     let(:_2_mib) { 2097152 }
 
-    context 'when unencrypted document is over the 2MiB limit but under the 16MiB limit' do
+    context 'when a single, unencrypted document is larger than 2MiB' do
       it 'can perform insert_one using the encrypted client' do
         document = {
           _id: "over_2mib_under_16mib",
@@ -68,7 +68,7 @@ describe 'Client-Side Encryption' do
       end
     end
 
-    context 'when encrypted content exceeds 2MiB, but unencrypted content does not' do
+    context 'when a single encrypted document is larger than 2MiB' do
       it 'can perform insert_one using the encrypted client' do
         result = client_encrypted[:coll].insert_one(
           limits_doc.merge(
@@ -81,7 +81,7 @@ describe 'Client-Side Encryption' do
       end
     end
 
-    context 'when there are two 2MiB unencrypted documents' do
+    context 'when bulk inserting two unencrypted documents under 2MiB' do
       it 'can perform bulk_insert using the encrypted client' do
         bulk_write = Mongo::BulkWrite.new(
           client_encrypted[:coll],
@@ -102,7 +102,7 @@ describe 'Client-Side Encryption' do
       end
     end
 
-    context 'when there are multiple encrypted documents over 2MiB' do
+    context 'when bulk inserting two encrypted documents under 2MiB' do
       it 'can perform bulk_insert using the encrypted client' do
         bulk_write = Mongo::BulkWrite.new(
           client_encrypted[:coll],
@@ -134,10 +134,11 @@ describe 'Client-Side Encryption' do
     end
 
 
-    context 'when the unencrypted document falls just under the maxBSONObjectSize limit' do
+    context 'when a single document is just smaller than 16MiB' do
       before do
-        skip "Reason"
+        skip "The Ruby Drivers does not behave correctly when inserting documents just under the maxBsonObjectLimit"
       end
+
       it 'can perform insert_one using the encrypted client' do
         result = client_encrypted[:coll].insert_one(
           _id: "under_16mib",
@@ -148,7 +149,7 @@ describe 'Client-Side Encryption' do
       end
     end
 
-    context 'when the encrypted document exceeds maxBSONObjectSize limit' do
+    context 'when an encrypted document is greater than the 16MiB limit' do
       it 'raises an exception when attempting to insert the document' do
         expect do
           client_encrypted[:coll].insert_one(
