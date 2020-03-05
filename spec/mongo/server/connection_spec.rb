@@ -731,7 +731,10 @@ describe Mongo::Server::Connection, retry: 3 do
         skip_if_linting
 
         let(:selector) do
-          { :getlasterror => '1' }
+          # The driver allows up to 16KiB for command overhead on top of
+          # the max bson object size reported by the server.
+          # Add that much padding.
+          { :getlasterror => '1', 'padding' => 'x'*16384 }
         end
 
         let(:command) do
