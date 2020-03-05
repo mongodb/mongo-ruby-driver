@@ -2192,6 +2192,8 @@ describe Mongo::BulkWrite do
     include_context 'define shared FLE helpers'
     include_context 'with local kms_providers'
 
+    let(:subscriber) { EventSubscriber.new }
+
     let(:client) do
       new_local_client(
         SpecConfig.instance.addresses,
@@ -2203,7 +2205,9 @@ describe Mongo::BulkWrite do
           },
           database: 'auto_encryption'
         ),
-      )
+      ).tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
     end
 
     let(:collection) { client[:users] }
@@ -2220,22 +2224,13 @@ describe Mongo::BulkWrite do
       described_class.new(collection, requests, options)
     end
 
-    it 'executes an encrypted bulk write' do
-      bulk_write.execute
+    let(:_2mib) { 2097152 }
 
-      documents = authorized_client.use(:auto_encryption)[:users].find
-      ssns = documents.map { |doc| doc['ssn'] }
-      expect(ssns).to all(be_ciphertext)
+    before do
+      client.use(:auto_encryption)[:coll].drop
     end
 
-    context 'when all requests exceed max BSON object size' do
-      # Each request is about 1.4 MiB
-      let(:requests) do
-        5.times.map do |i|
-          { insert_one: { ssn: '1' * 1500000 }}
-        end
-      end
-
+    shared_examples 'a functioning encrypted BulkWrite' do
       it 'executes an encrypted bulk write' do
         bulk_write.execute
 
@@ -2245,18 +2240,66 @@ describe Mongo::BulkWrite do
       end
     end
 
-    context 'when one request exceeds max BSON object size' do
-      # This request is about 3 MiB
+    context 'when total request size does not exceed 2MiB' do
       let(:requests) do
         [
-          { insert_one: { ssn: '1' * 3000000 }}
+          { insert_one: { ssn: 'a' * (_2mib/2) } },
+          { insert_one: { ssn: 'a' * (_2mib/2) } }
         ]
       end
 
-      it 'executes an encrypted bulk write' do
-        expect do
-          bulk_write.execute
-        end.to raise_error(Mongo::Error::MaxBSONSize, /Document exceeds allowed max BSON size/)
+      it_behaves_like 'a functioning encrypted BulkWrite'
+
+      it 'executes one write' do
+        bulk_write.execute
+
+        command_succeeded_events = subscriber.succeeded_events.select do |event|
+          event.command_name == 'insert'
+        end
+
+        expect(command_succeeded_events.length).to eq(1)
+      end
+    end
+
+    context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
+      let(:requests) do
+        [
+          { insert_one: { ssn: 'a' * (_2mib - 2000) } },
+          { insert_one: { ssn: 'a' * (_2mib - 2000) } }
+        ]
+      end
+
+      it_behaves_like 'a functioning encrypted BulkWrite'
+
+      it 'executes two writes' do
+        bulk_write.execute
+
+        command_succeeded_events = subscriber.succeeded_events.select do |event|
+          event.command_name == 'insert'
+        end
+
+        expect(command_succeeded_events.length).to eq(2)
+      end
+    end
+
+    context 'when each operation is larger than 2MiB' do
+      let(:requests) do
+        [
+          { insert_one: { ssn: 'a' * (_2mib * 1.2) } },
+          { insert_one: { ssn: 'a' * (_2mib * 1.2) } }
+        ]
+      end
+
+      it_behaves_like 'a functioning encrypted BulkWrite'
+
+      it 'executes two writes' do
+        bulk_write.execute
+
+        command_succeeded_events = subscriber.succeeded_events.select do |event|
+          event.command_name == 'insert'
+        end
+
+        expect(command_succeeded_events.length).to eq(2)
       end
     end
   end
