@@ -162,12 +162,7 @@ describe 'Client-Side Encryption' do
         expect(corpus_decrypted.keys).to eq(corpus.keys)
 
         corpus_decrypted.each do |key, doc|
-          if doc['value'].is_a?(Time)
-            expect(doc['value'].utc.to_s).to eq(corpus[key]['value'].utc.to_s)
-            next
-          end
-
-          expect(doc).to eq(corpus[key])
+          expect(key => doc).to eq(key => corpus[key])
         end
 
         corpus_encrypted_actual = client
