@@ -11,6 +11,8 @@ phases:
         ok: 1
         ismaster: true
         msg: "isdbgrid"
+        minWireVersion: 0
+        maxWireVersion: 6
     
     outcome:
       servers:
