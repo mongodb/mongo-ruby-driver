@@ -154,7 +154,7 @@ module Mongo
           # From client-side encryption spec: Because automatic encryption
           # increases the size of commands, the driver MUST split bulk writes
           # at a reduced size limit before undergoing automatic encryption.
-          max_bson_size = 2097152
+          max_bson_size = 1048580 * 2.2
         end
 
         final_message.serialize(buffer, max_bson_size)
