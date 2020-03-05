@@ -2256,7 +2256,7 @@ describe Mongo::BulkWrite do
       it 'executes an encrypted bulk write' do
         expect do
           bulk_write.execute
-        end.to raise_error(Mongo::Error::MaxBSONSize, /Document exceeds allowed max BSON size/)
+        end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
       end
     end
   end
