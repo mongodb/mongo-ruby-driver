@@ -1,13 +1,12 @@
 require 'spec_helper'
 
-describe 'BSON object size' do
+describe 'BSON & command size limits' do
   it 'raises an exception when document size is 16MiB' do
-    client = new_local_client(SpecConfig.instance.addresses)
-    max_size = 16777216 # 16 MiB
+    max_size = 16*1024*1024
 
     document = { key: 'a' * (max_size - 15) }
     expect(document.to_bson.length).to eq(max_size)
 
-    client.use(:db)[:coll].insert_one(document)
+    authorized_collection.insert_one(document)
   end
 end
