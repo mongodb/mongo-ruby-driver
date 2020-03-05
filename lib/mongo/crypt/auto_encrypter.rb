@@ -131,10 +131,6 @@ module Mongo
       def close
         @mongocryptd_client.close if @mongocryptd_client
 
-        @mongocryptd_client = nil
-        @key_vault_client = nil
-        @options = nil
-
         true
       end
 
