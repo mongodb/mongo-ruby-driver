@@ -40,5 +40,5 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 2.3"
 
-  s.add_dependency 'bson', '>=4.8.0', '<5.0.0'
+  s.add_dependency 'bson', '>=4.8.2', '<5.0.0'
 end
