@@ -133,16 +133,11 @@ describe 'Client-Side Encryption' do
       end
     end
 
-
     context 'when a single document is just smaller than 16MiB' do
-      before do
-        skip "The Ruby Drivers does not behave correctly when inserting documents just under the maxBsonObjectLimit"
-      end
-
       it 'can perform insert_one using the encrypted client' do
         result = client_encrypted[:coll].insert_one(
           _id: "under_16mib",
-          unencrypted: "a" * (16777216 - 2000)
+          unencrypted: "a" * 15*1024*1024,
         )
 
         expect(result).to be_ok
@@ -155,10 +150,10 @@ describe 'Client-Side Encryption' do
           client_encrypted[:coll].insert_one(
             limits_doc.merge(
               _id: "encryption_exceeds_16mib",
-              unencrypted: "a" * (16777216 - 2000)
+              unencrypted: "a" * 17*1024*1024,
             )
           )
-        end.to raise_error(Mongo::Error::MaxBSONSize, /Document exceeds allowed max BSON size/)
+        end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
       end
     end
   end
