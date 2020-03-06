@@ -62,6 +62,11 @@ RUN echo 2
   # Installing mlaunch from git: git
   # ruby-head archive: bzip2
   # nio4r on JRuby: libgmp-dev
+  #
+  # We currently use Python 2-compatible version of mtools, which
+  # is installable via pip (which uses Python 2). All of the MongoDB
+  # distros have pip installed (but none as of this writing have pip3)
+  # therefore install python-pip in all configurations here.
 
   # ubuntu1204, ubuntu1404 only have openjdk-7-jre
   <% unless %w(ubuntu1204 ubuntu1404).include?(distro) %>
@@ -76,7 +81,7 @@ RUN echo 2
 
   # ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
   RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 \
-    krb5-user bzip2 libgmp-dev
+    krb5-user bzip2 libgmp-dev python-pip
 
 <% else %>
 
@@ -85,12 +90,6 @@ RUN echo 2
 <% end %>
 
 <% if preload? %>
-
-  <% if debian? %>
-
-    RUN apt-get install -y python-pip
-
-  <% end %>
 
   WORKDIR /app
 
