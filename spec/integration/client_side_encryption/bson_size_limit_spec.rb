@@ -53,13 +53,14 @@ describe 'Client-Side Encryption' do
       )
     end
 
-    let(:_2_mib) { 2097152 }
+    let(:_2mib) { 2097152 }
+    let(:_16mib) { 16777216 }
 
     context 'when a single, unencrypted document is larger than 2MiB' do
       it 'can perform insert_one using the encrypted client' do
         document = {
           _id: "over_2mib_under_16mib",
-          unencrypted: 'a' * _2_mib
+          unencrypted: 'a' * _2mib
         }
 
         result = client_encrypted[:coll].insert_one(document)
@@ -73,7 +74,7 @@ describe 'Client-Side Encryption' do
         result = client_encrypted[:coll].insert_one(
           limits_doc.merge(
             _id: "encryption_exceeds_2mi",
-            unencrypted: 'a' * (2097152 - 2000)
+            unencrypted: 'a' * (_2mib - 2000)
           )
         )
 
@@ -86,8 +87,8 @@ describe 'Client-Side Encryption' do
         bulk_write = Mongo::BulkWrite.new(
           client_encrypted[:coll],
           [
-            { insert_one: { _id: 'over_2mib_1', unencrypted: 'a' * 2097152 } },
-            { insert_one: { _id: 'over_2mib_2', unencrypted: 'a' * 2097152 } },
+            { insert_one: { _id: 'over_2mib_1', unencrypted: 'a' * _2mib } },
+            { insert_one: { _id: 'over_2mib_2', unencrypted: 'a' * _2mib } },
           ]
         )
 
@@ -110,13 +111,13 @@ describe 'Client-Side Encryption' do
             {
               insert_one: limits_doc.merge(
                 _id: "encryption_exceeds_2mib_1",
-                unencrypted: 'a' * (2097152 - 2000)
+                unencrypted: 'a' * (_2mib - 2000)
               )
             },
             {
               insert_one: limits_doc.merge(
                 _id: 'encryption_exceeds_2mib_2',
-                unencrypted: 'a' * (2097152 - 2000)
+                unencrypted: 'a' * (_2mib - 2000)
               )
             },
           ]
@@ -142,7 +143,7 @@ describe 'Client-Side Encryption' do
       it 'can perform insert_one using the encrypted client' do
         result = client_encrypted[:coll].insert_one(
           _id: "under_16mib",
-          unencrypted: "a" * (16777216 - 2000)
+          unencrypted: "a" * (_16mib - 2000)
         )
 
         expect(result).to be_ok
@@ -155,7 +156,7 @@ describe 'Client-Side Encryption' do
           client_encrypted[:coll].insert_one(
             limits_doc.merge(
               _id: "encryption_exceeds_16mib",
-              unencrypted: "a" * (16777216 - 2000)
+              unencrypted: "a" * (_16mib - 2000)
             )
           )
         end.to raise_error(Mongo::Error::MaxBSONSize, /Document exceeds allowed max BSON size/)

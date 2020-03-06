@@ -26,6 +26,9 @@ module Mongo
       extend Forwardable
       include Monitoring::Publishable
 
+      # @api private
+      REDUCED_MAX_BSON_SIZE = 2097152
+
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
@@ -153,10 +156,15 @@ module Mongo
         if client && client.encrypter && client.encrypter.encrypt?
           # From client-side encryption spec: Because automatic encryption
           # increases the size of commands, the driver MUST split bulk writes
-          # at a reduced size limit before undergoing automatic encryption.
+          # at a reduced size limit (2MiB) before undergoing automatic encryption.
+          # However, the driver must not reduce the size limit for single
+          # writes.
           documents = message.documents.first['documents']
           if documents && documents.length > 1
-            max_bson_size = 1048580 * 2.2
+            # Make the new maximum size equal to the specified reduced size limit
+            # plus ten percent to account for other data present in the
+            # document.
+            max_bson_size = REDUCED_MAX_BSON_SIZE * 1.1
           end
         end
 
