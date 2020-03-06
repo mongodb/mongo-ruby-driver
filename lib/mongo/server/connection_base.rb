@@ -166,6 +166,13 @@ module Mongo
         start_size = 0
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
 
+        # Driver specifications only mandate the fixed 16MiB limit for
+        # serialized BSON documents. However, the server returns its
+        # active serialized BSON document size limit in the ismaster response,
+        # which is +max_bson_object_size+ below. The +DEFAULT_MAX_BSON_OBJECT_SIZE+
+        # is the 16MiB value mandated by the specifications which we use
+        # only as the default if the server's ismaster did not contain
+        # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
         if client && client.encrypter && client.encrypter.encrypt?
           # From client-side encryption spec: Because automatic encryption
