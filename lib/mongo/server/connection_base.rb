@@ -183,8 +183,17 @@ module Mongo
           # at a reduced size limit (2MiB) before undergoing automatic encryption.
           # However, the driver must not reduce the size limit for single
           # writes.
-          documents = message.documents.first['documents']
-          if documents && documents.length > 1
+          inserts = message.documents.first['documents']
+          updates = message.documents.first['updates']
+          deletes = message.documents.first['deletes']
+
+          num_inserts = inserts ? inserts.length : 0
+          num_updates = updates ? updates.length : 0
+          num_deletes = deletes ? deletes.length : 0
+
+         
+          is_bulk_write = num_inserts + num_updates + num_deletes > 1
+          if is_bulk_write
             # Make the new maximum size equal to the specified reduced size
             # limit plus the 16KiB overhead allowance.
             max_bson_size = REDUCED_MAX_BSON_SIZE + MAX_BSON_COMMAND_OVERHEAD

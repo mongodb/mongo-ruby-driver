@@ -113,23 +113,9 @@ describe 'Client-Side Encryption' do
 
         result = bulk_write.execute
         expect(result.inserted_count).to eq(2)
-        expect(client['coll'].count_documents({})).to eq(2)
-
-        # Now delete the documents
-        bulk_write = Mongo::BulkWrite.new(
-          client_encrypted[:coll],
-          [
-            { delete_one: { _id: 'over_2mib_1', unencrypted: 'a' * _2mib } },
-            { delete_one: { _id: 'over_2mib_2', unencrypted: 'a' * _2mib } },
-          ]
-        )
-
-        result = bulk_write.execute
-        expect(result.deleted_count).to eq(2)
-        expect(client['coll'].count_documents({})).to eq(0)
 
         command_succeeded_events = subscriber.succeeded_events.select do |event|
-          event.command_name == 'delete'
+          event.command_name == 'insert'
         end
 
         expect(command_succeeded_events.length).to eq(2)
