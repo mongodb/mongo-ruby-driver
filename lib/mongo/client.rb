@@ -748,7 +748,6 @@ module Mongo
     # @return [ true ] Always true.
     def close_encrypter
       @encrypter.close if @encrypter
-      @encrypter = nil
 
       true
     end

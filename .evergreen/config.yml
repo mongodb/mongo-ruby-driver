@@ -711,7 +711,7 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: ruby-2.6
+      ruby: [ruby-2.6, jruby-9.2]
       mongodb-version: '4.2'
       topology: replica-set
       bson: "*"

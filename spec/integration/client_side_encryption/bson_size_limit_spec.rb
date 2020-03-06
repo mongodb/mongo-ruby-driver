@@ -159,7 +159,7 @@ describe 'Client-Side Encryption' do
               unencrypted: "a" * (_16mib - 2000)
             )
           )
-        end.to raise_error(Mongo::Error::MaxBSONSize, /Document exceeds allowed max BSON size/)
+        end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size/)
       end
     end
   end
