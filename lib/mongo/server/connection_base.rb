@@ -177,7 +177,7 @@ module Mongo
         # only as the default if the server's ismaster did not contain
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
-        if false && client && client.encrypter && client.encrypter.encrypt?
+        if client && client.encrypter && client.encrypter.encrypt?
           # From client-side encryption spec: Because automatic encryption
           # increases the size of commands, the driver MUST split bulk writes
           # at a reduced size limit (2MiB) before undergoing automatic encryption.
