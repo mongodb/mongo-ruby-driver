@@ -80,7 +80,7 @@ describe 'Client-Side Encryption' do
     end
 
     context 'when bulk inserting two unencrypted documents under 2MiB' do
-      it 'can perform bulk_insert using the encrypted client' do
+      it 'can perform bulk insert using the encrypted client' do
         bulk_write = Mongo::BulkWrite.new(
           client_encrypted[:coll],
           [
@@ -94,6 +94,42 @@ describe 'Client-Side Encryption' do
 
         command_succeeded_events = subscriber.succeeded_events.select do |event|
           event.command_name == 'insert'
+        end
+
+        expect(command_succeeded_events.length).to eq(2)
+      end
+    end
+
+    context 'when bulk deletes two unencrypted documents under 2MiB' do
+      it 'can perform bulk delete using the encrypted client' do
+        # Insert documents that we can match and delete later
+        bulk_write = Mongo::BulkWrite.new(
+          client_encrypted[:coll],
+          [
+            { insert_one: { _id: 'over_2mib_1', unencrypted: 'a' * _2mib } },
+            { insert_one: { _id: 'over_2mib_2', unencrypted: 'a' * _2mib } },
+          ]
+        )
+
+        result = bulk_write.execute
+        expect(result.inserted_count).to eq(2)
+        expect(client['coll'].count_documents({})).to eq(2)
+
+        # Now delete the documents
+        bulk_write = Mongo::BulkWrite.new(
+          client_encrypted[:coll],
+          [
+            { delete_one: { _id: 'over_2mib_1', unencrypted: 'a' * _2mib } },
+            { delete_one: { _id: 'over_2mib_2', unencrypted: 'a' * _2mib } },
+          ]
+        )
+
+        result = bulk_write.execute
+        expect(result.deleted_count).to eq(2)
+        expect(client['coll'].count_documents({})).to eq(0)
+
+        command_succeeded_events = subscriber.succeeded_events.select do |event|
+          event.command_name == 'delete'
         end
 
         expect(command_succeeded_events.length).to eq(2)
