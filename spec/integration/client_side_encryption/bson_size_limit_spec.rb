@@ -29,7 +29,7 @@ describe 'Client-Side Encryption' do
             },
             key_vault_namespace: 'admin.datakeys',
           },
-          database: :db,
+          database: 'db',
         )
       ).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -44,8 +44,8 @@ describe 'Client-Side Encryption' do
         }
       ].create
 
-      client.use(:admin)[:datakeys].drop
-      client.use(:admin)[:datakeys].insert_one(
+      client.use('admin')['datakeys'].drop
+      client.use('admin')['datakeys'].insert_one(
         BSON::ExtJSON.parse(File.read('spec/support/crypt/limits/limits-key.json'))
       )
     end
@@ -60,7 +60,7 @@ describe 'Client-Side Encryption' do
           unencrypted: 'a' * _2mib
         }
 
-        result = client_encrypted[:coll].insert_one(document)
+        result = client_encrypted['coll'].insert_one(document)
 
         expect(result).to be_ok
       end
@@ -68,7 +68,7 @@ describe 'Client-Side Encryption' do
 
     context 'when a single encrypted document is larger than 2MiB' do
       it 'can perform insert_one using the encrypted client' do
-        result = client_encrypted[:coll].insert_one(
+        result = client_encrypted['coll'].insert_one(
           limits_doc.merge(
             _id: "encryption_exceeds_2mi",
             unencrypted: 'a' * (_2mib - 2000)
