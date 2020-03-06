@@ -34,7 +34,7 @@ class Runner
     end.parse!
 
     @env = Hash[ARGV.map do |arg|
-      arg.split('=')
+      arg.split('=', 2)
     end]
 
     @env['RVM_RUBY'] ||= 'ruby-2.7'
