@@ -188,7 +188,7 @@ module Mongo
             # Make the new maximum size equal to the specified reduced size limit
             # plus ten percent to account for other data present in the
             # document.
-            max_bson_size = REDUCED_MAX_BSON_SIZE * 1.1
+            max_bson_size = REDUCED_MAX_BSON_SIZE
           end
         else
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
