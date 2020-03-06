@@ -133,6 +133,9 @@ describe 'Bulk insert' do
 
     before do
       client.use(:auto_encryption)[:users].drop
+
+      client.use(:admin)[:datakeys].drop
+      client.use(:admin)[:datakeys].insert_one(data_key)
     end
 
     context 'when total request size does not exceed 2MiB' do

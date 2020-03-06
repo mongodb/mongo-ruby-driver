@@ -2228,6 +2228,9 @@ describe Mongo::BulkWrite do
 
     before do
       client.use(:auto_encryption)[:users].drop
+
+      client.use(:admin)[:datakeys].drop
+      client.use(:admin)[:datakeys].insert_one(data_key)
     end
 
     shared_examples 'a functioning encrypted BulkWrite' do |options={}|
