@@ -3,18 +3,12 @@ require 'spec_helper'
 describe 'Client-Side Encryption' do
   describe 'Prose tests: BSON size limits and batch splitting' do
     require_libmongocrypt
-    require_enterprise
-    min_server_fcv '4.2'
-
     include_context 'define shared FLE helpers'
 
     let(:subscriber) { EventSubscriber.new }
 
     let(:client) do
-      new_local_client(
-        SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options
-      )
+      authorized_client.use('db')
     end
 
     let(:json_schema) do
@@ -43,8 +37,8 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.use(:db)[:coll].drop
-      client.use(:db)[:coll,
+      client['coll'].drop
+      client['coll',
         {
           'validator' => { '$jsonSchema' => json_schema }
         }
