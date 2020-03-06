@@ -185,10 +185,9 @@ module Mongo
           # writes.
           documents = message.documents.first['documents']
           if documents && documents.length > 1
-            # Make the new maximum size equal to the specified reduced size limit
-            # plus ten percent to account for other data present in the
-            # document.
-            max_bson_size = REDUCED_MAX_BSON_SIZE
+            # Make the new maximum size equal to the specified reduced size
+            # limit plus the 16KiB overhead allowance.
+            max_bson_size = REDUCED_MAX_BSON_SIZE + MAX_BSON_COMMAND_OVERHEAD
           end
         else
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
