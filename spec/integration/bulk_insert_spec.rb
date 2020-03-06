@@ -77,4 +77,95 @@ describe 'Bulk insert' do
       end
     end
   end
+
+  context 'with auto-encryption enabled' do
+    require_libmongocrypt
+    require_enterprise
+    min_server_fcv '4.2'
+
+    include_context 'define shared FLE helpers'
+    include_context 'with local kms_providers'
+
+    let(:subscriber) { EventSubscriber.new }
+
+    let(:client) do
+      new_local_client(
+        SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(
+          auto_encryption_options: {
+            kms_providers: kms_providers,
+            key_vault_namespace: key_vault_namespace,
+            schema_map: { "auto_encryption.users" => schema_map },
+          },
+          database: 'auto_encryption'
+        ),
+      ).tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+    end
+
+    let(:_2mib) { 2097152 }
+
+    shared_examples 'a functioning encrypted bulk insert' do |options={}|
+      num_writes = options[:num_writes]
+
+      let!(:result) do
+        client[:users].insert_many(documents)
+      end
+
+      it 'executes an encrypted bulk write' do
+        documents = authorized_client
+          .use(:auto_encryption)[:users]
+          .find(_id: result.inserted_ids)
+
+        ssns = documents.map { |doc| doc['ssn'] }
+        expect(ssns).to all(be_ciphertext)
+      end
+
+      it 'executes the correct number of writes' do
+        command_succeeded_events = subscriber.succeeded_events.select do |event|
+          event.command_name == 'insert'
+        end
+
+        expect(command_succeeded_events.length).to eq(num_writes)
+      end
+    end
+
+    before do
+      client.use(:auto_encryption)[:users].drop
+    end
+
+    context 'when total request size does not exceed 2MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (_2mib/2) },
+          { ssn: 'a' * (_2mib/2) }
+        ]
+      end
+
+      it_behaves_like 'a functioning encrypted bulk insert', num_writes: 1
+    end
+
+    context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (_2mib - 2000) },
+          { ssn: 'a' * (_2mib - 2000) }
+        ]
+      end
+
+      it_behaves_like 'a functioning encrypted bulk insert', num_writes: 2
+    end
+
+    context 'when each operation is larger than 2MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (_2mib * 1.2) },
+          { ssn: 'a' * (_2mib * 1.2) }
+        ]
+
+        it_behaves_like 'a functioning encrypted bulk insert', num_writes: 2
+      end
+    end
+  end
 end

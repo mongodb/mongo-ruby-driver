@@ -2227,16 +2227,28 @@ describe Mongo::BulkWrite do
     let(:_2mib) { 2097152 }
 
     before do
-      client.use(:auto_encryption)[:coll].drop
+      client.use(:auto_encryption)[:users].drop
     end
 
-    shared_examples 'a functioning encrypted BulkWrite' do
-      it 'executes an encrypted bulk write' do
-        bulk_write.execute
+    shared_examples 'a functioning encrypted BulkWrite' do |options={}|
+      num_writes = options[:num_writes]
 
+      before do
+        bulk_write.execute
+      end
+
+      it 'executes an encrypted bulk write' do
         documents = authorized_client.use(:auto_encryption)[:users].find
         ssns = documents.map { |doc| doc['ssn'] }
         expect(ssns).to all(be_ciphertext)
+      end
+
+      it 'executes the correct number of writes' do
+        command_succeeded_events = subscriber.succeeded_events.select do |event|
+          event.command_name == 'insert'
+        end
+
+        expect(command_succeeded_events.length).to eq(num_writes)
       end
     end
 
@@ -2248,17 +2260,7 @@ describe Mongo::BulkWrite do
         ]
       end
 
-      it_behaves_like 'a functioning encrypted BulkWrite'
-
-      it 'executes one write' do
-        bulk_write.execute
-
-        command_succeeded_events = subscriber.succeeded_events.select do |event|
-          event.command_name == 'insert'
-        end
-
-        expect(command_succeeded_events.length).to eq(1)
-      end
+      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
     end
 
     context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
@@ -2269,17 +2271,7 @@ describe Mongo::BulkWrite do
         ]
       end
 
-      it_behaves_like 'a functioning encrypted BulkWrite'
-
-      it 'executes two writes' do
-        bulk_write.execute
-
-        command_succeeded_events = subscriber.succeeded_events.select do |event|
-          event.command_name == 'insert'
-        end
-
-        expect(command_succeeded_events.length).to eq(2)
-      end
+      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
     end
 
     context 'when each operation is larger than 2MiB' do
@@ -2290,17 +2282,7 @@ describe Mongo::BulkWrite do
         ]
       end
 
-      it_behaves_like 'a functioning encrypted BulkWrite'
-
-      it 'executes two writes' do
-        bulk_write.execute
-
-        command_succeeded_events = subscriber.succeeded_events.select do |event|
-          event.command_name == 'insert'
-        end
-
-        expect(command_succeeded_events.length).to eq(2)
-      end
+      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
     end
   end
 end
