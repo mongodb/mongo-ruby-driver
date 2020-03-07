@@ -105,17 +105,17 @@ module Mongo
       handle_errors { @socket.gets(*args) }
     end
 
-    # Create the new socket for the provided family - ipv4, piv6, or unix.
+    # Create the new socket for the provided domain - ipv4, ipv6, or unix.
     #
     # @example Create a new ipv4 socket.
-    #   Socket.new(Socket::PF_INET)
+    #   Socket.new(:INET)
     #
-    # @param [ Integer ] family The socket domain.
+    # @param [ Symbol | Integer ] domain The socket domain.
     #
     # @since 2.0.0
-    def initialize(family)
-      @family = family
-      @socket = ::Socket.new(family, SOCK_STREAM, 0)
+    def initialize(domain)
+      @family = domain
+      @socket = ::Socket.new(domain, SOCK_STREAM, 0)
       set_socket_options(@socket)
     end
 
