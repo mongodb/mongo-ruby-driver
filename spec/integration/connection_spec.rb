@@ -12,6 +12,11 @@ describe 'Connections' do
   let(:server) { client.cluster.servers.first }
 
   describe '#connect!' do
+
+    let(:connection) do
+      Mongo::Server::Connection.new(server, server.options)
+    end
+
     context 'network error during handshake' do
       # On JRuby 9.2.7.0, this line:
       # expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
@@ -19,10 +24,6 @@ describe 'Connections' do
       # entirely, resulting in this failure:
       # RSpec::Expectations::ExpectationNotMetError: expected Mongo::Error::SocketError, got #<NameError: undefined method `write' for class `Mongo::Socket'>
       fails_on_jruby
-
-      let(:connection) do
-        Mongo::Server::Connection.new(server, server.options)
-      end
 
       let(:exception) { Mongo::Error::SocketError }
 
@@ -123,10 +124,6 @@ describe 'Connections' do
 
       describe 'number of sockets created' do
 
-        let(:connection) do
-          Mongo::Server::Connection.new(server, server.options)
-        end
-
         before do
           server
         end
@@ -214,7 +211,6 @@ describe 'Connections' do
           # where we do not negotiate auth mechanism.
           expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
 
-          connection = Mongo::Server::Connection.new(server, server.options)
           expect(connection.connect!).to be true
 
           # ismaster response should update server description via sdam flow,
@@ -255,7 +251,7 @@ describe 'Connections' do
             client.cluster.topology.options, client.cluster.topology.monitoring, client.cluster))
 
         # now create a connection.
-        connection = Mongo::Server::Connection.new(server, server.options)
+        connection
 
         # verify everything once again
         expect(server).to be_unknown
