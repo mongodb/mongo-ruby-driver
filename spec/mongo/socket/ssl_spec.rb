@@ -3,24 +3,15 @@ require 'spec_helper'
 # this test performs direct network connections without retries.
 # In case of intermittent network issues, retry the entire failing test.
 describe Mongo::Socket::SSL, retry: 3 do
+  clean_slate_for_all
   require_tls
 
-  let(:address) do
-    default_address.tap do
-      ClientRegistry.instance.close_all_clients
-    end
-  end
-
-  let!(:resolver) do
-    address.send(:create_resolver, {})
-  end
-
-  let(:socket_timeout) do
-    1
-  end
+  let(:host_name) { 'localhost' }
 
   let(:socket) do
-    resolver.socket(socket_timeout, ssl_options, connect_timeout: 2.4)
+    described_class.new('127.0.0.1', default_address.port,
+      host_name, 1, :INET, ssl_options.merge(
+        connect_timeout: 2.4))
   end
 
   let(:ssl_options) do
@@ -247,38 +238,27 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'when the hostname is verified' do
-        it 'raises an error' do
-          error = nil
-          begin
-            described_class.new(
-              resolver.host,
-              resolver.port,
-              host_name,
-              30,
-              ::Socket::PF_INET,
-              ssl_options.merge(ssl_verify: false, ssl_verify_hostname: true)
-            )
-          rescue => e
-            error = e
-          end
 
-          expect(error).to be_a(Mongo::Error::SocketError)
-          expect(error.message).to eq('SSL handshake failed due to a hostname mismatch.')
+        let(:ssl_options) do
+          SpecConfig.instance.ssl_options.merge(ssl_verify: false, ssl_verify_hostname: true)
+        end
+
+        it 'raises an error' do
+          lambda do
+            socket
+          end.should raise_error(Mongo::Error::SocketError, /SSL handshake failed due to a hostname mismatch/)
         end
       end
 
       context 'when the hostname is not verified' do
-        it 'raises an error' do
-          expect {
-            described_class.new(
-              resolver.host,
-              resolver.port,
-              host_name,
-              30,
-              ::Socket::PF_INET,
-              ssl_options.merge(ssl_verify: false, ssl_verify_hostname: false)
-            )
-          }.not_to raise_error
+        let(:ssl_options) do
+          SpecConfig.instance.ssl_options.merge(ssl_verify: false, ssl_verify_hostname: false)
+        end
+
+        it 'does not raise an error' do
+          lambda do
+            socket
+          end.should_not raise_error
         end
       end
     end
