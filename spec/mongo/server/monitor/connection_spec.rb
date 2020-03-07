@@ -66,7 +66,7 @@ describe Mongo::Server::Monitor::Connection do
       end
 
       it 'uses the connect_timeout for the address' do
-        expect(connection.address.send(:connect_timeout)).to eq(3)
+        expect(connection.address.options[:connect_timeout]).to eq(3)
       end
 
       it 'uses the connect_timeout as the socket_timeout' do
@@ -81,7 +81,7 @@ describe Mongo::Server::Monitor::Connection do
       end
 
       it 'uses the connect_timeout for the address' do
-        expect(connection.address.send(:connect_timeout)).to eq(3)
+        expect(connection.address.options[:connect_timeout]).to eq(3)
       end
 
       it 'uses the connect_timeout as the socket_timeout' do
@@ -98,8 +98,8 @@ describe Mongo::Server::Monitor::Connection do
         SpecConfig.instance.test_options.merge(connect_timeout: nil, socket_timeout: 5)
       end
 
-      it 'uses the default connect_timeout for the address' do
-        expect(connection.address.send(:connect_timeout)).to eq(10)
+      it 'does not specify connect_timeout for the address' do
+        expect(connection.address.options[:connect_timeout]).to be nil
       end
 
       it 'uses the connect_timeout as the socket_timeout' do
@@ -113,8 +113,8 @@ describe Mongo::Server::Monitor::Connection do
         SpecConfig.instance.test_options.merge(connect_timeout: nil, socket_timeout: nil)
       end
 
-      it 'uses the default connect_timeout for the address' do
-        expect(connection.address.send(:connect_timeout)).to eq(10)
+      it 'does not specify connect_timeout for the address' do
+        expect(connection.address.options[:connect_timeout]).to be nil
       end
 
       it 'uses the connect_timeout as the socket_timeout' do

@@ -249,11 +249,7 @@ describe Mongo::Address do
       end
     end
 
-    context 'when creating a socket using the resolver' do
-
-      before do
-        address.send(:create_resolver, SpecConfig.instance.ssl_options)
-      end
+    context 'when creating a socket' do
 
       it 'uses the host, not the IP address' do
         expect(address.socket(0.0).host).to eq(socket_address_or_host)
@@ -282,6 +278,24 @@ describe Mongo::Address do
       if Socket.const_defined?(:TCP_KEEPIDLE)
         it 'sets the socket TCP_KEEPIDLE option' do
           expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE).int).to be <= 300
+        end
+      end
+    end
+
+    describe ':connect_timeout option' do
+      clean_slate
+
+      let(:address) { Mongo::Address.new('127.0.0.1') }
+
+      it 'defaults to 10' do
+        RSpec::Mocks.with_temporary_scope do
+          resolved_address = double('address')
+          # This test's expectation
+          expect(resolved_address).to receive(:socket).with(0, {}, connect_timeout: 10)
+
+          expect(Mongo::Address::IPv4).to receive(:new).and_return(resolved_address)
+
+          address.socket(0)
         end
       end
     end
@@ -318,14 +332,6 @@ describe Mongo::Address do
       it 'is host with port' do
         expect(address.to_s).to eql('[::1]:27000')
       end
-    end
-  end
-
-  describe '#connect_timeout' do
-    let(:address) { Mongo::Address.new('127.0.0.1') }
-
-    it 'defaults to 10' do
-      expect(address.send(:connect_timeout)).to eq(10)
     end
   end
 end

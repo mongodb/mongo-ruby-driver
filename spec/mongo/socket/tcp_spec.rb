@@ -1,16 +1,8 @@
 require 'spec_helper'
 
 describe Mongo::Socket::TCP do
-  require_no_tls
-
-  let(:address) { default_address }
-
-  let!(:resolver) do
-    address.send(:create_resolver, {})
-  end
-
   let(:socket) do
-    resolver.socket(5, {})
+    described_class.new('127.0.0.1', SpecConfig.instance.any_port, 5, Socket::AF_INET)
   end
 
   describe '#address' do
