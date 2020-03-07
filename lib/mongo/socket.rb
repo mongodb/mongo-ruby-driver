@@ -87,7 +87,7 @@ module Mongo
     #
     # @since 2.0.0
     def close
-      @socket.close rescue true
+      @socket.close rescue nil
       true
     end
 
@@ -103,20 +103,6 @@ module Mongo
     # @since 2.0.0
     def gets(*args)
       handle_errors { @socket.gets(*args) }
-    end
-
-    # Create the new socket for the provided family - ipv4, piv6, or unix.
-    #
-    # @example Create a new ipv4 socket.
-    #   Socket.new(Socket::PF_INET)
-    #
-    # @param [ Integer ] family The socket domain.
-    #
-    # @since 2.0.0
-    def initialize(family)
-      @family = family
-      @socket = ::Socket.new(family, SOCK_STREAM, 0)
-      set_socket_options(@socket)
     end
 
     # Will read all data from the socket for the provided number of bytes.
