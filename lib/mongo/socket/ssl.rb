@@ -50,12 +50,18 @@ module Mongo
             @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
           end
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
-          @socket.hostname = @host_name
-          @socket.sync_close = true
-          handle_errors do
-            @socket.connect
+          begin
+            @socket.hostname = @host_name
+            @socket.sync_close = true
+            handle_errors do
+              @socket.connect
+            end
+            verify_certificate!(@socket)
+          rescue
+            @socket.close
+            @socket = nil
+            raise
           end
-          verify_certificate!(@socket)
           self
         end
       end

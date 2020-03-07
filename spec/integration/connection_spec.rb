@@ -175,6 +175,8 @@ describe 'Connections' do
           server
         end
 
+        let(:socket_cls) { ::Socket }
+
         let(:socket) do
           double('socket').tap do |socket|
             allow(socket).to receive(:setsockopt)
@@ -195,6 +197,31 @@ describe 'Connections' do
             lambda do
               connection.connect!
             end.should raise_error(Mongo::Error::SocketError, /test error/)
+          end
+        end
+
+        context 'with tls' do
+          require_tls
+
+          let(:socket) do
+            double('socket').tap do |socket|
+              allow(socket).to receive(:hostname=)
+              allow(socket).to receive(:sync_close=)
+              expect(socket).to receive(:connect).and_raise(IOError, 'test error')
+
+              # This test is testing for the close call:
+              expect(socket).to receive(:close)
+            end
+          end
+
+          it 'closes the SSL socket' do
+            RSpec::Mocks.with_temporary_scope do
+              expect(OpenSSL::SSL::SSLSocket).to receive(:new).and_return(socket)
+
+              lambda do
+                connection.connect!
+              end.should raise_error(Mongo::Error::SocketError, /test error/)
+            end
           end
         end
       end
