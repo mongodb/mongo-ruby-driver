@@ -35,6 +35,28 @@ describe 'Batch writes with auto-encryption enabled' do
 
   let(:size_limit) { Mongo::Server::ConnectionBase::REDUCED_MAX_BSON_SIZE }
 
+  shared_examples 'a functioning encrypted BulkWrite' do |options={}|
+    num_writes = options[:num_writes]
+
+    before do
+      perform_bulk_write
+    end
+
+    it 'executes an encrypted bulk write' do
+      documents = authorized_client.use(:auto_encryption)[:users].find
+      ssns = documents.map { |doc| doc['ssn'] }
+      expect(ssns).to all(be_ciphertext)
+    end
+
+    it 'executes the correct number of writes' do
+      command_succeeded_events = subscriber.succeeded_events.select do |event|
+        event.command_name == command_name
+      end
+
+      expect(command_succeeded_events.length).to eq(num_writes)
+    end
+  end
+
   context 'using BulkWrite' do
     let(:collection) { client['users'] }
 
@@ -42,29 +64,13 @@ describe 'Batch writes with auto-encryption enabled' do
       Mongo::BulkWrite.new(collection, requests, {})
     end
 
-    shared_examples 'a functioning encrypted BulkWrite' do |options={}|
-      num_writes = options[:num_writes]
-
-      before do
-        bulk_write.execute
-      end
-
-      it 'executes an encrypted bulk write' do
-        documents = authorized_client.use(:auto_encryption)[:users].find
-        ssns = documents.map { |doc| doc['ssn'] }
-        expect(ssns).to all(be_ciphertext)
-      end
-
-      it 'executes the correct number of writes' do
-        command_succeeded_events = subscriber.succeeded_events.select do |event|
-          event.command_name == 'insert'
-        end
-
-        expect(command_succeeded_events.length).to eq(num_writes)
-      end
+    let(:perform_bulk_write) do
+      bulk_write.execute
     end
 
     context 'with insert operations' do
+      let(:command_name) { 'insert' }
+
       context 'when total request size does not exceed 2MiB' do
         let(:requests) do
           [
@@ -115,21 +121,23 @@ describe 'Batch writes with auto-encryption enabled' do
     end
 
     context 'with update operations' do
+      let(:command_name) { 'update' }
+
       before do
         client['users'].insert_one(_id: 1)
         client['users'].insert_one(_id: 2)
       end
 
-      # context 'when total request size does not exceed 2MiB' do
-      #   let(:requests) do
-      #     [
-      #       { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit/10) } } },
-      #       { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit/10) } } },
-      #     ]
-      #   end
+      context 'when total request size does not exceed 2MiB' do
+        let(:requests) do
+          [
+            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit/10) } } },
+            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit/10) } } },
+          ]
+        end
 
-      #   it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
-      # end
+        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+      end
 
       context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
         let(:requests) do
@@ -170,21 +178,23 @@ describe 'Batch writes with auto-encryption enabled' do
     end
 
     context 'with delete operations' do
-      # context 'when total request size does not exceed 2MiB' do
-      #   before do
-      #     client['users'].insert_one(ssn: 'a' * (size_limit/10))
-      #     client['users'].insert_one(ssn: 'b' * (size_limit/10))
-      #   end
+      let(:command_name) { 'delete' }
 
-      #   let(:requests) do
-      #     [
-      #       { delete_one: { filter: { ssn: 'a' * (size_limit/10) } } },
-      #       { delete_one: { filter: { ssn: 'b' * (size_limit/10) } } }
-      #     ]
-      #   end
+      context 'when total request size does not exceed 2MiB' do
+        before do
+          client['users'].insert_one(ssn: 'a' * (size_limit/10))
+          client['users'].insert_one(ssn: 'b' * (size_limit/10))
+        end
 
-      #   it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
-      # end
+        let(:requests) do
+          [
+            { delete_one: { filter: { ssn: 'a' * (size_limit/10) } } },
+            { delete_one: { filter: { ssn: 'b' * (size_limit/10) } } }
+          ]
+        end
+
+        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+      end
 
       context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
         before do
@@ -233,21 +243,61 @@ describe 'Batch writes with auto-encryption enabled' do
         end
       end
     end
-
-    context 'with insert, update, and delete operations' do
-
-    end
   end
 
   context '#insert_many' do
+    let(:perform_bulk_write) do
+      client[:users].insert_many(documents)
+    end
 
-  end
+    let(:command_name) { 'insert' }
 
-  context '#update_many' do
+    context 'when total request size does not exceed 2MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (size_limit/2) },
+          { ssn: 'a' * (size_limit/2) },
+        ]
+      end
 
-  end
+      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+    end
 
-  context '#delete_many' do
+    context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (size_limit - 2000) },
+          { ssn: 'a' * (size_limit - 2000) },
+        ]
+      end
 
+      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+    end
+
+    context 'when each operation is larger than 2MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (size_limit * 2) },
+          { ssn: 'a' * (size_limit * 2) },
+        ]
+      end
+
+      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+    end
+
+    context 'when one operation is larger than 16MiB' do
+      let(:documents) do
+        [
+          { ssn: 'a' * (Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE + 1000) },
+          { ssn: 'a' * size_limit },
+        ]
+      end
+
+      it 'raises an exception' do
+        expect do
+          perform_bulk_write
+        end.to raise_error(Mongo::Error::MaxBSONSize, /maximum allowed size: 16777216 bytes/)
+      end
+    end
   end
 end
