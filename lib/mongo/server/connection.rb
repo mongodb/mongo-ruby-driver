@@ -191,8 +191,7 @@ module Mongo
       #   a server description instance from the ismaster response of the
       #   returned socket.
       def do_connect
-        socket = address.socket(socket_timeout, ssl_options,
-          connect_timeout: address.connect_timeout)
+        socket = address.socket(socket_timeout, ssl_options, address.options)
 
         begin
           new_description = handshake!(socket)
