@@ -187,8 +187,7 @@ module Mongo
 
       # Separate method to permit easier mocking in the test suite.
       def do_connect
-        socket = address.socket(socket_timeout, ssl_options,
-          connect_timeout: address.connect_timeout)
+        socket = address.socket(socket_timeout, ssl_options, address.options)
 
         begin
           handshake!(socket)
