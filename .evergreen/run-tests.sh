@@ -78,7 +78,7 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
 
@@ -164,6 +164,6 @@ echo ${test_status}
 
 kill_jruby
 
-mlaunch stop --dir "$dbdir"
+python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
 exit ${test_status}
