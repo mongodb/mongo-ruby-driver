@@ -1098,7 +1098,7 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         it 'uses the connect_timeout for the address' do
-          expect(connection.address.send(:connect_timeout)).to eq(3)
+          expect(connection.address.options[:connect_timeout]).to eq(3)
         end
 
         it 'uses the socket_timeout as the socket_timeout' do
@@ -1117,7 +1117,7 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         it 'uses the connect_timeout for the address' do
-          expect(connection.address.send(:connect_timeout)).to eq(3)
+          expect(connection.address.options[:connect_timeout]).to eq(3)
         end
 
         it 'does not use a socket_timeout' do
@@ -1138,8 +1138,8 @@ describe Mongo::Server::Connection, retry: 3 do
           connection.connect!
         end
 
-        it 'uses the default connect_timeout for the address' do
-          expect(connection.address.send(:connect_timeout)).to eq(10)
+        it 'does not specify connect_timeout for the address' do
+          expect(connection.address.options[:connect_timeout]).to be nil
         end
 
         it 'uses the socket_timeout' do
@@ -1157,8 +1157,8 @@ describe Mongo::Server::Connection, retry: 3 do
           connection.connect!
         end
 
-        it 'uses the default connect_timeout for the address' do
-          expect(connection.address.send(:connect_timeout)).to eq(10)
+        it 'does not specify connect_timeout for the address' do
+          expect(connection.address.options[:connect_timeout]).to be nil
         end
 
         it 'does not use a socket_timeout' do
