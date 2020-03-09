@@ -32,6 +32,19 @@ RUN echo 2
 
   RUN apt-get install -y curl
 
+  <% if preload? && distro =~ /ubuntu1204/ %>
+  
+    # ubuntu1204 comes with python 2.7.3.
+    # Install a more recent one from deadsnakes ppa so that pip works.
+    RUN apt-get install -y python-software-properties
+    # https://github.com/deadsnakes/issues/issues/53
+    RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C
+    RUN add-apt-repository ppa:fkrull/deadsnakes-python2.7
+    RUN apt-get update
+    RUN apt-get install -y python2.7-dev
+
+  <% end %>
+
 <% end %>
 
 <% if ruby_head? %>
@@ -107,6 +120,17 @@ RUN echo 2
     ENV USE_OPT_TOOLCHAIN=1
   
   <% end %>
+  
+  <% if distro =~ /ubuntu1204/ %>
+  
+    # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
+    # https://pip.pypa.io/en/stable/installing/
+    RUN curl --retry 3 -fLo get-pip.py https://bootstrap.pypa.io/get-pip.py
+    RUN python get-pip.py
+  
+  <% end %>
+
+  RUN pip --version
 
 <% end %>
 
@@ -124,9 +148,7 @@ WORKDIR /app
 
 COPY . .
 
-ENV MONGO_ORCHESTRATION_HOME=/tmpfs
-ENV PROJECT_DIRECTORY=/app
+ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
+  PROJECT_DIRECTORY=/app
 
-<% @env.each do |k, v| %>
-ENV <%= k %>="<%= v %>"
-<% end %>
+ENV <%= @env.map { |k, v| %Q`#{k}="#{v}"` }.join(" \\\n  ") %>

@@ -300,10 +300,6 @@ install_mlaunch_pip() {
   python -V || true
   python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  # The scripts in a python installation have shebangs pointing to the
-  # prefix, which doesn't work for us because we unpack toolchain to a
-  # different directory than prefix used for building. Work around this by
-  # explicitly running pip3 with python.
   pip install -t "$pythonpath" 'mtools-legacy[mlaunch]'
   export PATH="$pythonpath/bin":$PATH
   export PYTHONPATH="$pythonpath"
