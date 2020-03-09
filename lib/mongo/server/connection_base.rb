@@ -43,6 +43,9 @@ module Mongo
       # @api private
       MAX_BSON_COMMAND_OVERHEAD = 16384
 
+      # @api private
+      REDUCED_MAX_BSON_SIZE = 2097152
+
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
@@ -175,10 +178,17 @@ module Mongo
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
         if client && client.encrypter && client.encrypter.encrypt?
-          # From client-side encryption spec: Because automatic encryption
-          # increases the size of commands, the driver MUST split bulk writes
-          # at a reduced size limit before undergoing automatic encryption.
-          max_bson_size = 2097152
+          # The client-side encryption specification requires bulk writes to
+          # be split at a reduced maxBsonObjectSize. If this message is a bulk
+          # write and its size exceeds the reduced size limit, the serializer
+          # will raise an exception, which is caught by BulkWrite. BulkWrite
+          # will split the operation into individual writes, which will
+          # not be subject to the reduced maxBsonObjectSize.
+          if message.bulk_write?
+            # Make the new maximum size equal to the specified reduced size
+            # limit plus the 16KiB overhead allowance.
+            max_bson_size = REDUCED_MAX_BSON_SIZE + MAX_BSON_COMMAND_OVERHEAD
+          end
         else
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
