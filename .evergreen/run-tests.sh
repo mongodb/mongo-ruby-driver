@@ -16,7 +16,7 @@ setup_ruby
 
 prepare_server $arch
 
-install_mlaunch_git https://github.com/p-mongo/mtools wait-for-rs
+install_mlaunch_pip
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -78,23 +78,7 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-# mlaunch frequently fails to provision sharded clusters with authentication -
-# see https://github.com/rueckstiess/mtools/issues/691.
-# Give it 5 attempts.
-ok=false
-for i in `seq 5`; do
-  if mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args; then
-    ok=true
-    break
-  fi
-  mlaunch stop --dir "$dbdir" || true
-  rm -rf "$dbdir"
-done
-
-if ! $ok; then
-  echo mlaunch failed to provision the desired deployment 1>&2
-  exit 5
-fi
+python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
 
@@ -180,6 +164,6 @@ echo ${test_status}
 
 kill_jruby
 
-mlaunch stop --dir "$dbdir"
+python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
 exit ${test_status}
