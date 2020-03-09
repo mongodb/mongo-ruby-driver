@@ -281,9 +281,9 @@ describe 'Bulk writes with auto-encryption enabled' do
 
           command_succeeded_events = subscriber.succeeded_events
 
-          inserts = command_succeeded_events.filter { |event| event.command_name == 'insert' }
-          updates = command_succeeded_events.filter { |event| event.command_name == 'update' }
-          deletes = command_succeeded_events.filter { |event| event.command_name == 'delete' }
+          inserts = command_succeeded_events.select { |event| event.command_name == 'insert' }
+          updates = command_succeeded_events.select { |event| event.command_name == 'update' }
+          deletes = command_succeeded_events.select { |event| event.command_name == 'delete' }
 
           expect(inserts.length).to eq(1)
           expect(updates.length).to eq(1)
