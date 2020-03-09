@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Batch writes with auto-encryption enabled' do
+describe 'Bulk writes with auto-encryption enabled' do
   require_libmongocrypt
   require_enterprise
   min_server_fcv '4.2'
@@ -26,6 +26,8 @@ describe 'Batch writes with auto-encryption enabled' do
     end
   end
 
+  let(:size_limit) { Mongo::Server::ConnectionBase::REDUCED_MAX_BSON_SIZE }
+
   before do
     authorized_client.use('auto_encryption')['users'].drop
 
@@ -33,9 +35,13 @@ describe 'Batch writes with auto-encryption enabled' do
     authorized_client.use('admin')['datakeys'].insert_one(data_key)
   end
 
-  let(:size_limit) { Mongo::Server::ConnectionBase::REDUCED_MAX_BSON_SIZE }
+  let(:command_succeeded_events) do
+    subscriber.succeeded_events.select do |event|
+      event.command_name == command_name
+    end
+  end
 
-  shared_examples 'a functioning encrypted BulkWrite' do |options={}|
+  shared_examples 'a functioning encrypted bulk write' do |options={}|
     num_writes = options[:num_writes]
 
     before do
@@ -49,24 +55,14 @@ describe 'Batch writes with auto-encryption enabled' do
     end
 
     it 'executes the correct number of writes' do
-      command_succeeded_events = subscriber.succeeded_events.select do |event|
-        event.command_name == command_name
-      end
-
       expect(command_succeeded_events.length).to eq(num_writes)
     end
   end
 
   context 'using BulkWrite' do
     let(:collection) { client['users'] }
-
-    let(:bulk_write) do
-      Mongo::BulkWrite.new(collection, requests, {})
-    end
-
-    let(:perform_bulk_write) do
-      bulk_write.execute
-    end
+    let(:bulk_write) { Mongo::BulkWrite.new(collection, requests, {}) }
+    let(:perform_bulk_write) { bulk_write.execute }
 
     context 'with insert operations' do
       let(:command_name) { 'insert' }
@@ -79,7 +75,7 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+        it_behaves_like 'a functioning encrypted bulk write', num_writes: 1
       end
 
       context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
@@ -90,7 +86,7 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+        it_behaves_like 'a functioning encrypted bulk write', num_writes: 2
       end
 
       context 'when each operation is larger than 2MiB' do
@@ -101,7 +97,7 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+        it_behaves_like 'a functioning encrypted bulk write', num_writes: 2
       end
 
       context 'when one operation is larger than 16MiB' do
@@ -131,12 +127,12 @@ describe 'Batch writes with auto-encryption enabled' do
       context 'when total request size does not exceed 2MiB' do
         let(:requests) do
           [
-            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit/10) } } },
-            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit/10) } } },
+            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit/2) } } },
+            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit/2) } } },
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+        it_behaves_like 'a functioning encrypted bulk write', num_writes: 1
       end
 
       context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
@@ -147,7 +143,7 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+        it_behaves_like 'a functioning encrypted bulk write', num_writes: 2
       end
 
       context 'when each operation is larger than 2MiB' do
@@ -158,7 +154,7 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+        it_behaves_like 'a functioning encrypted bulk write', num_writes: 2
       end
 
       context 'when one operation is larger than 16MiB' do
@@ -182,18 +178,24 @@ describe 'Batch writes with auto-encryption enabled' do
 
       context 'when total request size does not exceed 2MiB' do
         before do
-          client['users'].insert_one(ssn: 'a' * (size_limit/10))
-          client['users'].insert_one(ssn: 'b' * (size_limit/10))
+          client['users'].insert_one(ssn: 'a' * (size_limit/2))
+          client['users'].insert_one(ssn: 'b' * (size_limit/2))
         end
 
         let(:requests) do
           [
-            { delete_one: { filter: { ssn: 'a' * (size_limit/10) } } },
-            { delete_one: { filter: { ssn: 'b' * (size_limit/10) } } }
+            { delete_one: { filter: { ssn: 'a' * (size_limit/2) } } },
+            { delete_one: { filter: { ssn: 'b' * (size_limit/2) } } }
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+        it 'performs one delete' do
+          bulk_write.execute
+
+          documents = authorized_client.use('auto_encryption')['users'].find.to_a
+          expect(documents.length).to eq(0)
+          expect(command_succeeded_events.length).to eq(1)
+        end
       end
 
       context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
@@ -209,7 +211,13 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+        it 'performs two deletes' do
+          bulk_write.execute
+
+          documents = authorized_client.use('auto_encryption')['users'].find.to_a
+          expect(documents.length).to eq(0)
+          expect(command_succeeded_events.length).to eq(2)
+        end
       end
 
       context 'when each operation is larger than 2MiB' do
@@ -225,7 +233,13 @@ describe 'Batch writes with auto-encryption enabled' do
           ]
         end
 
-        it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+        it 'performs two deletes' do
+          bulk_write.execute
+
+          documents = authorized_client.use('auto_encryption')['users'].find.to_a
+          expect(documents.length).to eq(0)
+          expect(command_succeeded_events.length).to eq(2)
+        end
       end
 
       context 'when one operation is larger than 16MiB' do
@@ -240,6 +254,40 @@ describe 'Batch writes with auto-encryption enabled' do
           expect do
             bulk_write.execute
           end.to raise_error(Mongo::Error::MaxBSONSize, /maximum allowed size: 16777216 bytes/)
+        end
+      end
+    end
+
+    context 'with insert, update, and delete operations' do
+      context 'when total request size does not exceed 2MiB' do
+        let(:requests) do
+          [
+            { insert_one: { _id: 1, ssn: 'a' * (size_limit/3) } },
+            { update_one: { filter: { _id: 1 }, update: { ssn: 'b' * (size_limit/3) } } },
+            { delete_one: { filter: { ssn: 'b' * (size_limit/3) } } }
+          ]
+        end
+
+        it 'successfully performs the bulk write' do
+          bulk_write.execute
+
+          documents = authorized_client.use('auto_encryption')['users'].find.to_a
+          expect(documents.length).to eq(0)
+        end
+
+        # Bulk writes with different types of operations should
+        it 'performs 1 insert, 1 update, and 1 delete' do
+          bulk_write.execute
+
+          command_succeeded_events = subscriber.succeeded_events
+
+          inserts = command_succeeded_events.filter { |event| event.command_name == 'insert' }
+          updates = command_succeeded_events.filter { |event| event.command_name == 'update' }
+          deletes = command_succeeded_events.filter { |event| event.command_name == 'delete' }
+
+          expect(inserts.length).to eq(1)
+          expect(updates.length).to eq(1)
+          expect(deletes.length).to eq(1)
         end
       end
     end
@@ -260,7 +308,7 @@ describe 'Batch writes with auto-encryption enabled' do
         ]
       end
 
-      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 1
+      it_behaves_like 'a functioning encrypted bulk write', num_writes: 1
     end
 
     context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
@@ -271,7 +319,7 @@ describe 'Batch writes with auto-encryption enabled' do
         ]
       end
 
-      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+      it_behaves_like 'a functioning encrypted bulk write', num_writes: 2
     end
 
     context 'when each operation is larger than 2MiB' do
@@ -282,7 +330,7 @@ describe 'Batch writes with auto-encryption enabled' do
         ]
       end
 
-      it_behaves_like 'a functioning encrypted BulkWrite', num_writes: 2
+      it_behaves_like 'a functioning encrypted bulk write', num_writes: 2
     end
 
     context 'when one operation is larger than 16MiB' do

@@ -178,22 +178,13 @@ module Mongo
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
         if client && client.encrypter && client.encrypter.encrypt?
-          # From client-side encryption spec: Because automatic encryption
-          # increases the size of commands, the driver MUST split bulk writes
-          # at a reduced size limit (2MiB) before undergoing automatic encryption.
-          # However, the driver must not reduce the size limit for single
-          # writes.
-          inserts = message.documents.first['documents']
-          updates = message.documents.first['updates']
-          deletes = message.documents.first['deletes']
-
-          num_inserts = inserts ? inserts.length : 0
-          num_updates = updates ? updates.length : 0
-          num_deletes = deletes ? deletes.length : 0
-
-         
-          is_bulk_write = num_inserts + num_updates + num_deletes > 1
-          if is_bulk_write
+          # The client-side encryption specification requires bulk writes to
+          # be split at a reduced maxBsonObjectSize. If this message is a bulk
+          # write and its size exceeds the reduced size limit, the serializer
+          # will raise an exception, which is caught by BulkWrite. BulkWrite
+          # will split the operation into individual writes, which will
+          # not be subject to the reduced maxBsonObjectSize.
+          if message.bulk_write?
             # Make the new maximum size equal to the specified reduced size
             # limit plus the 16KiB overhead allowance.
             max_bson_size = REDUCED_MAX_BSON_SIZE + MAX_BSON_COMMAND_OVERHEAD
