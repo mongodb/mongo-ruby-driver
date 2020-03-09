@@ -4,21 +4,22 @@ runOn:
 data:
   - {_id: 1, x: 11}
   - {_id: 2, x: 22}
+  - {_id: 3, x: 33}
 
-collection_name: &collection_name 'test_deleteone_hint'
+collection_name: &collection_name 'test_deletemany_hint'
 
 tests:
   -
-    description: "deleteOne with hint string"
+    description: "deleteMany with hint string"
     operations:
       -
         object: collection
-        name: deleteOne
+        name: deleteMany
         arguments:
-          filter: &filter { _id: 1 }
+          filter: &filter { _id: { $gt: 1 } }
           hint: "_id_"
         result: &result
-          deletedCount: 1
+          deletedCount: 2
     expectations:
       -
         command_started_event:
@@ -31,13 +32,13 @@ tests:
     outcome: &outcome
       collection:
         data:
-          - {_id: 2, x: 22 }
+          - {_id: 1, x: 11 }
   -
-    description: "deleteOne with hint document"
+    description: "deleteMany with hint document"
     operations:
       -
         object: collection
-        name: deleteOne
+        name: deleteMany
         arguments:
           filter: *filter
           hint: { _id: 1 }

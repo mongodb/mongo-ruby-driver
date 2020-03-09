@@ -165,6 +165,8 @@ module Mongo
         # @since 2.0.0
         def delete_many(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
+          delete_doc[:hint] = opts[:hint] if opts[:hint]
+
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
@@ -195,6 +197,8 @@ module Mongo
         # @since 2.0.0
         def delete_one(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
+          delete_doc[:hint] = opts[:hint] if opts[:hint]
+
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
