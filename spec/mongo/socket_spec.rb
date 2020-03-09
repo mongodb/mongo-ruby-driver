@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Socket do
 
   let(:socket) do
-    described_class.new(Socket::PF_INET)
+    described_class.new
   end
 
   describe '#address' do

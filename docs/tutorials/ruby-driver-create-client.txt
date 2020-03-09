@@ -615,8 +615,8 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - zlibCompressionLevel=Integer
      - ``:zlib_compression_level => Integer``
 
-Details on Timeout Options
---------------------------
+Timeout Options
+---------------
 
 ``server_selection_timeout``
 ````````````````````````````
@@ -697,8 +697,8 @@ instructs the server to apply its default. This option can be set globally
 on the client or passed to individual operations under ``:write_concern``.
 
 
-Details on TLS Connections
---------------------------
+TLS Connections
+---------------
 
 To connect to the MongoDB cluster using TLS, pass ``tls`` Ruby or URI option
 to the ``Mongo::Client`` constructor. TLS must be explicitly configured on the
@@ -772,6 +772,23 @@ driver.
 Intermediate certificates should not be specified in files given to any
 of these options, because they would then not be verified against actual
 trusted CA certificates.
+
+
+IPv4/IPv6 Connections
+---------------------
+
+When a client is constructed with ``localhost`` as the host name, it will
+attempt an IPv4 connection only (i.e. if ``localhost`` resolves to
+``127.0.0.1`` and ``::1``, the driver will only try to connect to
+``127.0.0.1``).
+
+When a client is constructed with hostnames other than ``localhost``, it will
+attempt both IPv4 and IPv6 connections depending on the addresses that the
+hostnames resolve to. The driver respects the order in which ``getaddrinfo``
+returns the addresses, and will attempt to connect to them sequentially.
+The first successful connection will be used.
+
+The driver does not currently implement the Happy Eyeballs algorithm.
 
 
 TCP Keepalive Configuration

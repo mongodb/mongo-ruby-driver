@@ -40,7 +40,9 @@ module Mongo
       def connect!
         Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          handle_errors { socket.connect(::Socket.pack_sockaddr_in(port, host)) }
+          handle_errors do
+            socket.connect(::Socket.pack_sockaddr_in(port, host))
+          end
           self
         end
       end
@@ -63,8 +65,15 @@ module Mongo
       # @since 2.0.0
       def initialize(host, port, timeout, family, options = {})
         @host, @port, @timeout, @options = host, port, timeout, options
-        super(family)
-        connect!
+        @family = family
+        @socket = ::Socket.new(family, SOCK_STREAM, 0)
+        begin
+          set_socket_options(@socket)
+          connect!
+        rescue
+          @socket.close
+          raise
+        end
       end
 
       private
