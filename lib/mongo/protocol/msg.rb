@@ -248,8 +248,7 @@ module Mongo
 
       # Whether this message represents a bulk write. A bulk write is an insert,
       # update, or delete operation that encompasses multiple operations of
-      # the same type. A bulk write will not have multiple operations of
-      # different types.
+      # the same type.
       #
       # @return [ Boolean ] Whether this message represents a bulk write.
       #
@@ -263,8 +262,11 @@ module Mongo
         updates = documents.first['updates']
         deletes = documents.first['deletes']
 
-        inserts && inserts.length > 1  || updates && updates.length > 1 ||
-          deletes && deletes.length > 1
+        num_inserts = inserts ? inserts.length : 0
+        num_updates = updates ? updates.length : 0
+        num_deletes = deletes ? deletes.length : 0
+
+        num_inserts > 1  || num_updates > 1 || num_deletes > 1
       end
 
       private
