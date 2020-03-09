@@ -40,6 +40,11 @@ module Mongo
     # @since 2.0.0
     TIMEOUT_PACK = 'l_2'.freeze
 
+    # Write data to the socket in chunks of this size.
+    #
+    # @api private
+    WRITE_CHUNK_SIZE = 65536
+
     # @return [ Integer ] family The type of host family.
     attr_reader :family
 
@@ -158,7 +163,29 @@ module Mongo
     #
     # @since 2.0.0
     def write(*args)
-      handle_errors { @socket.write(*args) }
+      handle_errors do
+        # This method used to forward arguments to @socket.write in a
+        # single call like so:
+        #
+        # @socket.write(*args)
+        #
+        # Turns out, when each buffer to be written is large (e.g. 32 MiB),
+        # this write call would take an extremely long time (20+ seconds)
+        # while using 100% CPU. Splitting the writes into chunks produced
+        # massively better performance (0.05 seconds to write the 32 MiB of
+        # data on the same hardware). Unfortunately splitting the data,
+        # one would assume, results in it being copied, but this seems to be
+        # a much more minor issue compared to CPU cost of writing large buffers.
+        args.each do |buf|
+          buf = buf.to_s
+          i = 0
+          while i < buf.length
+            chunk = buf[i...i+WRITE_CHUNK_SIZE]
+            @socket.write(chunk)
+            i += WRITE_CHUNK_SIZE
+          end
+        end
+      end
     end
 
     # Tests if this socket has reached EOF. Primarily used for liveness checks.

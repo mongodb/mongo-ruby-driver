@@ -26,6 +26,23 @@ module Mongo
       extend Forwardable
       include Monitoring::Publishable
 
+      # The maximum allowed size in bytes that a user-supplied document may
+      # take up when serialized, if the server's ismaster response does not
+      # include maxBsonObjectSize field.
+      #
+      # The commands that are sent to the server may exceed this size by
+      # MAX_BSON_COMMAND_OVERHEAD.
+      #
+      # @api private
+      DEFAULT_MAX_BSON_OBJECT_SIZE = 16777216
+
+      # The additional overhead allowed for command data (i.e. fields added
+      # to the command document by the driver, as opposed to documents
+      # provided by the user) when serializing a complete command to BSON.
+      #
+      # @api private
+      MAX_BSON_COMMAND_OVERHEAD = 16384
+
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
@@ -149,12 +166,21 @@ module Mongo
         start_size = 0
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
 
-        max_bson_size = max_bson_object_size
+        # Driver specifications only mandate the fixed 16MiB limit for
+        # serialized BSON documents. However, the server returns its
+        # active serialized BSON document size limit in the ismaster response,
+        # which is +max_bson_object_size+ below. The +DEFAULT_MAX_BSON_OBJECT_SIZE+
+        # is the 16MiB value mandated by the specifications which we use
+        # only as the default if the server's ismaster did not contain
+        # maxBsonObjectSize.
+        max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
         if client && client.encrypter && client.encrypter.encrypt?
           # From client-side encryption spec: Because automatic encryption
           # increases the size of commands, the driver MUST split bulk writes
           # at a reduced size limit before undergoing automatic encryption.
           max_bson_size = 2097152
+        else
+          max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
         final_message.serialize(buffer, max_bson_size)
