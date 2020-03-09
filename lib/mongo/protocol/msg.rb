@@ -258,13 +258,13 @@ module Mongo
       #
       # @api private
       def bulk_write?
-        inserts = documents.first['documents']
-        updates = documents.first['updates']
-        deletes = documents.first['deletes']
+        inserts = @main_document['documents']
+        updates = @main_document['updates']
+        deletes = @main_document['deletes']
 
-        num_inserts = inserts ? inserts.length : 0
-        num_updates = updates ? updates.length : 0
-        num_deletes = deletes ? deletes.length : 0
+        num_inserts = inserts && inserts.length || 0
+        num_updates = updates && updates.length || 0
+        num_deletes = deletes && deletes.length || 0
 
         num_inserts > 1  || num_updates > 1 || num_deletes > 1
       end
