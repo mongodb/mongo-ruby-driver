@@ -46,12 +46,22 @@ module Mongo
       # @since 2.0.0
       def connect!
         Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
-          handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
+          handle_errors do
+            @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
+          end
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
-          @socket.hostname = @host_name
-          @socket.sync_close = true
-          handle_errors { @socket.connect }
-          verify_certificate!(@socket)
+          begin
+            @socket.hostname = @host_name
+            @socket.sync_close = true
+            handle_errors do
+              @socket.connect
+            end
+            verify_certificate!(@socket)
+          rescue
+            @socket.close
+            @socket = nil
+            raise
+          end
           self
         end
       end
@@ -76,9 +86,14 @@ module Mongo
         @context = create_context(options)
         @family = family
         @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
-        @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-        set_socket_options(@tcp_socket)
-        connect!
+        begin
+          @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+          set_socket_options(@tcp_socket)
+          connect!
+        rescue
+          @tcp_socket.close
+          raise
+        end
       end
 
       # Read a single byte from the socket.

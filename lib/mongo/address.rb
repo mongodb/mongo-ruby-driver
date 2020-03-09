@@ -193,11 +193,22 @@ module Mongo
         connect_timeout: Server::CONNECT_TIMEOUT,
       }.update(options)
 
+      # When the driver connects to "localhost", it only attempts IPv4
+      # connections. When the driver connects to other hosts, it will
+      # attempt both IPv4 and IPv6 connections.
       family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
       error = nil
-      ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
+      # Sometimes Socket#getaddrinfo returns the same info more than once
+      # (multiple identical items in the returned array). It does not make
+      # sense to try to connect to the same address more than once, thus
+      # eliminate duplicates here.
+      infos = ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+      results = infos.map do |info|
+        [info[4], info[3]]
+      end.uniq
+      results.each do |family, address_str|
         begin
-          specific_address = FAMILY_MAP[info[4]].new(info[3], port, host)
+          specific_address = FAMILY_MAP[family].new(address_str, port, host)
           socket = specific_address.socket(socket_timeout, ssl_options, options)
           return socket
         rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
