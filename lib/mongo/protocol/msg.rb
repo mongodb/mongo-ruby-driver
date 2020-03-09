@@ -246,6 +246,29 @@ module Mongo
         end
       end
 
+      # Whether this message represents a bulk write. A bulk write is an insert,
+      # update, or delete operation that encompasses multiple operations of
+      # the same type.
+      #
+      # @return [ Boolean ] Whether this message represents a bulk write.
+      #
+      # @note This method was written to support client-side encryption
+      #   functionality. It is not recommended that this method be used in
+      #   service of any other feature or behavior.
+      #
+      # @api private
+      def bulk_write?
+        inserts = @main_document['documents']
+        updates = @main_document['updates']
+        deletes = @main_document['deletes']
+
+        num_inserts = inserts && inserts.length || 0
+        num_updates = updates && updates.length || 0
+        num_deletes = deletes && deletes.length || 0
+
+        num_inserts > 1  || num_updates > 1 || num_deletes > 1
+      end
+
       private
 
       def command
