@@ -33,7 +33,6 @@ module Mongo
         else
           @arguments = {}
         end
-        @error = spec['error'] || false
         @outcome = Outcome.new(outcome_spec || spec)
       end
 
@@ -47,8 +46,6 @@ module Mongo
       attr_reader :arguments
 
       attr_reader :outcome
-
-      attr_reader :error
 
       def object
         @spec['object'] || 'collection'
