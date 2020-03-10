@@ -105,10 +105,8 @@ master key.
 
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
-    {
-      key_vault_namespace: 'admin.datakeys',
-      kms_providers: kms_providers
-    }
+    key_vault_namespace: 'admin.datakeys',
+    kms_providers: kms_providers
   )
 
   data_key_id = client_encryption.create_data_key('local')
@@ -195,10 +193,8 @@ and then decrypting it after reading it from the database.
 
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
-    {
-      key_vault_namespace: 'admin.datakeys',
-      kms_providers: kms_providers
-    }
+    key_vault_namespace: 'admin.datakeys',
+    kms_providers: kms_providers
   )
 
   data_key_id = client_encryption.create_data_key('local')
@@ -305,13 +301,11 @@ key with the following code snippet:
 
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
-    {
-      # Replace with the database and collection names for your key vault collection
-      key_vault_namespace: 'admin.datakeys',
-      kms_providers: {
-        local: {
-          key: local_master_key
-        }
+    # Replace with the database and collection names for your key vault collection
+    key_vault_namespace: 'admin.datakeys',
+    kms_providers: {
+      local: {
+        key: local_master_key
       }
     }
   )
@@ -338,14 +332,12 @@ use that information to generate a data key.
 
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
-    {
-      # Replace with the database and collection names for your key vault collection
-      key_vault_namespace: 'admin.datakeys',
-      kms_providers: {
-        aws: {
-          access_key_id: 'IAM-ACCESS-KEY-ID',
-          secret_access_key: 'IAM-SECRET-ACCESS-KEY'
-        }
+    # Replace with the database and collection names for your key vault collection
+    key_vault_namespace: 'admin.datakeys',
+    kms_providers: {
+      aws: {
+        access_key_id: 'IAM-ACCESS-KEY-ID',
+        secret_access_key: 'IAM-SECRET-ACCESS-KEY'
       }
     }
   )
