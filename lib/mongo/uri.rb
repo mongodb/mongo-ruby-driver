@@ -331,6 +331,14 @@ module Mongo
           raise_invalid_error_no_fmt!("#{e.class}: #{e}")
         end
       end
+
+      if uri_options[:direct_connection]
+        if uri_options[:connect] && uri_options[:connect].to_s != 'direct'
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with connect=#{uri_options[:connect]}")
+        end
+      elsif uri_options[:direct_connection] == false && uri_options[:connect].to_s == 'direct'
+        raise_invalid_error_no_fmt!("directConnection=false cannot be used with connect=direct")
+      end
     end
 
     # Get the credentials provided in the URI.
