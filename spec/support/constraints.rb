@@ -23,6 +23,22 @@ module Constraints
     end
   end
 
+  def min_server_version_long(version)
+    before(:all) do
+      if version > ClusterConfig.instance.server_version
+        skip "Server version #{version} or higher required, we have #{ClusterConfig.instance.server_version}"
+      end
+    end
+  end
+
+  def max_server_version_long(version)
+    before(:all) do
+      if version < ClusterConfig.instance.server_version
+        skip "Server version #{version} or lower required, we have #{ClusterConfig.instance.server_version}"
+      end
+    end
+  end
+
   def min_server_fcv(version)
     unless version =~ /^\d+\.\d+$/
       raise ArgumentError, "FCV can only be major.minor: #{version}"

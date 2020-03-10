@@ -204,10 +204,10 @@ def define_spec_tests_with_requirements(spec, &block)
     spec.requirements.each do |req|
       context(req.description) do
         if req.min_server_version
-          min_server_fcv req.short_min_server_version
+          min_server_version_long req.min_server_version
         end
         if req.max_server_version
-          max_server_version req.short_max_server_version
+          max_server_version_long req.max_server_version
         end
         if req.topologies
           require_topology *req.topologies

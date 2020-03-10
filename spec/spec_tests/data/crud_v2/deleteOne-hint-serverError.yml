@@ -1,15 +1,19 @@
 runOn:
-  - { minServerVersion: "4.3.4" }
+  # These tests assert that the driver does not raise client-side errors and
+  # instead relies on the server to raise an error. Server versions >= 3.4.0
+  # raise errors for unknown deleteOne options, and server versions >= 4.3.4
+  # support the hint option in deleteOne.
+  - { minServerVersion: "3.4.0", maxServerVersion: "4.3.3" }
 
 data:
-  - {_id: 1, x: 11}
-  - {_id: 2, x: 22}
+  - { _id: 1, x: 11 }
+  - { _id: 2, x: 22 }
 
 collection_name: &collection_name 'test_deleteone_hint'
 
 tests:
   -
-    description: "DeleteOne with hint string"
+    description: "DeleteOne with hint string unsupported (server-side error)"
     operations:
       -
         object: collection
@@ -17,8 +21,7 @@ tests:
         arguments:
           filter: &filter { _id: 1 }
           hint: "_id_"
-        result: &result
-          deletedCount: 1
+        error: true
     expectations:
       -
         command_started_event:
@@ -31,9 +34,10 @@ tests:
     outcome: &outcome
       collection:
         data:
-          - {_id: 2, x: 22 }
+          - { _id: 1, x: 11 }
+          - { _id: 2, x: 22 }
   -
-    description: "deleteOne with hint document"
+    description: "DeleteOne with hint document unsupported (server-side error)"
     operations:
       -
         object: collection
@@ -41,7 +45,7 @@ tests:
         arguments:
           filter: *filter
           hint: { _id: 1 }
-        result: *result
+        error: true
     expectations:
       -
         command_started_event:
@@ -52,4 +56,3 @@ tests:
                 q: *filter
                 hint: { _id: 1 }
     outcome: *outcome
-

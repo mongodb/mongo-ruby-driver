@@ -170,6 +170,10 @@ module Mongo
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
+              if server.max_wire_version < 5 && delete_doc[:hint]
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
@@ -202,6 +206,11 @@ module Mongo
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
+
+              if server.max_wire_version < 5 && delete_doc[:hint]
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
