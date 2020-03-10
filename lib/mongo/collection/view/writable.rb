@@ -52,11 +52,16 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
+          cmd[:hint] = opts[:hint] if opts[:hint]
 
           with_session(opts) do |session|
             applied_write_concern = applied_write_concern(session)
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
+              if server.max_wire_version < 8 && cmd[:hint]
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(cmd, server, opts)
               Operation::Command.new(
                   :selector => cmd,
