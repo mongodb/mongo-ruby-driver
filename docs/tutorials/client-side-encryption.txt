@@ -139,7 +139,7 @@ master key.
     }
   )
 
-  collection = client.use(:encryption_db)[:encryption_coll]
+  collection = client.use('encryption_db')['encryption_coll']
   collection.drop # Make sure there is no data in the collection
 
   # The string "sensitive data" will be encrypted and stored in the database
@@ -152,7 +152,7 @@ master key.
 
   # A client with no auto_encryption_options is unable to decrypt the data
   client_no_encryption = Mongo::Client.new(['localhost:27017'])
-  client_no_encryption.use(:encryption_db)[:encryption_coll].find.first['encrypted_field']
+  client_no_encryption.use('encryption_db')['encryption_coll'].find.first['encrypted_field']
   # => <BSON::Binary...>
 
 For more information about creating an encryption master key, creating a data key,
@@ -217,7 +217,7 @@ and then decrypting it after reading it from the database.
 
   # Create the client you will use to read and write the data to MongoDB
   client = Mongo::Client.new(['localhost:27017'])
-  collection = client.use(:encryption_db)[:encryption_coll]
+  collection = client.use('encryption_db')['encryption_coll']
   collection.drop # Make sure there is no data in the collection
 
   # Insert the encrypted value into the collection
