@@ -21,6 +21,11 @@ any server-side configuration or directives. Client-side field-level encryption
 supports workloads where applications must guarantee that unauthorized parties,
 including server administrators, cannot read the encrypted data.
 
+.. warning::
+
+  Enabling Client Side Encryption reduces the maximum write batch size and may
+  have a negative performance impact.
+
 Installation
 ------------
 
@@ -80,7 +85,20 @@ Automatic encryption is a feature that allows users to configure a
 performing database operations. Once the ``Mongo::Client`` is configured, it
 will automatically encrypt any field that requires encryption before writing
 it to the database, and it will automatically decrypt those fields when reading
-them. Automatic encryption is an enterprise-only feature.
+them.
+
+.. note::
+
+  Automatic encryption is an enterprise only feature that only applies to
+  operations on a collection. Automatic encryption is not supported for operations
+  on a database or view, and operations that are not bypassed will result in
+  error (see `libmongocrypt: Auto Encryption Whitelist<https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#libmongocrypt-auto-encryption-whitelist>`
+  ). To bypass automatic encryption for all operations, set ``bypass_auto_encryption``
+  to true in ``auto_encryption_options``.
+
+.. note::
+
+  Automatic encryption requires the authenticated user to have the listCollections privilege action.
 
 The following example provides a demonstration of auto-encryption using a local
 master key.
@@ -366,14 +384,33 @@ For more information about creating a data key, see the MongoDB manual.
 Creating a Schema Map
 ---------------------
 
-.. note::
-
-  Schema maps are only used in automatic encryption.
-
 Once you have created a data key, you can use it to encrypt and decrypt data
 during automatic encryption by referencing it in a schema map. A schema map
 is a Hash that provides the ``Mongo::Client`` with information about which
 fields to automatically encrypt and decrypt.
+
+.. note::
+
+  Schema maps are only used in automatic encryption.
+
+Remote Schema Map
+~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+  Supplying a schemaMap provides more security than relying on JSON Schemas
+  obtained from the server. It protects against a malicious server advertising
+  a false JSON Schema, which could trick the client into sending unencrypted
+  data that should be encrypted.
+
+.. note::
+
+  Schemas supplied in the schemaMap only apply to configuring automatic encryption
+  for client side encryption. Other validation rules in the JSON schema will not
+  be enforced by the driver and will result in an error.
+
+Local Schema Map
+~~~~~~~~~~~~~~~~
 
 The code snippet at the top of this tutorial demonstrates creating a schema
 map using a Ruby ``Hash``. While this will work, schema maps can grow quite
