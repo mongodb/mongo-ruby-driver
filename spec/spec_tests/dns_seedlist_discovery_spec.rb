@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe 'DNS Seedlist Discovery' do
   require_external_connectivity
