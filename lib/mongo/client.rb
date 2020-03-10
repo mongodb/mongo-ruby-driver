@@ -1006,6 +1006,14 @@ module Mongo
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
+
+      if options[:direct_connection] && options[:connect] && options[:connect].to_sym != :direct
+        raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{options[:connect]}"
+      end
+
+      if options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
+        raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{options[:connect]}"
+      end
     end
 
     # Validates all authentication-related options after they are set on the client

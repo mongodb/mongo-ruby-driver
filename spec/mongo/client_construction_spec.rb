@@ -1030,6 +1030,77 @@ describe Mongo::Client do
         new_local_client_nmio(['127.0.0.1:27017'], options)
       end
 
+      describe 'connection option conflicts' do
+        context 'direct_connection: true and connect: :direct' do
+          let(:options) do
+            {direct_connection: true, connect: :direct}
+          end
+
+          it 'is accepted' do
+            client.options[:direct_connection].should be true
+            client.options[:connect].should be :direct
+          end
+        end
+
+        context 'direct_connection: true and connect: :replica_set' do
+          let(:options) do
+            {direct_connection: true, connect: :replica_set}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=replica_set/)
+          end
+        end
+
+        context 'direct_connection: true and connect: :sharded' do
+          let(:options) do
+            {direct_connection: true, connect: :sharded}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=sharded/)
+          end
+        end
+
+        context 'direct_connection: false and connect: :direct' do
+          let(:options) do
+            {direct_connection: false, connect: :direct}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=false and connect=direct/)
+          end
+        end
+
+        context 'direct_connection: false and connect: :replica_set' do
+          let(:options) do
+            {direct_connection: false, connect: :replica_set, replica_set: 'foo'}
+          end
+
+          it 'is accepted' do
+            client.options[:direct_connection].should be false
+            client.options[:connect].should be :replica_set
+          end
+        end
+
+        context 'direct_connection: false and connect: :sharded' do
+          let(:options) do
+            {direct_connection: false, connect: :sharded}
+          end
+
+          it 'is accepted' do
+            client.options[:direct_connection].should be false
+            client.options[:connect].should be :sharded
+          end
+        end
+      end
+
       describe ':read option' do
         [
           :primary, :primary_preferred, :secondary, :secondary_preferred,  :nearest

@@ -78,10 +78,12 @@ module Mongo
       # @api private
       def initial(cluster, monitoring, options)
         cls = if options[:direct_connection]
-          if options[:connect] && options[:connect] != :direct
-            raise "Conflicting topology options: direct_connection=true and connect=#{options[:connect]}"
+          if options[:connect] && options[:connect] && options[:connect].to_sym != :direct
+            raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{options[:connect]}"
           end
           Single
+        elsif options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
+          raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{options[:connect]}"
         elsif options.key?(:connect)
           OPTIONS.fetch(options[:connect].to_sym)
         elsif options.key?(:replica_set) || options.key?(:replica_set_name)
