@@ -224,6 +224,14 @@ module Mongo
           txt_options
         end
       end
+
+      def validate_uri_options!
+        if uri_options[:direct_connection]
+          raise_invalid_error_no_fmt!("directConnection=true is incompatible with SRV URIs")
+        end
+
+        super
+      end
     end
   end
 end
