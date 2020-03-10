@@ -9,7 +9,6 @@ phases:
       - "a:27017"
       - ok: 1
         ismaster: true
-        primary: true
         setName: rs
         minWireVersion: 0
         maxWireVersion: 6
