@@ -222,9 +222,9 @@ Ruby Options
      - none
 
    * - ``:connect``
-     - Overrides the auto-discovery feature of the driver and forces the cluster
-       topology to a specific type. Choices: ``:direct``,
-       ``:replica_set`` or ``:sharded``.
+     - **Deprecated.** Disables deployment topology discovery normally
+       performed by the dirver and forces the cluster topology to a specific
+       type. Choices: ``:direct``, ``:replica_set`` or ``:sharded``.
      - ``Symbol``
      - none
 
@@ -238,6 +238,12 @@ Ruby Options
      - The name of the database to connect to.
      - ``String``
      - admin
+
+   * - ``:direct_connection``
+     - Connect directly to the specified host, do not discover deployment
+       topology.
+     - ``Boolean``
+     - false
 
    * - ``:heartbeat_frequency``
      - The number of seconds for the server monitors to refresh
@@ -577,6 +583,9 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - connectTimeoutMS=Integer
      - ``:connect_timeout => Float``
+
+   * - directConnection=Boolean
+     - ``:direct_connection => Boolean``
 
    * - fsync=Boolean
      - ``{ :write_concern => { :fsync => true|false }}``
