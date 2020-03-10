@@ -6,6 +6,40 @@ describe Mongo::URI do
 
     let(:uri) { described_class.get(string) }
 
+    describe 'invalid uris' do
+
+      context 'string is not uri' do
+
+        let(:string) { 'tyler' }
+
+        it 'raises an error' do
+          expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        end
+      end
+
+      context 'nil' do
+
+        let(:string) { nil }
+
+        it 'raises an error' do
+          expect do
+            uri
+          end.to raise_error(Mongo::Error::InvalidURI, /URI must be a string, not nil/)
+        end
+      end
+
+      context 'empty string' do
+
+        let(:string) { '' }
+
+        it 'raises an error' do
+          expect do
+            uri
+          end.to raise_error(Mongo::Error::InvalidURI, /Cannot parse an empty URI/)
+        end
+      end
+    end
+
     context 'when the scheme is mongodb://' do
 
       let(:string) do
@@ -55,12 +89,25 @@ describe Mongo::URI do
       end
     end
 
+    context 'nil' do
+
+      let(:string) { nil }
+
+      it 'raises an error' do
+        expect do
+          uri
+        end.to raise_error(Mongo::Error::InvalidURI, /URI must be a string, not nil/)
+      end
+    end
+
     context 'empty string' do
 
       let(:string) { '' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect do
+          uri
+        end.to raise_error(Mongo::Error::InvalidURI, /Cannot parse an empty URI/)
       end
     end
 
