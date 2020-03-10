@@ -141,6 +141,26 @@ Ruby Options
      - For MongoDB 2.6 and later: **admin** if credentials are
        supplied, otherwise the current database
 
+   * - ``:auto_encryption_options``
+     - A ``Hash`` of options for configuring automatic encryption.
+
+       - ``:key_vault_client`` - A client connected to the MongoDB instance
+         storing the encryption data keys (``Mongo::Client``, defaults to the
+         top-level client instance).
+       - ``:key_vault_namespace`` - The namespace of the key vault collection
+         in the format ``"database.collection"`` (``String``, required).
+       - ``:kms_providers`` - Key management service configuration information.
+         One or both of the keys ``:local`` and ``:aws`` must be specified
+         (``Hash``, required). See the :ref:`Client-Side Encryption tutorial<client-side-encryption>`
+         for more information about how to format this option.
+       - ``:schema_map`` - The JSONSchema for one or more collections specifying
+         which fields should be encrypted (``Hash``, optional, defaults to nil).
+         For more information about the format of this field, see the
+         :manual:`Auto Encryption Rules documentation</reference/security-client-side-automatic-json-schema/>`
+         in the MongoDB manual.
+     - ``Hash``
+     - none
+
    * - ``:compressors``
      - A list of potential compressors to use, in order of preference. The driver chooses the first
        compressor that is also supported by the server. Currently the driver only supports 'zlib'.
@@ -325,7 +345,7 @@ Ruby Options
        context in ``extra_chain_cert`` attribute. If intermediate certificates
        are provided, they must follow the client certificate which must be
        the first certificate in the file.
-       
+
        This option, if present, takes precedence over ``:ssl_cert_string`` and
        ``:ssl_cert_object`` options.
      - ``String``
@@ -348,7 +368,7 @@ Ruby Options
        to the OpenSSL context in ``extra_chain_cert`` attribute. If intermediate
        certificates are provided, they must follow the client certificate which
        must be the first certificatet in the string.
-       
+
        This option, if present, takes precedence over the ``:ssl_cert_object``
        option.
      - ``String``
@@ -463,17 +483,17 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - authMechanism=String
      - ``:auth_mech => Symbol``
-     
+
        Auth mechanism values are converted as follows from URI options to
        Ruby options:
-       
+
        - ``GSSAPI`` => ``:gssapi``
        - ``MONGODB-CR`` => ``:mongodb_cr``
        - ``MONGODB-X509`` => ``:mongodb_x509``
        - ``PLAIN`` => ``:plain``
        - ``SCRAM-SHA-1`` => ``:scram``
        - ``SCRAM-SHA-256`` => ``:scram256``
-       
+
        If a different value is provided for auth mechanism, it is converted
        to the Ruby option unmodified and retains its ``String`` type.
        Note that, while currently the driver allows a ``Client`` instance
@@ -521,7 +541,7 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - maxStalenessSeconds=Integer
      - ``{ :read => { :max_staleness => Integer }}``
-     
+
        If the maxStalenessSeconds URI option value is -1, the driver treats
        this as if the option was not given at all. Otherwise,
        if the option value is numeric, the Ruby option is set to the

@@ -239,6 +239,9 @@ or creating a schema map, see later sections of this tutorial.
   `Creating A Data Key`_,
   `Creating A Schema Map`_,
 
+The ``kms_providers`` option
+----------------------------
+
 Creating a Master Key
 ---------------------
 Both automatic encryption and explicit encryption require an encryption master key.
