@@ -115,12 +115,18 @@ in order to perform automatic encryption.
 
   require 'mongo'
 
-  # Step 1: Create a local master key
+  #####################################
+  # Step 1: Create a local master key #
+  #####################################
+
   # A local master key is a 96-byte binary blob.
   local_master_key = SecureRandom.random_bytes(96)
   # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
 
-  # Step 2: Create a data key
+  #############################
+  # Step 2: Create a data key #
+  #############################
+
   kms_providers = {
     local: {
       key: local_master_key
@@ -141,7 +147,10 @@ in order to perform automatic encryption.
   data_key_id = client_encryption.create_data_key('local')
   # => <BSON::Binary... type=ciphertext...>
 
-  # Step 3: Configure a Mongo::Client instance for automatic encryption
+  #######################################################
+  # Step 3: Configure Mongo::Client for auto-encryption #
+  #######################################################
+
   # Create a schema map, which tells the Mongo::Client which fields to encrypt
   schema_map = {
     'encryption_db.encryption_coll': {
@@ -188,8 +197,8 @@ The example above demonstrates using automatic encryption with a local master ke
 For more information about using the AWS Key Management Service to create a
 master key and create data keys, see the following sections of this tutorial:
 
-- `Creating A Master Key`_,
-- `Creating A Data Key`_,
+- `Creating A Master Key`_
+- `Creating A Data Key`_
 
 Explicit Encryption
 -------------------
@@ -214,12 +223,18 @@ in order to perform explicit encryption.
 
   require 'mongo'
 
-  # Step 1: Create a local master key
+  #####################################
+  # Step 1: Create a local master key #
+  #####################################
+
   # A local master key is a 96-byte binary blob.
   local_master_key = SecureRandom.random_bytes(96)
   # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
 
-  # Step 2: Create a data key
+  #############################
+  # Step 2: Create a data key #
+  #############################
+
   kms_providers = {
     local: {
       key: local_master_key
@@ -240,7 +255,9 @@ in order to perform explicit encryption.
   data_key_id = client_encryption.create_data_key('local')
   # => <BSON::Binary... type=ciphertext...>
 
-  # Step 3: Explicitly encrypt a string
+  #####################################################
+  # Step 3: Encrypt a string with explicit encryption #
+  #####################################################
 
   # The value to encrypt
   value = 'sensitive data'
@@ -465,7 +482,6 @@ Before creating the JSON file, Base64-encode the UUID of the your data key.
 
 .. code-block:: ruby
 
-  # Take note of the Base64-encoded uuid
   Base64.encode64(data_key_id.data)
   # => "sr6OTtQUwhPD..." (a base64-encoded string)
 
@@ -554,22 +570,27 @@ Every option in this ``Hash`` has a default value, so it is only necessary to
 provide the options whose defaults you want to override.
 
 **``:mongocryptd_spawn_args``**
+
 This is an ``Array<String>`` containing arguments for spawning mongocryptd.
 The Ruby driver will pass these arguments to mongocryptd on spawning the daemon.
 Possible arguments are:
+
 - ``"--idleShutdownTimeoutSecs"`` - The number of seconds mongocryptd must remain
   idle before it shuts itself down. The default value is 60.
 - ``"--port"`` - The port at which mongocryptd will listen for connections. The
   default is 27020.
 
 **``:mongocryptd_uri``**
+
 The URI that the driver will use to connect to mongocryptd. By default, this is
 ``"mongodb://localhost:27020"``.
 
 **``:mongocryptd_spawn_path``**
+
 The path to the mongocryptd executable. The default is ``"mongocryptd"``.
 
 **``:mongocryptd_bypass_spawn``**
+
 A ``Boolean`` indicating whether the driver should skip spawning mongocryptd.
 
 For example, if you would like to run mongocryptd on port 30000, provide
