@@ -1031,6 +1031,19 @@ describe Mongo::Client do
       end
 
       describe 'connection option conflicts' do
+        context 'direct_connection: true and multiple seeds' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017', '127.0.0.2:27017'],
+              direct_connection: true)
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with multiple seeds/)
+          end
+        end
+
         context 'direct_connection: true and connect: :direct' do
           let(:options) do
             {direct_connection: true, connect: :direct}

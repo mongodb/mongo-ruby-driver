@@ -460,7 +460,7 @@ module Mongo
       end
 =end
       @options.freeze
-      validate_options!
+      validate_options!(addresses)
       validate_authentication_options!
 
       @database = Database.new(self, @options[:database], @options)
@@ -1002,13 +1002,18 @@ module Mongo
     # Validates all options after they are set on the client.
     # This method is intended to catch combinations of options which are
     # not allowed.
-    def validate_options!
+    def validate_options!(addresses = self.cluster.servers_list.map(&:address))
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
 
-      if options[:direct_connection] && options[:connect] && options[:connect].to_sym != :direct
-        raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{options[:connect]}"
+      if options[:direct_connection]
+        if options[:connect] && options[:connect].to_sym != :direct
+          raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{options[:connect]}"
+        end
+        if addresses.length > 1
+          raise ArgumentError, "direct_connection=true cannot be used with multiple seeds"
+        end
       end
 
       if options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct

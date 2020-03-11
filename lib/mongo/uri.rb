@@ -882,6 +882,9 @@ module Mongo
         if uri_options[:connect] && uri_options[:connect].to_s != 'direct'
           raise_invalid_error_no_fmt!("directConnection=true cannot be used with connect=#{uri_options[:connect]}")
         end
+        if servers.length > 1
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with multiple seeds")
+        end
       elsif uri_options[:direct_connection] == false && uri_options[:connect].to_s == 'direct'
         raise_invalid_error_no_fmt!("directConnection=false cannot be used with connect=direct")
       end
