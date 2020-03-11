@@ -72,6 +72,19 @@ module Constraints
     require_topology :replica_set
   end
 
+  # Fail command fail point was added to mongod in 4.0 and to mongos in 4.2.
+  def require_fail_command
+    min_server_fcv '4.0'
+
+    before(:all) do
+      if ClusterConfig.instance.topology == :sharded
+        unless ClusterConfig.instance.short_server_version >= '4.2'
+          skip 'Test requires failCommand fail point which was added to mongos in 4.2'
+        end
+      end
+    end
+  end
+
   def require_tls
     before(:all) do
       unless SpecConfig.instance.ssl?
