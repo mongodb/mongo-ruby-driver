@@ -162,7 +162,7 @@ Ruby Options
          optional, defaults to ``nil``).
 
        For more information about formatting these options, see the
-       "Auto-Encryption Options" section of the :ref:`Client-Side Encryption tutorial <client-side-encryption#auto-encryption-options>`.
+       "Auto-Encryption Options" section of the :ref:`Client-Side Encryption tutorial<client-side-encryption>`.
      - ``Hash``
      - none
 
