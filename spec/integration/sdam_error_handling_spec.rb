@@ -75,7 +75,6 @@ describe 'SDAM error handling' do
 
     before do
       client.cluster.next_primary
-      stop_monitoring(client)
       # we also need a connection to the primary so that our error
       # expectations do not get triggered during handshakes which
       # have different behavior from non-handshake errors
