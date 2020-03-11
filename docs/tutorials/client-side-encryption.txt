@@ -299,8 +299,6 @@ Run the following code to generate a local master key using Ruby:
 
 .. code-block:: ruby
 
-  require 'securerandom'
-
   local_master_key = SecureRandom.random_bytes(96)
   # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..." (a binary blob)
 
@@ -406,36 +404,56 @@ For more information about creating a data key, see the
 :manual:`Create a Data Encryption Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
 section of the MongoDB manual.
 
-Creating a Schema Map
----------------------
+auto_encryption_options
+-----------------------
+Automatic encryption can be configured on a ``Mongo::Client`` using the
+``auto_encryption_options`` option ``Hash``. This section provides an overview
+of the fields inside ``auto_encryption_options`` and explains how to choose their
+values.
 
-Once you have created a data key, you can use it to encrypt and decrypt data
-during automatic encryption by referencing it in a schema map. A schema map
-is a Hash that provides the ``Mongo::Client`` with information about which
-fields to automatically encrypt and decrypt.
+``:key_vault_client``
+~~~~~~~~~~~~~~~~~~~~
+The key vault client is a ``Mongo::Client`` instance that will be used to connect
+to the MongoDB collection containing your encryption data keys. For example, if
+your key vault was hosted on a MongoDB instance at ``localhost:30000``:
 
-.. note::
+.. code-block:: ruby
 
-  Schema maps are only used in automatic encryption.
+  key_vault_client = Mongo::Client.new(['localhost:30000'])
 
-Remote Schema Map
-~~~~~~~~~~~~~~~~~
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_client: key_vault_client,
+      # ... (Fill in other options here)
+    }
+  )
 
-.. warning::
+If your data keys are stored in the same MongoDB instance that stores your encrypted
+data, you may leave this option blank, and the top-level client will be used
+to insert and fetch data keys.
 
-  Supplying a schemaMap provides more security than relying on JSON Schemas
-  obtained from the server. It protects against a malicious server advertising
-  a false JSON Schema, which could trick the client into sending unencrypted
-  data that should be encrypted.
+``:key_vault_namespace``
+~~~~~~~~~~~~~~~~~~~~~~~
+The key vault namespace is a ``String`` in the format ``"database_name.collection_name"``,
+where ``database_name`` and ``collection_name`` are the name of the database and
+collection in which you would like to store your data keys. For example, if your data
+keys are stored in the ``admin`` database in the ``datakeys`` collection:
 
-.. note::
+.. code-block:: ruby
 
-  Schemas supplied in the schemaMap only apply to configuring automatic encryption
-  for client side encryption. Other validation rules in the JSON schema will not
-  be enforced by the driver and will result in an error.
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_namespace: 'admin.datakeys',
+      # ... (Fill in other options here)
+    }
+  )
 
-Local Schema Map
-~~~~~~~~~~~~~~~~
+There is no default key vault namespace, and this option must be provided.
+
+``:schema_map``
+~~~~~~~~~~~~~~
+A schema map is a Hash with information about which fields to automatically
+encrypt and decrypt.
 
 The code snippet at the top of this tutorial demonstrates creating a schema
 map using a Ruby ``Hash``. While this will work, schema maps can grow quite
@@ -447,21 +465,14 @@ Before creating the JSON file, Base64-encode the UUID of the your data key.
 
 .. code-block:: ruby
 
-  require 'base64'
-
   # Take note of the Base64-encoded uuid
-  Base64.encode64(data_key_id).data
+  Base64.encode64(data_key_id.data)
+  # => "sr6OTtQUwhPD..." (a base64-encoded string)
 
-Then, create a new JSON file containing your schema map in the extended JSON
-format defined by the :manual:`Extended JSON v2 Documentation`</reference/mongodb-extended-json>`.
-
-Note that:
-
-* ``encryption_db`` and ``encryption_coll`` should be replaced with the
-  names of the database and collection where you plan to store encrypted data.
-* ``encrypted_field`` should be replaced with the name of the field you want to encrypt.
-* ``"bsonType": "string"`` should be replaced with the data type you intend to
-  encrypt, such as ``"bsonType": "integer"`` or ``"bsonType": "symbol"``.
+Then, create a new JSON file containing your schema map in the format defined by
+the JSON Schema Draft 4 standard syntax. You can read more about formatting
+your schema map in the :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
+section of the MongoDB manual.
 
 .. code-block:: json
 
@@ -490,13 +501,93 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
 
 .. code-block:: ruby
 
-  require 'bson'
+  schema_map = BSON::ExtJSON.parse(File.read('/path/to/your/file.json'))
+  # => { 'encryption_db.encryption_coll' => { ... } }
 
-  # schema_map is a Ruby Hash
-  schema_map = BSON::ExtJSON.parse(File.open('/path/to/your/file.json'))
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      schema_map: schema_map,
+      # ... (Fill in other options here)
+    }
+  )
 
-For more information about schema maps, see the MongoDB manual.
+.. note::
+
+  It is also possible to supply a schema map as a validator on a MongoDB collection.
+  This is referred to as a "remote schema map," while providing the schema map as
+  an option on the ``Mongo::Client`` is called a "local schema map."
+
+  Supplying a local schema map provides more security than relying on JSON schemas
+  obtained from the server. It protects against a malicious server advertising
+  a false JSON schema, which could trick the client into sending unencrypted
+  data that should be encrypted.
+
+  See :manual:`Server-Side Field Level Encryption Enforcement</core/security-automatic-client-side-encryption/#server-side-field-level-encryption-enforcement>`
+  in the MongoDB manual for more information about using the schema map to
+  create a JSON schema validator on your collection.
 
 .. seealso::
 
-  :manual:`Specify Encrypted Fields Using JSON Schema`</ecosystem/use-cases/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`
+  :manual:`Specify Encrypted Fields Using JSON Schema</ecosystem/use-cases/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
+  :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
+
+``:bypass_auto_encryption``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``:bypass_auto_encryption`` option is a ``Boolean`` that specifies whether the
+``Mongo::Client`` should skip encryption when writing to the database. If
+``:bypass_auto_encryption`` is ``true``, the client will still perform automatic
+decryption of any previously-encrypted data.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      bypass_auto_encryption: true,
+      # ... (Fill in other options here)
+    }
+  )
+
+``:extra_options``
+~~~~~~~~~~~~~~~~~~
+``:extra_options`` is a ``Hash`` of options related to spawning mongocryptd.
+Every option in this ``Hash`` has a default value, so it is only necessary to
+provide the options whose defaults you want to override.
+
+**``:mongocryptd_spawn_args``**
+This is an ``Array<String>`` containing arguments for spawning mongocryptd.
+The Ruby driver will pass these arguments to mongocryptd on spawning the daemon.
+Possible arguments are:
+- ``"--idleShutdownTimeoutSecs"`` - The number of seconds mongocryptd must remain
+  idle before it shuts itself down. The default value is 60.
+- ``"--port"`` - The port at which mongocryptd will listen for connections. The
+  default is 27020.
+
+**``:mongocryptd_uri``**
+The URI that the driver will use to connect to mongocryptd. By default, this is
+``"mongodb://localhost:27020"``.
+
+**``:mongocryptd_spawn_path``**
+The path to the mongocryptd executable. The default is ``"mongocryptd"``.
+
+**``:mongocryptd_bypass_spawn``**
+A ``Boolean`` indicating whether the driver should skip spawning mongocryptd.
+
+For example, if you would like to run mongocryptd on port 30000, provide
+``extra_options`` as follows:
+
+.. code-block:: ruby
+
+    Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      extra_options: {
+        mongocryptd_spawn_args: ['--port=30000'],
+        mongocryptd_uri: 'mongodb://localhost:30000',
+      }
+      # ... (Fill in other options here)
+    }
+  )
+
+.. warning::
+
+  The contents of ``:extra_options`` is subject to change in future versions
+  of the client-side encryption API.
