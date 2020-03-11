@@ -1002,7 +1002,7 @@ module Mongo
     # Validates all options after they are set on the client.
     # This method is intended to catch combinations of options which are
     # not allowed.
-    def validate_options!(addresses = self.cluster.servers_list.map(&:address))
+    def validate_options!(addresses = nil)
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
@@ -1011,8 +1011,13 @@ module Mongo
         if options[:connect] && options[:connect].to_sym != :direct
           raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{options[:connect]}"
         end
-        if addresses.length > 1
+        # When a new client is created, we get the list of seed addresses
+        if addresses && addresses.length > 1
           raise ArgumentError, "direct_connection=true cannot be used with multiple seeds"
+        end
+        # When a client is copied using #with, we have a cluster
+        if cluster && !cluster.topology.is_a?(Mongo::Cluster::Topology::Single)
+          raise ArgumentError, "direct_connection=true cannot be used with topologies other than Single (this client is #{cluster.topology.class.name.sub(/.*::/, '')})"
         end
       end
 

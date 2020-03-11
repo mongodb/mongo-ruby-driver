@@ -1397,6 +1397,73 @@ describe Mongo::Client do
       end
     end
 
+    context 'when direct_connection option is given' do
+      let(:client) do
+        options = SpecConfig.instance.test_options
+        options.delete(:connect)
+        new_local_client(SpecConfig.instance.addresses, options)
+      end
+
+      before do
+        client.options[:direct_connection].should be nil
+      end
+
+      let(:new_client) do
+        client.with(new_options)
+      end
+
+      context 'direct_connection set to false' do
+
+        let(:new_options) do
+          { direct_connection: false }
+        end
+
+        it 'is accepted' do
+          new_client.options[:direct_connection].should be false
+        end
+      end
+
+      context 'direct_connection set to true' do
+
+        let(:new_options) do
+          { direct_connection: true }
+        end
+
+        context 'in single topology' do
+          require_topology :single
+
+
+          it 'is accepted' do
+            new_client.options[:direct_connection].should be true
+            new_client.cluster.topology.should be_a(Mongo::Cluster::Topology::Single)
+          end
+        end
+
+        context 'in replica set or sharded cluster topology' do
+          require_topology :replica_set, :sharded
+
+          it 'is rejected' do
+            lambda do
+              new_client
+            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
+          end
+
+          context 'when a new cluster is created' do
+
+            let(:new_options) do
+              { direct_connection: true, app_name: 'new-client' }
+            end
+
+            it 'is rejected' do
+              lambda do
+                new_client
+              end.should raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
+            end
+          end
+        end
+      end
+    end
+
     context 'when the write concern is not changed' do
 
       let(:client) do
