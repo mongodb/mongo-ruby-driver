@@ -126,7 +126,16 @@ tests:
       uri: "mongodb://example.com/?directConnection=false"
       valid: true
       warning: false
-      hosts: ~
+      hosts: [example.com]
+      auth: ~
+      options:
+          directConnection: false
+    -
+      description: directConnection=false with multiple seeds
+      uri: "mongodb://example1.com,example2.com/?directConnection=false"
+      valid: true
+      warning: false
+      hosts: [example1.com, example2.com]
       auth: ~
       options:
           directConnection: false
