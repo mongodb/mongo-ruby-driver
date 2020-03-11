@@ -215,10 +215,22 @@ module Mongo
     # @example Get the uri object.
     #   URI.get(string)
     #
+    # @param [ String ] string The URI to parse.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Logger ] :logger A custom logger to use.
+    #
     # @return [URI, URI::SRVProtocol] The uri object.
     #
     # @since 2.5.0
     def self.get(string, opts = {})
+      unless string
+        raise Error::InvalidURI.new(string, 'URI must be a string, not nil.')
+      end
+      if string.empty?
+        raise Error::InvalidURI.new(string, 'Cannot parse an empty URI.')
+      end
+
       scheme, _, remaining = string.partition(SCHEME_DELIM)
       case scheme
         when MONGODB_SCHEME
@@ -257,13 +269,22 @@ module Mongo
     # @example Create the new URI.
     #   URI.new('mongodb://localhost:27017')
     #
-    # @param [ String ] string The uri string.
+    # @param [ String ] string The URI to parse.
     # @param [ Hash ] options The options.
+    #
+    # @option options [ Logger ] :logger A custom logger to use.
     #
     # @raise [ Error::InvalidURI ] If the uri does not match the spec.
     #
     # @since 2.0.0
     def initialize(string, options = {})
+      unless string
+        raise Error::InvalidURI.new(string, 'URI must be a string, not nil.')
+      end
+      if string.empty?
+        raise Error::InvalidURI.new(string, 'Cannot parse an empty URI.')
+      end
+
       @string = string
       @options = options
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
