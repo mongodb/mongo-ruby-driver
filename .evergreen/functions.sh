@@ -297,6 +297,11 @@ install_mlaunch_virtualenv() {
 }
 
 install_mlaunch_pip() {
+  if test -n "$USE_OPT_MONGODB" && which mlaunch >/dev/null 2>&1; then
+    # mlaunch is preinstalled in the docker image, do not install it here
+    return
+  fi
+  
   python -V || true
   python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
