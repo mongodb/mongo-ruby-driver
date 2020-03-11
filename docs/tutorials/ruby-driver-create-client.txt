@@ -156,17 +156,12 @@ Ruby Options
          information about this option.
        - ``:schema_map`` - The JSONSchema for one or more collections specifying
          which fields should be encrypted (``Hash``, optional, defaults to ``nil``).
-         For more information about the format of this field, see the
-         :manual:`Auto Encryption Rules documentation</reference/security-client-side-automatic-json-schema/>`
-         in the MongoDB manual.
        - ``:bypass_auto_encryption`` - Whether to skip automatic encryption when
          performing database operations (``Boolean``, defaults to ``false``).
        - ``:extra_options`` - Options related to spawning mongocryptd (``Hash``,
-         optional, defaults to ``nil``). See the "Spawning mongocryptd" section
-         of the :ref:`Client-Side Encryption tutorial<client-side-encryption>`
-         for more information about this option.
+         optional, defaults to ``nil``).
 
-       For more information about automatic encryption, see the :ref:`Client-Side Encryption tutorial<client-side-encryption>`.
+       For more information about formatting these options, see the :ref:`Client-Side Encryption tutorial<client-side-encryption#auto-encryption-options>`.
      - ``Hash``
      - none
 
