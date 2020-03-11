@@ -132,7 +132,10 @@ module Mongo
         # @return [ Mongo::Address ] address The address to connect to.
         attr_reader :address
 
-        # Send the preserialized ismaster call.
+        # Sends the preserialized ismaster request and returns the result.
+        #
+        # If there is any error during the ismaster request (such as a network
+        # error), the request is retried.
         #
         # @example Send a preserialized ismaster message.
         #   connection.ismaster
