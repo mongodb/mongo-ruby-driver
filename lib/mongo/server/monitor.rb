@@ -150,8 +150,14 @@ module Mongo
       # on the server being monitored and updating the server description
       # as a result.
       #
-      # @note If the system clock is set to a time in the past, this method
-      #   can sleep for a very long time.
+      # If the server check fails for any reason (such as a network error),
+      # the check is retried by this method.
+      #
+      # If the server check fails twice, this method updates the server
+      # description accordingly but does not raise an exception.
+      #
+      # @note If the system clock moves backwards, this method can sleep
+      #   for a very long time.
       #
       # @note The return value of this method is deprecated. In version 3.0.0
       #   this method will not have a return value.

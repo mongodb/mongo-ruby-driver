@@ -63,6 +63,12 @@ class EventSubscriber
       events.first
     end
 
+    def select_succeeded_events(cls)
+      @succeeded_events.select do |event|
+        event.is_a?(cls)
+      end
+    end
+
     # Cache the failed event.
     #
     # @param [ Event ] event The event.

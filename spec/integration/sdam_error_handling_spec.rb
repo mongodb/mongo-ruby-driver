@@ -75,7 +75,6 @@ describe 'SDAM error handling' do
 
     before do
       client.cluster.next_primary
-      stop_monitoring(client)
       # we also need a connection to the primary so that our error
       # expectations do not get triggered during handshakes which
       # have different behavior from non-handshake errors
@@ -179,38 +178,138 @@ describe 'SDAM error handling' do
     end
   end
 
-  # These tests fail intermittently in Evergreen
-  describe 'when there is an error on monitoring connection', retry: 3 do
+  describe 'when there is an error on monitoring connection' do
+    clean_slate_for_all
+
     let(:client) do
-      authorized_client_without_any_retries.with(
-        connect_timeout: 1, socket_timeout: 1)
+      new_local_client(SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(
+          connect_timeout: 1, socket_timeout: 1,
+      ))
+    end
+
+    let(:subscriber) { EventSubscriber.new }
+
+    let(:set_subscribers) do
+      client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
     end
 
     let(:operation) do
       expect(server.monitor.connection).not_to be nil
-      expect(server.monitor.connection).to receive(:ismaster).at_least(:once).and_raise(exception)
-      server.scan_semaphore.broadcast
-      6.times do
-        sleep 0.5
-        if server.unknown?
-          break
-        end
+      set_subscribers
+      RSpec::Mocks.with_temporary_scope do
+        socket = server.monitor.connection.send(:socket)
+        expect(socket).to receive(:write).twice.and_raise(exception)
+        server.monitor.scan!
       end
-      expect(server).to be_unknown
+      expect_server_state_change
     end
 
-    context 'non-timeout network error' do
-      let(:exception) { Mongo::Error::SocketError }
+    shared_examples_for 'marks server unknown - sdam event' do
+      it 'marks server unknown' do
+        expect(server).not_to be_unknown
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'clears connection pool'
+        events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
+        events.should be_empty
+
+        RSpec::Mocks.with_temporary_scope do
+          operation
+
+          events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
+          events.should_not be_empty
+          event = events.detect do |event|
+            event.new_description.address == server.address &&
+            event.new_description.unknown?
+          end
+          event.should_not be_nil
+        end
+      end
+    end
+
+    shared_examples_for 'clears connection pool - cmap event' do
+      it 'clears connection pool' do
+        events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
+        events.should be_empty
+
+        RSpec::Mocks.with_temporary_scope do
+          operation
+
+          events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
+          events.should_not be_empty
+          event = events.detect do |event|
+            event.address == server.address
+          end
+          event.should_not be_nil
+        end
+      end
+    end
+
+    shared_examples_for 'marks server unknown and clears connection pool' do
+      context 'via object inspection' do
+        let(:expect_server_state_change) do
+          server.summary.should =~ /unknown/i
+          expect(server).to be_unknown
+        end
+
+        it_behaves_like 'marks server unknown'
+        it_behaves_like 'clears connection pool'
+      end
+
+      context 'via events' do
+        # When we use events we do not need to examine object state, therefore
+        # it does not matter whether the server stays unknown or gets
+        # successfully checked.
+        let(:expect_server_state_change) do
+          # nothing
+        end
+
+        it_behaves_like 'marks server unknown - sdam event'
+        it_behaves_like 'clears connection pool - cmap event'
+      end
     end
 
     context 'network timeout' do
       let(:exception) { Mongo::Error::SocketTimeoutError }
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'clears connection pool'
+      it_behaves_like 'marks server unknown and clears connection pool'
+    end
+
+    context 'non-timeout network error' do
+      let(:exception) { Mongo::Error::SocketError }
+
+      it_behaves_like 'marks server unknown and clears connection pool'
+    end
+
+    context 'non-timeout network error via fail point' do
+      require_fail_command
+
+      let(:admin_client) { client.use(:admin) }
+
+      let(:set_fail_point) do
+        admin_client.command(
+          configureFailPoint: 'failCommand',
+          mode: {times: 2},
+          data: {
+            failCommands: %w(isMaster),
+            closeConnection: true,
+          },
+        )
+      end
+
+      let(:operation) do
+        expect(server.monitor.connection).not_to be nil
+        set_subscribers
+        set_fail_point
+        server.monitor.scan!
+        expect_server_state_change
+      end
+
+      it_behaves_like 'marks server unknown and clears connection pool'
+
+      after do
+        admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
+      end
     end
   end
 end

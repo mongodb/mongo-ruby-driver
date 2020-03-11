@@ -121,6 +121,8 @@ module Mongo
     # @deprecated
     alias :heartbeat_frequency_seconds :heartbeat_frequency
 
+    # Performs an immediate, synchronous check of the server.
+    #
     # @deprecated
     def_delegators :monitor, :scan!
 
