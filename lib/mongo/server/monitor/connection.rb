@@ -26,13 +26,18 @@ module Mongo
 
         # The command used for determining server status.
         #
+        # The case matters here for fail points.
+        #
         # @since 2.2.0
-        ISMASTER = { :ismaster => 1 }.freeze
+        ISMASTER = { isMaster: 1 }.freeze
 
-        # The command used for determining server status formatted for an OP_MSG (server versions >= 3.6).
+        # The command used for determining server status formatted for an
+        # OP_MSG (server versions >= 3.6).
+        #
+        # The case matters here for fail points.
         #
         # @since 2.5.0
-        ISMASTER_OP_MSG = { :ismaster => 1, '$db' => Database::ADMIN }.freeze
+        ISMASTER_OP_MSG = { isMaster: 1, '$db' => Database::ADMIN }.freeze
 
         # The constant for the ismaster command.
         #

@@ -180,10 +180,13 @@ describe 'SDAM error handling' do
   end
 
   describe 'when there is an error on monitoring connection' do
+    clean_slate_for_all
+
     let(:client) do
-      authorized_client_without_any_retries.with(
-        connect_timeout: 1, socket_timeout: 1,
-      )
+      new_local_client(SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(
+          connect_timeout: 1, socket_timeout: 1,
+      ))
     end
 
     let(:subscriber) { EventSubscriber.new }
@@ -196,14 +199,10 @@ describe 'SDAM error handling' do
     let(:operation) do
       expect(server.monitor.connection).not_to be nil
       set_subscribers
-      expect(server.monitor.connection).to receive(:ismaster).at_least(:once).and_raise(exception)
-      server.scan_semaphore.broadcast
-      6.times do
-        sleep 0.5
-        if server.unknown?
-          break
-        end
-        server.scan_semaphore.broadcast
+      RSpec::Mocks.with_temporary_scope do
+        socket = server.monitor.connection.send(:socket)
+        expect(socket).to receive(:write).twice.and_raise(exception)
+        server.monitor.scan!
       end
       expect_server_state_change
     end
@@ -291,7 +290,7 @@ describe 'SDAM error handling' do
       let(:set_fail_point) do
         admin_client.command(
           configureFailPoint: 'failCommand',
-          mode: {times: 1},
+          mode: {times: 2},
           data: {
             failCommands: %w(isMaster),
             closeConnection: true,
@@ -303,14 +302,7 @@ describe 'SDAM error handling' do
         expect(server.monitor.connection).not_to be nil
         set_subscribers
         set_fail_point
-        server.scan_semaphore.broadcast
-        6.times do
-          sleep 0.5
-          if server.unknown?
-            break
-          end
-          server.scan_semaphore.broadcast
-        end
+        server.monitor.scan!
         expect_server_state_change
       end
 
