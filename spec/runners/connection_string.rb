@@ -242,8 +242,9 @@ module Mongo
     class Options
 
       MAPPINGS = {
-        # Replica Set Options
+        # Connection and Replica Set Options
         'replicaset' => :replica_set,
+        'directconnection' => :direct_connection,
 
         # Timeout Options
         'connecttimeoutms' => :connect_timeout,

@@ -1,6 +1,6 @@
-description: "Direct connection to mongos"
+description: "Discover standalone"
 
-uri: "mongodb://a/?directConnection=true"
+uri: "mongodb://a/?directConnection=false"
 
 phases: [
 
@@ -11,7 +11,6 @@ phases: [
 
                     ok: 1,
                     ismaster: true,
-                    msg: "isdbgrid",
                     minWireVersion: 0,
                     maxWireVersion: 6
                 }]
@@ -23,7 +22,7 @@ phases: [
 
                 "a:27017": {
 
-                    type: "Mongos",
+                    type: "Standalone",
                     setName:
                 }
             },

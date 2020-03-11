@@ -4,63 +4,6 @@ describe Mongo::Client do
   clean_slate
 
   describe '.new' do
-    describe 'options' do
-      describe 'read' do
-        [
-          :primary, :primary_preferred, :secondary, :secondary_preferred,  :nearest
-        ].each do |sym|
-          it "accepts #{sym} as symbol" do
-            client = new_local_client_nmio(['127.0.0.1:27017'],
-              :read => {:mode => sym})
-            # the key got converted to a string here
-            expect(client.read_preference).to eq({'mode' => sym})
-          end
-
-          # string keys are not documented as being allowed
-          # but the code accepts them
-          it "accepts #{sym} as string" do
-            client = new_local_client_nmio(['127.0.0.1:27017'],
-              :read => {:mode => sym.to_s})
-            # the key got converted to a string here
-            # the value remains a string
-            expect(client.read_preference).to eq({'mode' => sym.to_s})
-          end
-        end
-
-        context 'when not linting' do
-          skip_if_linting
-
-          it 'rejects bogus read preference as symbol' do
-            expect do
-              client = new_local_client_nmio(['127.0.0.1:27017'],
-                :read => {:mode => :bogus})
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
-          end
-
-          it 'rejects bogus read preference as string' do
-            expect do
-              client = new_local_client_nmio(['127.0.0.1:27017'],
-                :read => {:mode => 'bogus'})
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
-          end
-
-          it 'rejects read option specified as a string' do
-            expect do
-              client = new_local_client_nmio(['127.0.0.1:27017'],
-                :read => 'primary')
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
-          end
-
-          it 'rejects read option specified as a symbol' do
-            expect do
-              client = new_local_client_nmio(['127.0.0.1:27017'],
-                :read => :primary)
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
-          end
-        end
-      end
-    end
-
     context 'with scan: false' do
       it 'does not perform i/o' do
         allow_any_instance_of(Mongo::Server::Monitor).to receive(:run!)
@@ -862,7 +805,7 @@ describe Mongo::Client do
         end
       end
 
-      context 'when options are provided' do
+      context 'when URI options are provided' do
 
         let!(:uri) do
           'mongodb://127.0.0.1:27017/testdb?w=3'
@@ -1080,11 +1023,166 @@ describe Mongo::Client do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
         end
       end
+    end
+
+    context 'when Ruby options are provided' do
+      let(:client) do
+        new_local_client_nmio(['127.0.0.1:27017'], options)
+      end
+
+      describe 'connection option conflicts' do
+        context 'direct_connection: true and multiple seeds' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017', '127.0.0.2:27017'],
+              direct_connection: true)
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with multiple seeds/)
+          end
+        end
+
+        context 'direct_connection: true and connect: :direct' do
+          let(:options) do
+            {direct_connection: true, connect: :direct}
+          end
+
+          it 'is accepted' do
+            client.options[:direct_connection].should be true
+            client.options[:connect].should be :direct
+          end
+        end
+
+        context 'direct_connection: true and connect: :replica_set' do
+          let(:options) do
+            {direct_connection: true, connect: :replica_set}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=replica_set/)
+          end
+        end
+
+        context 'direct_connection: true and connect: :sharded' do
+          let(:options) do
+            {direct_connection: true, connect: :sharded}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=sharded/)
+          end
+        end
+
+        context 'direct_connection: false and connect: :direct' do
+          let(:options) do
+            {direct_connection: false, connect: :direct}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=false and connect=direct/)
+          end
+        end
+
+        context 'direct_connection: false and connect: :replica_set' do
+          let(:options) do
+            {direct_connection: false, connect: :replica_set, replica_set: 'foo'}
+          end
+
+          it 'is accepted' do
+            client.options[:direct_connection].should be false
+            client.options[:connect].should be :replica_set
+          end
+        end
+
+        context 'direct_connection: false and connect: :sharded' do
+          let(:options) do
+            {direct_connection: false, connect: :sharded}
+          end
+
+          it 'is accepted' do
+            client.options[:direct_connection].should be false
+            client.options[:connect].should be :sharded
+          end
+        end
+      end
+
+      describe ':read option' do
+        [
+          :primary, :primary_preferred, :secondary, :secondary_preferred,  :nearest
+        ].each do |sym|
+          describe "#{sym}" do
+            context 'when given as symbol' do
+              let(:options) do
+                {read: {mode: sym}}
+              end
+
+              it "is accepted" do
+                # the key got converted to a string here
+                expect(client.read_preference).to eq({'mode' => sym})
+              end
+            end
+
+            context 'when given as string' do
+              let(:options) do
+                {read: {mode: sym.to_s}}
+              end
+
+              # string keys are not documented as being allowed
+              # but the code accepts them
+              it "is accepted" do
+                # the key got converted to a string here
+                # the value remains a string
+                expect(client.read_preference).to eq({'mode' => sym.to_s})
+              end
+            end
+          end
+        end
+
+        context 'when not linting' do
+          skip_if_linting
+
+          it 'rejects bogus read preference as symbol' do
+            expect do
+              client = new_local_client_nmio(['127.0.0.1:27017'],
+                :read => {:mode => :bogus})
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
+          end
+
+          it 'rejects bogus read preference as string' do
+            expect do
+              client = new_local_client_nmio(['127.0.0.1:27017'],
+                :read => {:mode => 'bogus'})
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
+          end
+
+          it 'rejects read option specified as a string' do
+            expect do
+              client = new_local_client_nmio(['127.0.0.1:27017'],
+                :read => 'primary')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+          end
+
+          it 'rejects read option specified as a symbol' do
+            expect do
+              client = new_local_client_nmio(['127.0.0.1:27017'],
+                :read => :primary)
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+          end
+        end
+      end
 
       context 'when an invalid option is provided' do
 
-        let(:client) do
-          new_local_client_nmio(['127.0.0.1:27017'], :ssl => false, :invalid => :test)
+        let(:options) do
+          {ssl: false, invalid: :test}
         end
 
         it 'does not set the option' do
@@ -1104,8 +1202,8 @@ describe Mongo::Client do
 =begin WriteConcern object support
       context 'when write concern is provided via a WriteConcern object' do
 
-        let(:client) do
-          new_local_client_nmio(['127.0.0.1:27017'], write_concern: wc)
+        let(:options) do
+          {write_concern: wc}
         end
 
         let(:wc) { Mongo::WriteConcern.get(w: 2) }
@@ -1296,6 +1394,73 @@ describe Mongo::Client do
 
       it 'does not keep the same cluster' do
         expect(new_client.cluster).not_to be(client.cluster)
+      end
+    end
+
+    context 'when direct_connection option is given' do
+      let(:client) do
+        options = SpecConfig.instance.test_options
+        options.delete(:connect)
+        new_local_client(SpecConfig.instance.addresses, options)
+      end
+
+      before do
+        client.options[:direct_connection].should be nil
+      end
+
+      let(:new_client) do
+        client.with(new_options)
+      end
+
+      context 'direct_connection set to false' do
+
+        let(:new_options) do
+          { direct_connection: false }
+        end
+
+        it 'is accepted' do
+          new_client.options[:direct_connection].should be false
+        end
+      end
+
+      context 'direct_connection set to true' do
+
+        let(:new_options) do
+          { direct_connection: true }
+        end
+
+        context 'in single topology' do
+          require_topology :single
+
+
+          it 'is accepted' do
+            new_client.options[:direct_connection].should be true
+            new_client.cluster.topology.should be_a(Mongo::Cluster::Topology::Single)
+          end
+        end
+
+        context 'in replica set or sharded cluster topology' do
+          require_topology :replica_set, :sharded
+
+          it 'is rejected' do
+            lambda do
+              new_client
+            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
+          end
+
+          context 'when a new cluster is created' do
+
+            let(:new_options) do
+              { direct_connection: true, app_name: 'new-client' }
+            end
+
+            it 'is rejected' do
+              lambda do
+                new_client
+              end.should raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
+            end
+          end
+        end
       end
     end
 

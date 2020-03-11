@@ -76,6 +76,16 @@ module Mongo
     # @param [ Hash ] options Options. Client constructor forwards its
     #   options to Cluster constructor, although Cluster recognizes
     #   only a subset of the options recognized by Client.
+    #
+    # @option options [ true | false ] :direct_connection Whether to connect
+    #   directly to the specified seed, bypassing topology discovery. Exactly
+    #   one seed must be provided.
+    # @option options [ Symbol ] :connect Deprecated - use :direct_connection
+    #   option instead of this option. The connection method to use. This
+    #   forces the cluster to behave in the specified way instead of
+    #   auto-discovering. One of :direct, :replica_set, :sharded
+    # @option options [ Symbol ] :replica_set The name of the replica set to
+    #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true | false ] :scan Whether to scan all seeds
     #   in constructor. The default in driver version 2.x is to do so;
     #   driver version 3.x will not scan seeds in constructor. Opt in to the

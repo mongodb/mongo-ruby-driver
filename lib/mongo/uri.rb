@@ -295,42 +295,7 @@ module Mongo
         raise_invalid_error!('No hosts in the URI')
       end
       parse!(remaining)
-
-      # The URI options spec requires that we raise an error if there are conflicting values of
-      # 'tls' and 'ssl'. In order to fulfill this, we parse the values of each instance into an
-      # array; assuming all values in the array are the same, we replace the array with that value.
-      unless @uri_options[:ssl].nil? || @uri_options[:ssl].empty?
-        unless @uri_options[:ssl].uniq.length == 1
-          raise_invalid_error_no_fmt!("all instances of 'tls' and 'ssl' must have the same value")
-        end
-
-        @uri_options[:ssl] = @uri_options[:ssl].first
-      end
-
-      # Check for conflicting TLS insecure options.
-      unless @uri_options[:ssl_verify].nil?
-        unless @uri_options[:ssl_verify_certificate].nil?
-          raise_invalid_error_no_fmt!("'tlsInsecure' and 'tlsAllowInvalidCertificates' cannot both be specified")
-        end
-
-        unless @uri_options[:ssl_verify_hostname].nil?
-          raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
-        end
-      end
-
-      # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
-      # value set for :ssl_cert must also be set for :ssl_key.
-      if @uri_options[:ssl_cert]
-        @uri_options[:ssl_key] = @uri_options[:ssl_cert]
-      end
-
-      if uri_options[:write_concern] && !uri_options[:write_concern].empty?
-        begin
-          WriteConcern.get(uri_options[:write_concern])
-        rescue Error::InvalidWriteConcern => e
-          raise_invalid_error_no_fmt!("#{e.class}: #{e}")
-        end
-      end
+      validate_uri_options!
     end
 
     # Get the credentials provided in the URI.
@@ -544,6 +509,7 @@ module Mongo
     uri_option 'tlsinsecure', :ssl_verify, :type => :inverse_bool
 
     # Topology options
+    uri_option 'directconnection', :direct_connection, type: :bool
     uri_option 'connect', :connect, type: :symbol
 
     # Auth Options
@@ -873,6 +839,55 @@ module Mongo
     # @return [ Array ] The array built from the string.
     def array(value)
       value.split(',')
+    end
+
+    def validate_uri_options!
+      # The URI options spec requires that we raise an error if there are conflicting values of
+      # 'tls' and 'ssl'. In order to fulfill this, we parse the values of each instance into an
+      # array; assuming all values in the array are the same, we replace the array with that value.
+      unless uri_options[:ssl].nil? || uri_options[:ssl].empty?
+        unless uri_options[:ssl].uniq.length == 1
+          raise_invalid_error_no_fmt!("all instances of 'tls' and 'ssl' must have the same value")
+        end
+
+        uri_options[:ssl] = uri_options[:ssl].first
+      end
+
+      # Check for conflicting TLS insecure options.
+      unless uri_options[:ssl_verify].nil?
+        unless uri_options[:ssl_verify_certificate].nil?
+          raise_invalid_error_no_fmt!("'tlsInsecure' and 'tlsAllowInvalidCertificates' cannot both be specified")
+        end
+
+        unless uri_options[:ssl_verify_hostname].nil?
+          raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
+        end
+      end
+
+      # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
+      # value set for :ssl_cert must also be set for :ssl_key.
+      if uri_options[:ssl_cert]
+        uri_options[:ssl_key] = uri_options[:ssl_cert]
+      end
+
+      if uri_options[:write_concern] && !uri_options[:write_concern].empty?
+        begin
+          WriteConcern.get(uri_options[:write_concern])
+        rescue Error::InvalidWriteConcern => e
+          raise_invalid_error_no_fmt!("#{e.class}: #{e}")
+        end
+      end
+
+      if uri_options[:direct_connection]
+        if uri_options[:connect] && uri_options[:connect].to_s != 'direct'
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with connect=#{uri_options[:connect]}")
+        end
+        if servers.length > 1
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with multiple seeds")
+        end
+      elsif uri_options[:direct_connection] == false && uri_options[:connect].to_s == 'direct'
+        raise_invalid_error_no_fmt!("directConnection=false cannot be used with connect=direct")
+      end
     end
   end
 end

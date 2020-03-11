@@ -1,6 +1,6 @@
-description: "Direct connection to mongos"
+description: "Discover primary with replicaSet URI option"
 
-uri: "mongodb://a/?directConnection=true"
+uri: "mongodb://a/?replicaSet=rs"
 
 phases: [
 
@@ -11,7 +11,8 @@ phases: [
 
                     ok: 1,
                     ismaster: true,
-                    msg: "isdbgrid",
+                    setName: "rs",
+                    hosts: ["a:27017", "b:27017"],
                     minWireVersion: 0,
                     maxWireVersion: 6
                 }]
@@ -23,13 +24,19 @@ phases: [
 
                 "a:27017": {
 
-                    type: "Mongos",
+                    type: "RSPrimary",
+                    setName: "rs"
+                },
+
+                "b:27017": {
+
+                    type: "Unknown",
                     setName:
                 }
             },
-            topologyType: "Single",
+            topologyType: "ReplicaSetWithPrimary",
             logicalSessionTimeoutMinutes: null,
-            setName:
+            setName: "rs"
         }
     }
 ]

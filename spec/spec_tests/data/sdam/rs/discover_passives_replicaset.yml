@@ -1,4 +1,4 @@
-description: "Primary to no primary with mismatched me"
+description: "Discover passives with replicaSet URI option"
 
 uri: "mongodb://a/?replicaSet=rs"
 
@@ -11,8 +11,8 @@ phases: [
 
                     ok: 1,
                     ismaster: true,
-                    hosts: ["a:27017", "b:27017"],
-                    me: "a:27017",
+                    hosts: ["a:27017"],
+                    passives: ["b:27017"],
                     setName: "rs",
                     minWireVersion: 0,
                     maxWireVersion: 6
@@ -43,12 +43,14 @@ phases: [
     {
         responses: [
 
-                ["a:27017", {
+                ["b:27017", {
 
                     ok: 1,
-                    ismaster: true,
-                    hosts: ["c:27017", "d:27017"],
-                    me : "c:27017",
+                    ismaster: false,
+                    secondary: true,
+                    passive: true,
+                    hosts: ["a:27017"],
+                    passives: ["b:27017"],
                     setName: "rs",
                     minWireVersion: 0,
                     maxWireVersion: 6
@@ -59,19 +61,19 @@ phases: [
 
             servers: {
 
-                "c:27017": {
+                "a:27017": {
 
-                    type: "Unknown",
-                    setName:
+                    type: "RSPrimary",
+                    setName: "rs"
                 },
 
-                "d:27017": {
+                "b:27017": {
 
-                    type: "Unknown",
-                    setName:
+                    type: "RSSecondary",
+                    setName: "rs"
                 }
             },
-            topologyType: "ReplicaSetNoPrimary",
+            topologyType: "ReplicaSetWithPrimary",
             logicalSessionTimeoutMinutes: null,
             setName: "rs"
         }

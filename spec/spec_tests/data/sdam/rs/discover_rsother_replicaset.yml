@@ -1,43 +1,66 @@
-description: "Replica set member with large maxWireVersion"
+description: "Discover RSOther with replicaSet URI option"
 
 uri: "mongodb://a,b/?replicaSet=rs"
 
 phases: [
+
     {
         responses: [
+
                 ["a:27017", {
+
                     ok: 1,
-                    ismaster: true,
+                    ismaster: false,
+                    secondary: true,
+                    hidden: true,
+                    hosts: ["c:27017", "d:27017"],
                     setName: "rs",
-                    hosts: ["a:27017", "b:27017"],
                     minWireVersion: 0,
                     maxWireVersion: 6
                 }],
                 ["b:27017", {
+
                     ok: 1,
                     ismaster: false,
-                    secondary: true,
+                    secondary: false,
+                    hosts: ["c:27017", "d:27017"],
                     setName: "rs",
-                    hosts: ["a:27017", "b:27017"],
                     minWireVersion: 0,
-                    maxWireVersion: 1000
+                    maxWireVersion: 6
                 }]
         ],
+
         outcome: {
+
             servers: {
+
                 "a:27017": {
-                    type: "RSPrimary",
+
+                    type: "RSOther",
                     setName: "rs"
                 },
+
                 "b:27017": {
-                    type: "RSSecondary",
+
+                    type: "RSOther",
                     setName: "rs"
+                },
+
+                "c:27017": {
+
+                    type: "Unknown",
+                    setName: 
+                },
+
+                "d:27017": {
+
+                    type: "Unknown",
+                    setName: 
                 }
             },
-            topologyType: "ReplicaSetWithPrimary",
-            setName: "rs",
+            topologyType: "ReplicaSetNoPrimary",
             logicalSessionTimeoutMinutes: null,
-            compatible: true
+            setName: "rs"
         }
     }
 ]

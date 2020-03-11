@@ -1,17 +1,17 @@
-description: "Direct connection to mongos"
+description: "Discover ghost with directConnection URI option"
 
-uri: "mongodb://a/?directConnection=true"
+uri: "mongodb://b/?directConnection=false"
 
 phases: [
 
     {
         responses: [
 
-                ["a:27017", {
+                ["b:27017", {
 
                     ok: 1,
-                    ismaster: true,
-                    msg: "isdbgrid",
+                    ismaster: false,
+                    isreplicaset: true,
                     minWireVersion: 0,
                     maxWireVersion: 6
                 }]
@@ -21,13 +21,13 @@ phases: [
 
             servers: {
 
-                "a:27017": {
+                "b:27017": {
 
-                    type: "Mongos",
+                    type: "RSGhost",
                     setName:
                 }
             },
-            topologyType: "Single",
+            topologyType: "Unknown",
             logicalSessionTimeoutMinutes: null,
             setName:
         }

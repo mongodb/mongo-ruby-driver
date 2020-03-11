@@ -62,12 +62,29 @@ module Mongo
       # @param [ Monitoring ] monitoring The monitoring.
       # @param [ Hash ] options The cluster options.
       #
+      # @option options [ true | false ] :direct_connection Whether to connect
+      #   directly to the specified seed, bypassing topology discovery. Exactly
+      #   one seed must be provided.
+      # @option options [ Symbol ] :connect Deprecated - use :direct_connection
+      #   option instead of this option. The connection method to use. This
+      #   forces the cluster to behave in the specified way instead of
+      #   auto-discovering. One of :direct, :replica_set, :sharded
+      # @option options [ Symbol ] :replica_set The name of the replica set to
+      #   connect to. Servers not in this replica set will be ignored.
+      #
       # @return [ ReplicaSet, Sharded, Single ] The topology.
       #
       # @since 2.0.0
       # @api private
       def initial(cluster, monitoring, options)
-        cls = if options.key?(:connect)
+        cls = if options[:direct_connection]
+          if options[:connect] && options[:connect] && options[:connect].to_sym != :direct
+            raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{options[:connect]}"
+          end
+          Single
+        elsif options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
+          raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{options[:connect]}"
+        elsif options.key?(:connect)
           OPTIONS.fetch(options[:connect].to_sym)
         elsif options.key?(:replica_set) || options.key?(:replica_set_name)
           ReplicaSetNoPrimary

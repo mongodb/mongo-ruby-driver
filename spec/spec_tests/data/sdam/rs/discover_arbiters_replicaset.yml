@@ -1,6 +1,6 @@
-description: "Discover arbiters with directConnection URI option"
+description: "Discover arbiters with replicaSet URI option"
 
-uri: "mongodb://a/?directConnection=false"
+uri: "mongodb://a/?replicaSet=rs"
 
 phases: [
 

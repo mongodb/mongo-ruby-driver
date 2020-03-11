@@ -57,6 +57,7 @@ module Mongo
       :auto_encryption_options,
       :cleanup,
       :compressors,
+      :direct_connection,
       :connect,
       :connect_timeout,
       :database,
@@ -205,7 +206,6 @@ module Mongo
     #   connection string is also provided, these options take precedence over any
     #   analogous options present in the URI string.
     #
-    #
     # @option options [ String, Symbol ] :app_name Application name that is
     #   printed to the mongod logs upon establishing a connection in server
     #   versions >= 3.4.
@@ -217,7 +217,11 @@ module Mongo
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the
     #   driver only supports 'zlib'.
-    # @option options [ Symbol ] :connect The connection method to use. This
+    # @option options [ true | false ] :direct_connection Whether to connect
+    #   directly to the specified seed, bypassing topology discovery. Exactly
+    #   one seed must be provided.
+    # @option options [ Symbol ] :connect Deprecated - use :direct_connection
+    #   option instead of this option. The connection method to use. This
     #   forces the cluster to behave in the specified way instead of
     #   auto-discovering. One of :direct, :replica_set, :sharded
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
@@ -456,7 +460,7 @@ module Mongo
       end
 =end
       @options.freeze
-      validate_options!
+      validate_options!(addresses)
       validate_authentication_options!
 
       @database = Database.new(self, @options[:database], @options)
@@ -998,9 +1002,27 @@ module Mongo
     # Validates all options after they are set on the client.
     # This method is intended to catch combinations of options which are
     # not allowed.
-    def validate_options!
+    def validate_options!(addresses = nil)
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
+      end
+
+      if options[:direct_connection]
+        if options[:connect] && options[:connect].to_sym != :direct
+          raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{options[:connect]}"
+        end
+        # When a new client is created, we get the list of seed addresses
+        if addresses && addresses.length > 1
+          raise ArgumentError, "direct_connection=true cannot be used with multiple seeds"
+        end
+        # When a client is copied using #with, we have a cluster
+        if cluster && !cluster.topology.is_a?(Mongo::Cluster::Topology::Single)
+          raise ArgumentError, "direct_connection=true cannot be used with topologies other than Single (this client is #{cluster.topology.class.name.sub(/.*::/, '')})"
+        end
+      end
+
+      if options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
+        raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{options[:connect]}"
       end
     end
 
