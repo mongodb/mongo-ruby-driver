@@ -14,7 +14,7 @@ class SpecConfig
       if @uri_options[:replica_set]
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :replica_set, replica_set: @uri_options[:replica_set] }
-      elsif @uri_options[:connect] == :sharded || ENV['TOPOLOGY'] == 'sharded_cluster'
+      elsif @uri_options[:connect] == :sharded || ENV['TOPOLOGY'] == 'sharded-cluster'
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :sharded }
       elsif @uri_options[:connect] == :direct
