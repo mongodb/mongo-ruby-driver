@@ -8,7 +8,9 @@ load File.join(File.dirname(__FILE__), 'tools.rb')
 class Runner
   def run
     process_arguments
-    create_dockerfile
+    unless @options[:exec_only]
+      create_dockerfile
+    end
     create_image
     run_tests
   end
@@ -22,6 +24,10 @@ class Runner
 
       opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
         @options[:distro] = v
+      end
+
+      opts.on('-e', '--exec-only', 'Execute tests using existing Dockerfile (for offline user)') do |v|
+        @options[:exec_only] = v
       end
 
       opts.on('-p', '--preload', 'Preload Ruby toolchain and server binaries in docker') do |v|

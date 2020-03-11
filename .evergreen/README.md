@@ -35,6 +35,12 @@ test runs. To turn on preloading, use `-p` option:
 
     ./.evergreen/test-on-docker -p
 
+It is possible to run the test suite offline (without Internet access)
+provided the full process has already been executed. This is accomplished
+with the `-e` option and only makes sense when `-p` is also used:
+
+    ./.evergreen/test-on-docker -pe
+
 ### rhel62
 
 To run rhel62 distro in docker, host system must be configured to [emulate
