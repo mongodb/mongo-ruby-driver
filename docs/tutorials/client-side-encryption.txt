@@ -404,7 +404,7 @@ For more information about creating a data key, see the
 :manual:`Create a Data Encryption Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
 section of the MongoDB manual.
 
-auto_encryption_options
+Auto-Encryption Options
 -----------------------
 Automatic encryption can be configured on a ``Mongo::Client`` using the
 ``auto_encryption_options`` option ``Hash``. This section provides an overview
@@ -412,7 +412,7 @@ of the fields inside ``auto_encryption_options`` and explains how to choose thei
 values.
 
 ``:key_vault_client``
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 The key vault client is a ``Mongo::Client`` instance that will be used to connect
 to the MongoDB collection containing your encryption data keys. For example, if
 your key vault was hosted on a MongoDB instance at ``localhost:30000``:
@@ -433,7 +433,7 @@ data, you may leave this option blank, and the top-level client will be used
 to insert and fetch data keys.
 
 ``:key_vault_namespace``
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 The key vault namespace is a ``String`` in the format ``"database_name.collection_name"``,
 where ``database_name`` and ``collection_name`` are the name of the database and
 collection in which you would like to store your data keys. For example, if your data
@@ -451,7 +451,7 @@ keys are stored in the ``admin`` database in the ``datakeys`` collection:
 There is no default key vault namespace, and this option must be provided.
 
 ``:schema_map``
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 A schema map is a Hash with information about which fields to automatically
 encrypt and decrypt.
 

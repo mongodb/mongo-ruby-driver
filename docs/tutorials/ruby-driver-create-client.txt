@@ -161,7 +161,8 @@ Ruby Options
        - ``:extra_options`` - Options related to spawning mongocryptd (``Hash``,
          optional, defaults to ``nil``).
 
-       For more information about formatting these options, see the :ref:`Client-Side Encryption tutorial<client-side-encryption#auto-encryption-options>`.
+       For more information about formatting these options, see the
+       "Auto-Encryption Options" section of the :ref:`Client-Side Encryption tutorial<client-side-encryption>`.
      - ``Hash``
      - none
 
