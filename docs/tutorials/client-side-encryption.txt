@@ -74,8 +74,8 @@ enterprise-only feature. If you only intend to use explicit encryption, you may
 skip this step.
 
 Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
-(versions 4.2 and newer). If you must install mongocryptd separately, follow
-the `installation instructions in the MongoDB manual <https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation>`_.
+(versions 4.2 and newer). For installation instructions, see
+`the MongoDB manual <https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation>`_.
 
 Automatic Encryption
 --------------------
@@ -86,6 +86,17 @@ performing database operations. Once the ``Mongo::Client`` is configured, it
 will automatically encrypt any field that requires encryption before writing
 it to the database, and it will automatically decrypt those fields when reading
 them.
+
+Client-side encryption implements envelope encryption, which is the practice of
+encrypting data with a data key, which is in turn encrypted using a master key.
+Thus, using client-side encryption with MongoDB involves three main steps:
+
+1. Create a master key
+2. Create a data key (and encrypt it using the master key)
+3. Encrypt data using the data key
+
+The example below demonstrates how to follow these steps with a local master key
+in order to perform automatic encryption.
 
 .. note::
 
@@ -100,27 +111,27 @@ them.
 
   Automatic encryption requires the authenticated user to have the listCollections privilege action.
 
-The following example provides a demonstration of auto-encryption using a local
-master key.
-
 .. code-block:: ruby
 
   require 'mongo'
 
-  # Generate a local encryption master key
-  # To reuse this master key, persist it to a file or environment variable
-  # on your machine.
+  # Step 1: Create a local master key
+  # A local master key is a 96-byte binary blob.
   local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
 
+  # Step 2: Create a data key
   kms_providers = {
     local: {
       key: local_master_key
     }
   }
 
-  # Create an encryption data key and insert it into the key vault collection
+  # The key vault client is a Mongo::Client instance connected to the collection
+  # that will store your data keys.
   key_vault_client = Mongo::Client.new(['localhost:27017'])
 
+  # Use an instance of Mongo::ClientEncryption to create a new data key
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
     key_vault_namespace: 'admin.datakeys',
@@ -128,8 +139,10 @@ master key.
   )
 
   data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
 
-  # Create a schema map
+  # Step 3: Configure a Mongo::Client instance for automatic encryption
+  # Create a schema map, which tells the Mongo::Client which fields to encrypt
   schema_map = {
     'encryption_db.encryption_coll': {
       properties: {
@@ -169,15 +182,14 @@ master key.
   # A client with no auto_encryption_options is unable to decrypt the data
   client_no_encryption = Mongo::Client.new(['localhost:27017'])
   client_no_encryption.use('encryption_db')['encryption_coll'].find.first['encrypted_field']
-  # => <BSON::Binary...>
+  # => <BSON::Binary... type=ciphertext...>
 
-For more information about creating an encryption master key, creating a data key,
-or creating a schema map, see later sections of this tutorial.
+The example above demonstrates using automatic encryption with a local master key.
+For more information about using the AWS Key Management Service to create a
+master key and create data keys, see the following sections of this tutorial:
 
-.. seealso::
-  `Creating A Master Key`_,
-  `Creating A Data Key`_,
-  `Creating A Schema Map`_,
+- `Creating A Master Key`_,
+- `Creating A Data Key`_,
 
 Explicit Encryption
 -------------------
@@ -187,28 +199,38 @@ encryption is a community feature and does not require an enterprise build
 of the MongoDB server to use. To perform all explicit encryption and decryption
 operations, use an instance of the ClientEncryption class.
 
-The following is an example of using explicit encryption with a local encryption
-master key to encrypt a piece of data before inserting it into the database,
-and then decrypting it after reading it from the database.
+Client-side encryption implements envelope encryption, which is the practice of
+encrypting data with a data key, which is in turn encrypted using a master key.
+Thus, using client-side encryption with MongoDB involves three main steps:
+
+1. Create a master key
+2. Create a data key (and encrypt it using the master key)
+3. Encrypt data using the data key
+
+The example below demonstrates how to follow these steps with a local master key
+in order to perform explicit encryption.
 
 .. code-block:: ruby
 
   require 'mongo'
 
-  # Generate a local encryption master key
-  # To reuse this master key, persist it to a file or environment variable
-  # on your machine.
+  # Step 1: Create a local master key
+  # A local master key is a 96-byte binary blob.
   local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
 
+  # Step 2: Create a data key
   kms_providers = {
     local: {
       key: local_master_key
     }
   }
 
-  # Create an encryption data key and insert it into the key vault collection
+  # The key vault client is a Mongo::Client instance connected to the collection
+  # that will store your data keys.
   key_vault_client = Mongo::Client.new(['localhost:27017'])
 
+  # Use an instance of Mongo::ClientEncryption to create a new data key
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
     key_vault_namespace: 'admin.datakeys',
@@ -216,6 +238,9 @@ and then decrypting it after reading it from the database.
   )
 
   data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
+
+  # Step 3: Explicitly encrypt a string
 
   # The value to encrypt
   value = 'sensitive data'
@@ -245,16 +270,12 @@ and then decrypting it after reading it from the database.
   unencrypted_result = client_encryption.decrypt(find_result)
   # => "sensitive data"
 
-For more information about creating an encryption master key, creating a data key,
-or creating a schema map, see later sections of this tutorial.
+The example above demonstrates using explicit encryption with a local master key.
+For more information about using the AWS Key Management Service to create a
+master key and create data keys, see the following sections of this tutorial:
 
-.. seealso::
-  `Creating A Master Key`_,
-  `Creating A Data Key`_,
-  `Creating A Schema Map`_,
-
-The ``kms_providers`` option
-----------------------------
+- `Creating A Master Key`_,
+- `Creating A Data Key`_,
 
 Creating a Master Key
 ---------------------
@@ -281,6 +302,7 @@ Run the following code to generate a local master key using Ruby:
   require 'securerandom'
 
   local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..." (a binary blob)
 
 AWS Master Key
 ~~~~~~~~~~~~~~
@@ -289,11 +311,9 @@ store your master key. To do so, follow steps 1 and 2 of the
 :manual:`"Convert to a Remote Master Key" section</ecosystem/use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
 in the MongoDB Client-Side Encryption documentation.
 
-For more information about creating a master key, see the MongoDB manual.
-
-.. seealso::
-
-  :manual:`Create a Master Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#a-create-a-master-key>`
+For more information about creating a master key, see the
+:manual:`Create a Master Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#a-create-a-master-key>`
+section of the MongoDB manual.
 
 Creating a Data Key
 -------------------
@@ -309,6 +329,11 @@ Create a Data Key Using a Local Master Key
 
 If you have created a local master key, you may use it to generate a new data
 key with the following code snippet:
+
+.. warning::
+
+  Using a local master key is insecure and not recommended if you plan
+  to use client-side encryption in production.
 
 .. code-block:: ruby
 
@@ -329,6 +354,7 @@ key with the following code snippet:
   )
 
   data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
 
 See the `Local Master Key`_ section for more information about generating a new
 local master key.
@@ -370,16 +396,15 @@ use that information to generate a data key.
 
     }
   )
+  # => <BSON::Binary... type=ciphertext...>
 
 See the `AWS Master Key`_ section of this tutorial  for more information about
 generating a new master key on AWS and finding the information you need to
 create data keys.
 
-For more information about creating a data key, see the MongoDB manual.
-
-.. seealso::
-
-  :manual:`Create a Data Encryption Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
+For more information about creating a data key, see the
+:manual:`Create a Data Encryption Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
+section of the MongoDB manual.
 
 Creating a Schema Map
 ---------------------
@@ -425,7 +450,7 @@ Before creating the JSON file, Base64-encode the UUID of the your data key.
   require 'base64'
 
   # Take note of the Base64-encoded uuid
-  Base64.encode64(data_key_id)
+  Base64.encode64(data_key_id).data
 
 Then, create a new JSON file containing your schema map in the extended JSON
 format defined by the :manual:`Extended JSON v2 Documentation`</reference/mongodb-extended-json>`.
