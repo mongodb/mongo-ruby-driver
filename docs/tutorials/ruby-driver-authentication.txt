@@ -7,7 +7,7 @@ Authentication
 .. contents:: On this page
    :local:
    :backlinks: none
-   :depth: 1
+   :depth: 2
    :class: singlecol
 
 MongoDB supports a variety of
@@ -17,14 +17,15 @@ For more information about configuring your MongoDB server for each of
 these authentication mechanisms see MongoDB's
 :manual:`online documentation </tutorial/enable-authentication>`.
 
-For more information about users and user management, see the
-:ref:`User Management tutorial<user-management>`.
+For more information about users and the Ruby driver's helpers for
+user management, see the :ref:`User Management tutorial<user-management>`.
+
 
 Providing credentials
-`````````````````````
+---------------------
 
 If authentication is enabled, provide credentials when creating a new
-client.
+client:
 
 .. code-block:: ruby
 
@@ -32,73 +33,117 @@ client.
                              user: 'test',
                              password: '123' )
 
+  # If using a URI:
+  client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017")
 
-The current database can be changed with the client's ``use`` method.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ])
-  music_client = client.use( 'music')
-
-A new client can be created with the authentication credentials.
+Authentication credentials can be changed on a client instance to obtain
+a new client using the ``Client#with`` method:
 
 .. code-block:: ruby
 
-  authenticated_client = client.with( user: 'test',
-                                     password: '123' )
+  authenticated_client = client.with( user: 'another-user',
+                                      password: '123' )
 
-Alternatively, setting the current database and credentials can be done in one step:
+It is also possible to change the client's database and credentials in
+one step:
 
 .. code-block:: ruby
 
-  authenticated_music_client = client.with( :database => 'music',
-                                           user:'test',
-                                           password:'123' )
+  authenticated_music_client = client.with( database: 'music',
+                                            user:'test',
+                                            password:'123' )
+
 
 .. _auth-source:
 
 Auth Source
-```````````
+-----------
 
-A user's auth source is the database where that user's authentication credentials are stored.
+A user's auth source is the database where that user's authentication
+credentials are stored.
 
-When creating a client with authentication credentials, you may specify an auth source
-for the user:
+The user's auth source may be specified whenever the credentials are specified:
 
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             database: 'mydb',
                              user: 'test',
                              password: '123',
                              auth_source: 'admin' )
 
-If no auth source is specified, then a default will be assumed by the client. The default
-auth source depends on the authentication mechanism that is being used to connect.
+  # If using a URI:
+  client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017/mydb?authSource=admin")
 
-For the ``MONGODB-CR``, ``SCRAM-SHA-1``, and ``SCRAM-SHA-256`` authentication mechanisms, the default
-auth source is the database to which the client is connecting; if no database is specified,
-`admin` becomes the default auth source. For the ``PLAIN`` mechanism (LDAP), the default auth source
-is the database to which the client is connecting; if no database is specified, ``$external`` is
-used as the auth source. For the ``GSSAPI`` and ``MONGODB_X509`` mechanisms,
-the auth source is always ``$external``.
+If no auth source is specified, then a default will be assumed by the client.
+The default auth source depends on the authentication mechanism that is being
+used to connect.
 
-MONGODB-CR Mechanism
-````````````````````
+For the ``MONGODB-CR``, ``SCRAM-SHA-1``, and ``SCRAM-SHA-256`` authentication
+mechanisms, the default auth source is the database to which the client is
+connecting; if no database is specified, ``admin`` database is the default
+database and hence the default auth source. For the ``PLAIN`` mechanism (LDAP),
+the default auth source is the database to which the client is connecting;
+if no database is specified, the ``$external`` database is used as the
+auth source. For the ``GSSAPI`` and ``MONGODB_X509`` mechanisms, the
+auth source is always ``$external``.
 
-*Deprecated:* MONGODB-CR mechanism is deprecated as of MongoDB version 3.6.
-Please use SCRAM authentication instead.
+.. note::
 
-MONGODB-CR was the default authentication mechanism for MongoDB up through version 2.6.
+  When changing the database using the ``with`` method, the auth source is
+  determined in the new ``Client`` instance using the full set of options
+  that applies to it. For example, if the original client had an auth source
+  specified, this auth source would take precedence over the database
+  given in the ``with`` call. If the original client did not have an auth
+  source specified, the new database would be the new auth source, subject
+  to the rules of the authentication mechanism used.
 
-The mechanism can be explicitly set with the credentials:
+
+Authentication Mechanisms
+-------------------------
+
+.. _scram:
+
+SCRAM
+`````
+
+:manual:`SCRAM authentication </core/security-scram/>` is the default
+authentication mechanism for MongoDB. There are two SCRAM mechanisms in
+MongoDB: SCRAM-SHA-1 (available as of MongoDB 3.0) and SCRAM-SHA-256
+(available as of MongoDB 4.0). If an authentication mechanism is not
+specified but user credentials are, the driver will attempt to use SCRAM
+authentication on server 3.0 or newer and will negotiate the mechanism
+to use based on the server version and the mechanisms defined for a
+particular user (it is possible to configure a user in the server to only
+allow SCRAM-SHA-1 mechanism, only SCRAM-SHA-256 mechanism or both).
+
+To explicitly specify SCRAM-SHA-1 as the authentication mechanism, use the
+``auth_mech: :scram`` Ruby client option or the ``SCRAM-SHA-1`` as the value
+for the ``authMechanism`` URI option, as follows:
 
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ],
-                             :database => 'music',
+                             database: 'mydb',
                              user: 'test',
                              password: '123',
-                             auth_mech: :mongodb_cr )
+                             auth_mech: :scram )
+
+  client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017/mydb?authMechanism=SCRAM-SHA-1")
+
+To explicitly specify SCRAM-SHA-256 as the authentication mechanism, use the
+``auth_mech: :scram256`` Ruby client option or the ``SCRAM-SHA-256`` as the
+value for the ``authMechanism`` URI option, as follows:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             database: 'mydb',
+                             user: 'test',
+                             password: '123',
+                             auth_mech: :scram256 )
+
+  client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017/mydb?authMechanism=SCRAM-SHA-256")
 
 
 Client Certificate (X.509)
@@ -132,8 +177,9 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
                              ssl_ca_cert: '/path/to/ca.pem' )
 
 
-LDAP (SASL PLAIN) mechanism
-```````````````````````````
+LDAP (SASL PLAIN)
+`````````````````
+
 *Requires MongoDB Enterprise Edition v2.6 or greater.*
 
 MongoDB Enterprise Edition supports the LDAP authentication mechanism
@@ -159,10 +205,12 @@ MongoDB, see the :manual:`SASL/LDAP tutorial in the MongoDB Manual
                              ssl_cert: '/path/to/client.pem',
                              ssl_ca_cert: '/path/to/ca.pem' )
 
+
 .. _kerberos:
 
-Kerberos (GSSAPI) mechanism
-```````````````````````````
+Kerberos (GSSAPI)
+`````````````````
+
 *Requires MongoDB Enterprise Edition v2.4 or greater.*
 
 MongoDB Enterprise Edition v2.4+ supports Kerberos authentication.
@@ -183,8 +231,8 @@ installed. Add to your ``Gemfile``:
   require 'mongo'
   require 'mongo_kerberos'
 
-To use Kerberos in the Ruby driver with **MRI**, create a
-ticket-granting ticket using ``kinit``. See
+To use Kerberos in the Ruby driver with **MRI**, create a ticket-granting
+ticket using ``kinit``. See
 `this documentation <http://linux.die.net/man/1/kinit>`_ for more
 information.
 
@@ -209,3 +257,23 @@ authentication, see the :manual:`manual
                              auth_mech: :gssapi,
                              user: 'test',
                              password: '123' )
+
+
+MONGODB-CR
+``````````
+
+*Deprecated:* MONGODB-CR mechanism is deprecated as of MongoDB 3.6 and
+removed as of MongoDB 4.0. Please use `SCRAM authentication <scram>`_ instead.
+
+MONGODB-CR was the default authentication mechanism for MongoDB up through
+version 2.6.
+
+The mechanism can be explicitly set with the credentials:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             database: 'music',
+                             user: 'test',
+                             password: '123',
+                             auth_mech: :mongodb_cr )
