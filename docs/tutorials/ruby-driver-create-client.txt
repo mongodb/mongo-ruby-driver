@@ -22,7 +22,9 @@ By default, the driver will automatically detect the topology used by the
 deployment and connect appropriately.
 
 To connect to a local standalone MongoDB deployment, specify the host and
-port as follows:
+port of the server. In most cases you would also specify the database name
+to connect to; if no database name is specified, the client will use the
+``admin`` database:
 
 .. code-block:: ruby
 
@@ -41,10 +43,26 @@ specify the Atlas deployment URI:
 
 .. code-block:: ruby
 
-  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority")
+  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/mydb?w=majority")
 
 The driver will discover all nodes in the cluster and connect to them as
 needed.
+
+
+Database
+````````
+
+Usually the client will connect to a specific database. It is possible to
+change the active database by calling ``Client#use`` to obtain a new ``Client``
+instance configured to use the new database. For example, it is common to
+perform operations on the ``admin`` database:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'mydb')
+  admin_client = client.use('admin')
+  # Issue an administrative command
+  admin_client.database.command(replSetGetConfig: 1).documents.first
 
 
 Direct Connection
