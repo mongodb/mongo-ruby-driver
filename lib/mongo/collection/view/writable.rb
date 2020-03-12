@@ -301,9 +301,15 @@ module Mongo
           if opts[:upsert]
             update_doc['upsert'] = true
           end
+
+          update_doc[:hint] = opts[:hint] if opts[:hint]
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
+              if server.max_wire_version < 5 && update_doc[:hint]
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
               Operation::Update.new(
@@ -345,9 +351,17 @@ module Mongo
           if opts[:upsert]
             update_doc['upsert'] = true
           end
+
+          update_doc[:hint] = opts[:hint] if opts[:hint]
+
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
+
+              if server.max_wire_version < 5 && update_doc[:hint]
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
 
