@@ -28,7 +28,7 @@ MongoDB Compatibility
      - MongoDB 2.6
      - MongoDB 2.4
 
-   * - 2.11
+   * - 2.12
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -38,8 +38,18 @@ MongoDB Compatibility
      - |checkmark|
      -
 
+   * - 2.11
+     - |checkmark| [#client-side-encryption]_
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
    * - 2.10
-     - |checkmark| [#srv-polling]_
+     - |checkmark| [#srv-polling]_ [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -141,6 +151,9 @@ MongoDB Compatibility
 .. [#srv-polling] Polling of SRV records in sharded topologies is
    implemented as of driver version 2.11.
 
+.. [#client-side-encryption] Client-side encryption is implemented as of
+   driver version 2.12.
+
 The driver does not support older versions of MongoDB.
 
 .. _reference-compatibility-language-ruby:
@@ -174,16 +187,30 @@ for that Ruby version is deprecated.
      - JRuby 9.1
      - JRuby
 
+   * - 2.12
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+
    * - 2.11
      - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - 
-     - 
-     - 
-     - 
+     -
+     -
+     -
+     -
      - |checkmark|
      -
      -
