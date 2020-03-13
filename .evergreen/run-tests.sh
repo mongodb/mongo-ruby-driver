@@ -16,7 +16,7 @@ setup_ruby
 
 prepare_server $arch
 
-install_mlaunch_pip
+install_mongo_manager
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -26,41 +26,39 @@ mkdir -p "$dbdir"
 
 mongo_version=`echo $MONGODB_VERSION |tr -d .`
 
-args="--setParameter enableTestCommands=1"
+ptargs="--setParameter enableTestCommands=1"
 # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
 # and mlaunch does not support specifying mongod-only parameters:
 # https://github.com/rueckstiess/mtools/issues/696
 # Pass it to 3.4 and newer servers where it is accepted by all daemons.
 if test $mongo_version -ge 34; then
-  args="$args --setParameter diagnosticDataCollectionEnabled=false"
+  ptargs="$ptargs --setParameter diagnosticDataCollectionEnabled=false"
 fi
+args=
 uri_options=
 if test "$TOPOLOGY" = replica-set; then
-  args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
+  args="$args --replica-set ruby-driver-rs --nodes 2 --arbiter"
   export HAVE_ARBITER=1
 elif test "$TOPOLOGY" = sharded-cluster; then
-  args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
+  args="$args --replica-set ruby-driver-rs --nodes 1 --sharded 1"
   if test -z "$SINGLE_MONGOS"; then
     args="$args --mongos 2"
   fi
-else
-  args="$args --single"
 fi
 if test -n "$MMAPV1"; then
-  args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
+  args="$args --mongod-arg=--storageEngine=mmapv1 --mongod-arg=--smallfiles --mongod-arg=--noprealloc"
   uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
 if test "$AUTH" = auth; then
-  args="$args --auth --username bob --password pwd123"
+  args="$args --username bob --password pwd123"
 fi
 if test "$AUTH" = x509; then
-  args="$args --auth --username bootstrap --password bootstrap"
+  args="$args --username bootstrap --password bootstrap"
 fi
 if test "$SSL" = ssl; then
-  args="$args --sslMode requireSSL"\
-" --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
-" --sslCAFile spec/support/certificates/ca.crt"\
-" --sslClientCertificate spec/support/certificates/client.pem"
+  args="$args --tls-mode requireTLS"\
+" --tls-certificate-key-file spec/support/certificates/server-second-level-bundle.pem"\
+" --tls-ca-file spec/support/certificates/ca.crt"
 
   if test "$AUTH" = x509; then
     client_pem=client-x509.pem
@@ -78,7 +76,8 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
-python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+(export PATH=$RUBIES_PREFIX/ruby-2.7/bin:$PATH &&
+  mongo-manager init --dir "$dbdir" --bin-dir "$BINDIR" $args -- $ptargs)
 
 install_deps
 
@@ -164,6 +163,6 @@ echo ${test_status}
 
 kill_jruby
 
-python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
+mongo_manager_stop
 
 exit ${test_status}
