@@ -3,9 +3,9 @@
 This directory contains configuration and scripts used to run the driver's
 test suite in Evergreen, MongoDB's continuous integration system.
 
-## Running On Docker
+## Testing In Docker
 
-It is possible to run the test suite on Docker. This executes all of the
+It is possible to run the test suite in Docker. This executes all of the
 shell scripts as if they were running in the Evergreen environment.
 
 Use the following command:
@@ -47,3 +47,27 @@ To run rhel62 distro in docker, host system must be configured to [emulate
 syscalls](https://github.com/CentOS/sig-cloud-instance-images/issues/103).
 Note that this defeats one of the patches for the Spectre set of processor
 vulnerabilities.
+
+## Running Deployment In Docker
+
+It is possible to use the Docker infrastructure provided by the test suite
+to provision a MongoDB server deployment in Docker and expose it to the host.
+Doing so allows testing on all server versions supported by the test suite
+without having to build and install them on the host system, as well as
+running the deployment on a distro that differs from that of the host system.
+
+Do provision a deployment, use the `-m` option. This option requires one
+argument which is the port number on the host system to use as the starting
+port for the deployment. Use the Evergreen environment variable syntax to
+specify the desired server version, topology, authentication and other
+parameters. The `-p` argument is supported to preload the server into the
+Docker image and its use is recommended with `-m`.
+
+To run a standalone server and expose it on the default port, 27017:
+
+    ./.evergreen/test-on-docker -pm 27017
+
+To run a replica set deployment with authentication and expose its members
+on ports 30000 through 30002:
+
+    ./.evergreen/test-on-docker -pm 30000 -d debian92 TOPOLOGY=replica-set AUTH=auth

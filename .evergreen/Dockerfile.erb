@@ -153,4 +153,12 @@ COPY . .
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
   PROJECT_DIRECTORY=/app
 
-ENV <%= @env.map { |k, v| %Q`#{k}="#{v}"` }.join(" \\\n  ") %>
+ENV <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
+
+<% if expose? %>
+
+  <% 0.upto(num_exposed_ports-1) do |i| %>
+    EXPOSE <%= 27017 + i %>
+  <% end %>
+
+<% end %>
