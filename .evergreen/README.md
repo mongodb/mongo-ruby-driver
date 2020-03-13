@@ -56,7 +56,7 @@ Doing so allows testing on all server versions supported by the test suite
 without having to build and install them on the host system, as well as
 running the deployment on a distro that differs from that of the host system.
 
-Do provision a deployment, use the `-m` option. This option requires one
+To provision a deployment, use the `-m` option. This option requires one
 argument which is the port number on the host system to use as the starting
 port for the deployment. Use the Evergreen environment variable syntax to
 specify the desired server version, topology, authentication and other
