@@ -17,8 +17,8 @@ to encrypt specific fields in MongoDB documents before inserting them into the
 database.
 
 With client-side encryption, developers can encrypt fields client-side without
-any server-side configuration or directives. Client-side field-level encryption
-supports workloads where applications must guarantee that unauthorized parties,
+any server-side configuration or directives. Client-side encryption supports
+workloads where applications must guarantee that unauthorized parties,
 including server administrators, cannot read the encrypted data.
 
 .. warning::

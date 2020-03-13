@@ -1,3 +1,7 @@
+# Copyright (C) 2020 MongoDB Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #   http://www.apache.org/licenses/LICENSE-2.0
@@ -11,7 +15,7 @@
 module Mongo
   class Error
 
-    # An error related to field-level encryption
+    # An error related to client-side encryption.
     class CryptError < Mongo::Error
       # Create a new CryptError
       #
