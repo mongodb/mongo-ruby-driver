@@ -286,7 +286,7 @@ possible to run just the Kerberos-related unit tests without provisioning a
 MongoDB deployment; consult .evergreen/run-tests-kerberos-unit.sh for the
 full list of relevant test files.
 
-## Field-Level Encryption
+## Client-Side Encryption
 
 Install libmongocrypt on your machine:
 
@@ -305,7 +305,7 @@ Option 2: Build from source
 - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
 
 Create AWS KMS keys
-Many of the Field-Level Encryption tests require that you have an encryption
+Many of the Client-Side Encryption tests require that you have an encryption
 master key hosted on AWS's Key Management Service. Set up a master key by following
 these steps:
 
@@ -320,7 +320,7 @@ in environment variables on your local machine. Create an access key by followin
 "Managing Access Keys (Console)" instructions in this guide:
 https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey
 Once an access key has been created, store the access key id and the access key
-secret in environment variables. If you plan to frequently run Field-Level
+secret in environment variables. If you plan to frequently run Client-Side
 Encryption tests, it may be a good idea to put these lines in your .bash_profile
 or .bashrc file. Otherwise, you can run them in the terminal window where you
 plan to run your tests.
@@ -342,7 +342,7 @@ section of this guide: https://docs.aws.amazon.com/kms/latest/developerguide/cre
         and how to view your key's ARN: https://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys-console.html
 
     Store these two pieces of information in environment variables. If you plan
-    to frequently run Field-Level Encryption tests, it may be a good idea to put
+    to frequently run Client-Side Encryption tests, it may be a good idea to put
     these lines in your .bash_profile or .bashrc file. Otherwise, you can run
     them in the terminal window where you plan to run your tests.
 

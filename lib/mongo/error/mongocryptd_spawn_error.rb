@@ -1,3 +1,7 @@
+# Copyright (C) 2020 MongoDB Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #   http://www.apache.org/licenses/LICENSE-2.0
@@ -11,14 +15,8 @@
 module Mongo
   class Error
 
-    # An error related to spawning mongocryptd for field-level encrpytion
+    # An error related to spawning mongocryptd for client-side encryption.
     class MongocryptdSpawnError < CryptError
-      # Create a new MongocryptdSpawnError
-      #
-      # @param [ String ] message The error message
-      def initialize(message)
-        super(message)
-      end
     end
   end
 end
