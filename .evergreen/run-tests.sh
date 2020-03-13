@@ -78,6 +78,12 @@ if test "$SSL" = ssl; then
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 fi
 
+# Docker forwards ports to the external interface, not to the loopback.
+# Hence we must bind to all interfaces here.
+if test -n "$BIND_ALL"; then
+  args="$args --bind_ip_all"
+fi
+
 python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
