@@ -357,9 +357,8 @@ compatibility code for behavior like time serialization to be correct:
    require 'mongo'
    require 'mongo/active_support'
 
-Applications using Mongoid 7.0.3 or newer
-do not need to explicitly load the driver's ActiveSupport code, since Mongoid
-automatically does so.
+Applications using Mongoid 7.0.6 or newer do not need to explicitly load
+the driver's ActiveSupport code, since Mongoid automatically does so.
 
 Atlas Compatibility
 ~~~~~~~~~~~~~~~~~~~
