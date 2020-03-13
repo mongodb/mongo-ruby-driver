@@ -10,9 +10,13 @@ class Runner
     process_arguments
     unless @options[:exec_only]
       create_dockerfile
+      create_image
     end
-    create_image
-    run_tests
+    if @options[:mongo_only]
+      run_deployment
+    else
+      run_tests
+    end
   end
 
   private
@@ -28,6 +32,10 @@ class Runner
 
       opts.on('-e', '--exec-only', 'Execute tests using existing Dockerfile (for offline user)') do |v|
         @options[:exec_only] = v
+      end
+
+      opts.on('-m', '--mongo-only=PORT', 'Start the MongoDB deployment and expose it to host on ports starting with PORT') do |v|
+        @options[:mongo_only] = v.to_i
       end
 
       opts.on('-p', '--preload', 'Preload Ruby toolchain and server binaries in docker') do |v|
@@ -63,8 +71,25 @@ class Runner
     run_command(%w(docker build -t test-driver  -f .evergreen/Dockerfile .))
   end
 
+  BASE_TEST_COMMAND = %w(docker run -ti --tmpfs /tmpfs:exec).freeze
+
   def run_tests
-    run_command(%w(docker run -ti --tmpfs /tmpfs:exec test-driver) + script.split(/\s+/))
+    run_command(BASE_TEST_COMMAND + %w(test-driver) + script.split(/\s+/))
+  end
+
+  def run_deployment
+    run_command(BASE_TEST_COMMAND + [
+      '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
+      '-e', 'BIND_ALL=true',
+    ] + port_forwards + %w(test-driver) + script.split(/\s+/))
+  end
+
+  def port_forwards
+    (0...num_exposed_ports).map do |i|
+      host_port = @options[:mongo_only] + i
+      container_port = 27017 + i
+      ['-p', "#{host_port}:#{container_port}"]
+    end.flatten
   end
 
   def run_command(cmd)
@@ -123,6 +148,25 @@ class Runner
 
   def server_download_url
     @server_download_url ||= ServerVersionRegistry.new(server_version, distro).download_url
+  end
+
+  def expose?
+    !!@options[:mongo_only]
+  end
+
+  def num_exposed_ports
+    case @env['TOPOLOGY'] || 'standalone'
+    when 'standalone'
+      1
+    when 'replica-set'
+      3
+    when 'sharded-cluster'
+      if @env['SINGLE_MONGOS']
+        1
+      else
+        2
+      end
+    end
   end
 end
 
