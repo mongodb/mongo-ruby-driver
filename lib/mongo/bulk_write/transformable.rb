@@ -97,6 +97,7 @@ module Mongo
             d['upsert'] = true
           end
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[:hint] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -114,6 +115,7 @@ module Mongo
           end
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
+          d[:hint] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -130,6 +132,7 @@ module Mongo
           end
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
+          d[:hint] = doc[:hint] if doc[:hint]
         end
       }
 

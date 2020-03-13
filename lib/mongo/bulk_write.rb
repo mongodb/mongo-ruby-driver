@@ -231,12 +231,24 @@ module Mongo
 
     def update_one(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
+
+      hints_present = spec[:updates].any? { |update| update.key?(:hint) }
+      if server.max_wire_version < 5 && hints_present
+        raise Mongo::Error, "Add a descriptive error here"
+      end
+
       Operation::Update.new(spec).bulk_execute(server, client: client)
     end
     alias :replace_one :update_one
 
     def update_many(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents)
+
+      hints_present = spec[:updates].any? { |update| update.key?(:hint) }
+      if server.max_wire_version < 5 && hints_present
+        raise Mongo::Error, "Add a descriptive error here"
+      end
+
       Operation::Update.new(spec).bulk_execute(server, client: client)
     end
   end
