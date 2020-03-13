@@ -61,6 +61,7 @@ module Mongo
           Operation::LIMIT => 0,
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[:hint] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -73,6 +74,7 @@ module Mongo
           Operation::LIMIT => 1,
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[:hint] = doc[:hint] if doc[:hint]
         end
       }
 

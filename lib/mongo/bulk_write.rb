@@ -203,11 +203,24 @@ module Mongo
 
     def delete_one(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
+
+      hints_present = spec[:deletes].any? { |delete| delete.key?(:hint) }
+
+      if server.max_wire_version < 5 && hints_present
+        raise Mongo::Error, "Add a descriptive error here"
+      end
+
       Operation::Delete.new(spec).bulk_execute(server, client: client)
     end
 
     def delete_many(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents)
+
+      hints_present = spec[:deletes].any? { |delete| delete.key?(:hint) }
+      if server.max_wire_version < 5 && hints_present
+        raise Mongo::Error, "Add a descriptive error here"
+      end
+
       Operation::Delete.new(spec).bulk_execute(server, client: client)
     end
 
