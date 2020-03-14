@@ -27,11 +27,17 @@ setup_ruby
 #
 # To assign variables in a loop:
 # https://unix.stackexchange.com/questions/348175/bash-scope-of-variables-in-a-for-loop-using-tee
-while read line; do
-  k=`echo "$line" |awk -F= '{print $1}'`
-  v=`echo "$line" |awk -F= '{print $2}'`
-  eval export $k="'"$v"'"
-done < <(cat ./.env.private)
+#
+# When running the tests via Docker, .env.private does not exist and instead
+# all of the variables in it are written into the image (and are already
+# available at this point).
+if test -f ./.env.private; then
+  while read line; do
+    k=`echo "$line" |awk -F= '{print $1}'`
+    v=`echo "$line" |awk -F= '{print $2}'`
+    eval export $k="'"$v"'"
+  done < <(cat ./.env.private)
+fi
 
 if test -z "$SASL_HOST"; then
   echo SASL_HOST must be set in the environment 1>&2

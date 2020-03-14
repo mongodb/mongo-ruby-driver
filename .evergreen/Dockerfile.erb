@@ -166,7 +166,7 @@ COPY . .
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
   PROJECT_DIRECTORY=/app
 
-ENV <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
+ENV <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('$', "\\$").gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
 
 <% if expose? %>
 

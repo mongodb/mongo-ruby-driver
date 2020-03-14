@@ -2,6 +2,7 @@
 
 require 'optparse'
 require 'erb'
+autoload :Dotenv, 'dotenv'
 
 load File.join(File.dirname(__FILE__), 'tools.rb')
 
@@ -26,6 +27,13 @@ class Runner
     OptionParser.new do |opts|
       opts.banner = "Usage: test-on-docker [-d distro] [evergreen_key=value ...]"
 
+      opts.on("-a", "--add-env=PATH", "Load environment variables from PATH in .env format") do |path|
+        @options[:extra_env] ||= {}
+        Dotenv.parse(path).each do |k, v|
+          @options[:extra_env][k] = v
+        end
+      end
+
       opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
         @options[:distro] = v
       end
@@ -47,9 +55,9 @@ class Runner
       end
     end.parse!
 
-    @env = Hash[ARGV.map do |arg|
+    @env = (@options[:extra_env] || {}).merge(Hash[ARGV.map do |arg|
       arg.split('=', 2)
-    end]
+    end])
 
     @env['RVM_RUBY'] ||= 'ruby-2.7'
     unless ruby =~ /^j?ruby-/

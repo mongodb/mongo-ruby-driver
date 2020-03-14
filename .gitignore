@@ -22,3 +22,4 @@ tmp
 sandbox/*
 .byebug_history
 gemfiles/*.gemfile.lock
+.env.private
