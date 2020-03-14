@@ -15,19 +15,24 @@ set_env_vars
 
 setup_ruby
 
+if test -z "$SASL_HOST"; then
+  echo SASL_HOST must be set in the environment 1>&2
+  exit 5
+fi
+
 # TODO Find out of $OS is set here, right now we only test on Linux thus
 # it doesn't matter if it is set.
 case "$OS" in
   cygwin*)
-    IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
+    IP_ADDR=`getent hosts ${SASL_HOST} | head -n 1 | awk '{print $1}'`
     ;;
 
   darwin)
-    IP_ADDR=`dig ${sasl_host} +short | tail -1`
+    IP_ADDR=`dig ${SASL_HOST} +short | tail -1`
     ;;
 
   *)
-    IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
+    IP_ADDR=`getent hosts ${SASL_HOST} | head -n 1 | awk '{print $1}'`
 esac
 
 export IP_ADDR=$IP_ADDR
