@@ -762,8 +762,8 @@ buildvariants:
 
   - matrix_name: "enterprise-auth-tests-ubuntu"
     matrix_spec:
-      # Ruby 2.7, 2.6, 2.5, and 2.4 segfault
-      ruby: ["ruby-2.3", "jruby-9.2"]
+      # Other Rubies segfault
+      ruby: [ruby-2.5, ruby-2.4, jruby-9.2]
     display_name: "Enterprise Auth Ubuntu ${ruby}"
     run_on:
       - ubuntu1604-test
@@ -772,8 +772,8 @@ buildvariants:
 
   - matrix_name: "enterprise-auth-tests-rhel"
     matrix_spec:
-      # Ruby 2.6 and 2.5 segfault
-      ruby: ["ruby-2.3", "ruby-2.4"]
+      # Other Rubies segfault
+      ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
       os: rhel70
     display_name: "Enterprise Auth ${ruby} ${os}"
     tasks:
