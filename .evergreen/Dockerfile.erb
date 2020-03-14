@@ -103,10 +103,14 @@ RUN echo 2
   # Ruby dependency: libyaml
   # compiling python packages: gcc python-devel
   # Kerberos tests: krb5-workstation + cyrus-sasl-devel to build the
-  # mongo_kerberos gem
+  # mongo_kerberos gem + cyrus-sasl-gssapi for authentication to work
+  #
+  # Note: lacking cyrus-sasl-gssapi produces a cryptic message
+  # "SASL(-4): no mechanism available: No worthy mechs found"
+  # https://github.com/farorm/python-ad/issues/10
   
   RUN yum install -y redhat-lsb-core which git gcc python-devel libyaml \
-    krb5-workstation cyrus-sasl-devel
+    krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi
 
 <% end %>
 
