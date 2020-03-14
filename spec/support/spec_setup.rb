@@ -3,8 +3,8 @@ require_relative './client_registry'
 
 class SpecSetup
   def run
-    if SpecConfig.instance.x509_auth?
-      warn 'Skipping user creation because X.509 auth appears to be enabled'
+    if SpecConfig.instance.fixed_user?
+      warn 'Skipping user creation because the set of users is fixed'
       return
     end
 

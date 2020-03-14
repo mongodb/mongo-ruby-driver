@@ -354,6 +354,9 @@ EOT
         if auth_source
           options[:auth_source] = auth_source
         end
+        if uri_options[:auth_mech]
+          options[:auth_mech] = uri_options[:auth_mech]
+        end
       end
     end
   end
@@ -475,11 +478,21 @@ EOT
     uri_options[:auth_mech] == :mongodb_x509
   end
 
-  # When we use x.509 authentication, omit all of the users we normally create
-  # and authenticate with x.509.
-  def credentials_or_x509(creds)
-    if x509_auth?
-      {auth_mech: :mongodb_x509}
+  # When we authenticate with a username & password mechanism (scram, cr)
+  # we create a variety of users in the test suite for different purposes.
+  # When we authenticate with passwordless mechanisms (x509, aws) we use
+  # the globally specified user for all operations.
+  def fixed_user?
+    %i(mongodb_x509).include?(uri_options[:auth_mech])
+  end
+
+  # When we use external authentication, omit all of the users we normally
+  # create and authenticate with the external mechanism. This also ensures
+  # our various helpers work correctly when the only users available are
+  # the external ones.
+  def credentials_or_fixed_user(creds)
+    if fixed_user?
+      auth_options
     else
       creds
     end

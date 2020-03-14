@@ -102,7 +102,7 @@ class ClientRegistry
     when 'authorized'
       client_options = {
         database: SpecConfig.instance.test_db,
-      }.update(SpecConfig.instance.credentials_or_x509(
+      }.update(SpecConfig.instance.credentials_or_fixed_user(
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
       ))
@@ -176,7 +176,7 @@ class ClientRegistry
       else
         client_options = {
           database: SpecConfig.instance.test_db,
-        }.update(SpecConfig.instance.credentials_or_x509(
+        }.update(SpecConfig.instance.credentials_or_fixed_user(
           user: SpecConfig.instance.root_user.name,
           password: SpecConfig.instance.root_user.password,
           auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
@@ -193,7 +193,7 @@ class ClientRegistry
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(
           database: SpecConfig.instance.test_db,
-        ).merge(SpecConfig.instance.credentials_or_x509(
+        ).merge(SpecConfig.instance.credentials_or_fixed_user(
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
         ))
