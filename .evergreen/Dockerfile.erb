@@ -102,8 +102,11 @@ RUN echo 2
   # our runner scripts: which
   # Ruby dependency: libyaml
   # compiling python packages: gcc python-devel
+  # Kerberos tests: krb5-workstation + cyrus-sasl-devel to build the
+  # mongo_kerberos gem
   
-  RUN yum install -y redhat-lsb-core which git gcc python-devel libyaml
+  RUN yum install -y redhat-lsb-core which git gcc python-devel libyaml \
+    krb5-workstation cyrus-sasl-devel
 
 <% end %>
 
