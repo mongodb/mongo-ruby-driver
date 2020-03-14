@@ -65,11 +65,21 @@ echo "Setting krb5 config file"
 touch ${PROJECT_DIRECTORY}/.evergreen/krb5.conf.empty
 export KRB5_CONFIG=${PROJECT_DIRECTORY}/.evergreen/krb5.conf.empty
 
+if test -z "$KEYTAB_BASE64"; then
+  echo KEYTAB_BASE64 must be set in the environment 1>&2
+  exit 5
+fi
+
 echo "Writing keytab"
-echo ${KEYTAB_BASE64} | base64 --decode > ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab
+echo "$KEYTAB_BASE64" | base64 --decode > ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab
+
+if test -z "$PRINCIPAL"; then
+  echo PRINCIPAL must be set in the environment 1>&2
+  exit 5
+fi
 
 echo "Running kinit"
-kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p ${PRINCIPAL}
+kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p "$PRINCIPAL"
 
 # To test authentication using the mongo shell, note that the host name
 # must be uppercased when it is used in the username.
