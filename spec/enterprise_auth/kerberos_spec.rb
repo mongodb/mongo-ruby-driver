@@ -39,9 +39,29 @@ describe 'kerberos authentication' do
     client.database[:test].find.first
   end
 
-  it 'correctly authenticates' do
-    expect(doc['kerberos']).to eq(true)
-    expect(doc['authenticated']).to eq('yeah')
+  shared_examples_for 'correctly authenticates' do
+    it 'correctly authenticates' do
+      expect(doc['kerberos']).to eq(true)
+      expect(doc['authenticated']).to eq('yeah')
+    end
+  end
+
+  it_behaves_like 'correctly authenticates'
+
+  context 'when host is lowercased' do
+    let(:host) do
+      "#{require_env_value('SASL_HOST').downcase}"
+    end
+
+    it_behaves_like 'correctly authenticates'
+  end
+
+  context 'when host is uppercased' do
+    let(:host) do
+      "#{require_env_value('SASL_HOST').upcase}"
+    end
+
+    it_behaves_like 'correctly authenticates'
   end
 
   context 'when canonicalize_host_name is true' do
