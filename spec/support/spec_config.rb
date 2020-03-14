@@ -483,7 +483,14 @@ EOT
   # When we authenticate with passwordless mechanisms (x509, aws) we use
   # the globally specified user for all operations.
   def fixed_user?
-    %i(mongodb_x509).include?(uri_options[:auth_mech])
+    case uri_options[:auth_mech]
+    when :mongodb_x509
+      true
+    when nil, :scram, :scram256
+      false
+    else
+      raise "Unknown auth mechanism value: #{uri_options[:auth_mech]}"
+    end
   end
 
   # When we use external authentication, omit all of the users we normally
