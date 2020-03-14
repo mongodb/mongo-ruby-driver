@@ -55,9 +55,9 @@ class Runner
       end
     end.parse!
 
-    @env = (@options[:extra_env] || {}).merge(Hash[ARGV.map do |arg|
+    @env = Hash[ARGV.map do |arg|
       arg.split('=', 2)
-    end])
+    end]
 
     @env['RVM_RUBY'] ||= 'ruby-2.7'
     unless ruby =~ /^j?ruby-/
@@ -82,7 +82,7 @@ class Runner
   BASE_TEST_COMMAND = %w(docker run -ti --tmpfs /tmpfs:exec).freeze
 
   def run_tests
-    run_command(BASE_TEST_COMMAND + %w(test-driver) + script.split(/\s+/))
+    run_command(BASE_TEST_COMMAND + extra_env + %w(test-driver) + script.split(/\s+/))
   end
 
   def run_deployment
@@ -90,6 +90,13 @@ class Runner
       '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
       '-e', 'BIND_ALL=true',
     ] + port_forwards + %w(test-driver) + script.split(/\s+/))
+  end
+
+  def extra_env
+    @options[:extra_env].map do |k, v|
+      # Here the value must not be escaped
+      ['-e', "#{k}=#{v}"]
+    end.flatten
   end
 
   def port_forwards

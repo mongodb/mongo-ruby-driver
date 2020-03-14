@@ -66,6 +66,11 @@ pertanining to the test Kerberos server, you could run:
 The `.env.private` path specifically is listed in .gitignore and .dockerignore
 files, and is thus ignored by both Git and Docker.
 
+The private environment variables provided via the `-a` argument are
+specified in the `docker run` invocation and are not part of the image
+created by `docker build`. Because of this, they override any environment
+variables provided as positional arguments.
+
 ### rhel62
 
 To run rhel62 distro in docker, host system must be configured to [emulate
