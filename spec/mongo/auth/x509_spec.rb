@@ -44,7 +44,7 @@ describe Mongo::Auth::X509 do
   describe '#login' do
     # When x509 auth is configured, the login would work and this test
     # requires the login to fail.
-    require_no_x509_auth
+    require_no_fixed_user
 
     context 'when the user is not authorized for the database' do
 
@@ -61,9 +61,9 @@ describe Mongo::Auth::X509 do
       end
 
       it 'attempts to log the user into the connection' do
-        expect {
+        expect do
           x509.login(connection)
-        }.to raise_error(Mongo::Auth::Unauthorized)
+        end.to raise_error(Mongo::Auth::Unauthorized)
       end
     end
   end

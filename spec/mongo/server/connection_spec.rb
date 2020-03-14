@@ -290,7 +290,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when user credentials exist' do
-      require_no_x509_auth
+      require_no_fixed_user
 
       let(:server) { monitored_server }
 
@@ -528,7 +528,7 @@ describe Mongo::Server::Connection, retry: 3 do
         server,
         SpecConfig.instance.test_options.merge(
           :database => SpecConfig.instance.test_user.database,
-        ).merge(SpecConfig.instance.credentials_or_x509(
+        ).merge(SpecConfig.instance.credentials_or_fixed_user(
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
         ))
@@ -1044,7 +1044,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when authentication options are provided' do
-      require_no_x509_auth
+      require_no_fixed_user
 
       let(:connection) do
         described_class.new(
@@ -1195,7 +1195,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when auth options differ from server' do
-      require_no_x509_auth
+      require_no_fixed_user
 
       let(:connection) do
         described_class.new(server, server.options.merge(user: 'foo'))

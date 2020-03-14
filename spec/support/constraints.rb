@@ -169,10 +169,10 @@ module Constraints
     end
   end
 
-  def require_no_x509_auth
+  def require_no_fixed_user
     before(:all) do
-      if SpecConfig.instance.x509_auth?
-        skip "X.509 auth not allowed"
+      if SpecConfig.instance.fixed_user?
+        skip "Fixed user configurations not compatible with this test"
       end
     end
   end

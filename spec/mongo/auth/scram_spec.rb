@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Auth::SCRAM do
-  require_no_x509_auth
+  require_no_fixed_user
 
   let(:server) do
     authorized_client.cluster.next_primary

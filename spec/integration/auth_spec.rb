@@ -194,7 +194,7 @@ describe 'Auth' do
   describe 'scram-sha-1 client key caching' do
     clean_slate
     min_server_version '3.0'
-    require_no_x509_auth
+    require_no_fixed_user
 
     let(:client) { authorized_client.with(max_pool_size: 2) }
 
