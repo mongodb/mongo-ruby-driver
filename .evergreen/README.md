@@ -20,7 +20,7 @@ All arguments are optional.
 By default the entire test suite is run (using mlaunch to launch the server);
 to specify another script, use `-s` option:
 
-    ./.evergreen/test-on-docker -s .evergreen/run-tests-enterprise-auth.sh
+    ./.evergreen/test-on-docker -s .evergreen/run-tests-kerberos-unit.sh
 
 To override just the test command (but maintain the setup performed
 by Evergreen shell scripts), use TEST_CMD:
