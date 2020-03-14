@@ -41,12 +41,14 @@ export IP_ADDR=$IP_ADDR
 # 2. The database for Kerberos is $external. This means the file cannot be
 #    simply sourced into the shell, as that would expand $external as a
 #    variable.
-cat ./.env.private |
-  while read line; do
-    k=`echo "$line" |awk -F= '{print $1}'`
-    v=`echo "$line" |awk -F= '{print $2}'`
-    eval $k="'"$v"'"
-  done
+#
+# To assign variables in a loop:
+# https://unix.stackexchange.com/questions/348175/bash-scope-of-variables-in-a-for-loop-using-tee
+while read line; do
+  k=`echo "$line" |awk -F= '{print $1}'`
+  v=`echo "$line" |awk -F= '{print $2}'`
+  eval export $k="'"$v"'"
+done < <(cat ./.env.private)
 
 echo "Setting krb5 config file"
 touch ${PROJECT_DIRECTORY}/.evergreen/krb5.conf.empty
