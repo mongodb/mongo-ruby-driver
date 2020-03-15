@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/ldap/conversation'
-
 module Mongo
   module Auth
 
@@ -21,27 +19,13 @@ module Mongo
     #
     # @since 2.0.0
     # @api private
-    class LDAP
+    class LDAP < Base
 
       # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'PLAIN'.freeze
 
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
-
-      # Instantiate a new authenticator.
-      #
-      # @example Create the authenticator.
-      #   Mongo::Auth::LDAP.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
-      end
       # Log the user in on the given connection.
       #
       # @example Log the user in.
@@ -62,3 +46,5 @@ module Mongo
     end
   end
 end
+
+require 'mongo/auth/ldap/conversation'

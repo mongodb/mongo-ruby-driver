@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/scram/conversation'
-
 module Mongo
   module Auth
 
@@ -21,7 +19,7 @@ module Mongo
     #
     # @since 2.0.0
     # @api private
-    class SCRAM
+    class SCRAM < Base
 
       # The authentication mechanism string for SCRAM-SHA-1.
       #
@@ -40,21 +38,6 @@ module Mongo
         scram: SCRAM_SHA_1_MECHANISM,
         scram256: SCRAM_SHA_256_MECHANISM
       }.freeze
-
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
-
-      # Instantiate a new authenticator.
-      #
-      # @example Create the authenticator.
-      #   Mongo::Auth::SCRAM.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
-      end
 
       # Log the user in on the given connection.
       #
@@ -82,3 +65,5 @@ module Mongo
     end
   end
 end
+
+require 'mongo/auth/scram/conversation'

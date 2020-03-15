@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/cr/conversation'
-
 module Mongo
   module Auth
 
@@ -24,27 +22,12 @@ module Mongo
     #   as of MongoDB 3.6. Support for it in the Ruby driver will be
     #   removed in driver version 3.0. Please use SCRAM instead.
     # @api private
-    class CR
+    class CR < Base
 
       # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-CR'.freeze
-
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
-
-      # Instantiate a new authenticator.
-      #
-      # @example Create the authenticator.
-      #   Mongo::Auth::CR.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
-      end
 
       # Log the user in on the given connection.
       #
@@ -67,3 +50,5 @@ module Mongo
     end
   end
 end
+
+require 'mongo/auth/cr/conversation'
