@@ -29,6 +29,34 @@ module Mongo
       def initialize(user)
         @user = user
       end
+
+      private
+
+      def converse_1_step(connection, conversation)
+        reply = connection.dispatch([ conversation.start(connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
+        conversation.finalize(reply, connection)
+      end
+
+      def converse_2_step(connection, conversation)
+        reply = connection.dispatch([ conversation.start(connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
+        reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
+        conversation.finalize(reply, connection)
+      end
+
+      def converse_multi_step(connection, conversation)
+        reply = connection.dispatch([ conversation.start(connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
+        reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
+        until reply.documents.first[:done]
+          reply = connection.dispatch([ conversation.finalize(reply, connection) ])
+          connection.update_cluster_time(Operation::Result.new(reply))
+        end
+        reply
+      end
     end
   end
 end

@@ -39,11 +39,6 @@ module Mongo
         # @deprecated
         CLIENT_KEY = 'Client Key'.freeze
 
-        # The key for the done field in the responses.
-        #
-        # @since 2.0.0
-        DONE = 'done'.freeze
-
         # The conversation id field.
         #
         # @since 2.0.0
