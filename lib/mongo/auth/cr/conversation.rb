@@ -23,7 +23,7 @@ module Mongo
       # @deprecated MONGODB-CR authentication mechanism is deprecated
       #   as of MongoDB 3.6. Support for it in the Ruby driver will be
       #   removed in driver version 3.0. Please use SCRAM instead.
-      class Conversation
+      class Conversation < ConversationBase
 
         # The login message base.
         #
@@ -39,9 +39,6 @@ module Mongo
 
         # @return [ String ] nonce The initial auth nonce.
         attr_reader :nonce
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
 
         # Continue the CR conversation. This sends the client final message
         # to the server after setting the reply from the previous server
@@ -113,18 +110,6 @@ module Mongo
               Auth::GET_NONCE,
               limit: -1)
           end
-        end
-
-        # Create the new conversation.
-        #
-        # @example Create the new conversation.
-        #   Conversation.new(user, "admin")
-        #
-        # @param [ Auth::User ] user The user to converse about.
-        #
-        # @since 2.0.0
-        def initialize(user)
-          @user = user
         end
 
         private

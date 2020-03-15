@@ -21,7 +21,7 @@ module Mongo
       #
       # @since 2.0.0
       # @api private
-      class Conversation
+      class Conversation < ConversationBase
 
         # The base client continue message.
         #
@@ -88,9 +88,6 @@ module Mongo
         # @return [ Protocol::Message ] reply The current reply in the
         #   conversation.
         attr_reader :reply
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
 
         # Continue the SCRAM conversation. This sends the client final message
         # to the server after setting the reply from the previous server
@@ -223,7 +220,7 @@ module Mongo
             raise InvalidMechanism.new(mechanism)
           end
 
-          @user = user
+          super(user)
           @nonce = SecureRandom.base64
           @mechanism = mechanism
         end
