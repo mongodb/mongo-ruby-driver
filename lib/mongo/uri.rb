@@ -197,7 +197,7 @@ module Mongo
       'MONGODB-X509' => :mongodb_x509,
       'PLAIN'        => :plain,
       'SCRAM-SHA-1'  => :scram,
-      'SCRAM-SHA-256' => :scram256
+      'SCRAM-SHA-256' => :scram256,
     }.freeze
 
     # Options that are allowed to appear more than once in the uri.
