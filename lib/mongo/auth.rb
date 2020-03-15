@@ -13,13 +13,14 @@
 # limitations under the License.
 
 require 'mongo/auth/credential_cache'
+require 'mongo/auth/stringprep'
+require 'mongo/auth/user'
+require 'mongo/auth/roles'
+require 'mongo/auth/base'
 require 'mongo/auth/cr'
 require 'mongo/auth/ldap'
 require 'mongo/auth/scram'
-require 'mongo/auth/user'
 require 'mongo/auth/x509'
-require 'mongo/auth/roles'
-require 'mongo/auth/stringprep'
 
 module Mongo
 
