@@ -23,7 +23,7 @@ module Mongo
     # @api private
     class X509
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-X509'.freeze

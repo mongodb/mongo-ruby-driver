@@ -23,7 +23,7 @@ module Mongo
     # @api private
     class LDAP
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'PLAIN'.freeze

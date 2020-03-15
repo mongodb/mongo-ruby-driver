@@ -26,7 +26,7 @@ module Mongo
     # @api private
     class CR
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-CR'.freeze
