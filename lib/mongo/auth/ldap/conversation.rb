@@ -20,7 +20,7 @@ module Mongo
       # client and server.
       #
       # @since 2.0.0
-      class Conversation
+      class Conversation < ConversationBase
 
         # The login message.
         #
@@ -30,9 +30,6 @@ module Mongo
         # @return [ Protocol::Message ] reply The current reply in the
         #   conversation.
         attr_reader :reply
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
 
         # Finalize the PLAIN conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
@@ -73,18 +70,6 @@ module Mongo
               limit: -1
             )
           end
-        end
-
-        # Create the new conversation.
-        #
-        # @example Create the new conversation.
-        #   Conversation.new(user, "admin")
-        #
-        # @param [ Auth::User ] user The user to converse about.
-        #
-        # @since 2.0.0
-        def initialize(user)
-          @user = user
         end
 
         private
