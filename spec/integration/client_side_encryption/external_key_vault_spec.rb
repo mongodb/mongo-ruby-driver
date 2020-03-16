@@ -36,11 +36,11 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.use(:admin)[:datakeys].drop
-      client.use(:db)[:coll].drop
+      client.use('admin')['datakeys'].drop
+      client.use('db')['coll'].drop
 
       data_key = BSON::ExtJSON.parse(File.read('spec/support/crypt/external/external-key.json'))
-      client.use(:admin)[:datakeys].insert_one(data_key)
+      client.use('admin')['datakeys', write_concern: { w: :majority }].insert_one(data_key)
     end
 
     context 'with default key vault client' do
@@ -69,10 +69,10 @@ describe 'Client-Side Encryption' do
       end
 
       it 'inserts an encrypted document with client' do
-        result = client_encrypted[:coll].insert_one(encrypted: 'test')
+        result = client_encrypted['coll'].insert_one(encrypted: 'test')
         expect(result).to be_ok
 
-        encrypted = client.use(:db)[:coll].find.first['encrypted']
+        encrypted = client.use('db')['coll'].find.first['encrypted']
         expect(encrypted).to be_ciphertext
       end
 
@@ -117,7 +117,7 @@ describe 'Client-Side Encryption' do
 
        it 'raises an authentication exception when auto encrypting' do
         expect do
-          client_encrypted[:coll].insert_one(encrypted: 'test')
+          client_encrypted['coll'].insert_one(encrypted: 'test')
         end.to raise_error(Mongo::Auth::Unauthorized, /fake-user/)
       end
 
