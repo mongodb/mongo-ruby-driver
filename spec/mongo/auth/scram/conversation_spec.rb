@@ -73,12 +73,12 @@ describe Mongo::Auth::SCRAM::Conversation do
       end
 
       let(:documents) do
-        [{
+        [BSON::Document.new(
           'conversationId' => 1,
           'done' => false,
           'payload' => payload,
           'ok' => 1.0
-        }]
+        )]
       end
 
       before do
