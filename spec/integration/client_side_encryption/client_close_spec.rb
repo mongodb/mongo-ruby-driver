@@ -18,7 +18,7 @@ describe 'Auto encryption client' do
             key_vault_namespace: 'admin.datakeys',
             schema_map: { 'auto_encryption.users' => schema_map },
           },
-          database: :auto_encryption,
+          database: 'auto_encryption',
         )
       )
     end

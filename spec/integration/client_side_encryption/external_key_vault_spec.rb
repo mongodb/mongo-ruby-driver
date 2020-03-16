@@ -53,7 +53,7 @@ describe 'Client-Side Encryption' do
               key_vault_namespace: 'admin.datakeys',
               schema_map: test_schema_map,
             },
-            database: :db,
+            database: 'db',
           )
         )
       end
@@ -100,7 +100,7 @@ describe 'Client-Side Encryption' do
               schema_map: test_schema_map,
               key_vault_client: external_key_vault_client,
             },
-            database: :db,
+            database: 'db',
           )
         )
       end
