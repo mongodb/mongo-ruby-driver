@@ -793,7 +793,7 @@ buildvariants:
       mongodb-version: ["4.2"]
       os: rhel70
       fle: fle
-    display_name: "FLE Tests: ${mongodb-version} ${ruby}"
+    display_name: "FLE Tests: ${topology} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
 
