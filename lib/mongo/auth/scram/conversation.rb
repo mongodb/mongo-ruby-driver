@@ -21,17 +21,7 @@ module Mongo
       #
       # @since 2.0.0
       # @api private
-      class Conversation < ConversationBase
-
-        # The base client continue message.
-        #
-        # @since 2.0.0
-        CLIENT_CONTINUE_MESSAGE = { saslContinue: 1 }.freeze
-
-        # The base client first message.
-        #
-        # @since 2.0.0
-        CLIENT_FIRST_MESSAGE = { saslStart: 1, autoAuthorize: 1 }.freeze
+      class Conversation < SaslConversationBase
 
         # The client key string.
         #
@@ -61,10 +51,10 @@ module Mongo
         # @since 2.0.0
         PAYLOAD = 'payload'.freeze
 
-        # The rnonce key in the responses.
+        # The server nonce key in the responses.
         #
         # @since 2.0.0
-        RNONCE = /r=([^,]*)/.freeze
+        SERVER_NONCE = /r=([^,]*)/.freeze
 
         # The salt key in the responses.
         #
@@ -82,8 +72,8 @@ module Mongo
         # @since 2.0.0
         VERIFIER = /v=([^,]*)/.freeze
 
-        # @return [ String ] nonce The initial user nonce.
-        attr_reader :nonce
+        # @return [ String ] client_nonce The client nonce.
+        attr_reader :client_nonce
 
         # @return [ Protocol::Message ] reply The current reply in the
         #   conversation.
@@ -163,33 +153,6 @@ module Mongo
           end
         end
 
-        # Start the SCRAM conversation. This returns the first message that
-        # needs to be sent to the server.
-        #
-        # @param [ Server::Connection ] connection The connection being authenticated.
-        #
-        # @return [ Protocol::Query ] The first SCRAM conversation message.
-        #
-        # @since 2.0.0
-        def start(connection)
-          if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_FIRST_MESSAGE.merge(
-              payload: client_first_message, mechanism: full_mechanism)
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              user.auth_source,
-              Database::COMMAND,
-              CLIENT_FIRST_MESSAGE.merge(
-                payload: client_first_message, mechanism: full_mechanism),
-              limit: -1,
-            )
-          end
-        end
-
         def full_mechanism
           MECHANISMS[@mechanism]
         end
@@ -221,11 +184,16 @@ module Mongo
           end
 
           super(user)
-          @nonce = SecureRandom.base64
+          @client_nonce = SecureRandom.base64
           @mechanism = mechanism
         end
 
         private
+
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        def client_first_payload
+          "n,,#{first_bare}"
+        end
 
         # Auth message algorithm implementation.
         #
@@ -256,17 +224,6 @@ module Mongo
         # @since 2.0.0
         def client_final_message
           BSON::Binary.new("#{without_proof},p=#{client_final}")
-        end
-
-        # Get the client first message
-        #
-        # @api private
-        #
-        # @see http://tools.ietf.org/html/rfc5802#section-3
-        #
-        # @since 2.0.0
-        def client_first_message
-          BSON::Binary.new("n,,#{first_bare}")
         end
 
         # Client final implementation.
@@ -323,7 +280,7 @@ module Mongo
         #
         # @since 2.0.0
         def first_bare
-          @first_bare ||= "n=#{user.encoded_name},r=#{nonce}"
+          @first_bare ||= "n=#{user.encoded_name},r=#{client_nonce}"
         end
 
         # H algorithm implementation.
@@ -403,9 +360,7 @@ module Mongo
         # @api private
         #
         # @since 2.0.0
-        def rnonce
-          @rnonce ||= payload_data.match(RNONCE)[1]
-        end
+        attr_reader :server_nonce
 
         # Gets the salt from the server response.
         #
@@ -491,7 +446,7 @@ module Mongo
         #
         # @since 2.0.0
         def without_proof
-          @without_proof ||= "c=biws,r=#{rnonce}"
+          @without_proof ||= "c=biws,r=#{server_nonce}"
         end
 
         # XOR operation for two strings.
@@ -510,26 +465,19 @@ module Mongo
         end
 
         def validate_final_message!(reply, server)
-          validate!(reply, server)
+          validate_reply!(reply, server)
+          @reply = reply
           unless compare_digest(verifier, server_signature)
             raise Error::InvalidSignature.new(verifier, server_signature)
           end
         end
 
         def validate_first_message!(reply, server)
-          validate!(reply, server)
-          raise Error::InvalidNonce.new(nonce, rnonce) unless rnonce.start_with?(nonce)
-        end
-
-        def validate!(reply, server)
-          if reply.documents[0][Operation::Result::OK] != 1
-            raise Unauthorized.new(user,
-              used_mechanism: full_mechanism,
-              message: reply.documents[0]['errmsg'],
-              server: server,
-            )
-          end
+          validate_reply!(reply, server)
           @reply = reply
+          payload_data = reply.documents[0][PAYLOAD].data
+          @server_nonce = payload_data.match(SERVER_NONCE)[1]
+          validate_server_nonce!
         end
 
         private
