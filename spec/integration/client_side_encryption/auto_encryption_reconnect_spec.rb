@@ -28,7 +28,7 @@ describe 'Client with auto encryption #reconnect' do
     )
   end
 
-  let(:unencrypted_client) { authorized_client.use(:auto_encryption) }
+  let(:unencrypted_client) { authorized_client.use('auto_encryption') }
 
   let(:mongocryptd_client) { client.encrypter.mongocryptd_client }
   let(:key_vault_client) { client.encrypter.key_vault_client }
@@ -36,7 +36,7 @@ describe 'Client with auto encryption #reconnect' do
 
   shared_examples 'a functioning client' do
     it 'can perform an encrypted find command' do
-      doc = client[:users].find(ssn: ssn).first
+      doc = client['users'].find(ssn: ssn).first
       expect(doc).not_to be_nil
       expect(doc['ssn']).to eq(ssn)
     end
@@ -65,7 +65,7 @@ describe 'Client with auto encryption #reconnect' do
 
   shared_examples 'a functioning key vault client' do
     it 'can perform a find command' do
-      doc = key_vault_client.use(key_vault_db)[key_vault_coll].find(_id: data_key_id).first
+      doc = key_vault_client.use(key_vault_db)[key_vault_coll, read_concern: { level: :majority}].find(_id: data_key_id).first
       expect(doc).not_to be_nil
       expect(doc['_id']).to eq(data_key_id)
     end
@@ -76,12 +76,12 @@ describe 'Client with auto encryption #reconnect' do
       key_vault_collection.drop
       key_vault_collection.insert_one(data_key)
 
-      unencrypted_client[:users].drop
+      unencrypted_client['users'].drop
       # Use a client without auto_encryption_options to insert an
       # encrypted document into the collection; this ensures that the
       # client with auto_encryption_options must perform decryption
       # to properly read the document.
-      unencrypted_client[:users].insert_one(
+      unencrypted_client['users'].insert_one(
         ssn: BSON::Binary.new(Base64.decode64(encrypted_ssn), :ciphertext)
       )
     end
@@ -200,7 +200,10 @@ describe 'Client with auto encryption #reconnect' do
 
   context 'with custom key vault client option' do
     let(:key_vault_client_option) do
-      Mongo::Client.new(SpecConfig.instance.addresses).use(:test)
+      new_local_client(
+        SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options
+      )
     end
 
     context 'with AWS KMS providers' do
