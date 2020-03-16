@@ -15,6 +15,7 @@
 require 'mongo/auth/credential_cache'
 require 'mongo/auth/stringprep'
 require 'mongo/auth/conversation_base'
+require 'mongo/auth/sasl_conversation_base'
 require 'mongo/auth/user'
 require 'mongo/auth/roles'
 require 'mongo/auth/base'
