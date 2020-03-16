@@ -89,7 +89,7 @@ functions:
 
             export STRESS_SPEC=true
           EOT
-          
+
           # See what we've done
           cat expansion.yml
 
@@ -789,7 +789,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
-      topology: standalone
+      topology: [standalone, replica-set]
       mongodb-version: ["4.2"]
       os: rhel70
       fle: fle
