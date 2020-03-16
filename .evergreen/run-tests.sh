@@ -139,7 +139,7 @@ EOT
 fi
 
 if test "$AUTH" = kerberos; then
-  export KERBEROS=1
+  export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
 
 if test -n "$FLE"; then

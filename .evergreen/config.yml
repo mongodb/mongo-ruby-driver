@@ -249,7 +249,7 @@ functions:
           ${PREPARE_SHELL}
           .evergreen/run-tests.sh
 
-  "run kerberos unit tests":
+  "run Kerberos unit tests":
     - command: shell.exec
       type: test
       params:
@@ -259,7 +259,7 @@ functions:
           ${PREPARE_SHELL}
           .evergreen/run-tests-kerberos-unit.sh
 
-  "run enterprise auth tests":
+  "run Kerberos integration tests":
     - command: shell.exec
       type: test
       params:
@@ -267,7 +267,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-enterprise-auth.sh
+          .evergreen/run-tests-kerberos-integration.sh
 
 pre:
   - func: "fetch source"
@@ -286,13 +286,13 @@ tasks:
     - name: "test-mlaunch"
       commands:
         - func: "run tests"
-    - name: "enterprise-auth-tests"
+    - name: "test-kerberos-integration"
       commands:
         - func: "export Kerberos credentials"
-        - func: "run enterprise auth tests"
+        - func: "run Kerberos integration tests"
     - name: "test-kerberos"
       commands:
-        - func: "run kerberos unit tests"
+        - func: "run Kerberos unit tests"
     - name: "test-fle"
       commands:
         - func: "export FLE AWS credentials"
@@ -761,29 +761,29 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "enterprise-auth-tests-ubuntu"
+  - matrix_name: "kerberos-integration-ubuntu"
     matrix_spec:
       # Other Rubies segfault
       ruby: [ruby-2.5, ruby-2.4, jruby-9.2]
-    display_name: "Enterprise Auth Ubuntu ${ruby}"
+    display_name: "Kerberos integration Ubuntu ${ruby}"
     run_on:
       - ubuntu1604-test
     tasks:
-      - name: "enterprise-auth-tests"
+      - name: "test-kerberos-integration"
 
-  - matrix_name: "enterprise-auth-tests-rhel"
+  - matrix_name: "kerberos-integration-rhel"
     matrix_spec:
       # Other Rubies segfault
       ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
       os: rhel70
-    display_name: "Enterprise Auth ${ruby} ${os}"
+    display_name: "Kerberos integration RHEL ${ruby} ${os}"
     tasks:
-      - name: "enterprise-auth-tests"
+      - name: "test-kerberos-integration"
 
-  # Enterprise auth tests on debian are omitted due to segfaults:
+  # Kerberos integration tests on debian are omitted due to segfaults:
   # https://jira.mongodb.org/browse/RUBY-1534
 
-  - matrix_name: "test-kerberos"
+  - matrix_name: "kerberos-unit"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "ruby-2.6"
@@ -795,7 +795,7 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  - matrix_name: "fle-tests-4.2"
+  - matrix_name: "fle-4.2"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
@@ -803,11 +803,11 @@ buildvariants:
       mongodb-version: ["4.2"]
       os: rhel70
       fle: fle
-    display_name: "FLE Tests: ${topology} ${mongodb-version} ${ruby}"
+    display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "fle-tests-4.0"
+  - matrix_name: "fle-4.0"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-2.6, jruby-9.2]
@@ -815,11 +815,11 @@ buildvariants:
       mongodb-version: ["4.0"]
       os: rhel70
       fle: fle
-    display_name: "FLE Tests: ${mongodb-version} ${ruby}"
+    display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "fle-tests-latest"
+  - matrix_name: "fle-latest"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-2.7]
@@ -827,6 +827,6 @@ buildvariants:
       mongodb-version: [latest]
       os: rhel70
       fle: fle
-    display_name: "FLE Tests: ${mongodb-version} ${ruby}"
+    display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"

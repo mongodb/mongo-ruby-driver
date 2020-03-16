@@ -272,19 +272,60 @@ To run the test suite against such a server, run:
 ## Kerberos
 
 The Kerberos-related functionality is packaged in a separate gem,
-`mongo_kerberos`. The driver test suite includes a number of unit tests that
-are skipped by default. To run them as part of the test suite, use the
-provided gemfile as follows:
+`mongo_kerberos`. To run any of the Kerberos tests, a special gemfile must
+be used that references `mongo_kerberos`:
 
     export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
     bundle install
-    export KERBEROS=1
+
+Ensure that BUNDLE_GEMFILE is set in the environment for both the
+`bundle install` invocation and the `rake` / `rspec` invocation.
+
+### Unit Tests
+
+The driver test suite includes a number of Kerberos-related unit tests that
+are skipped by default. To run them as part of the test suite, set the
+`MONGO_RUBY_DRIVER_KERBEROS` environment variable to `1`, `yes` or `true`
+as follows:
+
+    export MONGO_RUBY_DRIVER_KERBEROS=1
     rake
 
 Note that running the full test suite requires a MongoDB deployment. It is
 possible to run just the Kerberos-related unit tests without provisioning a
-MongoDB deployment; consult .evergreen/run-tests-kerberos-unit.sh for the
-full list of relevant test files.
+MongoDB deployment; consult the `.evergreen/run-tests-kerberos-unit.sh` file
+for the full list of relevant test files.
+
+### Integration Tests
+
+The driver test suite includes a number of Kerberos-related integration tests
+in the `spec/kerberos` directory. These require a provisioned Kerberos
+deployment and appropriately configured MongoDB deployment. One such deployment
+is provided internally by MongoDB and is used in the driver's Evergreen
+configuration; it is also possible to provision a test deployment locally.
+
+The following additional environment variables must be set to run the
+Kerberos integration tests:
+
+- `MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1`
+- `SASL_HOST`: the host name of the MongoDB server that is configured to
+use Kerberos. Note that this is NOT the Kerberos domain controller (KDC).
+- `SASL_PORT`: the port number that the Kerberized MongoDB server is
+listenin on.
+- `SASL_USER`: the username to provide to MongoDB for authentication.
+- `SASL_PASS`: the password to provide to MongoDB for authentication.
+- `SASL_DB`: the database that stores the user used for authentication. This
+is the "auth soure" in MongoDB parlance. Normally this should be `$external`.
+- `PRINCIPAL`: the Kerberos principal to use for authentication, in the
+form of `username@realm`. Note that the realm is commonly uppercased.
+- `KERBEROS_DB`: the database that the user has access to.
+- `KEYTAB_BASE64`: Base64 encoded keytab for the user. Used instead of the
+password.
+
+There are several steps that must be taken in order to set up Kerberos on
+the client side before it is usable by the driver for authentication against
+a Kerberized server. Consult the `.evergreen/run-tests-kerberos-integration.sh`
+file for details.
 
 ## Client-Side Encryption
 
