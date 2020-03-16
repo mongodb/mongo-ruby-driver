@@ -35,8 +35,8 @@ describe 'Auto Encryption' do
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
 
-    encryption_client[:users].drop
-    result = encryption_client[:users].insert_one(ssn: ssn, age: 23)
+    encryption_client['users'].drop
+    result = encryption_client['users'].insert_one(ssn: ssn, age: 23)
   end
 
   let(:started_event) do
@@ -68,7 +68,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'aggregate' }
 
     before do
-      encryption_client[:users].aggregate([{ '$match' => { 'ssn' => ssn } }]).first
+      encryption_client['users'].aggregate([{ '$match' => { 'ssn' => ssn } }]).first
     end
 
     it 'has encrypted data in command monitoring' do
@@ -88,7 +88,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'count' }
 
     before do
-      encryption_client[:users].count(ssn: ssn)
+      encryption_client['users'].count(ssn: ssn)
     end
 
     it 'has encrypted data in command monitoring' do
@@ -104,7 +104,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'distinct' }
 
     before do
-      encryption_client[:users].distinct(:ssn)
+      encryption_client['users'].distinct(:ssn)
     end
 
     it 'has encrypted data in command monitoring' do
@@ -120,7 +120,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'delete' }
 
     before do
-      encryption_client[:users].delete_one(ssn: ssn)
+      encryption_client['users'].delete_one(ssn: ssn)
     end
 
     it 'has encrypted data in command monitoring' do
@@ -136,7 +136,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'delete' }
 
     before do
-      encryption_client[:users].delete_many(ssn: ssn)
+      encryption_client['users'].delete_many(ssn: ssn)
     end
 
     it 'has encrypted data in command monitoring' do
@@ -152,7 +152,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'find' }
 
     before do
-      encryption_client[:users].find(ssn: ssn).first
+      encryption_client['users'].find(ssn: ssn).first
     end
 
     it 'has encrypted data in command monitoring' do
@@ -170,7 +170,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'findAndModify' }
 
     before do
-      encryption_client[:users].find_one_and_delete(ssn: ssn)
+      encryption_client['users'].find_one_and_delete(ssn: ssn)
     end
 
     it 'has encrypted data in command monitoring' do
@@ -188,7 +188,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'findAndModify' }
 
     before do
-      encryption_client[:users].find_one_and_replace(
+      encryption_client['users'].find_one_and_replace(
         { ssn: ssn },
         { ssn: '555-555-5555' }
       )
@@ -210,7 +210,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'findAndModify' }
 
     before do
-      encryption_client[:users].find_one_and_update(
+      encryption_client['users'].find_one_and_update(
         { ssn: ssn },
         { ssn: '555-555-5555' }
       )
@@ -233,7 +233,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'insert' }
 
     before do
-      encryption_client[:users].insert_one(ssn: ssn)
+      encryption_client['users'].insert_one(ssn: ssn)
     end
 
     it 'has encrypted data in command monitoring' do
@@ -249,7 +249,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'update' }
 
     before do
-      encryption_client[:users].replace_one(
+      encryption_client['users'].replace_one(
         { ssn: ssn },
         { ssn: '555-555-5555' }
       )
@@ -269,7 +269,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'update' }
 
     before do
-      encryption_client[:users].update_one({ ssn: ssn }, { ssn: '555-555-5555' })
+      encryption_client['users'].update_one({ ssn: ssn }, { ssn: '555-555-5555' })
     end
 
     it 'has encrypted data in command monitoring' do
@@ -287,7 +287,7 @@ describe 'Auto Encryption' do
 
     before do
       # update_many does not support replacement-style updates
-      encryption_client[:users].update_many({ ssn: ssn }, { "$inc" => { :age => 1 } })
+      encryption_client['users'].update_many({ ssn: ssn }, { "$inc" => { :age => 1 } })
     end
 
     it 'has encrypted data in command monitoring' do
