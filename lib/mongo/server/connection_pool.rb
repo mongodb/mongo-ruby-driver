@@ -383,6 +383,12 @@ module Mongo
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
         )
 
+        if Lint.enabled?
+          unless connection.connected?
+            raise Error::LintError, 'Connection pool checked out a disconnected connection'
+          end
+        end
+
         connection
       ensure
         check_invariants
