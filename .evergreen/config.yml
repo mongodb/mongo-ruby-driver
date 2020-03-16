@@ -113,6 +113,24 @@ functions:
           MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
           EOT
 
+  "export Kerberos credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          SASL_HOST=${sasl_host}
+          SASL_PORT=${sasl_port}
+          SASL_USER=${sasl_user}
+          SASL_PASS=${sasl_pass}
+          SASL_DB=${sasl_db}
+          PRINCIPAL=${principal}
+          KERBEROS_DB=${kerberos_db}
+          KEYTAB_BASE64=${keytab_base64}
+          EOT
+
   "exec script" :
     - command: shell.exec
       type: test
@@ -238,7 +256,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          KERBEROS=1 .evergreen/run-tests-kerberos-unit.sh
+          .evergreen/run-tests-kerberos-unit.sh
 
   "run enterprise auth tests":
     - command: shell.exec
@@ -247,21 +265,8 @@ functions:
         shell: bash
         working_dir: "src"
         script: |
-            # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-            case "$OS" in
-              cygwin*)
-                 IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
-                 ;;
-
-              darwin)
-                 IP_ADDR=`dig ${sasl_host} +short | tail -1`
-                 ;;
-
-              *)
-                 IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
-            esac
-
-            KERBEROS=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-tests-enterprise-auth.sh
+          ${PREPARE_SHELL}
+          .evergreen/run-tests-enterprise-auth.sh
 
 pre:
   - func: "fetch source"
@@ -282,6 +287,7 @@ tasks:
         - func: "run tests"
     - name: "enterprise-auth-tests"
       commands:
+        - func: "export Kerberos credentials"
         - func: "run enterprise auth tests"
     - name: "test-kerberos"
       commands:
@@ -383,6 +389,10 @@ axes:
         variables:
           AUTH: "x509"
           SSL: "ssl"
+      - id: kerberos
+        display_name: Kerberos
+        variables:
+          AUTH: kerberos
 
   - id: "ruby"
     display_name: Ruby Version
@@ -752,9 +762,8 @@ buildvariants:
 
   - matrix_name: "enterprise-auth-tests-ubuntu"
     matrix_spec:
-      auth-and-ssl: "auth-and-ssl"
-      # Ruby 2.7, 2.6, 2.5, and 2.4 segfault
-      ruby: ["ruby-2.3", "jruby-9.2"]
+      # Other Rubies segfault
+      ruby: [ruby-2.5, ruby-2.4, jruby-9.2]
     display_name: "Enterprise Auth Ubuntu ${ruby}"
     run_on:
       - ubuntu1604-test
@@ -763,9 +772,8 @@ buildvariants:
 
   - matrix_name: "enterprise-auth-tests-rhel"
     matrix_spec:
-      auth-and-ssl: "auth-and-ssl"
-      # Ruby 2.6 and 2.5 segfault
-      ruby: ["ruby-2.3", "ruby-2.4"]
+      # Other Rubies segfault
+      ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
       os: rhel70
     display_name: "Enterprise Auth ${ruby} ${os}"
     tasks:
@@ -781,6 +789,7 @@ buildvariants:
       mongodb-version: "4.2"
       topology: standalone
       os: rhel70
+      auth-and-ssl: kerberos
     display_name: "Kerberos Tests"
     tasks:
       - name: "test-kerberos"

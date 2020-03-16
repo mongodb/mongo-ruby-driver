@@ -1,27 +1,30 @@
-require 'mongo'
-require 'support/lite_constraints'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe 'kerberos authentication' do
   require_mongo_kerberos
 
+  def require_env_value(key)
+    ENV[key].tap do |value|
+      if value.nil? || value.empty?
+        raise "Value for key #{key} is not present in environment as required"
+      end
+    end
+  end
+
   let(:user) do
-   "#{ENV['SASL_USER']}%40#{ENV['SASL_HOST'].upcase}"
+   "#{require_env_value('SASL_USER')}%40#{require_env_value('SASL_HOST').upcase}"
   end
 
   let(:host) do
-    "#{ENV['SASL_HOST']}"
+    "#{require_env_value('SASL_HOST')}"
   end
 
   let(:kerberos_db) do
-    "#{ENV['KERBEROS_DB']}"
+    "#{require_env_value('KERBEROS_DB')}"
   end
 
   let(:auth_source) do
-    "#{ENV['SASL_DB']}"
+    "#{require_env_value('SASL_DB')}"
   end
 
   let(:uri) do
@@ -29,21 +32,41 @@ describe 'kerberos authentication' do
   end
 
   let(:client) do
-    Mongo::Client.new(uri)
+    Mongo::Client.new(uri, server_selection_timeout: 6.31)
   end
 
   let(:doc) do
     client.database[:test].find.first
   end
 
-  it 'correctly authenticates' do
-    expect(doc['kerberos']).to eq(true)
-    expect(doc['authenticated']).to eq('yeah')
+  shared_examples_for 'correctly authenticates' do
+    it 'correctly authenticates' do
+      expect(doc['kerberos']).to eq(true)
+      expect(doc['authenticated']).to eq('yeah')
+    end
+  end
+
+  it_behaves_like 'correctly authenticates'
+
+  context 'when host is lowercased' do
+    let(:host) do
+      "#{require_env_value('SASL_HOST').downcase}"
+    end
+
+    it_behaves_like 'correctly authenticates'
+  end
+
+  context 'when host is uppercased' do
+    let(:host) do
+      "#{require_env_value('SASL_HOST').upcase}"
+    end
+
+    it_behaves_like 'correctly authenticates'
   end
 
   context 'when canonicalize_host_name is true' do
     let(:host) do
-      "#{ENV['IP_ADDR']}"
+      "#{require_env_value('IP_ADDR')}"
     end
 
     let(:uri) do
