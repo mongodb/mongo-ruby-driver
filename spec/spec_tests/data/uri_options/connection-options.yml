@@ -126,7 +126,7 @@ tests:
       uri: "mongodb://example.com/?directConnection=false"
       valid: true
       warning: false
-      hosts: [example.com]
+      hosts: ~
       auth: ~
       options:
           directConnection: false
@@ -135,7 +135,7 @@ tests:
       uri: "mongodb://example1.com,example2.com/?directConnection=false"
       valid: true
       warning: false
-      hosts: [example1.com, example2.com]
+      hosts: ~
       auth: ~
       options:
           directConnection: false
