@@ -62,10 +62,16 @@ module Mongo
       private
 
       def validate_reply!(reply, server)
-        if reply.documents[0][Operation::Result::OK] != 1
+        doc = reply.documents[0]
+        if doc[:ok] != 1
+          extra = [doc[:code], doc[:codeName]].compact.join(': ')
+          msg = doc[:errmsg]
+          unless extra.empty?
+            msg += " (#{extra})"
+          end
           raise Unauthorized.new(user,
             used_mechanism: full_mechanism,
-            message: reply.documents[0]['errmsg'],
+            message: msg,
             server: server,
           )
         end
