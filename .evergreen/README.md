@@ -20,9 +20,9 @@ All arguments are optional.
 By default the entire test suite is run (using mlaunch to launch the server);
 to specify another script, use `-s` option:
 
-    ./.evergreen/test-on-docker -s .evergreen/run-tests-enterprise-auth.sh
+    ./.evergreen/test-on-docker -s .evergreen/run-tests-kerberos-unit.sh
 
-To perform override just the test command (but maintaining the setup performed
+To override just the test command (but maintain the setup performed
 by Evergreen shell scripts), use TEST_CMD:
 
     ./.evergreen/test-on-docker TEST_CMD='rspec spec/mongo/auth'
@@ -40,6 +40,36 @@ provided the full process has already been executed. This is accomplished
 with the `-e` option and only makes sense when `-p` is also used:
 
     ./.evergreen/test-on-docker -pe
+
+### Private Environment Variables
+
+Normally the environment variables are specified on the command line as
+positional arguments. However the Ruby driver Evergreen projects also have
+private variables containing various passwords which are not echoed in the
+build logs, and therefore are not conveniently providable using the normal
+environment variable handling.
+
+Instead, these variables can be collected into a
+[.env](https://github.com/bkeepers/dotenv)-compatible configuration file,
+and the path to this configuration file can be provided via the `-a`
+option to the test runner. The `-a` option may be given multiple times.
+
+When creating the .env files from Evergreen private variables, the variable
+names must be uppercased.
+
+For example, to execute enterprise auth tests which require private variables
+pertanining to the test Kerberos server, you could run:
+
+    ./.evergreen/test-on-docker -d rhel70 RVM_RUBY=ruby-2.3 \
+      -s .evergreen/run-tests-enterprise-auth.sh -pa .env.private
+
+The `.env.private` path specifically is listed in .gitignore and .dockerignore
+files, and is thus ignored by both Git and Docker.
+
+The private environment variables provided via the `-a` argument are
+specified in the `docker run` invocation and are not part of the image
+created by `docker build`. Because of this, they override any environment
+variables provided as positional arguments.
 
 ### rhel62
 

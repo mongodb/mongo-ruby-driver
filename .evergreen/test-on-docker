@@ -2,6 +2,7 @@
 
 require 'optparse'
 require 'erb'
+autoload :Dotenv, 'dotenv'
 
 load File.join(File.dirname(__FILE__), 'tools.rb')
 
@@ -25,6 +26,13 @@ class Runner
     @options = {}
     OptionParser.new do |opts|
       opts.banner = "Usage: test-on-docker [-d distro] [evergreen_key=value ...]"
+
+      opts.on("-a", "--add-env=PATH", "Load environment variables from PATH in .env format") do |path|
+        @options[:extra_env] ||= {}
+        Dotenv.parse(path).each do |k, v|
+          @options[:extra_env][k] = v
+        end
+      end
 
       opts.on("-d", "--distro=DISTRO", "Distro to use") do |v|
         @options[:distro] = v
@@ -74,7 +82,7 @@ class Runner
   BASE_TEST_COMMAND = %w(docker run -ti --tmpfs /tmpfs:exec).freeze
 
   def run_tests
-    run_command(BASE_TEST_COMMAND + %w(test-driver) + script.split(/\s+/))
+    run_command(BASE_TEST_COMMAND + extra_env + %w(test-driver) + script.split(/\s+/))
   end
 
   def run_deployment
@@ -82,6 +90,13 @@ class Runner
       '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
       '-e', 'BIND_ALL=true',
     ] + port_forwards + %w(test-driver) + script.split(/\s+/))
+  end
+
+  def extra_env
+    @options[:extra_env].map do |k, v|
+      # Here the value must not be escaped
+      ['-e', "#{k}=#{v}"]
+    end.flatten
   end
 
   def port_forwards

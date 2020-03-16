@@ -98,7 +98,19 @@ RUN echo 2
 
 <% else %>
 
-  RUN yum install -y redhat-lsb-core which git
+  # lsb_release: redhat-lsb-core
+  # our runner scripts: which
+  # Ruby dependency: libyaml
+  # compiling python packages: gcc python-devel
+  # Kerberos tests: krb5-workstation + cyrus-sasl-devel to build the
+  # mongo_kerberos gem + cyrus-sasl-gssapi for authentication to work
+  #
+  # Note: lacking cyrus-sasl-gssapi produces a cryptic message
+  # "SASL(-4): no mechanism available: No worthy mechs found"
+  # https://github.com/farorm/python-ad/issues/10
+  
+  RUN yum install -y redhat-lsb-core which git gcc python-devel libyaml \
+    krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi
 
 <% end %>
 
@@ -121,12 +133,13 @@ RUN echo 2
   
   <% end %>
   
-  <% if distro =~ /ubuntu1204/ %>
+  <% if distro =~ /ubuntu1204|rhel/ %>
   
     # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
+    # rhel apparently does not package pip at all in core repoitories,
+    # therefore install it the manual way.
     # https://pip.pypa.io/en/stable/installing/
-    RUN curl --retry 3 -fLo get-pip.py https://bootstrap.pypa.io/get-pip.py
-    RUN python get-pip.py
+    RUN curl --retry 3 -fL https://bootstrap.pypa.io/get-pip.py | python
   
   <% end %>
 
@@ -153,7 +166,7 @@ COPY . .
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
   PROJECT_DIRECTORY=/app
 
-ENV <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
+ENV <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('$', "\\$").gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
 
 <% if expose? %>
 

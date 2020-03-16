@@ -138,6 +138,10 @@ EOT
     --eval "$create_user_cmd"
 fi
 
+if test "$AUTH" = kerberos; then
+  export KERBEROS=1
+fi
+
 if test -n "$FLE"; then
   curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   tar xf libmongocrypt-all.tar.gz
