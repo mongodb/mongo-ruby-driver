@@ -29,7 +29,6 @@ describe 'Auto Encryption' do
   end
 
   let(:client) { authorized_client.use(:auto_encryption) }
-  let(:admin_client) { authorized_client.use(:admin) }
 
   let(:bypass_auto_encryption) { false }
 
@@ -76,8 +75,8 @@ describe 'Auto Encryption' do
 
   before(:each) do
     client[:users].drop
-    admin_client[:datakeys].drop
-    admin_client[:datakeys].insert_one(data_key)
+    key_vault_collection.drop
+    key_vault_collection.insert_one(data_key)
   end
 
   shared_examples 'an encrypted command' do

@@ -36,10 +36,11 @@ describe 'Auto Encryption' do
 
   shared_examples 'it decrypts but does not encrypt on wire version < 8' do
     before do
+      client[:users].drop
       client[:users].insert_one(ssn: encrypted_ssn_binary)
 
-      authorized_client.use(:admin)[:datakeys].drop
-      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+      key_vault_collection.drop
+      key_vault_collection.insert_one(data_key)
     end
 
     it 'raises an exception when trying to encrypt' do

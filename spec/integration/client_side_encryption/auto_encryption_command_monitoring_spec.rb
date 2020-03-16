@@ -32,8 +32,8 @@ describe 'Auto Encryption' do
   end
 
   before(:each) do
-    authorized_client.use(key_vault_db)[key_vault_coll].drop
-    authorized_client.use(key_vault_db)[key_vault_coll].insert_one(data_key)
+    key_vault_collection.drop
+    key_vault_collection.insert_one(data_key)
 
     encryption_client[:users].drop
     result = encryption_client[:users].insert_one(ssn: ssn, age: 23)

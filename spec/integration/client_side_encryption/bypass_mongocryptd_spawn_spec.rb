@@ -34,7 +34,7 @@ describe 'Client-Side Encryption' do
 
       it 'does not spawn' do
         lambda do
-          client[:coll].insert_one(encrypted: 'test')
+          client['coll'].insert_one(encrypted: 'test')
         end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:27090 UNKNOWN/)
       end
     end

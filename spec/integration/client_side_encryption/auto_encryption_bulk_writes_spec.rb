@@ -31,8 +31,8 @@ describe 'Bulk writes with auto-encryption enabled' do
   before do
     authorized_client.use('auto_encryption')['users'].drop
 
-    authorized_client.use('admin')['datakeys'].drop
-    authorized_client.use('admin')['datakeys'].insert_one(data_key)
+    key_vault_collection.drop
+    key_vault_collection.insert_one(data_key)
   end
 
   let(:command_succeeded_events) do

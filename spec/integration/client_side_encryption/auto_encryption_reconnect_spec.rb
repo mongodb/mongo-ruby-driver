@@ -73,8 +73,8 @@ describe 'Client with auto encryption #reconnect' do
 
   shared_examples 'an auto-encryption client that reconnects properly' do
     before do
-      authorized_client.use(:admin)[:datakeys].drop
-      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+      key_vault_collection.drop
+      key_vault_collection.insert_one(data_key)
 
       unencrypted_client[:users].drop
       # Use a client without auto_encryption_options to insert an

@@ -47,8 +47,8 @@ describe 'Client-Side Encryption' do
         }
       ].create
 
-      client.use('admin')['datakeys'].drop
-      client.use('admin')['datakeys'].insert_one(
+      key_vault_collection.drop
+      key_vault_collection.insert_one(
         BSON::ExtJSON.parse(File.read('spec/support/crypt/limits/limits-key.json'))
       )
     end
