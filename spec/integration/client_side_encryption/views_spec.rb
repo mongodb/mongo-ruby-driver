@@ -23,19 +23,19 @@ describe 'Client-Side Encryption' do
             kms_providers: local_kms_providers,
             key_vault_namespace: 'admin.datakeys',
           },
-          database: :db,
+          database: 'db',
         )
       )
     end
 
     before do
-      client.use(:db)[:view].drop
-      client.use(:db).database.command(create: "view", viewOn: "coll")
+      client.use('db')['view'].drop
+      client.use('db').database.command(create: 'view', viewOn: 'coll')
     end
 
     it 'does not perform encryption on views' do
       expect do
-        client_encrypted[:view].insert_one({})
+        client_encrypted['view'].insert_one({})
       end.to raise_error(Mongo::Error::CryptError, /cannot auto encrypt a view/)
     end
   end

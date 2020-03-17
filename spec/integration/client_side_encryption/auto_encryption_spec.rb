@@ -28,8 +28,7 @@ describe 'Auto Encryption' do
     )
   end
 
-  let(:client) { authorized_client.use(:auto_encryption) }
-  let(:admin_client) { authorized_client.use(:admin) }
+  let(:client) { authorized_client.use('auto_encryption') }
 
   let(:bypass_auto_encryption) { false }
 
@@ -45,7 +44,7 @@ describe 'Auto Encryption' do
     let(:local_schema) { nil }
 
     before do
-      client[:users,
+      client['users',
         {
           'validator' => { '$jsonSchema' => schema_map }
         }
@@ -57,27 +56,27 @@ describe 'Auto Encryption' do
     let(:local_schema) { { "auto_encryption.users" => schema_map } }
 
     before do
-      client[:users].create
+      client['users'].create
     end
   end
 
   shared_context 'encrypted document in collection' do
     before do
-      client[:users].insert_one(ssn: encrypted_ssn_binary)
+      client['users'].insert_one(ssn: encrypted_ssn_binary)
     end
   end
 
   shared_context 'multiple encrypted documents in collection' do
     before do
-      client[:users].insert_one(ssn: encrypted_ssn_binary)
-      client[:users].insert_one(ssn: encrypted_ssn_binary)
+      client['users'].insert_one(ssn: encrypted_ssn_binary)
+      client['users'].insert_one(ssn: encrypted_ssn_binary)
     end
   end
 
   before(:each) do
-    client[:users].drop
-    admin_client[:datakeys].drop
-    admin_client[:datakeys].insert_one(data_key)
+    client['users'].drop
+    key_vault_collection.drop
+    key_vault_collection.insert_one(data_key)
   end
 
   shared_examples 'an encrypted command' do
@@ -115,7 +114,7 @@ describe 'Auto Encryption' do
       include_context 'encrypted document in collection'
 
       let(:result) do
-        encryption_client[:users].aggregate([
+        encryption_client['users'].aggregate([
           { '$match' => { 'ssn' => ssn } }
         ]).first
       end
@@ -133,7 +132,7 @@ describe 'Auto Encryption' do
         end
 
         it 'does auto decrypt the response' do
-          result = encryption_client[:users].aggregate([
+          result = encryption_client['users'].aggregate([
             { '$match' => { 'ssn' => encrypted_ssn_binary } }
           ]).first
 
@@ -150,7 +149,7 @@ describe 'Auto Encryption' do
     shared_examples 'it performs an encrypted command' do
       include_context 'multiple encrypted documents in collection'
 
-      let(:result) { encryption_client[:users].count(ssn: ssn) }
+      let(:result) { encryption_client['users'].count(ssn: ssn) }
 
       it 'encrypts the command and finds the documents' do
         expect(result).to eq(2)
@@ -172,7 +171,7 @@ describe 'Auto Encryption' do
     shared_examples 'it performs an encrypted command' do
       include_context 'encrypted document in collection'
 
-      let(:result) { encryption_client[:users].distinct(:ssn) }
+      let(:result) { encryption_client['users'].distinct(:ssn) }
 
       it 'decrypts the SSN field' do
         expect(result.length).to eq(1)
@@ -196,7 +195,7 @@ describe 'Auto Encryption' do
     shared_examples 'it performs an encrypted command' do
       include_context 'encrypted document in collection'
 
-      let(:result) { encryption_client[:users].delete_one(ssn: ssn) }
+      let(:result) { encryption_client['users'].delete_one(ssn: ssn) }
 
       it 'encrypts the SSN field' do
         expect(result.deleted_count).to eq(1)
@@ -218,7 +217,7 @@ describe 'Auto Encryption' do
     shared_examples 'it performs an encrypted command' do
       include_context 'multiple encrypted documents in collection'
 
-      let(:result) { encryption_client[:users].delete_many(ssn: ssn) }
+      let(:result) { encryption_client['users'].delete_many(ssn: ssn) }
 
       it 'decrypts the SSN field' do
         expect(result.deleted_count).to eq(2)
@@ -240,7 +239,7 @@ describe 'Auto Encryption' do
     shared_examples 'it performs an encrypted command' do
       include_context 'encrypted document in collection'
 
-      let(:result) { encryption_client[:users].find(ssn: ssn).first }
+      let(:result) { encryption_client['users'].find(ssn: ssn).first }
 
       it 'encrypts the command and decrypts the response' do
         result.should_not be_nil
@@ -263,7 +262,7 @@ describe 'Auto Encryption' do
     shared_examples 'it performs an encrypted command' do
       include_context 'encrypted document in collection'
 
-      let(:result) { encryption_client[:users].find_one_and_delete(ssn: ssn) }
+      let(:result) { encryption_client['users'].find_one_and_delete(ssn: ssn) }
 
       it 'encrypts the command and decrypts the response' do
         expect(result['ssn']).to eq(ssn)
@@ -277,7 +276,7 @@ describe 'Auto Encryption' do
         end
 
         it 'still decrypts the command' do
-          result = encryption_client[:users].find_one_and_delete(ssn: encrypted_ssn_binary)
+          result = encryption_client['users'].find_one_and_delete(ssn: encrypted_ssn_binary)
           expect(result['ssn']).to eq(ssn)
         end
       end
@@ -294,7 +293,7 @@ describe 'Auto Encryption' do
         include_context 'encrypted document in collection'
 
         let(:result) do
-          encryption_client[:users].find_one_and_replace(
+          encryption_client['users'].find_one_and_replace(
             { ssn: ssn },
             { name: name },
             return_document: :before
@@ -304,7 +303,7 @@ describe 'Auto Encryption' do
         it 'encrypts the command and decrypts the response, returning original document' do
           expect(result['ssn']).to eq(ssn)
 
-          documents = client[:users].find
+          documents = client['users'].find
           expect(documents.count).to eq(1)
           expect(documents.first['ssn']).to be_nil
         end
@@ -312,11 +311,11 @@ describe 'Auto Encryption' do
 
       context 'with :return_document => :after' do
         before do
-          client[:users].insert_one(name: name)
+          client['users'].insert_one(name: name)
         end
 
         let(:result) do
-          encryption_client[:users].find_one_and_replace(
+          encryption_client['users'].find_one_and_replace(
             { name: name },
             { ssn: ssn },
             return_document: :after
@@ -326,7 +325,7 @@ describe 'Auto Encryption' do
         it 'encrypts the command and decrypts the response, returning new document' do
           expect(result['ssn']).to eq(ssn)
 
-          documents = client[:users].find
+          documents = client['users'].find
           expect(documents.count).to eq(1)
           expect(documents.first['ssn']).to eq(encrypted_ssn_binary)
         end
@@ -337,7 +336,7 @@ describe 'Auto Encryption' do
         include_context 'encrypted document in collection'
 
         let(:result) do
-          encryption_client[:users].find_one_and_replace(
+          encryption_client['users'].find_one_and_replace(
             { ssn: encrypted_ssn_binary },
             { name: name },
             :return_document => :before
@@ -347,7 +346,7 @@ describe 'Auto Encryption' do
         it 'does not encrypt the command but still decrypts the response, returning original document' do
           expect(result['ssn']).to eq(ssn)
 
-          documents = client[:users].find
+          documents = client['users'].find
           expect(documents.count).to eq(1)
           expect(documents.first['ssn']).to be_nil
         end
@@ -364,7 +363,7 @@ describe 'Auto Encryption' do
       let(:name) { 'Alan Turing' }
 
       let(:result) do
-        encryption_client[:users].find_one_and_update(
+        encryption_client['users'].find_one_and_update(
           { ssn: ssn },
           { name: name }
         )
@@ -373,7 +372,7 @@ describe 'Auto Encryption' do
       it 'encrypts the command and decrypts the response' do
         expect(result['ssn']).to eq(ssn)
 
-        documents = client[:users].find
+        documents = client['users'].find
         expect(documents.count).to eq(1)
         expect(documents.first['ssn']).to be_nil
       end
@@ -387,7 +386,7 @@ describe 'Auto Encryption' do
 
         it 'still decrypts the response' do
           # Query using the encrypted ssn value so the find will succeed
-          result = encryption_client[:users].find_one_and_update(
+          result = encryption_client['users'].find_one_and_update(
             { ssn: encrypted_ssn_binary },
             { name: name }
           )
@@ -402,7 +401,7 @@ describe 'Auto Encryption' do
 
   describe '#insert_one' do
     let(:query) { { ssn: ssn } }
-    let(:result) { encryption_client[:users].insert_one(query) }
+    let(:result) { encryption_client['users'].insert_one(query) }
 
     shared_examples 'it performs an encrypted command' do
       it 'encrypts the ssn field' do
@@ -411,7 +410,7 @@ describe 'Auto Encryption' do
 
         id = result.inserted_ids.first
 
-        document = client[:users].find(_id: id).first
+        document = client['users'].find(_id: id).first
         document.should_not be_nil
         expect(document['ssn']).to eq(encrypted_ssn_binary)
       end
@@ -421,13 +420,13 @@ describe 'Auto Encryption' do
       include_context 'bypass auto encryption'
 
       it 'does not encrypt the command' do
-        result = encryption_client[:users].insert_one(ssn: ssn)
+        result = encryption_client['users'].insert_one(ssn: ssn)
         expect(result).to be_ok
         expect(result.inserted_ids.length).to eq(1)
 
         id = result.inserted_ids.first
 
-        document = client[:users].find(_id: id).first
+        document = client['users'].find(_id: id).first
         expect(document['ssn']).to eq(ssn)
       end
     end
@@ -461,7 +460,7 @@ describe 'Auto Encryption' do
         expect(result).to be_ok
         id = result.inserted_ids.first
 
-        document = client[:users].find(_id: id).first
+        document = client['users'].find(_id: id).first
         document.should_not be_nil
         # Document was not encrypted
         expect(document['ssn']).to eq(ssn)
@@ -481,7 +480,7 @@ describe 'Auto Encryption' do
 
           id = result.inserted_ids.first
 
-          document = client[:users].find(_id: id).first
+          document = client['users'].find(_id: id).first
           document.should_not be_nil
           # Auto-encryption with key alt names only works with random encryption,
           # so it will not generate the same result on every test run.
@@ -497,7 +496,7 @@ describe 'Auto Encryption' do
 
           id = result.inserted_ids.first
 
-          document = client[:users].find(_id: id).first
+          document = client['users'].find(_id: id).first
           document.should_not be_nil
           # Auto-encryption with key alt names only works with random encryption,
           # so it will not generate the same result on every test run.
@@ -514,7 +513,7 @@ describe 'Auto Encryption' do
       let(:replacement_ssn) { '098-765-4321' }
 
       let(:result) do
-        encryption_client[:users].replace_one(
+        encryption_client['users'].replace_one(
           { ssn: ssn },
           { ssn: replacement_ssn }
         )
@@ -523,7 +522,7 @@ describe 'Auto Encryption' do
       it 'encrypts the ssn field' do
         expect(result.modified_count).to eq(1)
 
-        find_result = encryption_client[:users].find(ssn: '098-765-4321')
+        find_result = encryption_client['users'].find(ssn: '098-765-4321')
         expect(find_result.count).to eq(1)
       end
 
@@ -544,13 +543,13 @@ describe 'Auto Encryption' do
       include_context 'encrypted document in collection'
 
       let(:result) do
-        encryption_client[:users].update_one({ ssn: ssn }, { ssn: '098-765-4321' })
+        encryption_client['users'].update_one({ ssn: ssn }, { ssn: '098-765-4321' })
       end
 
       it 'encrypts the ssn field' do
         expect(result.n).to eq(1)
 
-        find_result = encryption_client[:users].find(ssn: '098-765-4321')
+        find_result = encryption_client['users'].find(ssn: '098-765-4321')
         expect(find_result.count).to eq(1)
       end
 
@@ -569,18 +568,18 @@ describe 'Auto Encryption' do
   describe '#update_many' do
     shared_examples 'it performs an encrypted command' do
       before do
-        client[:users].insert_one(ssn: encrypted_ssn_binary, age: 25)
-        client[:users].insert_one(ssn: encrypted_ssn_binary, age: 43)
+        client['users'].insert_one(ssn: encrypted_ssn_binary, age: 25)
+        client['users'].insert_one(ssn: encrypted_ssn_binary, age: 43)
       end
 
       let(:result) do
-        encryption_client[:users].update_many({ ssn: ssn }, { "$inc" => { :age =>  1 } })
+        encryption_client['users'].update_many({ ssn: ssn }, { "$inc" => { :age =>  1 } })
       end
 
       it 'encrypts the ssn field' do
         expect(result.n).to eq(2)
 
-        updated_documents = encryption_client[:users].find(ssn: ssn)
+        updated_documents = encryption_client['users'].find(ssn: ssn)
         ages = updated_documents.map { |doc| doc['age'] }
         expect(ages).to include(26)
         expect(ages).to include(44)

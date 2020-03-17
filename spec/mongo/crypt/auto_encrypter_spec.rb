@@ -81,7 +81,6 @@ describe Mongo::Crypt::AutoEncrypter do
   end
 
   before do
-    key_vault_collection = client.use(key_vault_db)[key_vault_coll]
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
   end

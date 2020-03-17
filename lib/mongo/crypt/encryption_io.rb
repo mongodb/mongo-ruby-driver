@@ -179,7 +179,8 @@ module Mongo
       def key_vault_collection
         @key_vault_collection ||= @key_vault_client.with(
           database: @key_vault_db_name,
-          read_concern: { level: :majority }
+          read_concern: { level: :majority },
+          write_concern: { w: :majority }
         )[@key_vault_collection_name]
       end
 

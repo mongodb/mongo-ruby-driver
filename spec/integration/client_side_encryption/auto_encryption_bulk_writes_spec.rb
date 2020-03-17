@@ -31,8 +31,8 @@ describe 'Bulk writes with auto-encryption enabled' do
   before do
     authorized_client.use('auto_encryption')['users'].drop
 
-    authorized_client.use('admin')['datakeys'].drop
-    authorized_client.use('admin')['datakeys'].insert_one(data_key)
+    key_vault_collection.drop
+    key_vault_collection.insert_one(data_key)
   end
 
   let(:command_succeeded_events) do
@@ -49,7 +49,7 @@ describe 'Bulk writes with auto-encryption enabled' do
     end
 
     it 'executes an encrypted bulk write' do
-      documents = authorized_client.use(:auto_encryption)[:users].find
+      documents = authorized_client.use('auto_encryption')['users'].find
       ssns = documents.map { |doc| doc['ssn'] }
       expect(ssns).to all(be_ciphertext)
     end
@@ -295,7 +295,7 @@ describe 'Bulk writes with auto-encryption enabled' do
 
   context '#insert_many' do
     let(:perform_bulk_write) do
-      client[:users].insert_many(documents)
+      client['users'].insert_many(documents)
     end
 
     let(:command_name) { 'insert' }

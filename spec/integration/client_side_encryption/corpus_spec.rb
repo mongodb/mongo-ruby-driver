@@ -8,11 +8,13 @@ describe 'Client-Side Encryption' do
 
     include_context 'define shared FLE helpers'
 
-    let(:client) do
-      new_local_client(
-        SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options
-      )
+    let(:client) { authorized_client }
+
+    let(:key_vault_client) do
+      client.with(
+        database: 'admin',
+        write_concern: { w: :majority }
+      )['datakeys']
     end
 
     let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json')) }
@@ -34,7 +36,7 @@ describe 'Client-Side Encryption' do
             key_vault_namespace: 'admin.datakeys',
             schema_map: local_schema_map,
           },
-          database: :db,
+          database: 'db',
         )
       )
     end
@@ -123,18 +125,19 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.use(:db)[:coll].drop
+      client.use('db')['coll'].drop
 
-      client.use(:admin)[:datakeys].drop
-      client.use(:admin)[:datakeys].insert_one(local_data_key)
-      client.use(:admin)[:datakeys].insert_one(aws_data_key)
+      key_vault_collection = client.use('admin')['datakeys', write_concern: { w: :majority }]
+      key_vault_collection.drop
+      key_vault_collection.insert_one(local_data_key)
+      key_vault_collection.insert_one(aws_data_key)
     end
 
     shared_context 'with jsonSchema collection validator' do
       let(:local_schema_map) { nil }
 
       before do
-        client.use(:db)[:coll,
+        client.use('db')['coll',
           {
             'validator' => { '$jsonSchema' => test_schema_map }
           }
@@ -148,11 +151,11 @@ describe 'Client-Side Encryption' do
 
     shared_examples 'a functioning encrypter' do
       it 'properly encrypts and decrypts a document' do
-        corpus_encrypted_id = client_encrypted[:coll]
+        corpus_encrypted_id = client_encrypted['coll']
           .insert_one(corpus_copied)
           .inserted_id
 
-        corpus_decrypted = client_encrypted[:coll]
+        corpus_decrypted = client_encrypted['coll']
           .find(_id: corpus_encrypted_id)
           .first
 
@@ -166,7 +169,7 @@ describe 'Client-Side Encryption' do
         end
 
         corpus_encrypted_actual = client
-          .use(:db)[:coll]
+          .use('db')['coll']
           .find(_id: corpus_encrypted_id)
           .first
 

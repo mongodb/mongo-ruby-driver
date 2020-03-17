@@ -27,14 +27,14 @@ describe 'Client-Side Encryption' do
                 mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
               },
             },
-            database: :db
+            database: 'db'
           ),
         )
       end
 
       it 'does not spawn' do
         lambda do
-          client[:coll].insert_one(encrypted: 'test')
+          client['coll'].insert_one(encrypted: 'test')
         end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:27090 UNKNOWN/)
       end
     end
@@ -52,7 +52,7 @@ describe 'Client-Side Encryption' do
                 mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
               },
             },
-            database: :db
+            database: 'db'
           ),
         )
       end
@@ -63,7 +63,7 @@ describe 'Client-Side Encryption' do
 
       it 'does not spawn' do
         lambda do
-          client[:coll].insert_one(encrypted: 'test')
+          client['coll'].insert_one(encrypted: 'test')
         end.should_not raise_error
         lambda do
           mongocryptd_client.database.command(ismaster: 1)

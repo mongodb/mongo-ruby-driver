@@ -52,6 +52,13 @@ module Crypt
 
     # Example value to encrypt
     let(:ssn) { '123-456-7890' }
+
+    let(:key_vault_collection) do
+      authorized_client.with(
+        database: key_vault_db,
+        write_concern: { w: :majority }
+      )[key_vault_coll]
+    end
   end
 
   # For tests that require local KMS to be configured
