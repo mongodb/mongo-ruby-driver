@@ -9,7 +9,12 @@ describe Mongo::Crypt::AutoEncrypter do
   include_context 'define shared FLE helpers'
 
   let(:auto_encrypter) do
-    described_class.new(auto_encryption_options.merge(client: authorized_client.use(:auto_encryption)))
+    described_class.new(
+      auto_encryption_options.merge(
+        client: authorized_client.use(:auto_encryption),
+        extra_options: extra_options
+      )
+    )
   end
 
   let(:client) { authorized_client }
@@ -96,7 +101,7 @@ describe Mongo::Crypt::AutoEncrypter do
       {
         kms_providers: kms_providers,
         key_vault_namespace: key_vault_namespace,
-        schema_map: { "#{db_name}.#{collection_name}": schema_map }
+        schema_map: { "#{db_name}.#{collection_name}": schema_map },
       }
     end
 

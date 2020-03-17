@@ -18,6 +18,7 @@ describe 'Bulk writes with auto-encryption enabled' do
           kms_providers: kms_providers,
           key_vault_namespace: key_vault_namespace,
           schema_map: { "auto_encryption.users" => schema_map },
+          extra_options: extra_options,
         },
         database: 'auto_encryption'
       ),

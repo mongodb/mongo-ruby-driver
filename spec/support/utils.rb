@@ -89,6 +89,12 @@ module Utils
       if name == 'autoEncryptOpts'
         opts.merge!(
           auto_encryption_options: convert_auto_encryption_client_options(value)
+            .merge(
+              extra_options: {
+                mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
+                mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
+              }
+            )
         )
       else
         uri.send(:add_uri_option, name, value.to_s, opts)

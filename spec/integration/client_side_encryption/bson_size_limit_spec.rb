@@ -31,6 +31,7 @@ describe 'Client-Side Encryption' do
               local: { key: local_master_key },
             },
             key_vault_namespace: 'admin.datakeys',
+            extra_options: extra_options,
           },
           database: 'db',
         )

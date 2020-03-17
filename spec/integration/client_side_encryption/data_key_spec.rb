@@ -50,6 +50,7 @@ describe 'Client-Side Encryption' do
             },
             key_vault_namespace: 'admin.datakeys',
             schema_map: test_schema_map,
+            extra_options: extra_options,
           },
           database: 'db',
         )

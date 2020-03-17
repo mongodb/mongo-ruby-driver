@@ -22,6 +22,7 @@ describe 'Client-Side Encryption' do
           auto_encryption_options: {
             kms_providers: local_kms_providers,
             key_vault_namespace: 'admin.datakeys',
+            extra_options: extra_options,
           },
           database: 'db',
         )

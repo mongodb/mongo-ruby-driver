@@ -8,6 +8,10 @@ describe 'Client-Side Encryption' do
 
     include_context 'define shared FLE helpers'
 
+    # Choose a different port for mongocryptd than the one used by all the other
+    # tests to avoid failures caused by other tests spawning mongocryptd.
+    let(:mongocryptd_port) { SpecConfig.instance.mongocryptd_port + 1 }
+
     context 'via mongocryptdBypassSpawn' do
       let(:test_schema_map) do
         BSON::ExtJSON.parse(File.read('spec/support/crypt/external/external-schema.json'))
@@ -23,8 +27,8 @@ describe 'Client-Side Encryption' do
               schema_map: { 'db.coll' => test_schema_map },
               extra_options: {
                 mongocryptd_bypass_spawn: true,
-                mongocryptd_uri: "mongodb://localhost:27090/db?serverSelectionTimeoutMS=1000",
-                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
+                mongocryptd_uri: "mongodb://localhost:#{mongocryptd_port}/db?serverSelectionTimeoutMS=1000",
+                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=#{mongocryptd_port}"],
               },
             },
             database: 'db'
@@ -35,7 +39,7 @@ describe 'Client-Side Encryption' do
       it 'does not spawn' do
         lambda do
           client['coll'].insert_one(encrypted: 'test')
-        end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:27090 UNKNOWN/)
+        end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:#{Regexp.quote(mongocryptd_port.to_s)} UNKNOWN/)
       end
     end
 
@@ -49,7 +53,7 @@ describe 'Client-Side Encryption' do
               key_vault_namespace: 'admin.datakeys',
               bypass_auto_encryption: true,
               extra_options: {
-                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27090"],
+                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=#{mongocryptd_port}"],
               },
             },
             database: 'db'
@@ -58,7 +62,7 @@ describe 'Client-Side Encryption' do
       end
 
       let(:mongocryptd_client) do
-        new_local_client(['localhost:27090'], server_selection_timeout: 1)
+        new_local_client(["localhost:#{mongocryptd_port}"], server_selection_timeout: 1)
       end
 
       it 'does not spawn' do

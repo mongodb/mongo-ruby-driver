@@ -21,7 +21,8 @@ describe 'Auto Encryption' do
           kms_providers: kms_providers,
           key_vault_namespace: key_vault_namespace,
           schema_map: local_schema,
-          bypass_auto_encryption: bypass_auto_encryption
+          bypass_auto_encryption: bypass_auto_encryption,
+          extra_options: extra_options,
         },
         database: 'auto_encryption'
       ),
