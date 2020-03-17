@@ -8,7 +8,6 @@ Gem::Specification.new do |s|
   s.platform          = Gem::Platform::RUBY
 
   s.authors           = ['Tyler Brock', 'Emily Stolfo', 'Durran Jordan']
-  s.email             = 'mongodb-dev@googlegroups.com'
   s.homepage          = 'https://docs.mongodb.com/ruby-driver/'
   s.summary           = 'Ruby driver for MongoDB'
   s.description       = 'A Ruby driver for MongoDB'
@@ -19,7 +18,6 @@ Gem::Specification.new do |s|
     'changelog_uri' => 'https://github.com/mongodb/mongo-ruby-driver/releases',
     'documentation_uri' => 'https://docs.mongodb.com/ruby-driver/',
     'homepage_uri' => 'https://docs.mongodb.com/ruby-driver/',
-    'mailing_list_uri' => 'https://groups.google.com/group/mongodb-user',
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
