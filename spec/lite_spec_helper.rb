@@ -36,8 +36,8 @@ require 'mongo'
 require 'pp'
 
 autoload :Benchmark, 'benchmark'
-autoload :Timecop, 'timecop'
 autoload :IceNine, 'ice_nine'
+autoload :Timecop, 'timecop'
 
 if BSON::Environment.jruby?
   require 'concurrent-ruby'
