@@ -28,7 +28,7 @@ describe 'Auto Encryption' do
   end
 
   let(:bypass_auto_encryption) { false }
-  let(:client) { authorized_client.use(:auto_encryption) }
+  let(:client) { authorized_client.use('auto_encryption') }
 
   let(:encrypted_ssn_binary) do
     BSON::Binary.new(Base64.decode64(encrypted_ssn), :ciphertext)
@@ -36,15 +36,16 @@ describe 'Auto Encryption' do
 
   shared_examples 'it decrypts but does not encrypt on wire version < 8' do
     before do
-      client[:users].insert_one(ssn: encrypted_ssn_binary)
+      client['users'].drop
+      client['users'].insert_one(ssn: encrypted_ssn_binary)
 
-      authorized_client.use(:admin)[:datakeys].drop
-      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+      key_vault_collection.drop
+      key_vault_collection.insert_one(data_key)
     end
 
     it 'raises an exception when trying to encrypt' do
       expect do
-        encryption_client[:users].find(ssn: ssn).first
+        encryption_client['users'].find(ssn: ssn).first
       end.to raise_error(Mongo::Error::CryptError, /Auto-encryption requires a minimum MongoDB version of 4.2/)
     end
 
@@ -52,12 +53,12 @@ describe 'Auto Encryption' do
       let(:bypass_auto_encryption) { true }
 
       it 'does not raise an exception but doesn\'t encrypt' do
-        document = encryption_client[:users].find(ssn: ssn).first
+        document = encryption_client['users'].find(ssn: ssn).first
         expect(document).to be_nil
       end
 
       it 'still decrypts' do
-        document = encryption_client[:users].find(ssn: encrypted_ssn_binary).first
+        document = encryption_client['users'].find(ssn: encrypted_ssn_binary).first
         # ssn field is still decrypted
         expect(document['ssn']).to eq(ssn)
       end

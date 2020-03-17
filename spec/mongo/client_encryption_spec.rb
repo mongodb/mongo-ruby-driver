@@ -1,6 +1,4 @@
-require 'mongo'
-require 'base64'
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::ClientEncryption do
   require_libmongocrypt
@@ -8,7 +6,8 @@ describe Mongo::ClientEncryption do
 
   let(:client) do
     ClientRegistry.instance.new_local_client(
-      [SpecConfig.instance.addresses.first]
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.test_options
     )
   end
 
@@ -345,9 +344,7 @@ describe Mongo::ClientEncryption do
     let(:encrypted_value) { encrypted_ssn }
 
     before do
-      key_vault_collection = client.use(key_vault_db)[key_vault_coll]
       key_vault_collection.drop
-
       key_vault_collection.insert_one(data_key)
     end
 

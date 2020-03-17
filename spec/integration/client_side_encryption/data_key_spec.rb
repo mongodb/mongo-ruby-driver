@@ -51,7 +51,7 @@ describe 'Client-Side Encryption' do
             key_vault_namespace: 'admin.datakeys',
             schema_map: test_schema_map,
           },
-          database: :db,
+          database: 'db',
         )
       )
     end
@@ -73,8 +73,8 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.use(:admin)[:datakeys].drop
-      client.use(:db)[:coll].drop
+      client.use('admin')['datakeys'].drop
+      client.use('db')['coll'].drop
     end
 
     shared_examples 'can create and use a data key' do
@@ -86,7 +86,7 @@ describe 'Client-Side Encryption' do
 
         expect(data_key_id).to be_uuid
 
-        keys = client.use(:admin)[:datakeys].find(_id: data_key_id)
+        keys = client.use('admin')['datakeys'].find(_id: data_key_id)
 
         expect(keys.count).to eq(1)
         expect(keys.first['masterKey']['provider']).to eq(kms_provider_name)
@@ -107,12 +107,12 @@ describe 'Client-Side Encryption' do
 
         expect(encrypted).to be_ciphertext
 
-        client_encrypted[:coll].insert_one(
+        client_encrypted['coll'].insert_one(
           _id: kms_provider_name,
-          'value': encrypted,
+          value: encrypted,
         )
 
-        document = client_encrypted[:coll].find(_id: kms_provider_name).first
+        document = client_encrypted['coll'].find(_id: kms_provider_name).first
 
         expect(document['value']).to eq(value_to_encrypt)
 
@@ -128,7 +128,7 @@ describe 'Client-Side Encryption' do
         expect(encrypted_with_alt_name).to eq(encrypted)
 
         expect do
-          client_encrypted[:coll].insert_one(encrypted_placeholder: encrypted)
+          client_encrypted['coll'].insert_one(encrypted_placeholder: encrypted)
         end.to raise_error(Mongo::Error::OperationFailure, /Cannot encrypt element of type binData/)
       end
     end

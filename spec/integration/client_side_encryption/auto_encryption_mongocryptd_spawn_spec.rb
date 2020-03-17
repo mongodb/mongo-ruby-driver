@@ -31,8 +31,8 @@ describe 'Auto Encryption' do
     let(:cluster) { double("Cluster") }
 
     before do
-      authorized_client.use(:admin)[:datakeys].drop
-      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+      key_vault_collection.drop
+      key_vault_collection.insert_one(data_key)
 
       allow(server_selector).to receive(:name)
       allow(server_selector).to receive(:server_selection_timeout)
@@ -61,7 +61,7 @@ describe 'Auto Encryption' do
 
     it 'raises an exception when trying to perform auto encryption' do
       expect do
-        client[:users].insert_one(ssn: ssn)
+        client['users'].insert_one(ssn: ssn)
       end.to raise_error(
         Mongo::Error::MongocryptdSpawnError,
         /Failed to spawn mongocryptd at the path "echo hello world" with arguments/

@@ -47,8 +47,10 @@ describe 'Client-Side Encryption' do
         }
       ].create
 
-      client.use('admin')['datakeys'].drop
-      client.use('admin')['datakeys'].insert_one(
+      key_vault_collection = client.use('admin')['datakeys', write_concern: { w: :majority }]
+
+      key_vault_collection.drop
+      key_vault_collection.insert_one(
         BSON::ExtJSON.parse(File.read('spec/support/crypt/limits/limits-key.json'))
       )
     end
@@ -85,7 +87,7 @@ describe 'Client-Side Encryption' do
     context 'when bulk inserting two unencrypted documents under 2MiB' do
       it 'can perform bulk insert using the encrypted client' do
         bulk_write = Mongo::BulkWrite.new(
-          client_encrypted[:coll],
+          client_encrypted['coll'],
           [
             { insert_one: { _id: 'over_2mib_1', unencrypted: 'a' * _2mib } },
             { insert_one: { _id: 'over_2mib_2', unencrypted: 'a' * _2mib } },
@@ -107,7 +109,7 @@ describe 'Client-Side Encryption' do
       it 'can perform bulk delete using the encrypted client' do
         # Insert documents that we can match and delete later
         bulk_write = Mongo::BulkWrite.new(
-          client_encrypted[:coll],
+          client_encrypted['coll'],
           [
             { insert_one: { _id: 'over_2mib_1', unencrypted: 'a' * _2mib } },
             { insert_one: { _id: 'over_2mib_2', unencrypted: 'a' * _2mib } },
@@ -128,7 +130,7 @@ describe 'Client-Side Encryption' do
     context 'when bulk inserting two encrypted documents under 2MiB' do
       it 'can perform bulk_insert using the encrypted client' do
         bulk_write = Mongo::BulkWrite.new(
-          client_encrypted[:coll],
+          client_encrypted['coll'],
           [
             {
               insert_one: limits_doc.merge(
@@ -158,7 +160,7 @@ describe 'Client-Side Encryption' do
 
     context 'when a single document is just smaller than 16MiB' do
       it 'can perform insert_one using the encrypted client' do
-        result = client_encrypted[:coll].insert_one(
+        result = client_encrypted['coll'].insert_one(
           _id: "under_16mib",
           unencrypted: "a" * (_16mib - 2000)
         )
@@ -170,7 +172,7 @@ describe 'Client-Side Encryption' do
     context 'when an encrypted document is greater than the 16MiB limit' do
       it 'raises an exception when attempting to insert the document' do
         expect do
-          client_encrypted[:coll].insert_one(
+          client_encrypted['coll'].insert_one(
             limits_doc.merge(
               _id: "encryption_exceeds_16mib",
               unencrypted: "a" * (16*1024*1024 + 500*1024),
