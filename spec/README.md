@@ -374,6 +374,21 @@ environment variable to the full path to the .so/.dll/.dylib
 LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt/nocrypto/libmongocrypt.so bundle exec rake
 ```
 
+If you would like to run the client-side encryption tests on a replica set or
+sharded cluster, be aware that the driver will try to spawn the mongocryptd daemon on
+port 27020 by default. If port 27020 is already in use by a mongod or mongos
+process, spawning mongocryptd will fail, causing the tests to fail as well.
+
+To avoid this problem, set MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT environment
+variable to the port at which you would like the driver to spawn mongocryptd.
+For example, to always have the mongocryptd process listen on port 27090:
+
+```
+MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT=27090
+```
+
+Keep in mind that this will only impact the behavior of the Ruby Driver test suite.
+
 ## Compression
 
 To test compression, set the `compressors` URI option:
