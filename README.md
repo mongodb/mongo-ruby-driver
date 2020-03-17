@@ -18,7 +18,8 @@ Support & Feedback
 For issues, questions or feedback related to the Ruby driver, please look into
 our [support channels](http://www.mongodb.org/about/support). Please
 do not email any of the Ruby developers directly with issues or
-questions - you're more likely to get an answer quickly on the [mongodb-user list](http://groups.google.com/group/mongodb-user) on Google Groups.
+questions - you're more likely to get an answer quickly on the
+[MongoDB Community Forum](https://community.mongodb.com).
 
 
 Bugs & Feature Requests
