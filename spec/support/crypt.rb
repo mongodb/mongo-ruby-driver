@@ -59,6 +59,13 @@ module Crypt
         write_concern: { w: :majority }
       )[key_vault_coll]
     end
+
+    let(:extra_options) do
+      {
+        mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
+        mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
+      }
+    end
   end
 
   # For tests that require local KMS to be configured

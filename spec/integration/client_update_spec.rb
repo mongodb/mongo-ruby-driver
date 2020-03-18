@@ -30,6 +30,8 @@ describe Mongo::Client do
             auto_encryption_options: {
               kms_providers: kms_providers,
               key_vault_namespace: key_vault_namespace,
+              # Spawn mongocryptd on non-default port for sharded cluster tests
+              extra_options: extra_options,
             },
             database: :auto_encryption
           ),
@@ -46,6 +48,8 @@ describe Mongo::Client do
             kms_providers: kms_providers,
             key_vault_namespace: key_vault_namespace,
             schema_map: { 'auto_encryption.users' => schema_map },
+            # Spawn mongocryptd on non-default port for sharded cluster tests
+            extra_options: extra_options,
           }
         end
 
@@ -101,6 +105,8 @@ describe Mongo::Client do
             auto_encryption_options: {
               kms_providers: kms_providers,
               key_vault_namespace: key_vault_namespace,
+              # Spawn mongocryptd on non-default port for sharded cluster tests
+              extra_options: extra_options,
             }
           )
         )
