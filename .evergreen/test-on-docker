@@ -93,10 +93,14 @@ class Runner
   end
 
   def extra_env
-    @options[:extra_env].map do |k, v|
-      # Here the value must not be escaped
-      ['-e', "#{k}=#{v}"]
-    end.flatten
+    if @options[:extra_env]
+      @options[:extra_env].map do |k, v|
+        # Here the value must not be escaped
+        ['-e', "#{k}=#{v}"]
+      end.flatten
+    else
+      []
+    end
   end
 
   def port_forwards
