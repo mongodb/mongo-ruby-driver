@@ -152,7 +152,8 @@ describe 'Client construction' do
       {
         key_vault_client: key_vault_client,
         key_vault_namespace: key_vault_namespace,
-        kms_providers: kms_providers
+        kms_providers: kms_providers,
+        extra_options: extra_options,
       }
     end
 

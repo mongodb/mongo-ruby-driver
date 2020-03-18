@@ -10,7 +10,7 @@ describe 'Client-Side Encryption' do
 
     # Choose a different port for mongocryptd than the one used by all the other
     # tests to avoid failures caused by other tests spawning mongocryptd.
-    let(:mongocryptd_port) { SpecConfig.instance.mongocryptd_port + 1 }
+    let(:mongocryptd_port) { 27091 }
 
     context 'via mongocryptdBypassSpawn' do
       let(:test_schema_map) do
