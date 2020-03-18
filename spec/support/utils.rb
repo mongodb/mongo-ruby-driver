@@ -90,6 +90,7 @@ module Utils
         opts.merge!(
           auto_encryption_options: convert_auto_encryption_client_options(value)
             .merge(
+              # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: {
                 mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
                 mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",

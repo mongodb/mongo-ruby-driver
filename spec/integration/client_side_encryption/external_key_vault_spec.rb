@@ -52,6 +52,7 @@ describe 'Client-Side Encryption' do
               kms_providers: local_kms_providers,
               key_vault_namespace: 'admin.datakeys',
               schema_map: test_schema_map,
+              # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: extra_options,
             },
             database: 'db',
@@ -100,6 +101,7 @@ describe 'Client-Side Encryption' do
               key_vault_namespace: 'admin.datakeys',
               schema_map: test_schema_map,
               key_vault_client: external_key_vault_client,
+              # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: extra_options,
             },
             database: 'db',

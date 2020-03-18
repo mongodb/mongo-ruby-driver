@@ -153,6 +153,7 @@ describe 'Client construction' do
         key_vault_client: key_vault_client,
         key_vault_namespace: key_vault_namespace,
         kms_providers: kms_providers,
+        # Spawn mongocryptd on non-default port for sharded cluster tests
         extra_options: extra_options,
       }
     end

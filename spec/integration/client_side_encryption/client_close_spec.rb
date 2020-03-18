@@ -17,6 +17,7 @@ describe 'Auto encryption client' do
             kms_providers: kms_providers,
             key_vault_namespace: 'admin.datakeys',
             schema_map: { 'auto_encryption.users' => schema_map },
+            # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
           database: 'auto_encryption',

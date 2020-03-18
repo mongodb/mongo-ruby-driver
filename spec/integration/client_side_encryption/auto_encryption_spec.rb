@@ -22,6 +22,7 @@ describe 'Auto Encryption' do
           key_vault_namespace: key_vault_namespace,
           schema_map: local_schema,
           bypass_auto_encryption: bypass_auto_encryption,
+          # Spawn mongocryptd on non-default port for sharded cluster tests
           extra_options: extra_options,
         },
         database: 'auto_encryption'

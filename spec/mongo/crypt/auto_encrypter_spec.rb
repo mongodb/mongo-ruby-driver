@@ -12,6 +12,7 @@ describe Mongo::Crypt::AutoEncrypter do
     described_class.new(
       auto_encryption_options.merge(
         client: authorized_client.use(:auto_encryption),
+        # Spawn mongocryptd on non-default port for sharded cluster tests
         extra_options: extra_options
       )
     )
