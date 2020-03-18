@@ -288,6 +288,15 @@ full list of relevant test files.
 
 ## Client-Side Encryption
 
+NOTE: Client-side encryption tests require an enterprise build of MongoDB
+server version 4.2 or higher. These builds of the MongoDB server come packaged with
+mongocryptd, a daemon that is spawned by the driver during automatic encryption.
+The client-side encryption tests require the mongocryptd binary to be in the
+system path.
+
+Download enterprise versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
+Read more about installing mongocryptd here: https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#mongocryptd
+
 Install libmongocrypt on your machine:
 
 Option 1: Download a pre-built binary
@@ -356,12 +365,6 @@ by following the "Using the AWS Management Console Default View" section of this
 https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html
 
 In one terminal, launch MongoDB:
-
-NOTE: You must be running MongoDB 4.2 or higher. All auto-encryption features
-require an enterprise build of MongoDB, but you can still run
-explicit encryption tests using the community edition of MongoDB.
-
-Download different versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
 
 ```
 mkdir /tmp/mdb

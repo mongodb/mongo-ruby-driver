@@ -329,7 +329,13 @@ EOT
   end
 
   def mongocryptd_port
-    ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] || 27020
+    if ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] &&
+      !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?
+    then
+      ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].to_i
+    else
+      27020
+    end
   end
 
   # Option hashes
