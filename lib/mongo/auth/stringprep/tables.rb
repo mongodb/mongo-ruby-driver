@@ -18,6 +18,7 @@ module Mongo
       # Contains character tables defined by RFC 3454 (string preparation).
       #
       # @since 2.6.0
+      # @api private
       module Tables
         # Table A1 as defined by RFC 3454 (string preparation).
         #

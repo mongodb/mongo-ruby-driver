@@ -35,16 +35,19 @@ module Mongo
     # The external database name.
     #
     # @since 2.0.0
+    # @api private
     EXTERNAL = '$external'.freeze
 
     # Constant for the nonce command.
     #
     # @since 2.0.0
+    # @api private
     GET_NONCE = { getnonce: 1 }.freeze
 
     # Constant for the nonce field.
     #
     # @since 2.0.0
+    # @api private
     NONCE = 'nonce'.freeze
 
     # Map the symbols parsed from the URI connection string to strategies.

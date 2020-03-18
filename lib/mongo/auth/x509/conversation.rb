@@ -20,6 +20,7 @@ module Mongo
       # client and server.
       #
       # @since 2.0.0
+      # @api private
       class Conversation < ConversationBase
 
         # The login message.
