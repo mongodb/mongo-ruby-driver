@@ -20,7 +20,9 @@ describe 'Client with auto encryption #reconnect' do
             kms_providers: kms_providers,
             key_vault_namespace: key_vault_namespace,
             key_vault_client: key_vault_client_option,
-            schema_map: { 'auto_encryption.users': schema_map }
+            schema_map: { 'auto_encryption.users': schema_map },
+            # Spawn mongocryptd on non-default port for sharded cluster tests
+            extra_options: extra_options,
           },
           database: 'auto_encryption'
         }

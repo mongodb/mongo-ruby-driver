@@ -22,6 +22,8 @@ describe 'Client-Side Encryption' do
           auto_encryption_options: {
             kms_providers: local_kms_providers,
             key_vault_namespace: 'admin.datakeys',
+            # Spawn mongocryptd on non-default port for sharded cluster tests
+            extra_options: extra_options,
           },
           database: 'db',
         )

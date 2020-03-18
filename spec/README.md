@@ -288,6 +288,15 @@ full list of relevant test files.
 
 ## Client-Side Encryption
 
+NOTE: Client-side encryption tests require an enterprise build of MongoDB
+server version 4.2 or higher. These builds of the MongoDB server come packaged with
+mongocryptd, a daemon that is spawned by the driver during automatic encryption.
+The client-side encryption tests require the mongocryptd binary to be in the
+system path.
+
+Download enterprise versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
+Read more about installing mongocryptd here: https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#mongocryptd
+
 Install libmongocrypt on your machine:
 
 Option 1: Download a pre-built binary
@@ -357,12 +366,6 @@ https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html
 
 In one terminal, launch MongoDB:
 
-NOTE: You must be running MongoDB 4.2 or higher. All auto-encryption features
-require an enterprise build of MongoDB, but you can still run
-explicit encryption tests using the community edition of MongoDB.
-
-Download different versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
-
 ```
 mkdir /tmp/mdb
 mongod --dbpath /tmp/mdb --setParameter enableTestCommands=1
@@ -373,6 +376,22 @@ environment variable to the full path to the .so/.dll/.dylib
 ```
 LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt/nocrypto/libmongocrypt.so bundle exec rake
 ```
+
+If you would like to run the client-side encryption tests on a replica set or
+sharded cluster, be aware that the driver will try to spawn the mongocryptd daemon on
+port 27020 by default. If port 27020 is already in use by a mongod or mongos
+process, spawning mongocryptd will fail, causing the tests to fail as well.
+
+To avoid this problem, set the MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT environment
+variable to the port at which you would like the driver to spawn mongocryptd.
+For example, to always have the mongocryptd process listen on port 27090:
+
+```
+export MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT=27090
+```
+
+Keep in mind that this will only impact the behavior of the Ruby Driver test suite,
+not the behavior of the driver itself.
 
 ## Compression
 

@@ -111,6 +111,7 @@ functions:
           MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
           MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
           MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
+          MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
           EOT
 
   "export Kerberos credentials":
@@ -798,7 +799,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
-      topology: [standalone, replica-set]
+      topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
       os: rhel70
       fle: fle

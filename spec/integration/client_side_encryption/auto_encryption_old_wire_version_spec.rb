@@ -20,7 +20,9 @@ describe 'Auto Encryption' do
           # Must use local schema map because server versions older than 4.2
           # do not support jsonSchema collection validator.
           schema_map: { 'auto_encryption.users' => schema_map },
-          bypass_auto_encryption: bypass_auto_encryption
+          bypass_auto_encryption: bypass_auto_encryption,
+          # Spawn mongocryptd on non-default port for sharded cluster tests
+          extra_options: extra_options,
         },
         database: 'auto_encryption'
       ),
