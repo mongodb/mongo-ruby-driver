@@ -91,7 +91,8 @@ echo "Install dependencies"
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle_install
 
-export KERBEROS=1
+export MONGO_RUBY_DRIVER_KERBEROS=1
+export MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1
 
 echo "Running tests"
-bundle exec rspec spec/enterprise_auth
+bundle exec rspec spec/kerberos

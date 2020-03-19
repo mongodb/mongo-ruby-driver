@@ -47,7 +47,9 @@ module LiteConstraints
 
   def require_mongo_kerberos
     before(:all) do
-      skip 'KERBEROS env var not specified' unless ENV['KERBEROS']
+      unless %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_KERBEROS']&.downcase)
+        skip 'Set MONGO_RUBY_DRIVER_KERBEROS=1 in environment to run Kerberos unit tests'
+      end
       require 'mongo_kerberos'
     end
   end

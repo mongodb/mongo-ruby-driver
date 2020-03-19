@@ -3,6 +3,12 @@ require 'lite_spec_helper'
 describe 'kerberos authentication' do
   require_mongo_kerberos
 
+  before(:all) do
+    unless %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION']&.downcase)
+      skip "Set MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1 in environment to run the Kerberos integration tests"
+    end
+  end
+
   def require_env_value(key)
     ENV[key].tap do |value|
       if value.nil? || value.empty?

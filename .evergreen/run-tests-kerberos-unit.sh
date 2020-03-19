@@ -15,7 +15,7 @@ setup_ruby
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle_install
 
-export KERBEROS=1
+export MONGO_RUBY_DRIVER_KERBEROS=1
 
 bundle exec rspec \
   spec/spec_tests/uri_options_spec.rb \
