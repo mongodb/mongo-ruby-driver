@@ -57,11 +57,11 @@ option to the test runner. The `-a` option may be given multiple times.
 When creating the .env files from Evergreen private variables, the variable
 names must be uppercased.
 
-For example, to execute enterprise auth tests which require private variables
-pertanining to the test Kerberos server, you could run:
+For example, to execute Kerberos integration tests which require private
+variables pertanining to the test Kerberos server, you could run:
 
     ./.evergreen/test-on-docker -d rhel70 RVM_RUBY=ruby-2.3 \
-      -s .evergreen/run-tests-enterprise-auth.sh -pa .env.private
+      -s .evergreen/run-tests-kerberos-integration.sh -pa .env.private
 
 The `.env.private` path specifically is listed in .gitignore and .dockerignore
 files, and is thus ignored by both Git and Docker.
