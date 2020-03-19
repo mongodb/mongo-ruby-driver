@@ -79,24 +79,40 @@ class Runner
     run_command(%w(docker build -t test-driver  -f .evergreen/Dockerfile .))
   end
 
-  BASE_TEST_COMMAND = %w(docker run -ti --tmpfs /tmpfs:exec).freeze
+  BASE_TEST_COMMAND = %w(docker run -i --tmpfs /tmpfs:exec).freeze
 
   def run_tests
-    run_command(BASE_TEST_COMMAND + extra_env + %w(test-driver) + script.split(/\s+/))
+    run_command(BASE_TEST_COMMAND + tty_arg + extra_env + %w(test-driver) +
+      script.split(/\s+/))
   end
 
   def run_deployment
-    run_command(BASE_TEST_COMMAND + [
+    run_command(BASE_TEST_COMMAND + tty_arg + [
       '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
       '-e', 'BIND_ALL=true',
     ] + port_forwards + %w(test-driver) + script.split(/\s+/))
   end
 
+  def tty_arg
+    tty = File.open('/dev/stdin') do |f|
+      f.isatty
+    end
+    if tty
+      %w(-t)
+    else
+      []
+    end
+  end
+
   def extra_env
-    @options[:extra_env].map do |k, v|
-      # Here the value must not be escaped
-      ['-e', "#{k}=#{v}"]
-    end.flatten
+    if @options[:extra_env]
+      @options[:extra_env].map do |k, v|
+        # Here the value must not be escaped
+        ['-e', "#{k}=#{v}"]
+      end.flatten
+    else
+      []
+    end
   end
 
   def port_forwards
