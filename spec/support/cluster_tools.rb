@@ -304,7 +304,12 @@ class ClusterTools
   def set_rs_config(config)
     config = config.dup
     config['version'] += 1
-    result = admin_client.database.command(replSetReconfig: config)
+    cmd = {replSetReconfig: config}
+    if ClusterConfig.instance.fcv_ish >= '4.4'
+      # Workaround for https://jira.mongodb.org/browse/SERVER-46894
+      cmd[:force] = true
+    end
+    result = admin_client.database.command(cmd)
     doc = result.reply.documents.first
     if doc['ok'] != 1
       raise 'Failed to reconfigure RS'
