@@ -129,7 +129,16 @@ module Mongo
       # Some driver objects can be reconnected, for backwards compatibiilty
       # reasons. Clear the thread instance variable to support this cleanly.
       if @thread.alive?
-        log_warn("Failed to stop background thread in #{self} in #{(Time.now - start_time).to_i} seconds")
+        log_warn("Failed to stop the background thread in #{self} in #{(Time.now - start_time).to_i} seconds: #{@thread.inspect} (thread status: #{@thread.status})")
+        # On JRuby the thread may be stuck in aborting state
+        # seemingly indefinitely. If the thread is aborting, consider it dead
+        # for our purposes (we will create a new thread if needed, and
+        # the background thread monitor will not detect the aborting thread
+        # as being alive).
+        if @thread.status == 'aborting'
+          @thread = nil
+          @stop_requested = false
+        end
         false
       else
         @thread = nil
