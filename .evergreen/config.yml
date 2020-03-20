@@ -26,6 +26,16 @@ functions:
       params:
         directory: "src"
 
+  "fetch egos":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          set -ex
+          
+          curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
+          chmod +x ./egos
+
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -248,7 +258,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           set -x
-          .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
+          ./egos .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
   "run tests":
     - command: shell.exec
@@ -258,7 +268,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests.sh
+          ./egos .evergreen/run-tests.sh
 
   "run Kerberos unit tests":
     - command: shell.exec
@@ -268,7 +278,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-kerberos-unit.sh
+          ./egos .evergreen/run-tests-kerberos-unit.sh
 
   "run Kerberos integration tests":
     - command: shell.exec
@@ -278,10 +288,11 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-kerberos-integration.sh
+          ./egos .evergreen/run-tests-kerberos-integration.sh
 
 pre:
   - func: "fetch source"
+  - func: "fetch egos"
   - func: "create expansions"
 
 post:
