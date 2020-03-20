@@ -136,7 +136,7 @@ module Mongo
         # Forward super's return value
         super.tap do
           # Important: disconnect should happen after the background thread
-          # terminated.
+          # terminates.
           connection.disconnect!
         end
       end
