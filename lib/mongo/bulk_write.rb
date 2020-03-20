@@ -210,6 +210,12 @@ module Mongo
         raise Mongo::Error, "Add a descriptive error here"
       end
 
+      if server.max_wire_version < 9 && hints_present &&
+          spec[:write_concern] && !spec[:write_concern].acknowledged?
+      then
+        raise Mongo::Error, "Add a descriptive error here"
+      end
+
       Operation::Delete.new(spec).bulk_execute(server, client: client)
     end
 
@@ -218,6 +224,12 @@ module Mongo
 
       hints_present = spec[:deletes].any? { |delete| delete.key?(:hint) }
       if server.max_wire_version < 5 && hints_present
+        raise Mongo::Error, "Add a descriptive error here"
+      end
+
+      if server.max_wire_version < 9 && hints_present &&
+          spec[:write_concern] && !spec[:write_concern].acknowledged?
+      then
         raise Mongo::Error, "Add a descriptive error here"
       end
 
