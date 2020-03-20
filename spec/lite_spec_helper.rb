@@ -23,16 +23,12 @@ AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
 
 unless ENV['CI']
+  # Load debuggers before loading the driver code, so that breakpoints
+  # can be placed in the driver code on file/class level.
   begin
     require 'byebug'
   rescue LoadError
-    # jruby - try pry
-    begin
-      require 'pry'
-    # jruby likes to raise random error classes, in this case
-    # NameError in addition to LoadError
-    rescue Exception
-    end
+    require 'ruby-debug'
   end
 end
 

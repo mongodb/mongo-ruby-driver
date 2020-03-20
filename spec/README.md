@@ -547,3 +547,37 @@ with color, use the `-R` option:
 
     rake 2>&1 | tee rake.log
     less -R rake.log
+
+## Debugging
+
+The test suite is configured to use [Byebug](https://github.com/deivid-rodriguez/byebug)
+for debugging on MRI and [ruby-debug](https://github.com/jruby/jruby/wiki/UsingTheJRubyDebugger)
+on JRuby.
+
+### MRI
+
+Call `byebug` anywhere in the test suite to break into Byebug.
+
+### JRuby
+
+To debug on JRuby, the test suite must be started with the `--debug` argument
+to `jruby`. This can be achieved by starting the test suite as follows:
+
+    jruby --debug -S rspec [rspec args...]
+
+Call `debugger` anywhere in the test suite to break into the debugger.
+
+### Docker
+
+By default, when the test suite is running in a CI environment the debuggers
+are not loaded. The Docker runner emulates the CI environment, therefore
+to debug in Docker the debugger must be explicitly loaded first. To break
+into the debugger on MRI, call:
+
+    require 'byebug'
+    byebug
+
+To break into the debugger on JRuby, call:
+
+    require 'ruby-debug'
+    debugger
