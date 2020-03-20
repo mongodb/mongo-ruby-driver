@@ -298,7 +298,7 @@ module Mongo
     #   will ignore it and will never scan seeds in the constructor.
     # @option options [ Proc ] :sdam_proc A Proc to invoke with the client
     #   as the argument prior to performing server discovery and monitoring.
-    #   Use this to set up SDAM event listeners to receive events dispatched
+    #   Use this to set up SDAM event listeners to receive events published
     #   during client construction.
     #
     #   Note: the client is not fully constructed when sdam_proc is invoked,

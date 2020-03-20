@@ -400,6 +400,27 @@ Ruby Options
      - ``Boolean``
      - true
 
+   * - ``:sdam_proc``
+     - Since the client begins monitoring the deployment in background as
+       soon as it is constructed, constructing a client and then subscribing
+       to `SDAM <sdam>`_ events in a separate statement may result in the
+       subscriber not receiving some of the SDAM events. The ``:sdam_proc``
+       option permits adding event subscribers on the client being constructed
+       before any SDAM events are published.
+       
+       Pass a ``Proc`` which will be called with the ``Client`` as the argument
+       after the client's event subscription mechanism has been initialized
+       but before any of the servers are added to the client. Use this
+       ``Proc`` to set up SDAM event subscribers on the client.
+       
+       Note: the client is not fully constructed when the ``Proc`` provided in
+       ``:sdam_proc is invoked, in particular the cluster is nil at this time.
+       ``:sdam_proc`` procedure should limit itself to calling
+       ``Client#subscribe`` and ``Client#unsubscribe`` methods on on the
+       passed client only.
+     - ``Proc``
+     - none
+
    * - ``:server_selection_timeout``
      - The number of seconds to wait for an appropriate server to
        be selected for an operation to be executed before raising an exception.
