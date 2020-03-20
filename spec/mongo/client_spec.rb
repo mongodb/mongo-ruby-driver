@@ -527,6 +527,17 @@ describe Mongo::Client do
     end
   end
 
+  shared_context 'ensure test db exists' do
+    before(:all) do
+      # Ensure the database we are querying exists.
+      # When the entire test suite is run, it will generally have been
+      # created by a previous test, but if this test is run on a fresh
+      # deployment the database won't exist.
+      client = ClientRegistry.instance.global_client('authorized')
+      client['any-collection-name'].insert_one(any: :value)
+    end
+  end
+
   describe '#database_names' do
 
     it 'returns a list of database names' do
@@ -537,6 +548,8 @@ describe Mongo::Client do
 
     context 'when filter criteria is present' do
       min_server_fcv '3.6'
+
+      include_context 'ensure test db exists'
 
       let(:result) do
         root_authorized_client.database_names(filter)
@@ -564,6 +577,8 @@ describe Mongo::Client do
 
     context 'when filter criteria is present' do
       min_server_fcv '3.6'
+
+      include_context 'ensure test db exists'
 
       let(:result) do
         root_authorized_client.list_databases(filter)
@@ -631,6 +646,8 @@ describe Mongo::Client do
 
     context 'when filter criteria is present' do
       min_server_fcv '3.6'
+
+      include_context 'ensure test db exists'
 
       let(:result) do
         client.list_mongo_databases(filter)
