@@ -63,6 +63,12 @@ class EventSubscriber
       events.first
     end
 
+    def select_started_events(cls)
+      @started_events.select do |event|
+        event.is_a?(cls)
+      end
+    end
+
     def select_succeeded_events(cls)
       @succeeded_events.select do |event|
         event.is_a?(cls)

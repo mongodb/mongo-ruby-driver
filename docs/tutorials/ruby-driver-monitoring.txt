@@ -92,6 +92,8 @@ Sample output:
   D, [2018-09-23T13:47:31.259145 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.ismaster | SUCCEEDED | 0.000791175s
 
 
+.. _sdam:
+
 Server Discovery And Monitoring
 -------------------------------
 
@@ -265,6 +267,14 @@ Sample output:
   D, [2018-10-09T13:58:05.342299 #22079] DEBUG -- : SDAM | Server localhost:27101 connection closed.
   D, [2018-10-09T13:58:05.342565 #22079] DEBUG -- : SDAM | Server localhost:27102 connection closed.
   D, [2018-10-09T13:58:05.342693 #22079] DEBUG -- : SDAM | Topology type 'ReplicaSetWithPrimary' closed.
+
+.. note::
+
+  ``:sdam_proc`` client option applies only to the client during whose
+  construction it is given. When certain client options are changed via the
+  ``Client#with`` call, a new cluster may be created by the driver with
+  a default set of event subscribers. If this happens, the provided
+  ``:sdam_proc`` is not called and the application may miss events.
 
 
 Server Heartbeats
