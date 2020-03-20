@@ -13,6 +13,7 @@ def standard_dependencies
     gem 'rake'
 
     gem 'byebug', platforms: :mri
+    gem 'ruby-debug', platforms: :jruby
 
     # for benchmark tests
     gem 'yajl-ruby', platforms: :mri, require: false
@@ -35,7 +36,5 @@ def standard_dependencies
 
   group :development do
     gem 'ruby-prof', platforms: :mri
-    gem 'pry-rescue'
-    gem 'pry-nav'
   end
 end
