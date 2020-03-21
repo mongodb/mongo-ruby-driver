@@ -118,15 +118,13 @@ RUN echo 2
 
   WORKDIR /app
 
-  RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
-  RUN tar xfz <%= File.basename(server_download_url) %>
+  RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf -
   RUN mv mongo*/ /opt/mongodb
   ENV USE_OPT_MONGODB=1
   
   <% unless ruby_head? %>
     
-    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
-    RUN tar -xC /opt -zf ruby-toolchain.tar.gz
+    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -zf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH
     #ENV PATH=/opt/rubies/python/3/bin:$PATH
     ENV USE_OPT_TOOLCHAIN=1
