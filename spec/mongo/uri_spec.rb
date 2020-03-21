@@ -275,10 +275,10 @@ describe Mongo::URI do
 
     context 'equal sign in option value' do
 
-      let(:string) { 'mongodb://example.com/?w=a=b' }
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=foo:a=b&appname=test' }
 
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI, %r,Value for option w contains the key/value delimiter \(=\): a=b,)
+      it 'is allowed' do
+        expect(uri.uri_options[:auth_mech_properties]).to eq('foo' => 'a=b')
       end
     end
 
