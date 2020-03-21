@@ -400,9 +400,6 @@ module Mongo
         if value.nil?
           raise_invalid_error!("Option #{key} has no value")
         end
-        if value.index('=')
-          raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
-        end
         key = decode(key)
         value = decode(value)
         add_uri_option(key, value, uri_options)
