@@ -120,10 +120,7 @@ elif test "$AUTH" = x509; then
       {
         createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
         roles: [
-             { role: "dbAdminAnyDatabase", db: "admin" },
-             { role: "readWriteAnyDatabase", db: "admin" },
-             { role: "userAdminAnyDatabase", db: "admin" },
-             { role: "clusterAdmin", db: "admin" },
+             { role: "root", db: "admin" },
         ],
         writeConcern: { w: "majority" , wtimeout: 5000 },
       }
