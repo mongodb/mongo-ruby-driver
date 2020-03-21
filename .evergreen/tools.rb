@@ -36,7 +36,10 @@ class ServerVersionRegistry
           exit 2
         end
       end
-      dl = version['downloads'].detect { |dl| dl['archive']['url'].index("enterprise-#{arch}") }
+      dl = version['downloads'].detect do |dl|
+        dl['archive']['url'].index("enterprise-#{arch}") &&
+        dl['arch'] == 'x86_64'
+      end
       unless dl
         STDERR.puts "Error: no download for #{arch} for #{version['version']}"
         exit 2
