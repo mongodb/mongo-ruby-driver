@@ -819,13 +819,13 @@ describe Mongo::URI do
 
         let(:mechanism) { 'GSSAPI' }
         let(:expected) { :gssapi }
+        let(:client) { new_local_client_nmio(string) }
 
         it 'sets the auth mechanism to :gssapi' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
 
         it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
           expect(client.options[:auth_mech]).to eq(expected)
         end
 
@@ -839,7 +839,7 @@ describe Mongo::URI do
 
           it 'does not allow a client to be created' do
             expect {
-              new_local_client_nmio(string)
+              client
             }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
           end
         end
@@ -848,8 +848,23 @@ describe Mongo::URI do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true" }
 
           it 'sets the options on a client created with the uri' do
-            client = new_local_client_nmio(string)
             expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => true, 'service_name' => 'other' })
+          end
+
+          context 'when a mapping value is missing' do
+            let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:,CANONICALIZE_HOST_NAME:" }
+
+            it 'sets the options on a client created with the uri' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => nil, 'service_name' => nil })
+            end
+          end
+
+          context 'when a mapping value is missing but another is present' do
+            let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:foo,CANONICALIZE_HOST_NAME:" }
+
+            it 'sets the options on a client created with the uri' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => nil, 'service_name' => 'foo' })
+            end
           end
         end
       end

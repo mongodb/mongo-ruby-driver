@@ -643,7 +643,7 @@ module Mongo
     # @return [ Hash ] The auth mechanism properties hash.
     def auth_mech_props(value)
       properties = hash_extractor('authMechanismProperties', value)
-      if properties[:canonicalize_host_name]
+      if properties && properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
           properties[:canonicalize_host_name].downcase == 'true')
       end
@@ -818,15 +818,16 @@ module Mongo
     #
     # @return [ Hash ] The hash built from the string.
     def hash_extractor(name, value)
-      value.split(',').reduce({}) do |set, tag|
+      h = {}
+      value.split(',').each do |tag|
         k, v = tag.split(':')
         if v.nil?
-          log_warn("Invalid hash value for #{name}: #{value}")
-          return nil
+          log_warn("Invalid hash value for #{name}: key `#{k}` does not have a value: #{value}")
         end
 
-        set.merge(k.downcase.to_sym => v)
+        h[k.downcase.to_sym] = v
       end
+      h
     end
 
     # Extract values from the string and put them into an array.
