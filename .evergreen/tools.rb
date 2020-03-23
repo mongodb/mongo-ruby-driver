@@ -11,12 +11,23 @@ class ServerVersionRegistry
   def download_url
     @download_url ||= begin
       info = JSON.load(uri_open('http://downloads.mongodb.org/current.json').read)
-      version = info['versions'].detect { |version| version['version'].start_with?(desired_version) }
+      version = info['versions'].detect do |version|
+        version['version'].start_with?(desired_version) &&
+        !version['version'].include?('-') &&
+        # Sometimes the download situation is borked and there is a release
+        # with no downloads... skip those.
+        !version['downloads'].empty?
+      end
       if version.nil?
-        info = JSON.load(URI.open('http://downloads.mongodb.org/full.json').read)
-        versions = info['versions'].select { |version| version['version'].start_with?(desired_version) }
+        info = JSON.load(URI.parse('http://downloads.mongodb.org/full.json').open.read)
+        versions = info['versions'].select do |version|
+          version['version'].start_with?(desired_version) &&
+          !version['downloads'].empty?
+        end
         # Get rid of rc, beta etc. versions.
-        versions.delete_if { |version| version['version'].include?('-') }
+        versions.delete_if do |version|
+          version['version'].include?('-')
+        end
         # Versions are ordered with newest first, take the first one i.e. the most
         # recent one.
         version = versions.first
