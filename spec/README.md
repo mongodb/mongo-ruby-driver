@@ -476,6 +476,24 @@ variable:
 
     EXTERNAL_DISABLED=true
 
+## Debug Logging
+
+The test suite is run with the driver log level set to `WARN` by default.
+This produces a fair amount of output as many tests trigger various conditions
+resulting in the driver outputting warnings. This is expected behavior.
+
+To increase the driver log level to `DEBUG`, set the
+`MONGO_RUBY_DRIVER_CLIENT_DEBUG` environment variable to `1`, `true` or `yes`.
+This will produce additional log output pertaining to, for example, SDAM
+events and transitions performed by the driver, as well as log all
+commands sent to and responses received from the database.
+
+To debug authentication and user management commands, set the
+`MONGO_RUBY_DRIVER_UNREDACT_EVENTS` environment variable to `1`, `true` or
+`yes`. This will disable redaction of command monitoring payloads for sensitive
+commands. Normally this environment variable should be used with
+`MONGO_RUBY_DRIVER_CLIENT_DEBUG` to see the command payloads.
+
 ## Caveats
 
 ### Socket Permission Errors
@@ -514,12 +532,6 @@ In order to run some of the tests, the mongo cluster needs to have fail points
 enabled. This is accomplished by starting `mongod` with the following option:
 
     --setParameter enableTestCommands=1
-
-### Log Output
-
-The test suite is run with the driver log level set to WARN by default.
-This produces a fair amount of output as many tests trigger various conditions
-resulting in the driver outputting warnings. This is expected behavior.
 
 ## Running Individual Examples
 
