@@ -1,0 +1,66 @@
+runOn:
+  - { minServerVersion: "4.2.0" }
+
+data:
+  - {_id: 1, x: 11}
+  - {_id: 2, x: 22}
+  - {_id: 3, x: 33}
+
+collection_name: &collection_name 'Updatemany_hint'
+
+tests:
+  -
+    description: "Unacknowledged updateMany with hint string"
+    operations:
+      -
+        object: collection
+        collectionOptions: &collection_options
+          writeConcern: { w: 0 }
+        name: updateMany
+        arguments:
+          filter: &filter { _id: { $gt: 1 } }
+          update: &update { $inc: { x: 1 } }
+          hint: "_id_"
+        result: &result
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+    expectations:
+      -
+        command_started_event:
+          command:
+            update: *collection_name
+            updates:
+              -
+                q: *filter
+                u: *update
+                multi: true
+                hint: "_id_"
+    # Do not verify the contents of the collection to avoid race conditions
+    outcome: {}
+  -
+    description: "Unacknowledged updateMany with hint document"
+    operations:
+      -
+        object: collection
+        collectionOptions: *collection_options
+        name: updateMany
+        arguments: 
+          filter: *filter
+          update: *update
+          hint: { _id: 1 }
+        result: *result
+    expectations:
+      -
+        command_started_event:
+          command:
+            update: *collection_name
+            updates:
+              -
+                q: *filter
+                u: *update
+                multi: true
+                hint: { _id: 1 }
+    # Do not verify the contents of the collection to avoid race conditions
+    outcome: {}
+

@@ -62,6 +62,12 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
+              if server.max_wire_version < 9 && cmd[:hint] &&
+                write_concern && !write_concern.acknowledged?
+              then
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(cmd, server, opts)
               Operation::Command.new(
                   :selector => cmd,
@@ -134,6 +140,7 @@ module Mongo
           cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
+          cmd[:hint] = opts[:hint] if opts[:hint]
           if opts[:bypass_document_validation]
             cmd[:bypassDocumentValidation] = true
           end
@@ -142,6 +149,12 @@ module Mongo
             applied_write_concern = applied_write_concern(opts[:session])
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
+              if server.max_wire_version < 9 && cmd[:hint] &&
+                  cmd[:writeConcern] && !cmd[:writeConcern].acknowledged?
+              then
+                raise Mongo::Error, "add meaningful description"
+              end
+
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
               Operation::Command.new(
@@ -266,9 +279,18 @@ module Mongo
           if opts[:upsert]
             update_doc['upsert'] = true
           end
+
+          update_doc[:hint] = opts[:hint] if opts[:hint]
+
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
+              if server.max_wire_version < 8 && update_doc[:hint] &&
+                  write_concern && !write_concern.acknowledged?
+              then
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
 
@@ -322,6 +344,12 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
+              if server.max_wire_version < 8 && update_doc[:hint] &&
+                  write_concern && !write_concern.acknowledged?
+              then
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
               Operation::Update.new(
@@ -371,6 +399,12 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
 
               if server.max_wire_version < 5 && update_doc[:hint]
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
+              if server.max_wire_version < 8 && update_doc[:hint] &&
+                  write_concern && !write_concern.acknowledged?
+              then
                 raise Mongo::Error, "Add a descriptive error here"
               end
 

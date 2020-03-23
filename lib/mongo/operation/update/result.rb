@@ -94,6 +94,7 @@ module Mongo
         private
 
         def upsert?
+          return false unless acknowledged?
           first[UPSERTED]
         end
       end
