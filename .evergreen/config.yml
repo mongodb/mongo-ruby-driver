@@ -342,6 +342,11 @@ axes:
         display_name: "latest"
         variables:
           MONGODB_VERSION: "latest"
+      - id: "4.4"
+        display_name: "4.4"
+        variables:
+          # Until 4.4.0 RC0 ships, we use 4.3.x versions.
+          MONGODB_VERSION: "4.3"
       - id: "4.2"
         display_name: "4.2"
         variables:
@@ -651,11 +656,11 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-latest"
+  - matrix_name: "mongo-4.4"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.7"
-      mongodb-version: latest
+      mongodb-version: '4.4'
       topology: "*"
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -666,7 +671,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.6"
-      mongodb-version: ['4.0', '4.2', latest]
+      mongodb-version: ['4.0', '4.2', '4.4']
       topology: "sharded-cluster"
       single-mongos: single-mongos
       os: ubuntu1604
@@ -877,12 +882,12 @@ buildvariants:
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "fle-latest"
+  - matrix_name: "fle-4.4"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-2.7]
       topology: standalone
-      mongodb-version: [latest]
+      mongodb-version: ['4.4']
       os: rhel70
       fle: fle
     display_name: "FLE: ${mongodb-version} ${ruby}"

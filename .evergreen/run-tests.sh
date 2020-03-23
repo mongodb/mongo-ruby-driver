@@ -25,6 +25,9 @@ export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
 mongo_version=`echo $MONGODB_VERSION |tr -d .`
+if test $mongo_version = latest; then
+  mongo_version=44
+fi
 
 args="--setParameter enableTestCommands=1"
 # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
