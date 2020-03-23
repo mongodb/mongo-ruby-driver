@@ -121,7 +121,7 @@ class SpecConfig
   # Test suite configuration
 
   def client_debug?
-    %w(1 true yes).include?((ENV['MONGO_RUBY_DRIVER_CLIENT_DEBUG'] || '').downcase)
+    %w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_CLIENT_DEBUG']&.downcase)
   end
 
   def drivers_tools?

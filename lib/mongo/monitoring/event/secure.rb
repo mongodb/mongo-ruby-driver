@@ -51,7 +51,7 @@ module Mongo
         # @since 2.1.0
         def redacted(command_name, document)
           if REDACTED_COMMANDS.include?(command_name.to_s) &&
-            !%w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS'])
+            !%w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
           then
             BSON::Document.new
           else
