@@ -179,6 +179,12 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
+              if server.max_wire_version < 9 && delete_doc[:hint] &&
+                write_concern && !write_concern.acknowledged?
+              then
+                raise Mongo::Error, "Add a descriptive error here"
+              end
+
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
