@@ -242,7 +242,6 @@ bundle_install() {
 
 install_deps() {
   bundle_install
-  bundle exec rake clean
 }
 
 kill_jruby() {
