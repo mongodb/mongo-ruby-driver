@@ -35,7 +35,7 @@ module Mongo
       # @since 2.0.0
       def initialize(result)
         @result = result
-        super
+        super()
       end
 
       def to_s
