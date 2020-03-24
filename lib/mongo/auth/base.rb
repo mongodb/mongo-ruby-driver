@@ -34,6 +34,7 @@ module Mongo
 
       private
 
+      # Performs a single-step conversation on the given connection.
       def converse_1_step(connection, conversation)
         reply = connection.dispatch([ conversation.start(connection) ])
         validate_reply!(connection, conversation, reply)
@@ -41,6 +42,11 @@ module Mongo
         conversation.finalize(reply, connection)
       end
 
+      # Performs a two-step conversation on the given connection.
+      #
+      # The implementation is very similar to +converse_multi_step+, but
+      # conversations using this method do not involve the server replying
+      # with {done: true} to indicate the end of the conversation.
       def converse_2_step(connection, conversation)
         reply = connection.dispatch([ conversation.start(connection) ])
         validate_reply!(connection, conversation, reply)
