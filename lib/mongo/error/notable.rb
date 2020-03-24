@@ -47,7 +47,7 @@ module Mongo
 
       # @api public
       def message
-        super + notes_tail
+        super
       end
 
       # @api public
