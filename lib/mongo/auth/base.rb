@@ -48,12 +48,19 @@ module Mongo
         conversation.finalize(reply, connection)
       end
 
+      # Performs the variable-length SASL conversation on the given connection.
       def converse_multi_step(connection, conversation)
+        # Although the SASL conversation in theory can have any number of
+        # steps, all defined authentication methods have a predefined number
+        # of steps, and therefore all of our authenticators have a fixed set
+        # of methods that generate payloads with one method per step.
+        # We support a maximum of 3 total exchanges (start, continue and
+        # finalize) and in practice the first two exchanges always happen.
         reply = connection.dispatch([ conversation.start(connection) ])
         connection.update_cluster_time(Operation::Result.new(reply))
         reply = connection.dispatch([ conversation.continue(reply, connection) ])
         connection.update_cluster_time(Operation::Result.new(reply))
-        until reply.documents.first[:done]
+        unless reply.documents.first[:done]
           reply = connection.dispatch([ conversation.finalize(reply, connection) ])
           connection.update_cluster_time(Operation::Result.new(reply))
         end
