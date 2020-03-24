@@ -64,6 +64,10 @@ module Mongo
           reply = connection.dispatch([ conversation.finalize(reply, connection) ])
           connection.update_cluster_time(Operation::Result.new(reply))
         end
+        unless reply.documents.first[:done]
+          raise Error::InvalidServerAuthResponse,
+            'Server did not respond with {done: true} after finalizing the conversation'
+        end
         reply
       end
     end
