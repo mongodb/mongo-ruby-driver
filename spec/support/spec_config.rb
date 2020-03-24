@@ -407,8 +407,12 @@ EOT
       # Server selection timeout of 1 is insufficient for evergreen.
       server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 4.01 : 2.01),
 
-      wait_queue_timeout: 2,
+      # Since connections are established under the wait queue timeout,
+      # the wait queue timeout should be at least as long as the
+      # connect timeout.
+      wait_queue_timeout: 4,
       connect_timeout: 3,
+      socket_timeout: 3,
       max_idle_time: 5
    }
   end
