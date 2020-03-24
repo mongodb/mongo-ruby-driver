@@ -12,14 +12,6 @@ describe Mongo::Error::BulkWriteError do
 
   let(:error) { described_class.new(result) }
 
-  let(:messages) do
-    'message1 (1), message2 (2)'
-  end
-
-  let(:notes_tail) do
-    ' (note1, note2)'
-  end
-
   before do
     error.add_note('note1')
     error.add_note('note2')

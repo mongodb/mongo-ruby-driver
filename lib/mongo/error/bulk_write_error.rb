@@ -44,7 +44,7 @@ module Mongo
 
       def build_message
         errors = @result['writeErrors']
-        return '' unless errors
+        return nil unless errors
 
         fragment = errors.first(10).map do |error|
           "#{error['errmsg']} (#{error['code']})"
