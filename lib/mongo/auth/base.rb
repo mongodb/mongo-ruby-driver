@@ -36,14 +36,17 @@ module Mongo
 
       def converse_1_step(connection, conversation)
         reply = connection.dispatch([ conversation.start(connection) ])
+        validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
         conversation.finalize(reply, connection)
       end
 
       def converse_2_step(connection, conversation)
         reply = connection.dispatch([ conversation.start(connection) ])
+        validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
         reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
         conversation.finalize(reply, connection)
       end
@@ -57,11 +60,14 @@ module Mongo
         # We support a maximum of 3 total exchanges (start, continue and
         # finalize) and in practice the first two exchanges always happen.
         reply = connection.dispatch([ conversation.start(connection) ])
+        validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
         reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
         unless reply.documents.first[:done]
           reply = connection.dispatch([ conversation.finalize(reply, connection) ])
+          validate_reply!(connection, conversation, reply)
           connection.update_cluster_time(Operation::Result.new(reply))
         end
         unless reply.documents.first[:done]
@@ -69,6 +75,30 @@ module Mongo
             'Server did not respond with {done: true} after finalizing the conversation'
         end
         reply
+      end
+
+      # Checks whether reply is successful (i.e. has {ok: 1} set) and
+      # raises Unauthorized if not.
+      def validate_reply!(connection, conversation, reply)
+        doc = reply.documents[0]
+        if doc[:ok] != 1
+          extra = [doc[:code], doc[:codeName]].compact.join(': ')
+          msg = doc[:errmsg]
+          unless extra.empty?
+            msg += " (#{extra})"
+          end
+          full_mechanism = if conversation.respond_to?(:full_mechanism)
+            # Scram
+            conversation.full_mechanism
+          else
+            self.class.const_get(:MECHANISM)
+          end
+          raise Unauthorized.new(user,
+            used_mechanism: full_mechanism,
+            message: msg,
+            server: connection.server,
+          )
+        end
       end
     end
   end

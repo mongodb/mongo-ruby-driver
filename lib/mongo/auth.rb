@@ -52,6 +52,9 @@ module Mongo
 
     # Map the symbols parsed from the URI connection string to strategies.
     #
+    # @note This map is not frozen because when mongo_kerberos is loaded,
+    #   it mutates this map by adding the Kerberos authenticator.
+    #
     # @since 2.0.0
     SOURCES = {
       mongodb_cr: CR,

@@ -465,7 +465,6 @@ module Mongo
         end
 
         def validate_final_message!(reply, server)
-          validate_reply!(reply, server)
           @reply = reply
           unless compare_digest(verifier, server_signature)
             raise Error::InvalidSignature.new(verifier, server_signature)
@@ -473,7 +472,6 @@ module Mongo
         end
 
         def validate_first_message!(reply, server)
-          validate_reply!(reply, server)
           @reply = reply
           payload_data = reply.documents[0][PAYLOAD].data
           @server_nonce = payload_data.match(SERVER_NONCE)[1]

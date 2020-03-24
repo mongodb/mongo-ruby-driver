@@ -61,24 +61,6 @@ module Mongo
 
       private
 
-      # Checks whether reply is successful (i.e. has `ok: 1` set) and
-      # raises Unauthorized if not.
-      def validate_reply!(reply, server)
-        doc = reply.documents[0]
-        if doc[:ok] != 1
-          extra = [doc[:code], doc[:codeName]].compact.join(': ')
-          msg = doc[:errmsg]
-          unless extra.empty?
-            msg += " (#{extra})"
-          end
-          raise Unauthorized.new(user,
-            used_mechanism: full_mechanism,
-            message: msg,
-            server: server,
-          )
-        end
-      end
-
       # Helper method to validate that server nonce starts with the client
       # nonce.
       #

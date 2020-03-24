@@ -36,7 +36,7 @@ module Mongo
       # @since 2.6.0
       MECHANISMS = {
         scram: SCRAM_SHA_1_MECHANISM,
-        scram256: SCRAM_SHA_256_MECHANISM
+        scram256: SCRAM_SHA_256_MECHANISM,
       }.freeze
 
       # Log the user in on the given connection.
