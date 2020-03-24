@@ -130,7 +130,11 @@ RSpec.configure do |config|
       unless BSON::Environment.jruby?
         Rfc::Rif.output_object_space_stats = true
       end
-      Rfc::Rif.output_system_load = true
+
+      # Uncomment this line to log memory and CPU statistics during
+      # test suite execution to diagnose issues potentially related to
+      # system resource exhaustion.
+      #Rfc::Rif.output_system_load = true
     end
   end
 
