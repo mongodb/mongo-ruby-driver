@@ -79,20 +79,17 @@ module Mongo
         # to the server after setting the reply from the previous server
         # communication.
         #
-        # @example Continue the conversation.
-        #   conversation.continue(reply)
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         # @param [ Server::Connection ] connection The connection being
         #   authenticated.
         #
         # @return [ Protocol::Message ] The next message to send.
         #
         # @since 2.0.0
-        def continue(reply, connection)
-          @id = reply.documents[0][ID]
-          payload_data = reply.documents[0][PAYLOAD].data
+        def continue(reply_document, connection)
+          @id = reply_document[ID]
+          payload_data = reply_document[PAYLOAD].data
           @server_nonce = payload_data.match(SERVER_NONCE)[1]
           @salt = payload_data.match(SALT)[1]
           @iterations = payload_data.match(ITERATIONS)[1].to_i.tap do |i|
@@ -130,15 +127,15 @@ module Mongo
         # Finalize the SCRAM conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         # @param [ Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply, connection)
-          payload_data = reply.documents[0][PAYLOAD].data
+        def finalize(reply_document, connection)
+          payload_data = reply_document[PAYLOAD].data
           @verifier = payload_data.match(VERIFIER)[1]
 
           unless compare_digest(verifier, server_signature)

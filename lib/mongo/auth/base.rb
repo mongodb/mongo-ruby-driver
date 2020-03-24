@@ -36,10 +36,11 @@ module Mongo
 
       # Performs a single-step conversation on the given connection.
       def converse_1_step(connection, conversation)
-        reply = connection.dispatch([ conversation.start(connection) ])
+        msg = conversation.start(connection)
+        reply = connection.dispatch([msg])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply)
+        conversation.finalize(reply.documents.first)
         reply
       end
 
@@ -49,13 +50,15 @@ module Mongo
       # conversations using this method do not involve the server replying
       # with {done: true} to indicate the end of the conversation.
       def converse_2_step(connection, conversation)
-        reply = connection.dispatch([ conversation.start(connection) ])
+        msg = conversation.start(connection)
+        reply = connection.dispatch([msg])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
-        reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        msg = conversation.continue(reply.documents.first, connection)
+        reply = connection.dispatch([msg])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply)
+        conversation.finalize(reply.documents.first)
         reply
       end
 
@@ -67,14 +70,17 @@ module Mongo
         # of methods that generate payloads with one method per step.
         # We support a maximum of 3 total exchanges (start, continue and
         # finalize) and in practice the first two exchanges always happen.
-        reply = connection.dispatch([ conversation.start(connection) ])
+        msg = conversation.start(connection)
+        reply = connection.dispatch([msg])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
-        reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        msg = conversation.continue(reply.documents.first, connection)
+        reply = connection.dispatch([msg])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
         unless reply.documents.first[:done]
-          reply = connection.dispatch([ conversation.finalize(reply, connection) ])
+          msg = conversation.finalize(reply.documents.first, connection)
+          reply = connection.dispatch([msg])
           validate_reply!(connection, conversation, reply)
           connection.update_cluster_time(Operation::Result.new(reply))
         end
@@ -88,7 +94,7 @@ module Mongo
       # Checks whether reply is successful (i.e. has {ok: 1} set) and
       # raises Unauthorized if not.
       def validate_reply!(connection, conversation, reply)
-        doc = reply.documents[0]
+        doc = reply.documents.first
         if doc[:ok] != 1
           extra = [doc[:code], doc[:codeName]].compact.join(': ')
           msg = doc[:errmsg]

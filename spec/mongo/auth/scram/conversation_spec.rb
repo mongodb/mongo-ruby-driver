@@ -19,34 +19,22 @@ describe Mongo::Auth::SCRAM::Conversation do
 
   shared_context 'continue and finalize replies' do
 
-    let(:continue_reply) do
-      Mongo::Protocol::Message.new.tap do |msg|
-        allow(msg).to receive(:documents).and_return(continue_documents)
-      end
-    end
-
-    let(:continue_documents) do
-      [BSON::Document.new(
+    let(:continue_document) do
+      BSON::Document.new(
         'conversationId' => 1,
         'done' => false,
         'payload' => continue_payload,
         'ok' => 1.0
-      )]
+      )
     end
 
-    let(:finalize_reply) do
-      Mongo::Protocol::Message.new.tap do |msg|
-        allow(msg).to receive(:documents).and_return(finalize_documents)
-      end
-    end
-
-    let(:finalize_documents) do
-      [BSON::Document.new(
+    let(:finalize_document) do
+      BSON::Document.new(
         'conversationId' => 1,
         'done' => false,
         'payload' => finalize_payload,
         'ok' => 1.0
-      )]
+      )
     end
   end
 
@@ -115,7 +103,7 @@ describe Mongo::Auth::SCRAM::Conversation do
         end
 
         let(:query) do
-          conversation.continue(continue_reply, connection)
+          conversation.continue(continue_document, connection)
         end
 
         let(:selector) do
@@ -147,7 +135,7 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         it 'raises an error' do
           expect {
-            conversation.continue(continue_reply, connection)
+            conversation.continue(continue_document, connection)
           }.to raise_error(Mongo::Error::InvalidNonce)
         end
       end
@@ -173,8 +161,8 @@ describe Mongo::Auth::SCRAM::Conversation do
         end
 
         let(:query) do
-          conversation.continue(continue_reply, connection)
-          conversation.finalize(finalize_reply, connection)
+          conversation.continue(continue_document, connection)
+          conversation.finalize(finalize_document, connection)
         end
 
         let(:selector) do
@@ -202,8 +190,8 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         it 'raises an error' do
           expect {
-            conversation.continue(continue_reply, connection)
-            conversation.finalize(finalize_reply, connection)
+            conversation.continue(continue_document, connection)
+            conversation.finalize(finalize_document, connection)
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
@@ -273,7 +261,7 @@ describe Mongo::Auth::SCRAM::Conversation do
         end
 
         let(:query) do
-          conversation.continue(continue_reply, connection)
+          conversation.continue(continue_document, connection)
         end
 
         let(:selector) do
@@ -305,7 +293,7 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         it 'raises an error' do
           expect {
-            conversation.continue(continue_reply, connection)
+            conversation.continue(continue_document, connection)
           }.to raise_error(Mongo::Error::InvalidNonce)
         end
       end
@@ -331,8 +319,8 @@ describe Mongo::Auth::SCRAM::Conversation do
         end
 
         let(:query) do
-          conversation.continue(continue_reply, connection)
-          conversation.finalize(finalize_reply, connection)
+          conversation.continue(continue_document, connection)
+          conversation.finalize(finalize_document, connection)
         end
 
         let(:selector) do
@@ -360,8 +348,8 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         it 'raises an error' do
           expect do
-            conversation.continue(continue_reply, connection)
-            conversation.finalize(finalize_reply, connection)
+            conversation.continue(continue_document, connection)
+            conversation.finalize(finalize_document, connection)
           end.to raise_error(Mongo::Error::InvalidSignature)
         end
       end

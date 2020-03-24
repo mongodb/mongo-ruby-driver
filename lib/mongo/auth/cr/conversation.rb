@@ -65,19 +65,16 @@ module Mongo
         # to the server after setting the reply from the previous server
         # communication.
         #
-        # @example Continue the conversation.
-        #   conversation.continue(reply)
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         # @param [ Mongo::Server::Connection ] connection The connection being
         #   authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def continue(reply, connection)
-          @nonce = reply.documents[0][Auth::NONCE]
+        def continue(reply_document, connection)
+          @nonce = reply_document[Auth::NONCE]
 
           if connection && connection.features.op_msg_enabled?
             selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
@@ -98,15 +95,15 @@ module Mongo
         # Finalize the CR conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         # @param [ Server::Connection ] connection The connection being
         #   authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply)
+        def finalize(reply_document)
         end
       end
     end

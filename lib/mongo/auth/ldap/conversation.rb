@@ -57,13 +57,13 @@ module Mongo
         # Finalize the PLAIN conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ nil ] Always nil.
         #
         # @since 2.0.0
-        def finalize(reply)
+        def finalize(reply_document)
         end
 
         private
