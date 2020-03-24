@@ -69,7 +69,7 @@ RUN echo 2
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
   # JRuby: openjdk-8-jre
-  # Server dependencies: libsnmp30 libcurl3
+  # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
   # Kerberos testing: krb5-user
   # Installing mlaunch from git: git
@@ -91,9 +91,16 @@ RUN echo 2
   <% else %>
     RUN apt-get install -y libsnmp30
   <% end %>
-
+  
   # ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
-  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release libcurl3 \
+  # ubuntu1804: libcurl4
+  <% if distro =~ /ubuntu1804/ %>
+    RUN apt-get install -y libcurl4
+  <% else %>
+    RUN apt-get install -y libcurl3
+  <% end %>
+
+  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release \
     krb5-user bzip2 libgmp-dev python-pip
 
 <% else %>
@@ -118,15 +125,13 @@ RUN echo 2
 
   WORKDIR /app
 
-  RUN curl --retry 3 -fL <%= server_download_url %> -o <%= File.basename(server_download_url) %>
-  RUN tar xfz <%= File.basename(server_download_url) %>
+  RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf -
   RUN mv mongo*/ /opt/mongodb
   ENV USE_OPT_MONGODB=1
   
   <% unless ruby_head? %>
     
-    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> -o ruby-toolchain.tar.gz
-    RUN tar -xC /opt -zf ruby-toolchain.tar.gz
+    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -zf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH
     #ENV PATH=/opt/rubies/python/3/bin:$PATH
     ENV USE_OPT_TOOLCHAIN=1

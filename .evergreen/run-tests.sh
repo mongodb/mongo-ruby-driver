@@ -55,8 +55,7 @@ if test -n "$MMAPV1"; then
 fi
 if test "$AUTH" = auth; then
   args="$args --auth --username bob --password pwd123"
-fi
-if test "$AUTH" = x509; then
+elif test "$AUTH" = x509; then
   args="$args --auth --username bootstrap --password bootstrap"
 fi
 if test "$SSL" = ssl; then
@@ -115,18 +114,13 @@ fi
 
 if test "$AUTH" = auth; then
   hosts="bob:pwd123@$hosts"
-fi
-
-if test "$AUTH" = x509; then
+elif test "$AUTH" = x509; then
   create_user_cmd="`cat <<'EOT'
     db.getSiblingDB("$external").runCommand(
       {
         createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
         roles: [
-             { role: "dbAdminAnyDatabase", db: "admin" },
-             { role: "readWriteAnyDatabase", db: "admin" },
-             { role: "userAdminAnyDatabase", db: "admin" },
-             { role: "clusterAdmin", db: "admin" },
+             { role: "root", db: "admin" },
         ],
         writeConcern: { w: "majority" , wtimeout: 5000 },
       }
@@ -139,9 +133,7 @@ EOT
     --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
     -u bootstrap -p bootstrap \
     --eval "$create_user_cmd"
-fi
-
-if test "$AUTH" = kerberos; then
+elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
 
