@@ -203,8 +203,10 @@ setup_ruby() {
 
     # Only install bundler when not using ruby-head.
     # ruby-head comes with bundler and gem complains
-    # because installing bundler would overwrite the bundler binary
-    if echo "$RVM_RUBY" |grep -q jruby; then
+    # because installing bundler would overwrite the bundler binary.
+    # We now install bundler in the toolchain, hence nothing needs to be done
+    # in the tests.
+    if false && echo "$RVM_RUBY" |grep -q jruby; then
       gem install bundler -v '<2'
     fi
   fi
