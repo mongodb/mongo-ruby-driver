@@ -25,7 +25,7 @@ shift
 do_ssh "$target" sudo apt-get update
 do_ssh "$target" sudo apt-get -y install rsync
 
-do_rsync --exclude .git --exclude .env.private\* -av \
+do_rsync --delete --exclude .git --exclude .env.private\* -av \
   --exclude gem-private_key.pem \
   . $target:work
 

@@ -33,7 +33,7 @@ shift
 
 . `dirname $0`/functions-remote.sh
 
-do_rsync --exclude .git -av --exclude gem-private_key.pem \
+do_rsync --delete --exclude .git -av --exclude gem-private_key.pem \
   . "$target":work
 
 cmd=`./.evergreen/shell-escape "$@"`
