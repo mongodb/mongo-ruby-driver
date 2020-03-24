@@ -81,7 +81,7 @@ module Mongo
         #
         # @since 2.0.0
         def continue(reply, connection)
-          validate!(reply, connection.server)
+          validate!(reply)
           if connection && connection.features.op_msg_enabled?
             selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
@@ -110,12 +110,12 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply, connection)
-          validate!(reply, connection.server)
+          validate!(reply)
         end
 
         private
 
-        def validate!(reply, server)
+        def validate!(reply)
           @nonce = reply.documents[0][Auth::NONCE]
           @reply = reply
         end

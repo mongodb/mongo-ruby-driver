@@ -70,7 +70,7 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply, connection)
-          validate!(reply, connection.server)
+          validate!(reply)
         end
 
         private
@@ -79,7 +79,7 @@ module Mongo
           BSON::Binary.new("\x00#{user.name}\x00#{user.password}")
         end
 
-        def validate!(reply, server)
+        def validate!(reply)
           @reply = reply
         end
       end

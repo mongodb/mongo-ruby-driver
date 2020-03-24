@@ -95,7 +95,7 @@ module Mongo
         #
         # @since 2.0.0
         def continue(reply, connection)
-          validate_first_message!(reply, connection.server)
+          validate_first_message!(reply)
 
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
@@ -130,7 +130,7 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply, connection)
-          validate_final_message!(reply, connection.server)
+          validate_final_message!(reply)
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
               payload: client_empty_message,
@@ -464,14 +464,14 @@ module Mongo
           check == 0
         end
 
-        def validate_final_message!(reply, server)
+        def validate_final_message!(reply)
           @reply = reply
           unless compare_digest(verifier, server_signature)
             raise Error::InvalidSignature.new(verifier, server_signature)
           end
         end
 
-        def validate_first_message!(reply, server)
+        def validate_first_message!(reply)
           @reply = reply
           payload_data = reply.documents[0][PAYLOAD].data
           @server_nonce = payload_data.match(SERVER_NONCE)[1]
