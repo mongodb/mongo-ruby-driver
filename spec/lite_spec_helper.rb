@@ -35,6 +35,13 @@ end
 require 'mongo'
 require 'pp'
 
+if BSON::Environment.jruby?
+  # Autoloading appears to not work in some environments without these
+  # gem calls. May have to do with rubygems version?
+  gem 'ice_nine'
+  gem 'timecop'
+end
+
 autoload :Benchmark, 'benchmark'
 autoload :IceNine, 'ice_nine'
 autoload :Timecop, 'timecop'
