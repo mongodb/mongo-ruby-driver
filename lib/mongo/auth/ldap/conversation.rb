@@ -63,13 +63,11 @@ module Mongo
         #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
-        # @param [ Server::Connection ] connection The connection being
-        #   authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply, connection)
+        def finalize(reply)
           validate!(reply)
         end
 

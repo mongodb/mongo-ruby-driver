@@ -39,7 +39,7 @@ module Mongo
         reply = connection.dispatch([ conversation.start(connection) ])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply, connection)
+        conversation.finalize(reply)
       end
 
       # Performs a two-step conversation on the given connection.
@@ -54,7 +54,7 @@ module Mongo
         reply = connection.dispatch([ conversation.continue(reply, connection) ])
         validate_reply!(connection, conversation, reply)
         connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply, connection)
+        conversation.finalize(reply)
       end
 
       # Performs the variable-length SASL conversation on the given connection.

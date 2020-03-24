@@ -109,7 +109,7 @@ module Mongo
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply, connection)
+        def finalize(reply)
           validate!(reply)
         end
 
