@@ -36,12 +36,12 @@ FROM <%= base_image %>
   
     # ubuntu1204 comes with python 2.7.3.
     # Install a more recent one from deadsnakes ppa so that pip works.
-    RUN apt-get install -y python-software-properties
-    # https://github.com/deadsnakes/issues/issues/53
-    RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C
-    RUN add-apt-repository ppa:fkrull/deadsnakes-python2.7
-    RUN apt-get update
-    RUN apt-get install -y python2.7-dev
+    # See also: https://github.com/deadsnakes/issues/issues/53
+    RUN apt-get install -y python-software-properties && \
+      apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C && \
+      add-apt-repository ppa:fkrull/deadsnakes-python2.7 && \
+      apt-get update && \
+      apt-get install -y python2.7-dev
 
   <% end %>
 
@@ -125,16 +125,16 @@ FROM <%= base_image %>
 
   WORKDIR /app
 
-  RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf -
-  RUN mv mongo*/ /opt/mongodb
+  RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf - && \
+    mv mongo*/ /opt/mongodb
   ENV USE_OPT_MONGODB=1
   
   <% unless ruby_head? %>
     
     RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -zf -
-    ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH
+    ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
+      USE_OPT_TOOLCHAIN=1
     #ENV PATH=/opt/rubies/python/3/bin:$PATH
-    ENV USE_OPT_TOOLCHAIN=1
   
   <% end %>
   
@@ -148,9 +148,8 @@ FROM <%= base_image %>
   
   <% end %>
 
-  RUN pip --version
-  
-  RUN pip install mtools-legacy[mlaunch]
+  RUN pip --version && \
+    pip install mtools-legacy[mlaunch]
 
 <% end %>
 
