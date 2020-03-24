@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'shellwords'
+
+puts ARGV.map { |arg| Shellwords.shellescape(arg) }.join(' ')
