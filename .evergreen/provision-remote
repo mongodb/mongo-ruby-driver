@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Copies the current directory to the specified target, then runs the
+# provision script on the target.
+#
+# The current directory is copied into the `work` subdirectory of the user's
+# home directory on the target.
+#
+# The target is meant to be an EC2 instance which will be provisioned with the
+# required software to be able to build and run a Docker container with the
+# driver's test suite.
+
+set -e
+
+target="$1"
+if test -z "$target"; then
+  echo Usage: `basename $0` user@host 1>&2
+  exit 1
+fi
+
+shift
+
+. `dirname $0`/functions-remote.sh
+
+do_ssh "$target" sudo apt-get update
+do_ssh "$target" sudo apt-get -y install rsync
+
+do_rsync --exclude .git --exclude .env.private\* -av \
+  --exclude gem-private_key.pem \
+  . $target:work
+
+do_ssh "$target" 'cd work && ./.evergreen/provision'
