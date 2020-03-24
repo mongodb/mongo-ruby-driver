@@ -15,6 +15,8 @@
 module Mongo
   module Auth
 
+    # Base class for authenticators.
+    #
     # @api private
     class Base
 

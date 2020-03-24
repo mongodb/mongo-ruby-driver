@@ -61,6 +61,8 @@ module Mongo
 
       private
 
+      # Checks whether reply is successful (i.e. has `ok: 1` set) and
+      # raises Unauthorized if not.
       def validate_reply!(reply, server)
         doc = reply.documents[0]
         if doc[:ok] != 1
