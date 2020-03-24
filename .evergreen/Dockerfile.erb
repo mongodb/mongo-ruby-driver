@@ -21,16 +21,16 @@ ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/
 
 FROM <%= base_image %>
 
-# increment to force apt-get update to run
-RUN echo 2
-
 <% if debian? %>
 
   ENV DEBIAN_FRONTEND=noninteractive
 
-  RUN apt-get update
-
-  RUN apt-get install -y curl
+  # increment the counter to force apt-get update to run.
+  # zsh is not required for any scripts but it is a better interactive shell
+  # than bash.
+  RUN echo 1 && \
+    apt-get update && \
+    apt-get install -y curl zsh
 
   <% if preload? && distro =~ /ubuntu1204/ %>
   
