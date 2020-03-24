@@ -75,10 +75,6 @@ module Mongo
         # @return [ String ] client_nonce The client nonce.
         attr_reader :client_nonce
 
-        # @return [ Protocol::Message ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
         # Continue the SCRAM conversation. This sends the client final message
         # to the server after setting the reply from the previous server
         # communication.
@@ -95,7 +91,19 @@ module Mongo
         #
         # @since 2.0.0
         def continue(reply, connection)
-          validate_first_message!(reply)
+          @id = reply.documents[0][ID]
+          payload_data = reply.documents[0][PAYLOAD].data
+          @server_nonce = payload_data.match(SERVER_NONCE)[1]
+          @salt = payload_data.match(SALT)[1]
+          @iterations = payload_data.match(ITERATIONS)[1].to_i.tap do |i|
+            if i < MIN_ITER_COUNT
+              raise Error::InsufficientIterationCount.new(
+                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
+            end
+          end
+          @auth_message = "#{first_bare},#{payload_data},#{without_proof}"
+
+          validate_server_nonce!
 
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
@@ -130,7 +138,13 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply, connection)
-          validate_final_message!(reply)
+          payload_data = reply.documents[0][PAYLOAD].data
+          @verifier = payload_data.match(VERIFIER)[1]
+
+          unless compare_digest(verifier, server_signature)
+            raise Error::InvalidSignature.new(verifier, server_signature)
+          end
+
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
               payload: client_empty_message,
@@ -165,9 +179,7 @@ module Mongo
         # @return [ Integer ] The conversation id.
         #
         # @since 2.0.0
-        def id
-          reply.documents[0][ID]
-        end
+        attr_reader :id
 
         # Create the new conversation.
         #
@@ -202,9 +214,7 @@ module Mongo
         # @see http://tools.ietf.org/html/rfc5802#section-3
         #
         # @since 2.0.0
-        def auth_message
-          @auth_message ||= "#{first_bare},#{reply.documents[0][PAYLOAD].data},#{without_proof}"
-        end
+        attr_reader :auth_message
 
         # Get the empty client message.
         #
@@ -337,23 +347,14 @@ module Mongo
         # @api private
         #
         # @since 2.0.0
-        def iterations
-          @iterations ||= payload_data.match(ITERATIONS)[1].to_i.tap do |i|
-            if i < MIN_ITER_COUNT
-              raise Error::InsufficientIterationCount.new(
-                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
-            end
-          end
-        end
+        attr_reader :iterations
 
         # Get the data from the returned payload.
         #
         # @api private
         #
         # @since 2.0.0
-        def payload_data
-          reply.documents[0][PAYLOAD].data
-        end
+        attr_reader :payload_data
 
         # Get the server nonce from the payload.
         #
@@ -367,9 +368,7 @@ module Mongo
         # @api private
         #
         # @since 2.0.0
-        def salt
-          @salt ||= payload_data.match(SALT)[1]
-        end
+        attr_reader :salt
 
         # @api private
         def cache_key(*extra)
@@ -434,9 +433,7 @@ module Mongo
         # @api private
         #
         # @since 2.0.0
-        def verifier
-          @verifier ||= payload_data.match(VERIFIER)[1]
-        end
+        attr_reader :verifier
 
         # Get the without proof message.
         #
@@ -462,20 +459,6 @@ module Mongo
           check = a.bytesize ^ b.bytesize
           a.bytes.zip(b.bytes){ |x, y| check |= x ^ y.to_i }
           check == 0
-        end
-
-        def validate_final_message!(reply)
-          @reply = reply
-          unless compare_digest(verifier, server_signature)
-            raise Error::InvalidSignature.new(verifier, server_signature)
-          end
-        end
-
-        def validate_first_message!(reply)
-          @reply = reply
-          payload_data = reply.documents[0][PAYLOAD].data
-          @server_nonce = payload_data.match(SERVER_NONCE)[1]
-          validate_server_nonce!
         end
 
         private

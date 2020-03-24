@@ -28,10 +28,6 @@ module Mongo
         # @since 2.0.0
         LOGIN = { saslStart: 1, autoAuthorize: 1 }.freeze
 
-        # @return [ Protocol::Message ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
         # Start the PLAIN conversation. This returns the first message that
         # needs to be sent to the server.
         #
@@ -68,17 +64,12 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply)
-          validate!(reply)
         end
 
         private
 
         def payload
           BSON::Binary.new("\x00#{user.name}\x00#{user.password}")
-        end
-
-        def validate!(reply)
-          @reply = reply
         end
       end
     end

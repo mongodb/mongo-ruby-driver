@@ -31,10 +31,6 @@ module Mongo
         # @since 2.0.0
         LOGIN = { authenticate: 1 }.freeze
 
-        # @return [ Protocol::Message ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
         # @return [ String ] database The database to authenticate against.
         attr_reader :database
 
@@ -81,7 +77,8 @@ module Mongo
         #
         # @since 2.0.0
         def continue(reply, connection)
-          validate!(reply)
+          @nonce = reply.documents[0][Auth::NONCE]
+
           if connection && connection.features.op_msg_enabled?
             selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
@@ -110,14 +107,6 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply)
-          validate!(reply)
-        end
-
-        private
-
-        def validate!(reply)
-          @nonce = reply.documents[0][Auth::NONCE]
-          @reply = reply
         end
       end
     end
