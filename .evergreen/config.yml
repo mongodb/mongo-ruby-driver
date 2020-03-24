@@ -272,7 +272,7 @@ functions:
             MONGODB_VERSION=${mongodb-version} \
             TOPOLOGY=${topology} \
             RVM_RUBY=${ruby} \
-            -s .evergreen/run-tests.sh TEST_CMD=rspec
+            -s .evergreen/run-tests.sh
 
   "run Kerberos unit tests":
     - command: shell.exec
