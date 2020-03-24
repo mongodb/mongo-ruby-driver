@@ -38,14 +38,20 @@ describe Mongo::Error::BulkWriteError do
   end
 
   describe '#message' do
-    it 'returns the formatted message' do
-      expect(error.message).to eq("#{described_class}: #{messages}#{notes_tail}")
+    it 'is correct' do
+      expect(error.message).to eq("message1 (1), message2 (2) (note1, note2)")
     end
   end
 
   describe '#to_s' do
-    it 'returns the error represented as a string' do
-      expect(error.to_s).to eq("#{described_class}: #{messages}#{notes_tail}")
+    it 'is correct' do
+      expect(error.to_s).to eq("message1 (1), message2 (2) (note1, note2)")
+    end
+  end
+
+  describe '#inspect' do
+    it 'is correct' do
+      expect(error.inspect).to eq("#<Mongo::Error::BulkWriteError: message1 (1), message2 (2) (note1, note2)>")
     end
   end
 end

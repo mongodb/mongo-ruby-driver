@@ -35,7 +35,9 @@ module Mongo
       # @since 2.0.0
       def initialize(result)
         @result = result
-        super("#{self.class}: #{build_message}")
+        # Exception constructor behaves differently for a nil argument and
+        # for no argument. Avoid passing nil explicitly.
+        super(*[build_message])
       end
 
       private
