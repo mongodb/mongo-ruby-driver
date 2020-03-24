@@ -487,6 +487,11 @@ module Mongo
         server.reconnect!
       end
       @periodic_executor.restart!
+      @srv_monitor_lock.synchronize do
+        if @srv_monitor
+          @srv_monitor.run!
+        end
+      end
       @connecting = false
       @connected = true
     end
