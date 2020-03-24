@@ -41,6 +41,30 @@ module Mongo
         # @return [ String ] nonce The initial auth nonce.
         attr_reader :nonce
 
+        # Start the CR conversation. This returns the first message that
+        # needs to be sent to the server.
+        #
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
+        #
+        # @return [ Protocol::Query ] The first CR conversation message.
+        #
+        # @since 2.0.0
+        def start(connection)
+          if connection && connection.features.op_msg_enabled?
+            selector = Auth::GET_NONCE.merge(Protocol::Msg::DATABASE_IDENTIFIER => user.auth_source)
+            cluster_time = connection.mongos? && connection.cluster_time
+            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
+            Protocol::Msg.new([], {}, selector)
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              Auth::GET_NONCE,
+              limit: -1)
+          end
+        end
+
         # Continue the CR conversation. This sends the client final message
         # to the server after setting the reply from the previous server
         # communication.
@@ -87,30 +111,6 @@ module Mongo
         # @since 2.0.0
         def finalize(reply, connection)
           validate!(reply, connection.server)
-        end
-
-        # Start the CR conversation. This returns the first message that
-        # needs to be sent to the server.
-        #
-        # @param [ Server::Connection ] connection The connection being
-        #   authenticated.
-        #
-        # @return [ Protocol::Query ] The first CR conversation message.
-        #
-        # @since 2.0.0
-        def start(connection)
-          if connection && connection.features.op_msg_enabled?
-            selector = Auth::GET_NONCE.merge(Protocol::Msg::DATABASE_IDENTIFIER => user.auth_source)
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              user.auth_source,
-              Database::COMMAND,
-              Auth::GET_NONCE,
-              limit: -1)
-          end
         end
 
         private

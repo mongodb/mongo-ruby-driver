@@ -32,21 +32,6 @@ module Mongo
         #   conversation.
         attr_reader :reply
 
-        # Finalize the PLAIN conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
-        # @param [ Server::Connection ] connection The connection being
-        #   authenticated.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def finalize(reply, connection)
-          validate!(reply, connection.server)
-        end
-
         # Start the PLAIN conversation. This returns the first message that
         # needs to be sent to the server.
         #
@@ -71,6 +56,21 @@ module Mongo
               limit: -1
             )
           end
+        end
+
+        # Finalize the PLAIN conversation. This is meant to be iterated until
+        # the provided reply indicates the conversation is finished.
+        #
+        # @param [ Protocol::Message ] reply The reply of the previous
+        #   message.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
+        #
+        # @return [ Protocol::Query ] The next message to send.
+        #
+        # @since 2.0.0
+        def finalize(reply, connection)
+          validate!(reply, connection.server)
         end
 
         private
