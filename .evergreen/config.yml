@@ -268,7 +268,11 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          ./egos .evergreen/run-tests.sh
+          ./egos .evergreen/test-on-docker -d ${os} \
+            MONGODB_VERSION=${mongodb-version} \
+            TOPOLOGY=${topology} \
+            RVM_RUBY=${ruby} \
+            -s .evergreen/run-tests.sh TEST_CMD=rspec
 
   "run Kerberos unit tests":
     - command: shell.exec
