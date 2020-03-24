@@ -109,12 +109,17 @@ set_env_vars() {
   export CI=evergreen
 
   # JRUBY_OPTS were initially set for Mongoid
-  export JRUBY_OPTS="--server -J-Xms512m -J-Xmx2G"
+  export JRUBY_OPTS="--server -J-Xms512m -J-Xmx1536M"
 
   if test "$BSON" = min; then
     export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
   elif test "$BSON" = master; then
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
+  fi
+  
+  # rhel62 ships with Python 2.6
+  if test -d /opt/python/2.7/bin; then
+    export PATH=/opt/python/2.7/bin:$PATH
   fi
 }
 
@@ -203,8 +208,10 @@ setup_ruby() {
 
     # Only install bundler when not using ruby-head.
     # ruby-head comes with bundler and gem complains
-    # because installing bundler would overwrite the bundler binary
-    if echo "$RVM_RUBY" |grep -q jruby; then
+    # because installing bundler would overwrite the bundler binary.
+    # We now install bundler in the toolchain, hence nothing needs to be done
+    # in the tests.
+    if false && echo "$RVM_RUBY" |grep -q jruby; then
       gem install bundler -v '<2'
     fi
   fi

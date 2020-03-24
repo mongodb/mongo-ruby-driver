@@ -35,6 +35,13 @@ end
 require 'mongo'
 require 'pp'
 
+if BSON::Environment.jruby?
+  # Autoloading appears to not work in some environments without these
+  # gem calls. May have to do with rubygems version?
+  gem 'ice_nine'
+  gem 'timecop'
+end
+
 autoload :Benchmark, 'benchmark'
 autoload :IceNine, 'ice_nine'
 autoload :Timecop, 'timecop'
@@ -119,10 +126,15 @@ RSpec.configure do |config|
   end
 
   if SpecConfig.instance.ci?
-    unless BSON::Environment.jruby?
-      if defined?(Rfc)
+    if defined?(Rfc)
+      unless BSON::Environment.jruby?
         Rfc::Rif.output_object_space_stats = true
       end
+
+      # Uncomment this line to log memory and CPU statistics during
+      # test suite execution to diagnose issues potentially related to
+      # system resource exhaustion.
+      #Rfc::Rif.output_system_load = true
     end
   end
 

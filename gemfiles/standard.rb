@@ -27,7 +27,7 @@ def standard_dependencies
     gem 'rspec-retry'
     gem 'rspec-expectations', '~> 3.0'
     gem 'rspec-mocks-diag', '~> 3.0'
-    gem 'rfc'
+    gem 'rfc', '~> 0.1.1'
     gem 'fuubar'
     gem 'timeout-interrupt', platforms: :mri
     gem 'concurrent-ruby', platforms: :jruby

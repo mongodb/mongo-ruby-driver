@@ -484,8 +484,11 @@ axes:
         display_name: "Ubuntu 12.04"
         run_on: ubuntu1204-test
       - id: rhel70
-        display_name: "RHEL 7.0"
+        display_name: "RHEL 7"
         run_on: rhel70-small
+      - id: rhel62
+        display_name: "RHEL 6"
+        run_on: rhel62-small
 
   - id: "compressor"
     display_name: Compressor
@@ -740,7 +743,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "4.2"
       topology: "*"
-      os: ubuntu1604
+      os: rhel70
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -751,7 +754,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "2.6"
       topology: "*"
-      os: ubuntu1204
+      os: rhel62
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -808,7 +811,7 @@ buildvariants:
       mongodb-version: '4.2'
       topology: replica-set
       bson: "*"
-      os: ubuntu1604
+      os: rhel70
     display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
     tasks:
       - name: "test-mlaunch"
