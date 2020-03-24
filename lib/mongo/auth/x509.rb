@@ -56,7 +56,7 @@ module Mongo
       # @param [ Mongo::Connection ] connection The connection to log into.
       #   on.
       #
-      # @return [ Protocol::Message ] The authentication response.
+      # @return [ BSON::Document ] The document of the authentication response.
       #
       # @since 2.0.0
       def login(connection)

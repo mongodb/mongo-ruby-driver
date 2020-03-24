@@ -70,7 +70,7 @@ describe Mongo::Auth::CR do
     end
 
     it 'logs the user into the connection' do
-      expect(login.documents[0]['ok']).to eq(1)
+      expect(login['ok']).to eq(1)
     end
   end
 end

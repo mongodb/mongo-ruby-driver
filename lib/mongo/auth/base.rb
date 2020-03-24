@@ -37,11 +37,9 @@ module Mongo
       # Performs a single-step conversation on the given connection.
       def converse_1_step(connection, conversation)
         msg = conversation.start(connection)
-        reply = connection.dispatch([msg])
-        validate_reply!(connection, conversation, reply)
-        connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply.documents.first)
-        reply
+        reply_document = dispatch_msg(connection, conversation, msg)
+        conversation.finalize(reply_document)
+        reply_document
       end
 
       # Performs a two-step conversation on the given connection.
@@ -51,15 +49,11 @@ module Mongo
       # with {done: true} to indicate the end of the conversation.
       def converse_2_step(connection, conversation)
         msg = conversation.start(connection)
-        reply = connection.dispatch([msg])
-        validate_reply!(connection, conversation, reply)
-        connection.update_cluster_time(Operation::Result.new(reply))
-        msg = conversation.continue(reply.documents.first, connection)
-        reply = connection.dispatch([msg])
-        validate_reply!(connection, conversation, reply)
-        connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply.documents.first)
-        reply
+        reply_document = dispatch_msg(connection, conversation, msg)
+        msg = conversation.continue(reply_document, connection)
+        reply_document = dispatch_msg(connection, conversation, msg)
+        conversation.finalize(reply_document)
+        reply_document
       end
 
       # Performs the variable-length SASL conversation on the given connection.
@@ -71,30 +65,31 @@ module Mongo
         # We support a maximum of 3 total exchanges (start, continue and
         # finalize) and in practice the first two exchanges always happen.
         msg = conversation.start(connection)
-        reply = connection.dispatch([msg])
-        validate_reply!(connection, conversation, reply)
-        connection.update_cluster_time(Operation::Result.new(reply))
-        msg = conversation.continue(reply.documents.first, connection)
-        reply = connection.dispatch([msg])
-        validate_reply!(connection, conversation, reply)
-        connection.update_cluster_time(Operation::Result.new(reply))
-        unless reply.documents.first[:done]
-          msg = conversation.finalize(reply.documents.first, connection)
-          reply = connection.dispatch([msg])
-          validate_reply!(connection, conversation, reply)
-          connection.update_cluster_time(Operation::Result.new(reply))
+        reply_document = dispatch_msg(connection, conversation, msg)
+        msg = conversation.continue(reply_document, connection)
+        reply_document = dispatch_msg(connection, conversation, msg)
+        unless reply_document[:done]
+          msg = conversation.finalize(reply_document, connection)
+          reply_document = dispatch_msg(connection, conversation, msg)
         end
-        unless reply.documents.first[:done]
+        unless reply_document[:done]
           raise Error::InvalidServerAuthResponse,
             'Server did not respond with {done: true} after finalizing the conversation'
         end
-        reply
+        reply_document
+      end
+
+      def dispatch_msg(connection, conversation, msg)
+        reply = connection.dispatch([msg])
+        reply_document = reply.documents.first
+        validate_reply!(connection, conversation, reply_document)
+        connection.update_cluster_time(Operation::Result.new(reply))
+        reply_document
       end
 
       # Checks whether reply is successful (i.e. has {ok: 1} set) and
       # raises Unauthorized if not.
-      def validate_reply!(connection, conversation, reply)
-        doc = reply.documents.first
+      def validate_reply!(connection, conversation, doc)
         if doc[:ok] != 1
           extra = [doc[:code], doc[:codeName]].compact.join(': ')
           msg = doc[:errmsg]
