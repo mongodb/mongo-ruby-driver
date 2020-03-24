@@ -40,7 +40,7 @@ class BackgroundThreadRegistry
         alive_thread_records.each do |record|
           msg << "\n  #{record.object}"
           if record.object.respond_to?(:options)
-            msg << "\n  #{record.object.options}"
+            msg << "\n  with options: #{record.object.options}"
           end
           msg << "\n  in #{record.example.id} #{record.example.full_description}"
         end
