@@ -46,23 +46,8 @@ module Mongo
       end
 
       # @api public
-      def message
-        super + notes_tail
-      end
-
-      # @api public
       def to_s
         super + notes_tail
-      end
-
-      # @api public
-      def inspect
-        msg = super
-        if msg.end_with?('>')
-          msg[0...msg.length-1] + notes_tail + '>'
-        else
-          msg + notes_tail
-        end
       end
 
       private

@@ -84,19 +84,23 @@ describe Mongo::BulkWrite::Result do
 
     context 'with top level error' do
       let(:results_document) do
-        {'writeErrors' => {
-          'ok' => 0,
-          'errmsg' => 'not master',
-          'code' => 10107,
-          'codeName' => 'NotMaster',
-        }}
+        {
+          'writeErrors' => [
+            {
+              'ok' => 0,
+              'errmsg' => 'not master',
+              'code' => 10107,
+              'codeName' => 'NotMaster',
+            }
+          ]
+        }
       end
 
       it 'raises BulkWriteError' do
         expect do
           subject.validate!
         # BulkWriteErrors don't have any messages on them
-        end.to raise_error(Mongo::Error::BulkWriteError, nil)
+        end.to raise_error(Mongo::Error::BulkWriteError, /not master/)
       end
     end
 
