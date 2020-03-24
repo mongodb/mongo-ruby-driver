@@ -116,6 +116,11 @@ set_env_vars() {
   elif test "$BSON" = master; then
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
   fi
+  
+  # rhel62 ships with Python 2.6
+  if test -d /opt/python/2.7/bin; then
+    export PATH=/opt/python/2.7/bin:$PATH
+  fi
 }
 
 setup_ruby() {
