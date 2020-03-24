@@ -35,22 +35,24 @@ module Mongo
       # @since 2.0.0
       def initialize(result)
         @result = result
+        # Exception constructor behaves differently for a nil argument and
+        # for no argument. Avoid passing nil explicitly.
+        super(*[build_message])
       end
 
-      def to_s
-        messages = if errors = result['writeErrors']
-          frag = ': ' + errors[0..10].map do |error|
-            "#{error['errmsg']} (#{error['code']})"
-          end.join(', ')
-          if errors.length > 10
-            frag += '...'
-          else
-            frag
-          end
-        else
-          ''
-        end
-        "#{self.class}: #{messages}" + notes_tail
+      private
+
+      def build_message
+        errors = @result['writeErrors']
+        return nil unless errors
+
+        fragment = errors.first(10).map do |error|
+          "#{error['errmsg']} (#{error['code']})"
+        end.join(', ')
+
+        fragment += '...' if errors.length > 10
+
+        fragment
       end
     end
   end
