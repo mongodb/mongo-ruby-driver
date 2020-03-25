@@ -114,25 +114,39 @@ module Mongo
         raise ArgumentError, 'Seeds cannot be nil'
       end
 
+      options = options.dup
       if options[:monitoring_io] == false && !options.key?(:cleanup)
-        options = options.dup
         options[:cleanup] = false
       end
+      @options = options.freeze
 
-      seeds = seeds.uniq
-
+      # @update_lock covers @servers, @connecting, @connected, @topology and
+      # @sessions_supported. Generally instance variables that do not have a
+      # designated for them lock should only be modified under the update lock.
+      # Note that topology change is locked by @update_lock and not by
+      # @sdam_flow_lock.
+      @update_lock = Mutex.new
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
-      @options = options.freeze
       @app_metadata = Server::AppMetadata.new(@options)
-      @update_lock = Mutex.new
-      @sdam_flow_lock = Mutex.new
-      @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      @cluster_time = nil
       @srv_monitor_lock = Mutex.new
+      @srv_monitor = nil
       @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
+      # State change lock is similar to the sdam flow lock, but is designed
+      # to serialize state changes initated by consumers of Cluster
+      # (e.g. application connecting or disconnecting the cluster), so that
+      # e.g. an application calling disconnect-connect-disconnect rapidly
+      # does not put the cluster into an inconsistent state.
+      # Monitoring updates performed internally by the driver do not take
+      # the state change lock.
+      @state_change_lock = Mutex.new
+      # @sdam_flow_lock covers just the sdam flow. Note it does not apply
+      # to @topology replacements which are done under @update_lock.
+      @sdam_flow_lock = Mutex.new
       Session::SessionPool.create(self)
 
       # The opening topology is always unknown with no servers.
@@ -144,7 +158,7 @@ module Mongo
         Monitoring::Event::TopologyOpening.new(opening_topology)
       )
 
-      @seeds = seeds
+      @seeds = seeds = seeds.uniq
       servers = seeds.map do |seed|
         # Server opening events must be sent after topology change events.
         # Therefore separate server addition, done here before topoolgy change
@@ -348,6 +362,17 @@ module Mongo
       options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
     end
 
+    # Whether the cluster object is in the process of connecting to its cluster.
+    #
+    # @return [ true|false ] Whether the cluster is connecting.
+    #
+    # @api private
+    def connecting?
+      @update_lock.synchronize do
+        !!@connecting
+      end
+    end
+
     # Whether the cluster object is connected to its cluster.
     #
     # @return [ true|false ] Whether the cluster is connected.
@@ -355,7 +380,9 @@ module Mongo
     # @api private
     # @since 2.7.0
     def connected?
-      !!@connected
+      @update_lock.synchronize do
+        !!@connected
+      end
     end
 
     # Get a list of server candidates from the cluster that can have operations
@@ -380,7 +407,7 @@ module Mongo
     #
     # @since 2.0.6
     def addresses
-      servers_list.map(&:address).dup
+      servers_list.map(&:address)
     end
 
     # The logical session timeout value in minutes.
@@ -451,32 +478,36 @@ module Mongo
     #
     # @since 2.1.0
     def disconnect!
-      unless @connecting || @connected
-        return true
-      end
-      if options[:cleanup] != false
-        session_pool.end_sessions
-        @periodic_executor.stop!
-      end
-      @srv_monitor_lock.synchronize do
-        if @srv_monitor
-          @srv_monitor.stop!
+      @state_change_lock.synchronize do
+        unless connecting? || connected?
+          return true
+        end
+        if options[:cleanup] != false
+          session_pool.end_sessions
+          @periodic_executor.stop!
+        end
+        @srv_monitor_lock.synchronize do
+          if @srv_monitor
+            @srv_monitor.stop!
+          end
+        end
+        @servers.each do |server|
+          if server.connected?
+            server.disconnect!
+            publish_sdam_event(
+              Monitoring::SERVER_CLOSED,
+              Monitoring::Event::ServerClosed.new(server.address, topology)
+            )
+          end
+        end
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CLOSED,
+          Monitoring::Event::TopologyClosed.new(topology)
+        )
+        @update_lock.synchronize do
+          @connecting = @connected = false
         end
       end
-      @servers.each do |server|
-        if server.connected?
-          server.disconnect!
-          publish_sdam_event(
-            Monitoring::SERVER_CLOSED,
-            Monitoring::Event::ServerClosed.new(server.address, topology)
-          )
-        end
-      end
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CLOSED,
-        Monitoring::Event::TopologyClosed.new(topology)
-      )
-      @connecting = @connected = false
       true
     end
 
@@ -491,19 +522,25 @@ module Mongo
     # @deprecated Use Client#reconnect to reconnect to the cluster instead of
     #   calling this method. This method does not send SDAM events.
     def reconnect!
-      @connecting = true
-      scan!
-      servers.each do |server|
-        server.reconnect!
-      end
-      @periodic_executor.restart!
-      @srv_monitor_lock.synchronize do
-        if @srv_monitor
-          @srv_monitor.run!
+      @state_change_lock.synchronize do
+        @update_lock.synchronize do
+          @connecting = true
+        end
+        scan!
+        servers.each do |server|
+          server.reconnect!
+        end
+        @periodic_executor.restart!
+        @srv_monitor_lock.synchronize do
+          if @srv_monitor
+            @srv_monitor.run!
+          end
+        end
+        @update_lock.synchronize do
+          @connecting = false
+          @connected = true
         end
       end
-      @connecting = false
-      @connected = true
     end
 
     # Force a scan of all known servers in the cluster.
@@ -746,7 +783,14 @@ module Mongo
       if !addresses.include?(address)
         server = Server.new(address, self, @monitoring, event_listeners, options.merge(
           monitor: false))
-        @update_lock.synchronize { @servers.push(server) }
+        @update_lock.synchronize do
+          # Need to recheck whether server is present in @servers, because
+          # the previous check was not under a lock.
+          # Since we are under the update lock here, we cannot call servers_list.
+          return if @servers.map(&:address).include?(address)
+
+          @servers.push(server)
+        end
         if add_options.nil? || add_options[:monitor] != false
           server.start_monitoring
         end
@@ -775,8 +819,16 @@ module Mongo
     # @since 2.0.0
     def remove(host, disconnect: true)
       address = Address.new(host)
-      removed_servers = @servers.select { |s| s.address == address }
-      @update_lock.synchronize { @servers = @servers - removed_servers }
+      removed_servers = []
+      @update_lock.synchronize do
+        @servers.delete_if do |server|
+          (server.address == address).tap do |delete|
+            if delete
+              removed_servers << server
+            end
+          end
+        end
+      end
       if disconnect != false
         removed_servers.each do |server|
           disconnect_server_if_connected(server)
@@ -791,8 +843,11 @@ module Mongo
 
     # @api private
     def update_topology(new_topology)
-      old_topology = topology
-      @topology = new_topology
+      old_topology = nil
+      @update_lock.synchronize do
+        old_topology = topology
+        @topology = new_topology
+      end
 
       # If new topology has data bearing servers, we know for sure whether
       # sessions are supported - update our cached value.
@@ -801,7 +856,10 @@ module Mongo
       # to try to determine session support accurately, falling back to the
       # last known value.
       if topology.data_bearing_servers?
-        @sessions_supported = !!topology.logical_session_timeout
+        sessions_supported = !!topology.logical_session_timeout
+        @update_lock.synchronize do
+          @sessions_supported = sessions_supported
+        end
       end
 
       publish_sdam_event(
@@ -812,7 +870,9 @@ module Mongo
 
     # @api private
     def servers_list
-      @update_lock.synchronize { @servers.dup }
+      @update_lock.synchronize do
+        @servers.dup
+      end
     end
 
     # @api private
@@ -852,7 +912,9 @@ module Mongo
       rescue Error::NoServerAvailable
         # We haven't been able to contact any servers - use last known
         # value for esssion support.
-        @sessions_supported || false
+        @update_lock.synchronize do
+          @sessions_supported || false
+        end
       end
     end
 
