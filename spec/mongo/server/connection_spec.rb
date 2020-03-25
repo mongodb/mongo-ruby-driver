@@ -979,8 +979,14 @@ describe Mongo::Server::Connection, retry: 3 do
         expect(connection.send(:socket)).to be_nil
       end
 
-      it 'does not set the timeout to the default' do
-        expect(connection.timeout).to be_nil
+      context 'when timeout is not set in client options' do
+        let(:server_options) do
+          SpecConfig.instance.test_options.merge(monitoring_io: false, socket_timeout: nil)
+        end
+
+        it 'does not set the timeout to the default' do
+          expect(connection.timeout).to be_nil
+        end
       end
     end
 
