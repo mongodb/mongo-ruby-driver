@@ -150,7 +150,7 @@ module Mongo
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               if server.max_wire_version < 9 && cmd[:hint] &&
-                  cmd[:writeConcern] && !cmd[:writeConcern].acknowledged?
+                  applied_write_concern && !applied_write_concern.acknowledged?
               then
                 raise Mongo::Error, "add meaningful description"
               end
