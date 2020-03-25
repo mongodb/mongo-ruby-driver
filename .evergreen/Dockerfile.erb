@@ -32,19 +32,6 @@ FROM <%= base_image %>
     apt-get update && \
     apt-get install -y curl zsh
 
-  <% if preload? && distro =~ /ubuntu1204/ %>
-  
-    # ubuntu1204 comes with python 2.7.3.
-    # Install a more recent one from deadsnakes ppa so that pip works.
-    # See also: https://github.com/deadsnakes/issues/issues/53
-    RUN apt-get install -y python-software-properties && \
-      apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C && \
-      add-apt-repository ppa:fkrull/deadsnakes-python2.7 && \
-      apt-get update && \
-      apt-get install -y python2.7-dev
-
-  <% end %>
-
 <% end %>
 
 <% if ruby_head? %>
@@ -68,6 +55,7 @@ FROM <%= base_image %>
 
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
+  # Compiling pyhton packages: python2.7-dev
   # JRuby: openjdk-8-jre
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
@@ -81,18 +69,12 @@ FROM <%= base_image %>
   # distros have pip installed (but none as of this writing have pip3)
   # therefore install python-pip in all configurations here.
 
-  # ubuntu1204, ubuntu1404 only have openjdk-7-jre
-  <% unless %w(ubuntu1204 ubuntu1404).include?(distro) %>
+  # ubuntu1404 only has openjdk-7-jre
+  <% if distro !~ /ubuntu1404/ %>
     RUN apt-get install -y openjdk-8-jre
   <% end %>
-
-  <% if %w(ubuntu1204).include?(distro) %>
-    RUN apt-get install -y libsnmp15
-  <% else %>
-    RUN apt-get install -y libsnmp30
-  <% end %>
   
-  # ubuntu1204, ubuntu1404, ubuntu1604: libcurl3
+  # ubuntu1404, ubuntu1604: libcurl3
   # ubuntu1804: libcurl4
   <% if distro =~ /ubuntu1804/ %>
     RUN apt-get install -y libcurl4
@@ -100,8 +82,8 @@ FROM <%= base_image %>
     RUN apt-get install -y libcurl3
   <% end %>
 
-  RUN apt-get install -y libyaml-0-2 gcc make git lsb-release \
-    krb5-user bzip2 libgmp-dev python-pip
+  RUN apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
+    krb5-user bzip2 libgmp-dev python-pip python2.7-dev
 
 <% else %>
 
@@ -138,7 +120,7 @@ FROM <%= base_image %>
   
   <% end %>
   
-  <% if distro =~ /ubuntu1204|rhel/ %>
+  <% if distro =~ /rhel/ %>
   
     # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
     # rhel apparently does not package pip at all in core repoitories,

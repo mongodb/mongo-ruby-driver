@@ -480,9 +480,6 @@ axes:
       - id: ubuntu1404
         display_name: "Ubuntu 14.04"
         run_on: ubuntu1404-test
-      - id: ubuntu1204
-        display_name: "Ubuntu 12.04"
-        run_on: ubuntu1204-test
       - id: rhel70
         display_name: "RHEL 7"
         run_on: rhel70-small
@@ -643,7 +640,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['3.0']
       topology: "*"
-      os: ubuntu1204
+      os: ubuntu1404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -654,7 +651,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: ['2.6']
       topology: "*"
-      os: ubuntu1204
+      os: ubuntu1404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
