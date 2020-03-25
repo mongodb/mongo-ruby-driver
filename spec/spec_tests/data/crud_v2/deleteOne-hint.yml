@@ -5,7 +5,7 @@ data:
   - {_id: 1, x: 11}
   - {_id: 2, x: 22}
 
-collection_name: &collection_name 'test_deleteone_hint'
+collection_name: &collection_name 'DeleteOne_hint'
 
 tests:
   -
@@ -28,6 +28,7 @@ tests:
               -
                 q: *filter
                 hint: "_id_"
+                limit: 1
     outcome: &outcome
       collection:
         data:
@@ -51,5 +52,6 @@ tests:
               -
                 q: *filter
                 hint: { _id: 1 }
+                limit: 1
     outcome: *outcome
 

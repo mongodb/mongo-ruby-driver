@@ -10,7 +10,7 @@ data:
   - { _id: 2, x: 22 }
   - { _id: 3, x: 33 }
 
-collection_name: &collection_name 'test_deletemany_hint'
+collection_name: &collection_name 'DeleteMany_hint'
 
 tests:
   -
@@ -32,6 +32,7 @@ tests:
               -
                 q: *filter
                 hint: "_id_"
+                limit: 0
     outcome: &outcome
       collection:
         data:
@@ -57,4 +58,5 @@ tests:
               -
                 q: *filter
                 hint: { _id: 1 }
+                limit: 0
     outcome: *outcome

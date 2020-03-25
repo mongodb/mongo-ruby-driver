@@ -1,11 +1,14 @@
 runOn:
+  # Server versions >= 3.4.0 will return an error response for unrecognized
+  # deleteOne options. These tests check that the driver will raise an error
+  # if a hint is provided on a server version < 3.4.
   - { maxServerVersion: "3.3.99" }
 
 data:
   - { _id: 1, x: 11 }
   - { _id: 2, x: 22 }
 
-collection_name: &collection_name 'test_deleteone_hint'
+collection_name: &collection_name 'DeleteOne_hint'
 
 tests:
   -

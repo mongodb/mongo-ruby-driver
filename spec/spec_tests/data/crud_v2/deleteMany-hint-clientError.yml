@@ -1,4 +1,7 @@
 runOn:
+  # Server versions >= 3.4.0 will return an error response for unrecognized
+  # deleteMany options. These tests check that the driver will raise an error
+  # if a hint is provided on a server version < 3.4.
   - { maxServerVersion: "3.3.99" }
 
 data:
@@ -6,7 +9,7 @@ data:
   - { _id: 2, x: 22 }
   - { _id: 3, x: 33 }
 
-collection_name: &collection_name 'test_deletemany_hint'
+collection_name: &collection_name 'DeleteMany_hint'
 
 tests:
   -
