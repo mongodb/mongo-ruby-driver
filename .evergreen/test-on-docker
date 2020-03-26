@@ -141,7 +141,6 @@ class Runner
   BASE_IMAGES = {
     'debian81' => 'debian:jessie',
     'debian92' => 'debian:stretch',
-    'ubuntu1204' => 'ubuntu:precise',
     'ubuntu1404' => 'ubuntu:trusty',
     'ubuntu1604' => 'ubuntu:xenial',
     'ubuntu1804' => 'ubuntu:bionic',
