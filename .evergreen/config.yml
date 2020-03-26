@@ -374,7 +374,7 @@ functions:
           echo '{"results": [{ "status": "FAIL", "test_file": "Build", "log_raw": "No test-results.json found was created"  } ]}' > ${PROJECT_DIRECTORY}/test-results.json
 
   "install dependencies":
-    - type: test
+    - command: shell.exec
       params:
         working_dir: "src"
         script: |
