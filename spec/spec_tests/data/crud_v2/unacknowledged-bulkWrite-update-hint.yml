@@ -11,7 +11,7 @@ collection_name: &collection_name 'BulkWrite_update_hint'
 
 tests:
   -
-    description: "Unacknowledged bulkWrite updateOne with update hints"
+    description: "Unacknowledged bulkWrite updateOne with update hint succeeds on server >= 4.2"
     operations:
       -
         name: "bulkWrite"
@@ -32,14 +32,7 @@ tests:
                 update: *updateOne_update
                 hint: &hint_doc { _id: 1 }
           options: { ordered: true }
-        result: &result
-          deletedCount: 0
-          insertedCount: 0
-          insertedIds: {}
-          matchedCount: 0
-          modifiedCount: 0 # Updates are unacknowledged
-          upsertedCount: 0
-          upsertedIds: {}
+        # Don't check result because different drivers return different responses to unacknowledged bulk writes
     expectations:
       -
         command_started_event:
@@ -58,7 +51,7 @@ tests:
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
   -
-    description: "Unacknowledged bulkWrite updateMany with update hints"
+    description: "Unacknowledged bulkWrite updateMany with update hint succeeds on server >= 4.2"
     operations:
       -
         name: "bulkWrite"
@@ -78,7 +71,7 @@ tests:
                 update: *updateMany_update
                 hint: *hint_doc
           options: { ordered: true }
-        result: *result
+        # Don't check result because different drivers return different responses to unacknowledged bulk writes
     expectations:
       -
         command_started_event:
@@ -119,7 +112,7 @@ tests:
                 replacement: { x: 444 }
                 hint: *hint_doc
           options: { ordered: true }
-        result: *result
+        # Don't check result because different drivers return different responses to unacknowledged bulk writes
     expectations:
       -
         command_started_event:

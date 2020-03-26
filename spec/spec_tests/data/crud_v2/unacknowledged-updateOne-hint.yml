@@ -9,7 +9,7 @@ collection_name: &collection_name 'updateone_hint'
 
 tests:
   -
-    description: "Unacknowledged updateOne with hint string"
+    description: "Unacknowledged updateOne with hint string succeeds on server >= 4.2"
     operations:
       -
         object: collection
@@ -37,7 +37,7 @@ tests:
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
   -
-    description: "Unacknowledged updateOne with hint document"
+    description: "Unacknowledged updateOne with hint document succeeds on server >= 4.2"
     operations:
       -
         object: collection

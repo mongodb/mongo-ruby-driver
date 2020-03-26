@@ -9,7 +9,7 @@ collection_name: &collection_name 'DeleteOne_hint'
 
 tests:
   -
-    description: "Unacknowledged deleteOne with hint string"
+    description: "Unacknowledged deleteOne with hint string succeeds on server >= 4.4"
     operations:
       -
         object: collection
@@ -30,10 +30,11 @@ tests:
               -
                 q: *filter
                 hint: "_id_"
+                limit: 1
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
   -
-    description: "Unacknowledged deleteOne with hint document"
+    description: "Unacknowledged deleteOne with hint document succeeds on server >= 4.4"
     operations:
       -
         object: collection
@@ -52,6 +53,7 @@ tests:
               -
                 q: *filter
                 hint: { _id: 1 }
+                limit: 1
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
 

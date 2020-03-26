@@ -12,7 +12,7 @@ collection_name: &collection_name 'findOneAndDelete_hint'
 
 tests:
   -
-    description: "Unacknowledged findOneAndDelete with hint string unsupported (client-side error)"
+    description: "Unacknowledged findOneAndDelete with hint string fails with client-side error on server < 4.4"
     operations:
       -
         object: collection
@@ -30,7 +30,7 @@ tests:
           - { _id: 1, x: 11 }
           - { _id: 2, x: 22 }
   -
-    description: "Unacknowledged findOneAndDelete with hint document unsupported (client-side error)"
+    description: "Unacknowledged findOneAndDelete with hint document fails with client-side error on server < 4.4"
     operations:
       -
         object: collection

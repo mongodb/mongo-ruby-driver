@@ -14,7 +14,7 @@ collection_name: &collection_name 'Bulkwrite_update_hint'
 
 tests:
   -
-    description: "Unacknowledged bulkWrite updateOne with hints unsupported (client-side error)"
+    description: "Unacknowledged bulkWrite updateOne with hints fails with client-side error on server < 4.2"
     operations:
       -
         name: "bulkWrite"
@@ -45,7 +45,7 @@ tests:
           - {_id: 3, x: 33 }
           - {_id: 4, x: 44 }
   -
-    description: "Unacknowledged bulkWrite updateMany with hints unsupported (client-side error)"
+    description: "Unacknowledged bulkWrite updateMany with hints fails with client-side error on server < 4.2"
     operations:
       -
         name: "bulkWrite"

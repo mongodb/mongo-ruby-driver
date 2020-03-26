@@ -14,7 +14,7 @@ collection_name: &collection_name 'BulkWrite_delete_hint'
 
 tests:
   -
-    description: "Unacknowledged bulkWrite deleteOne with hints unsupported (client-side error)"
+    description: "Unacknowledged bulkWrite deleteOne with hints fails with client-side error on server < 4.4"
     operations:
       -
         name: "bulkWrite"
@@ -43,7 +43,7 @@ tests:
           - {_id: 3, x: 33 }
           - {_id: 4, x: 44 }
   -
-    description: "Unacknowledged bulkWrite deleteMany with hints unsupported (client-side error)"
+    description: "Unacknowledged bulkWrite deleteMany with hints fails with client-side error on server < 4.4"
     operations:
       -
         name: "bulkWrite"

@@ -11,7 +11,7 @@ collection_name: &collection_name 'BulkWrite_delete_hint'
 
 tests:
   -
-    description: "Unacknowledged bulkWrite deleteOne with hints"
+    description: "Unacknowledged bulkWrite deleteOne with hints succeeds on server >= 4.4"
     operations:
       -
         name: "bulkWrite"
@@ -30,14 +30,7 @@ tests:
                 filter: &deleteOne_filter2 { _id: 2 }
                 hint: &hint_doc { _id: 1 }
           options: { ordered: true }
-        result: &result
-          deletedCount: 0 # Deletes are unacknowledged
-          insertedCount: 0
-          insertedIds: {}
-          matchedCount: 0
-          modifiedCount: 0
-          upsertedCount: 0
-          upsertedIds: {}
+        # Don't check result because different drivers return different responses to unacknowledged bulk writes
     expectations:
       -
         command_started_event:
@@ -56,7 +49,7 @@ tests:
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
   -
-    description: "Unacknowledged bulkWrite deleteMany with hints"
+    description: "Unacknowledged bulkWrite deleteMany with hints succeeds on server >= 4.4"
     operations:
       -
         name: "bulkWrite"
@@ -74,7 +67,7 @@ tests:
                 filter: &deleteMany_filter2 { _id: { $gte: 4 } }
                 hint: *hint_doc
           options: { ordered: true }
-        result: *result
+        # Don't check result because different drivers return different responses to unacknowledged bulk writes
     expectations:
       -
         command_started_event:

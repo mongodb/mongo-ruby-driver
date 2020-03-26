@@ -6,11 +6,11 @@ data:
   - {_id: 2, x: 22}
   - {_id: 3, x: 33}
 
-collection_name: &collection_name 'Updatemany_hint'
+collection_name: &collection_name 'UpdateMany_hint'
 
 tests:
   -
-    description: "Unacknowledged updateMany with hint string"
+    description: "Unacknowledged updateMany with hint string succeeds on server >= 4.2"
     operations:
       -
         object: collection
@@ -39,7 +39,7 @@ tests:
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
   -
-    description: "Unacknowledged updateMany with hint document"
+    description: "Unacknowledged updateMany with hint document succeeds on server >= 4.2"
     operations:
       -
         object: collection

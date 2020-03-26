@@ -9,7 +9,7 @@ collection_name: &collection_name 'findOneAndDelete_hint'
 
 tests:
   -
-    description: "Unacknowledged findOneAndDelete with hint string"
+    description: "Unacknowledged findOneAndDelete with hint string succeeds on server >= 4.4"
     operations:
       -
         object: collection
@@ -32,7 +32,7 @@ tests:
     # Do not verify the contents of the collection to avoid race conditions
     outcome: {}
   -
-    description: "Unacknowledged findOneAndDelete with hint document"
+    description: "Unacknowledged findOneAndDelete with hint document succeeds on server >= 4.4"
     operations:
       -
         object: collection
