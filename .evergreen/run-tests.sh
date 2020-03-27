@@ -149,7 +149,7 @@ export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options
 
 set_fcv
 
-bundle exec rake spec:prepare
+#bundle exec rake spec:prepare
 
 if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
