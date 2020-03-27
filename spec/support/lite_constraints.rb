@@ -91,4 +91,12 @@ module LiteConstraints
       end
     end
   end
+
+  def require_aws_auth
+    before(:all) do
+      unless (ENV['AUTH'] || '') =~ /^aws/
+        skip 'This test requires AUTH=aws* and an appropriately configured runtime environment'
+      end
+    end
+  end
 end

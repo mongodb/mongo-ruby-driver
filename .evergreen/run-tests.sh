@@ -1,7 +1,13 @@
 #!/bin/bash
 
-set -o xtrace   # Write all commands first to stderr
-set -o errexit  # Exit the script with error if any of the commands fail
+set -e
+
+if echo "$AUTH" |grep -q ^aws; then
+  # Do not set -x as this will expose passwords in Evergreen logs
+  set +x
+else
+  set -x
+fi
 
 . `dirname "$0"`/functions.sh
 

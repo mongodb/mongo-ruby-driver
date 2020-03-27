@@ -109,6 +109,30 @@ functions:
       params:
         file: src/expansion.yml
 
+  "export AWS auth credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          IAM_AUTH_ASSUME_AWS_ACCOUNT="${iam_auth_assume_aws_account}"
+          IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY="${iam_auth_assume_aws_secret_access_key}"
+          IAM_AUTH_ASSUME_ROLE_NAME="${iam_auth_assume_role_name}"
+          IAM_AUTH_EC2_INSTANCE_ACCOUNT="${iam_auth_ec2_instance_account}"
+          IAM_AUTH_EC2_INSTANCE_PROFILE="${iam_auth_ec2_instance_profile}"
+          IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY="${iam_auth_ec2_instance_secret_access_key}"
+          IAM_AUTH_ECS_ACCOUNT="${iam_auth_ecs_account}"
+          IAM_AUTH_ECS_ACCOUNT_ARN="${iam_auth_ecs_account_arn}"
+          IAM_AUTH_ECS_CLUSTER="${iam_auth_ecs_cluster}"
+          IAM_AUTH_ECS_SECRET_ACCESS_KEY="${iam_auth_ecs_secret_access_key}"
+          IAM_AUTH_ECS_SECURITY_GROUP="${iam_auth_ecs_security_group}"
+          IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
+          IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
+          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+          EOT
+
   "export FLE AWS credentials":
     - command: shell.exec
       type: test
@@ -270,6 +294,16 @@ functions:
           ${PREPARE_SHELL}
           ./egos .evergreen/run-tests.sh
 
+  "run AWS auth tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ./egos .evergreen/run-tests-aws-auth.sh
+
   "run Kerberos unit tests":
     - command: shell.exec
       type: test
@@ -322,6 +356,10 @@ tasks:
       commands:
         - func: "export FLE AWS credentials"
         - func: "run tests"
+    - name: "test-aws-auth"
+      commands:
+        - func: "export AWS auth credentials"
+        - func: "run AWS auth tests"
 
 axes:
 
@@ -435,6 +473,10 @@ axes:
         display_name: Kerberos
         variables:
           AUTH: kerberos
+      - id: aws-regular
+        display_name: AWS Auth Regular Credentials
+        variables:
+          AUTH: aws-regular
 
   - id: "ruby"
     display_name: Ruby Version
@@ -893,3 +935,14 @@ buildvariants:
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
+
+  - matrix_name: aws-auth-regular
+    matrix_spec:
+      auth-and-ssl: aws-regular
+      ruby: [ruby-2.7]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "AWS auth regular: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: "test-aws-auth"
