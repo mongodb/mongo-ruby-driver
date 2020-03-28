@@ -87,19 +87,37 @@ FROM <%= base_image %>
 
 <% else %>
 
+  # Enterprise server: net-snmp
   # lsb_release: redhat-lsb-core
   # our runner scripts: which
   # Ruby dependency: libyaml
   # compiling python packages: gcc python-devel
   # Kerberos tests: krb5-workstation + cyrus-sasl-devel to build the
   # mongo_kerberos gem + cyrus-sasl-gssapi for authentication to work
+  # JRuby: java-1.8.0-openjdk
   #
   # Note: lacking cyrus-sasl-gssapi produces a cryptic message
   # "SASL(-4): no mechanism available: No worthy mechs found"
   # https://github.com/farorm/python-ad/issues/10
   
-  RUN yum install -y redhat-lsb-core which git gcc python-devel libyaml \
-    krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi
+  RUN yum install -y redhat-lsb-core which git gcc libyaml \
+    krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
+    net-snmp
+    
+  <% if distro =~ /rhel6/ %>
+    
+    # RHEL 6 ships with Python 2.6.
+    
+    RUN yum install -y centos-release-scl && \
+      yum install -y python27-python python27-python-devel
+    ENV PATH=/opt/rh/python27/root/usr/bin:$PATH \
+      LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64
+  
+  <% else %>
+    
+    RUN yum install -y python-devel
+  
+  <% end %>
 
 <% end %>
 
