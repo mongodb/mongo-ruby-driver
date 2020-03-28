@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Copies the current directory to the specified target, then executes the
-# remaining arguments on the target as a shell command.
+# Copies the current directory to the specified target, then runs the
+# test-on-docker script on the target with the remaining arguments.
 #
 # The current directory is copied into the `work` subdirectory of the user's
 # home directory on the target.
@@ -15,8 +15,7 @@
 #
 # Example:
 #
-# ./.evergreen/test-remote admin@12.34.56.78 \
-#   env MONGODB_VERSION=4.4 AUTH=aws-regular .evergreen/run-tests-aws-auth.sh
+# ./.evergreen/test-docker-remote admin@12.34.56.78 -p MONGODB_VERSION=4.2
 #
 # Note: the private environment files (.env.private*) are copied to the target.
 #   This is done in order to be able to test, for example, AWS authentication
@@ -34,10 +33,10 @@ shift
 
 . `dirname $0`/functions-remote.sh
 
-do_ssh "$target" -t "sudo pkill -9 mongod; sudo pkill -9 mongos; sudo rm -rf work; sudo rm -rf /db"
-
 do_rsync --delete --exclude .git -av --exclude gem-private_key.pem \
   . "$target":work
 
 cmd=`./.evergreen/shell-escape "$@"`
-do_ssh "$target" -t "cd work && $cmd"
+# To debug the test-on-docker invocation:
+# do_ssh "$target" -t "cd work && set -x && ./.evergreen/test-on-docker $cmd"
+do_ssh "$target" -t "cd work && ./.evergreen/test-on-docker $cmd"

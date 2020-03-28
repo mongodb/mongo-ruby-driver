@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Provisions the machine on which this script is running with the
+# required software to be able to run the Ruby driver test suite.
+#
+# This script may be run more than once, in which case it will try to attain
+# the same final machine state as it would have attained on a fresh instance.
+
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+sudo apt-get -y install ruby zsh
+
+sudo apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
+
+sudo apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
+  krb5-user bzip2 libgmp-dev python-pip python2.7-dev

@@ -107,11 +107,21 @@ on ports 30000 through 30002:
 
 ## Testing in AWS
 
+The scripts described in this section assist in running the driver test suite
+on EC2 instances and in ECS tasks.
+
+It is recommended to test via Docker on EC2 instances, as this produces
+shorter test cycles since all of the cleanup is handled by Docker.
+Docker is not usable on ECS (because ECS tasks are already running in
+Docker themselves), thus to test in ECS tasks it is required to use
+non-Docker scripts which generally rebuild more of the target instance and
+thus have longer test cycles.
+
 ### Instance Types
 
-The Docker infrastructure and the test suite require a decent amount of
-memory to run. I suggest starting with 2 GB, for example via a `t3a.small`
-instance type.
+The test suite, as well as the Docker infrastructure if it is used,
+require a decent amount of memory to run. Starting with 2 GB generally
+works well, for example via the `t3a.small` instance type.
 
 ### Supported Operating Systems
 
@@ -139,34 +149,44 @@ used to launch the EC2 instance you wish to use for testing:
 
 ### Provision
 
-Given a Debian EC2 instance at IP `12.34.56.78` which uses `admin` as the
-username for the initial user, run:
+Given an EC2 instance running a supported Debian or Ubuntu version at
+IP `12.34.56.78`, use the `provision-remote` command to prepare it for
+being used to run the driver's test suite. This command takes two arguments:
+the target, in the form of `username@ip`, and the type of provisioning
+to perform which can be `docker` or `local`. Note that the username for
+Debian instances is `admin` and the username for Ubuntu instances is `ubuntu`:
 
-    ./.evergreen/provision-remote admin@12.34.56.78
+    # Configure a Debian instance to run the test suite via Docker
+    ./.evergreen/provision-remote admin@12.34.56.78 docker
+    
+    # Configure an Ubuntu instance to run the test suite without Docker
+    ./.evergreen/provision-remote ubuntu@12.34.56.78 local
 
 This only needs to be done once per instance.
 
-### Run Tests
+### Run Tests - Docker
 
-The tests are run via Docker - see the "Testing In Docker" section above.
-The instance creates a docker image with the specified configuration, then
-runs the test suite in a container created from that image.
+When testing on an EC2 instance, it is recommended to run the tests via Docker
+In this scenario a docker image is created on the EC2 instance with appropriate
+configuration, then a container is run using this image which executes the
+test suite. All parameters supported by the Docker test script described
+above are supported.
 
 Note that the private environment files (`.env.private*`), if any exist,
 are copied to the EC2 instance. This is done so that, for example, AWS auth
 may be tested in EC2 which generally requires private environment variables.
 
-Run the `test-remote` script as follows:
+Run the `test-docker-remote` script as follows:
 
-    ./.evergreen/test-remote admin@12.34.56.78 MONGODB_VERSION=4.2 -p
+    ./.evergreen/test-docker-remote ubuntu@12.34.56.78 MONGODB_VERSION=4.2 -p
 
 The first argument is the target on which to run the tests. All subsequent
-arguments are passed to the `test-on-docker` script. In this case, `test-remote`
+arguments are passed to the `test-on-docker` script. In this case, `test-docker-remote`
 will execute the following script on the target instance:
 
     ./.evergreen/test-on-docker MONGODB_VERSION=4.2 -p
 
-All arguments that `test-on-docker` accepts are accepted by `test-remote`.
+All arguments that `test-on-docker` accepts are accepted by `test-docker-remote`.
 For example, to verify that all of the tooling is working correctly but not
 run any tests you could issue;
 
@@ -176,3 +196,21 @@ The private environment files need to be specified explicitly, just like they
 need to be explicitly specified to `test-on-docker`. For example:
 
     ./.evergreen/test-on-docker MONGODB_VERSION=4.2 -pa .env.private
+
+### Run Tests - Local
+
+When testing in an ECS task, the only option is to execute the test suite
+locally to the task. This strategy can also be used on an EC2 instance,
+although this is not recommended because the test cycle is longer compared
+to the Docker testing strategy.
+
+To run the tests in the task, use the `test-remote` script as follows:
+
+    ./.evergreen/test-remote ubuntu@12.34.56.78 \
+      env MONGODB_VERSION=4.4 AUTH=aws-regular .evergreen/run-tests-aws-auth.sh
+
+The first argument is the target in the `username@ip` format. The script
+first copies the current directory to the target, then executes the remaining
+arguments as a shell command on the target. This example uses `env` to set
+environment variables that are referenced by the `.evergreen/run-tests-aws-auth.sh`
+script.

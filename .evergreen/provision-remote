@@ -20,13 +20,28 @@ fi
 
 shift
 
+method="$1"
+
 . `dirname $0`/functions-remote.sh
 
-do_ssh "$target" sudo apt-get update
-do_ssh "$target" sudo apt-get -y install rsync
+do_ssh "$target" '
+  if test `id -u` = 0; then
+    apt-get update &&
+    apt-get -y install rsync sudo
+  else
+    sudo apt-get update &&
+    sudo apt-get -y install rsync
+  fi
+'
 
 do_rsync --delete --exclude .git --exclude .env.private\* -av \
   --exclude gem-private_key.pem \
   . $target:work
 
-do_ssh "$target" 'cd work && ./.evergreen/provision'
+if test "$method" = local; then
+  script=provision-local
+else
+  script=provision-docker
+fi
+
+do_ssh "$target" "cd work && ./.evergreen/$script"
