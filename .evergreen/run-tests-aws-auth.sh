@@ -36,6 +36,22 @@ case "$AUTH" in
     export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="`get_var IAM_AUTH_ECS_ACCOUNT_ARN`"
     ;;
     
+  aws-assume-role)
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_ASSUME_AWS_ACCOUNT`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY`"
+    
+    # This is the ARN provided in the AssumeRole request. It is different
+    # from the ARN that the credentials returned by the AssumeRole request
+    # resolve to.
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN="`get_var IAM_AUTH_ASSUME_ROLE_NAME`"
+    
+    # This is the ARN that the credentials obtained by the AssumeRole
+    # request resolve to. It is hardcoded in
+    # https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/auth_aws/aws_e2e_assume_role.js
+    # and is not given as an Evergreen variable.
+    export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/authtest_user_assume_role/*"
+    ;;
+    
   *)
     echo "Unknown AUTH value $AUTH" 1>&2
     exit 1

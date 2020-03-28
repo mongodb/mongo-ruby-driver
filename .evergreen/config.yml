@@ -477,6 +477,10 @@ axes:
         display_name: AWS Auth Regular Credentials
         variables:
           AUTH: aws-regular
+      - id: aws-assume-role
+        display_name: AWS Auth Assume Role
+        variables:
+          AUTH: aws-assume-role
 
   - id: "ruby"
     display_name: Ruby Version
@@ -944,5 +948,16 @@ buildvariants:
       mongodb-version: '4.4'
       os: ubuntu1804
     display_name: "AWS auth regular: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: "test-aws-auth"
+
+  - matrix_name: aws-auth-assume-role
+    matrix_spec:
+      auth-and-ssl: aws-assume-role
+      ruby: [ruby-2.7]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "AWS auth assume role: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
