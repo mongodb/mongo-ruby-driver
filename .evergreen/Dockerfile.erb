@@ -137,15 +137,6 @@ FROM <%= base_image %>
 
 WORKDIR /app
 
-<% if preload? && !ruby_head? %>
-
-  COPY Gemfile .
-  COPY gemfiles gemfiles
-  COPY *.gemspec .
-  COPY lib/mongo/version.rb lib/mongo/version.rb
-  RUN bundle install
-
-<% end %>
 
 COPY . .
 
