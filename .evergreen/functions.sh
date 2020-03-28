@@ -109,7 +109,7 @@ set_env_vars() {
   export CI=evergreen
 
   # JRUBY_OPTS were initially set for Mongoid
-  export JRUBY_OPTS="--server -J-Xms512m -J-Xmx1536M"
+  export JRUBY_OPTS="-J-Xms512m -J-Xmx1536M"
 
   if test "$BSON" = min; then
     export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
@@ -166,8 +166,9 @@ setup_ruby() {
     elif true; then
 
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
-    curl --retry 3 -fL $toolchain_url |tar zxf -
+    #toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
+    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-`host_arch`-717e3e0a26debdc100fecee0d093e488ee7a0219.tar.xz
+    curl --retry 3 -fL $toolchain_url |tar Jxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     #export PATH=`pwd`/rubies/python/3/bin:$PATH
 
