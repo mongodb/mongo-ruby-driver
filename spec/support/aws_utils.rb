@@ -48,8 +48,8 @@ module AwsUtils
 
   AWS_AUTH_ECS_ROLE_NAME = "#{NAMESPACE}.ecs-role".freeze
 
-  autoload :Base, 'aws_utils/base'
-  autoload :Inspector, 'aws_utils/inspector'
-  autoload :Orchestrator, 'aws_utils/orchestrator'
-  autoload :Provisioner, 'aws_utils/provisioner'
+  autoload :Base, 'support/aws_utils/base'
+  autoload :Inspector, 'support/aws_utils/inspector'
+  autoload :Orchestrator, 'support/aws_utils/orchestrator'
+  autoload :Provisioner, 'support/aws_utils/provisioner'
 end
