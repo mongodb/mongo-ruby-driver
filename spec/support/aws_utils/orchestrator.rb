@@ -10,11 +10,17 @@ module AwsUtils
       resp.credentials
     end
 
-    def set_instance_profile(instance_id)
+    def set_instance_profile(instance_id,
+      instance_profile_name: AWS_AUTH_INSTANCE_PROFILE_NAME,
+      instance_profile_arn: nil
+    )
       clear_instance_profile(instance_id)
 
       ec2_client.associate_iam_instance_profile(
-        iam_instance_profile: {name: AWS_AUTH_INSTANCE_PROFILE_NAME},
+        iam_instance_profile: {
+          name: instance_profile_name,
+          arn: instance_profile_arn,
+        },
         instance_id: instance_id,
       )
     end

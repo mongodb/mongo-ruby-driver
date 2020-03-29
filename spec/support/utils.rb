@@ -348,4 +348,21 @@ module Utils
     end
   end
   module_function :match_with_type?
+
+  module_function def ec2_instance_id
+    http = Net::HTTP.new('169.254.169.254')
+    req = Net::HTTP::Put.new('/latest/api/token',
+      # The TTL is required in order to obtain the metadata token.
+      {'x-aws-ec2-metadata-token-ttl-seconds' => '30'})
+    resp = http.request(req)
+    if resp.code != '200'
+      raise 'Metadata token request failed'
+    end
+    metadata_token = resp.body
+    req = Net::HTTP::Get.new('/latest/dynamic/instance-identity/document',
+      {'x-aws-ec2-metadata-token' => metadata_token})
+    resp = http.request(req)
+    payload = JSON.parse(resp.body)
+    payload.fetch('instanceId')
+  end
 end

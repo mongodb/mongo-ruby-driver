@@ -99,4 +99,27 @@ module LiteConstraints
       end
     end
   end
+
+  def require_ec2_host
+    before(:all) do
+      if $have_aws.nil?
+        $have_aws = begin
+          require 'open-uri'
+          begin
+            Timeout.timeout(3.81) do
+              URI.parse('http://169.254.169.254/latest/meta-data/profile').open.read
+            end
+            true
+          # When trying to use the EC2 metadata endpoint on ECS:
+          # Errno::EINVAL: Failed to open TCP connection to 169.254.169.254:80 (Invalid argument - connect(2) for "169.254.169.254" port 80)
+          rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, OpenURI::HTTPError => $aws_error
+            false
+          end
+        end
+      end
+      unless $have_aws
+        skip "EC2 instance metadata is not available - assuming not running on an EC2 instance: #{$aws_error.class}: #{$aws_error}"
+      end
+    end
+  end
 end

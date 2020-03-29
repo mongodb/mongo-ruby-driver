@@ -481,6 +481,10 @@ axes:
         display_name: AWS Auth Assume Role
         variables:
           AUTH: aws-assume-role
+      - id: aws-ec2
+        display_name: AWS Auth EC2 Role
+        variables:
+          AUTH: aws-ec2
 
   - id: "ruby"
     display_name: Ruby Version
@@ -951,13 +955,13 @@ buildvariants:
     tasks:
       - name: "test-aws-auth"
 
-  - matrix_name: aws-auth-assume-role
+  - matrix_name: aws-auth-temporary
     matrix_spec:
-      auth-and-ssl: aws-assume-role
+      auth-and-ssl: [aws-assume-role, aws-ec2]
       ruby: [ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
-    display_name: "AWS auth assume role: ${mongodb-version} ${ruby}"
+    display_name: "AWS auth temporary: ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"

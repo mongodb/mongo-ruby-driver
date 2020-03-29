@@ -4,6 +4,12 @@ require 'net/http'
 describe Mongo::Auth::Aws::Request do
   require_aws_auth
 
+  before(:all) do
+    if ENV['AUTH'] =~ /aws-(ec2|ecs)/
+      skip "This test requires explicit credentials to be provided"
+    end
+  end
+
   let(:access_key_id) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID') }
   let(:secret_access_key) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY') }
   let(:session_token) { ENV['MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN'] }
