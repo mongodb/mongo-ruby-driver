@@ -1,6 +1,6 @@
 require 'lite_spec_helper'
 
-describe Mongo::SRV::Monitor do
+describe Mongo::Srv::Monitor do
   describe '#scan!' do
     let(:hostname) do
       'test1.test.build.10gen.cc.'

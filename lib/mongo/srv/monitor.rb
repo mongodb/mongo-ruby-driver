@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  module SRV
+  module Srv
 
     # Polls SRV records for the URI that a cluster was created for and
     # updates the list of servers in the cluster when records change.
