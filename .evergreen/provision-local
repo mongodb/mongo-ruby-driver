@@ -8,7 +8,16 @@
 
 set -e
 
+# https://askubuntu.com/questions/132059/how-to-make-a-package-manager-wait-if-another-instance-of-apt-is-running
+while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock; do
+  echo Waiting for existing package manager commands to finish... 1>&2
+  sleep 1
+done
+
 export DEBIAN_FRONTEND=noninteractive
+
+# psmisc is for fuser, which is used for detecting concurrent apt-get runs
+sudo apt-get -y install psmisc
 
 sudo apt-get -y install ruby zsh
 
