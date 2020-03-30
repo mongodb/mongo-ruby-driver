@@ -14,7 +14,7 @@ the IAM user or role that the client will authenticate as.
 Note that the server does not need to have AWS keys provided to it - it
 uses the keys that the client provides during authentication.
 
-An easy way to configure the deployment in the required fashios is to
+An easy way to configure the deployment in the required fashion is to
 configure the deployment to accept both password authentication and
 AWS authentication, and add a bootstrap user:
 
