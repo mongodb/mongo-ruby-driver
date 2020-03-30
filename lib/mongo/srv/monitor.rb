@@ -15,63 +15,92 @@
 module Mongo
   module Srv
 
-    # Polls SRV records for the URI that a cluster was created for and
-    # updates the list of servers in the cluster when records change.
+    # Periodically retrieves SRV records for the cluster's SRV URI, and
+    # sets the cluster's server list to the SRV lookup result.
+    #
+    # If an error is encountered during SRV lookup or an SRV record is invalid
+    # or disallowed for security reasons, a warning is logged and monitoring
+    # continues.
     #
     # @api private
     class Monitor
       include Loggable
+      include BackgroundThread
 
-      MIN_RESCAN_FREQUENCY = 60
+      MIN_SCAN_INTERVAL = 60
+
+      DEFAULT_TIMEOUT = 10
+
+      # Creates the SRV monitor.
+      #
+      # @param [ Cluster ] cluster The cluster.
+      # @param [ Hash ] options The cluster options.
+      #
+      # @option options [ Float ] :timeout The timeout to use for DNS lookups.
+      # @option options [ URI::SRVProtocol ] :srv_uri The SRV URI to monitor.
+      # @option options [ Hash ] :resolv_options For internal driver use only.
+      #   Options to pass through to Resolv::DNS constructor for SRV lookups.
+      def initialize(cluster, options = nil)
+        options = if options
+          options.dup
+        else
+          {}
+        end
+        @cluster = cluster
+        @resolver = Srv::Resolver.new(options)
+        unless @srv_uri = options.delete(:srv_uri)
+          raise ArgumentError, 'SRV URI is required'
+        end
+        @options = options.freeze
+        @last_result = @srv_uri.srv_result
+        @stop_semaphore = Semaphore.new
+      end
 
       attr_reader :options
 
-      def initialize(cluster, resolver, srv_records, options = nil)
-        @options = options || {}
-        @cluster = cluster
-        @resolver = resolver
-        @records = srv_records
-        @no_records_found = false
-      end
+      attr_reader :cluster
 
-      def start_monitor!
-        @thread = Thread.new do
-          loop do
-            sleep(rescan_frequency)
-            scan!
-          end
-        end
+      # @return [ Srv::Result ] Last known SRV lookup result. Used for
+      #   determining intervals between SRV lookups, which depend on SRV DNS
+      #   records' TTL values.
+      attr_reader :last_result
 
+      def start!
+        super
         ObjectSpace.define_finalizer(self, self.class.finalize(@thread))
       end
 
+      private
+
+      def do_work
+        scan!
+        @stop_semaphore.wait(scan_interval)
+      end
+
       def scan!
-        @old_hosts = @records.hosts
+        old_hosts = last_result.address_strs
 
         begin
-          @records = @resolver.get_records(@records.hostname)
+          last_result = Timeout.timeout(timeout) do
+            @resolver.get_records(@srv_uri.query_hostname)
+          end
         rescue Resolv::ResolvTimeout => e
-          log_warn("Timed out trying to resolve hostname #{@records.hostname}")
+          log_warn("SRV monitor: timed out trying to resolve hostname #{@srv_uri.query_hostname}: #{e.class}: #{e}")
+          return
+        rescue ::Timeout::Error
+          log_warn("SRV monitor: timed out trying to resolve hostname #{@srv_uri.query_hostname} (timeout=#{timeout})")
           return
         rescue Resolv::ResolvError => e
-          log_warn("Unable to resolve hostname #{@records.hostname}")
+          log_warn("SRV monitor: unable to resolve hostname #{@srv_uri.query_hostname}: #{e.class}: #{e}")
           return
         end
 
-        if @records.empty?
-          @no_records_found = true
+        if last_result.empty?
+          log_warn("SRV monitor: hostname #{@srv_uri.query_hostname} resolved to zero records")
           return
         end
 
-        @no_records_found = false
-
-        (@old_hosts - @records.hosts).each do |host|
-          @cluster.remove(host)
-        end
-
-        (@records.hosts - @old_hosts).each do |host|
-          @cluster.add(host)
-        end
+        @cluster.set_server_list(last_result.address_strs)
       end
 
       def self.finalize(thread)
@@ -80,16 +109,18 @@ module Mongo
         end
       end
 
-      private
-
-      def rescan_frequency
-        if @no_records_found
-          Server:: Monitor::HEARTBEAT_FREQUENCY
-        elsif @records.min_ttl.nil?
-          MIN_RESCAN_FREQUENCY
+      def scan_interval
+        if last_result.empty?
+          [cluster.heartbeat_interval, MIN_SCAN_INTERVAL].min
+        elsif last_result.min_ttl.nil?
+          MIN_SCAN_INTERVAL
         else
-          [@records.min_ttl, MIN_RESCAN_FREQUENCY].max
+          [last_result.min_ttl, MIN_SCAN_INTERVAL].max
         end
+      end
+
+      def timeout
+        options[:timeout] || DEFAULT_TIMEOUT
       end
     end
   end
