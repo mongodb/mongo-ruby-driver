@@ -15,6 +15,13 @@ def standard_dependencies
     gem 'byebug', platforms: :mri
     gem 'ruby-debug', platforms: :jruby
 
+    gem 'aws-sdk-core', '~> 3'
+    gem 'aws-sdk-cloudwatchlogs'
+    gem 'aws-sdk-ec2'
+    gem 'aws-sdk-ecs'
+    gem 'aws-sdk-iam'
+    gem 'paint'
+
     # for benchmark tests
     gem 'yajl-ruby', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
