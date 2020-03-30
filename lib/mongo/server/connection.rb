@@ -378,13 +378,18 @@ module Mongo
         end
       end
 
-      def authenticate!(pending_connection)
-        if options[:user] || options[:auth_mech]
+      def user
+        @user ||= begin
           user_options = Options::Redacted.new(:auth_mech => default_mechanism).merge(options)
           if user_options[:auth_mech] == :mongodb_x509
             user_options[:auth_source] = '$external'
           end
-          user = Auth::User.new(user_options)
+          Auth::User.new(user_options)
+        end
+      end
+
+      def authenticate!(pending_connection)
+        if options[:user] || options[:auth_mech]
           @server.handle_auth_failure! do
             begin
               Auth.get(user).login(pending_connection)
