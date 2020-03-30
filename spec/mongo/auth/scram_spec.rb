@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Auth::SCRAM do
-  require_no_x509_auth
+  require_no_fixed_user
 
   let(:server) do
     authorized_client.cluster.next_primary
@@ -79,7 +79,7 @@ describe Mongo::Auth::SCRAM do
         end
 
         let(:login) do
-          authenticator.login(connection).documents[0]
+          authenticator.login(connection)
         end
 
         it 'logs the user into the connection' do
@@ -143,7 +143,7 @@ describe Mongo::Auth::SCRAM do
         end
 
         let(:login) do
-          authenticator.login(connection).documents[0]
+          authenticator.login(connection)
         end
 
         it 'logs the user into the connection' do

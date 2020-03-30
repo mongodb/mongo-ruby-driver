@@ -66,11 +66,11 @@ describe Mongo::Auth::CR do
     end
 
     let(:login) do
-      cr.login(connection).documents[0]
+      cr.login(connection)
     end
 
     it 'logs the user into the connection' do
-      expect(cr.login(connection).documents[0]['ok']).to eq(1)
+      expect(login['ok']).to eq(1)
     end
   end
 end

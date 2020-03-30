@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/x509/conversation'
-
 module Mongo
   module Auth
 
@@ -21,15 +19,12 @@ module Mongo
     #
     # @since 2.0.0
     # @api private
-    class X509
+    class X509 < Base
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-X509'.freeze
-
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
 
       # Instantiate a new authenticator.
       #
@@ -50,7 +45,7 @@ module Mongo
           raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
         end
 
-        @user = user
+        super
       end
 
       # Log the user in on the given connection.
@@ -61,15 +56,15 @@ module Mongo
       # @param [ Mongo::Connection ] connection The connection to log into.
       #   on.
       #
-      # @return [ Protocol::Message ] The authentication response.
+      # @return [ BSON::Document ] The document of the authentication response.
       #
       # @since 2.0.0
       def login(connection)
         conversation = Conversation.new(user)
-        reply = connection.dispatch([ conversation.start(connection) ])
-        connection.update_cluster_time(Operation::Result.new(reply))
-        conversation.finalize(reply, connection)
+        converse_1_step(connection, conversation)
       end
     end
   end
 end
+
+require 'mongo/auth/x509/conversation'

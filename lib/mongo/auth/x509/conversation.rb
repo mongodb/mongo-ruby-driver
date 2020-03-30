@@ -20,37 +20,13 @@ module Mongo
       # client and server.
       #
       # @since 2.0.0
-      class Conversation
+      # @api private
+      class Conversation < ConversationBase
 
         # The login message.
         #
         # @since 2.0.0
         LOGIN = { authenticate: 1 }.freeze
-
-        # @return [ Protocol::Message ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
-
-        # Finalize the X.509 conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
-        #
-        # @example Finalize the conversation.
-        #   conversation.finalize(reply)
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
-        # @param [ Server::Connection ] connection The connection being
-        #   authenticated.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def finalize(reply, connection)
-          validate!(reply, connection.server)
-        end
 
         # Start the X.509 conversation. This returns the first message that
         # needs to be sent to the server.
@@ -89,25 +65,16 @@ module Mongo
           end
         end
 
-        # Create the new conversation.
+        # Finalize the X.509 conversation. This is meant to be iterated until
+        # the provided reply indicates the conversation is finished.
         #
-        # @example Create the new conversation.
-        #   Conversation.new(user, "admin")
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         #
-        # @param [ Auth::User ] user The user to converse about.
+        # @return [ nil ] Always nil.
         #
         # @since 2.0.0
-        def initialize(user)
-          @user = user
-        end
-
-        private
-
-        def validate!(reply, server)
-          if reply.documents[0][Operation::Result::OK] != 1
-            raise Unauthorized.new(user, used_mechanism: MECHANISM, server: server)
-          end
-          @reply = reply
+        def finalize(reply_document)
         end
       end
     end

@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe 'Auth' do
+  # User creation with a password fails on the server if, for example,
+  # only MONGODB-AWS auth mechanism is allowed in server configuration.
+  require_no_fixed_user
+
   describe 'Unauthorized exception message' do
     let(:server) do
       authorized_client.cluster.next_primary
@@ -194,7 +198,7 @@ describe 'Auth' do
   describe 'scram-sha-1 client key caching' do
     clean_slate
     min_server_version '3.0'
-    require_no_x509_auth
+    require_no_fixed_user
 
     let(:client) { authorized_client.with(max_pool_size: 2) }
 

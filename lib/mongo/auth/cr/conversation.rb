@@ -23,73 +23,19 @@ module Mongo
       # @deprecated MONGODB-CR authentication mechanism is deprecated
       #   as of MongoDB 3.6. Support for it in the Ruby driver will be
       #   removed in driver version 3.0. Please use SCRAM instead.
-      class Conversation
+      # @api private
+      class Conversation < ConversationBase
 
         # The login message base.
         #
         # @since 2.0.0
         LOGIN = { authenticate: 1 }.freeze
 
-        # @return [ Protocol::Message ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
         # @return [ String ] database The database to authenticate against.
         attr_reader :database
 
         # @return [ String ] nonce The initial auth nonce.
         attr_reader :nonce
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
-
-        # Continue the CR conversation. This sends the client final message
-        # to the server after setting the reply from the previous server
-        # communication.
-        #
-        # @example Continue the conversation.
-        #   conversation.continue(reply)
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
-        # @param [ Mongo::Server::Connection ] connection The connection being
-        #   authenticated.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def continue(reply, connection)
-          validate!(reply, connection.server)
-          if connection && connection.features.op_msg_enabled?
-            selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              user.auth_source,
-              Database::COMMAND,
-              LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
-              limit: -1
-            )
-          end
-        end
-
-        # Finalize the CR conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
-        # @param [ Server::Connection ] connection The connection being
-        #   authenticated.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def finalize(reply, connection)
-          validate!(reply, connection.server)
-        end
 
         # Start the CR conversation. This returns the first message that
         # needs to be sent to the server.
@@ -115,26 +61,49 @@ module Mongo
           end
         end
 
-        # Create the new conversation.
+        # Continue the CR conversation. This sends the client final message
+        # to the server after setting the reply from the previous server
+        # communication.
         #
-        # @example Create the new conversation.
-        #   Conversation.new(user, "admin")
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
+        # @param [ Mongo::Server::Connection ] connection The connection being
+        #   authenticated.
         #
-        # @param [ Auth::User ] user The user to converse about.
+        # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def initialize(user)
-          @user = user
+        def continue(reply_document, connection)
+          @nonce = reply_document[Auth::NONCE]
+
+          if connection && connection.features.op_msg_enabled?
+            selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            cluster_time = connection.mongos? && connection.cluster_time
+            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
+            Protocol::Msg.new([], {}, selector)
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
+              limit: -1
+            )
+          end
         end
 
-        private
-
-        def validate!(reply, server)
-          if reply.documents[0][Operation::Result::OK] != 1
-            raise Unauthorized.new(user, used_mechanism: MECHANISM, server: server)
-          end
-          @nonce = reply.documents[0][Auth::NONCE]
-          @reply = reply
+        # Finalize the CR conversation. This is meant to be iterated until
+        # the provided reply indicates the conversation is finished.
+        #
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
+        #
+        # @return [ Protocol::Query ] The next message to send.
+        #
+        # @since 2.0.0
+        def finalize(reply_document)
         end
       end
     end

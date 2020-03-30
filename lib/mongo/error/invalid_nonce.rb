@@ -16,7 +16,7 @@ module Mongo
   class Error
 
     # This exception is raised when the server nonce returned does not
-    # match the client nonce sent to it.
+    # start with the client nonce sent to it.
     #
     # @since 2.0.0
     class InvalidNonce < Error

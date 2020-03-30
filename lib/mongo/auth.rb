@@ -13,13 +13,16 @@
 # limitations under the License.
 
 require 'mongo/auth/credential_cache'
+require 'mongo/auth/stringprep'
+require 'mongo/auth/conversation_base'
+require 'mongo/auth/sasl_conversation_base'
+require 'mongo/auth/user'
+require 'mongo/auth/roles'
+require 'mongo/auth/base'
 require 'mongo/auth/cr'
 require 'mongo/auth/ldap'
 require 'mongo/auth/scram'
-require 'mongo/auth/user'
 require 'mongo/auth/x509'
-require 'mongo/auth/roles'
-require 'mongo/auth/stringprep'
 
 module Mongo
 
@@ -32,19 +35,25 @@ module Mongo
     # The external database name.
     #
     # @since 2.0.0
+    # @api private
     EXTERNAL = '$external'.freeze
 
     # Constant for the nonce command.
     #
     # @since 2.0.0
+    # @api private
     GET_NONCE = { getnonce: 1 }.freeze
 
     # Constant for the nonce field.
     #
     # @since 2.0.0
+    # @api private
     NONCE = 'nonce'.freeze
 
     # Map the symbols parsed from the URI connection string to strategies.
+    #
+    # @note This map is not frozen because when mongo_kerberos is loaded,
+    #   it mutates this map by adding the Kerberos authenticator.
     #
     # @since 2.0.0
     SOURCES = {

@@ -17,6 +17,27 @@ describe Mongo::Auth::SCRAM::Conversation do
     end
   end
 
+  shared_context 'continue and finalize replies' do
+
+    let(:continue_document) do
+      BSON::Document.new(
+        'conversationId' => 1,
+        'done' => false,
+        'payload' => continue_payload,
+        'ok' => 1.0
+      )
+    end
+
+    let(:finalize_document) do
+      BSON::Document.new(
+        'conversationId' => 1,
+        'done' => false,
+        'payload' => finalize_payload,
+        'ok' => 1.0
+      )
+    end
+  end
+
   context 'when SCRAM-SHA-1 is used' do
     min_server_fcv '3.0'
 
@@ -67,35 +88,22 @@ describe Mongo::Auth::SCRAM::Conversation do
     end
 
     describe '#continue' do
-
-      let(:reply) do
-        Mongo::Protocol::Message.new
-      end
-
-      let(:documents) do
-        [{
-          'conversationId' => 1,
-          'done' => false,
-          'payload' => payload,
-          'ok' => 1.0
-        }]
-      end
+      include_context 'continue and finalize replies'
 
       before do
         expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
-        allow(reply).to receive(:documents).and_return(documents)
       end
 
       context 'when the server rnonce starts with the nonce' do
 
-        let(:payload) do
+        let(:continue_payload) do
           BSON::Binary.new(
             'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
           )
         end
 
         let(:query) do
-          conversation.continue(reply, connection)
+          conversation.continue(continue_document, connection)
         end
 
         let(:selector) do
@@ -119,7 +127,7 @@ describe Mongo::Auth::SCRAM::Conversation do
 
       context 'when the server nonce does not start with the nonce' do
 
-        let(:payload) do
+        let(:continue_payload) do
           BSON::Binary.new(
             'r=NDA2NzU4MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
           )
@@ -127,26 +135,14 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         it 'raises an error' do
           expect {
-            conversation.continue(reply, connection)
+            conversation.continue(continue_document, connection)
           }.to raise_error(Mongo::Error::InvalidNonce)
         end
       end
     end
 
     describe '#finalize' do
-
-      let(:continue_reply) do
-        Mongo::Protocol::Message.new
-      end
-
-      let(:continue_documents) do
-        [{
-          'conversationId' => 1,
-          'done' => false,
-          'payload' => continue_payload,
-          'ok' => 1.0
-        }]
-      end
+      include_context 'continue and finalize replies'
 
       let(:continue_payload) do
         BSON::Binary.new(
@@ -154,34 +150,19 @@ describe Mongo::Auth::SCRAM::Conversation do
         )
       end
 
-      let(:reply) do
-        Mongo::Protocol::Message.new
-      end
-
-      let(:documents) do
-        [{
-          'conversationId' => 1,
-          'done' => false,
-          'payload' => payload,
-          'ok' => 1.0
-        }]
-      end
-
       before do
         expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
-        allow(continue_reply).to receive(:documents).and_return(continue_documents)
-        allow(reply).to receive(:documents).and_return(documents)
       end
 
       context 'when the verifier matches the server signature' do
 
-        let(:payload) do
+        let(:finalize_payload) do
           BSON::Binary.new('v=gwo9E8+uifshm7ixj441GvIfuUY=')
         end
 
         let(:query) do
-          conversation.continue(continue_reply, connection)
-          conversation.finalize(reply, connection)
+          conversation.continue(continue_document, connection)
+          conversation.finalize(finalize_document, connection)
         end
 
         let(:selector) do
@@ -203,14 +184,14 @@ describe Mongo::Auth::SCRAM::Conversation do
 
       context 'when the verifier does not match the server signature' do
 
-        let(:payload) do
+        let(:finalize_payload) do
           BSON::Binary.new('v=LQ+8yhQeVL2a3Dh+TDJ7xHz4Srk=')
         end
 
         it 'raises an error' do
           expect {
-            conversation.continue(continue_reply, connection)
-            conversation.finalize(reply, connection)
+            conversation.continue(continue_document, connection)
+            conversation.finalize(finalize_document, connection)
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
@@ -265,35 +246,22 @@ describe Mongo::Auth::SCRAM::Conversation do
     end
 
     describe '#continue' do
-
-      let(:reply) do
-        Mongo::Protocol::Message.new
-      end
-
-      let(:documents) do
-        [{
-          'conversationId' => 1,
-          'done' => false,
-          'payload' => payload,
-          'ok' => 1.0
-        }]
-      end
+      include_context 'continue and finalize replies'
 
       before do
         expect(SecureRandom).to receive(:base64).once.and_return('rOprNGfwEbeRWgbNEkqO')
-        allow(reply).to receive(:documents).and_return(documents)
       end
 
       context 'when the server rnonce starts with the nonce' do
 
-        let(:payload) do
+        let(:continue_payload) do
           BSON::Binary.new(
             'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
           )
         end
 
         let(:query) do
-          conversation.continue(reply, connection)
+          conversation.continue(continue_document, connection)
         end
 
         let(:selector) do
@@ -317,7 +285,7 @@ describe Mongo::Auth::SCRAM::Conversation do
 
       context 'when the server nonce does not start with the nonce' do
 
-        let(:payload) do
+        let(:continue_payload) do
           BSON::Binary.new(
             'r=sOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
           )
@@ -325,26 +293,14 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         it 'raises an error' do
           expect {
-            conversation.continue(reply, connection)
+            conversation.continue(continue_document, connection)
           }.to raise_error(Mongo::Error::InvalidNonce)
         end
       end
     end
 
     describe '#finalize' do
-
-      let(:continue_reply) do
-        Mongo::Protocol::Message.new
-      end
-
-      let(:continue_documents) do
-        [{
-          'conversationId' => 1,
-          'done' => false,
-          'payload' => continue_payload,
-          'ok' => 1.0
-        }]
-      end
+      include_context 'continue and finalize replies'
 
       let(:continue_payload) do
         BSON::Binary.new(
@@ -352,34 +308,19 @@ describe Mongo::Auth::SCRAM::Conversation do
         )
       end
 
-      let(:reply) do
-        Mongo::Protocol::Message.new
-      end
-
-      let(:documents) do
-        [{
-          'conversationId' => 1,
-          'done' => false,
-          'payload' => payload,
-          'ok' => 1.0
-        }]
-      end
-
       before do
         expect(SecureRandom).to receive(:base64).once.and_return('rOprNGfwEbeRWgbNEkqO')
-        allow(continue_reply).to receive(:documents).and_return(continue_documents)
-        allow(reply).to receive(:documents).and_return(documents)
       end
 
       context 'when the verifier matches the server signature' do
 
-        let(:payload) do
+        let(:finalize_payload) do
           BSON::Binary.new(' v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=')
         end
 
         let(:query) do
-          conversation.continue(continue_reply, connection)
-          conversation.finalize(reply, connection)
+          conversation.continue(continue_document, connection)
+          conversation.finalize(finalize_document, connection)
         end
 
         let(:selector) do
@@ -401,14 +342,14 @@ describe Mongo::Auth::SCRAM::Conversation do
 
       context 'when the verifier does not match the server signature' do
 
-        let(:payload) do
+        let(:finalize_payload) do
           BSON::Binary.new('v=7rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=')
         end
 
         it 'raises an error' do
           expect do
-            conversation.continue(continue_reply, connection)
-            conversation.finalize(reply, connection)
+            conversation.continue(continue_document, connection)
+            conversation.finalize(finalize_document, connection)
           end.to raise_error(Mongo::Error::InvalidSignature)
         end
       end

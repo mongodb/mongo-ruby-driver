@@ -73,7 +73,7 @@ describe 'Command monitoring' do
     min_server_fcv '3.6'
 
     # X.509 auth uses authenticate instead of sasl* commands
-    require_no_x509_auth
+    require_no_fixed_user
 
     it 'does not nest auth and find' do
       expect(subscriber.started_events.length).to eq 0

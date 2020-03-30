@@ -21,28 +21,13 @@ module Mongo
       #
       # @since 2.0.0
       # @api private
-      class Conversation
-
-        # The base client continue message.
-        #
-        # @since 2.0.0
-        CLIENT_CONTINUE_MESSAGE = { saslContinue: 1 }.freeze
-
-        # The base client first message.
-        #
-        # @since 2.0.0
-        CLIENT_FIRST_MESSAGE = { saslStart: 1, autoAuthorize: 1 }.freeze
+      class Conversation < SaslConversationBase
 
         # The client key string.
         #
         # @since 2.0.0
         # @deprecated
         CLIENT_KEY = 'Client Key'.freeze
-
-        # The key for the done field in the responses.
-        #
-        # @since 2.0.0
-        DONE = 'done'.freeze
 
         # The conversation id field.
         #
@@ -66,10 +51,10 @@ module Mongo
         # @since 2.0.0
         PAYLOAD = 'payload'.freeze
 
-        # The rnonce key in the responses.
+        # The server nonce key in the responses.
         #
         # @since 2.0.0
-        RNONCE = /r=([^,]*)/.freeze
+        SERVER_NONCE = /r=([^,]*)/.freeze
 
         # The salt key in the responses.
         #
@@ -87,33 +72,35 @@ module Mongo
         # @since 2.0.0
         VERIFIER = /v=([^,]*)/.freeze
 
-        # @return [ String ] nonce The initial user nonce.
-        attr_reader :nonce
-
-        # @return [ Protocol::Message ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
+        # @return [ String ] client_nonce The client nonce.
+        attr_reader :client_nonce
 
         # Continue the SCRAM conversation. This sends the client final message
         # to the server after setting the reply from the previous server
         # communication.
         #
-        # @example Continue the conversation.
-        #   conversation.continue(reply)
-        #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         # @param [ Server::Connection ] connection The connection being
         #   authenticated.
         #
         # @return [ Protocol::Message ] The next message to send.
         #
         # @since 2.0.0
-        def continue(reply, connection)
-          validate_first_message!(reply, connection.server)
+        def continue(reply_document, connection)
+          @id = reply_document[ID]
+          payload_data = reply_document[PAYLOAD].data
+          @server_nonce = payload_data.match(SERVER_NONCE)[1]
+          @salt = payload_data.match(SALT)[1]
+          @iterations = payload_data.match(ITERATIONS)[1].to_i.tap do |i|
+            if i < MIN_ITER_COUNT
+              raise Error::InsufficientIterationCount.new(
+                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
+            end
+          end
+          @auth_message = "#{first_bare},#{payload_data},#{without_proof}"
+
+          validate_server_nonce!
 
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
@@ -140,15 +127,21 @@ module Mongo
         # Finalize the SCRAM conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @param [ Protocol::Message ] reply The reply of the previous
-        #   message.
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
         # @param [ Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply, connection)
-          validate_final_message!(reply, connection.server)
+        def finalize(reply_document, connection)
+          payload_data = reply_document[PAYLOAD].data
+          @verifier = payload_data.match(VERIFIER)[1]
+
+          unless compare_digest(verifier, server_signature)
+            raise Error::InvalidSignature.new(verifier, server_signature)
+          end
+
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
               payload: client_empty_message,
@@ -171,33 +164,6 @@ module Mongo
           end
         end
 
-        # Start the SCRAM conversation. This returns the first message that
-        # needs to be sent to the server.
-        #
-        # @param [ Server::Connection ] connection The connection being authenticated.
-        #
-        # @return [ Protocol::Query ] The first SCRAM conversation message.
-        #
-        # @since 2.0.0
-        def start(connection)
-          if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_FIRST_MESSAGE.merge(
-              payload: client_first_message, mechanism: full_mechanism)
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              user.auth_source,
-              Database::COMMAND,
-              CLIENT_FIRST_MESSAGE.merge(
-                payload: client_first_message, mechanism: full_mechanism),
-              limit: -1,
-            )
-          end
-        end
-
         def full_mechanism
           MECHANISMS[@mechanism]
         end
@@ -210,9 +176,7 @@ module Mongo
         # @return [ Integer ] The conversation id.
         #
         # @since 2.0.0
-        def id
-          reply.documents[0][ID]
-        end
+        attr_reader :id
 
         # Create the new conversation.
         #
@@ -228,12 +192,17 @@ module Mongo
             raise InvalidMechanism.new(mechanism)
           end
 
-          @user = user
-          @nonce = SecureRandom.base64
+          super(user)
+          @client_nonce = SecureRandom.base64
           @mechanism = mechanism
         end
 
         private
+
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        def client_first_payload
+          "n,,#{first_bare}"
+        end
 
         # Auth message algorithm implementation.
         #
@@ -242,9 +211,7 @@ module Mongo
         # @see http://tools.ietf.org/html/rfc5802#section-3
         #
         # @since 2.0.0
-        def auth_message
-          @auth_message ||= "#{first_bare},#{reply.documents[0][PAYLOAD].data},#{without_proof}"
-        end
+        attr_reader :auth_message
 
         # Get the empty client message.
         #
@@ -264,17 +231,6 @@ module Mongo
         # @since 2.0.0
         def client_final_message
           BSON::Binary.new("#{without_proof},p=#{client_final}")
-        end
-
-        # Get the client first message
-        #
-        # @api private
-        #
-        # @see http://tools.ietf.org/html/rfc5802#section-3
-        #
-        # @since 2.0.0
-        def client_first_message
-          BSON::Binary.new("n,,#{first_bare}")
         end
 
         # Client final implementation.
@@ -331,7 +287,7 @@ module Mongo
         #
         # @since 2.0.0
         def first_bare
-          @first_bare ||= "n=#{user.encoded_name},r=#{nonce}"
+          @first_bare ||= "n=#{user.encoded_name},r=#{client_nonce}"
         end
 
         # H algorithm implementation.
@@ -388,41 +344,28 @@ module Mongo
         # @api private
         #
         # @since 2.0.0
-        def iterations
-          @iterations ||= payload_data.match(ITERATIONS)[1].to_i.tap do |i|
-            if i < MIN_ITER_COUNT
-              raise Error::InsufficientIterationCount.new(
-                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
-            end
-          end
-        end
+        attr_reader :iterations
 
         # Get the data from the returned payload.
         #
         # @api private
         #
         # @since 2.0.0
-        def payload_data
-          reply.documents[0][PAYLOAD].data
-        end
+        attr_reader :payload_data
 
         # Get the server nonce from the payload.
         #
         # @api private
         #
         # @since 2.0.0
-        def rnonce
-          @rnonce ||= payload_data.match(RNONCE)[1]
-        end
+        attr_reader :server_nonce
 
         # Gets the salt from the server response.
         #
         # @api private
         #
         # @since 2.0.0
-        def salt
-          @salt ||= payload_data.match(SALT)[1]
-        end
+        attr_reader :salt
 
         # @api private
         def cache_key(*extra)
@@ -487,9 +430,7 @@ module Mongo
         # @api private
         #
         # @since 2.0.0
-        def verifier
-          @verifier ||= payload_data.match(VERIFIER)[1]
-        end
+        attr_reader :verifier
 
         # Get the without proof message.
         #
@@ -499,7 +440,7 @@ module Mongo
         #
         # @since 2.0.0
         def without_proof
-          @without_proof ||= "c=biws,r=#{rnonce}"
+          @without_proof ||= "c=biws,r=#{server_nonce}"
         end
 
         # XOR operation for two strings.
@@ -515,29 +456,6 @@ module Mongo
           check = a.bytesize ^ b.bytesize
           a.bytes.zip(b.bytes){ |x, y| check |= x ^ y.to_i }
           check == 0
-        end
-
-        def validate_final_message!(reply, server)
-          validate!(reply, server)
-          unless compare_digest(verifier, server_signature)
-            raise Error::InvalidSignature.new(verifier, server_signature)
-          end
-        end
-
-        def validate_first_message!(reply, server)
-          validate!(reply, server)
-          raise Error::InvalidNonce.new(nonce, rnonce) unless rnonce.start_with?(nonce)
-        end
-
-        def validate!(reply, server)
-          if reply.documents[0][Operation::Result::OK] != 1
-            raise Unauthorized.new(user,
-              used_mechanism: full_mechanism,
-              message: reply.documents[0]['errmsg'],
-              server: server,
-            )
-          end
-          @reply = reply
         end
 
         private

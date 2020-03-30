@@ -21,6 +21,7 @@ module Mongo
         # @note Only available for Ruby versions 2.2.0 and up.
         #
         # @since 2.6.0
+        # @api private
         module SASL
           MAP_NON_ASCII_TO_SPACE = {
             0x00A0 => [0x0020],
