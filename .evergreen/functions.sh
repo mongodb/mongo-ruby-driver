@@ -373,6 +373,9 @@ show_local_instructions() {
   if test -n "$COMPRESSOR"; then
     params="$params COMPRESSOR=$COMPRESSOR"
   fi
+  if test -n "$FLE"; then
+    params="$params FLE=$FLE"
+  fi
   if test -n "$FCV"; then
     params="$params FCV=$FCV"
   fi
