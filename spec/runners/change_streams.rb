@@ -25,6 +25,7 @@ RSpec::Matchers.define :match_commands do |test|
 end
 
 require 'runners/crud/operation'
+require 'runners/crud/test_base'
 
 module Mongo
   module ChangeStreams
@@ -60,25 +61,17 @@ module Mongo
       # @since 2.0.0
       def tests
         @spec_tests.map do |test|
-          ChangeStreamsTest.new(test, @collection_name, @collection2_name, @database_name, @database2_name)
+          ChangeStreamsTest.new(self, test,
+            @collection_name, @collection2_name, @database_name, @database2_name)
         end
       end
 
-      class ChangeStreamsTest
-        # The test description.
-        #
-        # @return [ String ] description The test description.
-        #
-        # @since 2.0.0
-        attr_reader :description
+      class ChangeStreamsTest < Mongo::CRUD::CRUDTestBase
 
-        # Optional list of command-started events in Extended JSON format
-        #
-        # @return [ Array<Hash> ] The list of command-started events
-        attr_reader :expectations
-
-        def initialize(test, collection_name, collection2_name, database_name, database2_name)
+        def initialize(crud_spec, test, collection_name, collection2_name, database_name, database2_name)
+          @spec = crud_spec
           @description = test['description']
+
           @min_server_version = test['minServerVersion']
           @max_server_version = test['maxServerVersion']
           @target_type = test['target']
@@ -87,11 +80,14 @@ module Mongo
           end
           @pipeline = test['changeStreamPipeline'] || []
           @options = test['changeStreamOptions'] || {}
+
           @operations = test['operations'].map do |op|
             Mongo::CRUD::Operation.new(self, op)
           end
+
           @expectations = test['expectations'] &&
             BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
+
           @result = test['result']
           @collection_name = collection_name
           @collection2_name = collection2_name

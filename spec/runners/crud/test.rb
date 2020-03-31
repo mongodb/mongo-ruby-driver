@@ -6,13 +6,6 @@ module Mongo
     # @since 2.0.0
     class CRUDTest < CRUDTestBase
 
-      # The test description.
-      #
-      # @return [ String ] description The test description.
-      #
-      # @since 2.0.0
-      attr_reader :description
-
       # Spec tests have configureFailPoint as a string, make it a string here too
       FAIL_POINT_BASE_COMMAND = BSON::Document.new(
         'configureFailPoint' => "onPrimaryTransactionalWrite",
@@ -64,9 +57,6 @@ module Mongo
       # there are multiple operations for each test. In either case we build
       # an array of operations.
       attr_reader :operations
-
-      # The expected command monitoring events
-      attr_reader :expectations
 
       attr_reader :outcome
 

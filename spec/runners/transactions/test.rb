@@ -20,18 +20,6 @@ module Mongo
     # @since 2.6.0
     class TransactionsTest < CRUD::CRUDTestBase
 
-      # The test description.
-      #
-      # @return [ String ] description The test description.
-      #
-      # @since 2.6.0
-      attr_reader :description
-
-      # The expected command monitoring events
-      #
-      # @since 2.6.0
-      attr_reader :expectations
-
       attr_reader :expected_results
       attr_reader :skip_reason
 
