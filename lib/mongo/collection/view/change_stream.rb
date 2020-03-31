@@ -147,19 +147,16 @@ module Mongo
         # @since 2.6.0
         def try_next
           raise StopIteration.new if closed?
-          retried = false
-
           begin
             doc = @cursor.try_next
           rescue Mongo::Error => e
-            if retried || !e.change_stream_resumable?
+            if !e.change_stream_resumable?
               raise
             end
 
-            retried = true
             # Rerun initial aggregation.
             # Any errors here will stop iteration and break out of this
-            # method
+            # method.
 
             # Save cursor's resume token so we can use it
             # to create a new cursor
