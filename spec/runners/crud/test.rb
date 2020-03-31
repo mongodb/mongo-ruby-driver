@@ -108,18 +108,6 @@ module Mongo
         setup_fail_point(client)
       end
 
-      def setup_fail_point(client)
-        if @fail_point_command
-          client.use(:admin).command(@fail_point_command)
-        end
-      end
-
-      def clear_fail_point(client)
-        if @fail_point_command
-          client.use(:admin).command(@fail_point_command.merge(mode: "off"))
-        end
-      end
-
       def actual_collection_contents(client)
         unless @spec.collection_name
           raise ArgumentError, 'Spec does not specify a global collection'

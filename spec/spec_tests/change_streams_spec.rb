@@ -15,12 +15,16 @@ describe 'ChangeStreams' do
         context(test.description) do
           require_topology *test.topologies
 
-          before(:each) do
+          before do
             unless test.server_version_satisfied?(authorized_client)
               skip 'Version requirements not satisfied'
             end
 
             test.setup_test
+          end
+
+          after do
+            test.teardown_test
           end
 
           let(:result) do
