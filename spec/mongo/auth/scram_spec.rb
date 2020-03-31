@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Auth::SCRAM do
-  require_no_fixed_user
+  require_no_external_user
 
   let(:server) do
     authorized_client.cluster.next_primary

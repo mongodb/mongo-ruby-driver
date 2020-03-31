@@ -169,10 +169,10 @@ module Constraints
     end
   end
 
-  def require_no_fixed_user
+  def require_no_external_user
     before(:all) do
-      if SpecConfig.instance.fixed_user?
-        skip "Fixed user configurations not compatible with this test"
+      if SpecConfig.instance.external_user?
+        skip "External user configurations are not compatible with this test"
       end
     end
   end

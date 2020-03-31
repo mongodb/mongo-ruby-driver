@@ -3,7 +3,7 @@ require_relative './client_registry'
 
 class SpecSetup
   def run
-    if SpecConfig.instance.fixed_user?
+    if SpecConfig.instance.external_user?
       warn 'Skipping user creation because the set of users is fixed'
       return
     end
