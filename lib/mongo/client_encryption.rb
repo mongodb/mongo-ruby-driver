@@ -44,7 +44,7 @@ module Mongo
     #
     # @param [ String ] kms_provider The KMS provider to use. Valid values are
     #   "aws" and "local".
-    # @params [ Hash ] options
+    # @param [ Hash ] options
     #
     # @option options [ Hash ] :master_key Information about the AWS master key.
     #   Required if kms_provider is "aws".

@@ -697,7 +697,7 @@ module Mongo
     # The exception instance should already have all of the labels set on it
     # (both client- and server-side generated ones).
     #
-    # @param [ Error ] The exception instance to process.
+    # @param [ Error ] error The exception instance to process.
     #
     # @api private
     def unpin_maybe(error)

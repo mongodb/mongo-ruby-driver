@@ -204,7 +204,7 @@ module Mongo
         # @note This method is transitional and is provided for backwards compatibility.
         # It will be removed when md5 support is deprecated entirely.
         #
-        # @param [ String ] The bytes to use to update the digest.
+        # @param [ String ] bytes The bytes to use to update the digest.
         #
         # @return [ Digest::MD5 ] The md5 hash object.
         #

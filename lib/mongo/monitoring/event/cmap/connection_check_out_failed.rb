@@ -57,7 +57,7 @@ module Mongo
           # Create the event.
           #
           # @param [ Address ] address
-          # @param [ Symbol ] symbol
+          # @param [ Symbol ] reason
           #
           # @since 2.9.0
           # @api private

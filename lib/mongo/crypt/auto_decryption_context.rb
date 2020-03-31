@@ -23,13 +23,11 @@ module Mongo
       # Create a new AutoEncryptionContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
-      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
+      #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t.
       # @param [ ClientEncryption::IO ] io A instance of the IO class
       #   that implements driver I/O methods required to run the
-      #   state machine
-      # @param [ String ] db_name The name of the database against which
-      #   the command is being made
-      # @param [ Hash ] command The command to be encrypted
+      #   state machine.
+      # @param [ Hash ] command The command to be decrypted.
       def initialize(mongocrypt, io, command)
         super(mongocrypt, io)
 
