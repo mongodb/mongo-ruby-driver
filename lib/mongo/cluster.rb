@@ -932,7 +932,7 @@ module Mongo
           unless @srv_monitor
             monitor_options = options.merge(
               timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
-            @srv_monitor = _srv_monitor = SrvMonitor.new(self, monitor_options)
+            @srv_monitor = _srv_monitor = Srv::Monitor.new(self, monitor_options)
             finalizer = lambda do
               _srv_monitor.stop!
             end
@@ -956,4 +956,3 @@ module Mongo
 end
 
 require 'mongo/cluster/sdam_flow'
-require 'mongo/cluster/srv_monitor'
