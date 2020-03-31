@@ -132,7 +132,7 @@ module Mongo
           rescue Mongo::Error::OperationFailure => e
             return {
               result: { 'error' => { 'code' => e.code } },
-              events: events
+              events: events,
             }
           end
 
