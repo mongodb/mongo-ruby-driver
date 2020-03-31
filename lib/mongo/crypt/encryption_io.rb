@@ -29,15 +29,15 @@ module Mongo
       # Creates a new EncryptionIO object with information about how to connect
       # to the key vault.
       #
-      # @param [ Mongo::Client ] client: The client used to connect to the collection
+      # @param [ Mongo::Client ] client The client used to connect to the collection
       #   that stores the encrypted documents, defaults to nil.
-      # @param [ Mongo::Client ] mongocryptd_client: The client connected to mongocryptd,
+      # @param [ Mongo::Client ] mongocryptd_client The client connected to mongocryptd,
       #   defaults to nil.
-      # @param [ Mongo::Client ] key_vault_client: The client connected to the
+      # @param [ Mongo::Client ] key_vault_client The client connected to the
       #   key vault collection.
-      # @param [ String ] key_vault_namespace: The key vault namespace in the format
+      # @param [ String ] key_vault_namespace The key vault namespace in the format
       #   db_name.collection_name.
-      # @param [ Hash ] mongocryptd_options: Options related to mongocryptd.
+      # @param [ Hash ] mongocryptd_options Options related to mongocryptd.
       #
       # @option mongocryptd_options [ Boolean ] :mongocryptd_bypass_spawn
       # @option mongocryptd_options [ String ] :mongocryptd_spawn_path
@@ -234,8 +234,9 @@ module Mongo
 
       # Provide an SSL socket to be used for KMS calls in a block API
       #
-      # @param [ String ] endpoint The URI at which to connect the SSL socket
-      # @param [ Proc ] block The block to execute
+      # @param [ String ] endpoint The URI at which to connect the SSL socket.
+      # @yieldparam [ OpenSSL::SSL::SSLSocket ] ssl_socket Yields an SSL socket
+      #   connected to the specified endpoint.
       #
       # @raise [ Mongo::Error::KmsError ] If the socket times out or raises
       #   an exception

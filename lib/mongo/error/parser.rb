@@ -76,7 +76,7 @@ module Mongo
       # examined because the status (ok: 1) is not part of the document and
       # there is no way to distinguish successful from failed responses using
       # the document itself, and a successful response may legitimately have
-      # {code: 123, codeName: 'foo'} as the contents of a user-inserted
+      # { code: 123, codeName: 'foo' } as the contents of a user-inserted
       # document. The legacy server versions do not fill out code nor codeName
       # thus not reading them does not lose information.
       #

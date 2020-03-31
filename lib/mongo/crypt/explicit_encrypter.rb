@@ -22,9 +22,9 @@ module Mongo
     class ExplicitEncrypter
       # Create a new ExplicitEncrypter object.
       #
-      # @params [ Mongo::Client ] key_vault_client An instance of Mongo::Client
+      # @param [ Mongo::Client ] key_vault_client An instance of Mongo::Client
       #   to connect to the key vault collection.
-      # @params [ String ] key_vault_namespace The namespace of the key vault
+      # @param [ String ] key_vault_namespace The namespace of the key vault
       #   collection in the format "db_name.collection_name".
       # @option options [ Hash ] :kms_providers A hash of key management service
       #   configuration information. Valid hash keys are :local or :aws. There
@@ -44,7 +44,7 @@ module Mongo
       #
       # @param [ String ] kms_provider The KMS provider to use. Valid values are
       #   "aws" and "local".
-      # @params [ Hash ] options
+      # @param [ Hash ] options
       #
       # @option options [ Hash ] :master_key Information about the AWS master key. Required
       #   if kms_provider is "aws".
