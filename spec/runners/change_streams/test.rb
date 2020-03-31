@@ -41,7 +41,7 @@ module Mongo
         @expectations = test['expectations'] &&
           BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
 
-        @result = test['result']
+        @result = BSON::ExtJSON.parse_obj(test['result'], mode: :bson)
         @collection_name = collection_name
         @collection2_name = collection2_name
         @database_name = database_name
@@ -53,6 +53,8 @@ module Mongo
       attr_reader :topologies
 
       attr_reader :outcome
+
+      attr_reader :result
 
       def setup_test
         @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
@@ -148,15 +150,6 @@ module Mongo
         }
       end
 
-      def match_result?(result)
-        case @result.first.first
-        when 'success'
-          match_success?(result)
-        when 'error'
-          @result == result
-        end
-      end
-
       def server_version_satisfied?(client)
         lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
       end
@@ -176,42 +169,6 @@ module Mongo
               'database_name' => e.database_name,
             }
           }
-        end
-      end
-
-      def match_success?(result)
-        return false unless result['success']
-        match?(@result['success'], result['success'])
-      end
-
-      def match?(expected, actual)
-        return !!actual if expected.to_s == '42'
-        return match_array?(expected, actual) if expected.is_a?(Array)
-        return match_hash?(expected, actual) if expected.is_a?(Hash)
-        expected == actual
-      end
-
-      def match_array?(expected, actual)
-        return false unless actual.is_a?(Array)
-        return false unless expected.length == actual.length
-
-        expected.each_with_index.all? do |e, i|
-          actual[i] && match?(e, actual[i])
-        end
-      end
-
-      def match_hash?(expected, actual)
-        return false unless actual.is_a?(Hash)
-
-        expected.all? do |k, v|
-          if v.is_a?(Hash) && !v.empty?
-            case v.first.first
-            when '$numberInt'
-              v = v.first.last.to_i
-            end
-          end
-
-          actual[k] && match?(v, actual[k])
         end
       end
 

@@ -1,12 +1,6 @@
 require 'spec_helper'
 require 'runners/change_streams/spec'
 
-RSpec::Matchers.define :match_result do |test|
-  match do |actual|
-    test.match_result?(actual)
-  end
-end
-
 describe 'ChangeStreams' do
   require_wired_tiger
 
@@ -48,8 +42,21 @@ describe 'ChangeStreams' do
               end
             end
           else
-            it 'returns the correct result' do
-              expect(result[:result]).to match_result(test)
+            let(:actual_documents) do
+              result[:result]['success'].map do |document|
+                document = document.dup
+                fd = document['fullDocument']
+                if fd
+                  fd = fd.dup
+                  fd.delete('_id')
+                  document['fullDocument'] = fd
+                end
+                document
+              end
+            end
+
+            it 'has the correct documents' do
+              verifier.verify_operation_result(test.result['success'], actual_documents)
             end
           end
 
