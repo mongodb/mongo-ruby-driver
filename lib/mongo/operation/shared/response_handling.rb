@@ -68,7 +68,7 @@ module Mongo
       #   is included in BulkWrite which does not store the session in the
       #   receiver (despite Specifiable doing so).
       #
-      # @param [ Session | nil ] Session to consider.
+      # @param [ Session | nil ] session Session to consider.
       def unpin_maybe(session)
         yield
       rescue Mongo::Error => e

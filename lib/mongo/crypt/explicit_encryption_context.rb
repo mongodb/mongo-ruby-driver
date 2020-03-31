@@ -38,7 +38,7 @@ module Mongo
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
       #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
       #
-      # @raises [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
+      # @raise [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
       def initialize(mongocrypt, io, doc, options={})
         super(mongocrypt, io)
 

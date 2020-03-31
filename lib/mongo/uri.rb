@@ -216,7 +216,7 @@ module Mongo
     #   URI.get(string)
     #
     # @param [ String ] string The URI to parse.
-    # @param [ Hash ] options The options.
+    # @param [ Hash ] opts The options.
     #
     # @option options [ Logger ] :logger A custom logger to use.
     #

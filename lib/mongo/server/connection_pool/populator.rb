@@ -21,7 +21,7 @@ module Mongo
     class Populator
       include BackgroundThread
 
-      # @param [ Server::ConnectionPool ] The connection pool.
+      # @param [ Server::ConnectionPool ] pool The connection pool.
       # @param [ Hash ] options The options.
       #
       # @option options [ Logger ] :logger A custom logger to use.

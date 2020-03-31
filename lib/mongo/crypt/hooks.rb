@@ -62,7 +62,7 @@ module Mongo
 
       # An HMAC SHA-512 or SHA-256 function
       #
-      # @param [ String ] The name of the digest, either "SHA256" or "SHA512"
+      # @param [ String ] digest_name The name of the digest, either "SHA256" or "SHA512"
       # @param [ String ] key The 32-byte AES encryption key
       # @param [ String ] input The data to be tagged
       #

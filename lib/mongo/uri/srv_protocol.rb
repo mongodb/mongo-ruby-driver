@@ -17,7 +17,7 @@ module Mongo
   class URI
 
     # Parser for a URI using the mongodb+srv protocol, which specifies a DNS to query for SRV records.
-    # The driver will query the DNS server for SRV records on {hostname}.{domainname},
+    # The driver will query the DNS server for SRV records on <hostname>.<domainname>,
     # prefixed with _mongodb._tcp
     # The SRV records can then be used as the seedlist for a Mongo::Client.
     # The driver also queries for a TXT record providing default connection string options.

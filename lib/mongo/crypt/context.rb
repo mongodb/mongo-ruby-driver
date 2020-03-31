@@ -26,11 +26,11 @@ module Mongo
     class Context
       #  Create a new Context object
       #
-      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_t object
-      #   used to create a new mongocrypt_ctx_t
-      # @param [ ClientEncryption::IO ] A instance of the IO class
+      # @param [ Mongo::Crypt::Handle ] mongocrypt_handle A handle to libmongocrypt
+      #   used to create a new context object.
+      # @param [ ClientEncryption::IO ] io An instance of the IO class
       #   that implements driver I/O methods required to run the
-      #   state machine
+      #   state machine.
       def initialize(mongocrypt_handle, io)
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.

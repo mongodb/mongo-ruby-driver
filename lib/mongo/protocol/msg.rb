@@ -161,7 +161,7 @@ module Mongo
       end
 
       # Reverse-populates the instance variables after deserialization sets
-      # @sections to the list of documents.
+      # the @sections instance variable to the list of documents.
       #
       # TODO fix deserialization so that this method is not needed.
       #
