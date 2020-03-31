@@ -90,7 +90,8 @@ module Mongo
           @operations = test['operations'].map do |op|
             Mongo::CRUD::Operation.new(self, op)
           end
-          @expectations = test['expectations']
+          @expectations = test['expectations'] &&
+            BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
           @result = test['result']
           @collection_name = collection_name
           @collection2_name = collection2_name
