@@ -482,7 +482,7 @@ EOT
   # we create a variety of users in the test suite for different purposes.
   # When we authenticate with passwordless mechanisms (x509, aws) we use
   # the globally specified user for all operations.
-  def fixed_user?
+  def external_user?
     case uri_options[:auth_mech]
     when :mongodb_x509
       true
@@ -497,8 +497,8 @@ EOT
   # create and authenticate with the external mechanism. This also ensures
   # our various helpers work correctly when the only users available are
   # the external ones.
-  def credentials_or_fixed_user(creds)
-    if fixed_user?
+  def credentials_or_external_user(creds)
+    if external_user?
       auth_options
     else
       creds
