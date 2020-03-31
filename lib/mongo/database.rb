@@ -256,6 +256,9 @@ module Mongo
     # @since 2.0.0
     def initialize(client, name, options = {})
       raise Error::InvalidDatabaseName.new unless name
+      if Lint.enabled? && !(name.is_a?(String) || name.is_a?(Symbol))
+        raise "Database name must be a string or a symbol: #{name}"
+      end
       @client = client
       @name = name.to_s.freeze
       @options = options.freeze

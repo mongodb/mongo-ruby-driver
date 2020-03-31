@@ -44,10 +44,10 @@ module Mongo
         @spec = YAML.load(File.read(test_path))
         @description = File.basename(test_path)
         @spec_tests = @spec['tests']
-        @coll1 = @spec['collection_name']
-        @coll2 = @spec['collection2_name']
-        @db1 = @spec['database_name']
-        @db2 = @spec['database2_name']
+        @collection_name = @spec['collection_name']
+        @collection2_name = @spec['collection2_name']
+        @database_name = @spec['database_name']
+        @database2_name = @spec['database2_name']
       end
 
       # Get a list of ChangeStreamsTests for each test definition.
@@ -60,7 +60,7 @@ module Mongo
       # @since 2.0.0
       def tests
         @spec_tests.map do |test|
-          ChangeStreamsTest.new(test, @coll1, @coll2, @db1, @db2)
+          ChangeStreamsTest.new(test, @collection_name, @collection2_name, @database_name, @database2_name)
         end
       end
 
@@ -77,7 +77,7 @@ module Mongo
         # @return [ Array<Hash> ] The list of command-started events
         attr_reader :expectations
 
-        def initialize(test, coll1, coll2, db1, db2)
+        def initialize(test, collection_name, collection2_name, database_name, database2_name)
           @description = test['description']
           @min_server_version = test['minServerVersion']
           @max_server_version = test['maxServerVersion']
@@ -90,10 +90,10 @@ module Mongo
           @operations = test['operations'].map { |op| Operation.new(op) }
           @expectations = test['expectations']
           @result = test['result']
-          @coll1_name = coll1
-          @coll2_name = coll2
-          @db1_name = db1
-          @db2_name = db2
+          @collection_name = collection_name
+          @collection2_name = collection2_name
+          @database_name = database_name
+          @database2_name = database2_name
         end
 
         attr_reader :topologies
@@ -101,14 +101,18 @@ module Mongo
         def setup_test
           @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
 
-          @db1 = @global_client.use(@db1_name).database.tap(&:drop)
-          @db2 = @global_client.use(@db2_name).database.tap(&:drop)
+          @database = @global_client.use(@database_name).database.tap(&:drop)
+          if @database2_name
+            @database2 = @global_client.use(@database2_name).database.tap(&:drop)
+          end
 
-          @db1[@coll1_name].create
-          @db2[@coll2_name].create
+          @database[@collection_name].create
+          if @collection2_name
+            @database2[@collection2_name].create
+          end
 
           client = ClientRegistry.instance.global_client('root_authorized').with(
-            database: @db1_name,
+            database: @database_name,
             app_name: 'this is used solely to force the new client to create its own cluster')
           client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
 
@@ -118,7 +122,7 @@ module Mongo
                    when 'database'
                      client.database
                    when 'collection'
-                     client[@coll1_name]
+                     client[@collection_name]
                    end
         end
 
@@ -137,7 +141,7 @@ module Mongo
           enum = change_stream.to_enum
 
           @operations.each do |op|
-            op.execute(@db1, @db2)
+            op.execute(@database, @database2)
           end
 
           changes = []
@@ -200,7 +204,7 @@ module Mongo
               'command_started_event' => {
                 'command' => e.command,
                 'command_name' => e.command_name.to_s,
-                'database_name' => e.database_name
+                'database_name' => e.database_name,
               }
             }
           end
