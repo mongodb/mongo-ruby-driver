@@ -24,7 +24,7 @@ RSpec::Matchers.define :match_commands do |test|
   end
 end
 
-require 'runners/change_streams/operation'
+require 'runners/crud/operation'
 
 module Mongo
   module ChangeStreams
@@ -87,7 +87,9 @@ module Mongo
           end
           @pipeline = test['changeStreamPipeline'] || []
           @options = test['changeStreamOptions'] || {}
-          @operations = test['operations'].map { |op| Operation.new(op) }
+          @operations = test['operations'].map do |op|
+            Mongo::CRUD::Operation.new(self, op)
+          end
           @expectations = test['expectations']
           @result = test['result']
           @collection_name = collection_name
@@ -141,7 +143,16 @@ module Mongo
           enum = change_stream.to_enum
 
           @operations.each do |op|
-            op.execute(@database, @database2)
+            db = case op.spec['database']
+              when @database_name
+                @database
+              when @database2_name
+                @database2
+              else
+                raise "Unknown database name #{op.spec['database']}"
+              end
+            collection = db[op.spec['collection']]
+            op.execute(collection)
           end
 
           changes = []
