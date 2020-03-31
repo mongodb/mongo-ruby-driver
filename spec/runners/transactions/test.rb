@@ -68,7 +68,7 @@ module Mongo
         @multiple_mongoses = test['useMultipleMongoses']
 
         operations = test['operations']
-        @ops = operations.map do |op|
+        @operations = operations.map do |op|
           Operation.new(self, op)
         end
 
@@ -156,7 +156,7 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        results = @ops.map do |op|
+        results = @operations.map do |op|
           target = resolve_target(test_client, op)
           op.execute(target, @session0, @session1)
         end
@@ -230,7 +230,7 @@ module Mongo
 
         coll.insert_many(@data) unless @data.empty?
 
-        $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
+        $distinct_ran ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
           mongos_each_direct_client do |direct_client|
             direct_client['test'].distinct('foo').to_a
           end
