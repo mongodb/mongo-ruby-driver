@@ -35,8 +35,22 @@ describe 'ChangeStreams' do
 
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
-          it 'returns the correct result' do
-            expect(result[:result]).to match_result(test)
+          if test.outcome.error?
+            let(:actual_error) { result[:result][:error] }
+
+            it 'fails' do
+              actual_error[:code].should == test.outcome.error.fetch('code')
+            end
+
+            if test.outcome.error['errorLabels']
+              it 'has correct error labels' do
+                actual_error[:labels].should == test.outcome.error.fetch('errorLabels')
+              end
+            end
+          else
+            it 'returns the correct result' do
+              expect(result[:result]).to match_result(test)
+            end
           end
 
           if test.expectations

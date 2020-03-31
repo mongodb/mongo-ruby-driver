@@ -14,6 +14,7 @@
 
 require 'runners/crud/operation'
 require 'runners/crud/test_base'
+require 'runners/change_streams/outcome'
 
 module Mongo
   module ChangeStreams
@@ -45,9 +46,13 @@ module Mongo
         @collection2_name = collection2_name
         @database_name = database_name
         @database2_name = database2_name
+
+        @outcome = Outcome.new(test.fetch('result'))
       end
 
       attr_reader :topologies
+
+      attr_reader :outcome
 
       def setup_test
         @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
@@ -82,7 +87,12 @@ module Mongo
           @target.watch(@pipeline, Utils.snakeize_hash(@options))
         rescue Mongo::Error::OperationFailure => e
           return {
-            result: { 'error' => { 'code' => e.code } },
+            result: {
+              error: {
+                code: e.code,
+                labels: e.labels,
+              },
+            },
             events: events,
           }
         end
@@ -112,8 +122,13 @@ module Mongo
           changes << change
         rescue Mongo::Error::OperationFailure => e
           return {
-            result: { 'error' => { 'code' => e.code, 'errorLabels' => e.labels} },
-            events: events
+            result: {
+              error: {
+                code: e.code,
+                labels: e.labels,
+              },
+            },
+            events: events,
           }
         end
 
