@@ -55,7 +55,7 @@ module Mongo
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
 
-        @fail_point = test['failPoint']
+        @fail_point_command = test['failPoint']
 
         @session_options = if opts = test['sessionOptions']
           Hash[opts.map do |session_name, options|
@@ -236,7 +236,7 @@ module Mongo
           end
         end
 
-        admin_support_client.command(@fail_point) if @fail_point
+        admin_support_client.command(@fail_point_command) if @fail_point_command
 
         @collection = test_client[@spec.collection_name]
 
@@ -250,15 +250,15 @@ module Mongo
 
       def teardown_test
 
-        if @fail_point
+        if @fail_point_command
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         if $disable_fail_points
-          $disable_fail_points.each do |(fail_point, address)|
+          $disable_fail_points.each do |(fail_point_command, address)|
             client = ClusterTools.instance.direct_client(address,
               database: 'admin')
-            client.command(configureFailPoint: fail_point['configureFailPoint'],
+            client.command(configureFailPoint: fail_point_command['configureFailPoint'],
               mode: 'off')
           end
         end
