@@ -1,4 +1,11 @@
 require 'spec_helper'
+require 'runners/change_streams/spec'
+
+RSpec::Matchers.define :match_result do |test|
+  match do |actual|
+    test.match_result?(actual)
+  end
+end
 
 describe 'ChangeStreams' do
   require_wired_tiger
