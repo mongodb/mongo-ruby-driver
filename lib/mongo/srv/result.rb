@@ -13,7 +13,6 @@
 # limitations under the License.
 
 module Mongo
-
   module Srv
 
     # SRV record lookup result.

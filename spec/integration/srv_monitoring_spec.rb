@@ -53,7 +53,7 @@ describe 'SRV Monitoring' do
 
         expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Sharded)
 
-        expect(client.cluster.instance_variable_get('@srv_monitor')).to be_a(Mongo::Cluster::SrvMonitor)
+        expect(client.cluster.instance_variable_get('@srv_monitor')).to be_a(Mongo::Srv::Monitor)
 
         # Close the client in the test rather than allowing our post-test cleanup
         # to take care of it, since the client references test doubles.
@@ -101,7 +101,7 @@ describe 'SRV Monitoring' do
 
     before do
       # Expedite the polling process
-      allow_any_instance_of(Mongo::Cluster::SrvMonitor).to receive(:scan_interval).and_return(1)
+      allow_any_instance_of(Mongo::Srv::Monitor).to receive(:scan_interval).and_return(1)
     end
 
     context 'sharded cluster' do
