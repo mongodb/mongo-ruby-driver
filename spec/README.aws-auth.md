@@ -225,8 +225,9 @@ To remove the instance profile from the instance, run:
 
     ./.evergreen/aws clear-instance-profile i-instanceid
 
-Note: the driver does not have a provision to terminate the launched instance.
-Please use the AWS console or the AWS CLI to do so when it is no longer needed.
+To terminate the instance, run:
+
+    ./.evergreen/aws stop-ec2
 
 ## Temporary Credentials - ECS Task Role
 
@@ -270,8 +271,6 @@ which includes the Docker execution output collected via CloudWatch.
 The status output includes the public IP of the running task once it is
 available, which can be used to SSH into the container and run the tests.
 
-Note: as with the EC2 instance, ECS service and tasks are not automatically
-cleaned up by the driver tooling. Please use the AWS console or the AWS CLI
-to do so when they are no longer needed. The common setup sets the retention
-period on the CloudWatch log group to one day, hence it is not needed to
-manually remove the logs from CloudWatch.
+To terminate the service, run:
+
+    ./.evergreen/aws stop-ecs

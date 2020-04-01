@@ -98,6 +98,19 @@ CMD
       puts "Found usable instance #{instance.instance_id} at #{instance.public_ip_address}"
     end
 
+    def terminate_auth_ec2_instance
+      ec2_client.describe_instances(filters: [
+        {name: 'tag:name', values: [AWS_AUTH_EC2_INSTANCE_NAME]},
+      ]).each do |resp|
+        resp.reservations.each do |res|
+          res.instances.each do |instance|
+            puts "Terminating #{instance.instance_id}"
+            ec2_client.terminate_instances(instance_ids: [instance.instance_id])
+          end
+        end
+      end
+    end
+
     def provision_auth_ecs_task(public_key_path)
       public_key = File.read(public_key_path)
       security_group_id = ssh_vpc_security_group_id!
@@ -186,6 +199,30 @@ CMD
             },
           },
         ).service
+      end
+    end
+
+    def terminate_auth_ecs_task
+      ecs_client.describe_services(
+        cluster: AWS_AUTH_ECS_CLUSTER_NAME,
+        services: [AWS_AUTH_ECS_SERVICE_NAME],
+      ).each do |resp|
+        resp.services.each do |service|
+          puts "Terminating #{service.service_name}"
+          begin
+            ecs_client.update_service(
+              cluster: AWS_AUTH_ECS_CLUSTER_NAME,
+              service: service.service_name,
+              desired_count: 0,
+            )
+          rescue Aws::ECS::Errors::ServiceNotActiveException
+            # No action needed
+          end
+          ecs_client.delete_service(
+            cluster: AWS_AUTH_ECS_CLUSTER_NAME,
+            service: service.service_name,
+          )
+        end
       end
     end
 
