@@ -71,6 +71,18 @@ EOT
         end
       end
 
+      # This variant used by change stream tests which provide the first N
+      # events rather than all of them.
+      def verify_command_started_event_min_count(expected_events, actual_events)
+        if actual_events.length < expected_events.length
+          raise RSpec::Expectations::ExpectationNotMetError.new, <<-EOT
+Expected at least #{expected_events.length} events, got #{actual_events.length} events.
+Expected events: #{expected_events.pretty_inspect}
+Actual events: #{actual_events.pretty_inspect}
+EOT
+        end
+      end
+
       def verify_command_started_event(expected_events, actual_events, i)
         expect(expected_events.length).to be > i
         expect(actual_events.length).to be > i

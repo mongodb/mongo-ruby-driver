@@ -66,7 +66,7 @@ describe 'ChangeStreams' do
             end
 
             it 'has the correct number of command_started events' do
-              verifier.verify_command_started_event_count(test.expectations, actual_events)
+              verifier.verify_command_started_event_min_count(test.expectations, actual_events)
             end
 
             test.expectations.each_with_index do |expectation, i|
