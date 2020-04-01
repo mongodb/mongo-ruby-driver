@@ -176,7 +176,7 @@ module Mongo
 
       private
 
-      IGNORE_COMMANDS = %w(saslStart saslContinue killCursors getMore)
+      IGNORE_COMMANDS = %w(saslStart saslContinue killCursors)
 
       def global_client
         @global_client ||= ClientRegistry.instance.global_client('root_authorized').use('admin')
@@ -186,9 +186,22 @@ module Mongo
         EventSubscriber.started_events.reduce([]) do |evs, e|
           next evs if IGNORE_COMMANDS.include?(e.command_name)
 
+          command = e.command.dup
+          if command['aggregate'] && command['pipeline']
+            command['pipeline'] = command['pipeline'].map do |stage|
+              if stage['$changeStream']
+                cs = stage['$changeStream'].dup
+                cs.delete('resumeAfter')
+                stage.merge('$changeStream' => cs)
+              else
+                stage
+              end
+            end
+          end
+
           evs << {
             'command_started_event' => {
-              'command' => e.command,
+              'command' => command,
               'command_name' => e.command_name.to_s,
               'database_name' => e.database_name,
             }

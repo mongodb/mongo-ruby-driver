@@ -341,8 +341,10 @@ module Utils
       end.all?
 
       same_length && same_values
+    elsif expected == 42
+      actual.is_a?(Numeric) || actual.is_a?(BSON::Int32) || actual.is_a?(BSON::Int64)
     else
-      return expected == actual
+      expected == actual
     end
   end
   module_function :match_with_type?
