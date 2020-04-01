@@ -49,7 +49,8 @@ module Mongo
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
-        @expectations = test['expectations']
+
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
       end
 
       attr_reader :client_options

@@ -148,10 +148,10 @@ module Utils
     events = events.map do |e|
       command = e.command.dup
 
-      # Fake $code for map/reduce commands
+      # Fake BSON::Code for map/reduce commands
       %w(map reduce).each do |key|
         if command[key].is_a?(String)
-          command[key] = {'$code' => command[key]}
+          command[key] = BSON::Code.new(command[key])
         end
       end
 
@@ -179,17 +179,6 @@ module Utils
       # Remove fields if empty
       #command.delete('filter') if command['filter'] && command['filter'].empty?
       command.delete('query') if command['query'] && command['query'].empty?
-
-      if filter = command['filter']
-        # Since the Ruby driver does not implement extended JSON, hack
-        # the types here manually.
-        # Note that this code mutates the command.
-        %w(_id files_id).each do |key|
-          if filter[key] && filter[key].is_a?(BSON::ObjectId)
-            filter[key] = {'$oid' => filter[key].to_s}
-          end
-        end
-      end
 
       {
         'command_started_event' => order_hash(
