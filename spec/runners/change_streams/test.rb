@@ -64,6 +64,15 @@ module Mongo
           @database2 = @global_client.use(@database2_name).database.tap(&:drop)
         end
 
+        # Work around https://jira.mongodb.org/browse/SERVER-17397
+        if ClusterConfig.instance.server_version < '4.3' &&
+          @global_client.cluster.servers.length > 1
+        then
+          mongos_each_direct_client do |client|
+            client.database.command(flushRouterConfig: 1)
+          end
+        end
+
         @database[@collection_name].create
         if @collection2_name
           @database2[@collection2_name].create

@@ -118,21 +118,6 @@ module Mongo
         @event_subscriber ||= EventSubscriber.new
       end
 
-      def mongos_each_direct_client
-        if ClusterConfig.instance.topology == :sharded
-          client = ClientRegistry.instance.global_client('basic')
-          client.cluster.next_primary
-          client.cluster.servers.each do |server|
-            direct_client = ClientRegistry.instance.new_local_client(
-              [server.address.to_s],
-              SpecConfig.instance.test_options.merge(
-                connect: :sharded
-              ).merge(SpecConfig.instance.auth_options))
-            yield direct_client
-          end
-        end
-      end
-
       # Run the test.
       #
       # @example Run the test.
