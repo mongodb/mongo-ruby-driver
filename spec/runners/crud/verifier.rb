@@ -116,6 +116,8 @@ EOT
         case expected
         when nil
           expect(actual).to be nil
+        when 42, '42'
+          expect(actual).not_to be nil
         when Hash
           if actual.is_a?(Hash) && actual['error'] &&
             !expected.keys.any? { |key| key.start_with?('error') }
@@ -155,6 +157,10 @@ EOT
           return
         end
 
+        if [42, '42'].include?(expected[k]) && actual[k]
+          return
+        end
+
         if %w(deletedCount matchedCount modifiedCount upsertedCount).include?(k)
           # Some tests assert that some of these counts are zero.
           # The driver may omit the respective key, which is fine.
@@ -176,11 +182,11 @@ EOT
         end
 
         if expected[k].is_a?(Time)
-          expect({k => expected[k].utc.to_s}).to eq({k => actual[k].utc.to_s})
+          expect(k => actual[k].utc.to_s).to eq(k => expected[k].utc.to_s)
         else
           # This should produce a meaningful error message,
           # even though we do not actually require that expected[k] == actual[k]
-          expect({k => expected[k]}).to eq({k => actual[k]})
+          expect(k => actual[k]).to eq(k => expected[k])
         end
       end
     end

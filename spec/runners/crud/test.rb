@@ -6,13 +6,6 @@ module Mongo
     # @since 2.0.0
     class CRUDTest < CRUDTestBase
 
-      # The test description.
-      #
-      # @return [ String ] description The test description.
-      #
-      # @since 2.0.0
-      attr_reader :description
-
       # Spec tests have configureFailPoint as a string, make it a string here too
       FAIL_POINT_BASE_COMMAND = BSON::Document.new(
         'configureFailPoint' => "onPrimaryTransactionalWrite",
@@ -34,11 +27,13 @@ module Mongo
       def initialize(crud_spec, data, test)
         @spec = crud_spec
         @data = data
+        @description = test['description']
+        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+
         if test['failPoint']
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
         end
-        @description = test['description']
-        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+
         if test['operations']
           @operations = test['operations'].map do |op_spec|
             Operation.new(self, op_spec)
@@ -46,11 +41,12 @@ module Mongo
         else
           @operations = [Operation.new(self, test['operation'], test['outcome'])]
         end
-        if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
-        end
 
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
+
+        if test['outcome']
+          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
+        end
       end
 
       attr_reader :client_options
@@ -61,9 +57,6 @@ module Mongo
       # there are multiple operations for each test. In either case we build
       # an array of operations.
       attr_reader :operations
-
-      # The expected command monitoring events
-      attr_reader :expectations
 
       attr_reader :outcome
 

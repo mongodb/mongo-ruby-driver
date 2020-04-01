@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'runners/change_streams/spec'
 
 describe 'ChangeStreams' do
   require_wired_tiger
@@ -28,8 +29,35 @@ describe 'ChangeStreams' do
 
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
-          it 'returns the correct result' do
-            expect(result[:result]).to match_result(test)
+          if test.outcome.error?
+            let(:actual_error) { result[:result][:error] }
+
+            it 'fails' do
+              actual_error[:code].should == test.outcome.error.fetch('code')
+            end
+
+            if test.outcome.error['errorLabels']
+              it 'has correct error labels' do
+                actual_error[:labels].should == test.outcome.error.fetch('errorLabels')
+              end
+            end
+          else
+            let(:actual_documents) do
+              result[:result]['success'].map do |document|
+                document = document.dup
+                fd = document['fullDocument']
+                if fd
+                  fd = fd.dup
+                  fd.delete('_id')
+                  document['fullDocument'] = fd
+                end
+                document
+              end
+            end
+
+            it 'has the correct documents' do
+              verifier.verify_operation_result(test.result['success'], actual_documents)
+            end
           end
 
           if test.expectations

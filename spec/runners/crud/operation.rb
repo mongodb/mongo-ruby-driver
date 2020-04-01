@@ -36,6 +36,8 @@ module Mongo
         @outcome = Outcome.new(outcome_spec || spec)
       end
 
+      attr_reader :spec
+
       # The operation name.
       #
       # @return [ String ] name The operation name.
@@ -90,7 +92,7 @@ module Mongo
         if target.is_a?(Mongo::Database)
           op_name = "db_#{op_name}"
         elsif target.is_a?(Mongo::Client)
-          op_name= "client_#{op_name}"
+          op_name = "client_#{op_name}"
         end
         send(op_name, target, Context.new)
       end
@@ -259,6 +261,19 @@ module Mongo
 
       def find_one_and_update(collection, context)
         collection.find_one_and_update(arguments['filter'], arguments['update'], context.transform_arguments(options))
+      end
+
+      # ddl
+
+      def rename(collection, context)
+        collection.client.use(:admin).command({
+          renameCollection: "#{collection.database.name}.#{collection.name}",
+          to: "#{collection.database.name}.#{arguments['to']}"
+        })
+      end
+
+      def drop(collection, context)
+        collection.drop
       end
 
       # options & arguments

@@ -161,7 +161,7 @@ tests:
               -
                 $match:
                   "fullDocument.z":
-                    3
+                    $numberInt: "3"
           command_name: aggregate
           database_name: *database_name
     result:
@@ -173,7 +173,7 @@ tests:
             coll: *collection_name
           fullDocument:
             z:
-              3
+              $numberInt: "3"
   -
     description: Executing a watch helper on a Database results in notifications for changes to all collections in the specified database.
     minServerVersion: "3.8.0"
@@ -209,7 +209,7 @@ tests:
         command_started_event:
           command:
             aggregate:
-              1
+              $numberInt: "1"
             cursor: {}
             pipeline:
               - 
@@ -269,7 +269,7 @@ tests:
         command_started_event:
           command:
             aggregate:
-              1
+              $numberInt: "1"
             cursor: {}
             pipeline:
               - 
@@ -372,6 +372,7 @@ tests:
             db: *database_name
             coll: *collection_name
           updateDescription:
+            removedFields: []
             updatedFields:
               x:
                 $numberInt: "2"

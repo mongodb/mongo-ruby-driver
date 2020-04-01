@@ -84,7 +84,6 @@ require 'runners/connection_string'
 require 'runners/connection_string'
 require 'runners/gridfs'
 require 'runners/transactions'
-require 'runners/change_streams'
 require 'runners/auth'
 
 if SpecConfig.instance.mri?

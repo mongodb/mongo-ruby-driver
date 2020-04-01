@@ -20,18 +20,6 @@ module Mongo
     # @since 2.6.0
     class TransactionsTest < CRUD::CRUDTestBase
 
-      # The test description.
-      #
-      # @return [ String ] description The test description.
-      #
-      # @since 2.6.0
-      attr_reader :description
-
-      # The expected command monitoring events
-      #
-      # @since 2.6.0
-      attr_reader :expectations
-
       attr_reader :expected_results
       attr_reader :skip_reason
 
@@ -54,6 +42,9 @@ module Mongo
         @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+
+        @fail_point_command = test['failPoint']
+
         @session_options = if opts = test['sessionOptions']
           Hash[opts.map do |session_name, options|
             [session_name.to_sym, Utils.convert_operation_options(options)]
@@ -61,12 +52,11 @@ module Mongo
         else
           {}
         end
-        @fail_point = test['failPoint']
         @skip_reason = test['skipReason']
         @multiple_mongoses = test['useMultipleMongoses']
 
-        @operations = test['operations']
-        @ops = @operations.map do |op|
+        operations = test['operations']
+        @operations = operations.map do |op|
           Operation.new(self, op)
         end
 
@@ -76,7 +66,7 @@ module Mongo
           @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
         end
 
-        @expected_results = @operations.map do |o|
+        @expected_results = operations.map do |o|
           o = BSON::ExtJSON.parse_obj(o)
 
           # We check both o.key('error') and o['error'] to provide a better
@@ -128,21 +118,6 @@ module Mongo
         @event_subscriber ||= EventSubscriber.new
       end
 
-      def mongos_each_direct_client
-        if ClusterConfig.instance.topology == :sharded
-          client = ClientRegistry.instance.global_client('basic')
-          client.cluster.next_primary
-          client.cluster.servers.each do |server|
-            direct_client = ClientRegistry.instance.new_local_client(
-              [server.address.to_s],
-              SpecConfig.instance.test_options.merge(
-                connect: :sharded
-              ).merge(SpecConfig.instance.auth_options))
-            yield direct_client
-          end
-        end
-      end
-
       # Run the test.
       #
       # @example Run the test.
@@ -154,7 +129,7 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        results = @ops.map do |op|
+        results = @operations.map do |op|
           target = resolve_target(test_client, op)
           op.execute(target, @session0, @session1)
         end
@@ -228,13 +203,13 @@ module Mongo
 
         coll.insert_many(@data) unless @data.empty?
 
-        $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
+        $distinct_ran ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
           mongos_each_direct_client do |direct_client|
             direct_client['test'].distinct('foo').to_a
           end
         end
 
-        admin_support_client.command(@fail_point) if @fail_point
+        admin_support_client.command(@fail_point_command) if @fail_point_command
 
         @collection = test_client[@spec.collection_name]
 
@@ -248,15 +223,15 @@ module Mongo
 
       def teardown_test
 
-        if @fail_point
+        if @fail_point_command
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         if $disable_fail_points
-          $disable_fail_points.each do |(fail_point, address)|
+          $disable_fail_points.each do |(fail_point_command, address)|
             client = ClusterTools.instance.direct_client(address,
               database: 'admin')
-            client.command(configureFailPoint: fail_point['configureFailPoint'],
+            client.command(configureFailPoint: fail_point_command['configureFailPoint'],
               mode: 'off')
           end
         end
