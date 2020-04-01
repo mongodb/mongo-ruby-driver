@@ -85,16 +85,20 @@ describe 'Change stream integration', retry: 4 do
       min_server_fcv '4.0'
       clear_fail_point_before
 
+      let(:client) do
+        authorized_client_without_any_retries
+      end
+
       before do
-        authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+        client.use(:admin).command(fail_point_base_command.merge(
           :mode => {:times => 1},
-          :data => {:failCommands => ['aggregate'], errorCode: 100}))
+          :data => {:failCommands => ['aggregate'], errorCode: 10107}))
       end
 
       it 'watch raises error' do
         expect do
-          authorized_collection.watch
-        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(100\)/)
+          client['change-stream'].watch
+        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(10107\)/)
       end
     end
 
@@ -105,35 +109,43 @@ describe 'Change stream integration', retry: 4 do
       context 'error on first getMore' do
         before do
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 1},
-            :data => {:failCommands => ['getMore'], errorCode: errorCode}))
+            mode: {times: 1},
+            data: {
+              failCommands: ['getMore'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
         end
 
         context 'when the error is resumable' do
-          let(:errorCode) do
-            100
-          end
+          let(:error_code) { 10107 }
+
+          let(:error_labels) { ["ResumableChangeStreamError"] }
+
           it_behaves_like 'returns a change document'
         end
 
         context 'when the error is Interrupted' do
-          let(:errorCode) do
-            11601
-          end
+          let(:error_code) { 11601 }
+
+          let(:error_labels) { [] }
+
           it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CappedPositionLost' do
-          let(:errorCode) do
-            136
-          end
+          let(:error_code) { 136 }
+
+          let(:error_labels) { [] }
+
           it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CursorKilled' do
-          let(:errorCode) do
-            237
-          end
+          let(:error_code) { 237 }
+
+          let(:error_labels) { [] }
+
           it_behaves_like 'raises an exception'
         end
       end
@@ -150,35 +162,43 @@ describe 'Change stream integration', retry: 4 do
           authorized_collection.insert_one(:a => 1)
 
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 1},
-            :data => {:failCommands => ['getMore'], errorCode: errorCode}))
+            mode: {times: 1},
+            data: {
+              failCommands: ['getMore'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
         end
 
         context 'when the error is resumable' do
-          let(:errorCode) do
-            100
-          end
+          let(:error_code) { 10107 }
+
+          let(:error_labels) { ["ResumableChangeStreamError"] }
+
           it_behaves_like 'returns a change document'
         end
 
         context 'when the error is Interrupted' do
-          let(:errorCode) do
-            11601
-          end
+          let(:error_code) { 11601 }
+
+          let(:error_labels) { [] }
+
           it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CappedPositionLost' do
-          let(:errorCode) do
-            136
-          end
+          let(:error_code) { 136 }
+
+          let(:error_labels) { [] }
+
           it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CursorKilled' do
-          let(:errorCode) do
-            237
-          end
+          let(:error_code) { 237 }
+
+          let(:error_labels) { [] }
+
           it_behaves_like 'raises an exception'
         end
       end
@@ -188,11 +208,19 @@ describe 'Change stream integration', retry: 4 do
       min_server_fcv '4.0'
       clear_fail_point_before
 
-      context 'error of first getMores' do
+      let(:error_code) { 10107 }
+
+      let(:error_labels) { ["ResumableChangeStreamError"] }
+
+      context 'error on first getMore' do
         before do
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 2},
-            :data => {:failCommands => ['getMore'], errorCode: 100}))
+            mode: {times: 2},
+            data: {
+              failCommands: ['getMore'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
         end
 
         # this retries twice because aggregation resets retry count,
@@ -212,8 +240,12 @@ describe 'Change stream integration', retry: 4 do
           authorized_collection.insert_one(:a => 1)
 
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 2},
-            :data => {:failCommands => ['getMore'], errorCode: 100}))
+            mode: {times: 2},
+            data: {
+              failCommands: ['getMore'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
         end
 
         # this retries twice because aggregation resets retry count,
@@ -282,6 +314,10 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
+    let(:error_code) { 10107 }
+
+    let(:error_labels) { ["ResumableChangeStreamError"] }
+
     context 'one error on getMore' do
       min_server_fcv '4.0'
       clear_fail_point_before
@@ -289,8 +325,12 @@ describe 'Change stream integration', retry: 4 do
       context 'error on first getMore' do
         before do
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 1},
-            :data => {:failCommands => ['getMore'], errorCode: 100}))
+            mode: {times: 1},
+            data: {
+              failCommands: ['getMore'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
         end
 
         it_behaves_like 'returns a change document'
@@ -304,8 +344,12 @@ describe 'Change stream integration', retry: 4 do
           authorized_collection.insert_one(:a => 1)
 
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 1},
-            :data => {:failCommands => ['getMore'], errorCode: 100}))
+            mode: {times: 1},
+            data: {
+              failCommands: ['getMore'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
         end
 
         it_behaves_like 'returns a change document'
@@ -323,8 +367,12 @@ describe 'Change stream integration', retry: 4 do
         # getMore as no errors actually happen.
         # 4.0.5-dev server appears to correctly set the fail point.
         authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-          :mode => {:times => 2},
-          :data => {:failCommands => ['getMore'], errorCode: 100}))
+          mode: {times: 2},
+          data: {
+            failCommands: ['getMore'],
+            errorCode: error_code,
+            errorLabels: error_labels,
+          }))
       end
 
       # this retries twice because aggregation resets retry count,
@@ -347,14 +395,18 @@ describe 'Change stream integration', retry: 4 do
           enum = change_stream.to_enum
 
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 3},
-            :data => {:failCommands => ['getMore', 'aggregate'], errorCode: 101}))
+            mode: {times: 3},
+            data: {
+              failCommands: ['getMore', 'aggregate'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
 
           sleep 0.5
 
           expect do
             enum.try_next
-          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(101\)/)
+          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(10107\)/)
         end
       end
 
@@ -370,14 +422,18 @@ describe 'Change stream integration', retry: 4 do
           enum = change_stream.to_enum
 
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 3},
-            :data => {:failCommands => ['getMore', 'aggregate'], errorCode: 101}))
+            mode: {times: 3},
+            data: {
+              failCommands: ['getMore', 'aggregate'],
+              errorCode: error_code,
+              errorLabels: error_labels,
+            }))
 
           sleep 0.5
 
           expect do
             enum.try_next
-          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(101\)/)
+          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(10107\)/)
         end
       end
     end
@@ -487,10 +543,18 @@ describe 'Change stream integration', retry: 4 do
 
         authorized_collection.insert_one(x: 1)
         authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-          :mode => {:times => 1},
-          :data => {:failCommands => ['getMore'], errorCode: 100}))
+          mode: {times: 1},
+          data: {
+            failCommands: ['getMore'],
+            errorCode: error_code,
+            errorLabels: error_labels,
+          }))
         stream.to_enum.next
       end
+
+      let(:error_code) { 10107 }
+
+      let(:error_labels) { ["ResumableChangeStreamError"] }
 
       it 'does not startAfter even when passed in' do
         expect(events.size == 2).to eq(true)

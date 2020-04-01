@@ -69,44 +69,6 @@ describe Mongo::Error::OperationFailure do
   end
 
   describe '#change_stream_resumable?' do
-    context 'when there is a network error' do
-      context 'getMore' do
-        let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception',
-          Mongo::Operation::GetMore::Result.new(nil)) }
-
-        it 'returns true' do
-          expect(error.change_stream_resumable?).to be true
-        end
-      end
-
-      context 'not getMore' do
-        let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception', nil) }
-
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to be false
-        end
-      end
-    end
-
-    context 'when there is a resumable message' do
-      context 'getMore response' do
-        let(:error) { Mongo::Error::OperationFailure.new('problem: node is recovering',
-          Mongo::Operation::GetMore::Result.new(nil)) }
-
-        it 'returns true' do
-          expect(error.change_stream_resumable?).to eql(true)
-        end
-      end
-
-      context 'not a getMore response' do
-        let(:error) { Mongo::Error::OperationFailure.new('problem: node is recovering', nil) }
-
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to eql(false)
-        end
-      end
-    end
-
     context 'when there is a resumable code' do
       context 'getMore response' do
         let(:result) do
