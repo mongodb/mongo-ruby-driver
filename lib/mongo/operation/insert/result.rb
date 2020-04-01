@@ -35,11 +35,14 @@ module Mongo
         #   Result.new(replies, inserted_ids)
         #
         # @param [ Array<Protocol::Message> | nil ] replies The wire protocol replies, if any.
+        # @param [ Server::Description ] connection_description
+        #   Server description of the server that performed the operation that
+        #   this result is for.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0
-        def initialize(replies, ids)
-          @replies = [*replies] if replies
+        def initialize(replies, connection_description, ids)
+          super(replies, connection_description)
           @inserted_ids = ids
         end
 
@@ -56,7 +59,7 @@ module Mongo
         end
 
         def bulk_result
-          BulkResult.new(@replies, @inserted_ids)
+          BulkResult.new(@replies, connection_description, @inserted_ids)
         end
       end
     end

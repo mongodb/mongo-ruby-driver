@@ -2,8 +2,13 @@ require 'spec_helper'
 
 describe Mongo::Operation::Aggregate::Result do
 
+  let(:description) do
+    Mongo::Server::Description.new(double('description address'),
+      'minWireVersion' => 0, 'maxWireVersion' => 2)
+  end
+
   let(:result) do
-    described_class.new(reply)
+    described_class.new(reply, description)
   end
 
   let(:cursor_id) { 0 }

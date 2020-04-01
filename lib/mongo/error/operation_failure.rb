@@ -71,6 +71,12 @@ module Mongo
 
       def_delegators :@result, :operation_time
 
+      # @return [ Server::Description ] Server description of the server that
+      #   the operation that this exception refers to was performed on.
+      #
+      # @api private
+      def_delegator :@result, :connection_description
+
       # @return [ Integer ] The error code parsed from the document.
       #
       # @since 2.6.0
@@ -159,7 +165,8 @@ module Mongo
       # @since 2.6.0
       def change_stream_resumable?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
-          if true
+          # Connection description is not populated for unacknowledged writes.
+          if connection_description.max_wire_version >= 9
             label?('ResumableChangeStreamError')
           else
             change_stream_resumable_code?

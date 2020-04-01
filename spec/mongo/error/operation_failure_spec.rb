@@ -109,37 +109,111 @@ describe Mongo::Error::OperationFailure do
 
     context 'when there is a resumable code' do
       context 'getMore response' do
+        let(:result) do
+          Mongo::Operation::GetMore::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new(nil),
+          result,
           :code => 91, :code_name => 'ShutdownInProgress') }
 
-        it 'returns true' do
-          expect(error.change_stream_resumable?).to eql(true)
+        context 'wire protocol version < 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 8,
+            )
+          end
+
+          it 'returns true' do
+            expect(error.change_stream_resumable?).to eql(true)
+          end
+        end
+
+        context 'wire protocol version >= 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 9,
+            )
+          end
+
+          it 'returns false' do
+            # Error code is not consulted with wire version >= 9
+            expect(error.change_stream_resumable?).to eql(false)
+          end
         end
       end
 
       context 'not a getMore response' do
+        let(:result) do
+          Mongo::Operation::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
         let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
           :code => 91, :code_name => 'ShutdownInProgress') }
 
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to eql(false)
+        context 'wire protocol version < 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 8,
+            )
+          end
+
+          it 'returns false' do
+            expect(error.change_stream_resumable?).to eql(false)
+          end
         end
       end
     end
 
     context 'when there is a non-resumable code' do
       context 'getMore response' do
+        let(:result) do
+          Mongo::Operation::GetMore::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new(nil),
+          result,
           :code => 136, :code_name => 'CappedPositionLost') }
 
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to eql(false)
+        context 'wire protocol version < 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 8,
+            )
+          end
+
+          it 'returns false' do
+            expect(error.change_stream_resumable?).to eql(false)
+          end
+        end
+
+        context 'wire protocol version >= 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 9,
+            )
+          end
+
+          it 'returns false' do
+            expect(error.change_stream_resumable?).to eql(false)
+          end
         end
       end
 
       context 'not a getMore response' do
+        let(:result) do
+          Mongo::Operation::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
         let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
           :code => 136, :code_name => 'CappedPositionLost') }
 
@@ -151,46 +225,68 @@ describe Mongo::Error::OperationFailure do
 
     context 'when there is a non-resumable label' do
       context 'getMore response' do
+        let(:result) do
+          Mongo::Operation::GetMore::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
         let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new(nil),
+          result,
           :code => 91, :code_name => 'ShutdownInProgress',
           :labels => ['NonResumableChangeStreamError']) }
 
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to eql(false)
+        context 'wire protocol version < 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 8,
+            )
+          end
+
+          it 'returns true' do
+            # Error code is consulted => error is resumable
+            expect(error.change_stream_resumable?).to eql(true)
+          end
+        end
+
+        context 'wire protocol version >= 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 9,
+            )
+          end
+
+          it 'returns false' do
+            # Error code is not consulted, there is no resumable label =>
+            # error is not resumable
+            expect(error.change_stream_resumable?).to eql(false)
+          end
         end
       end
 
       context 'not a getMore response' do
-        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+        let(:result) do
+          Mongo::Operation::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
+        let(:error) { Mongo::Error::OperationFailure.new('no message',
+          result,
           :code => 91, :code_name => 'ShutdownInProgress',
           :labels => ['NonResumableChangeStreamError']) }
 
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to eql(false)
-        end
-      end
-    end
+        context 'wire protocol version < 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 8,
+            )
+          end
 
-    context 'when there is another label' do
-      context 'getMore response' do
-        let(:error) { Mongo::Error::OperationFailure.new('no message',
-          Mongo::Operation::GetMore::Result.new(nil),
-          :code => 91, :code_name => 'ShutdownInProgress',
-          :labels => %w(TransientTransactionError)) }
-
-        it 'returns true' do
-          expect(error.change_stream_resumable?).to eql(true)
-        end
-      end
-
-      context 'not a getMore response' do
-        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
-          :code => 91, :code_name => 'ShutdownInProgress',
-          :labels => %w(TransientTransactionError)) }
-
-        it 'returns false' do
-          expect(error.change_stream_resumable?).to eql(false)
+          it 'returns false' do
+            expect(error.change_stream_resumable?).to eql(false)
+          end
         end
       end
     end
@@ -230,7 +326,7 @@ describe Mongo::Error::OperationFailure do
       end
 
       let(:result) do
-        Mongo::Operation::Result.new(reply)
+        Mongo::Operation::Result.new(reply, Mongo::Server::Description.new(''))
       end
 
       subject do

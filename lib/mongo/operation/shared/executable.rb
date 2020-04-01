@@ -47,15 +47,16 @@ module Mongo
       end
 
       def get_result(server, client)
-        result_class.new(dispatch_message(server, client))
+        result_class.new(*dispatch_message(server, client))
       end
 
-      # Returns a Protocol::Message or nil
+      # Returns a Protocol::Message or nil as reply.
       def dispatch_message(server, client)
         server.with_connection do |connection|
           message = build_message(server)
           message = message.maybe_encrypt(server, client)
-          connection.dispatch([ message ], operation_id, client)
+          reply = connection.dispatch([ message ], operation_id, client)
+          [reply, connection.description]
         end
       end
 

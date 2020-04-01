@@ -80,9 +80,14 @@ module Mongo
       #
       # @param [ Protocol::Message | Array<Protocol::Message> | nil ] replies
       #  The wire protocol replies.
+      # @param [ Server::Description | nil ] connection_description
+      #   Server description of the server that performed the operation that
+      #   this result is for. This parameter is allowed to be nil for
+      #   compatibility with existing mongo_kerberos library, but should
+      #   always be not nil in the driver proper.
       #
       # @api private
-      def initialize(replies)
+      def initialize(replies, connection_description = nil)
         if replies
           if replies.is_a?(Array)
             if replies.length != 1
@@ -96,11 +101,18 @@ module Mongo
             raise ArgumentError, "Argument must be a Message instance, but is a #{reply.class}: #{reply.inspect}"
           end
           @replies = [ reply ]
+          @connection_description = connection_description
         end
       end
 
       # @return [ Array<Protocol::Message> ] replies The wrapped wire protocol replies.
       attr_reader :replies
+
+      # @return [ Server::Description ] Server description of the server that
+      #   the operation was performed on that this result is for.
+      #
+      # @api private
+      attr_reader :connection_description
 
       # @api private
       def_delegators :parser,
@@ -295,7 +307,9 @@ module Mongo
           write_concern_error_code: parser.write_concern_error_code,
           write_concern_error_code_name: parser.write_concern_error_code_name,
           labels: parser.labels,
-          wtimeout: parser.wtimeout)
+          wtimeout: parser.wtimeout,
+          connection_description: connection_description,
+        )
       end
 
       # Raises a Mongo::OperationFailure exception corresponding to the
