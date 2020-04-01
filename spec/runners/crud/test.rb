@@ -34,11 +34,13 @@ module Mongo
       def initialize(crud_spec, data, test)
         @spec = crud_spec
         @data = data
+        @description = test['description']
+        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+
         if test['failPoint']
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
         end
-        @description = test['description']
-        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+
         if test['operations']
           @operations = test['operations'].map do |op_spec|
             Operation.new(self, op_spec)
@@ -46,11 +48,12 @@ module Mongo
         else
           @operations = [Operation.new(self, test['operation'], test['outcome'])]
         end
-        if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
-        end
 
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
+
+        if test['outcome']
+          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
+        end
       end
 
       attr_reader :client_options

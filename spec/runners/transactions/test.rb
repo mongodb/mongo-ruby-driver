@@ -54,6 +54,9 @@ module Mongo
         @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+
+        @fail_point = test['failPoint']
+
         @session_options = if opts = test['sessionOptions']
           Hash[opts.map do |session_name, options|
             [session_name.to_sym, Utils.convert_operation_options(options)]
@@ -61,12 +64,11 @@ module Mongo
         else
           {}
         end
-        @fail_point = test['failPoint']
         @skip_reason = test['skipReason']
         @multiple_mongoses = test['useMultipleMongoses']
 
-        @operations = test['operations']
-        @ops = @operations.map do |op|
+        operations = test['operations']
+        @ops = operations.map do |op|
           Operation.new(self, op)
         end
 
@@ -76,7 +78,7 @@ module Mongo
           @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
         end
 
-        @expected_results = @operations.map do |o|
+        @expected_results = operations.map do |o|
           o = BSON::ExtJSON.parse_obj(o)
 
           # We check both o.key('error') and o['error'] to provide a better
