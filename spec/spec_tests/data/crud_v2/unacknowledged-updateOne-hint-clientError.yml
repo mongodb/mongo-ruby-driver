@@ -24,7 +24,7 @@ tests:
           update: &update { $inc: { x: 1 } }
           hint: "_id_"
         error: true
-    expectations: {}
+    expectations: []
     outcome: &outcome
       collection:
         data:
@@ -42,5 +42,5 @@ tests:
           update: *update
           hint: { _id: 1 }
         error: true
-    expectations: {}
+    expectations: []
     outcome: *outcome

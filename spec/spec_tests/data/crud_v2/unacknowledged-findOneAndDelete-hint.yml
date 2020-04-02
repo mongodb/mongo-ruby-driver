@@ -19,8 +19,7 @@ tests:
         arguments:
           filter: &filter { _id: 1 }
           hint: "_id_"
-        # original document is returned by default
-        result: &result { _id: 1, x: 11 }
+        # Don't check result because different drivers return different responses to unacknowledged findAndModify commands
     expectations:
       -
         command_started_event:
@@ -41,8 +40,7 @@ tests:
         arguments:
           filter: &filter { _id: 1 }
           hint: { _id: 1 }
-        # original document is returned by default
-        result: &result { _id: 1, x: 11 }
+        # Don't check result because different drivers return different responses to unacknowledged findAndModify commands
     expectations:
       -
         command_started_event:

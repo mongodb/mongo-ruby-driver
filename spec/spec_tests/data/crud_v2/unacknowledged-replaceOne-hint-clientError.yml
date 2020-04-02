@@ -24,7 +24,7 @@ tests:
           replacement: &replacement { x: 111 }
           hint: "_id_"
         error: true
-    expectations: {}
+    expectations: []
     outcome: &outcome
       collection:
         data:
@@ -36,11 +36,11 @@ tests:
       -
         object: collection
         collectionOptions: *collection_options
-        name: updateOne
+        name: replaceOne
         arguments:
           filter: *filter
           replacement: *replacement
           hint: { _id: 1 }
         error: true
-    expectations: {}
+    expectations: []
     outcome: *outcome

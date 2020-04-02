@@ -34,7 +34,7 @@ tests:
                 hint: &hint_doc { _id: 1 }
           options: { ordered: true }
         error: true
-    expectations: {}
+    expectations: []
     outcome: &outcome
       collection:
         data:
@@ -62,5 +62,5 @@ tests:
                 hint: *hint_doc
           options: { ordered: true }
         error: true
-    expectations: {}
+    expectations: []
     outcome: *outcome

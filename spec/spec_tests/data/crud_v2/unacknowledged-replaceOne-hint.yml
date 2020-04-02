@@ -20,10 +20,7 @@ tests:
           filter: &filter { _id: { $gt: 1 } }
           replacement: &replacement {x: 111}
           hint: "_id_"
-        result: &result
-          matchedCount: 0
-          modifiedCount: 0 # replaceOne is unacknowledged
-          upsertedCount: 0
+        # Don't check result because different drivers return different responses to unacknowledged replaceOne commands
     expectations:
       -
         command_started_event:
@@ -47,7 +44,7 @@ tests:
           filter: *filter
           replacement: *replacement
           hint: { _id: 1 }
-        result: *result
+        # Don't check result because different drivers return different responses to unacknowledged replaceOne commands
     expectations:
       -
         command_started_event:

@@ -20,10 +20,7 @@ tests:
           filter: &filter { _id: { $gt: 1 } }
           update: &update { $inc: { x: 1 } }
           hint: "_id_"
-        result: &result
-          matchedCount: 0
-          modifiedCount: 0 # Update is unacknowledged
-          upsertedCount: 0
+        # Don't check result because different drivers return different responses to unacknowledged updates
     expectations:
       -
         command_started_event:
@@ -47,7 +44,7 @@ tests:
           filter: *filter
           update: *update
           hint: { _id: 1 }
-        result: *result
+        # Don't check result because different drivers return different responses to unacknowledged updates
     expectations:
       -
         command_started_event:

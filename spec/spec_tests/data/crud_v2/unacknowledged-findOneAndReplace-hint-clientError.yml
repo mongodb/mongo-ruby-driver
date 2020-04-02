@@ -24,7 +24,7 @@ tests:
           replacement: &replacement { x: 33 }
           hint: "_id_"
         error: true
-    expectations: {}
+    expectations: []
     outcome: &outcome
       collection:
         data:
@@ -42,5 +42,5 @@ tests:
           replacement: *replacement
           hint: { _id: 1 }
         error: true
-    expectations: {}
+    expectations: []
     outcome: *outcome

@@ -19,8 +19,7 @@ tests:
         arguments:
           filter: &filter { _id: 1 }
           hint: "_id_"
-        result: &result
-          deletedCount: 0 # Delete is unacknowledged
+        # Don't check result because different drivers return different responses to unacknowledged deletes
     expectations:
       -
         command_started_event:
@@ -43,7 +42,7 @@ tests:
         arguments:
           filter: *filter
           hint: { _id: 1 }
-        result: *result
+        # Don't check result because different drivers return different responses to unacknowledged deletes
     expectations:
       -
         command_started_event:

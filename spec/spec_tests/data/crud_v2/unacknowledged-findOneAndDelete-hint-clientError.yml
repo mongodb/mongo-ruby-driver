@@ -23,7 +23,7 @@ tests:
           filter: &filter { _id: 1 }
           hint: "_id_"
         error: true
-    expectations: {}
+    expectations: []
     outcome: &outcome
       collection:
         data:
@@ -40,7 +40,7 @@ tests:
           filter: &filter { _id: 1 }
           hint: { _id: 1 }
         error: true
-    expectations: {}
+    expectations: []
     outcome: &outcome
       collection:
         data:
