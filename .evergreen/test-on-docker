@@ -98,7 +98,7 @@ class Runner
       f.isatty
     end
     if tty
-      %w(-t)
+      %w(-t --init)
     else
       []
     end

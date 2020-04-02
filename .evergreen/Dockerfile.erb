@@ -60,6 +60,7 @@ FROM <%= base_image %>
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
   # Kerberos testing: krb5-user
+  # Local Kerberos server: krb5-kdc krb5-admin-server
   # Installing mlaunch from git: git
   # ruby-head archive: bzip2
   # nio4r on JRuby: libgmp-dev
@@ -83,7 +84,7 @@ FROM <%= base_image %>
   <% end %>
 
   RUN apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
-    krb5-user bzip2 libgmp-dev python-pip python2.7-dev
+    krb5-user krb5-kdc krb5-admin-server bzip2 libgmp-dev python-pip python2.7-dev
 
 <% else %>
 
@@ -94,13 +95,14 @@ FROM <%= base_image %>
   # compiling python packages: gcc python-devel
   # Kerberos tests: krb5-workstation + cyrus-sasl-devel to build the
   # mongo_kerberos gem + cyrus-sasl-gssapi for authentication to work
+  # Local Kerberos server: krb5-server
   # JRuby: java-1.8.0-openjdk
   #
   # Note: lacking cyrus-sasl-gssapi produces a cryptic message
   # "SASL(-4): no mechanism available: No worthy mechs found"
   # https://github.com/farorm/python-ad/issues/10
   
-  RUN yum install -y redhat-lsb-core which git gcc libyaml \
+  RUN yum install -y redhat-lsb-core which git gcc libyaml krb5-server \
     krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
     net-snmp
     

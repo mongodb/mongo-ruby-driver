@@ -18,19 +18,23 @@ describe 'kerberos authentication' do
   end
 
   let(:user) do
-   "#{require_env_value('SASL_USER')}%40#{require_env_value('SASL_HOST').upcase}"
+   "#{require_env_value('SASL_USER')}%40#{realm}"
   end
 
   let(:host) do
-    "#{require_env_value('SASL_HOST')}"
+    require_env_value('SASL_HOST')
+  end
+
+  let(:realm) do
+    require_env_value('SASL_REALM')
   end
 
   let(:kerberos_db) do
-    "#{require_env_value('KERBEROS_DB')}"
+    require_env_value('KERBEROS_DB')
   end
 
   let(:auth_source) do
-    "#{require_env_value('SASL_DB')}"
+    require_env_value('SASL_DB')
   end
 
   let(:uri) do
@@ -56,7 +60,7 @@ describe 'kerberos authentication' do
 
   context 'when host is lowercased' do
     let(:host) do
-      "#{require_env_value('SASL_HOST').downcase}"
+      require_env_value('SASL_HOST').downcase
     end
 
     it_behaves_like 'correctly authenticates'
@@ -64,7 +68,7 @@ describe 'kerberos authentication' do
 
   context 'when host is uppercased' do
     let(:host) do
-      "#{require_env_value('SASL_HOST').upcase}"
+      require_env_value('SASL_HOST').upcase
     end
 
     it_behaves_like 'correctly authenticates'

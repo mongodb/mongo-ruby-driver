@@ -6,6 +6,7 @@ set +x
 set -e
 
 . `dirname "$0"`/functions.sh
+. `dirname "$0"`/functions-kerberos.sh
 
 arch=`host_arch`
 
@@ -39,47 +40,12 @@ if test -f ./.env.private; then
   done < <(cat ./.env.private)
 fi
 
-if test -z "$SASL_HOST"; then
-  echo SASL_HOST must be set in the environment 1>&2
-  exit 5
+if test -n "$SASL_HOST"; then
+  configure_for_external_kerberos
+else
+  configure_local_kerberos
 fi
-
-# TODO Find out of $OS is set here, right now we only test on Linux thus
-# it doesn't matter if it is set.
-case "$OS" in
-  cygwin*)
-    IP_ADDR=`getent hosts ${SASL_HOST} | head -n 1 | awk '{print $1}'`
-    ;;
-
-  darwin)
-    IP_ADDR=`dig ${SASL_HOST} +short | tail -1`
-    ;;
-
-  *)
-    IP_ADDR=`getent hosts ${SASL_HOST} | head -n 1 | awk '{print $1}'`
-esac
-
-export IP_ADDR
-
-echo "Setting krb5 config file"
-touch ${PROJECT_DIRECTORY}/.evergreen/krb5.conf.empty
-export KRB5_CONFIG=${PROJECT_DIRECTORY}/.evergreen/krb5.conf.empty
-
-if test -z "$KEYTAB_BASE64"; then
-  echo KEYTAB_BASE64 must be set in the environment 1>&2
-  exit 5
-fi
-
-echo "Writing keytab"
-echo "$KEYTAB_BASE64" | base64 --decode > ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab
-
-if test -z "$PRINCIPAL"; then
-  echo PRINCIPAL must be set in the environment 1>&2
-  exit 5
-fi
-
-echo "Running kinit"
-kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p "$PRINCIPAL"
+configure_kerberos_ip_addr
 
 # To test authentication using the mongo shell, note that the host name
 # must be uppercased when it is used in the username.
@@ -94,5 +60,9 @@ bundle_install
 export MONGO_RUBY_DRIVER_KERBEROS=1
 export MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1
 
-echo "Running tests"
-bundle exec rspec spec/kerberos
+if test -n "$TEST_CMD"; then
+  eval $TEST_CMD
+else
+  echo "Running tests"
+  bundle exec rspec spec/kerberos
+fi
