@@ -19,7 +19,8 @@ configure_for_external_kerberos() {
   echo "Running kinit"
   kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p "$PRINCIPAL"
   
-  export SASL_REALM="$SASL_HOST"
+  # Realm must be uppercased.
+  export SASL_REALM=`echo "$SASL_HOST" |tr a-z A-Z`
 }
 
 configure_local_kerberos() {
