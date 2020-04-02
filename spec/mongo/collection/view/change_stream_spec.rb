@@ -608,7 +608,7 @@ describe Mongo::Collection::View::ChangeStream do
         change_stream.to_enum
       end
 
-      it 'should create a new cursor and resume' do
+      it 'propagates cursor not found error' do
         original_cursor_id = cursor.id
 
         client.use(:admin).command({
@@ -616,11 +616,9 @@ describe Mongo::Collection::View::ChangeStream do
           cursors: [cursor.id]
         })
 
-        document = enum.next
-        expect(document[:fullDocument][:a]).to eq(2)
-
-        new_cursor_id = change_stream.instance_variable_get(:@cursor).id
-        expect(new_cursor_id).not_to eq(original_cursor_id)
+        lambda do
+          enum.next
+        end.should raise_error(Mongo::Error::OperationFailure, /cursor.*not found/)
       end
     end
 
@@ -632,7 +630,7 @@ describe Mongo::Collection::View::ChangeStream do
         collection.insert_one(a:2)
       end
 
-      it 'should create a new cursor and resume' do
+      it 'propagates cursor not found error' do
         original_cursor_id = cursor.id
 
         client.use(:admin).command({
@@ -640,12 +638,9 @@ describe Mongo::Collection::View::ChangeStream do
           cursors: [cursor.id]
         })
 
-        document = change_stream.try_next
-        expect(document).to be_a(BSON::Document)
-        expect(document[:fullDocument][:a]).to eq(2)
-
-        new_cursor_id = change_stream.instance_variable_get(:@cursor).id
-        expect(new_cursor_id).not_to eq(original_cursor_id)
+        lambda do
+          change_stream.try_next
+        end.should raise_error(Mongo::Error::OperationFailure, /cursor.*not found/)
       end
     end
   end
