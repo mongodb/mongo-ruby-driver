@@ -18,11 +18,15 @@ describe 'kerberos authentication' do
   end
 
   let(:user) do
-   "#{require_env_value('SASL_USER')}%40#{require_env_value('SASL_HOST').upcase}"
+   "#{require_env_value('SASL_USER')}%40#{realm}"
   end
 
   let(:host) do
     "#{require_env_value('SASL_HOST')}"
+  end
+
+  let(:realm) do
+    "#{require_env_value('SASL_REALM')}"
   end
 
   let(:kerberos_db) do
