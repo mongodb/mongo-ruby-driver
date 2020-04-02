@@ -60,5 +60,9 @@ bundle_install
 export MONGO_RUBY_DRIVER_KERBEROS=1
 export MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1
 
-echo "Running tests"
-bundle exec rspec spec/kerberos
+if test -n "$TEST_CMD"; then
+  eval $TEST_CMD
+else
+  echo "Running tests"
+  bundle exec rspec spec/kerberos
+fi
