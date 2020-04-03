@@ -401,5 +401,13 @@ show_local_instructions() {
   if test -n "$MMAPV1"; then
     params="$params MMAPV1=$MMAPV1"
   fi
-  echo ./.evergreen/test-on-docker -d $arch $params -s "$0"
+  # $0 has the current script being executed which is also the script that
+  # was initially invoked EXCEPT for the AWS configurations which use the
+  # wrapper script.
+  if echo "$AUTH" |grep -q ^aws; then
+    script=.evergreen/run-tests-aws-auth.sh
+  else
+    script="$0"
+  fi
+  echo ./.evergreen/test-on-docker -d $arch $params -s "$script"
 }
