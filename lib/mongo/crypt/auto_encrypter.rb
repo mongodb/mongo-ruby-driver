@@ -62,24 +62,24 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def initialize(options)
+        @options = set_default_options(options).freeze
+
+        @crypt_handle = Crypt::Handle.new(
+          @options[:kms_providers],
+          schema_map: @options[:schema_map]
+        )
+
+        @key_vault_client = @options[:key_vault_client]
+
+        # Set server selection timeout to 1 to prevent the client waiting for a
+        # long timeout before spawning mongocryptd
+        @mongocryptd_client = Client.new(
+          @options[:extra_options][:mongocryptd_uri],
+          monitoring_io: @options[:client].options[:monitoring_io],
+          server_selection_timeout: 1,
+        )
+
         begin
-          @options = set_default_options(options).freeze
-
-          @crypt_handle = Crypt::Handle.new(
-            @options[:kms_providers],
-            schema_map: @options[:schema_map]
-          )
-
-          @key_vault_client = @options[:key_vault_client]
-
-          # Set server selection timeout to 1 to prevent the client waiting for a
-          # long timeout before spawning mongocryptd
-          @mongocryptd_client = Client.new(
-            @options[:extra_options][:mongocryptd_uri],
-            monitoring_io: @options[:client].options[:monitoring_io],
-            server_selection_timeout: 1,
-          )
-
           @encryption_io = EncryptionIO.new(
             client: @options[:client],
             mongocryptd_client: @mongocryptd_client,
@@ -88,7 +88,12 @@ module Mongo
             mongocryptd_options: @options[:extra_options]
           )
         rescue
-          @mongocryptd_client.close if @mongocryptd_client 
+          begin
+            @mongocryptd_client.close
+          rescue => e
+            log_warn("Eror closing mongocryptd client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
           raise
         end
       end
