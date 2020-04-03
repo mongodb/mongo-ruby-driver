@@ -699,7 +699,9 @@ module Mongo
         # If auto_encryption_options are nil, set @encrypter to nil, but do not
         # close the encrypter because it may still be used by the original client.
         if @options[:auto_encryption_options] && auto_encryption_options_changed
-          build_encrypter
+          @connect_lock.synchronize do
+            build_encrypter
+          end
         elsif @options[:auto_encryption_options].nil?
           @encrypter = nil
         end
@@ -902,9 +904,14 @@ module Mongo
 
     # Create a new encrypter object using the client's auto encryption options
     def build_encrypter
-      @encrypter = Crypt::AutoEncrypter.new(
-        @options[:auto_encryption_options].merge(client: self)
-      )
+      begin
+        @encrypter = Crypt::AutoEncrypter.new(
+          @options[:auto_encryption_options].merge(client: self)
+        )
+      rescue => e
+        do_close
+        raise e
+      end
     end
 
     # Generate default client options based on the URI and options
