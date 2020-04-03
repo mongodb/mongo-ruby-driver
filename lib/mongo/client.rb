@@ -484,7 +484,12 @@ module Mongo
 
       if @options[:auto_encryption_options]
         @connect_lock.synchronize do
-          build_encrypter
+          begin
+            build_encrypter
+          rescue
+            @cluster.disconnect!
+            raise
+          end
         end
       end
 
@@ -906,14 +911,9 @@ module Mongo
 
     # Create a new encrypter object using the client's auto encryption options
     def build_encrypter
-      begin
-        @encrypter = Crypt::AutoEncrypter.new(
-          @options[:auto_encryption_options].merge(client: self)
-        )
-      rescue
-        @cluster.disconnect!
-        raise
-      end
+      @encrypter = Crypt::AutoEncrypter.new(
+        @options[:auto_encryption_options].merge(client: self)
+      )
     end
 
     # Generate default client options based on the URI and options
