@@ -134,7 +134,7 @@ describe Mongo::Crypt::Handle do
       it 'raises an exception' do
         expect do
           handle
-        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+        end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; currently have nil/)
       end
     end
 
@@ -151,7 +151,24 @@ describe Mongo::Crypt::Handle do
       it 'raises an exception' do
         expect do
           handle
-        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+        end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; currently have 5/)
+      end
+    end
+
+    context 'with empty string AWS access_key_id' do
+      let(:kms_providers) {
+        {
+          aws: {
+            access_key_id: '',
+            secret_access_key: SpecConfig.instance.fle_aws_secret
+          }
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; it is currently an empty string/)
       end
     end
 
@@ -169,7 +186,7 @@ describe Mongo::Crypt::Handle do
       it 'raises an exception' do
         expect do
           handle
-        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+        end.to raise_error(ArgumentError, /The aws secret_access_key option must be a String with at least one character; currently have nil/)
       end
     end
 
@@ -186,7 +203,24 @@ describe Mongo::Crypt::Handle do
       it 'raises an exception' do
         expect do
           handle
-        end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
+        end.to raise_error(ArgumentError, /The aws secret_access_key option must be a String with at least one character; currently have 5/)
+      end
+    end
+
+    context 'with empty string AWS secret_access_key' do
+      let(:kms_providers) {
+        {
+          aws: {
+            access_key_id: SpecConfig.instance.fle_aws_key,
+            secret_access_key: ''
+          }
+        }
+      }
+
+      it 'raises an exception' do
+        expect do
+          handle
+        end.to raise_error(ArgumentError, /The aws secret_access_key option must be a String with at least one character; it is currently an empty string/)
       end
     end
 

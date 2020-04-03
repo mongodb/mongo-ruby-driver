@@ -158,12 +158,34 @@ describe 'Client construction' do
       }
     end
 
+    let(:client) do
+      ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], options)
+    end
+
+    context 'with AWS kms providers with empty string credentials' do
+      let(:auto_encryption_options) do
+        {
+          key_vault_namespace: key_vault_namespace,
+          kms_providers: {
+            aws: {
+              access_key_id: '',
+              secret_access_key: '',
+            }
+          },
+          # Spawn mongocryptd on non-default port for sharded cluster tests
+          extra_options: extra_options,
+        }
+      end
+
+      it 'raises an exception' do
+        expect do
+          client
+        end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; it is currently an empty string/)
+      end
+    end
+
     context 'with default key vault client' do
       let(:key_vault_client) { nil }
-
-      let(:client) do
-        ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], options)
-      end
 
       it 'creates a working key vault client' do
         key_vault_client = client.encrypter.key_vault_client

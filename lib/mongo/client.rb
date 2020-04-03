@@ -479,16 +479,26 @@ module Mongo
           cluster_options.merge(srv_uri: srv_uri))
       end
 
-      # Unset monitoring, it will be taken out of cluster from now on
-      remove_instance_variable('@monitoring')
+      begin
+        # Unset monitoring, it will be taken out of cluster from now on
+        remove_instance_variable('@monitoring')
 
-      if @options[:auto_encryption_options]
-        @connect_lock.synchronize do
-          build_encrypter
+        if @options[:auto_encryption_options]
+          @connect_lock.synchronize do
+            build_encrypter
+          end
         end
-      end
 
-      yield(self) if block_given?
+        yield(self) if block_given?
+      rescue
+        begin
+          @cluster.disconnect!
+        rescue => e
+          log_warn("Eror disconnecting cluster in client constructor's exception handler: #{e.class}: #{e}")
+          # Drop this exception so that the original exception is raised
+        end
+        raise
+      end
     end
 
     # @api private
@@ -699,9 +709,13 @@ module Mongo
         # If auto_encryption_options are nil, set @encrypter to nil, but do not
         # close the encrypter because it may still be used by the original client.
         if @options[:auto_encryption_options] && auto_encryption_options_changed
-          build_encrypter
+          @connect_lock.synchronize do
+            build_encrypter
+          end
         elsif @options[:auto_encryption_options].nil?
-          @encrypter = nil
+          @connect_lock.synchronize do
+            @encrypter = nil
+          end
         end
 
         validate_options!

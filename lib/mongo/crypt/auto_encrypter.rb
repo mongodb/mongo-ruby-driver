@@ -79,13 +79,23 @@ module Mongo
           server_selection_timeout: 1,
         )
 
-        @encryption_io = EncryptionIO.new(
-          client: @options[:client],
-          mongocryptd_client: @mongocryptd_client,
-          key_vault_namespace: @options[:key_vault_namespace],
-          key_vault_client: @key_vault_client,
-          mongocryptd_options: @options[:extra_options]
-        )
+        begin
+          @encryption_io = EncryptionIO.new(
+            client: @options[:client],
+            mongocryptd_client: @mongocryptd_client,
+            key_vault_namespace: @options[:key_vault_namespace],
+            key_vault_client: @key_vault_client,
+            mongocryptd_options: @options[:extra_options]
+          )
+        rescue
+          begin
+            @mongocryptd_client.close
+          rescue => e
+            log_warn("Eror closing mongocryptd client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+          raise
+        end
       end
 
       # Whether this encrypter should perform encryption (returns false if
