@@ -269,15 +269,37 @@ module Mongo
         access_key_id = kms_providers[:aws][:access_key_id]
         secret_access_key = kms_providers[:aws][:secret_access_key]
 
-        valid_access_key_id = access_key_id && access_key_id.is_a?(String)
-        valid_secret_access_key = secret_access_key && secret_access_key.is_a?(String)
-
-        unless valid_access_key_id && valid_secret_access_key
+        unless kms_providers[:aws].key?(:access_key_id) && 
+            kms_providers[:aws].key?(:secret_access_key)
           raise ArgumentError.new(
             "The specified aws kms_providers option is invalid: #{kms_providers[:aws]}. " +
             "kms_providers with :aws key must be in the format: " +
             "{ aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }"
           )
+        end
+
+        %i(access_key_id secret_access_key).each do |key|
+          value = kms_providers[:aws][key]
+          if value.nil?
+            raise ArgumentError.new(
+              "The aws #{key} option must be a String with at least one character; " \
+              "currently have nil"
+            )
+          end
+
+          unless value.is_a?(String)
+            raise ArgumentError.new(
+              "The aws #{key} option must be a String with at least one character; " \
+              "currently have #{value}"
+            )
+          end
+
+          if value.empty?
+            raise ArgumentError.new(
+              "The aws #{key} option must be a String with at least one character; " \
+              "it is currently an empty string"
+            )
+          end
         end
 
         Binding.setopt_kms_provider_aws(self, access_key_id, secret_access_key)
