@@ -43,6 +43,18 @@ describe Mongo::Collection::View::ChangeStream do
     change_stream.send(:pipeline)[0]['$changeStream']
   end
 
+  let(:connection_description) do
+    Mongo::Server::Description.new(double('description address'),
+      'minWireVersion' => 0, 'maxWireVersion' => 2)
+  end
+
+  let(:result) do
+    Mongo::Operation::GetMore::Result.new(
+      Mongo::Protocol::Message.new,
+      connection_description,
+    )
+  end
+
   context 'when an error is encountered the first time the command is run' do
     include PrimarySocket
 
@@ -224,6 +236,30 @@ describe Mongo::Collection::View::ChangeStream do
   context 'when a server error is encountered during a getMore' do
     fails_on_jruby
 
+    shared_examples_for 'a change stream that is not resumed' do
+      before do
+        change_stream
+        collection.insert_one(a: 1)
+        enum.next
+        collection.insert_one(a: 2)
+        expect(cursor).to receive(:get_more).once.and_raise(error)
+      end
+
+      let(:enum) do
+        change_stream.to_enum
+      end
+
+      let(:document) do
+        enum.next
+      end
+
+      it 'is not resumed' do
+        expect do
+          document
+        end.to raise_error(error)
+      end
+    end
+
     context 'when the error is a resumable error' do
 
       shared_examples_for 'a change stream that encounters an error from a getMore' do
@@ -234,9 +270,6 @@ describe Mongo::Collection::View::ChangeStream do
           enum.next
           collection.insert_one(a: 2)
           expect(cursor).to receive(:get_more).once.and_raise(error)
-          expect(cursor).to receive(:close).and_call_original
-          expect(view.send(:server_selector)).to receive(:select_server).once.and_call_original
-          expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
         end
 
         let(:enum) do
@@ -248,6 +281,10 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         it 'runs the command again while using the same read preference and caching the resume token' do
+          expect(cursor).to receive(:close).and_call_original
+          expect(view.send(:server_selector)).to receive(:select_server).once.and_call_original
+          expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
+
           expect(document[:fullDocument][:a]).to eq(2)
           expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
         end
@@ -293,21 +330,19 @@ describe Mongo::Collection::View::ChangeStream do
       context "when the error is 'not master'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('not master',
-            Mongo::Operation::GetMore::Result.new(nil))
+          Mongo::Error::OperationFailure.new('not master', result)
         end
 
-        it_behaves_like 'a change stream that encounters an error from a getMore'
+        it_behaves_like 'a change stream that is not resumed'
       end
 
       context "when the error is 'node is recovering'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('node is recovering',
-            Mongo::Operation::GetMore::Result.new(nil))
+          Mongo::Error::OperationFailure.new('node is recovering', result)
         end
 
-        it_behaves_like 'a change stream that encounters an error from a getMore'
+        it_behaves_like 'a change stream that is not resumed'
       end
     end
 
@@ -319,7 +354,6 @@ describe Mongo::Collection::View::ChangeStream do
         enum.next
         collection.insert_one(a: 2)
         expect(cursor).to receive(:get_more).and_raise(Mongo::Error::MissingResumeToken)
-        expect(cursor).to receive(:close).and_call_original
         expect(Mongo::Operation::Aggregate).not_to receive(:new)
       end
 
