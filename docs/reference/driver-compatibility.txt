@@ -6,6 +6,12 @@ Driver Compatibility
 
 .. default-domain:: mongodb
 
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
 .. _reference-compatibility-mongodb-ruby:
 
 MongoDB Compatibility
@@ -398,6 +404,25 @@ When running on JRuby and connecting to Atlas Free Tier,
 `driver version 2.6.4 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.4>`_
 or higher and Java 8 or higher are required.
 
+``mongo_kerberos`` Compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following compatibility table specifies the version(s) of the
+:ref:`mongo_kerberos library <kerberos>` to use with a specific version of
+the driver.
+
+.. list-table::
+   :header-rows: 1
+   :stub-columns: 1
+   :class: compatibility-large no-padding
+
+   * - Ruby Driver
+     - mongo_kerberos |nbsp| 2.1
+
+   * - 2.7 - 2.12
+     - |checkmark|
+
+
 JRuby Kerberos
 ~~~~~~~~~~~~~~
 
@@ -408,3 +433,4 @@ will also be affected by this setting, meaning any TGTs in the system cache will
 obtaining Kerberos credentials as well.
 
 .. include:: /includes/unicode-checkmark.rst
+.. include:: /includes/unicode-nbsp.rst
