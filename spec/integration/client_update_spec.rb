@@ -38,11 +38,35 @@ describe Mongo::Client do
         )
       end
 
-      let!(:new_client) do
-        old_client.with(auto_encryption_options: new_auto_encryption_options)
+      context 'with new, invalid auto_encryption_options' do
+        let(:new_auto_encryption_options) { { kms_providers: nil } }
+
+        let(:new_client) do
+          old_client.with(auto_encryption_options: new_auto_encryption_options)
+        end
+
+        # Detection of leaked background threads only, these tests do not
+        # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
+        clean_slate
+
+        it 'raises an exception' do
+          expect do
+            new_client
+          end.to raise_error(ArgumentError)
+        end
+
+        it 'allows the original client to keep encrypting' do
+          old_client[:users].insert_one(ssn: ssn)
+          document = authorized_client.use(:auto_encryption)[:users].find.first
+          expect(document['ssn']).to be_ciphertext
+        end
       end
 
       context 'with new auto_encryption_options' do
+        let!(:new_client) do
+          old_client.with(auto_encryption_options: new_auto_encryption_options)
+        end
+
         let(:new_auto_encryption_options) do
           {
             kms_providers: kms_providers,
@@ -83,6 +107,10 @@ describe Mongo::Client do
       end
 
       context 'with nil auto_encryption_options' do
+        let!(:new_client) do
+          old_client.with(auto_encryption_options: new_auto_encryption_options)
+        end
+
         let(:new_auto_encryption_options) { nil }
 
         it 'removes auto encryption options' do
