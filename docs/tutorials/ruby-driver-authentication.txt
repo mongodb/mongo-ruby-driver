@@ -180,7 +180,7 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
 LDAP (SASL PLAIN)
 `````````````````
 
-*Requires MongoDB Enterprise Edition v2.6 or greater.*
+*Requires MongoDB Enterprise Edition.*
 
 MongoDB Enterprise Edition supports the LDAP authentication mechanism
 which allows you to delegate authentication using a Lightweight Directory
@@ -211,9 +211,9 @@ MongoDB, see the :manual:`SASL/LDAP tutorial in the MongoDB Manual
 Kerberos (GSSAPI)
 `````````````````
 
-*Requires MongoDB Enterprise Edition v2.4 or greater.*
+*Requires MongoDB Enterprise Edition.*
 
-MongoDB Enterprise Edition v2.4+ supports Kerberos authentication.
+MongoDB Enterprise Edition supports Kerberos authentication.
 
 To use Kerberos authentication from Ruby,
 `mongo_kerberos <https://rubygems.org/gems/mongo_kerberos>`_ must be
