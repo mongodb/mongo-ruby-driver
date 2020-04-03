@@ -3,6 +3,7 @@ require 'runners/change_streams/spec'
 
 describe 'ChangeStreams' do
   require_wired_tiger
+  require_no_multi_shard
 
   CHANGE_STREAMS_TESTS.each do |file|
 
@@ -15,12 +16,16 @@ describe 'ChangeStreams' do
         context(test.description) do
           require_topology *test.topologies
 
-          before(:each) do
+          before do
             unless test.server_version_satisfied?(authorized_client)
               skip 'Version requirements not satisfied'
             end
 
             test.setup_test
+          end
+
+          after do
+            test.teardown_test
           end
 
           let(:result) do
@@ -66,7 +71,7 @@ describe 'ChangeStreams' do
             end
 
             it 'has the correct number of command_started events' do
-              verifier.verify_command_started_event_count(test.expectations, actual_events)
+              verifier.verify_command_started_event_min_count(test.expectations, actual_events)
             end
 
             test.expectations.each_with_index do |expectation, i|

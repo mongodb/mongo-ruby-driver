@@ -25,6 +25,8 @@ module Mongo
         @spec = crud_spec
         @description = test['description']
 
+        @fail_point_command = test['failPoint']
+
         @min_server_version = test['minServerVersion']
         @max_server_version = test['maxServerVersion']
         @target_type = test['target']
@@ -57,16 +59,16 @@ module Mongo
       attr_reader :result
 
       def setup_test
-        @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
+        clear_fail_point(global_client)
 
-        @database = @global_client.use(@database_name).database.tap(&:drop)
+        @database = global_client.use(@database_name).database.tap(&:drop)
         if @database2_name
-          @database2 = @global_client.use(@database2_name).database.tap(&:drop)
+          @database2 = global_client.use(@database2_name).database.tap(&:drop)
         end
 
         # Work around https://jira.mongodb.org/browse/SERVER-17397
         if ClusterConfig.instance.server_version < '4.3' &&
-          @global_client.cluster.servers.length > 1
+          global_client.cluster.servers.length > 1
         then
           mongos_each_direct_client do |client|
             client.database.command(flushRouterConfig: 1)
@@ -81,6 +83,9 @@ module Mongo
         client = ClientRegistry.instance.global_client('root_authorized').with(
           database: @database_name,
           app_name: 'this is used solely to force the new client to create its own cluster')
+
+        setup_fail_point(client)
+
         client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
 
         @target = case @target_type
@@ -91,6 +96,12 @@ module Mongo
                  when 'collection'
                    client[@collection_name]
                  end
+      end
+
+      def teardown_test
+        if @fail_point_command
+          clear_fail_point(global_client)
+        end
       end
 
       def run
@@ -165,15 +176,32 @@ module Mongo
 
       private
 
-      IGNORE_COMMANDS = %w(saslStart saslContinue killCursors getMore)
+      IGNORE_COMMANDS = %w(saslStart saslContinue killCursors)
+
+      def global_client
+        @global_client ||= ClientRegistry.instance.global_client('root_authorized').use('admin')
+      end
 
       def events
         EventSubscriber.started_events.reduce([]) do |evs, e|
           next evs if IGNORE_COMMANDS.include?(e.command_name)
 
+          command = e.command.dup
+          if command['aggregate'] && command['pipeline']
+            command['pipeline'] = command['pipeline'].map do |stage|
+              if stage['$changeStream']
+                cs = stage['$changeStream'].dup
+                cs.delete('resumeAfter')
+                stage.merge('$changeStream' => cs)
+              else
+                stage
+              end
+            end
+          end
+
           evs << {
             'command_started_event' => {
-              'command' => e.command,
+              'command' => command,
               'command_name' => e.command_name.to_s,
               'database_name' => e.database_name,
             }

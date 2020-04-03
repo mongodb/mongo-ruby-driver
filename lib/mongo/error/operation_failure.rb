@@ -28,18 +28,18 @@ module Mongo
       # @since 2.6.0
       # @api private
       WRITE_RETRY_ERRORS = [
-        {:code_name => 'InterruptedAtShutdown', :code => 11600},
-        {:code_name => 'InterruptedDueToStepDown', :code => 11602},
+        {:code_name => 'HostUnreachable', :code => 6},
+        {:code_name => 'HostNotFound', :code => 7},
+        {:code_name => 'NetworkTimeout', :code => 89},
+        {:code_name => 'ShutdownInProgress', :code => 91},
+        {:code_name => 'PrimarySteppedDown', :code => 189},
+        {:code_name => 'ExceededTimeLimit', :code => 262},
+        {:code_name => 'SocketException', :code => 9001},
         {:code_name => 'NotMaster', :code => 10107},
+        {:code_name => 'InterruptedAtShutdown', :code => 11600},
+        {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
         {:code_name => 'NotMasterNoSlaveOk', :code => 13435},
         {:code_name => 'NotMasterOrSecondary', :code => 13436},
-        {:code_name => 'PrimarySteppedDown', :code => 189},
-        {:code_name => 'ShutdownInProgress', :code => 91},
-        {:code_name => 'HostNotFound', :code => 7},
-        {:code_name => 'HostUnreachable', :code => 6},
-        {:code_name => 'NetworkTimeout', :code => 89},
-        {:code_name => 'SocketException', :code => 9001},
-        {:code_name => 'ExceededTimeLimit', :code => 262}
       ].freeze
 
       # These are magic error messages that could indicate a master change.
@@ -70,6 +70,12 @@ module Mongo
       ].freeze
 
       def_delegators :@result, :operation_time
+
+      # @return [ Server::Description ] Server description of the server that
+      #   the operation that this exception refers to was performed on.
+      #
+      # @api private
+      def_delegator :@result, :connection_description
 
       # @return [ Integer ] The error code parsed from the document.
       #
@@ -119,12 +125,27 @@ module Mongo
       # Error codes and code names that should result in a failing getMore
       # command on a change stream NOT being resumed.
       #
-      # @since 2.6.0
       # @api private
-      CHANGE_STREAM_NOT_RESUME_ERRORS = [
-        {:code_name => 'CappedPositionLost', :code => 136},
-        {:code_name => 'CursorKilled', :code => 237},
-        {:code_name => 'Interrupted', :code => 11601},
+      CHANGE_STREAM_RESUME_ERRORS = [
+        {code_name: 'HostUnreachable', code: 6},
+        {code_name: 'HostNotFound', code: 7},
+        {code_name: 'NetworkTimeout', code: 89},
+        {code_name: 'ShutdownInProgress', code: 91},
+        {code_name: 'PrimarySteppedDown', code: 189},
+        {code_name: 'ExceededTimeLimit', code: 262},
+        {code_name: 'SocketException', code: 9001},
+        {code_name: 'NotMaster', code: 10107},
+        {code_name: 'InterruptedAtShutdown', code: 11600},
+        {code_name: 'InterruptedDueToReplStateChange', code: 11602},
+        {code_name: 'NotMasterNoSlaveOk', code: 13435},
+        {code_name: 'NotMasterOrSecondary', code: 13436},
+
+        {code_name: 'StaleShardVersion', code: 63},
+        {code_name: 'FailedToSatisfyReadPreference', code: 133},
+        {code_name: 'StaleEpoch', code: 150},
+        {code_name: 'ElectionInProgress', code: 216},
+        {code_name: 'RetryChangeStream', code: 234},
+        {code_name: 'StaleConfig', code: 13388},
       ].freeze
 
       # Change stream can be resumed when these error messages are encountered.
@@ -144,36 +165,21 @@ module Mongo
       # @since 2.6.0
       def change_stream_resumable?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
-          !change_stream_not_resumable_label? &&
-          (change_stream_resumable_message? ||
-          change_stream_resumable_code?)
+          # Connection description is not populated for unacknowledged writes.
+          if connection_description.max_wire_version >= 9
+            label?('ResumableChangeStreamError')
+          else
+            change_stream_resumable_code?
+          end
         else
           false
         end
       end
-
-      def change_stream_resumable_message?
-        CHANGE_STREAM_RESUME_MESSAGES.any? { |m| message.include?(m) }
-      end
-      private :change_stream_resumable_message?
 
       def change_stream_resumable_code?
-        if code
-          !CHANGE_STREAM_NOT_RESUME_ERRORS.any? { |e| e[:code] == code }
-        else
-          true
-        end
+        CHANGE_STREAM_RESUME_ERRORS.any? { |e| e[:code] == code }
       end
       private :change_stream_resumable_code?
-
-      def change_stream_not_resumable_label?
-        if labels
-          labels.include? 'NonResumableChangeStreamError'
-        else
-          false
-        end
-      end
-      private :change_stream_not_resumable_label?
 
       # @return [ true | false ] Whether the failure includes a write
       #   concern error. A failure may have a top level error and a write

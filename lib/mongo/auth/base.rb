@@ -83,7 +83,8 @@ module Mongo
         reply = connection.dispatch([msg])
         reply_document = reply.documents.first
         validate_reply!(connection, conversation, reply_document)
-        connection.update_cluster_time(Operation::Result.new(reply))
+        result = Operation::Result.new(reply, connection.description)
+        connection.update_cluster_time(result)
         reply_document
       end
 

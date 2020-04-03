@@ -8,8 +8,13 @@ describe Mongo::Cursor::Builder::OpKillCursors do
     end
   end
 
+  let(:description) do
+    Mongo::Server::Description.new(double('description address'),
+      'minWireVersion' => 0, 'maxWireVersion' => 2)
+  end
+
   let(:result) do
-    Mongo::Operation::Result.new(reply)
+    Mongo::Operation::Result.new(reply, description)
   end
 
   let(:view) do

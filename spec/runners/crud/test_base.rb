@@ -11,6 +11,18 @@ module Mongo
       # The expected command monitoring events.
       attr_reader :expectations
 
+      def setup_fail_point(client)
+        if @fail_point_command
+          client.use(:admin).command(@fail_point_command)
+        end
+      end
+
+      def clear_fail_point(client)
+        if @fail_point_command
+          client.use(:admin).command(BSON::Document.new(@fail_point_command).merge(mode: "off"))
+        end
+      end
+
       private
 
       def resolve_target(client, operation)

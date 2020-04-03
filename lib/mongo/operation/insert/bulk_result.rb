@@ -33,11 +33,15 @@ module Mongo
         #   Result.new(replies, inserted_ids)
         #
         # @param [ Array<Protocol::Message> | nil ] replies The wire protocol replies, if any.
+        # @param [ Server::Description ] connection_description
+        #   Server description of the server that performed the operation that
+        #   this result is for.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0
-        def initialize(replies, ids)
+        def initialize(replies, connection_description, ids)
           @replies = [*replies] if replies
+          @connection_description = connection_description
           if replies && replies.first && (doc = replies.first.documents.first)
             if errors = doc['writeErrors']
               # some documents were potentially inserted

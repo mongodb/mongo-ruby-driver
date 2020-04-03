@@ -88,7 +88,7 @@ module Mongo
         end
 
         def bulk_result
-          BulkResult.new(@replies)
+          BulkResult.new(@replies, connection_description)
         end
 
         private
