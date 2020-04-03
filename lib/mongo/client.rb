@@ -703,7 +703,9 @@ module Mongo
             build_encrypter
           end
         elsif @options[:auto_encryption_options].nil?
-          @encrypter = nil
+          @connect_lock.synchronize do
+            @encrypter = nil
+          end
         end
 
         validate_options!
@@ -908,9 +910,9 @@ module Mongo
         @encrypter = Crypt::AutoEncrypter.new(
           @options[:auto_encryption_options].merge(client: self)
         )
-      rescue => e
-        do_close
-        raise e
+      rescue
+        @cluster.disconnect!
+        raise
       end
     end
 

@@ -62,30 +62,35 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def initialize(options)
-        @options = set_default_options(options).freeze
+        begin
+          @options = set_default_options(options).freeze
 
-        @crypt_handle = Crypt::Handle.new(
-          @options[:kms_providers],
-          schema_map: @options[:schema_map]
-        )
+          @crypt_handle = Crypt::Handle.new(
+            @options[:kms_providers],
+            schema_map: @options[:schema_map]
+          )
 
-        @key_vault_client = @options[:key_vault_client]
+          @key_vault_client = @options[:key_vault_client]
 
-        # Set server selection timeout to 1 to prevent the client waiting for a
-        # long timeout before spawning mongocryptd
-        @mongocryptd_client = Client.new(
-          @options[:extra_options][:mongocryptd_uri],
-          monitoring_io: @options[:client].options[:monitoring_io],
-          server_selection_timeout: 1,
-        )
+          # Set server selection timeout to 1 to prevent the client waiting for a
+          # long timeout before spawning mongocryptd
+          @mongocryptd_client = Client.new(
+            @options[:extra_options][:mongocryptd_uri],
+            monitoring_io: @options[:client].options[:monitoring_io],
+            server_selection_timeout: 1,
+          )
 
-        @encryption_io = EncryptionIO.new(
-          client: @options[:client],
-          mongocryptd_client: @mongocryptd_client,
-          key_vault_namespace: @options[:key_vault_namespace],
-          key_vault_client: @key_vault_client,
-          mongocryptd_options: @options[:extra_options]
-        )
+          @encryption_io = EncryptionIO.new(
+            client: @options[:client],
+            mongocryptd_client: @mongocryptd_client,
+            key_vault_namespace: @options[:key_vault_namespace],
+            key_vault_client: @key_vault_client,
+            mongocryptd_options: @options[:extra_options]
+          )
+        rescue
+          @mongocryptd_client.close if @mongocryptd_client 
+          raise
+        end
       end
 
       # Whether this encrypter should perform encryption (returns false if
