@@ -205,3 +205,14 @@ Note that AWS Ruby SDK uses `AWS_REGION` environment variable to configure
 the region used for operations.
 
 [STS::Client#assume_role documentation](https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/STS/Client.html#assume_role-instance_method)
+
+## ECS Task Roles
+
+When an ECS task (or more precisely, the task definition) is created,
+it is possible to specify an *execution role* and a *task role*. The two are
+completely separate; an execution role is required to, for example, be
+able to send container logs to CloudWatch if the container is running in
+Fargate, and a task role is required for AWS authentication purposes.
+
+The ECS task role is also separate from EC2 instance role and the IAM role
+for a user to assume a role - these roles all require different configuration.

@@ -156,9 +156,13 @@ CMD
       # When testing locally, we repace task definition every time we launch
       # the service.
       if task_definition_ref !~ /^arn:/
-        execution_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_ROLE_NAME)
+        execution_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_EXECUTION_ROLE_NAME)
         if execution_role.nil?
           raise 'Execution role not configured'
+        end
+        task_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_TASK_ROLE_NAME)
+        if task_role.nil?
+          raise 'Task role not configured'
         end
 
         task_definition = ecs_client.register_task_definition(
@@ -185,6 +189,10 @@ CMD
           network_mode: 'awsvpc',
           cpu: '512',
           memory: '2048',
+          # This is the ECS task role used for AWS auth testing
+          task_role_arn: task_role.arn,
+          # The execution role is required to support awslogs (logging to
+          # CloudWatch).
           execution_role_arn: execution_role.arn,
         ).task_definition
         task_definition_ref = AWS_AUTH_ECS_TASK_FAMILY

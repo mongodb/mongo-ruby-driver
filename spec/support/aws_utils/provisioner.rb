@@ -198,9 +198,23 @@ module AwsUtils
         ],
       }
 
+      # The task role itself does not have any permissions.
+      # The example given in https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+      # allows read-only access to an S3 bucket.
+      ecs_task_role_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [],
+      }
+      ecs_task_role = create_role_with_policy(
+        AWS_AUTH_ECS_TASK_ROLE_NAME,
+        {
+          assume_role_policy_document: ecs_assume_role_policy_document.to_json,
+        },
+      )
+
       # Logging to CloudWatch:
       # https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/QuickStartEC2Instance.html
-      ecs_role_policy_document = {
+      ecs_execution_role_policy_document = {
         "Version": "2012-10-17",
         "Statement": [
         {
@@ -216,13 +230,14 @@ module AwsUtils
           ],
         }],
       }
-      ecs_role = create_role_with_policy(
-        AWS_AUTH_ECS_ROLE_NAME,
+      ecs_execution_role = create_role_with_policy(
+        AWS_AUTH_ECS_EXECUTION_ROLE_NAME,
         {
           assume_role_policy_document: ecs_assume_role_policy_document.to_json,
         },
-        ecs_role_policy_document,
+        ecs_execution_role_policy_document,
       )
+
 =begin
       iam_client.attach_role_policy(
         role_name: AWS_AUTH_ECS_ROLE_NAME,
@@ -273,7 +288,7 @@ module AwsUtils
 
     private
 
-    def create_role_with_policy(role_name, role_options, role_policy_document)
+    def create_role_with_policy(role_name, role_options, role_policy_document = nil)
       role = detect_object(iam_client.list_roles, :roles, :role_name, role_name)
       if role.nil?
         resp = iam_client.create_role({
@@ -282,11 +297,13 @@ module AwsUtils
         role = resp.role
       end
 
-      iam_client.put_role_policy(
-        role_name: role_name,
-        policy_name: "#{role_name}.policy",
-        policy_document: role_policy_document.to_json,
-      )
+      if role_policy_document
+        iam_client.put_role_policy(
+          role_name: role_name,
+          policy_name: "#{role_name}.policy",
+          policy_document: role_policy_document.to_json,
+        )
+      end
 
       role
     end
