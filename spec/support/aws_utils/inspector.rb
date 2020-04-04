@@ -200,6 +200,7 @@ module AwsUtils
 
       if running_public_ip
         puts
+        puts "ip=#{running_public_ip}"
         puts "ssh -o StrictHostKeyChecking=false root@#{running_public_ip}"
       end
 
