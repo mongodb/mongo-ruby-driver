@@ -24,15 +24,15 @@ module Mongo
     #   When no error exception is provided, Timeout::Error is raised.
     # @param [ String ] message The error message passed to the exception raised
     #   on timeout, optional. When no error message is provided, the default
-    #   error message is "execution expired".
-    #
-    # @note Ruby versions older than 2.4.0 do not support specifying a custom
-    #   error message, and any error message passed in as an argument will be
-    #   ignored.
+    #   error message for the exception class is used.
     def timeout(sec, klass=nil, message=nil)
-      if RUBY_VERSION < '2.4.0'
-        ::Timeout.timeout(sec, klass) do
-          yield
+      if message && RUBY_VERSION < '2.94.0'
+        begin
+          ::Timeout.timeout(sec) do
+            yield
+          end
+        rescue ::Timeout::Error => e
+          raise klass, message
         end
       else
         # Jruby Timeout::timeout method does not support passing nil arguments.
