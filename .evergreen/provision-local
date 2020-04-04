@@ -14,14 +14,16 @@ while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock; do
   sleep 1
 done
 
-export DEBIAN_FRONTEND=noninteractive
-
 # psmisc is for fuser, which is used for detecting concurrent apt-get runs
-sudo apt-get -y install psmisc
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install psmisc
 
-sudo apt-get -y install ruby zsh
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install ruby zsh
 
-sudo apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
 
-sudo apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
   krb5-user bzip2 libgmp-dev python-pip python2.7-dev

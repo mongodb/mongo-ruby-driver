@@ -35,10 +35,10 @@ do_ssh "$target" '
   
   if test `id -u` = 0; then
     apt-get update &&
-    apt-get -y install rsync sudo psmisc
+    env DEBIAN_FRONTEND=noninteractive apt-get -y install rsync sudo psmisc
   else
     sudo apt-get update &&
-    sudo apt-get -y install rsync psmisc
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y install rsync psmisc
   fi
 '
 
