@@ -197,13 +197,31 @@ CMD
         services: [service_name],
       ).services.first
 
+      if service && service.status.downcase == 'draining'
+        puts "Waiting for #{service_name} to drain"
+        ecs_client.wait_until(
+          :services_inactive, {
+            cluster: cluster.cluster_name,
+            services: [service_name],
+          },
+          delay: 5,
+          max_attempts: 36,
+        )
+        puts "... done."
+        service = nil
+      end
+      if service && service.status.downcase == 'inactive'
+        service = nil
+      end
       if service
+        puts "Updating service with status #{service.status}"
         service = ecs_client.update_service(
           cluster: cluster_name,
           service: service_name,
           task_definition: task_definition_ref,
         ).service
       else
+        puts "Creating a new service"
         service = ecs_client.create_service(
           desired_count: 1,
           service_name: service_name,
