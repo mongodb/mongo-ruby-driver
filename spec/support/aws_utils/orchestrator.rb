@@ -145,8 +145,7 @@ CMD
 #{public_key}
 EOT
           service ssh start &&
-          sleep 3600 &&
-          tail -f /var/log/auth.log
+          sleep 10000000
           #mkdir /run/sshd && /usr/sbin/sshd -d
 CMD
       else
