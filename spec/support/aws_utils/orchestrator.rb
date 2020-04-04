@@ -168,8 +168,7 @@ CMD
             name: 'ssh',
             essential: true,
             entry_point: entry_point,
-            image: 'debian:10',
-            #image: 'httpd:2.4',
+            image: 'debian:9',
             port_mappings: [{
               container_port: 22,
               protocol: 'tcp',
