@@ -24,6 +24,8 @@ sudo env DEBIAN_FRONTEND=noninteractive \
 #sudo env DEBIAN_FRONTEND=noninteractive \
 #  apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
 
+# Need binutils for `strings` utility per
+# https://aws.amazon.com/premiumsupport/knowledge-center/ecs-iam-task-roles-config-errors/
 sudo env DEBIAN_FRONTEND=noninteractive \
   apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
-  krb5-user bzip2 libgmp-dev python-pip python2.7-dev
+  krb5-user bzip2 libgmp-dev python-pip python2.7-dev binutils
