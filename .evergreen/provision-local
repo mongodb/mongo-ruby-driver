@@ -19,10 +19,10 @@ sudo env DEBIAN_FRONTEND=noninteractive \
   apt-get -y install psmisc
 
 sudo env DEBIAN_FRONTEND=noninteractive \
-  apt-get -y install ruby zsh
+  apt-get -y install ruby curl zsh
 
-sudo env DEBIAN_FRONTEND=noninteractive \
-  apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
+#sudo env DEBIAN_FRONTEND=noninteractive \
+#  apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
 
 sudo env DEBIAN_FRONTEND=noninteractive \
   apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
