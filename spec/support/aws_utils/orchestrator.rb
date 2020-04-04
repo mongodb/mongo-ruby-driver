@@ -183,7 +183,7 @@ CMD
           }],
           requires_compatibilities: ['FARGATE'],
           network_mode: 'awsvpc',
-          cpu: '256',
+          cpu: '512',
           memory: '2048',
           execution_role_arn: execution_role.arn,
         ).task_definition
