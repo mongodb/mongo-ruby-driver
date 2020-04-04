@@ -24,6 +24,23 @@
 
 set -e
 
+exec_only=false
+
+while getopts :e option; do
+  case $option in
+    e)
+      exec_only=true
+      ;;
+      
+    *)
+      echo "Unknown option $option" 1>&2
+      exit 1
+      ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
 target="$1"
 if test -z "$target"; then
   echo Usage: `basename $0` user@host 1>&2
@@ -34,9 +51,11 @@ shift
 
 . `dirname $0`/functions-remote.sh
 
-do_ssh "$target" -t "sudo pkill -9 mongod; sudo pkill -9 mongos; sudo rm -rf work; sudo rm -rf /db"
+if ! $exec_only; then
+  do_ssh "$target" -t "sudo pkill -9 mongod; sudo pkill -9 mongos; sudo rm -rf work; sudo rm -rf /db"
+fi
 
-do_rsync --delete --exclude .git -av --exclude gem-private_key.pem \
+do_rsync --exclude .git -a --exclude gem-private_key.pem \
   . "$target":work
 
 cmd=`./.evergreen/shell-escape "$@"`
