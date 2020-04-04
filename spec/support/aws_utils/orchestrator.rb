@@ -152,7 +152,11 @@ CMD
       else
         entry_point = nil
       end
-      if task_definition_ref.nil?
+      # When testing in Evergreen, we are given the task definition ARN
+      # and we always launch the tasks with that ARN.
+      # When testing locally, we repace task definition every time we launch
+      # the service.
+      if task_definition_ref !~ /^arn:/
         execution_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_ROLE_NAME)
         if execution_role.nil?
           raise 'Execution role not configured'
