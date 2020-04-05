@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+# IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
 . `dirname "$0"`/functions.sh

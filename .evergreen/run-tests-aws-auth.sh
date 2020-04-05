@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-# Do not set -x as this will expose passwords in Evergreen logs
+# IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
 # When running in Evergreen, credentials are written to this file.
