@@ -171,6 +171,7 @@ export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options
 
 set_fcv
 
+echo Preparing the test suite
 bundle exec rake spec:prepare
 
 if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then

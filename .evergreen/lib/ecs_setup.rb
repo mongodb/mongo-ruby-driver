@@ -27,14 +27,10 @@ class EcsSetup
       task_definition_ref: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ECS_TASK_DEFINITION_ARN'),
     )
 
-    puts "Waiting for #{service_name} to become stable"
-    inspector.ecs_client.wait_until(
-      :services_stable, {
-        cluster: cluster.cluster_name,
-        services: [service_name],
-      },
-      delay: 5,
-      max_attempts: 36,
+    puts "Waiting for #{service_name} to become ready"
+    orchestrator.wait_for_ecs_ready(
+      cluster_name: cluster.cluster_name,
+      service_name: service_name,
     )
     puts "... OK"
 
