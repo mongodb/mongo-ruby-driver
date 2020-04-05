@@ -63,6 +63,21 @@ case "$AUTH" in
     export TEST_CMD=${TEST_CMD:=rspec spec/int*/aws*spec.rb}
     ;;
     
+  aws-ecs)
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_ECS_ACCOUNT`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_ECS_SECRET_ACCESS_KEY`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ECS_CLUSTER_ARN="`get_var IAM_AUTH_ECS_CLUSTER`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ECS_SECURITY_GROUP="`get_var IAM_AUTH_ECS_SECURITY_GROUP`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ECS_SUBNETS="`get_var IAM_AUTH_ECS_SUBNET_A`,`get_var IAM_AUTH_ECS_SUBNET_B`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ECS_TASK_DEFINITION_ARN="`get_var IAM_AUTH_ECS_TASK_DEFINITION`"
+    # Region is not specified in Evergreen but can be specified when
+    # testing locally.
+    export MONGO_RUBY_DRIVER_AWS_AUTH_REGION=${MONGO_RUBY_DRIVER_AWS_AUTH_REGION:=us-east-1}
+    
+    export TEST_CMD=${TEST_CMD:=rspec spec/int*/aws*spec.rb}
+    exec `dirname $0`/run-tests-ecs.sh
+    ;;
+    
   *)
     echo "Unknown AUTH value $AUTH" 1>&2
     exit 1

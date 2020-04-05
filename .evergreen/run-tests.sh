@@ -150,6 +150,11 @@ elif test "$AUTH" = aws-assume-role; then
   export MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN=$AWS_SESSION_TOKEN
 elif test "$AUTH" = aws-ec2; then
   :
+elif test "$AUTH" = aws-ecs; then
+  if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
+    # drivers-evergreen-tools performs this operation in its ECS E2E tester.
+    eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
+  fi
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi

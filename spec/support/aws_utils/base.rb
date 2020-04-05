@@ -93,6 +93,8 @@ module AwsUtils
       Aws::Credentials.new(access_key_id, secret_access_key)
     end
 
+    public
+
     def ec2_client
       @ec2_client ||= Aws::EC2::Client.new(
         region: region,
