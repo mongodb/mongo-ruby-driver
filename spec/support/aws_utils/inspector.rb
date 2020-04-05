@@ -24,12 +24,17 @@ module AwsUtils
         services: [service_name],
       ).services.first
       if service.nil?
-        raise 'No service - provision first'
+        raise "No service #{service_name} in cluster #{cluster_name} - provision first"
       end
 
+      # When Ruby driver tooling is used, task definition generation is
+      # going up on each service launch, and service name is the fixed.
+      # When testing in Evergreen, generation is fixed because we do not
+      # change the task definition, but service name is different for
+      # each test run.
       if service.task_definition =~ /:(\d+)$/
         generation = $1
-        puts "Current task definition generation: #{generation}"
+        puts "Current task definition generation: #{generation} for service: #{service_name}"
       else
         raise 'Could not determine task definition generation'
       end
@@ -50,6 +55,7 @@ module AwsUtils
       %w(running pending stopped).each do |status|
         resp = ecs_client.list_tasks(
           cluster: cluster_name,
+          service_name: service_name,
           desired_status: status,
         )
         task_arns = resp.map(&:task_arns).flatten
