@@ -269,13 +269,13 @@ prepare_server() {
     return
   fi
 
-  if test $MONGODB_VERSION = latest; then
+  if test "$MONGODB_VERSION" = latest; then
     # Test on the most recent published 4.3 release.
     # https://jira.mongodb.org/browse/RUBY-1724
     echo 'Using "latest" server is not currently implemented' 1>&2
     exit 1
   else
-    download_version=$MONGODB_VERSION
+    download_version="$MONGODB_VERSION"
   fi
   
   url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`

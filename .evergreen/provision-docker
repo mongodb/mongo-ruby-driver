@@ -12,7 +12,8 @@
 
 set -e
 
-sudo apt-get -y install docker.io ruby zsh
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install docker.io ruby zsh
 sudo gem install dotenv --no-document
 
 user=`whoami`
