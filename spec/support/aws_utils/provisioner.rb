@@ -24,6 +24,40 @@ module AwsUtils
         ).vpc
       end
 
+      # The VPC must have an internet gateway and the subnet in the VPC
+      # must have a route to the internet gateway.
+      # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html#d0e22943
+      # Internet gateways cannot be named when they are created, therefore
+      # we check if our VPC has a gateway and if not, create an unnamed one
+      # and attach it right away.
+      # https://aws.amazon.com/premiumsupport/knowledge-center/ecs-pull-container-error/
+      igw = ec2_client.describe_internet_gateways(
+        filters: [{
+          name: 'attachment.vpc-id',
+          values: [vpc.vpc_id],
+        }],
+      ).internet_gateways.first
+      if igw.nil?
+        igw = ec2_client.create_internet_gateway.internet_gateway
+        ec2_client.attach_internet_gateway(
+          internet_gateway_id: igw.internet_gateway_id,
+          vpc_id: vpc.vpc_id,
+        )
+      end
+
+      # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html#Add_IGW_Routing
+      route_table = ec2_client.describe_route_tables(
+        filters: [{
+          name: 'vpc-id',
+          values: [vpc.vpc_id],
+        }],
+      ).route_tables.first
+      ec2_client.create_route(
+        destination_cidr_block: '0.0.0.0/0',
+        gateway_id: igw.internet_gateway_id,
+        route_table_id: route_table.route_table_id,
+      )
+
       vpc_security_group_id = ssh_vpc_security_group_id
       if vpc_security_group_id.nil?
         vpc_security_group_id = ec2_client.create_security_group(
@@ -303,6 +337,7 @@ module AwsUtils
           }],
         }],
       )
+    rescue Aws::EC2::Errors::InvalidPermissionDuplicate
     end
   end
 end
