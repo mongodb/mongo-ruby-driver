@@ -16,22 +16,43 @@ module AwsUtils
     )
       clear_instance_profile(instance_id)
 
-      ec2_client.associate_iam_instance_profile(
-        iam_instance_profile: {
-          name: instance_profile_name,
-          arn: instance_profile_arn,
-        },
-        instance_id: instance_id,
-      )
+      deadline = Time.now + 30
+      begin
+        ec2_client.associate_iam_instance_profile(
+          iam_instance_profile: {
+            name: instance_profile_name,
+            arn: instance_profile_arn,
+          },
+          instance_id: instance_id,
+        )
+      rescue Aws::EC2::Errors::RequestLimitExceeded => e
+        if Time.now >= deadline
+          raise
+        end
+        STDERR.puts("AWS request limit exceeded: #{e.class}: #{e}, will retry")
+        sleep 5
+        retry
+      end
     end
 
     def clear_instance_profile(instance_id)
       assoc = detect_object(ec2_client.describe_iam_instance_profile_associations,
         :iam_instance_profile_associations, :instance_id, instance_id)
+
       if assoc
-        ec2_client.disassociate_iam_instance_profile(
-          association_id: assoc.association_id,
-        )
+        deadline = Time.now + 30
+        begin
+          ec2_client.disassociate_iam_instance_profile(
+            association_id: assoc.association_id,
+          )
+        rescue Aws::EC2::Errors::RequestLimitExceeded => e
+          if Time.now >= deadline
+            raise
+          end
+          STDERR.puts("AWS request limit exceeded: #{e.class}: #{e}, will retry")
+          sleep 5
+          retry
+        end
       end
     end
 
