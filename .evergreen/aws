@@ -74,7 +74,7 @@ when 'launch-ecs'
   end
 
   AwsUtils::Orchestrator.new.provision_auth_ecs_task(
-    public_key_path,
+    public_key_path: public_key_path,
   )
 when 'stop-ecs'
   AwsUtils::Orchestrator.new.terminate_auth_ecs_task

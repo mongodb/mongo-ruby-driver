@@ -18,6 +18,8 @@ module AwsUtils
 
   AWS_AUTH_SECURITY_GROUP_NAME = "#{NAMESPACE}.ssh".freeze
 
+  AWS_AUTH_VPC_GATEWAY_NAME = NAMESPACE
+
   AWS_AUTH_VPC_SECURITY_GROUP_NAME = "#{NAMESPACE}.vpc-ssh".freeze
 
   AWS_AUTH_VPC_CIDR = "10.42.142.64/28".freeze
@@ -46,7 +48,11 @@ module AwsUtils
 
   AWS_AUTH_ECS_LOG_STREAM_PREFIX = "task".freeze
 
-  AWS_AUTH_ECS_ROLE_NAME = "#{NAMESPACE}.ecs-role".freeze
+  # This role allows ECS tasks access to output logs to CloudWatch.
+  AWS_AUTH_ECS_EXECUTION_ROLE_NAME = "#{NAMESPACE}.ecs-execution-role".freeze
+
+  # This role is assumed by ECS tasks.
+  AWS_AUTH_ECS_TASK_ROLE_NAME = "#{NAMESPACE}.ecs-task-role".freeze
 
   autoload :Base, 'support/aws_utils/base'
   autoload :Inspector, 'support/aws_utils/inspector'

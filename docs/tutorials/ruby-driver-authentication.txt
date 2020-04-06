@@ -180,7 +180,7 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
 LDAP (SASL PLAIN)
 `````````````````
 
-*Requires MongoDB Enterprise Edition v2.6 or greater.*
+*Requires MongoDB Enterprise Edition.*
 
 MongoDB Enterprise Edition supports the LDAP authentication mechanism
 which allows you to delegate authentication using a Lightweight Directory
@@ -211,52 +211,72 @@ MongoDB, see the :manual:`SASL/LDAP tutorial in the MongoDB Manual
 Kerberos (GSSAPI)
 `````````````````
 
-*Requires MongoDB Enterprise Edition v2.4 or greater.*
+*Requires MongoDB Enterprise Edition.*
 
-MongoDB Enterprise Edition v2.4+ supports Kerberos authentication.
+To configure the MongoDB server to use Kerberos, please refer to the
+:manual:`server Kerberos documentation
+</tutorial/control-access-to-mongodb-with-kerberos-authentication/>`.
 
-To use Kerberos authentication from Ruby,
-`mongo_kerberos <https://rubygems.org/gems/mongo_kerberos>`_ must be
-installed. Add to your ``Gemfile``:
+To use the Kerberos authentication mechanism with the Ruby MongoDB driver,
+an additional library implementing the Kerberos authenticator -
+`mongo_kerberos <https://rubygems.org/gems/mongo_kerberos>`_ - must be
+installed and loaded. To do so, add to your ``Gemfile``:
 
 .. code-block:: ruby
 
-  gem 'mongo'
-  gem 'mongo_kerberos'
+  gem 'mongo', '~> 2'
+  gem 'mongo_kerberos', '~> 2'
 
-... and in your application:
+... and add to your application code:
 
 .. code-block:: ruby
 
   require 'mongo'
   require 'mongo_kerberos'
 
-To use Kerberos in the Ruby driver with **MRI**, create a ticket-granting
-ticket using ``kinit``. See
-`this documentation <http://linux.die.net/man/1/kinit>`_ for more
-information.
+If using Kerberos authentication with **MRI**, the password is not specified
+in driver configuration and it is not sent to the MongoDB server by the driver.
+Instead a Kerberos session must be established externally to the driver
+and this session is used by the driver to prove the user's identity to
+the server. Establishing this session requires that the host system is
+configured for Kerberos authentication; refer to the `Kerberos documentation
+<https://web.mit.edu/kerberos/krb5-latest/doc/admin/install_clients.html>`_
+or your operating system documentation for details. Use the `kinit utility
+<https://web.mit.edu/kerberos/krb5-latest/doc/user/user_commands/kinit.html>`_
+to establish a Kerberos session.
 
-To use Kerberos in the Ruby driver with **JRuby**, do the following:
+If using Kerberos authentication with **JRuby**, the Kerberos session may
+be estabished externally to the driver using the process described above
+for MRI; alternatively, the password may be provided directly to the driver
+via client configuration, or the path to a keytab file may be provided via
+configuration stored in the ``java.security.auth.login.config`` system property.
+Additionally, the Java runtime environment must be configured for Kerberos;
+please refer to the  `MongoDB Java Driver Kerberos documentation
+<http://mongodb.github.io/mongo-java-driver/4.0/driver/tutorials/authentication/#gssapi>`_
+for more information.
 
-1. Specify several system properties so that the underlying GSSAPI Java
-   libraries can acquire a Kerberos ticket. See the `MongoDB Java
-   Driver authentication documentation
-   <http://mongodb.github.io/mongo-java-driver/3.0/driver/reference/connecting/authenticating/#kerberos-gssapi>`_
-   for more information.
+.. note::
 
-2. Either provide a password OR set the 'java.security.auth.login.config'
-   system property to a config file that references a keytab file.
+  As per the server Kerberos documentation, the FQDN of the host
+  running MongoDB must be specified when using Kerberos authentication.
 
-For more information about deploying MongoDB with Kerberos
-authentication, see the :manual:`manual
-</tutorial/control-access-to-mongodb-with-kerberos-authentication/>`.
+.. note::
+
+  If using MongoDB URIs, be sure to percent-escape special characters like
+  ``/`` and ``@`` when they appear in the username.
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+  # Authenticate as appuser@MYREALM:
+  client = Mongo::Client.new("mongodb://appuser%40MYREALM@myserver.mycompany.com:27017/mydb?authMechanism=GSSAPI")
+  
+  # Authenticate as myapp/appuser@MYREALM:
+  client = Mongo::Client.new("mongodb://myapp%2Fappuser%40MYREALM@myserver.mycompany.com:27017/mydb?authMechanism=GSSAPI")
+
+  # Authenticate using Ruby options:
+  client = Mongo::Client.new(['myserver.mycompany.com:27017'],
                              auth_mech: :gssapi,
-                             user: 'test',
-                             password: '123' )
+                             user: 'myapp/appuser@MYREALM')
 
 
 MONGODB-CR

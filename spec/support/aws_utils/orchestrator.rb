@@ -117,89 +117,132 @@ CMD
       end
     end
 
-    def provision_auth_ecs_task(public_key_path)
-      public_key = File.read(public_key_path)
-      security_group_id = ssh_vpc_security_group_id!
-      subnet_id = subnet_id!
+    def provision_auth_ecs_task(public_key_path: nil,
+      cluster_name: AWS_AUTH_ECS_CLUSTER_NAME,
+      service_name: AWS_AUTH_ECS_SERVICE_NAME,
+      security_group_id: nil,
+      subnet_ids: nil,
+      task_definition_ref: AWS_AUTH_ECS_TASK_FAMILY
+    )
+      security_group_id ||= ssh_vpc_security_group_id!
+      subnet_ids ||= [subnet_id!]
 
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_AWSCLI_Fargate.html
       resp = ecs_client.describe_clusters(
-        clusters: [AWS_AUTH_ECS_CLUSTER_NAME],
+        clusters: [cluster_name],
       )
-      cluster = detect_object(resp, :clusters, :cluster_name, AWS_AUTH_ECS_CLUSTER_NAME)
+      cluster = detect_object(resp, :clusters, :cluster_name, cluster_name)
       if cluster.nil?
         raise 'No cluster found, please run `aws setup-resources`'
       end
 
-      execution_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_ROLE_NAME)
-      if execution_role.nil?
-        raise 'Execution role not configured'
-      end
-
-      entry_point = ['bash', '-c', <<-CMD]
-        apt-get update &&
-        apt-get install -y openssh-server &&
-        cd /root &&
-        mkdir -p .ssh &&
-        chmod 0700 .ssh &&
-        cat >.ssh/authorized_keys  <<-EOT &&
+      if public_key_path
+        public_key = File.read(public_key_path)
+        unless public_key =~ /\Assh-/
+          raise "The file at #{public_key_path} does not look like a public key"
+        end
+        entry_point = ['bash', '-c', <<-CMD]
+          apt-get update &&
+          apt-get install -y openssh-server &&
+          cd /root &&
+          mkdir -p .ssh &&
+          chmod 0700 .ssh &&
+          cat >.ssh/authorized_keys  <<-EOT &&
 #{public_key}
 EOT
-        service ssh start &&
-        sleep 3600 &&
-        tail -f /var/log/auth.log
-        #mkdir /run/sshd && /usr/sbin/sshd -d
+          service ssh start &&
+          sleep 10000000
+          #mkdir /run/sshd && /usr/sbin/sshd -d
 CMD
-  #entry_point=['bash','-c','echo hai']
-      task_definition = ecs_client.register_task_definition(
-        family: AWS_AUTH_ECS_TASK_FAMILY,
-        container_definitions: [{
-          name: 'ssh',
-          essential: true,
-          entry_point: entry_point,
-          image: 'debian:10',
-          #image: 'httpd:2.4',
-          port_mappings: [{
-            container_port: 22,
-            protocol: 'tcp',
-          }],
-          log_configuration: {
-            log_driver: 'awslogs',
-            options: {
-              'awslogs-group' => AWS_AUTH_ECS_LOG_GROUP,
-              'awslogs-region' => region,
-              'awslogs-stream-prefix' => AWS_AUTH_ECS_LOG_STREAM_PREFIX,
+      else
+        entry_point = nil
+      end
+      # When testing in Evergreen, we are given the task definition ARN
+      # and we always launch the tasks with that ARN.
+      # When testing locally, we repace task definition every time we launch
+      # the service.
+      if task_definition_ref !~ /^arn:/
+        execution_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_EXECUTION_ROLE_NAME)
+        if execution_role.nil?
+          raise 'Execution role not configured'
+        end
+        task_role = detect_object(iam_client.list_roles, :roles, :role_name, AWS_AUTH_ECS_TASK_ROLE_NAME)
+        if task_role.nil?
+          raise 'Task role not configured'
+        end
+
+        task_definition = ecs_client.register_task_definition(
+          family: AWS_AUTH_ECS_TASK_FAMILY,
+          container_definitions: [{
+            name: 'ssh',
+            essential: true,
+            entry_point: entry_point,
+            image: 'debian:9',
+            port_mappings: [{
+              container_port: 22,
+              protocol: 'tcp',
+            }],
+            log_configuration: {
+              log_driver: 'awslogs',
+              options: {
+                'awslogs-group' => AWS_AUTH_ECS_LOG_GROUP,
+                'awslogs-region' => region,
+                'awslogs-stream-prefix' => AWS_AUTH_ECS_LOG_STREAM_PREFIX,
+              },
             },
-          },
-        }],
-        requires_compatibilities: ['FARGATE'],
-        network_mode: 'awsvpc',
-        cpu: '256',
-        memory: '2048',
-        execution_role_arn: execution_role.arn,
-      ).task_definition
+          }],
+          requires_compatibilities: ['FARGATE'],
+          network_mode: 'awsvpc',
+          cpu: '512',
+          memory: '2048',
+          # This is the ECS task role used for AWS auth testing
+          task_role_arn: task_role.arn,
+          # The execution role is required to support awslogs (logging to
+          # CloudWatch).
+          execution_role_arn: execution_role.arn,
+        ).task_definition
+        task_definition_ref = AWS_AUTH_ECS_TASK_FAMILY
+      end
 
       service = ecs_client.describe_services(
-        cluster: AWS_AUTH_ECS_CLUSTER_NAME,
-        services: [AWS_AUTH_ECS_SERVICE_NAME],
+        cluster: cluster_name,
+        services: [service_name],
       ).services.first
 
+      if service && service.status.downcase == 'draining'
+        puts "Waiting for #{service_name} to drain"
+        ecs_client.wait_until(
+          :services_inactive, {
+            cluster: cluster.cluster_name,
+            services: [service_name],
+          },
+          delay: 5,
+          max_attempts: 36,
+        )
+        puts "... done."
+        service = nil
+      end
+      if service && service.status.downcase == 'inactive'
+        service = nil
+      end
       if service
+        puts "Updating service with status #{service.status}"
         service = ecs_client.update_service(
-          cluster: AWS_AUTH_ECS_CLUSTER_NAME,
-          service: AWS_AUTH_ECS_SERVICE_NAME,
-          task_definition: AWS_AUTH_ECS_TASK_FAMILY,
+          cluster: cluster_name,
+          service: service_name,
+          task_definition: task_definition_ref,
         ).service
       else
+        puts "Creating a new service"
         service = ecs_client.create_service(
           desired_count: 1,
-          service_name: AWS_AUTH_ECS_SERVICE_NAME,
-          task_definition: AWS_AUTH_ECS_TASK_FAMILY,
-          cluster: AWS_AUTH_ECS_CLUSTER_NAME,
+          service_name: service_name,
+          task_definition: task_definition_ref,
+          cluster: cluster_name,
           launch_type: 'FARGATE',
           network_configuration: {
             awsvpc_configuration: {
-              subnets: [subnet_id],
+              subnets: subnet_ids,
               security_groups: [security_group_id],
               assign_public_ip: 'ENABLED',
             },
