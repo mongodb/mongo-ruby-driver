@@ -91,7 +91,13 @@ class Mongo::Cluster
 
       case topology
       when Topology::Single
-        # no changes ever
+        if topology.replica_set_name
+          if updated_desc.replica_set_name != topology.replica_set_name
+            @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
+              {}, updated_desc.average_round_trip_time)
+            update_server_descriptions
+          end
+        end
       when Topology::Unknown
         if updated_desc.standalone?
           update_unknown_with_standalone
