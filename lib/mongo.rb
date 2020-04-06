@@ -27,6 +27,8 @@ require 'timeout'
 require 'uri'
 require 'zlib'
 
+autoload :CGI, 'cgi'
+
 require 'bson'
 
 require 'mongo/id'

@@ -31,6 +31,9 @@ module Mongo
         # This is currently the only request that this class supports making.
         STS_REQUEST_BODY = "Action=GetCallerIdentity&Version=2011-06-15".freeze
 
+        # The timeout, in seconds, to use for validating credentials via STS.
+        VALIDATE_TIMEOUT = 10
+
         # Constructs the request.
         #
         # @note By overriding the time, it is possible to create reproducible
@@ -208,6 +211,38 @@ module Mongo
         # @return [ String ] Authorization header value.
         def authorization
           "AWS4-HMAC-SHA256 Credential=#{access_key_id}/#{scope}, SignedHeaders=#{signed_headers_string}, Signature=#{signature}"
+        end
+
+        # Validates the credentials and the constructed request components
+        # by sending a real STS GetCallerIdentity request.
+        #
+        # @return [ Hash ] GetCallerIdentity result.
+        def validate!
+          sts_request = Net::HTTP::Post.new("https://#{host}").tap do |req|
+            headers.each do |k, v|
+              req[k] = v
+            end
+            req['authorization'] = authorization
+            req['accept'] = 'application/json'
+            req.body = STS_REQUEST_BODY
+          end
+          http = Net::HTTP.new(host, 443)
+          http.use_ssl = true
+          http.start do
+            resp = Timeout.timeout(VALIDATE_TIMEOUT, Error::CredentialCheckError, 'GetCallerIdentity request timed out') do
+              http.request(sts_request)
+            end
+            payload = JSON.parse(resp.body)
+            if resp.code != '200'
+              aws_code = payload.fetch('Error').fetch('Code')
+              aws_message = payload.fetch('Error').fetch('Message')
+              msg = "Credential check for user #{access_key_id} failed with HTTP status code #{resp.code}: #{aws_code}: #{aws_message}"
+              msg += '.' unless msg.end_with?('.')
+              msg += " Please check that the credentials are valid, and if they are temporary (i.e. use the session token) that the session token is provided and not expired"
+              raise Error::CredentialCheckError, msg
+            end
+            payload.fetch('GetCallerIdentityResponse').fetch('GetCallerIdentityResult')
+          end
         end
 
         private

@@ -13,16 +13,14 @@
 # limitations under the License.
 
 module Mongo
-  module Auth
-    class Aws < Base
+  class Error
 
-      # The AWS credential set.
-      #
-      # @api private
-      Credentials = Struct.new(:access_key_id, :secret_access_key, :session_token)
+    # Credential check for MONGODB-AWS authentication mechanism failed.
+    #
+    # This exception is raised when the driver attempts to verify the
+    # credentials via STS prior to sending them to the server, and the
+    # verification fails due to an error response from the STS.
+    class CredentialCheckError < AuthError
     end
   end
 end
-
-require 'mongo/auth/aws/credentials_retriever'
-require 'mongo/auth/aws/request'

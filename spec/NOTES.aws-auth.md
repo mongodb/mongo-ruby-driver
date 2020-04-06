@@ -206,6 +206,16 @@ the region used for operations.
 
 [STS::Client#assume_role documentation](https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/STS/Client.html#assume_role-instance_method)
 
+## IMDSv2
+
+`X-aws-ec2-metadata-token-ttl-seconds` is a required header when using
+IMDSv2 EC2 instance metadata requests. This header is used in the examples
+on [Amazon's page describing
+IMDSv2](https://aws.amazon.com/blogs/security/defense-in-depth-open-firewalls-reverse-proxies-ssrf-vulnerabilities-ec2-instance-metadata-service/),
+but is not explicitly stated as being required.
+
+Not providing this header fails the PUT requests with HTTP code 400.
+
 ## ECS Task Roles
 
 When an ECS task (or more precisely, the task definition) is created,
