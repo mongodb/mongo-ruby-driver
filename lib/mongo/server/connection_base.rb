@@ -146,8 +146,7 @@ module Mongo
           begin
             socket.write(buffer.to_s)
             result = if message.replyable?
-              deserialization_options = options[:deserialization_mode] ? { mode: options[:deserialization_mode] } : {}
-              Protocol::Message.deserialize(socket, max_message_size, message.request_id, deserialization_options)
+              Protocol::Message.deserialize(socket, max_message_size, message.request_id, options)
             else
               nil
             end

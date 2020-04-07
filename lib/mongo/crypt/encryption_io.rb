@@ -105,13 +105,17 @@ module Mongo
           raise ArgumentError, 'mark_command requires mongocryptd_client to have been passed to the constructor, but it was not'
         end
 
+        # Ensure the response from mongocryptd is deserialized with { mode: :bson }
+        # to prevent losing type information in commands
+        options = { execution_options: { deserialize_as_bson: true } }
+
         begin
-          response = @mongocryptd_client.database.command(cmd, { deserialization_mode: :bson })
+          response = @mongocryptd_client.database.command(cmd, options)
         rescue Error::NoServerAvailable => e
           raise e if @options[:mongocryptd_bypass_spawn]
 
           spawn_mongocryptd
-          response = @mongocryptd_client.database.command(cmd, { deserialization_mode: :bson })
+          response = @mongocryptd_client.database.command(cmd, options)
         end
 
         return response.first

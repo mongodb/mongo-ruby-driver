@@ -265,8 +265,8 @@ module Mongo
           #
           # @since 2.5.0
           def self.deserialize(buffer, options = {})
-            opts = options[:mode] ? { mode: options[:mode] } : {}
-            BSON::Document.from_bson(buffer, **opts)
+            mode = options[:deserialize_as_bson] ? :bson : nil
+            BSON::Document.from_bson(buffer, **{ mode: mode })
           end
         end
 
@@ -356,8 +356,8 @@ module Mongo
         #
         # @return [ Hash ] The decoded BSON document.
         def self.deserialize(buffer, options = {})
-          opts = options[:mode] ? { mode: options[:mode] } : {}
-          BSON::Document.from_bson(buffer, **opts)
+          mode = options[:deserialize_as_bson] ? :bson : nil
+          BSON::Document.from_bson(buffer, **{ mode: mode })
         end
 
         # Whether there can be a size limit on this type after serialization.
