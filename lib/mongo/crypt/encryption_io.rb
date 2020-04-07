@@ -106,12 +106,12 @@ module Mongo
         end
 
         begin
-          response = @mongocryptd_client.database.command(cmd)
+          response = @mongocryptd_client.database.command(cmd, { deserialization_mode: :bson })
         rescue Error::NoServerAvailable => e
           raise e if @options[:mongocryptd_bypass_spawn]
 
           spawn_mongocryptd
-          response = @mongocryptd_client.database.command(cmd)
+          response = @mongocryptd_client.database.command(cmd, { deserialization_mode: :bson })
         end
 
         return response.first

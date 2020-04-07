@@ -60,7 +60,7 @@ module Mongo
         #
         # @return [ Array<Fixnum> ] Array consisting of the deserialized
         #   length, request id, response id, and op code.
-        def self.deserialize(buffer)
+        def self.deserialize(buffer, options = {})
           buffer.get_bytes(16).unpack(HEADER_PACK)
         end
       end
@@ -125,7 +125,7 @@ module Mongo
         # @param [ String ] buffer Buffer containing the 32-bit integer
         #
         # @return [ Fixnum ] Deserialized Int32
-        def self.deserialize(buffer)
+        def self.deserialize(buffer, options = {})
           buffer.get_int32
         end
       end
@@ -158,7 +158,7 @@ module Mongo
         # @param [ String ] buffer Buffer containing the 64-bit integer.
         #
         # @return [Fixnum] Deserialized Int64.
-        def self.deserialize(buffer)
+        def self.deserialize(buffer, options = {})
           buffer.get_int64
         end
       end
@@ -202,15 +202,15 @@ module Mongo
         # @return [ Array<BSON::Document> ] Deserialized sections.
         #
         # @since 2.5.0
-        def self.deserialize(buffer)
+        def self.deserialize(buffer, options = {})
           end_length = (@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1 ? 32 : 0
           sections = []
           until buffer.length == end_length
             case byte = buffer.get_byte
             when PayloadZero::TYPE_BYTE
-              sections << PayloadZero.deserialize(buffer)
+              sections << PayloadZero.deserialize(buffer, options)
             when PayloadOne::TYPE_BYTE
-              sections += PayloadOne.deserialize(buffer)
+              sections += PayloadOne.deserialize(buffer, options)
             else
               raise Error::UnknownPayloadType.new(byte)
             end
@@ -264,8 +264,9 @@ module Mongo
           # @return [ Array<BSON::Document> ] Deserialized section.
           #
           # @since 2.5.0
-          def self.deserialize(buffer)
-            BSON::Document.from_bson(buffer)
+          def self.deserialize(buffer, options = {})
+            opts = options[:mode] ? { mode: options[:mode] } : {}
+            BSON::Document.from_bson(buffer, **opts)
           end
         end
 
@@ -354,8 +355,9 @@ module Mongo
         # @param [ String ] buffer Buffer containing the BSON encoded document.
         #
         # @return [ Hash ] The decoded BSON document.
-        def self.deserialize(buffer)
-          BSON::Document.from_bson(buffer)
+        def self.deserialize(buffer, options = {})
+          opts = options[:mode] ? { mode: options[:mode] } : {}
+          BSON::Document.from_bson(buffer, **opts)
         end
 
         # Whether there can be a size limit on this type after serialization.
@@ -393,7 +395,7 @@ module Mongo
         # @return [ String ] The byte.
         #
         # @since 2.5.0
-        def self.deserialize(buffer)
+        def self.deserialize(buffer, options = {})
           buffer.get_byte
         end
       end

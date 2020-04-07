@@ -182,7 +182,9 @@ module Mongo
           :read => selector,
           :session => session
         )
-        op.execute(server, client: client)
+
+        execution_opts = opts[:deserialization_mode] ? { deserialization_mode: opts[:deserialization_mode] } : {}
+        op.execute(server, client: client, options: execution_opts)
       end
     end
 

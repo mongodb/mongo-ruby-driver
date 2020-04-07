@@ -53,10 +53,10 @@ describe 'CRUD operations' do
             },
             database: 'auto_encryption'
           )
-        )['auto_encryption']
+        )['users']
       end
 
-      let(:collection) { authorized_client['auto_encryption'] }
+      let(:collection) { authorized_client.use('auto_encryption')['users'] }
 
       context 'inserting an int64' do
         before do
