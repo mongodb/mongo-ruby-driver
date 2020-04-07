@@ -83,6 +83,12 @@ module Mongo
             return credentials
           end
 
+          credentials = ecs_metadata_credentials
+
+          if credentials && credentials_valid?(credentials, 'ECS task metadata')
+            return credentials
+          end
+
           credentials = ec2_metadata_credentials
 
           if credentials && credentials_valid?(credentials, 'EC2 instance metadata')
@@ -90,7 +96,7 @@ module Mongo
           end
 
           raise Auth::InvalidConfiguration,
-            "Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, EC2 metadata)"
+            "Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata)"
         end
 
         private
@@ -135,7 +141,39 @@ module Mongo
             payload['SecretAccessKey'],
             payload['Token'],
           )
-        rescue ::Timeout::Error
+        # When trying to use the EC2 metadata endpoint on ECS:
+        # Errno::EINVAL: Failed to open TCP connection to 169.254.169.254:80 (Invalid argument - connect(2) for "169.254.169.254" port 80)
+        rescue ::Timeout::Error, IOError, Errno::EINVAL
+          return nil
+        end
+
+        def ecs_metadata_credentials
+          relative_uri = ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
+          if relative_uri.nil? || relative_uri.empty?
+            return nil
+          end
+
+          http = Net::HTTP.new('169.254.170.2')
+          # Per https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+          # the value in AWS_CONTAINER_CREDENTIALS_RELATIVE_URI includes
+          # the leading slash.
+          # The current language in MONGODB-AWS specification implies that
+          # a leading slash must be added by the driver, but this is not
+          # in fact needed.
+          req = Net::HTTP::Get.new(relative_uri)
+          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+            http.request(req)
+          end
+          if resp.code != '200'
+            return nil
+          end
+          payload = JSON.parse(resp.body)
+          Credentials.new(
+            payload['AccessKeyId'],
+            payload['SecretAccessKey'],
+            payload['Token'],
+          )
+        rescue ::Timeout::Error, IOError, Errno::EINVAL
           return nil
         end
 

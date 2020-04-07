@@ -216,7 +216,18 @@ but is not explicitly stated as being required.
 
 Not providing this header fails the PUT requests with HTTP code 400.
 
-## ECS Task Roles
+## IAM Roles For EC2 Instances
+
+### Metadata Rate Limit
+
+[Amazon documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html#instancedata-throttling)
+states that the EC2 instance metadata endpoint is rate limited. Since the
+driver accesses it to obtain credentials whenever a connection is established,
+rate limits may adversely affect the driver's ability to establish connections.
+
+## IAM Roles For ECS Tasks
+
+### ECS Task Roles
 
 When an ECS task (or more precisely, the task definition) is created,
 it is possible to specify an *execution role* and a *task role*. The two are
@@ -226,3 +237,38 @@ Fargate, and a task role is required for AWS authentication purposes.
 
 The ECS task role is also separate from EC2 instance role and the IAM role
 for a user to assume a role - these roles all require different configuration.
+
+### `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` Scope
+
+As stated in [this Amazon support document](https://aws.amazon.com/premiumsupport/knowledge-center/ecs-iam-task-roles-config-errors/),
+the `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` environment variable is only
+available to the PID 1 process in the container. Other processes need to
+extract it from PID 1's environment:
+
+    strings /proc/1/environment
+
+### Other ECS Metadata
+
+`strings /proc/1/environment` also shows a number of other enviroment
+variables available in the container with metadata. For example a test
+container yields:
+
+    HOSTNAME=f893c90ec4bd
+    ECS_CONTAINER_METADATA_URI=http://169.254.170.2/v3/5fb0b11b-c4c8-4cdb-b68b-edf70b3f4937
+    AWS_DEFAULT_REGION=us-east-2
+    AWS_EXECUTION_ENV=AWS_ECS_FARGATE
+    AWS_REGION=us-east-2
+    AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/f17b5770-9a0d-498c-8d26-eea69f8d0924
+
+### Metadata Rate Limit
+
+[Amazon documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/troubleshoot-task-iam-roles.html)
+states that ECS task metadata endpoint is subject to rate limiting,
+which is configured via [ECS_TASK_METADATA_RPS_LIMIT container agent
+parameter](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-config.html).
+When the rate limit is reached, requests fail with `429 Too Many Requests`
+HTTP status code.
+
+Since the driver accesses this endpoint to obtain credentials whenever
+a connection is established, rate limits may adversely affect the driver's
+ability to establish connections.

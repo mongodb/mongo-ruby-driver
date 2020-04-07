@@ -272,6 +272,56 @@ CMD
       end
     end
 
+    def wait_for_ecs_ready(
+      cluster_name: AWS_AUTH_ECS_CLUSTER_NAME,
+      service_name: AWS_AUTH_ECS_SERVICE_NAME,
+      timeout: 20
+    )
+      deadline = Time.now + timeout
+
+      # The AWS SDK waiter seems to immediately fail sometimes right after
+      # the service is created, so wait for the service to become active
+      # manually and then use the waiter to wait for the service to become
+      # stable.
+      #
+      # The failure may be due to the fact that apparently, it is possible for
+      # describe_services to not return an existing service for some time.
+      # Therefore, allow the lack of service to be a transient error.
+      loop do
+        service = ecs_client.describe_services(
+          cluster: cluster_name,
+          services: [service_name],
+        ).services.first
+
+        if service.nil?
+          puts "Service #{service_name} in cluster #{cluster_name} does not exist (yet?)"
+          status = 'MISSING'
+        elsif service.status.downcase == 'active'
+          break
+        else
+          status = service.status
+        end
+
+        now = Time.now
+        if now >= deadline
+          raise "Service #{service_name} in cluster #{cluster_name} did not become ready in #{timeout} seconds (current status: #{status})"
+        end
+
+        puts "Wating for service #{service_name} in cluster #{cluster_name} to become ready (#{'%2.1f' % (deadline - now)} seconds remaining, current status: #{status})"
+        sleep 5
+      end
+
+      puts "Wating for service #{service_name} in cluster #{cluster_name} to become stable"
+      ecs_client.wait_until(
+        :services_stable, {
+          cluster: cluster_name,
+          services: [service_name],
+        },
+        delay: 5,
+        max_attempts: 36,
+      )
+    end
+
     def terminate_auth_ecs_task
       ecs_client.describe_services(
         cluster: AWS_AUTH_ECS_CLUSTER_NAME,

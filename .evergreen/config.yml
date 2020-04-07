@@ -485,6 +485,10 @@ axes:
         display_name: AWS Auth EC2 Role
         variables:
           AUTH: aws-ec2
+      - id: aws-ecs
+        display_name: AWS Auth ECS Task
+        variables:
+          AUTH: aws-ecs
 
   - id: "ruby"
     display_name: Ruby Version
@@ -957,7 +961,7 @@ buildvariants:
 
   - matrix_name: aws-auth-temporary
     matrix_spec:
-      auth-and-ssl: [aws-assume-role, aws-ec2]
+      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs]
       ruby: [ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'

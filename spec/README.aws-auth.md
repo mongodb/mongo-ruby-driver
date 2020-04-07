@@ -271,6 +271,30 @@ which includes the Docker execution output collected via CloudWatch.
 The status output includes the public IP of the running task once it is
 available, which can be used to SSH into the container and run the tests.
 
-To terminate the service, run:
+Note that when AWS auth from an ECS task is tested in Evergreen, the task is
+accessed via its private IP; when the test is performed using the provisioning
+tooling described in this document, the task is accessed via its public IP.
+
+If the public IP address is in the `IP` shell variable, provision the task:
+
+    ./.evergreen/provision-remote root@$IP local
+
+To run the credentials retrieval test on the ECS task, execute:
+
+    ./.evergreen/test-remote root@$IP env AUTH=aws-ecs RVM_RUBY=ruby-2.7 MONGODB_VERSION=4.3 TEST_CMD='rspec spec/integration/aws*spec.rb' .evergreen/run-tests.sh
+
+To run the test again without rebuilding the remote environment, execute:
+
+    ./.evergreen/test-remote -e root@$IP \
+      env AUTH=aws-ecs RVM_RUBY=ruby-2.7 sh -c '\
+        export PATH=`pwd`/rubies/ruby-2.7/bin:$PATH && \
+        eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` && \
+        bundle exec rspec spec/integration/aws*spec.rb'
+
+Note that this command retrieves the value of `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
+from the PID 1 environment and places it into the current environment prior to
+running the tests.
+
+To terminate the AWS auth-related ECS tasks, run:
 
     ./.evergreen/aws stop-ecs

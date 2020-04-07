@@ -17,6 +17,32 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
       Mongo::Auth::User.new(auth_mech: :scram)
     end
 
+    shared_examples_for 'retrieves the credentials' do
+      it 'retrieves' do
+        credentials.should be_a(Mongo::Auth::Aws::Credentials)
+
+        # When user is not given, credentials retrieved are always temporary.
+        retriever.credentials.access_key_id.should =~ /^ASIA/
+        retriever.credentials.secret_access_key.should =~ /./
+        retriever.credentials.session_token.should =~ /./
+      end
+
+      let(:request) do
+        Mongo::Auth::Aws::Request.new(
+          access_key_id: credentials.access_key_id,
+          secret_access_key: credentials.secret_access_key,
+          session_token: credentials.session_token,
+          host: 'sts.amazonaws.com',
+          server_nonce: 'test',
+        )
+      end
+
+      it 'produces valid credentials' do
+        result = request.validate!
+        puts "STS request successful with ARN #{result['Arn']}"
+      end
+    end
+
     context 'ec2 instance role' do
       require_ec2_host
 
@@ -62,30 +88,18 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
           sleep 5
         end
 
-        it 'retrieves' do
-          credentials.should be_a(Mongo::Auth::Aws::Credentials)
+        it_behaves_like 'retrieves the credentials'
+      end
+    end
 
-          # When user is not given, credentials retrieved are always temporary.
-          retriever.credentials.access_key_id.should =~ /^ASIA/
-          retriever.credentials.secret_access_key.should =~ /./
-          retriever.credentials.session_token.should =~ /./
-        end
-
-        let(:request) do
-          Mongo::Auth::Aws::Request.new(
-            access_key_id: credentials.access_key_id,
-            secret_access_key: credentials.secret_access_key,
-            session_token: credentials.session_token,
-            host: 'sts.amazonaws.com',
-            server_nonce: 'test',
-          )
-        end
-
-        it 'produces valid credentials' do
-          result = request.validate!
-          puts "STS request successful with ARN #{result['Arn']}"
+    context 'ecs task role' do
+      before(:all) do
+        unless ENV['AUTH'] == 'aws-ecs'
+          skip "Set AUTH=aws-ecs in environment to run ECS task role tests"
         end
       end
+
+      it_behaves_like 'retrieves the credentials'
     end
   end
 end

@@ -1,9 +1,8 @@
 #!/bin/bash
 
+set -e
 # IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
-
-set -e
 
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-kerberos.sh
