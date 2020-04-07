@@ -1,13 +1,14 @@
 module AwsUtils
   class Base
 
-    def initialize(access_key_id: nil, secret_access_key: nil, region: nil)
+    def initialize(access_key_id: nil, secret_access_key: nil, region: nil, **options)
       @access_key_id = access_key_id || ENV['AWS_ACCESS_KEY_ID']
       @secret_access_key = secret_access_key || ENV['AWS_SECRET_ACCESS_KEY']
       @region = region || ENV['AWS_REGION']
+      @options = options
     end
 
-    attr_reader :access_key_id, :secret_access_key, :region
+    attr_reader :access_key_id, :secret_access_key, :region, :options
 
     private
 
