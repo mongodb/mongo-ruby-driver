@@ -24,6 +24,7 @@ eval `cat .env.private.ecs`
 ./.evergreen/test-remote root@$PRIVATE_IP \
   env AUTH=aws-ecs \
     RVM_RUBY=$RVM_RUBY MONGODB_VERSION=$MONGODB_VERSION \
+    MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="$MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN" \
     TEST_CMD="$TEST_CMD" .evergreen/run-tests.sh
 
 mkdir -p tmp

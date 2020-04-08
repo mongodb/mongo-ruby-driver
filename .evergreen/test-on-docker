@@ -87,7 +87,7 @@ class Runner
   end
 
   def run_deployment
-    run_command(BASE_TEST_COMMAND + tty_arg + [
+    run_command(BASE_TEST_COMMAND + tty_arg + extra_env + [
       '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
       '-e', 'BIND_ALL=true',
     ] + port_forwards + %w(test-driver) + script.split(/\s+/))

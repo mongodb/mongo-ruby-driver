@@ -15,6 +15,17 @@
 module Mongo
   module Auth
     class Aws < Base
+      MECHANISM = 'MONGODB-AWS'.freeze
+
+      # Log the user in on the given connection.
+      #
+      # @param [ Mongo::Connection ] connection The connection to log into.
+      #
+      # @return [ BSON::Document ] The document of the authentication response.
+      def login(connection)
+        conversation = Conversation.new(user)
+        converse_2_step(connection, conversation)
+      end
 
       # The AWS credential set.
       #
@@ -24,5 +35,6 @@ module Mongo
   end
 end
 
+require 'mongo/auth/aws/conversation'
 require 'mongo/auth/aws/credentials_retriever'
 require 'mongo/auth/aws/request'

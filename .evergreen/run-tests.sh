@@ -63,6 +63,10 @@ if test "$AUTH" = auth; then
   args="$args --auth --username bob --password pwd123"
 elif test "$AUTH" = x509; then
   args="$args --auth --username bootstrap --password bootstrap"
+elif echo "$AUTH" |grep -q ^aws; then
+  args="$args --auth --username bootstrap --password bootstrap"
+  args="$args --setParameter authenticationMechanisms=MONGODB-AWS,SCRAM-SHA-1,SCRAM-SHA-256"
+  uri_options="$uri_options&authMechanism=MONGODB-AWS&authSource=\$external"
 fi
 if test "$SSL" = ssl; then
   args="$args --sslMode requireSSL"\
@@ -96,7 +100,6 @@ python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
 install_deps
 
-echo "Running specs"
 which bundle
 bundle --version
 
@@ -139,6 +142,10 @@ EOT
     --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
     -u bootstrap -p bootstrap \
     --eval "$create_user_cmd"
+elif test "$AUTH" = aws-regular; then
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
 elif test "$AUTH" = aws-assume-role; then
   ./.evergreen/aws -a "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID" \
     -s "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY" \
@@ -148,13 +155,25 @@ elif test "$AUTH" = aws-assume-role; then
   export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
   export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
   export MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN=$AWS_SESSION_TOKEN
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+  export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+  export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+
+  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
+
+  uri_options="$uri_options&"\
+"authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
 elif test "$AUTH" = aws-ec2; then
-  :
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = aws-ecs; then
   if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
     # drivers-evergreen-tools performs this operation in its ECS E2E tester.
     eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
   fi
+  
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
@@ -181,6 +200,7 @@ if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
 fi
 
 export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
+echo "Running tests"
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 else

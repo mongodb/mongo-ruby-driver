@@ -14,7 +14,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
 
   context 'when user is not given' do
     let(:user) do
-      Mongo::Auth::User.new(auth_mech: :scram)
+      Mongo::Auth::User.new(auth_mech: :aws)
     end
 
     shared_examples_for 'retrieves the credentials' do

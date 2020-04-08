@@ -60,7 +60,13 @@ case "$AUTH" in
     # testing locally.
     export MONGO_RUBY_DRIVER_AWS_AUTH_REGION=${MONGO_RUBY_DRIVER_AWS_AUTH_REGION:=us-east-1}
     
-    export TEST_CMD=${TEST_CMD:=rspec spec/int*/aws*spec.rb}
+    # This is the ARN that the credentials obtained via EC2 instance metadata
+    # resolve to. It is hardcoded in
+    # https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/auth_aws/aws_e2e_ec2.js
+    # and is not given as an Evergreen variable.
+    export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/authtest_instance_profile_role/*"
+    
+    export TEST_CMD=${TEST_CMD:=rspec spec/integration/aws*spec.rb spec/integration/client_construction_aws*spec.rb}
     ;;
     
   aws-ecs)
@@ -74,7 +80,13 @@ case "$AUTH" in
     # testing locally.
     export MONGO_RUBY_DRIVER_AWS_AUTH_REGION=${MONGO_RUBY_DRIVER_AWS_AUTH_REGION:=us-east-1}
     
-    export TEST_CMD=${TEST_CMD:=rspec spec/int*/aws*spec.rb}
+    # This is the ARN that the credentials obtained via ECS task metadata
+    # resolve to. It is hardcoded in
+    # https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/auth_aws/lib/ecs_hosted_test.js
+    # and is not given as an Evergreen variable.
+    export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/ecsTaskExecutionRole/*"
+    
+    export TEST_CMD=${TEST_CMD:=rspec spec/integration/aws*spec.rb spec/integration/client_construction_aws*spec.rb}
     exec `dirname $0`/run-tests-ecs.sh
     ;;
     

@@ -143,7 +143,7 @@ module Mongo
           )
         # When trying to use the EC2 metadata endpoint on ECS:
         # Errno::EINVAL: Failed to open TCP connection to 169.254.169.254:80 (Invalid argument - connect(2) for "169.254.169.254" port 80)
-        rescue ::Timeout::Error, IOError, Errno::EINVAL
+        rescue ::Timeout::Error, IOError, SystemCallError
           return nil
         end
 
@@ -173,7 +173,7 @@ module Mongo
             payload['SecretAccessKey'],
             payload['Token'],
           )
-        rescue ::Timeout::Error, IOError, Errno::EINVAL
+        rescue ::Timeout::Error, IOError, SystemCallError
           return nil
         end
 

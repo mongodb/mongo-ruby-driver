@@ -3,6 +3,7 @@ autoload :Paint, 'paint'
 
 module Aws
   autoload :CloudWatchLogs, 'aws-sdk-cloudwatchlogs'
+  autoload :Credentials, 'aws-sdk-core'
   autoload :EC2, 'aws-sdk-ec2'
   autoload :ECS, 'aws-sdk-ecs'
   autoload :IAM, 'aws-sdk-iam'

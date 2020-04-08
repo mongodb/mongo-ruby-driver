@@ -81,6 +81,10 @@ add_uri_option() {
   MONGODB_URI="$MONGODB_URI&$opt"
 }
 
+uri_escape() {
+  echo "$1" |ruby -rcgi -e 'puts CGI.escape(STDIN.read.strip).gsub("+", "%20")'
+}
+
 set_env_vars() {
   # drivers-evergreen-tools do not set tls parameter in URI when the
   # deployment uses TLS, repair this

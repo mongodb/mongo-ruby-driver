@@ -91,7 +91,10 @@ module Mongo
         end
 
         if credential['mechanism_properties']
-          expected_credential['auth_mech_properties'] = expected_auth_mech_properties
+          props = Hash[credential['mechanism_properties'].map do |k, v|
+            [k.downcase, v]
+          end]
+          expected_credential['auth_mech_properties'] = props
         end
 
         expected_credential
