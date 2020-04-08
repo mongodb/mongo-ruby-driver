@@ -171,19 +171,19 @@ module Mongo
     #
     # @return [ Mongo::Operation::Result ] The result of the command execution.
     def command(operation, opts = {})
-      opts_copy = opts.dup
-      execution_opts = opts_copy.delete(:execution_options) || {}
+      opts = opts.dup
+      execution_opts = opts.delete(:execution_options) || {}
 
-      txn_read_pref = if opts_copy[:session] && opts_copy[:session].in_transaction?
-        opts_copy[:session].txn_read_preference
+      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
+        opts[:session].txn_read_preference
       else
         nil
       end
-      txn_read_pref ||= opts_copy[:read] || ServerSelector::PRIMARY
+      txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
       Lint.validate_underscore_read_preference(txn_read_pref)
       selector = ServerSelector.get(txn_read_pref)
 
-      client.send(:with_session, opts_copy) do |session|
+      client.send(:with_session, opts) do |session|
         server = selector.select_server(cluster, nil, session)
         op = Operation::Command.new(
           :selector => operation.dup,
