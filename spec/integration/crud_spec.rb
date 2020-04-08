@@ -14,7 +14,7 @@ describe 'CRUD operations' do
       end
 
       it 'is stored as the correct type' do
-        result = collection.find(int64: { '$type' => 18 }).first
+        result = collection.find(int64: { '$type' => 'long' }).first
         expect(result).not_to be_nil
         expect(result['int64']).to eq(42)
       end
@@ -26,7 +26,7 @@ describe 'CRUD operations' do
       end
 
       it 'is stored as the correct type' do
-        result = collection.find(int32: { '$type' => 16 }).first
+        result = collection.find(int32: { '$type' => 'int' }).first
         expect(result).not_to be_nil
         expect(result['int32']).to eq(42)
       end
@@ -64,7 +64,7 @@ describe 'CRUD operations' do
         end
 
         it 'is stored as the correct type' do
-          result = collection.find(int64: { '$type' => 18 }).first
+          result = collection.find(int64: { '$type' => 'long' }).first
           expect(result).not_to be_nil
           expect(result['int64']).to eq(42)
         end
@@ -76,7 +76,7 @@ describe 'CRUD operations' do
         end
 
         it 'is stored as the correct type' do
-          result = collection.find(int32: { '$type' => 16 }).first
+          result = collection.find(int32: { '$type' => 'int' }).first
           expect(result).not_to be_nil
           expect(result['int32']).to eq(42)
         end
