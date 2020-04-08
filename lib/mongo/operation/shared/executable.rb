@@ -22,20 +22,23 @@ module Mongo
 
       include ResponseHandling
 
-      def do_execute(server, client)
+      def do_execute(connection, client)
         unpin_maybe(session) do
           add_error_labels do
-            add_server_diagnostics(server) do
-              get_result(server, client).tap do |result|
-                process_result(result, server)
+            add_server_diagnostics(connection.server) do
+              get_result(connection, client).tap do |result|
+                process_result(result, connection.server)
               end
             end
           end
         end
       end
 
-      def execute(server, client:)
-        do_execute(server, client).tap do |result|
+      def execute(connection, client:)
+        # TODO: remove this at the very end
+        raise "execute called with wrong type" unless connection.is_a?(Mongo::Server::Connection)
+
+        do_execute(connection, client).tap do |result|
           validate_result(result, server)
         end
       end
@@ -46,18 +49,18 @@ module Mongo
         Result
       end
 
-      def get_result(server, client)
-        result_class.new(*dispatch_message(server, client))
+      def get_result(connection, client)
+        result_class.new(*dispatch_message(connection, client))
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(server, client)
-        server.with_connection do |connection|
-          message = build_message(server)
-          message = message.maybe_encrypt(server, client)
-          reply = connection.dispatch([ message ], operation_id, client)
-          [reply, connection.description]
-        end
+      def dispatch_message(connection, client)
+        server = connection.server
+
+        message = build_message(server)
+        message = message.maybe_encrypt(server, client)
+        reply = connection.dispatch([ message ], operation_id, client)
+        [reply, connection.description]
       end
 
       def build_message(server)

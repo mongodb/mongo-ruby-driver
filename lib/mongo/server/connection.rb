@@ -120,6 +120,9 @@ module Mongo
       # @since 2.9.0
       attr_reader :id
 
+      # TODO: documentation
+      attr_reader :server
+
       # Connection pool generation from which this connection was created.
       # May be nil.
       #
