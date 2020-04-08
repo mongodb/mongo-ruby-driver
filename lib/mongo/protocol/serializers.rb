@@ -57,6 +57,7 @@ module Mongo
         # Deserializes the header value from the IO stream
         #
         # @param [ String ] buffer Buffer containing the message header.
+        # @param [ Hash ] options This method currently accepts no options.
         #
         # @return [ Array<Fixnum> ] Array consisting of the deserialized
         #   length, request id, response id, and op code.
@@ -123,6 +124,7 @@ module Mongo
         # Deserializes a 32-bit Fixnum from the IO stream
         #
         # @param [ String ] buffer Buffer containing the 32-bit integer
+        # @param [ Hash ] options This method currently accepts no options.
         #
         # @return [ Fixnum ] Deserialized Int32
         def self.deserialize(buffer, options = {})
@@ -156,6 +158,7 @@ module Mongo
         # Deserializes a 64-bit Fixnum from the IO stream
         #
         # @param [ String ] buffer Buffer containing the 64-bit integer.
+        # @param [ Hash ] options This method currently accepts no options.
         #
         # @return [Fixnum] Deserialized Int64.
         def self.deserialize(buffer, options = {})
@@ -198,6 +201,11 @@ module Mongo
         # Deserializes a section of an OP_MSG from the IO stream.
         #
         # @param [ BSON::ByteBuffer ] buffer Buffer containing the sections.
+        # @param [ Hash ] options
+        #
+        # @option options [ Boolean ] :deserialize_as_bson Whether to perform
+        #   section deserialization using BSON types instead of native Ruby types
+        #   wherever possible.
         #
         # @return [ Array<BSON::Document> ] Deserialized sections.
         #
@@ -260,6 +268,11 @@ module Mongo
           # Deserializes a section of payload type 0 of an OP_MSG from the IO stream.
           #
           # @param [ BSON::ByteBuffer ] buffer Buffer containing the sections.
+          # @param [ Hash ] options
+          #
+          # @option options [ Boolean ] :deserialize_as_bson Whether to perform
+          #   section deserialization using BSON types instead of native Ruby types
+          #   wherever possible.
           #
           # @return [ Array<BSON::Document> ] Deserialized section.
           #
@@ -353,6 +366,11 @@ module Mongo
         # Deserializes a document from the IO stream
         #
         # @param [ String ] buffer Buffer containing the BSON encoded document.
+        # @param [ Hash ] options
+        #
+        # @option options [ Boolean ] :deserialize_as_bson Whether to perform
+        #   section deserialization using BSON types instead of native Ruby types
+        #   wherever possible.
         #
         # @return [ Hash ] The decoded BSON document.
         def self.deserialize(buffer, options = {})
@@ -391,6 +409,7 @@ module Mongo
         # Deserializes a byte from the byte buffer.
         #
         # @param [ BSON::ByteBuffer ] buffer Buffer containing the value to read.
+        # @param [ Hash ] options This method currently accepts no options.
         #
         # @return [ String ] The byte.
         #

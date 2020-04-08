@@ -194,6 +194,11 @@ module Mongo
       #
       # @param [ Integer ] max_message_size The max message size.
       # @param [ IO ] io Stream containing a message
+      # @param [ Hash ] options
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this message using BSON types instead of native Ruby types wherever
+      #   possible.
       #
       # @return [ Message ] Instance of a Message class
       def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil, options = {})
@@ -363,6 +368,11 @@ module Mongo
       # @param message [Message] Message to contain the deserialized array.
       # @param io [IO] Stream containing the array to deserialize.
       # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   each of the elements in this array using BSON types wherever possible.
+      #
       # @return [Message] Message with deserialized array.
       def self.deserialize_array(message, io, field, options)
         elements = []
@@ -376,6 +386,11 @@ module Mongo
       # @param message [Message] Message to contain the deserialized field.
       # @param io [IO] Stream containing the field to deserialize.
       # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this field using BSON types wherever possible.
+      #
       # @return [Message] Message with deserialized field.
       def self.deserialize_field(message, io, field, options)
         message.instance_variable_set(

@@ -165,6 +165,9 @@ module Mongo
     # @option opts :execution_options [ Hash ] Options to pass to the code that
     #   executes this command. This is an internal option and is subject to
     #   change.
+    #   - :deserialize_as_bson [ Boolean ] Whether to deserialize the response
+    #     to this command using BSON types intead of native Ruby types wherever
+    #     possible.
     #
     # @return [ Mongo::Operation::Result ] The result of the command execution.
     def command(operation, opts = {})

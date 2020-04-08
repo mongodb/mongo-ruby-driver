@@ -115,6 +115,11 @@ module Mongo
       # @param [ Array<Message> ] messages A one-element array containing
       #   the message to dispatch.
       # @param [ Integer ] operation_id The operation id to link messages.
+      # @param [ Hash ] options
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   the response to this message using BSON objects in place of native
+      #   Ruby types wherever possible.
       #
       # @return [ Protocol::Message | nil ] The reply if needed.
       #
