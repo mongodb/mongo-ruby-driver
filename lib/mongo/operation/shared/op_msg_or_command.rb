@@ -22,9 +22,9 @@ module Mongo
     module OpMsgOrCommand
       include PolymorphicLookup
 
-      def execute(server, client:)
+      def execute(server, client:, options: {})
         operation = final_operation(server)
-        operation.execute(server, client: client)
+        operation.execute(server, client: client, options: options)
       end
 
       private
