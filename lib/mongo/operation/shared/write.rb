@@ -35,17 +35,18 @@ module Mongo
       # @return [ Mongo::Operation::Result ] The operation result.
       #
       # @since 2.5.2
-      def execute(server, client:)
+      def execute(connection, client:)
+        raise "connection is wrong type" unless connection.is_a?(Mongo::Server::Connection)
         validate!
-        op = if server.features.op_msg_enabled?
+        op = if connection.features.op_msg_enabled?
             self.class::OpMsg.new(spec)
           elsif !acknowledged_write?
             self.class::Legacy.new(spec)
           else
             self.class::Command.new(spec)
           end
-        result = op.execute(server, client: client)
-        validate_result(result, server)
+        result = op.execute(connection, client: client)
+        validate_result(result, connection.server)
       end
 
       # Execute the bulk write operation.
@@ -63,11 +64,12 @@ module Mongo
       #           Mongo::Operation::Update::BulkResult ] The bulk result.
       #
       # @since 2.5.2
-      def bulk_execute(server, client:)
-        if server.features.op_msg_enabled?
-          self.class::OpMsg.new(spec).execute(server, client: client).bulk_result
+      def bulk_execute(connection, client:)
+        raise "connection is wrong type" unless connection.is_a?(Mongo::Server::Connection)
+        if connection.features.op_msg_enabled?
+          self.class::OpMsg.new(spec).execute(connection, client: client).bulk_result
         else
-          self.class::Command.new(spec).execute(server, client: client).bulk_result
+          self.class::Command.new(spec).execute(connection, client: client).bulk_result
         end
       end
 
