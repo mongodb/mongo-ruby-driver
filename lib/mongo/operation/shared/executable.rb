@@ -22,11 +22,11 @@ module Mongo
 
       include ResponseHandling
 
-      def do_execute(server, client)
+      def do_execute(server, client, options = {})
         unpin_maybe(session) do
           add_error_labels do
             add_server_diagnostics(server) do
-              get_result(server, client).tap do |result|
+              get_result(server, client, options).tap do |result|
                 process_result(result, server)
               end
             end
@@ -34,8 +34,8 @@ module Mongo
         end
       end
 
-      def execute(server, client:)
-        do_execute(server, client).tap do |result|
+      def execute(server, client:, options: {})
+        do_execute(server, client, options).tap do |result|
           validate_result(result, server)
         end
       end
@@ -46,16 +46,16 @@ module Mongo
         Result
       end
 
-      def get_result(server, client)
-        result_class.new(*dispatch_message(server, client))
+      def get_result(server, client, options = {})
+        result_class.new(*dispatch_message(server, client, options))
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(server, client)
+      def dispatch_message(server, client, options = {})
         server.with_connection do |connection|
           message = build_message(server)
           message = message.maybe_encrypt(server, client)
-          reply = connection.dispatch([ message ], operation_id, client)
+          reply = connection.dispatch([ message ], operation_id, client, options)
           [reply, connection.description]
         end
       end

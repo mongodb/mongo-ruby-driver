@@ -162,9 +162,18 @@ module Mongo
     #
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
+    # @option opts :execution_options [ Hash ] Options to pass to the code that
+    #   executes this command. This is an internal option and is subject to
+    #   change.
+    #   - :deserialize_as_bson [ Boolean ] Whether to deserialize the response
+    #     to this command using BSON types intead of native Ruby types wherever
+    #     possible.
     #
     # @return [ Mongo::Operation::Result ] The result of the command execution.
     def command(operation, opts = {})
+      opts = opts.dup
+      execution_opts = opts.delete(:execution_options) || {}
+
       txn_read_pref = if opts[:session] && opts[:session].in_transaction?
         opts[:session].txn_read_preference
       else
@@ -182,7 +191,8 @@ module Mongo
           :read => selector,
           :session => session
         )
-        op.execute(server, client: client)
+
+        op.execute(server, client: client, options: execution_opts)
       end
     end
 
