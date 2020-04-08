@@ -20,6 +20,11 @@ OptionParser.new do |opts|
   opts.on("-r", "--region=REGION", "AWS region") do |v|
     options[:region] = v
   end
+
+  # launch-ecs options
+  opts.on('--ec2', 'Use EC2 launch type instead of Fargate') do |v|
+    options[:ec2] = true
+  end
 end.parse!
 
 case cmd = ARGV.shift

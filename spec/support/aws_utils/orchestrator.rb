@@ -178,6 +178,11 @@ CMD
       else
         entry_point = nil
       end
+      launch_type = if options[:ec2]
+        'EC2'
+      else
+        'FARGATE'
+      end
       # When testing in Evergreen, we are given the task definition ARN
       # and we always launch the tasks with that ARN.
       # When testing locally, we repace task definition every time we launch
@@ -212,7 +217,7 @@ CMD
               },
             },
           }],
-          requires_compatibilities: ['FARGATE'],
+          requires_compatibilities: [launch_type],
           network_mode: 'awsvpc',
           cpu: '512',
           memory: '2048',
@@ -255,18 +260,21 @@ CMD
         ).service
       else
         puts "Creating a new service"
+        vpc_config = {}
+        unless options[:ec2]
+          vpc_config[:assign_public_ip] = 'ENABLED'
+        end
         service = ecs_client.create_service(
           desired_count: 1,
           service_name: service_name,
           task_definition: task_definition_ref,
           cluster: cluster_name,
-          launch_type: 'FARGATE',
+          launch_type: launch_type,
           network_configuration: {
-            awsvpc_configuration: {
+            awsvpc_configuration: vpc_config.merge(
               subnets: subnet_ids,
               security_groups: [security_group_id],
-              assign_public_ip: 'ENABLED',
-            },
+            ),
           },
         ).service
       end
