@@ -47,9 +47,10 @@ module Mongo
         # Deserializes vector by decoding the symbol according to its mask
         #
         # @param [ String ] buffer Buffer containing the vector to be deserialized.
+        # @param [ Hash ] options This method does not currently accept any options.
         #
         # @return [ Array<Symbol> ] Flags contained in the vector
-        def deserialize(buffer)
+        def deserialize(buffer, options = {})
           vector = buffer.get_int32
           flags = []
           @masks.each do |flag, mask|

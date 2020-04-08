@@ -194,9 +194,14 @@ module Mongo
       #
       # @param [ Integer ] max_message_size The max message size.
       # @param [ IO ] io Stream containing a message
+      # @param [ Hash ] options
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this message using BSON types instead of native Ruby types wherever
+      #   possible.
       #
       # @return [ Message ] Instance of a Message class
-      def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil)
+      def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil, options = {})
         length, _request_id, response_to, _op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
 
         # Protection from potential DOS man-in-the-middle attacks. See
@@ -216,9 +221,9 @@ module Mongo
 
         message.send(:fields).each do |field|
           if field[:multi]
-            deserialize_array(message, buffer, field)
+            deserialize_array(message, buffer, field, options)
           else
-            deserialize_field(message, buffer, field)
+            deserialize_field(message, buffer, field, options)
           end
         end
         if message.is_a?(Msg)
@@ -363,11 +368,16 @@ module Mongo
       # @param message [Message] Message to contain the deserialized array.
       # @param io [IO] Stream containing the array to deserialize.
       # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   each of the elements in this array using BSON types wherever possible.
+      #
       # @return [Message] Message with deserialized array.
-      def self.deserialize_array(message, io, field)
+      def self.deserialize_array(message, io, field, options)
         elements = []
         count = message.instance_variable_get(field[:multi])
-        count.times { elements << field[:type].deserialize(io) }
+        count.times { elements << field[:type].deserialize(io, options) }
         message.instance_variable_set(field[:name], elements)
       end
 
@@ -376,11 +386,16 @@ module Mongo
       # @param message [Message] Message to contain the deserialized field.
       # @param io [IO] Stream containing the field to deserialize.
       # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this field using BSON types wherever possible.
+      #
       # @return [Message] Message with deserialized field.
-      def self.deserialize_field(message, io, field)
+      def self.deserialize_field(message, io, field, options)
         message.instance_variable_set(
           field[:name],
-          field[:type].deserialize(io)
+          field[:type].deserialize(io, options)
         )
       end
 
