@@ -54,7 +54,8 @@ describe 'Auto Encryption' do
             'documents' => kind_of(Array),
             'jsonSchema' => kind_of(Hash),
             'isRemoteSchema' => false,
-          )
+          ),
+          { execution_options: { deserialize_as_bson: true } },
         )
         .and_raise(Mongo::Error::NoServerAvailable.new(server_selector, cluster))
     end
