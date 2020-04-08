@@ -8,25 +8,31 @@ describe 'CRUD operations' do
   end
 
   describe 'insert' do
-    context 'inserting a BSON::Int64 or BSON::Int32' do
+    context 'inserting a BSON::Int64' do
       before do
         collection.insert_one(int64: BSON::Int64.new(42))
       end
 
       it 'is stored as the correct type' do
-        result = collection.find(int64: { '$type' => 'long' }).first
+        # 18 is the number that represents the Int64 type for the $type
+        # operator; string aliases in the $type operator are only supported on
+        # server versions 3.2 and newer.
+        result = collection.find(int64: { '$type' => 18 }).first
         expect(result).not_to be_nil
         expect(result['int64']).to eq(42)
       end
     end
 
-    context 'inserting an in32' do
+    context 'inserting a BSON::Int32' do
       before do
         collection.insert_one(int32: BSON::Int32.new(42))
       end
 
       it 'is stored as the correct type' do
-        result = collection.find(int32: { '$type' => 'int' }).first
+        # 16 is the number that represents the Int32 type for the $type
+        # operator; string aliases in the $type operator are only supported on
+        # server versions 3.2 and newer.
+        result = collection.find(int32: { '$type' => 16 }).first
         expect(result).not_to be_nil
         expect(result['int32']).to eq(42)
       end
@@ -58,25 +64,31 @@ describe 'CRUD operations' do
 
       let(:collection) { authorized_client.use('auto_encryption')['users'] }
 
-      context 'inserting an int64' do
+      context 'inserting a BSON::Int64' do
         before do
           encrypted_collection.insert_one(ssn: '123-456-7890', int64: BSON::Int64.new(42))
         end
 
         it 'is stored as the correct type' do
-          result = collection.find(int64: { '$type' => 'long' }).first
+          # 18 is the number that represents the Int64 type for the $type
+          # operator; string aliases in the $type operator are only supported on
+          # server versions 3.2 and newer.
+          result = collection.find(int64: { '$type' => 18 }).first
           expect(result).not_to be_nil
           expect(result['int64']).to eq(42)
         end
       end
 
-      context 'inserting an in32' do
+      context 'inserting a BSON::Int32' do
         before do
           encrypted_collection.insert_one(ssn: '123-456-7890', int32: BSON::Int32.new(42))
         end
 
         it 'is stored as the correct type' do
-          result = collection.find(int32: { '$type' => 'int' }).first
+          # 16 is the number that represents the Int32 type for the $type
+          # operator; string aliases in the $type operator are only supported on
+          # server versions 3.2 and newer.
+          result = collection.find(int32: { '$type' => 16 }).first
           expect(result).not_to be_nil
           expect(result['int32']).to eq(42)
         end
