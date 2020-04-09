@@ -111,10 +111,6 @@ module Mongo
       def expected_auth_mech
         Mongo::URI::AUTH_MECH_MAP[credential['mechanism']]
       end
-
-      def expected_auth_mech_properties
-        credential['mechanism_properties'].keys.map(&:downcase)
-      end
     end
   end
 end
