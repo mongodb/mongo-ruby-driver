@@ -1,4 +1,8 @@
-require 'base64'
+autoload :Base64, 'base64'
+autoload :JSON, 'json'
+module Net
+  autoload :HTTP, 'net/http'
+end
 
 module Utils
   # Converts a 'camelCase' string or symbol to a :under_score symbol.

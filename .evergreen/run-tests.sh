@@ -167,6 +167,13 @@ elif test "$AUTH" = aws-assume-role; then
 "authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
 elif test "$AUTH" = aws-ec2; then
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+  
+  # We need to assign an instance profile to the current instance, otherwise
+  # since we don't place credentials into the environment the test suite
+  # cannot connect to the MongoDB server while bootstrapping.
+  # The EC2 credential retrieval tests clears the instance profile as part
+  # of one of the tests.
+  ruby -Ispec -Ilib -I.evergreen/lib -rec2_setup -e Ec2Setup.new.run
 elif test "$AUTH" = aws-ecs; then
   if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
     # drivers-evergreen-tools performs this operation in its ECS E2E tester.
