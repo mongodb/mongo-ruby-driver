@@ -1,0 +1,12 @@
+tests:
+    -
+        description: Equal sign in auth mechanism properties
+        uri: "mongodb://foo:bar@example.com/?authMechanismProperties=foo:a=bar&authMechanism=MONGODB-AWS"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
+            authMechanismProperties:
+              foo: a=bar
+            authMechanism: MONGODB-AWS

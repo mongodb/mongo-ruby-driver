@@ -192,6 +192,7 @@ module Mongo
     # @since 2.0.0
     AUTH_MECH_MAP = {
       'GSSAPI'       => :gssapi,
+      'MONGODB-AWS'  => :aws,
       # MONGODB-CR is deprecated and will be removed in driver version 3.0
       'MONGODB-CR'   => :mongodb_cr,
       'MONGODB-X509' => :mongodb_x509,
@@ -449,7 +450,7 @@ module Mongo
     end
 
     def encode(value)
-      ::URI.encode(value)
+      CGI.escape(value).gsub('+', '%20')
     end
 
     # Hash for storing map of URI option parameters to conversion strategies

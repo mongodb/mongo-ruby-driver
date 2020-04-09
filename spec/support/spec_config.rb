@@ -354,8 +354,10 @@ EOT
         if auth_source
           options[:auth_source] = auth_source
         end
-        if uri_options[:auth_mech]
-          options[:auth_mech] = uri_options[:auth_mech]
+        %i(auth_mech auth_mech_properties).each do |key|
+          if uri_options[key]
+            options[key] = uri_options[key]
+          end
         end
       end
     end
@@ -484,7 +486,7 @@ EOT
   # the globally specified user for all operations.
   def external_user?
     case uri_options[:auth_mech]
-    when :mongodb_x509
+    when :mongodb_x509, :aws
       true
     when nil, :scram, :scram256
       false

@@ -145,17 +145,24 @@ module Constraints
     end
   end
 
-  def require_auth
+  def require_auth(*values)
     before(:all) do
-      unless ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
-        skip "Auth required"
+      if values.any?
+        unless values.include?(ENV['AUTH'])
+          msg = values.map { |v| "AUTH=#{v}" }.join(' or ')
+          skip "This test requires #{msg}"
+        end
+      else
+        unless ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
+          skip "Auth required"
+        end
       end
     end
   end
 
   def require_no_auth
     before(:all) do
-      if ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
+      if (ENV['AUTH'] && ENV['AUTH'] != 'noauth') || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
         skip "Auth not allowed"
       end
     end

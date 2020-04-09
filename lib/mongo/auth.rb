@@ -58,6 +58,7 @@ module Mongo
     #
     # @since 2.0.0
     SOURCES = {
+      aws: Aws,
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,

@@ -31,9 +31,6 @@ module Mongo
 
       # Log the user in on the given connection.
       #
-      # @example Log the user in.
-      #   user.login(connection)
-      #
       # @param [ Mongo::Connection ] connection The connection to log into.
       #
       # @return [ BSON::Document ] The document of the authentication response.
