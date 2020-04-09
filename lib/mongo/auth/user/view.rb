@@ -44,13 +44,18 @@ module Mongo
         # @since 2.0.0
         def create(user_or_name, options = {})
           user = generate(user_or_name, options)
+
           client.send(:with_session, options) do |session|
-            Operation::CreateUser.new(
-              user: user,
-              db_name: database.name,
-              session: session,
-              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client: client)
+            server = next_primary(nil, session)
+
+            server.with_connection do |connection|
+              Operation::CreateUser.new(
+                user: user,
+                db_name: database.name,
+                session: session,
+                write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+              ).execute(connection, client: client)
+            end
           end
         end
 
@@ -82,12 +87,15 @@ module Mongo
         # @since 2.0.0
         def remove(name, options = {})
           client.send(:with_session, options) do |session|
-            Operation::RemoveUser.new(
-              user_name: name,
-              db_name: database.name,
-              session: session,
-              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client: client)
+            server = next_primary(nil, session)
+            server.with_connection do |connection|
+              Operation::RemoveUser.new(
+                user_name: name,
+                db_name: database.name,
+                session: session,
+                write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+              ).execute(connection, client: client)
+            end
           end
         end
 
@@ -108,12 +116,16 @@ module Mongo
         def update(user_or_name, options = {})
           client.send(:with_session, options) do |session|
             user = generate(user_or_name, options)
-            Operation::UpdateUser.new(
-              user: user,
-              db_name: database.name,
-              session: session,
-              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client: client)
+            server = next_primary(nil, session)
+
+            server.with_connection do |connection|
+              Operation::UpdateUser.new(
+                user: user,
+                db_name: database.name,
+                session: session,
+                write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+              ).execute(connection, client: client)
+            end
           end
         end
 
@@ -138,11 +150,14 @@ module Mongo
 
         def user_query(name, options = {})
           client.send(:with_session, options) do |session|
-            Operation::UsersInfo.new(
-              user_name: name,
-              db_name: database.name,
-              session: session
-            ).execute(next_primary(nil, session), client: client)
+            server = next_primary(nil, session)
+            server.with_connection do |connection|
+              Operation::UsersInfo.new(
+                user_name: name,
+                db_name: database.name,
+                session: session
+              ).execute(connection, client: client)
+            end
           end
         end
 
