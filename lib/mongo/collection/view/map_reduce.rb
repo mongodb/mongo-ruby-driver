@@ -16,6 +16,8 @@ module Mongo
   class Collection
     class View
 
+      class InvalidMapReduceServer < Mongo::Error; end
+
       # Provides behavior around a map/reduce operation on the collection
       # view.
       #
@@ -233,13 +235,25 @@ module Mongo
         end
 
         def send_initial_query(server, session)
-          unless valid_server?(server)
+          begin
+            server.with_connection do |connection|
+              raise InvalidMapReduceServer.new unless valid_server?(server)
+              do_stuff(connection, session)
+            end
+          rescue InvalidMapReduceServer
             msg = "Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
+
+            server.with_connection do |connection|
+              do_stuff(connection, session)
+            end
           end
-          validate_collation!(server)
-          initial_query_op(session).execute(server, client: client)
+        end
+
+        def do_stuff(connection, session)
+          validate_collation!(connection)
+          initial_query_op(session).execute(connection, client: client)
         end
 
         def fetch_query_spec
