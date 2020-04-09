@@ -185,14 +185,16 @@ module Mongo
 
       client.send(:with_session, opts) do |session|
         server = selector.select_server(cluster, nil, session)
-        op = Operation::Command.new(
-          :selector => operation.dup,
-          :db_name => name,
-          :read => selector,
-          :session => session
-        )
+        server.with_connection do |connection|
+          op = Operation::Command.new(
+            :selector => operation.dup,
+            :db_name => name,
+            :read => selector,
+            :session => session
+          )
 
-        op.execute(server, client: client, options: execution_opts)
+          op.execute(connection, client: client, options: execution_opts)
+        end
       end
     end
 
@@ -218,12 +220,14 @@ module Mongo
 
       client.send(:with_session, opts) do |session|
         read_with_retry(session, preference) do |server|
-          Operation::Command.new({
-            :selector => operation.dup,
-            :db_name => name,
-            :read => preference,
-            :session => session
-          }).execute(server, client: client)
+          server.with_connection do |connection|
+            Operation::Command.new(
+              :selector => operation.dup,
+              :db_name => name,
+              :read => preference,
+              :session => session
+            ).execute(connection, client: client)
+          end
         end
       end
     end

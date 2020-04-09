@@ -240,16 +240,21 @@ module Mongo
       operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
         server = next_primary(nil, session)
-        if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
-          raise Error::UnsupportedCollation
-        end
 
-        Operation::Create.new({
-                                selector: operation,
-                                db_name: database.name,
-                                write_concern: write_concern,
-                                session: session
-                                }).execute(server, client: client)
+        server.with_connection do |connection|
+          collation_provided = options[:collation] || options[Operation::COLLATION]
+
+          if collation_provided && !connection.features.collation_enabled?
+            raise Error::UnsupportedCollation
+          end
+
+          Operation::Create.new(
+            selector: operation,
+            db_name: database.name,
+            write_concern: write_concern,
+            session: session
+          ).execute(connection, client: client)
+        end
       end
     end
 
@@ -270,12 +275,15 @@ module Mongo
     # @since 2.0.0
     def drop(opts = {})
       client.send(:with_session, opts) do |session|
-        Operation::Drop.new({
-                              selector: { :drop => name },
-                              db_name: database.name,
-                              write_concern: write_concern,
-                              session: session
-                              }).execute(next_primary(nil, session), client: client)
+        server = next_primary(nil, session)
+        server.with_connection do |connection|
+          Operation::Drop.new(
+            selector: { :drop => name },
+            db_name: database.name,
+            write_concern: write_concern,
+            session: session
+          ).execute(connection, client: client)
+        end
       end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
