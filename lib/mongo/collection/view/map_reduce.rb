@@ -264,8 +264,8 @@ module Mongo
           Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(server, session)
-          if server.features.find_command_enabled?
+        def fetch_query_op(connection, session)
+          if connection.features.find_command_enabled?
             Operation::Find.new(find_command_spec(session))
           else
             Operation::Find.new(fetch_query_spec)
@@ -273,7 +273,9 @@ module Mongo
         end
 
         def send_fetch_query(server, session)
-          fetch_query_op(server, session).execute(server, client: client)
+          server.with_connection do |connection|
+            fetch_query_op(connection, session).execute(connection, client: client)
+          end
         end
 
         def validate_collation!(server)
