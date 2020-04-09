@@ -17,21 +17,6 @@ class Ec2Setup
       instance_profile_arn: ip_arn,
     )
 
-    deadline = Time.now + 15
-    loop do
-      begin
-        ip = Utils.ec2_instance_profile
-        if ip
-          puts "Instance profile assigned: #{ip}"
-          break
-        end
-      rescue => e
-        puts "Problem retrieving instance profile: #{e.class}: #{e}"
-      end
-      if Time.now >= deadline
-        raise 'Instance profile did not get assigned in 15 seconds'
-      end
-      sleep 3
-    end
+    Utils.wait_for_instance_profile
   end
 end

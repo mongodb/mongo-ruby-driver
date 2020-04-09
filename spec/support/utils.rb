@@ -381,7 +381,49 @@ module Utils
     req = Net::HTTP::Get.new('/latest/meta-data/iam/info',
       {'x-aws-ec2-metadata-token' => metadata_token})
     resp = http.request(req)
-    payload = JSON.parse(resp.body)
-    payload['InstanceProfileArn']
+    if resp.code == '404'
+      nil
+    else
+      payload = JSON.parse(resp.body)
+      payload['InstanceProfileArn']
+    end
+  end
+
+  module_function def wait_for_instance_profile
+    deadline = Time.now + 15
+    loop do
+      begin
+        ip = ec2_instance_profile
+        if ip
+          puts "Instance profile assigned: #{ip}"
+          break
+        end
+      rescue => e
+        puts "Problem retrieving instance profile: #{e.class}: #{e}"
+      end
+      if Time.now >= deadline
+        raise 'Instance profile did not get assigned in 15 seconds'
+      end
+      sleep 3
+    end
+  end
+
+  module_function def wait_for_no_instance_profile
+    deadline = Time.now + 15
+    loop do
+      begin
+        ip = ec2_instance_profile
+        if ip.nil?
+          puts "Instance profile cleared"
+          break
+        end
+      rescue => e
+        puts "Problem retrieving instance profile: #{e.class}: #{e}"
+      end
+      if Time.now >= deadline
+        raise 'Instance profile did not get cleared in 15 seconds'
+      end
+      sleep 3
+    end
   end
 end

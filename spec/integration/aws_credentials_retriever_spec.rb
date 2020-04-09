@@ -61,8 +61,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
           )
 
           orchestrator.clear_instance_profile(Utils.ec2_instance_id)
-          # Wait for change to propagate
-          sleep 5
+          Utils.wait_for_no_instance_profile
         end
 
         it 'raises an error' do
@@ -84,8 +83,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
             instance_profile_name: nil,
             instance_profile_arn: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_INSTANCE_PROFILE_ARN'),
           )
-          # Wait for change to propagate
-          sleep 5
+          Utils.wait_for_instance_profile
         end
 
         it_behaves_like 'retrieves the credentials'
