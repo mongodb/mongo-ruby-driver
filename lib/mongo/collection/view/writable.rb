@@ -200,15 +200,17 @@ module Mongo
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(delete_doc, server, opts)
-              Operation::Delete.new(
-                  :deletes => [ delete_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+              server.with_connection do |connection|
+                apply_collation!(delete_doc, connection, opts)
+                Operation::Delete.new(
+                    :deletes => [ delete_doc ],
+                    :db_name => collection.database.name,
+                    :coll_name => collection.name,
+                    :write_concern => write_concern,
+                    :session => session,
+                    :txn_num => txn_num
+                ).execute(connection, client: client)
+              end
             end
           end
         end
@@ -241,18 +243,20 @@ module Mongo
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
+              server.with_connection do |connection|
+                apply_collation!(update_doc, connection, opts)
+                apply_array_filters!(update_doc, connection, opts)
 
-              Operation::Update.new(
-                  :updates => [ update_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+                Operation::Update.new(
+                    :updates => [ update_doc ],
+                    :db_name => collection.database.name,
+                    :coll_name => collection.name,
+                    :write_concern => write_concern,
+                    :bypass_document_validation => !!opts[:bypass_document_validation],
+                    :session => session,
+                    :txn_num => txn_num
+                ).execute(connection, client: client)
+              end
             end
           end
         end
@@ -288,16 +292,18 @@ module Mongo
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
-              Operation::Update.new(
-                  :updates => [ update_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session
-              ).execute(server, client: client)
+              server.with_connection do |connection|
+                apply_collation!(update_doc, connection, opts)
+                apply_array_filters!(update_doc, connection, opts)
+                Operation::Update.new(
+                    :updates => [ update_doc ],
+                    :db_name => collection.database.name,
+                    :coll_name => collection.name,
+                    :write_concern => write_concern,
+                    :bypass_document_validation => !!opts[:bypass_document_validation],
+                    :session => session
+                ).execute(connection, client: client)
+              end
             end
           end
         end
@@ -350,15 +356,15 @@ module Mongo
 
         private
 
-        def apply_array_filters!(doc, server, opts = {})
+        def apply_array_filters!(doc, connection, opts = {})
           if filters = opts[:array_filters] || opts[ARRAY_FILTERS]
-            validate_array_filters!(server, filters)
+            validate_array_filters!(connection, filters)
             doc[:arrayFilters] = filters
           end
         end
 
-        def validate_array_filters!(server, filters)
-          if filters && !server.features.array_filters_enabled?
+        def validate_array_filters!(connection, filters)
+          if filters && !connection.features.array_filters_enabled?
             raise Error::UnsupportedArrayFilters.new
           end
         end
