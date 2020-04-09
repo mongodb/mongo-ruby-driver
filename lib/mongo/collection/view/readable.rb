@@ -148,14 +148,16 @@ module Mongo
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
-              apply_collation!(cmd, server, opts)
-              Operation::Count.new(
-                                     :selector => cmd,
-                                     :db_name => database.name,
-                                     :options => {:limit => -1},
-                                     :read => read_pref,
-                                     :session => session
-              ).execute(server, client: client)
+              server.with_connection do |connection|
+                apply_collation!(cmd, connection, opts)
+                Operation::Count.new(
+                  :selector => cmd,
+                  :db_name => database.name,
+                  :options => {:limit => -1},
+                  :read => read_pref,
+                  :session => session
+                ).execute(connection, client: client)
+              end
             end.n.to_i
           end
         end
