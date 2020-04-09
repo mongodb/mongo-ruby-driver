@@ -81,6 +81,7 @@ module Mongo
         :features,
         :max_bson_object_size,
         :max_message_size,
+        :max_write_batch_size,
         :mongos?
 
       def app_metadata
