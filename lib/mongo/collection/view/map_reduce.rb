@@ -237,7 +237,7 @@ module Mongo
         def send_initial_query(server, session)
           begin
             server.with_connection do |connection|
-              raise InvalidMapReduceServer.new unless valid_server?(server)
+              raise InvalidMapReduceServer.new unless valid_server?(connection)
               do_stuff(connection, session)
             end
           rescue InvalidMapReduceServer

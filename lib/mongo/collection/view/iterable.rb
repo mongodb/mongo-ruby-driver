@@ -39,17 +39,12 @@ module Mongo
           session = client.send(:get_session, @options)
           @cursor = if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session)
-
-            server.with_connection do |connection|
-              result = send_initial_query(connection, session)
-            end
+            result = send_initial_query(server, session)
 
             Cursor.new(view, result, server, session: session)
           else
             read_with_retry_cursor(session, server_selector, view) do |server|
-              server.with_connection do |connection|
-                result = send_initial_query(connection, session)
-              end
+              result = send_initial_query(server, session)
             end
           end
           if block_given?
@@ -99,9 +94,11 @@ module Mongo
           end
         end
 
-        def send_initial_query(connection, session = nil)
-          validate_collation!(connection, collation)
-          initial_query_op(connection, session).execute(connection, client: client)
+        def send_initial_query(server, session = nil)
+          server.with_connection do |connection|
+            validate_collation!(connection, collation)
+            initial_query_op(connection, session).execute(connection, client: client)
+          end
         end
       end
     end

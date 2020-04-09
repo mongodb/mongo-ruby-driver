@@ -16,6 +16,8 @@ module Mongo
   class Collection
     class View
 
+      class InvalidAggregationServer < Mongo::Error; end
+
       # Provides behavior around an aggregation pipeline on a collection view.
       #
       # @since 2.0.0
@@ -120,12 +122,24 @@ module Mongo
         end
 
         def send_initial_query(server, session)
-          unless valid_server?(server)
+          begin
+            server.with_connection do |connection|
+              raise InvalidAggregationServer.new unless valid_server?(connection)
+              do_stuff(connection, session)
+            end
+          rescue InvalidAggregationServer
             log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
             server = cluster.next_primary(nil, session)
+
+            server.with_connection do |connection|
+              do_stuff(connection, session)
+            end
           end
-          validate_collation!(server)
-          initial_query_op(session).execute(server, client: client)
+        end
+
+        def do_stuff(connection, session)
+          validate_collation!(connection)
+          initial_query_op(session).execute(connection, client: client)
         end
 
         def validate_collation!(server)
