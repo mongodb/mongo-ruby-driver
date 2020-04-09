@@ -151,14 +151,20 @@ module Mongo
       def create_many(*models)
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
-          spec = {
-                  indexes: normalize_models(models.flatten, server),
-                  db_name: database.name,
-                  coll_name: collection.name,
-                  session: session
-                 }
-          spec[:write_concern] = write_concern if server.features.collation_enabled?
-          Operation::CreateIndex.new(spec).execute(server, client: client)
+          server.with_connection do |connection|
+            spec = {
+              indexes: normalize_models(models.flatten, server),
+              db_name: database.name,
+              coll_name: collection.name,
+              session: session
+             }
+
+            if connection.features.collation_enabled?
+              spec[:write_concern] = write_concern
+            end
+
+            Operation::CreateIndex.new(spec).execute(connection, client: client)
+          end
         end
       end
 
@@ -193,7 +199,9 @@ module Mongo
       def each(&block)
         session = client.send(:get_session, @options)
         cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session)
+          server.with_connection do |connection|
+            send_initial_query(connection, session)
+          end
         end
         if block_given?
           cursor.each do |doc|
@@ -271,8 +279,8 @@ module Mongo
         end
       end
 
-      def send_initial_query(server, session)
-        initial_query_op(session).execute(server, client: client)
+      def send_initial_query(connection, session)
+        initial_query_op(session).execute(connection, client: client)
       end
 
       def with_generated_names(models, server)

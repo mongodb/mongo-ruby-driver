@@ -331,7 +331,10 @@ module Mongo
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
-      process(get_more_operation.execute(@server, client: client))
+
+      @server.with_connection do |connection|
+        process(get_more_operation.execute(connection, client: client))
+      end
     end
 
     private
