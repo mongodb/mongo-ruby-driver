@@ -54,7 +54,6 @@ module Mongo
       # Returns a Protocol::Message or nil as reply.
       def dispatch_message(connection, client, options = {})
         server = connection.server
-
         message = build_message(server)
         message = message.maybe_encrypt(server, client)
         reply = connection.dispatch([ message ], operation_id, client, options)

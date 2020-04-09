@@ -24,7 +24,9 @@ describe Mongo::Operation::Indexes do
     end
 
     let(:indexes) do
-      operation.execute(authorized_primary, client: nil)
+      authorized_primary.with_connection do |connection|
+        operation.execute(connection, client: nil)
+      end
     end
 
     it 'returns the indexes for the collection' do
