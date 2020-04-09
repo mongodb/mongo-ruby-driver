@@ -82,7 +82,9 @@ module Mongo
         :max_bson_object_size,
         :max_message_size,
         :max_write_batch_size,
-        :mongos?
+        :mongos?,
+        :primary?,
+        :standalone?
 
       def app_metadata
         @app_metadata ||= begin

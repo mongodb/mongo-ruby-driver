@@ -262,14 +262,16 @@ module Mongo
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
-              apply_collation!(cmd, server, opts)
-              Operation::Distinct.new({
-                                        :selector => cmd,
-                                        :db_name => database.name,
-                                        :options => {:limit => -1},
-                                        :read => read_pref,
-                                        :session => session
-                                       }).execute(server, client: client)
+              server.with_connection do |connection|
+                apply_collation!(cmd, connection, opts)
+                Operation::Distinct.new(
+                  :selector => cmd,
+                  :db_name => database.name,
+                  :options => {:limit => -1},
+                  :read => read_pref,
+                  :session => session
+                ).execute(connection, client: client)
+              end
             end.first['values']
           end
         end
