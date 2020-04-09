@@ -39,11 +39,17 @@ module Mongo
           session = client.send(:get_session, @options)
           @cursor = if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session)
-            result = send_initial_query(server, session)
+
+            server.with_connection do |connection|
+              result = send_initial_query(connection, session)
+            end
+
             Cursor.new(view, result, server, session: session)
           else
             read_with_retry_cursor(session, server_selector, view) do |server|
-              send_initial_query(server, session)
+              server.with_connection do |connection|
+                result = send_initial_query(connection, session)
+              end
             end
           end
           if block_given?
@@ -77,8 +83,8 @@ module Mongo
 
         private
 
-        def initial_query_op(server, session)
-          if server.features.find_command_enabled?
+        def initial_query_op(connection, session)
+          if connection.features.find_command_enabled?
             initial_command_op(session)
           else
             Operation::Find.new(Builder::OpQuery.new(self).specification)
@@ -93,9 +99,9 @@ module Mongo
           end
         end
 
-        def send_initial_query(server, session = nil)
-          validate_collation!(server, collation)
-          initial_query_op(server, session).execute(server, client: client)
+        def send_initial_query(connection, session = nil)
+          validate_collation!(connection, collation)
+          initial_query_op(connection, session).execute(connection, client: client)
         end
       end
     end
