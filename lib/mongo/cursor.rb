@@ -269,7 +269,9 @@ module Mongo
 
       unregister
       read_with_one_retry do
-        kill_cursors_operation.execute(@server, client: client)
+        @server.with_connection do |connection|
+          kill_cursors_operation.execute(connection, client: client)
+        end
       end
 
       nil
