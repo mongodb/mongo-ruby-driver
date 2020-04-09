@@ -29,6 +29,9 @@ class Runner
 
       opts.on("-a", "--add-env=PATH", "Load environment variables from PATH in .env format") do |path|
         @options[:extra_env] ||= {}
+        unless File.exist?(path)
+          raise "-a option references nonexistent file #{path}"
+        end
         Dotenv.parse(path).each do |k, v|
           @options[:extra_env][k] = v
         end
