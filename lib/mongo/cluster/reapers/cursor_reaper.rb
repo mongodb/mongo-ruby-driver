@@ -131,15 +131,16 @@ module Mongo
 
         to_kill_copy.each do |server, op_specs|
           op_specs.each do |op_spec|
-            if server.features.find_command_enabled?
-              Cursor::Builder::KillCursorsCommand.update_cursors(op_spec, active_cursors_copy.to_a)
-              if Cursor::Builder::KillCursorsCommand.get_cursors_list(op_spec).size > 0
-                Operation::KillCursors.new(op_spec).execute(server, client: nil)
+            server.with_connection do |connection|
+              kill_cursors_command_class = if connection.features.find_command_enabled?
+                Cursor::Builder::KillCursorsCommand
+              else
+                Cursor::Builder::OpKillCursors
               end
-            else
-              Cursor::Builder::OpKillCursors.update_cursors(op_spec, active_cursors_copy.to_a)
-              if Cursor::Builder::OpKillCursors.get_cursors_list(op_spec).size > 0
-                Operation::KillCursors.new(op_spec).execute(server, client: nil)
+
+              kill_cursors_command_class.update_cursors(op_spec, active_cursors_copy.to_a)
+              if kill_cursors_command_class.get_cursors_list(op_spec).size > 0
+                  Operation::KillCursors.new(op_spec).execute(connection, client: nil)
               end
             end
           end
