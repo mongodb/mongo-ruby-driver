@@ -6,6 +6,7 @@ set +x
 
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-kerberos.sh
+. `dirname "$0"`/functions-config.sh
 
 arch=`host_arch`
 

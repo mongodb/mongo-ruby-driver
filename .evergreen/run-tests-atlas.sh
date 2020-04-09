@@ -8,7 +8,7 @@ set_env_vars
 
 setup_ruby
 
-install_deps
+bundle_install
 
 echo "Running specs"
 
