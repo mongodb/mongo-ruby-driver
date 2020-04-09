@@ -353,20 +353,35 @@ module Utils
   end
   module_function :match_with_type?
 
-  module_function def ec2_instance_id
-    http = Net::HTTP.new('169.254.169.254')
+  module_function def get_ec2_metadata_token(ttl: 30, http: nil)
+    http ||= Net::HTTP.new('169.254.169.254')
     req = Net::HTTP::Put.new('/latest/api/token',
       # The TTL is required in order to obtain the metadata token.
-      {'x-aws-ec2-metadata-token-ttl-seconds' => '30'})
+      {'x-aws-ec2-metadata-token-ttl-seconds' => ttl.to_s})
     resp = http.request(req)
     if resp.code != '200'
-      raise 'Metadata token request failed'
+      raise "Metadata token request failed: #{e.class}: #{e}"
     end
-    metadata_token = resp.body
+    resp.body
+  end
+
+  module_function def ec2_instance_id
+    http = Net::HTTP.new('169.254.169.254')
+    metadata_token = get_ec2_metadata_token(http: http)
     req = Net::HTTP::Get.new('/latest/dynamic/instance-identity/document',
       {'x-aws-ec2-metadata-token' => metadata_token})
     resp = http.request(req)
     payload = JSON.parse(resp.body)
     payload.fetch('instanceId')
+  end
+
+  module_function def ec2_instance_profile
+    http = Net::HTTP.new('169.254.169.254')
+    metadata_token = get_ec2_metadata_token(http: http)
+    req = Net::HTTP::Get.new('/latest/meta-data/iam/info',
+      {'x-aws-ec2-metadata-token' => metadata_token})
+    resp = http.request(req)
+    payload = JSON.parse(resp.body)
+    payload['InstanceProfileArn']
   end
 end
