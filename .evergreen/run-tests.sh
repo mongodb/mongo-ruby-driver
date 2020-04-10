@@ -72,7 +72,6 @@ elif test "$AUTH" = x509; then
   args="$args --auth --username bootstrap --password bootstrap"
 elif echo "$AUTH" |grep -q ^aws; then
   args="$args --auth --username bootstrap --password bootstrap"
-  args="$args --setParameter authenticationMechanisms=MONGODB-AWS,SCRAM-SHA-1,SCRAM-SHA-256"
   uri_options="$uri_options&authMechanism=MONGODB-AWS&authSource=\$external"
 fi
 if test "$SSL" = ssl; then
