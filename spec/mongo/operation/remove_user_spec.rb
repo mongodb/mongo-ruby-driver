@@ -19,26 +19,24 @@ describe Mongo::Operation::RemoveUser do
       described_class.new(user_name: 'durran', db_name: SpecConfig.instance.test_db)
     end
 
-    context 'when user removal was successful' do
-
-      let!(:response) do
-        operation.execute(root_authorized_primary, client: nil)
+    let!(:response) do
+      root_authorized_primary.with_connection do |connection|
+        operation.execute(connection, client: nil)
       end
+    end
 
+    context 'when user removal was successful' do
       it 'removes the user from the database' do
         expect(response).to be_successful
       end
     end
 
     context 'when removal was not successful' do
-
-      before do
-        operation.execute(root_authorized_primary, client: nil)
-      end
-
       it 'raises an exception' do
         expect {
-          operation.execute(root_authorized_primary, client: nil)
+          root_authorized_primary.with_connection do |connection|
+            operation.execute(connection, client: nil)
+          end
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

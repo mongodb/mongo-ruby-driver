@@ -94,12 +94,13 @@ describe Mongo::Operation::MapReduce do
       authorized_collection.delete_many
     end
 
-    context 'when the map/reduce succeeds' do
-
-      let(:response) do
-        op.execute(authorized_primary, client: nil)
+    let(:response) do
+      authorized_primary.with_connection do |connection|
+        op.execute(connection, client: nil)
       end
+    end
 
+    context 'when the map/reduce succeeds' do
       it 'returns the response' do
         expect(response).to be_successful
       end
@@ -117,7 +118,7 @@ describe Mongo::Operation::MapReduce do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          response
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

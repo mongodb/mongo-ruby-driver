@@ -26,7 +26,9 @@ describe Mongo::Operation::DropIndex do
       end
 
       let(:response) do
-        operation.execute(authorized_primary, client: nil)
+        authorized_primary.with_connection do |connection|
+          operation.execute(connection, client: nil)
+        end
       end
 
       it 'removes the index' do
@@ -46,7 +48,9 @@ describe Mongo::Operation::DropIndex do
 
       it 'raises an exception' do
         expect {
-          operation.execute(authorized_primary, client: nil)
+          authorized_primary.with_connection do |connection|
+            operation.execute(connection, client: nil)
+          end
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

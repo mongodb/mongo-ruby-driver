@@ -77,11 +77,26 @@ module Mongo
       # @api private
       attr_reader :description
 
+      # TODO: documentation
       def_delegators :description,
+        :arbiter?,
+        :average_round_trip_time,
         :features,
+        :ghost?,
+        :last_write_date,
+        :logical_session_timeout,
         :max_bson_object_size,
         :max_message_size,
-        :mongos?
+        :max_wire_version,
+        :max_write_batch_size,
+        :mongos?,
+        :other?,
+        :primary?,
+        :replica_set_name,
+        :secondary?,
+        :standalone?,
+        :tags,
+        :unknown?
 
       def app_metadata
         @app_metadata ||= begin

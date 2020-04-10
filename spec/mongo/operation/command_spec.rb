@@ -39,28 +39,27 @@ describe Mongo::Operation::Command do
   end
 
   describe '#execute' do
+    let(:response) do
+      authorized_primary.with_connection do |connection|
+        op.execute(connection, client: nil)
+      end
+    end
 
     context 'when the command succeeds' do
-
-      let(:response) do
-        op.execute(authorized_primary, client: nil)
-      end
-
       it 'returns the reponse' do
         expect(response).to be_successful
       end
     end
 
     context 'when the command fails' do
-
       let(:selector) do
         { notacommand: 1 }
       end
 
       it 'raises an exception' do
-        expect {
-          op.execute(authorized_primary, client: nil)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        expect do
+          response
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
 
@@ -71,9 +70,9 @@ describe Mongo::Operation::Command do
       end
 
       it 'raises an error' do
-        expect {
-          op.execute(authorized_primary, client: nil)
-        }.to raise_error(Mongo::Error::MaxBSONSize)
+        expect do
+          response
+        end.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
   end

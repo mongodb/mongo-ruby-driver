@@ -8,9 +8,13 @@ describe Mongo::Operation::CreateIndex do
   end
 
   describe '#execute' do
+    let(:response) do
+      authorized_primary.with_connection do |connection|
+        operation.execute(connection, client: nil)
+      end
+    end
 
     context 'when the index is created' do
-
       let(:spec) do
         { key: { random: 1 }, name: 'random_1', unique: true }
       end
@@ -19,17 +23,12 @@ describe Mongo::Operation::CreateIndex do
         described_class.new(indexes: [ spec ], db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL)
       end
 
-      let(:response) do
-        operation.execute(authorized_primary, client: nil)
-      end
-
       it 'returns ok' do
         expect(response).to be_successful
       end
     end
 
     context 'when index creation fails' do
-
       let(:spec) do
         { key: { random: 1 }, name: 'random_1', unique: true }
       end
@@ -43,12 +42,16 @@ describe Mongo::Operation::CreateIndex do
       end
 
       before do
-        operation.execute(authorized_primary, client: nil)
+        authorized_primary.with_connection do |connection|
+          operation.execute(connection, client: nil) 
+        end
       end
 
       it 'raises an exception' do
         expect {
-          second_operation.execute(authorized_primary, client: nil)
+          authorized_primary.with_connection do |connection|
+            second_operation.execute(connection, client: nil) 
+          end
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

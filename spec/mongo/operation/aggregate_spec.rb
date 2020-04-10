@@ -64,7 +64,9 @@ describe Mongo::Operation::Aggregate do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          authorized_primary.with_connection do |connection|
+            op.execute(connection, client: nil)
+          end
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
