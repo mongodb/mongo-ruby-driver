@@ -52,17 +52,48 @@ needed.
 Database
 ````````
 
-Usually the client will connect to a specific database. It is possible to
-change the active database by calling ``Client#use`` to obtain a new ``Client``
-instance configured to use the new database. For example, it is common to
-perform operations on the ``admin`` database:
+By default, the client will connect to the ``admin`` database.
+
+The ``admin`` database is a special database in MongoDB often used for
+administrative tasks and storing administrative data such as users and
+roles (although users and roles may also be defined in other databases).
+In a sharded cluster, the ``admin`` database
+:manual:`exists on the config servers </core/sharded-cluster-config-servers/#read-and-write-operations-on-config-servers>`
+rather than the shard servers. Although it is possible to use the ``admin``
+database for ordinary operations (such as storing application data), this
+is not recommended and the application should explicitly specify the
+database it wishes to use.
+
+The database can be specified during ``Client`` construction:
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'mydb')
+  # Using Ruby client options:
+  client = Mongo::Client.new(['localhost'], database: 'mydb')
+  
+  # Using a MongoDB URI:
+  client = Mongo::Client.new('mongodb://localhost/mydb')
+
+Given a ``Client`` instance, the ``use`` method can be invoked to obtain a
+new ``Client`` instance configured with the specified database:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], database: 'mydb')
+  
   admin_client = client.use('admin')
+  
   # Issue an administrative command
   admin_client.database.command(replSetGetConfig: 1).documents.first
+
+There are other special databases in MongoDB which should be only used for
+their stated purposes:
+
+- The :manual:`config </reference/config-database/>` database.
+- The :manual:`local </reference/local-database/>` database.
+- The ``$external`` database, which is used with :ref:`PLAIN <plain>`,
+  :ref:`Kerberos <kerberos>` and :ref:`X.509 <x.509>` authentication
+  mechanisms.
 
 
 Direct Connection
