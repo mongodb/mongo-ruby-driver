@@ -5,6 +5,7 @@ set -e
 set +x
 
 . `dirname "$0"`/functions.sh
+. `dirname "$0"`/functions-config.sh
 
 show_local_instructions
 

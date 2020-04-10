@@ -3,6 +3,7 @@
 set -ex
 
 . `dirname "$0"`/functions.sh
+. `dirname "$0"`/functions-config.sh
 
 arch=`host_arch`
 

@@ -10,6 +10,8 @@ else
 fi
 
 . `dirname "$0"`/functions.sh
+. `dirname "$0"`/functions-server.sh
+. `dirname "$0"`/functions-config.sh
 
 arch=`host_arch`
 
@@ -33,6 +35,11 @@ mkdir -p "$dbdir"
 mongo_version=`echo $MONGODB_VERSION |tr -d .`
 if test $mongo_version = latest; then
   mongo_version=44
+fi
+  
+# Compression is handled via an environment variable, convert to URI option
+if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
+  add_uri_option compressors=zlib
 fi
 
 args="--setParameter enableTestCommands=1"
@@ -98,10 +105,7 @@ fi
 
 python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
-install_deps
-
-which bundle
-bundle --version
+bundle_install
 
 if test "$TOPOLOGY" = sharded-cluster; then
   if test -n "$SINGLE_MONGOS"; then

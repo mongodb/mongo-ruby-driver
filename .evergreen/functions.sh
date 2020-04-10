@@ -1,3 +1,6 @@
+# This file contains basic functions common between all Ruby driver team
+# projects: toolchain, bson-ruby, driver and Mongoid.
+
 detected_arch=
 
 host_arch() {
@@ -60,43 +63,11 @@ set_home() {
   fi
 }
 
-set_fcv() {
-  if test -n "$FCV"; then
-    mongo --eval 'assert.commandWorked(db.adminCommand( { setFeatureCompatibilityVersion: "'"$FCV"'" } ));' "$MONGODB_URI"
-    mongo --quiet --eval 'db.adminCommand( { getParameter: 1, featureCompatibilityVersion: 1 } )' |grep  "version.*$FCV"
-  fi
-}
-
-add_uri_option() {
-  opt=$1
-  
-  if ! echo $MONGODB_URI |sed -e s,//,, |grep -q /; then
-    MONGODB_URI="$MONGODB_URI/"
-  fi
-  
-  if ! echo $MONGODB_URI |grep -q '?'; then
-    MONGODB_URI="$MONGODB_URI?"
-  fi
-  
-  MONGODB_URI="$MONGODB_URI&$opt"
-}
-
 uri_escape() {
   echo "$1" |ruby -rcgi -e 'puts CGI.escape(STDIN.read.strip).gsub("+", "%20")'
 }
 
 set_env_vars() {
-  # drivers-evergreen-tools do not set tls parameter in URI when the
-  # deployment uses TLS, repair this
-  if test "$SSL" = ssl && ! echo $MONGODB_URI |grep -q tls=; then
-    add_uri_option tls=true
-  fi
-  
-  # Compression is handled via an environment variable, convert to URI option
-  if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
-    add_uri_option compressors=zlib
-  fi
-
   DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
   if test -n "$AUTH"; then
@@ -133,7 +104,7 @@ setup_ruby() {
     exit 2
   fi
 
-  ls -l /opt
+  #ls -l /opt
 
   # Necessary for jruby
   # Use toolchain java if it exists
@@ -161,8 +132,6 @@ setup_ruby() {
     export PATH=`pwd`/ruby-head/bin:`pwd`/ruby-head/lib/ruby/gems/2.6.0/bin:$PATH
     ruby --version
     ruby --version |grep dev
-
-    #rvm reinstall $RVM_RUBY
   else
     if test "$USE_OPT_TOOLCHAIN" = 1; then
       # nothing, also PATH is already set
@@ -252,166 +221,10 @@ bundle_install() {
   bundle install $args || bundle install $args
 }
 
-install_deps() {
-  bundle_install
-}
-
 kill_jruby() {
   jruby_running=`ps -ef | grep 'jruby' | grep -v grep | awk '{print $2}'`
   if [ -n "$jruby_running" ];then
     echo "terminating remaining jruby processes"
     for pid in $(ps -ef | grep "jruby" | grep -v grep | awk '{print $2}'); do kill -9 $pid; done
   fi
-}
-
-prepare_server() {
-  arch=$1
-  
-  if test -n "$USE_OPT_MONGODB"; then
-    export BINDIR=/opt/mongodb/bin
-    export PATH=$BINDIR:$PATH
-    return
-  fi
-
-  if test "$MONGODB_VERSION" = latest; then
-    # Test on the most recent published 4.3 release.
-    # https://jira.mongodb.org/browse/RUBY-1724
-    echo 'Using "latest" server is not currently implemented' 1>&2
-    exit 1
-  else
-    download_version="$MONGODB_VERSION"
-  fi
-  
-  url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
-
-  prepare_server_from_url $url
-}
-
-prepare_server_from_url() {
-  url=$1
-
-  mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb
-  mkdir -p "$mongodb_dir"
-  curl --retry 3 $url |tar xz -C "$mongodb_dir" -f -
-  BINDIR="$mongodb_dir"/`basename $url |sed -e s/.tgz//`/bin
-  export PATH="$BINDIR":$PATH
-}
-
-install_mlaunch_virtualenv() {
-  #export PATH=/opt/python/3.7/bin:$PATH
-  python -V || true
-  python3 -V || true
-  #pip3 install --user virtualenv
-  venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-  virtualenv $venvpath
-  . $venvpath/bin/activate
-  pip install 'mtools-legacy[mlaunch]'
-}
-
-install_mlaunch_pip() {
-  if test -n "$USE_OPT_MONGODB" && which mlaunch >/dev/null 2>&1; then
-    # mlaunch is preinstalled in the docker image, do not install it here
-    return
-  fi
-  
-  python -V || true
-  python3 -V || true
-  pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" 'mtools-legacy[mlaunch]'
-  export PATH="$pythonpath/bin":$PATH
-  export PYTHONPATH="$pythonpath"
-}
-
-install_mlaunch_git() {
-  repo=$1
-  branch=$2
-  python -V || true
-  python3 -V || true
-  which pip || true
-  which pip3 || true
-  
-  if false; then
-    if ! virtualenv --version; then
-      python3 `which pip3` install --user virtualenv
-      export PATH=$HOME/.local/bin:$PATH
-      virtualenv --version
-    fi
-    
-    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-    virtualenv -p python3 $venvpath
-    . $venvpath/bin/activate
-    
-    pip3 install psutil pymongo
-    
-    git clone $repo mlaunch
-    cd mlaunch
-    git checkout origin/$branch
-    python3 setup.py install
-    cd ..
-  else
-    pip install --user 'virtualenv==13'
-    export PATH=$HOME/.local/bin:$PATH
-    
-    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-    virtualenv $venvpath
-    . $venvpath/bin/activate
-  
-    pip install psutil pymongo
-    
-    git clone $repo mlaunch
-    (cd mlaunch &&
-      git checkout origin/$branch &&
-      python setup.py install
-    )
-  fi
-}
-
-show_local_instructions() {
-  echo To test this configuration locally:
-  params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY STRESS_SPEC=true"
-  if test -n "$AUTH"; then
-    params="$params AUTH=$AUTH"
-  fi
-  if test -n "$SSL"; then
-    params="$params SSL=$SSL"
-  fi
-  if test -n "$COMPRESSOR"; then
-    params="$params COMPRESSOR=$COMPRESSOR"
-  fi
-  if test -n "$FLE"; then
-    params="$params FLE=$FLE"
-  fi
-  if test -n "$FCV"; then
-    params="$params FCV=$FCV"
-  fi
-  if test -n "$MONGO_RUBY_DRIVER_LINT"; then
-    params="$params MONGO_RUBY_DRIVER_LINT=$MONGO_RUBY_DRIVER_LINT"
-  fi
-  if test -n "$RETRY_READS"; then
-    params="$params RETRY_READS=$RETRY_READS"
-  fi
-  if test -n "$RETRY_WRITES"; then
-    params="$params RETRY_WRITES=$RETRY_WRITES"
-  fi
-  if test -n "$WITH_ACTIVE_SUPPORT"; then
-    params="$params WITH_ACTIVE_SUPPORT=$WITH_ACTIVE_SUPPORT"
-  fi
-  if test -n "$SINGLE_MONGOS"; then
-    params="$params SINGLE_MONGOS=$SINGLE_MONGOS"
-  fi
-  if test -n "$BSON"; then
-    params="$params BSON=$BSON"
-  fi
-  if test -n "$MMAPV1"; then
-    params="$params MMAPV1=$MMAPV1"
-  fi
-  # $0 has the current script being executed which is also the script that
-  # was initially invoked EXCEPT for the AWS configurations which use the
-  # wrapper script.
-  if echo "$AUTH" |grep -q ^aws; then
-    script=.evergreen/run-tests-aws-auth.sh
-  else
-    script="$0"
-  fi
-  echo ./.evergreen/test-on-docker -d $arch $params -s "$script"
 }
