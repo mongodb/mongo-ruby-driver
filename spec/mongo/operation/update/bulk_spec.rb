@@ -89,18 +89,6 @@ describe Mongo::Operation::Update do
       authorized_collection.delete_many
     end
 
-    let(:bulk_execute_operation) do
-      authorized_primary.with_connection do |connection|
-        op.bulk_execute(connection, client: nil)
-      end
-    end
-
-    let(:bulk_execute_failing_update) do
-      authorized_primary.with_connection do |connection|
-        failing_update.execute(connection, client: nil)
-      end
-    end
-
     context 'when updating a single document' do
 
       context 'when the update passes' do
@@ -110,7 +98,9 @@ describe Mongo::Operation::Update do
         end
 
         it 'updates the document' do
-          bulk_execute_operation
+          authorized_primary.with_connection do |connection|
+            op.bulk_execute(connection, client: nil)
+          end
           expect(authorized_collection.find(field: 'blah').count).to eq(1)
         end
       end
@@ -134,7 +124,9 @@ describe Mongo::Operation::Update do
         end
 
         it 'updates the documents' do
-          bulk_execute_operation
+          authorized_primary.with_connection do |connection|
+            op.bulk_execute(connection, client: nil)
+          end
           expect(authorized_collection.find(field: 'blah').count).to eq(2)
         end
       end
@@ -166,6 +158,9 @@ describe Mongo::Operation::Update do
         context 'when write concern is acknowledged' do
 
           it 'aborts after first error' do
+            authorized_primary.with_connection do |connection|
+              failing_update.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
         end
@@ -177,7 +172,9 @@ describe Mongo::Operation::Update do
           end
 
           it 'aborts after first error' do
-            bulk_execute_failing_update
+            authorized_primary.with_connection do |connection|
+              failing_update.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
         end
@@ -187,7 +184,7 @@ describe Mongo::Operation::Update do
     context 'when the updates are unordered' do
 
       let(:documents) do
-        [ { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }}, 'multi' => true},
+        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' }}, 'multi' => true},
           { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => false }
         ]
       end
@@ -210,7 +207,9 @@ describe Mongo::Operation::Update do
         context 'when write concern is acknowledged' do
 
           it 'does not abort after first error' do
-            bulk_execute_failing_update
+            authorized_primary.with_connection do |connection|
+              failing_update.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
         end
@@ -222,7 +221,9 @@ describe Mongo::Operation::Update do
           end
 
           it 'does not abort after first error' do
-            bulk_execute_failing_update
+            authorized_primary.with_connection do |connection|
+              failing_update.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
         end
