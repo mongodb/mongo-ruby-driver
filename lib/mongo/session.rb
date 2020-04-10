@@ -578,7 +578,10 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute(server, client: @client)
+
+            server.with_connection do |connection|
+              Operation::Command.new(spec).execute(connection, client: @client)
+            end
           end
         end
       ensure
