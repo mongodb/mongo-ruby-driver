@@ -29,6 +29,9 @@ class Runner
 
       opts.on("-a", "--add-env=PATH", "Load environment variables from PATH in .env format") do |path|
         @options[:extra_env] ||= {}
+        unless File.exist?(path)
+          raise "-a option references nonexistent file #{path}"
+        end
         Dotenv.parse(path).each do |k, v|
           @options[:extra_env][k] = v
         end
@@ -87,7 +90,7 @@ class Runner
   end
 
   def run_deployment
-    run_command(BASE_TEST_COMMAND + tty_arg + [
+    run_command(BASE_TEST_COMMAND + tty_arg + extra_env + [
       '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
       '-e', 'BIND_ALL=true',
     ] + port_forwards + %w(test-driver) + script.split(/\s+/))

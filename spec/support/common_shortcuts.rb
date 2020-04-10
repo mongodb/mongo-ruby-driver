@@ -53,6 +53,49 @@ module CommonShortcuts
         end
       end
     end
+
+    # Applies environment variable overrides in +env+ to the global environment
+    # (+ENV+) for the duration of each test.
+    #
+    # If a key's value in +env+ is nil, this key is removed from +ENV+.
+    #
+    # When the test finishes, the values in original +ENV+ that were overridden
+    # by +env+ are restored. If a key was not in original +ENV+ and was
+    # overridden by +env+, this key is removed from +ENV+ after the test.
+    #
+    # If the environment variables are not known at test definition time
+    # but are determined at test execution time, pass a block instead of
+    # the +env+ parameter and return the desired environment variables as
+    # a Hash from the block.
+    def local_env(env = nil, &block)
+      around do |example|
+        env ||= block.call
+
+        # This duplicates ENV.
+        # Note that ENV.dup produces an Object which does not behave like
+        # the original ENV, and hence is not usable.
+        saved_env = ENV.to_h
+        env.each do |k, v|
+          if v.nil?
+            ENV.delete(k)
+          else
+            ENV[k] = v
+          end
+        end
+
+        begin
+          example.run
+        ensure
+          env.each do |k, v|
+            if saved_env.key?(k)
+              ENV[k] = saved_env[k]
+            else
+              ENV.delete(k)
+            end
+          end
+        end
+      end
+    end
   end
 
   module InstanceMethods

@@ -225,6 +225,24 @@ To remove the instance profile from the instance, run:
 
     ./.evergreen/aws clear-instance-profile i-instanceid
 
+To provision the instance for running the driver's test suite via Docker, run:
+
+    ip=12.34.56.78
+    ./.evergreen/provision-remote ubuntu@$ip docker
+
+To run the AWS auth tests using the EC2 instance role credentials, run:
+
+    ./.evergreen/test-docker-remote ubuntu@$ip \
+      MONGODB_VERSION=4.3 AUTH=aws-ec2 \
+      -s .evergreen/run-tests-aws-auth.sh \
+      -a .env.private
+
+Note that if if you are not using MongoDB AWS account for testing, you
+would need to specify MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN in your
+`.env.private` file with the ARN of the user to add to MongoDB. The easiest
+way to find out this value is to run the tests and note which username the
+test suite is trying to authenticate as.
+
 To terminate the instance, run:
 
     ./.evergreen/aws stop-ec2

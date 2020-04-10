@@ -5,6 +5,7 @@ require 'spec_helper'
 
 describe 'SCRAM-SHA auth mechanism negotiation' do
   min_server_fcv '4.0'
+  require_no_external_user
   # Test uses global assertions
   clean_slate
 

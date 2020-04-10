@@ -182,7 +182,6 @@ module Mongo
       raise Error::UnsupportedCollation.new if op_combiner.has_collation && !connection.features.collation_enabled?
       raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !connection.features.array_filters_enabled?
       unpin_maybe(session) do
-        byebug
         if values.size > connection.max_write_batch_size
           split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
         else

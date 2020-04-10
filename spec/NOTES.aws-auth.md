@@ -225,6 +225,13 @@ states that the EC2 instance metadata endpoint is rate limited. Since the
 driver accesses it to obtain credentials whenever a connection is established,
 rate limits may adversely affect the driver's ability to establish connections.
 
+### Instance Profile Assignment
+
+It can take over 5 seconds for an instance to see its instance profile change
+reflected in the instance metadata. Evergreen test runs seem to experience
+this delay to a significantly larger extent than testing in a standalone
+AWS account.
+
 ## IAM Roles For ECS Tasks
 
 ### ECS Task Roles

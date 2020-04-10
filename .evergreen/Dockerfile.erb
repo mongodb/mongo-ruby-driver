@@ -28,7 +28,7 @@ FROM <%= base_image %>
   # increment the counter to force apt-get update to run.
   # zsh is not required for any scripts but it is a better interactive shell
   # than bash.
-  RUN echo 1 && \
+  RUN echo 2 && \
     apt-get update && \
     apt-get install -y curl zsh
 

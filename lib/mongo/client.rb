@@ -1065,11 +1065,11 @@ module Mongo
         raise Mongo::Auth::InvalidMechanism.new(auth_mech)
       end
 
-      if user.nil? && auth_mech != :mongodb_x509
+      if user.nil? && !%i(aws mongodb_x509).include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration, "Username is required for auth mechanism #{auth_mech}"
       end
 
-      if password.nil? && ![:gssapi, :mongodb_x509].include?(auth_mech)
+      if password.nil? && !%i(aws gssapi mongodb_x509).include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration, "Password is required for auth mechanism #{auth_mech}"
       end
 
@@ -1077,7 +1077,11 @@ module Mongo
         raise Mongo::Auth::InvalidConfiguration, 'Password is not supported for :mongodb_x509 auth mechanism'
       end
 
-      if [:gssapi, :mongodb_x509].include?(auth_mech)
+      if auth_mech == :aws && user && !password
+        raise Mongo::Auth::InvalidConfiguration, 'Username is provided but password is not provided for :aws auth mechanism'
+      end
+
+      if %i(aws gssapi mongodb_x509).include?(auth_mech)
         if !['$external', nil].include?(auth_source)
           raise Mongo::Auth::InvalidConfiguration, "#{auth_source} is an invalid auth source for #{auth_mech}; valid options are $external and nil"
         end
@@ -1088,7 +1092,7 @@ module Mongo
         end
       end
 
-      if mech_properties && auth_mech != :gssapi
+      if mech_properties && !%i(aws gssapi).include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration, ":mechanism_properties are not supported for auth mechanism #{auth_mech}"
       end
     end

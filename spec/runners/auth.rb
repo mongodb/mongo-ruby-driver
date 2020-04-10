@@ -91,7 +91,10 @@ module Mongo
         end
 
         if credential['mechanism_properties']
-          expected_credential['auth_mech_properties'] = expected_auth_mech_properties
+          props = Hash[credential['mechanism_properties'].map do |k, v|
+            [k.downcase, v]
+          end]
+          expected_credential['auth_mech_properties'] = props
         end
 
         expected_credential
@@ -107,10 +110,6 @@ module Mongo
 
       def expected_auth_mech
         Mongo::URI::AUTH_MECH_MAP[credential['mechanism']]
-      end
-
-      def expected_auth_mech_properties
-        credential['mechanism_properties'].keys.map(&:downcase)
       end
     end
   end
