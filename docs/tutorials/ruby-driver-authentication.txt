@@ -146,6 +146,8 @@ value for the ``authMechanism`` URI option, as follows:
   client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017/mydb?authMechanism=SCRAM-SHA-256")
 
 
+.. _x.509:
+
 Client Certificate (X.509)
 ``````````````````````````
 
@@ -176,6 +178,8 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
                              ssl_key: '/path/to/client.pem',
                              ssl_ca_cert: '/path/to/ca.pem' )
 
+
+.. _plain:
 
 LDAP (SASL PLAIN)
 `````````````````
