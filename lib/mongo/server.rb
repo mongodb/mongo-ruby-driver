@@ -146,25 +146,25 @@ module Mongo
 
     # Delegate convenience methods to the monitor description.
     # TODO: mark these as deprecated
-    # def_delegators :description,
-    #                :arbiter?,
-    #                :features,
-    #                :ghost?,
-    #                :max_wire_version,
-    #                :max_write_batch_size,
-    #                :max_bson_object_size,
-    #                :max_message_size,
-    #                :tags,
-    #                :average_round_trip_time,
-    #                :mongos?,
-    #                :other?,
-    #                :primary?,
-    #                :replica_set_name,
-    #                :secondary?,
-    #                :standalone?,
-    #                :unknown?,
-    #                :last_write_date,
-    #                :logical_session_timeout
+    def_delegators :description,
+                   :arbiter?,
+                   :features,
+                   :ghost?,
+                   :max_wire_version,
+                   :max_write_batch_size,
+                   :max_bson_object_size,
+                   :max_message_size,
+                   :tags,
+                   :average_round_trip_time,
+                   :mongos?,
+                   :other?,
+                   :primary?,
+                   :replica_set_name,
+                   :secondary?,
+                   :standalone?,
+                   :unknown?,
+                   :last_write_date,
+                   :logical_session_timeout
 
     # Get the app metadata from the cluster.
     def_delegators :cluster,
@@ -470,6 +470,7 @@ module Mongo
       !!(features.sessions_enabled? && logical_session_timeout)
     end
 
+    # TODO: mark as deprecated
     # Will writes sent to this server be retried.
     #
     # @example Will writes be retried.
@@ -482,6 +483,7 @@ module Mongo
     #
     # @since 2.5.0
     def retry_writes?
+      raise "Not implemented"
       !!(features.sessions_enabled? && logical_session_timeout && !standalone?)
     end
 

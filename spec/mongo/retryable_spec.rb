@@ -91,6 +91,8 @@ describe Mongo::Retryable do
 
   let(:server) { double('server') }
 
+  let(:connection) { double('connection') }
+
   let(:max_read_retries) { 1 }
   let(:max_write_retries) { 1 }
 
@@ -120,6 +122,7 @@ describe Mongo::Retryable do
   before do
     # Retryable reads perform server selection
     allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:select_server).and_return(server)
+    allow(server).to receive(:with_connection).and_yield(connection)
   end
 
   shared_examples_for 'reads with retries' do
@@ -146,11 +149,10 @@ describe Mongo::Retryable do
     end
 
     context 'when a socket error occurs' do
-
       before do
-        expect(retryable).to receive(:select_server).ordered
+        expect(retryable).to receive(:select_server).ordered.and_return(server)
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
-        expect(retryable).to receive(:select_server).ordered
+        expect(retryable).to receive(:select_server).ordered.and_return(server)
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
@@ -162,9 +164,9 @@ describe Mongo::Retryable do
     context 'when a socket timeout error occurs' do
 
       before do
-        expect(retryable).to receive(:select_server).ordered
+        expect(retryable).to receive(:select_server).ordered.and_return(server)
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketTimeoutError).ordered
-        expect(retryable).to receive(:select_server).ordered
+        expect(retryable).to receive(:select_server).ordered.and_return(server)
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
@@ -201,10 +203,10 @@ describe Mongo::Retryable do
         context 'when the retry succeeds' do
 
           before do
-            expect(retryable).to receive(:select_server).ordered
+            expect(retryable).to receive(:select_server).ordered.and_return(server)
             expect(operation).to receive(:execute).and_raise(error).ordered
             expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
-            expect(retryable).to receive(:select_server).ordered
+            expect(retryable).to receive(:select_server).ordered.and_return(server)
             expect(operation).to receive(:execute).and_return(true).ordered
           end
 
@@ -217,15 +219,15 @@ describe Mongo::Retryable do
           let(:max_read_retries) { 2 }
 
           before do
-            expect(retryable).to receive(:select_server).ordered
+            expect(retryable).to receive(:select_server).ordered.and_return(server)
             expect(operation).to receive(:execute).and_raise(error).ordered
 
             expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
-            expect(retryable).to receive(:select_server).ordered
+            expect(retryable).to receive(:select_server).ordered.and_return(server)
             expect(operation).to receive(:execute).and_raise(error).ordered
 
             expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
-            expect(retryable).to receive(:select_server).ordered
+            expect(retryable).to receive(:select_server).ordered.and_return(server)
             expect(operation).to receive(:execute).and_return(true).ordered
           end
 
@@ -327,7 +329,6 @@ describe Mongo::Retryable do
   end
 
   describe '#write_with_retry - legacy' do
-
     before do
       # Quick sanity check that the expected code path is being exercised
       expect(retryable.retry_write_allowed_as_configured?).to be false

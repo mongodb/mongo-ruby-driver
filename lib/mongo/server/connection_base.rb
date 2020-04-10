@@ -98,6 +98,11 @@ module Mongo
         :tags,
         :unknown?
 
+      # TODO: documentation
+      def retry_writes?
+        !!(features.sessions_enabled? && logical_session_timeout && !standalone?)
+      end
+
       def app_metadata
         @app_metadata ||= begin
           same = true
