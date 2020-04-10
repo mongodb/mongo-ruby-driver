@@ -171,8 +171,14 @@ describe Mongo::Cluster::CursorReaper do
     around do |example|
       authorized_collection.insert_many(docs)
       periodic_executor.stop!
-      cluster.schedule_kill_cursor(cursor.id, cursor.send(:kill_cursors_op_spec),
-                                   cursor.instance_variable_get(:@server))
+      cursor.instance_variable_get(:@server).with_connection do |connection|
+        cluster.schedule_kill_cursor(
+          cursor.id, 
+          cursor.send(:kill_cursors_op_spec, connection),
+          cursor.instance_variable_get(:@server)
+        )
+      end
+
       periodic_executor.flush
       example.run
       periodic_executor.run!

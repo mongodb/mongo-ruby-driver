@@ -81,7 +81,7 @@ module Mongo
         register
         ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
           cluster,
-          kill_cursors_op_spec,
+          @server.with_connection { |connection| kill_cursors_op_spec(connection) },
           server,
           @session))
       end
@@ -270,7 +270,7 @@ module Mongo
       unregister
       read_with_one_retry do
         @server.with_connection do |connection|
-          kill_cursors_operation.execute(connection, client: client)
+          kill_cursors_operation(connection).execute(connection, client: client)
         end
       end
 
@@ -368,12 +368,12 @@ module Mongo
       @session.end_session if @session && @session.implicit?
     end
 
-    def kill_cursors_operation
-      Operation::KillCursors.new(kill_cursors_op_spec)
+    def kill_cursors_operation(connection)
+      Operation::KillCursors.new(kill_cursors_op_spec(connection))
     end
 
-    def kill_cursors_op_spec
-      if @server.features.find_command_enabled?
+    def kill_cursors_op_spec(connection)
+      if connection.features.find_command_enabled?
         Builder::KillCursorsCommand.new(self).specification
       else
         Builder::OpKillCursors.new(self).specification
