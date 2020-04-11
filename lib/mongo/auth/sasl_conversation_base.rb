@@ -54,7 +54,7 @@ module Mongo
             user.auth_source,
             Database::COMMAND,
             selector,
-            limit: 1,
+            limit: -1,
           )
         end
       end
