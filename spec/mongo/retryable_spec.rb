@@ -123,6 +123,7 @@ describe Mongo::Retryable do
     # Retryable reads perform server selection
     allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:select_server).and_return(server)
     allow(server).to receive(:with_connection).and_yield(connection)
+    allow(connection).to receive(:retry_writes?).and_return(true)
   end
 
   shared_examples_for 'reads with retries' do

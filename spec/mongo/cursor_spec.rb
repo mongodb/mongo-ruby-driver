@@ -15,7 +15,9 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      server.with_connection do |connection|
+        view.send(:send_initial_query, connection)
+      end
     end
 
     let(:cursor) do
@@ -101,7 +103,9 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      server.with_connection do |connection|
+        view.send(:send_initial_query, connection)
+      end
     end
 
     let(:cursor) do
@@ -327,7 +331,7 @@ describe Mongo::Cursor do
       before do
         authorized_collection.insert_many(documents)
         server = cursor.instance_variable_get(:@server)
-        
+
         server.with_connection do |connection|
           cluster.schedule_kill_cursor(
             cursor.id,
@@ -557,7 +561,9 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, authorized_primary)
+      authorized_primary.with_connection do |connection|
+        view.send(:send_initial_query, connection)
+      end
     end
 
     let(:cursor) do
