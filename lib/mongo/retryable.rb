@@ -59,9 +59,9 @@ module Mongo
     #
     # @return [ Cursor ] The cursor for the result set.
     def read_with_retry_cursor(session, server_selector, view, &block)
-      read_with_retry(session, server_selector) do |server|
-        result = yield server
-        Cursor.new(view, result, server, session: session)
+      read_with_retry(session, server_selector) do |connection|
+        result = yield connection
+        Cursor.new(view, result, connection.server, session: session)
       end
     end
 
@@ -213,7 +213,7 @@ module Mongo
 
       begin
         server.with_connection do |connection|
-          raise MondernRetryUnsupported.new unless ending_transaction || server.retry_writes?
+          raise MondernRetryUnsupported.new unless ending_transaction || connection.retry_writes?
 
           txn_num = if session.in_transaction?
             session.txn_num
@@ -222,7 +222,7 @@ module Mongo
           end
 
           begin
-            yield(server, txn_num, false)
+            yield(connection, txn_num, false)
           rescue Error::SocketError, Error::SocketTimeoutError => e
             e.add_note('modern retry')
             e.add_note("attempt 1")
@@ -268,7 +268,7 @@ module Mongo
         server = select_server(cluster, ServerSelector.primary, session)
         begin
           server.with_connection do |connection|
-            yield server
+            yield connection
           end
         rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
           e.add_note('retries disabled')

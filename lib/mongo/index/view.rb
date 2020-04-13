@@ -152,13 +152,16 @@ module Mongo
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
           spec = {
-                  indexes: normalize_models(models.flatten, server),
-                  db_name: database.name,
-                  coll_name: collection.name,
-                  session: session
-                 }
-          spec[:write_concern] = write_concern if server.features.collation_enabled?
-          Operation::CreateIndex.new(spec).execute(server, client: client)
+            indexes: normalize_models(models.flatten, server),
+            db_name: database.name,
+            coll_name: collection.name,
+            session: session
+           }
+
+          server.with_connection do |connection|
+            spec[:write_concern] = write_concern if connection.features.collation_enabled?
+            Operation::CreateIndex.new(spec).execute(connection, client: client)
+          end
         end
       end
 
