@@ -97,6 +97,10 @@ module Mongo
                    :last_write_date,
                    :logical_session_timeout
 
+    def retry_writes?
+      !!(features.sessions_enabled? && logical_session_timeout && !standalone?)
+    end
+
       def app_metadata
         @app_metadata ||= begin
           same = true

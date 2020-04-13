@@ -192,7 +192,9 @@ module Mongo
           :session => session
         )
 
-        op.execute(server, client: client, options: execution_opts)
+        server.with_connection do |connection|
+          op.execute(connection, client: client, options: execution_opts)
+        end
       end
     end
 
