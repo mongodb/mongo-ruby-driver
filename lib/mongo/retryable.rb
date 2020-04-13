@@ -406,7 +406,9 @@ module Mongo
       log_retry(original_error, message: 'Read retry')
 
       begin
-        yield server, true
+        server.with_connection do |connection|
+          yield connection, true
+        end
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
         e.add_note("attempt 2")
@@ -433,14 +435,16 @@ module Mongo
       # a socket error or a not master error should have marked the respective
       # server unknown). Here we just need to wait for server selection.
       server = select_server(cluster, ServerSelector.primary, session)
-      unless server.retry_writes?
-        # Do not need to add "modern retry" here, it should already be on
-        # the first exception.
-        original_error.add_note('did not retry because server selected for retry does not supoprt retryable writes')
-        raise original_error
+      server.with_connection do |connection|
+        unless connection.retry_writes?
+          # Do not need to add "modern retry" here, it should already be on
+          # the first exception.
+          original_error.add_note('did not retry because server selected for retry does not supoprt retryable writes')
+          raise original_error
+        end
+        log_retry(original_error, message: 'Write retry')
+        yield(connection, txn_num, true)
       end
-      log_retry(original_error, message: 'Write retry')
-      yield(server, txn_num, true)
     rescue Error::SocketError, Error::SocketTimeoutError => e
       e.add_note('modern retry')
       e.add_note('attempt 2')

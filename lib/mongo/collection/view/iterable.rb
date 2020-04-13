@@ -39,7 +39,9 @@ module Mongo
           session = client.send(:get_session, @options)
           @cursor = if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session)
-            result = send_initial_query(server, session)
+            result = server.with_connection do |connection|
+              send_initial_query(connection, session)
+            end
             Cursor.new(view, result, server, session: session)
           else
             read_with_retry_cursor(session, server_selector, view) do |server|
