@@ -23,11 +23,6 @@ module Mongo
       #
       # @since 2.0.0
       module Iterable
-        # TODO: clean up
-        private def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
-        end
-
         # Iterate through documents returned by a query with this +View+.
         #
         # @example Iterate through the result of the view.

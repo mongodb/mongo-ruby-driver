@@ -172,6 +172,10 @@ module Mongo
 
       private
 
+      def valid_server?(server)
+        true
+      end
+
       def initialize_copy(other)
         @collection = other.collection
         @options = other.options.dup
