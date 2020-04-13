@@ -183,6 +183,16 @@ the signature calculation. The following documents should be read in order:
 The most excellent [awssignature.com](http://www.awssignature.com/) was
 indispensable in debugging the actual signature calculation process.
 
+### MongoDB Server
+
+MongoDB server internally defines the set of headers that it is prepared to
+handle when it is processing AWS authentication. Headers that are not part
+of that set cause the server to reject driver's payloads.
+
+The error reporting when additional headers are provided and when the
+correct set of headers is provided but the headers are not ordered
+lexicographically [can be misleading](https://jira.mongodb.org/browse/SERVER-47488).
+
 ## Direct AWS Requests
 
 [STS GetCallerIdentity API docs](https://docs.aws.amazon.com/STS/latest/APIReference/API_GetCallerIdentity.html)
