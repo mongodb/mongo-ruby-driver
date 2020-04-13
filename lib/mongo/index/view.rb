@@ -238,8 +238,11 @@ module Mongo
                    session: session
                  }
           server = next_primary(nil, session)
-          spec[:write_concern] = write_concern if server.features.collation_enabled?
-          Operation::DropIndex.new(spec).execute(server, client: client)
+
+          server.with_connection do |connection|
+            spec[:write_concern] = write_concern if connection.features.collation_enabled?
+            Operation::DropIndex.new(spec).execute(connection, client: client)
+          end
         end
       end
 
