@@ -16,7 +16,8 @@ module Mongo
   class Collection
     class View
 
-      class InvalidMapReduceServer < Mongo::Error; end
+      # TODO: clean up
+      class MapReduceError < Mongo::Error; end
 
       # Provides behavior around a map/reduce operation on the collection
       # view.
@@ -71,8 +72,13 @@ module Mongo
           @cursor = nil
           session = client.send(:get_session, @options)
           server = cluster.next_primary(nil, session)
-          result = send_initial_query(server, session)
-          result = send_fetch_query(server, session) unless inline?
+
+          result = nil
+          server.with_connection do |connection|
+            result = send_initial_query(connection, session)
+            result = send_fetch_query(connection, session) unless inline?
+          end
+
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
             @cursor.each do |doc|
@@ -234,24 +240,13 @@ module Mongo
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server, session)
-          begin
-            server.with_connection do |connection|
-              raise InvalidMapReduceServer.new unless valid_server?(connection)
-              do_stuff(connection, session)
-            end
-          rescue InvalidMapReduceServer
-            msg = "Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable"
+        def send_initial_query(connection, session)
+          # TODO: come back here and fix this
+          unless valid_server?(connection)
+            msg = "Rerouting the MapReduce operation to the primary server - #{connection.server.summary} is not suitable"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
-
-            server.with_connection do |connection|
-              do_stuff(connection, session)
-            end
           end
-        end
-
-        def do_stuff(connection, session)
           validate_collation!(connection)
           initial_query_op(session).execute(connection, client: client)
         end
@@ -264,8 +259,8 @@ module Mongo
           Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(connection, session)
-          if connection.features.find_command_enabled?
+        def fetch_query_op(server, session)
+          if server.features.find_command_enabled?
             Operation::Find.new(find_command_spec(session))
           else
             Operation::Find.new(fetch_query_spec)
@@ -273,9 +268,7 @@ module Mongo
         end
 
         def send_fetch_query(server, session)
-          server.with_connection do |connection|
-            fetch_query_op(connection, session).execute(connection, client: client)
-          end
+          fetch_query_op(server, session).execute(server, client: client)
         end
 
         def validate_collation!(server)

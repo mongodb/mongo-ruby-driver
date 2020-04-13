@@ -16,11 +16,17 @@ module Mongo
   class Collection
     class View
 
+      # TODO: clean this up
+      class InvalidServerError < Mongo::Error; end
       # Defines iteration related behavior for collection views, including
       # cursor instantiation.
       #
       # @since 2.0.0
       module Iterable
+        # TODO: clean up
+        private def valid_server?(server)
+          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+        end
 
         # Iterate through documents returned by a query with this +View+.
         #
@@ -37,15 +43,35 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          @cursor = if respond_to?(:write?, true) && write?
-            server = server_selector.select_server(cluster, nil, session)
-            result = send_initial_query(server, session)
-            Cursor.new(view, result, server, session: session)
-          else
-            read_with_retry_cursor(session, server_selector, view) do |server|
-              send_initial_query(server, session)
+          begin
+            @cursor = if respond_to?(:write?, true) && write?
+              server = server_selector.select_server(cluster, nil, session)
+
+              result = server.with_connection do |connection|
+                raise InvalidServerError.new unless valid_server?(connection)
+                send_initial_query(connection, session)
+              end
+
+              Cursor.new(view, result, server, session: session)
+            else
+              read_with_retry_cursor(session, server_selector, view) do |connection|
+                raise InvalidServerError.new unless valid_server?(connection)
+                send_initial_query(connection, session)
+              end
+            end
+          rescue InvalidServerError
+            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
+            server = cluster.next_primary(nil, session)
+
+            result = server.with_connection do |connection|
+              send_initial_query(connection, session)
+            end
+
+            if respond_to?(:write?, true) && write?
+              @cursor = Cursor.new(view, result, server, session: session)
             end
           end
+
           if block_given?
             @cursor.each do |doc|
               yield doc
