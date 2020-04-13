@@ -596,29 +596,34 @@ module Mongo
           end
           server = server_selector.select_server(cluster, nil, session)
           cmd = Operation::ParallelScan.new({
-                  :coll_name => collection.name,
+            :coll_name => collection.name,
+            :db_name => database.name,
+            :cursor_count => cursor_count,
+            :read_concern => read_concern,
+            :session => session,
+          }.merge!(options))
+
+          server.with_connection do |connection|
+            cmd.execute(connection, client: client).cursor_ids.map do |cursor_id|
+              command = if connection.features.find_command_enabled?
+                Operation::GetMore.new(
+                  :selector => {:getMore => BSON::Int64.new(cursor_id),
+                               :collection => collection.name},
                   :db_name => database.name,
-                  :cursor_count => cursor_count,
-                  :read_concern => read_concern,
                   :session => session,
-                }.merge!(options))
-          cmd.execute(server, client: client).cursor_ids.map do |cursor_id|
-            result = if server.features.find_command_enabled?
-              Operation::GetMore.new({
-                :selector => {:getMore => BSON::Int64.new(cursor_id),
-                             :collection => collection.name},
-                :db_name => database.name,
-                :session => session,
-              }).execute(server, client: client)
-             else
-              Operation::GetMore.new({
-                :to_return => 0,
-                :cursor_id => BSON::Int64.new(cursor_id),
-                :db_name => database.name,
-                :coll_name => collection.name
-              }).execute(server, client: client)
+                )
+               else
+                Operation::GetMore.new(
+                  :to_return => 0,
+                  :cursor_id => BSON::Int64.new(cursor_id),
+                  :db_name => database.name,
+                  :coll_name => collection.name
+                )
+              end
+
+              result = command.execute(connection, client: client)
+              Cursor.new(self, result, server, session: session)
             end
-            Cursor.new(self, result, server, session: session)
           end
         end
 
