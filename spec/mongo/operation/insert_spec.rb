@@ -23,6 +23,12 @@ describe Mongo::Operation::Insert do
     described_class.new(spec)
   end
 
+  let(:response) do
+    authorized_primary.with_connection do |connection|
+      insert.execute(connection, client: nil)
+    end
+  end
+
   describe '#initialize' do
 
     context 'spec' do
@@ -83,7 +89,7 @@ describe Mongo::Operation::Insert do
       end
 
       let(:inserted_ids) do
-        insert.execute(authorized_primary, client: nil).inserted_ids
+        response.inserted_ids
       end
 
       let(:collection_ids) do
@@ -108,13 +114,13 @@ describe Mongo::Operation::Insert do
     end
 
     context 'when inserting a single document' do
+      let!(:response) do
+        authorized_primary.with_connection do |connection|
+          insert.execute(connection, client: nil)
+        end
+      end
 
       context 'when the insert succeeds' do
-
-        let!(:response) do
-          insert.execute(authorized_primary, client: nil)
-        end
-
         it 'reports the correct written count' do
           expect(response.written_count).to eq(1)
         end
@@ -143,10 +149,12 @@ describe Mongo::Operation::Insert do
         end
 
         it 'raises an error' do
-          expect {
-            failing_insert.execute(authorized_primary, client: nil)
-            failing_insert.execute(authorized_primary, client: nil)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          expect do
+            authorized_primary.with_connection do |connection|
+              failing_insert.execute(connection, client: nil)
+              failing_insert.execute(connection, client: nil)
+            end
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
@@ -163,7 +171,9 @@ describe Mongo::Operation::Insert do
         end
 
         let!(:response) do
-          insert.execute(authorized_primary, client: nil)
+          authorized_primary.with_connection do |connection|
+            insert.execute(connection, client: nil)
+          end
         end
 
         it 'reports the correct written count' do
@@ -195,8 +205,10 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(authorized_primary, client: nil)
-            failing_insert.execute(authorized_primary, client: nil)
+            authorized_primary.with_connection do |connection|
+              failing_insert.execute(connection, client: nil)
+              failing_insert.execute(connection, client: nil)
+            end
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -221,8 +233,10 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(authorized_primary, client: nil)
-            failing_insert.execute(authorized_primary, client: nil)
+            authorized_primary.with_connection do |connection|
+              failing_insert.execute(connection, client: nil)
+              failing_insert.execute(connection, client: nil)
+            end
           }.to raise_error(Mongo::Error::OperationFailure)
         end
 
@@ -236,13 +250,13 @@ describe Mongo::Operation::Insert do
 
         it 'raises an error' do
           expect {
-            insert.execute(authorized_primary, client: nil)
+            response
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
 
         it 'does not insert the document' do
           expect {
-            insert.execute(authorized_primary, client: nil)
+            response
           }.to raise_error(Mongo::Error::MaxBSONSize)
           expect(authorized_collection.find.count).to eq(0)
         end
@@ -264,16 +278,8 @@ describe Mongo::Operation::Insert do
         [{ '_id' => 1 }]
       end
 
-      let(:op) do
-        described_class.new(spec)
-      end
-
       before do
         expect(Mongo::Operation::Insert::Legacy).to receive(:new).and_call_original
-      end
-
-      let(:response) do
-        op.execute(authorized_primary, client: nil)
       end
 
       it 'uses op codes instead of write commands' do

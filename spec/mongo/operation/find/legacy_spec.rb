@@ -96,7 +96,11 @@ describe Mongo::Operation::Find::Legacy do
       end
 
       it 'does not raise an exception' do
-        expect(op.execute(authorized_primary, client: nil)).to be_a(Mongo::Operation::Find::Legacy::Result)
+        authorized_primary.with_connection do |connection|
+          expect(
+            op.execute(connection, client: nil)
+          ).to be_a(Mongo::Operation::Find::Legacy::Result)
+        end
       end
     end
   end

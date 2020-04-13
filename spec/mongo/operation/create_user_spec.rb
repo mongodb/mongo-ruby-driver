@@ -26,7 +26,9 @@ describe Mongo::Operation::CreateUser do
     context 'when user creation was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary, client: nil)
+        root_authorized_primary.with_connection do |connection|
+          operation.execute(connection, client: nil)
+        end
       end
 
       it 'saves the user in the database' do
@@ -37,10 +39,12 @@ describe Mongo::Operation::CreateUser do
     context 'when creation was not successful' do
 
       it 'raises an exception' do
-        expect {
-          operation.execute(root_authorized_primary, client: nil)
-          operation.execute(root_authorized_primary, client: nil)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        expect do
+          root_authorized_primary.with_connection do |connection|
+            operation.execute(connection, client: nil)
+            operation.execute(connection, client: nil)
+          end
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

@@ -85,6 +85,12 @@ describe Mongo::Operation::Delete do
       authorized_collection.delete_many
     end
 
+    let(:result) do
+      authorized_primary.with_connection do |connection|
+        delete.execute(connection, client: nil)
+      end
+    end
+
     context 'when deleting a single document' do
 
       let(:delete) do
@@ -100,10 +106,6 @@ describe Mongo::Operation::Delete do
 
         let(:document) do
           { 'q' => { field: 'test' }, 'limit' => 1 }
-        end
-
-        let(:result) do
-          delete.execute(authorized_primary, client: nil)
         end
 
         it 'deletes the documents from the database' do
@@ -122,9 +124,11 @@ describe Mongo::Operation::Delete do
         end
 
         it 'raises an exception' do
-          expect {
-            delete.execute(authorized_primary, client: nil)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          expect do
+            authorized_primary.with_connection do |connection|
+              delete.execute(connection, client: nil)
+            end
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
@@ -146,10 +150,6 @@ describe Mongo::Operation::Delete do
           { 'q' => { field: 'test' }, 'limit' => 0 }
         end
 
-        let(:result) do
-          delete.execute(authorized_primary, client: nil)
-        end
-
         it 'deletes the documents from the database' do
           expect(result.written_count).to eq(2)
         end
@@ -165,15 +165,13 @@ describe Mongo::Operation::Delete do
           { q: { '$set' => { a: 1 } }, limit: 0 }
         end
 
-        let(:result) do
-          delete.execute(authorized_primary, client: nil)
-        end
-
         it 'does not delete any documents' do
 
-          expect {
-            op.execute(authorized_primary, client: nil)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          expect do
+            authorized_primary.with_connection do |connection|
+              delete.execute(connection, client: nil)
+            end
+          end.to raise_error(Mongo::Error::OperationFailure)
 
           expect(authorized_collection.find.count).to eq(2)
         end
@@ -186,9 +184,11 @@ describe Mongo::Operation::Delete do
         end
 
         it 'raises an error' do
-          expect {
-            op.execute(authorized_primary, client: nil)
-          }.to raise_error(Mongo::Error::MaxBSONSize)
+          expect do
+            authorized_primary.with_connection do |connection|
+              delete.execute(connection, client: nil)
+            end
+          end.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
     end
@@ -208,10 +208,6 @@ describe Mongo::Operation::Delete do
 
       let(:document) do
         { 'q' => { field: 'test' }, 'limit' => 1 }
-      end
-
-      let(:result) do
-        delete.execute(authorized_primary, client: nil)
       end
 
       before do

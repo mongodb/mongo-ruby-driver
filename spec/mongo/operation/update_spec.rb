@@ -82,6 +82,12 @@ describe Mongo::Operation::Update do
       authorized_collection.delete_many
     end
 
+    let(:result) do
+      authorized_primary.with_connection do |connection|
+        update.execute(connection, client: nil)
+      end
+    end
+
     context 'when updating a single document' do
 
       let(:update) do
@@ -97,10 +103,6 @@ describe Mongo::Operation::Update do
 
         let(:document) do
           { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }} }
-        end
-
-        let(:result) do
-          update.execute(authorized_primary, client: nil)
         end
 
         it 'updates the document' do
@@ -128,7 +130,7 @@ describe Mongo::Operation::Update do
 
         it 'raises an exception' do
           expect {
-            update.execute(authorized_primary, client: nil)
+            result
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -149,10 +151,6 @@ describe Mongo::Operation::Update do
 
         let(:document) do
           { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => true }
-        end
-
-        let(:result) do
-          update.execute(authorized_primary, client: nil)
         end
 
         it 'updates the documents' do
@@ -180,7 +178,7 @@ describe Mongo::Operation::Update do
 
         it 'raises an exception' do
           expect {
-            update.execute(authorized_primary, client: nil)
+            result
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -193,7 +191,7 @@ describe Mongo::Operation::Update do
 
         it 'raises an error' do
           expect {
-            update.execute(authorized_primary, client: nil)
+            result
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
@@ -202,10 +200,6 @@ describe Mongo::Operation::Update do
 
         let(:document) do
           { 'q' => { field: 'non-existent' }, 'u' => { '$set' => { other: 'blah' }}, 'upsert' => true }
-        end
-
-        let(:result) do
-          update.execute(authorized_primary, client: nil)
         end
 
         it 'inserts the document' do
@@ -240,10 +234,6 @@ describe Mongo::Operation::Update do
 
       let(:document) do
         { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }}, limit: 1 }
-      end
-
-      let(:result) do
-        update.execute(authorized_primary, client: nil)
       end
 
       before do
