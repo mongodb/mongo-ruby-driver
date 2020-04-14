@@ -77,29 +77,37 @@ module Mongo
       # @api private
       attr_reader :description
 
-    def_delegators :description,
-                   :arbiter?,
-                   :features,
-                   :ghost?,
-                   :max_wire_version,
-                   :max_write_batch_size,
-                   :max_bson_object_size,
-                   :max_message_size,
-                   :tags,
-                   :average_round_trip_time,
-                   :mongos?,
-                   :other?,
-                   :primary?,
-                   :replica_set_name,
-                   :secondary?,
-                   :standalone?,
-                   :unknown?,
-                   :last_write_date,
-                   :logical_session_timeout
+      def_delegators :description,
+                     :arbiter?,
+                     :features,
+                     :ghost?,
+                     :max_wire_version,
+                     :max_write_batch_size,
+                     :max_bson_object_size,
+                     :max_message_size,
+                     :tags,
+                     :average_round_trip_time,
+                     :mongos?,
+                     :other?,
+                     :primary?,
+                     :replica_set_name,
+                     :secondary?,
+                     :standalone?,
+                     :unknown?,
+                     :last_write_date,
+                     :logical_session_timeout
 
-    def retry_writes?
-      !!(features.sessions_enabled? && logical_session_timeout && !standalone?)
-    end
+      # Whether writes sent across this connection should be retried
+      #
+      # @return [ Boolean ] Whether writes should be retried.
+      #
+      # @note Retryable writes are only available on server versions 3.6+ and with
+      #   sharded clusters or replica sets.
+      #
+      # @api private
+      def retry_writes?
+        !!(features.sessions_enabled? && logical_session_timeout && !standalone?)
+      end
 
       def app_metadata
         @app_metadata ||= begin
