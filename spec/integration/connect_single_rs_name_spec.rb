@@ -41,10 +41,11 @@ describe 'Direct connection with RS name' do
 
       it_behaves_like 'passes RS name to topology'
 
-      it 'creates a client which raises on every operation' do
+      it 'creates a client which does not find a suitable server' do
+        # TODO When RUBY-2197 is implemented, assert the error message also
         expect do
           client.database.command(ismaster: 1)
-        end.to raise_error(Mongo::Error::NoServerAvailable, "Cluster topology specifies replica set name wrong, but the server has replica set name #{ClusterConfig.instance.replica_set_name}")
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
   end
@@ -58,9 +59,10 @@ describe 'Direct connection with RS name' do
       it_behaves_like 'passes RS name to topology'
 
       it 'creates a client which raises on every operation' do
+        # TODO When RUBY-2197 is implemented, assert the error message also
         expect do
           client.database.command(ismaster: 1)
-        end.to raise_error(Mongo::Error::NoServerAvailable, 'Cluster topology specifies replica set name any, but the server has replica set name <nil>')
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
   end

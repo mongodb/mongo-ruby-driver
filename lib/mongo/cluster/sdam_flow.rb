@@ -91,7 +91,16 @@ class Mongo::Cluster
 
       case topology
       when Topology::Single
-        # no changes ever
+        if topology.replica_set_name
+          if updated_desc.replica_set_name != topology.replica_set_name
+            log_warn(
+              "Server #{updated_desc.address.to_s} has an incorrect replica set name '#{updated_desc.replica_set_name}'; expected '#{topology.replica_set_name}'"
+            )
+            @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
+              {}, updated_desc.average_round_trip_time)
+            update_server_descriptions
+          end
+        end
       when Topology::Unknown
         if updated_desc.standalone?
           update_unknown_with_standalone
@@ -194,8 +203,8 @@ class Mongo::Cluster
       if topology.replica_set_name != updated_desc.replica_set_name
         log_warn(
           "Removing server #{updated_desc.address.to_s} because it has an " +
-          "incorrect replica set name (#{updated_desc.replica_set_name}); " +
-          "current set name is #{topology.replica_set_name}"
+          "incorrect replica set name '#{updated_desc.replica_set_name}'; " +
+          "expected '#{topology.replica_set_name}'"
         )
         remove
         check_if_has_primary
