@@ -219,13 +219,13 @@ module Mongo
       preference = ServerSelector.get(txn_read_pref)
 
       client.send(:with_session, opts) do |session|
-        read_with_retry(session, preference) do |server|
-          Operation::Command.new({
+        read_with_retry(session, preference) do |connection|
+          Operation::Command.new(
             :selector => operation.dup,
             :db_name => name,
             :read => preference,
             :session => session
-          }).execute(server, client: client)
+          ).execute(connection, client: client)
         end
       end
     end

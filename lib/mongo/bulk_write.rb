@@ -201,30 +201,30 @@ module Mongo
       execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num)
     end
 
-    def delete_one(documents, server, operation_id, session, txn_num)
+    def delete_one(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
-      Operation::Delete.new(spec).bulk_execute(server, client: client)
+      Operation::Delete.new(spec).bulk_execute(connection, client: client)
     end
 
-    def delete_many(documents, server, operation_id, session, txn_num)
+    def delete_many(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents)
-      Operation::Delete.new(spec).bulk_execute(server, client: client)
+      Operation::Delete.new(spec).bulk_execute(connection, client: client)
     end
 
-    def insert_one(documents, server, operation_id, session, txn_num)
+    def insert_one(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
-      Operation::Insert.new(spec).bulk_execute(server, client: client)
+      Operation::Insert.new(spec).bulk_execute(connection, client: client)
     end
 
-    def update_one(documents, server, operation_id, session, txn_num)
+    def update_one(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
-      Operation::Update.new(spec).bulk_execute(server, client: client)
+      Operation::Update.new(spec).bulk_execute(connection, client: client)
     end
     alias :replace_one :update_one
 
-    def update_many(documents, server, operation_id, session, txn_num)
+    def update_many(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents)
-      Operation::Update.new(spec).bulk_execute(server, client: client)
+      Operation::Update.new(spec).bulk_execute(connection, client: client)
     end
   end
 end

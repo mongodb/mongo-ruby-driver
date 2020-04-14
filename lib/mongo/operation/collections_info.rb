@@ -31,7 +31,7 @@ module Mongo
       # Execute the operation.
       #
       # @example
-      #   operation.execute(server, client: nil)
+      #   operation.execute(connection, client: nil)
       #
       # @param [ Mongo::Server::Connection ] connection The connection over
       #   which to send the operation.
