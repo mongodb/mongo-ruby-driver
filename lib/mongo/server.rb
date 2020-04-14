@@ -161,9 +161,14 @@ module Mongo
                    :replica_set_name,
                    :secondary?,
                    :standalone?,
-                   :unknown?,
-                   :last_write_date,
-                   :logical_session_timeout
+                   :last_write_date
+                   :unknown?
+
+    # @!method logical_session_timeout
+    #   @deprecated
+    def_delegators :description,
+     :logical_session_timeout
+
 
     # Get the app metadata from the cluster.
     def_delegators :cluster,
