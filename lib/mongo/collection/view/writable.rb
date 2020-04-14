@@ -56,14 +56,14 @@ module Mongo
           with_session(opts) do |session|
             applied_write_concern = applied_write_concern(session)
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
-            write_with_retry(session, applied_write_concern) do |server, txn_num|
-              apply_collation!(cmd, server, opts)
+            write_with_retry(session, applied_write_concern) do |connection, txn_num|
+              apply_collation!(cmd, connection, opts)
               Operation::Command.new(
                   :selector => cmd,
                   :db_name => database.name,
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end.first['value']
         end
@@ -136,15 +136,15 @@ module Mongo
           value = with_session(opts) do |session|
             applied_write_concern = applied_write_concern(opts[:session])
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
-            write_with_retry(session, applied_write_concern) do |server, txn_num|
-              apply_collation!(cmd, server, opts)
-              apply_array_filters!(cmd, server, opts)
+            write_with_retry(session, applied_write_concern) do |connection, txn_num|
+              apply_collation!(cmd, connection, opts)
+              apply_array_filters!(cmd, connection, opts)
               Operation::Command.new(
                   :selector => cmd,
                   :db_name => database.name,
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end.first['value']
           value unless value.nil? || value.empty?
@@ -167,15 +167,15 @@ module Mongo
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
-            nro_write_with_retry(session, write_concern) do |server|
-              apply_collation!(delete_doc, server, opts)
+            nro_write_with_retry(session, write_concern) do |connection|
+              apply_collation!(delete_doc, connection, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
                   :session => session
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end
         end
@@ -197,8 +197,8 @@ module Mongo
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
-            write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(delete_doc, server, opts)
+            write_with_retry(session, write_concern) do |connection, txn_num|
+              apply_collation!(delete_doc, connection, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
@@ -206,7 +206,7 @@ module Mongo
                   :write_concern => write_concern,
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end
         end
@@ -238,9 +238,9 @@ module Mongo
           end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
-            write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
+            write_with_retry(session, write_concern) do |connection, txn_num|
+              apply_collation!(update_doc, connection, opts)
+              apply_array_filters!(update_doc, connection, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -250,7 +250,7 @@ module Mongo
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end
         end
@@ -285,9 +285,9 @@ module Mongo
           end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
-            nro_write_with_retry(session, write_concern) do |server|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
+            nro_write_with_retry(session, write_concern) do |connection|
+              apply_collation!(update_doc, connection, opts)
+              apply_array_filters!(update_doc, connection, opts)
               Operation::Update.new(
                   :updates => [ update_doc ],
                   :db_name => collection.database.name,
@@ -295,7 +295,7 @@ module Mongo
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end
         end
@@ -329,9 +329,9 @@ module Mongo
           end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
-            write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
+            write_with_retry(session, write_concern) do |connection, txn_num|
+              apply_collation!(update_doc, connection, opts)
+              apply_array_filters!(update_doc, connection, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -341,7 +341,7 @@ module Mongo
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
                   :txn_num => txn_num
-              ).execute(server, client: client)
+              ).execute(connection, client: client)
             end
           end
         end

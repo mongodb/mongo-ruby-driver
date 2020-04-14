@@ -424,6 +424,16 @@ module Mongo
       pool.with_connection(&block)
     end
 
+    # TODO: documentation
+    def check_out_connection
+      pool.check_out
+    end
+
+    # TODO: documentation
+    def check_in_connection(connection)
+      pool.check_in(connection)
+    end
+
     # Handle handshake failure.
     #
     # @since 2.7.0

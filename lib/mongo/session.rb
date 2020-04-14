@@ -561,7 +561,7 @@ module Mongo
           if write_concern && !write_concern.is_a?(WriteConcern::Base)
             write_concern = WriteConcern.get(write_concern)
           end
-          write_with_retry(self, write_concern, true) do |server, txn_num, is_retry|
+          write_with_retry(self, write_concern, true) do |connection, txn_num, is_retry|
             if is_retry
               if write_concern
                 wco = write_concern.options.merge(w: :majority)
@@ -578,7 +578,7 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute(server, client: @client)
+            Operation::Command.new(spec).execute(connection, client: @client)
           end
         end
       ensure
@@ -616,13 +616,13 @@ module Mongo
 
       begin
         unless starting_transaction?
-          write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
+          write_with_retry(self, txn_options[:write_concern], true) do |connection, txn_num|
             Operation::Command.new(
               selector: { abortTransaction: 1 },
               db_name: 'admin',
               session: self,
               txn_num: txn_num
-            ).execute(server, client: @client)
+            ).execute(connection, client: @client)
           end
         end
 

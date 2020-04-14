@@ -204,8 +204,8 @@ module Mongo
         def execute
           view.send(:with_session, @options) do |session|
             write_concern = view.write_concern_with_session(session)
-            nro_write_with_retry(session, write_concern) do |server|
-              send_initial_query(server, session)
+            nro_write_with_retry(session, write_concern) do |connection|
+              send_initial_query(connection, session)
             end
           end
         end

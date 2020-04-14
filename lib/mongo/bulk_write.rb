@@ -61,22 +61,22 @@ module Mongo
         operations.each do |operation|
           if single_statement?(operation)
             write_concern = write_concern(session)
-            write_with_retry(session, write_concern) do |server, txn_num|
+            write_with_retry(session, write_concern) do |connection, txn_num|
               execute_operation(
                   operation.keys.first,
                   operation.values.flatten,
-                  server,
+                  connection,
                   operation_id,
                   result_combiner,
                   session,
                   txn_num)
             end
           else
-            nro_write_with_retry(session, write_concern) do |server|
+            nro_write_with_retry(session, write_concern) do |connection|
               execute_operation(
                   operation.keys.first,
                   operation.values.flatten,
-                  server,
+                  connection,
                   operation_id,
                   result_combiner,
                   session)
@@ -172,21 +172,21 @@ module Mongo
       }
     end
 
-    def execute_operation(name, values, server, operation_id, result_combiner, session, txn_num = nil)
-      raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
-      raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
+    def execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num = nil)
+      raise Error::UnsupportedCollation.new if op_combiner.has_collation && !connection.features.collation_enabled?
+      raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !connection.features.array_filters_enabled?
       unpin_maybe(session) do
-        if values.size > server.max_write_batch_size
-          split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
+        if values.size > connection.max_write_batch_size
+          split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
         else
-          result = send(name, values, server, operation_id, session, txn_num)
+          result = send(name, values, connection, operation_id, session, txn_num)
           result_combiner.combine!(result, values.size)
         end
       end
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
       unpin_maybe(session) do
-        split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
+        split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
       end
     end
 
@@ -194,11 +194,11 @@ module Mongo
       @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
-    def split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
-      execute_operation(name, values.shift(values.size / 2), server, operation_id, result_combiner, session, txn_num)
+    def split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values.shift(values.size / 2), connection, operation_id, result_combiner, session, txn_num)
 
       txn_num = session.next_txn_num if txn_num
-      execute_operation(name, values, server, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num)
     end
 
     def delete_one(documents, server, operation_id, session, txn_num)
