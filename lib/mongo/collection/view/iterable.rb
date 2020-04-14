@@ -16,13 +16,12 @@ module Mongo
   class Collection
     class View
 
-      # TODO: clean this up
-      class InvalidServerError < Mongo::Error; end
       # Defines iteration related behavior for collection views, including
       # cursor instantiation.
       #
       # @since 2.0.0
       module Iterable
+
         # Iterate through documents returned by a query with this +View+.
         #
         # @example Iterate through the result of the view.
@@ -38,35 +37,19 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          begin
-            @cursor = if respond_to?(:write?, true) && write?
-              server = server_selector.select_server(cluster, nil, session)
-
-              result = server.with_connection do |connection|
-                raise InvalidServerError.new unless valid_server?(connection)
-                send_initial_query(connection, session)
-              end
-
-              Cursor.new(view, result, server, session: session)
-            else
-              read_with_retry_cursor(session, server_selector, view) do |connection|
-                raise InvalidServerError.new unless valid_server?(connection)
-                send_initial_query(connection, session)
-              end
-            end
-          rescue InvalidServerError
-            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
-            server = cluster.next_primary(nil, session)
+          @cursor = if respond_to?(:write?, true) && write?
+            server = server_selector.select_server(cluster, nil, session)
 
             result = server.with_connection do |connection|
               send_initial_query(connection, session)
             end
 
-            if respond_to?(:write?, true) && write?
-              @cursor = Cursor.new(view, result, server, session: session)
+            Cursor.new(view, result, server, session: session)
+          else
+            read_with_retry_cursor(session, server_selector, view) do |connection|
+              send_initial_query(connection, session)
             end
           end
-
           if block_given?
             @cursor.each do |doc|
               yield doc
@@ -98,8 +81,8 @@ module Mongo
 
         private
 
-        def initial_query_op(server, session)
-          if server.features.find_command_enabled?
+        def initial_query_op(connection, session)
+          if connection.features.find_command_enabled?
             initial_command_op(session)
           else
             Operation::Find.new(Builder::OpQuery.new(self).specification)
@@ -114,9 +97,9 @@ module Mongo
           end
         end
 
-        def send_initial_query(server, session = nil)
-          validate_collation!(server, collation)
-          initial_query_op(server, session).execute(server, client: client)
+        def send_initial_query(connection, session = nil)
+          validate_collation!(connection, collation)
+          initial_query_op(connection, session).execute(connection, client: client)
         end
       end
     end

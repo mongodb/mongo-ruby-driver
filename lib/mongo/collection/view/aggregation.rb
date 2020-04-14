@@ -119,13 +119,26 @@ module Mongo
           !write?
         end
 
-        def send_initial_query(server, session)
-          validate_collation!(server)
-          initial_query_op(session).execute(server, client: client)
+        def send_initial_query(connection, session)
+          if valid_server?(connection)
+            do_send_initial_query(connection, session)
+          else
+            log_warn("Rerouting the Aggregation operation to the primary server - #{connection.server.summary} is not suitable")
+            server = cluster.next_primary(nil, session)
+
+            server.with_connection do |connection|
+              do_send_initial_query(connection, session)
+            end
+          end
         end
 
-        def validate_collation!(server)
-          if options[:collation] && !server.features.collation_enabled?
+        def do_send_initial_query(connection, session)
+          validate_collation!(connection)
+          initial_query_op(session).execute(connection, client: client)
+        end
+
+        def validate_collation!(connection)
+          if options[:collation] && !connection.features.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
         end
