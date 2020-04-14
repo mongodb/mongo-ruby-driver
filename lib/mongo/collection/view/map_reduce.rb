@@ -16,9 +16,6 @@ module Mongo
   class Collection
     class View
 
-      # TODO: clean up
-      class MapReduceError < Mongo::Error; end
-
       # Provides behavior around a map/reduce operation on the collection
       # view.
       #
@@ -232,8 +229,8 @@ module Mongo
           Operation::MapReduce.new(map_reduce_spec(session))
         end
 
-        def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+        def valid_server?(connection)
+          connection.standalone? || connection.mongos? || connection.primary? || secondary_ok?
         end
 
         def secondary_ok?
@@ -241,12 +238,20 @@ module Mongo
         end
 
         def send_initial_query(connection, session)
-          # TODO: come back here and fix this
-          unless valid_server?(connection)
+          if valid_server?(connection)
+            do_send_initial_query(connection, session)
+          else
             msg = "Rerouting the MapReduce operation to the primary server - #{connection.server.summary} is not suitable"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
+
+            server.with_connection do |connection|
+              do_send_initial_query(connection, session)
+            end
           end
+        end
+
+        def do_send_initial_query(connection, session)
           validate_collation!(connection)
           initial_query_op(session).execute(connection, client: client)
         end
@@ -259,20 +264,20 @@ module Mongo
           Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(server, session)
-          if server.features.find_command_enabled?
+        def fetch_query_op(connection, session)
+          if connection.features.find_command_enabled?
             Operation::Find.new(find_command_spec(session))
           else
             Operation::Find.new(fetch_query_spec)
           end
         end
 
-        def send_fetch_query(server, session)
-          fetch_query_op(server, session).execute(server, client: client)
+        def send_fetch_query(connection, session)
+          fetch_query_op(connection, session).execute(connection, client: client)
         end
 
-        def validate_collation!(server)
-          if (view.options[:collation] || options[:collation]) && !server.features.collation_enabled?
+        def validate_collation!(connection)
+          if (view.options[:collation] || options[:collation]) && !connection.features.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
         end
