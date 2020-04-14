@@ -544,7 +544,7 @@ module Mongo
     def insert_one(document, opts = {})
       client.send(:with_session, opts) do |session|
         write_concern = write_concern_with_session(session)
-        write_with_retry(session, write_concern) do |server, txn_num|
+        write_with_retry(session, write_concern) do |connection, txn_num|
           Operation::Insert.new(
               :documents => [ document ],
               :db_name => database.name,
@@ -555,7 +555,7 @@ module Mongo
               :id_generator => client.options[:id_generator],
               :session => session,
               :txn_num => txn_num
-           ).execute(server, client: client)
+           ).execute(connection, client: client)
         end
       end
     end

@@ -24,15 +24,15 @@ module Mongo
     # Execute a read operation returning a cursor with retrying.
     #
     # This method performs server selection for the specified server selector
-    # and yields to the provided block, which should execute the initial
-    # query operation and return its result. The block will be passed the
-    # server selected for the operation. If the block raises an exception,
-    # and this exception corresponds to a read retryable error, and read
-    # retries are enabled for the client, this method will perform server
-    # selection again and yield to the block again (with potentially a
-    # different server). If the block returns successfully, the result
-    # of the block (which should be a Mongo::Operation::Result) is used to
-    # construct a Mongo::Cursor object for the result set. The cursor
+    # and yields a connection to that server to the provided block, which
+    # should execute the initial query operation and return its result.
+    # The block will be passed the server selected for the operation. If the
+    # block raises an exception ,and this exception corresponds to a read
+    # retryable error, and read retries are enabled for the client, this
+    # method will perform server selection again and yield to the block again
+    # (with potentially a different server). If the block returns successfully,
+    # the result of the block (which should be a Mongo::Operation::Result) is
+    # used to construct a Mongo::Cursor object for the result set. The cursor
     # is then returned.
     #
     # If modern retry reads are on (which is the default), the initial read
@@ -45,7 +45,7 @@ module Mongo
     # @api private
     #
     # @example Execute a read returning a cursor.
-    #   cursor = read_with_retry_cursor(session, server_selector, view) do |server|
+    #   cursor = read_with_retry_cursor(session, server_selector, view) do |connection|
     #     # return a Mongo::Operation::Result
     #     ...
     #   end
@@ -68,14 +68,14 @@ module Mongo
     # Execute a read operation with retrying.
     #
     # This method performs server selection for the specified server selector
-    # and yields to the provided block, which should execute the initial
-    # query operation and return its result. The block will be passed the
-    # server selected for the operation. If the block raises an exception,
-    # and this exception corresponds to a read retryable error, and read
-    # retries are enabled for the client, this method will perform server
-    # selection again and yield to the block again (with potentially a
-    # different server). If the block returns successfully, the result
-    # of the block is returned.
+    # and yields a connection to the selected server to the provided block,
+    # which should execute the initial query operation and return its result.
+    # The block will be passed the server selected for the operation. If the
+    # block raises an exception, and this exception corresponds to a read
+    # retryable error, and read retries are enabled for the client, this method
+    # will perform server selection again and yield to the block again (with
+    # potentially a different server). If the block returns successfully, the
+    # result of the block is returned.
     #
     # If modern retry reads are on (which is the default), the initial read
     # operation will be retried once. If legacy retry reads are on, the
@@ -87,7 +87,7 @@ module Mongo
     # @api private
     #
     # @example Execute the read.
-    #   read_with_retry(session, server_selector) do |server|
+    #   read_with_retry(session, server_selector) do |connection|
     #     ...
     #   end
     #
@@ -191,7 +191,8 @@ module Mongo
     #   commitTransaction, false otherwise.
     # @param [ Proc ] block The block to execute.
     #
-    # @yieldparam [ Server ] server The server to which the write should be sent.
+    # @yieldparam [ Mongo::Server::Connection ] connection The connection over
+    #   which the write should be sent.
     # @yieldparam [ Integer ] txn_num Transaction number (NOT the ACID kind).
     #
     # @return [ Result ] The result of the operation.
@@ -210,41 +211,41 @@ module Mongo
       # failed retry_write_allowed? check.
 
       server = select_server(cluster, ServerSelector.primary, session)
+      connection = server.check_out_connection
 
-      begin
-        server.with_connection do |connection|
-          raise MondernRetryUnsupported.new unless ending_transaction || connection.retry_writes?
-
-          txn_num = if session.in_transaction?
-            session.txn_num
-          else
-            session.next_txn_num
-          end
-
-          begin
-            yield(connection, txn_num, false)
-          rescue Error::SocketError, Error::SocketTimeoutError => e
-            e.add_note('modern retry')
-            e.add_note("attempt 1")
-            if session.in_transaction? && !ending_transaction
-              raise e
-            end
-            retry_write(e, session, txn_num, &block)
-          rescue Error::OperationFailure => e
-            e.add_note('modern retry')
-            e.add_note("attempt 1")
-            if e.unsupported_retryable_write?
-              raise_unsupported_error(e)
-            elsif (session.in_transaction? && !ending_transaction) || !e.write_retryable?
-              raise e
-            end
-
-            retry_write(e, session, txn_num, &block)
-          end
-        end
-      rescue ModernRetryUnsupported
+      unless ending_transaction || connection.retry_writes?
+        server.check_in_connection(connection)
         return legacy_write_with_retry(server, session, &block)
       end
+
+      txn_num = if session.in_transaction?
+        session.txn_num
+      else
+        session.next_txn_num
+      end
+
+      begin
+        yield(connection, txn_num, false)
+      rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.add_note('modern retry')
+        e.add_note("attempt 1")
+        if session.in_transaction? && !ending_transaction
+          raise e
+        end
+        retry_write(e, session, txn_num, &block)
+      rescue Error::OperationFailure => e
+        e.add_note('modern retry')
+        e.add_note("attempt 1")
+        if e.unsupported_retryable_write?
+          raise_unsupported_error(e)
+        elsif (session.in_transaction? && !ending_transaction) || !e.write_retryable?
+          raise e
+        end
+
+        retry_write(e, session, txn_num, &block)
+      end
+    ensure
+      server.check_in_connection(connection) if connection
     end
 
     # Retryable writes wrapper for operations not supporting modern retryable
@@ -290,7 +291,8 @@ module Mongo
     #   the cluster.
     # @param [ nil | Session ] session Optional session to use with the operation.
     #
-    # @yieldparam [ Server ] server The server to which the write should be sent.
+    # @yieldparam [ Mongo::Server::Connection ] connection The connection over
+    #   which the write should be sent.
     #
     # @api private
     def legacy_write_with_retry(server = nil, session = nil)

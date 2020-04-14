@@ -151,14 +151,14 @@ module Mongo
       def create_many(*models)
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
-          spec = {
-                  indexes: normalize_models(models.flatten, server),
-                  db_name: database.name,
-                  coll_name: collection.name,
-                  session: session
-                 }
-
           server.with_connection do |connection|
+            spec = {
+              indexes: normalize_models(models.flatten, connection),
+              db_name: database.name,
+              coll_name: collection.name,
+              session: session
+            }
+
             spec[:write_concern] = write_concern if connection.features.collation_enabled?
             Operation::CreateIndex.new(spec).execute(connection, client: client)
           end
@@ -195,8 +195,8 @@ module Mongo
       # @since 2.0.0
       def each(&block)
         session = client.send(:get_session, @options)
-        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session)
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |connection|
+          send_initial_query(connection, session)
         end
         if block_given?
           cursor.each do |doc|
@@ -271,28 +271,28 @@ module Mongo
         Options::Mapper.transform_keys_to_strings(spec)
       end
 
-      def normalize_models(models, server)
-        with_generated_names(models, server).map do |model|
+      def normalize_models(models, connection)
+        with_generated_names(models, connection).map do |model|
           Options::Mapper.transform(model, OPTIONS)
         end
       end
 
-      def send_initial_query(server, session)
-        initial_query_op(session).execute(server, client: client)
+      def send_initial_query(connection, session)
+        initial_query_op(session).execute(connection, client: client)
       end
 
-      def with_generated_names(models, server)
+      def with_generated_names(models, connection)
         models.dup.each do |model|
-          validate_collation!(model, server)
+          validate_collation!(model, connection)
           unless model[:name]
             model[:name] = index_name(model[:key])
           end
         end
       end
 
-      def validate_collation!(model, server)
+      def validate_collation!(model, connection)
         if (model[:collation] || model[Operation::COLLATION]) &&
-            !server.features.collation_enabled?
+            !connection.features.collation_enabled?
           raise Error::UnsupportedCollation.new
         end
       end

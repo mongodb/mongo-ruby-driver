@@ -271,10 +271,10 @@ module Mongo
           session = client.send(:get_session, @options)
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
-          @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
-            start_at_operation_time_supported = server.description.server_version_gte?('4.0')
+          @cursor = read_with_retry_cursor(session, server_selector, view) do |connection|
+            start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
-            result = send_initial_query(server, session)
+            result = send_initial_query(connection, session)
             if doc = result.replies.first && result.replies.first.documents.first
               start_at_operation_time = doc['operationTime']
             else
@@ -345,8 +345,8 @@ module Mongo
           end
         end
 
-        def send_initial_query(server, session)
-          initial_query_op(session).execute(server, client: client)
+        def send_initial_query(connection, session)
+          initial_query_op(session).execute(connection, client: client)
         end
 
         def time_to_bson_timestamp(time)

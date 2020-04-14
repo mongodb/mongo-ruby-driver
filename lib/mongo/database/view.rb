@@ -54,8 +54,8 @@ module Mongo
       def collection_names(options = {})
         @batch_size = options[:batch_size]
         session = client.send(:get_session, options)
-        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session, name_only: true)
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |connection|
+          send_initial_query(connection, session, name_only: true)
         end
         cursor.map do |info|
           if cursor.server.features.list_collections_enabled?
@@ -132,11 +132,11 @@ module Mongo
 
       def collections_info(session, server_selector, options = {}, &block)
         description = nil
-        cursor = read_with_retry_cursor(session, server_selector, self) do |server|
+        cursor = read_with_retry_cursor(session, server_selector, self) do |connection|
           # TODO take description from the connection used to send the query
           # once https://jira.mongodb.org/browse/RUBY-1601 is fixed.
-          description = server.description
-          send_initial_query(server, session, options)
+          description = connection.description
+          send_initial_query(connection, session, options)
         end
         # On 3.0+ servers, we get just the collection names.
         # On 2.6 server, we get collection names prefixed with the database
@@ -173,8 +173,8 @@ module Mongo
         Operation::CollectionsInfo.new(collections_info_spec(session, options))
       end
 
-      def send_initial_query(server, session, options = {})
-        initial_query_op(session, options).execute(server, client: client)
+      def send_initial_query(connection, session, options = {})
+        initial_query_op(session, options).execute(connection, client: client)
       end
     end
   end
