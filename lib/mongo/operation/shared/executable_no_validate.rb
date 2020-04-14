@@ -21,8 +21,8 @@ module Mongo
     # @api private
     module ExecutableNoValidate
 
-      def execute(server, client:)
-        do_execute(server, client)
+      def execute(connection, client:)
+        do_execute(connection, client)
       end
     end
   end

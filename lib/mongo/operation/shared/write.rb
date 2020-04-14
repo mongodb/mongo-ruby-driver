@@ -25,9 +25,10 @@ module Mongo
       # Execute the operation.
       #
       # @example
-      #   operation.execute(server, client: nil)
+      #   operation.execute(connection, client: nil)
       #
-      # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Server::Connection ] connection The connection over which
+      #   to send the operation.
       # @param [ Mongo::Client ] client The client that will be used to
       #   perform auto-encryption if it is necessary to encrypt the command
       #   being executed (optional).
@@ -35,25 +36,26 @@ module Mongo
       # @return [ Mongo::Operation::Result ] The operation result.
       #
       # @since 2.5.2
-      def execute(server, client:)
+      def execute(connection, client:)
         validate!
-        op = if server.features.op_msg_enabled?
+        op = if connection.features.op_msg_enabled?
             self.class::OpMsg.new(spec)
           elsif !acknowledged_write?
             self.class::Legacy.new(spec)
           else
             self.class::Command.new(spec)
           end
-        result = op.execute(server, client: client)
-        validate_result(result, server)
+        result = op.execute(connection, client: client)
+        validate_result(result, connection.server)
       end
 
       # Execute the bulk write operation.
       #
       # @example
-      #   operation.bulk_execute(server, client: nil)
+      #   operation.bulk_execute(connection, client: nil)
       #
-      # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Server::Connection ] connection The connection over
+      #   which to send the operation.
       # @param [ Mongo::Client ] client The client that will be used to
       #   perform auto-encryption if it is necessary to encrypt the command
       #   being executed (optional).
@@ -63,11 +65,11 @@ module Mongo
       #           Mongo::Operation::Update::BulkResult ] The bulk result.
       #
       # @since 2.5.2
-      def bulk_execute(server, client:)
-        if server.features.op_msg_enabled?
-          self.class::OpMsg.new(spec).execute(server, client: client).bulk_result
+      def bulk_execute(connection, client:)
+        if connection.features.op_msg_enabled?
+          self.class::OpMsg.new(spec).execute(connection, client: client).bulk_result
         else
-          self.class::Command.new(spec).execute(server, client: client).bulk_result
+          self.class::Command.new(spec).execute(connection, client: client).bulk_result
         end
       end
 

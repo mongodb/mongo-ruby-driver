@@ -22,15 +22,15 @@ module Mongo
     module OpMsgOrCommand
       include PolymorphicLookup
 
-      def execute(server, client:, options: {})
-        operation = final_operation(server)
-        operation.execute(server, client: client, options: options)
+      def execute(connection, client:, options: {})
+        operation = final_operation(connection)
+        operation.execute(connection, client: client, options: options)
       end
 
       private
 
-      def final_operation(server)
-        cls = if server.features.op_msg_enabled?
+      def final_operation(connection)
+        cls = if connection.features.op_msg_enabled?
           polymorphic_class(self.class.name, :OpMsg)
         else
           polymorphic_class(self.class.name, :Command)
