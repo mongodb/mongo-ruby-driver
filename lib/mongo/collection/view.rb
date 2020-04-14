@@ -172,10 +172,6 @@ module Mongo
 
       private
 
-      def valid_server?(server)
-        true
-      end
-
       def initialize_copy(other)
         @collection = other.collection
         @options = other.options.dup
@@ -193,15 +189,15 @@ module Mongo
         View.new(collection, filter, options)
       end
 
-      def apply_collation!(doc, server, opts = {})
+      def apply_collation!(doc, connection, opts = {})
         if coll = doc[:collation] || opts[:collation] || opts['collation'] || collation
-          validate_collation!(server, coll)
+          validate_collation!(connection, coll)
           doc[:collation] = coll
         end
       end
 
-      def validate_collation!(server, coll)
-        if coll &&!server.features.collation_enabled?
+      def validate_collation!(connection, coll)
+        if coll &&!connection.features.collation_enabled?
           raise Error::UnsupportedCollation.new
         end
       end

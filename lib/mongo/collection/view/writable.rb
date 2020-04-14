@@ -348,15 +348,15 @@ module Mongo
 
         private
 
-        def apply_array_filters!(doc, server, opts = {})
+        def apply_array_filters!(doc, connection, opts = {})
           if filters = opts[:array_filters] || opts[ARRAY_FILTERS]
-            validate_array_filters!(server, filters)
+            validate_array_filters!(connection, filters)
             doc[:arrayFilters] = filters
           end
         end
 
-        def validate_array_filters!(server, filters)
-          if filters && !server.features.array_filters_enabled?
+        def validate_array_filters!(connection, filters)
+          if filters && !connection.features.array_filters_enabled?
             raise Error::UnsupportedArrayFilters.new
           end
         end
