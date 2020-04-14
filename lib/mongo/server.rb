@@ -424,12 +424,21 @@ module Mongo
       pool.with_connection(&block)
     end
 
-    # TODO: documentation
+    # Checks a connection out of the server's connection pool.
+    #
+    # @return [ Mongo::Server::Connection ] The checked out connection.
+    #
+    # @api private
     def check_out_connection
       pool.check_out
     end
 
-    # TODO: documentation
+    # Checks the connection back into the server's connection pool.
+    #
+    # @param [ Mongo::Server::Connection ] connection The connection to check
+    #   into the pool.
+    #
+    # @api private
     def check_in_connection(connection)
       pool.check_in(connection)
     end
