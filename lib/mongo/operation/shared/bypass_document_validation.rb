@@ -22,12 +22,12 @@ module Mongo
 
       private
 
-      def command(server)
+      def command(connection)
         sel = super
-        add_bypass_document_validation(sel, server)
+        add_bypass_document_validation(sel)
       end
 
-      def add_bypass_document_validation(sel, server)
+      def add_bypass_document_validation(sel)
         return sel unless bypass_document_validation
         sel.merge(bypassDocumentValidation: true)
       end

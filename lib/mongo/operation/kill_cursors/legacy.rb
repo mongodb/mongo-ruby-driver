@@ -27,7 +27,7 @@ module Mongo
 
         private
 
-        def message(server)
+        def message(connection)
           Protocol::KillCursors.new(coll_name, db_name, cursor_ids)
         end
       end

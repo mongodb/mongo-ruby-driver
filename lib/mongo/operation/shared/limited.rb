@@ -22,7 +22,7 @@ module Mongo
 
       private
 
-      def options(server = nil)
+      def options(connection = nil)
         super.merge(limit: -1)
       end
     end

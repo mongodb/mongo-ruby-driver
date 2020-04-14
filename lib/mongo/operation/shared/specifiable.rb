@@ -333,7 +333,7 @@ module Mongo
       # @return [ Hash ] The options.
       #
       # @since 2.0.0
-      def options(server = nil)
+      def options(connection = nil)
         spec[OPTIONS] || {}
       end
 
@@ -395,7 +395,7 @@ module Mongo
       # @return [ Hash ] The selector spec.
       #
       # @since 2.0.0
-      def selector(server = nil)
+      def selector(connection = nil)
         spec[SELECTOR]
       end
 
@@ -537,8 +537,8 @@ module Mongo
       # @return [ Hash ] The command.
       #
       # @since 2.5.2
-      def command(server = nil)
-        selector(server)
+      def command(connection = nil)
+        selector(connection)
       end
 
       # The array filters.

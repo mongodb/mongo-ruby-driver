@@ -26,7 +26,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { :dropUser => user_name }
         end
       end

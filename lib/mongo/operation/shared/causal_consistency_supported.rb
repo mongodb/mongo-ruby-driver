@@ -33,8 +33,8 @@ module Mongo
       # In order for the override to work correctly the
       # CausalConsistencySupported module must be included after
       # SessionsSupported module in target classes.
-      def apply_causal_consistency!(selector, server)
-        apply_causal_consistency_if_possible(selector, server)
+      def apply_causal_consistency!(selector, connection)
+        apply_causal_consistency_if_possible(selector, connection)
       end
     end
   end

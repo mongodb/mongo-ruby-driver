@@ -80,14 +80,18 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       it 'does not include write concern in the selector' do
-        expect(op.send(:command, authorized_primary)[:writeConcern]).to be_nil
+        authorized_primary.with_connection do |connection|
+          expect(op.send(:command, connection)[:writeConcern]).to be_nil
+        end
       end
     end
 
     context 'when write concern is specified' do
 
       it 'includes write concern in the selector' do
-        expect(op.send(:command, authorized_primary)[:writeConcern]).to eq(write_concern.options)
+        authorized_primary.with_connection do |connection|
+          expect(op.send(:command, connection)[:writeConcern]).to eq(write_concern.options)
+        end
       end
     end
   end
@@ -126,7 +130,9 @@ describe Mongo::Operation::Update::OpMsg do
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
-          op.send(:message, authorized_primary)
+          authorized_primary.with_connection do |connection|
+            op.send(:message, connection)
+          end
         end
       end
 
@@ -201,7 +207,9 @@ describe Mongo::Operation::Update::OpMsg do
             it 'does not send a session id in the command' do
               authorized_client.command(ping:1)
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-              op.send(:message, authorized_primary)
+              authorized_primary.with_connection do |connection|
+                op.send(:message, connection)
+              end
             end
           end
 
@@ -242,7 +250,9 @@ describe Mongo::Operation::Update::OpMsg do
             authorized_client.command(ping:1)
             RSpec::Mocks.with_temporary_scope do
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-              op.send(:message, authorized_primary)
+              authorized_primary.with_connection do |connection|
+                op.send(:message, connection)
+              end
             end
           end
         end

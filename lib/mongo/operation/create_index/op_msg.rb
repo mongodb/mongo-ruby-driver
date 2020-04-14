@@ -26,7 +26,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { :createIndexes => coll_name, :indexes => indexes }
         end
       end

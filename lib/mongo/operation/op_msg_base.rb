@@ -22,8 +22,8 @@ module Mongo
 
       private
 
-      def message(server)
-        Protocol::Msg.new(flags, options, command(server))
+      def message(connection)
+        Protocol::Msg.new(flags, options, command(connection))
       end
     end
   end

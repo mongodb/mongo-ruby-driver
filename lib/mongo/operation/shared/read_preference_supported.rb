@@ -24,12 +24,12 @@ module Mongo
 
       SLAVE_OK = :slave_ok
 
-      def options(server)
-        update_options_for_slave_ok(super, server)
+      def options(connection)
+        update_options_for_slave_ok(super, connection)
       end
 
-      def update_selector_for_read_pref(sel, server)
-        if read && server.mongos? && read_pref = read.to_mongos
+      def update_selector_for_read_pref(sel, connection)
+        if read && connection.mongos? && read_pref = read.to_mongos
           Mongo::Lint.validate_camel_case_read_preference(read_pref)
           sel = sel[:$query] ? sel : {:$query => sel}
           sel = sel.merge(:$readPreference => read_pref)
@@ -38,8 +38,8 @@ module Mongo
         end
       end
 
-      def update_options_for_slave_ok(opts, server)
-        if (server.cluster.single? && !server.mongos?) || (read && read.slave_ok?)
+      def update_options_for_slave_ok(opts, connection)
+        if (connection.server.cluster.single? && !connection.mongos?) || (read && read.slave_ok?)
           opts.dup.tap do |o|
             (o[:flags] ||= []) << SLAVE_OK
           end
@@ -48,9 +48,9 @@ module Mongo
         end
       end
 
-      def command(server)
+      def command(connection)
         sel = super
-        update_selector_for_read_pref(sel, server)
+        update_selector_for_read_pref(sel, connection)
       end
     end
   end

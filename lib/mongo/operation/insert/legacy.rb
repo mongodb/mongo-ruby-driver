@@ -30,16 +30,16 @@ module Mongo
 
         private
 
-        def get_result(server, client, options = {})
+        def get_result(connection, client, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(server, client), @ids)
+          Result.new(*dispatch_message(connection, client), @ids)
         end
 
         def selector
           send(IDENTIFIER).first
         end
 
-        def message(server)
+        def message(connection)
           opts = !!options[:continue_on_error] ? { :flags => [:continue_on_error] } : {}
           Protocol::Insert.new(db_name, coll_name, documents, opts)
         end

@@ -59,7 +59,9 @@ describe Mongo::Operation::Find::Legacy do
     end
 
     let(:message) do
-      query.send(:message, authorized_primary)
+      authorized_primary.with_connection do |connection|
+        query.send(:message, connection)
+      end
     end
 
     it 'applies the correct flags' do
@@ -68,16 +70,28 @@ describe Mongo::Operation::Find::Legacy do
 
     context 'when the server is a secondary' do
 
-      let(:secondary_server_single) do
-        double('secondary_server').tap do |server|
-          allow(server).to receive(:mongos?) { false }
-          allow(server).to receive(:cluster) { cluster_single }
-          allow(server).to receive(:features) { authorized_primary.features }
+      let(:connection) do
+        double('connection').tap do |conn|
+          allow(conn).to receive(:mongos?) { false }
+          allow(conn).to receive(:server) { secondary_server_single }
+          allow(conn).to receive(:features) { authorized_primary.features }
         end
       end
 
+      let(:secondary_server_single) do
+        double('secondary_server').tap do |server|
+          allow(server).to receive(:cluster) { cluster_single }
+        end
+      end
+
+      before do
+        allow(secondary_server_single).to receive(:with_connection).and_yield(connection)
+      end
+
       let(:message) do
-        query.send(:message, secondary_server_single)
+        secondary_server_single.with_connection do |connection|
+          query.send(:message, connection)
+        end
       end
 
       it 'applies the correct flags' do

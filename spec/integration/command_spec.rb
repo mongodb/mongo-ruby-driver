@@ -8,7 +8,11 @@ describe 'Command' do
     let(:server) { authorized_client.cluster.next_primary }
 
     let(:payload) do
-      command.send(:final_operation, server).send(:message, server).payload.dup.tap do |payload|
+      result = server.with_connection do |connection|
+        command.send(:final_operation, connection).send(:message, connection)
+      end
+      
+      result.payload.dup.tap do |payload|
         if payload['request_id'].is_a?(Integer)
           payload['request_id'] = 42
         end

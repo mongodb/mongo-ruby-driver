@@ -161,7 +161,7 @@ module Mongo
                    :replica_set_name,
                    :secondary?,
                    :standalone?,
-                   :last_write_date
+                   :last_write_date,
                    :unknown?
 
     # @!method logical_session_timeout

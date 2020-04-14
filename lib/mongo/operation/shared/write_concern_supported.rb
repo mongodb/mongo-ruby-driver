@@ -22,14 +22,14 @@ module Mongo
 
       private
 
-      def write_concern_supported?(server); true; end
+      def write_concern_supported?(connection); true; end
 
-      def command(server)
-        add_write_concern!(super, server)
+      def command(connection)
+        add_write_concern!(super, connection)
       end
 
-      def add_write_concern!(sel, server)
-        if write_concern && write_concern_supported?(server)
+      def add_write_concern!(sel, connection)
+        if write_concern && write_concern_supported?(connection)
           sel[:writeConcern] = write_concern.options
         end
         sel
