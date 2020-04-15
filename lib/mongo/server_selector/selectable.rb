@@ -423,7 +423,6 @@ module Mongo
         # last_scan here.
         if primary
           candidates.select do |server|
-            # TODO: any work to be done here?
             validate_max_staleness_support!(server)
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
