@@ -4,6 +4,8 @@ set -e
 # IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
+. `dirname "$0"`/functions.sh
+
 # When running in Evergreen, credentials are written to this file.
 # In Docker they are already in the environment and the file does not exist.
 if test -f .env.private; then
@@ -18,16 +20,6 @@ fi
 # At the same time, the chosen names do not cleanly map to our configurations,
 # therefore to keep the rest of our test suite readable we perform the
 # remapping in this file.
-
-get_var() {
-  var=$1
-  value=${!var}
-  if test -z "$value"; then
-    echo "Missing value for $var" 1>&2
-    exit 1
-  fi
-  echo "$value"
-}
 
 case "$AUTH" in
   aws-regular)

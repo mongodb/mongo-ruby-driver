@@ -10,6 +10,7 @@ else
 fi
 
 . `dirname "$0"`/functions.sh
+. `dirname "$0"`/functions-aws.sh
 . `dirname "$0"`/functions-server.sh
 . `dirname "$0"`/functions-config.sh
 
@@ -147,10 +148,14 @@ EOT
     -u bootstrap -p bootstrap \
     --eval "$create_user_cmd"
 elif test "$AUTH" = aws-regular; then
+  clear_instance_profile
+  
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 
   hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
 elif test "$AUTH" = aws-assume-role; then
+  clear_instance_profile
+  
   ./.evergreen/aws -a "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID" \
     -s "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY" \
     -r us-east-1 \
@@ -177,7 +182,7 @@ elif test "$AUTH" = aws-ec2; then
   # cannot connect to the MongoDB server while bootstrapping.
   # The EC2 credential retrieval tests clears the instance profile as part
   # of one of the tests.
-  ruby -Ispec -Ilib -I.evergreen/lib -rec2_setup -e Ec2Setup.new.run
+  ruby -Ispec -Ilib -I.evergreen/lib -rec2_setup -e Ec2Setup.new.assign_instance_profile
 elif test "$AUTH" = aws-ecs; then
   if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
     # drivers-evergreen-tools performs this operation in its ECS E2E tester.
