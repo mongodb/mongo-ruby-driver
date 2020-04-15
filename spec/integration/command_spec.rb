@@ -8,16 +8,18 @@ describe 'Command' do
     let(:server) { authorized_client.cluster.next_primary }
 
     let(:payload) do
-      command.send(:final_operation, server).send(:message, server).payload.dup.tap do |payload|
-        if payload['request_id'].is_a?(Integer)
-          payload['request_id'] = 42
+      server.with_connection do |connection|
+        command.send(:final_operation, connection).send(:message, connection).payload.dup.tap do |payload|
+          if payload['request_id'].is_a?(Integer)
+            payload['request_id'] = 42
+          end
+          # $clusterTime may be present depending on the client's state
+          payload['command'].delete('$clusterTime')
+          # 3.6+ servers also return a payload field, earlier ones do not.
+          # The contents of this field duplicates the rest of the response
+          # so we can get rid of it without losing information.
+          payload.delete('reply')
         end
-        # $clusterTime may be present depending on the client's state
-        payload['command'].delete('$clusterTime')
-        # 3.6+ servers also return a payload field, earlier ones do not.
-        # The contents of this field duplicates the rest of the response
-        # so we can get rid of it without losing information.
-        payload.delete('reply')
       end
     end
 
