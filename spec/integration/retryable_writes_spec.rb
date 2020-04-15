@@ -132,9 +132,11 @@ describe 'Retryable writes integration tests' do
       context 'when the selected server does not support retryable writes' do
 
         before do
-          legacy_primary = double('legacy primary', :retry_writes? => false)
+          connection = double('connection', :retry_writes? => false)
+          legacy_primary = double('legacy primary')
           expect(collection).to receive(:select_server).and_return(primary_server, legacy_primary)
           expect(primary_socket).to receive(:write).and_raise(error)
+          expect(legacy_primary).to receive(:with_connection).and_yield(connection)
         end
 
         context 'when the error is a SocketError' do
