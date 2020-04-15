@@ -1,6 +1,16 @@
 # This file contains basic functions common between all Ruby driver team
 # projects: toolchain, bson-ruby, driver and Mongoid.
 
+get_var() {
+  var=$1
+  value=${!var}
+  if test -z "$value"; then
+    echo "Missing value for $var" 1>&2
+    exit 1
+  fi
+  echo "$value"
+}
+
 detected_arch=
 
 host_arch() {
