@@ -147,12 +147,7 @@ module Mongo
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
                    :arbiter?,
-                   :features,
                    :ghost?,
-                   :max_wire_version,
-                   :max_write_batch_size,
-                   :max_bson_object_size,
-                   :max_message_size,
                    :tags,
                    :average_round_trip_time,
                    :mongos?,
@@ -164,10 +159,30 @@ module Mongo
                    :last_write_date,
                    :unknown?
 
+    # @!method features
+    #   @deprecated
+    #
     # @!method logical_session_timeout
     #   @deprecated
+    #
+    # @!method max_bson_object_size
+    #   @deprecated
+    #
+    # @!method max_message_size
+    #   @deprecated
+    #
+    # @!method max_wire_version
+    #   @deprecated
+    #
+    # @!method max_write_batch_size
+    #   @deprecated
     def_delegators :description,
-     :logical_session_timeout
+     :features,
+     :logical_session_timeout,
+     :max_bson_object_size,
+     :max_message_size,
+     :max_wire_version,
+     :max_write_batch_size
 
 
     # Get the app metadata from the cluster.

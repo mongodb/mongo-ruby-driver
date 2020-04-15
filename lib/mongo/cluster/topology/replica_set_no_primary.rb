@@ -113,6 +113,7 @@ module Mongo
         #
         # @since 2.0.0
         def servers(servers)
+          # TODO: is there any work to do here?
           servers.select do |server|
             (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
               server.primary? || server.secondary?

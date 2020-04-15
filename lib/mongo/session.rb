@@ -676,6 +676,7 @@ module Mongo
         raise ArgumentError, 'Cannot pin to a nil server'
       end
       if Lint.enabled?
+        # TODO: does any work need to be done here?
         unless server.mongos?
           raise Error::LintError, "Attempted to pin the session to server #{server.summary} which is not a mongos"
         end

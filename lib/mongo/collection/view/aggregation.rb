@@ -107,8 +107,8 @@ module Mongo
           Operation::Aggregate.new(aggregate_spec(session))
         end
 
-        def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+        def valid_server?(connection)
+          connection.standalone? || connection.mongos? || connection.primary? || secondary_ok?
         end
 
         def write?

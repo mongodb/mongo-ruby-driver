@@ -335,7 +335,7 @@ module Mongo
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
 
       @server.with_connection do |connection|
-        process(get_more_operation.execute(connection, client: client))
+        process(get_more_operation(connection).execute(connection, client: client))
       end
     end
 
@@ -355,8 +355,8 @@ module Mongo
       @resume_token = @post_batch_resume_token if @post_batch_resume_token
     end
 
-    def get_more_operation
-      if @server.features.find_command_enabled?
+    def get_more_operation(connection)
+      if connection.features.find_command_enabled?
         spec = Builder::GetMoreCommand.new(self, @session).specification
       else
         spec = Builder::OpGetMore.new(self).specification
