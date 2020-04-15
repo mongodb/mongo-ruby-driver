@@ -32,12 +32,12 @@ module Mongo
 
         private
 
-        def get_result(server, client, options = {})
+        def get_result(connection, client, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(server, client), @ids)
+          Result.new(*dispatch_message(connection, client), @ids)
         end
 
-        def selector(server)
+        def selector(connection)
           { insert: coll_name,
             documents: send(IDENTIFIER),
             ordered: ordered? }
@@ -47,8 +47,8 @@ module Mongo
           super.merge(validating_keys: true)
         end
 
-        def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end
       end
     end

@@ -22,21 +22,22 @@ module Mongo
 
       include ResponseHandling
 
-      def do_execute(server, client, options = {})
+      def do_execute(connection, client, options = {})
         unpin_maybe(session) do
           add_error_labels do
-            add_server_diagnostics(server) do
-              get_result(server, client, options).tap do |result|
-                process_result(result, server)
+            add_server_diagnostics(connection.server) do
+              get_result(connection, client, options).tap do |result|
+                process_result(result, connection.server)
               end
             end
           end
         end
       end
 
-      def execute(server, client:, options: {})
-        do_execute(server, client, options).tap do |result|
-          validate_result(result, server)
+      def execute(connection, client:, options: {})
+        raise "connection is wrong type" unless connection.is_a?(Mongo::Server::Connection)
+        do_execute(connection, client, options).tap do |result|
+          validate_result(result, connection.server)
         end
       end
 
@@ -46,22 +47,20 @@ module Mongo
         Result
       end
 
-      def get_result(server, client, options = {})
-        result_class.new(*dispatch_message(server, client, options))
+      def get_result(connection, client, options = {})
+        result_class.new(*dispatch_message(connection, client, options))
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(server, client, options = {})
-        server.with_connection do |connection|
-          message = build_message(server)
-          message = message.maybe_encrypt(server, client)
-          reply = connection.dispatch([ message ], operation_id, client, options)
-          [reply, connection.description]
-        end
+      def dispatch_message(connection, client, options = {})
+        message = build_message(connection)
+        message = message.maybe_encrypt(connection, client)
+        reply = connection.dispatch([ message ], operation_id, client, options)
+        [reply, connection.description]
       end
 
-      def build_message(server)
-        message(server)
+      def build_message(connection)
+        message(connection)
       end
 
       def process_result(result, server)

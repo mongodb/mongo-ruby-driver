@@ -31,12 +31,12 @@ module Mongo
 
         private
 
-        def write_concern_supported?(server)
-          server.features.collation_enabled?
+        def write_concern_supported?(connection)
+          connection.features.collation_enabled?
         end
 
-        def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end
       end
     end

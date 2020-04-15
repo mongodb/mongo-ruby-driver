@@ -28,7 +28,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           sel = { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
           sel[:maxTimeMS] = max_time_ms if max_time_ms
           if read_concern

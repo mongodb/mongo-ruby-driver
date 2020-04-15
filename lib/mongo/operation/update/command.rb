@@ -32,14 +32,14 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { update: coll_name,
             updates: send(IDENTIFIER),
             ordered: ordered? }
         end
 
-        def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end
       end
     end

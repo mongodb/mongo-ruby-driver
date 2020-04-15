@@ -22,15 +22,15 @@ module Mongo
 
       private
 
-      # Get the options for executing the operation on a particular server.
+      # Get the options for executing the operation on a particular connection.
       #
-      # @param [ Server ] server The server that the operation will be
-      #   executed on.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash ] The options.
       #
       # @since 2.0.0
-      def options(server)
+      def options(connection)
         super.merge(limit: -1)
       end
     end

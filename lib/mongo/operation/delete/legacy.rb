@@ -32,7 +32,7 @@ module Mongo
           send(IDENTIFIER).first
         end
 
-        def message(server)
+        def message(connection)
           opts = (selector[Operation::LIMIT] || 0) <= 0 ? {} : { :flags => [ :single_remove ] }
           Protocol::Delete.new(db_name, coll_name, selector[Operation::Q], opts)
         end

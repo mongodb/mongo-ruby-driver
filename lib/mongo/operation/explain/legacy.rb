@@ -29,8 +29,8 @@ module Mongo
 
         private
 
-        def message(server)
-          Protocol::Query.new(db_name, coll_name, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, coll_name, command(connection), options(connection))
         end
       end
     end

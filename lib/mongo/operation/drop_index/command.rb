@@ -29,12 +29,12 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { :dropIndexes => coll_name, :index => index_name }
         end
 
-        def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end
       end
     end

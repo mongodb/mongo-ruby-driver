@@ -325,15 +325,15 @@ module Mongo
         spec[OPERATION_ID]
       end
 
-      # Get the options for executing the operation on a particular server.
+      # Get the options for executing the operation on a particular connection.
       #
-      # @param [ Server ] server The server that the operation will be
-      #   executed on.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash ] The options.
       #
       # @since 2.0.0
-      def options(server)
+      def options(connection)
         spec[OPTIONS] || {}
       end
 
@@ -387,15 +387,16 @@ module Mongo
         send(self.class::IDENTIFIER).first[COLLATION]
       end
 
-      # The selector from the specification for execution on a particular server.
+      # The selector from the specification for execution on a particular
+      # connection.
       #
-      # @param [ Server ] server The server that the operation will be
-      #   executed on.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash ] The selector spec.
       #
       # @since 2.0.0
-      def selector(server)
+      def selector(connection)
         spec[SELECTOR]
       end
 
@@ -539,8 +540,8 @@ module Mongo
       # @return [ Hash ] The command.
       #
       # @since 2.5.2
-      def command(server)
-        selector(server)
+      def command(connection)
+        selector(connection)
       end
 
       # The array filters.

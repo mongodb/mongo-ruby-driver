@@ -30,20 +30,20 @@ module Mongo
 
         private
 
-        def get_result(server, client, options = {})
+        def get_result(connection, client, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(server, client), @ids)
+          Result.new(*dispatch_message(connection, client), @ids)
         end
 
-        def selector(server)
+        def selector(connection)
           { insert: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
             ordered: ordered? }
         end
 
-        def message(server)
+        def message(connection)
           section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
-          Protocol::Msg.new(flags, { validating_keys: true }, command(server), section)
+          Protocol::Msg.new(flags, { validating_keys: true }, command(connection), section)
         end
       end
     end
