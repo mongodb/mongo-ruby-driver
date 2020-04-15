@@ -534,9 +534,6 @@ module Mongo
 
       # The command.
       #
-      # @example Get the command.
-      #   specifiable.command
-      #
       # @return [ Hash ] The command.
       #
       # @since 2.5.2

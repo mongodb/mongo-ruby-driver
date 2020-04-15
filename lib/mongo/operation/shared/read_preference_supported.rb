@@ -27,32 +27,34 @@ module Mongo
 
       private
 
-      # Get the options for executing the operation on a particular server.
+      # Get the options for executing the operation on a particular connection.
       #
-      # @param [ Server ] server The server that the operation will be
-      #   executed on.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash ] The options.
       #
       # @since 2.0.0
-      def options(server)
-        add_slave_ok_flag_maybe(super, server)
+      def options(connection)
+        add_slave_ok_flag_maybe(super, connection)
       end
 
       # Adds :slave_ok flag to options based on the read preference specified
-      # in the operation or implied by the topology that the server is a
-      # part of.
+      # in the operation or implied by the topology that the connection's
+      # server is a part of.
       #
       # @param [ Hash ] options The options calculated so far.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash ] The new options.
-      def add_slave_ok_flag_maybe(options, server)
+      def add_slave_ok_flag_maybe(options, connection)
         add_flag =
           # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
-          if server.standalone?
+          if connection.server.standalone?
             # Read preference is never sent to standalones.
             false
-          elsif server.cluster.single?
+          elsif connection.server.cluster.single?
             # In Single topology the driver forces primaryPreferred read
             # preference mode (via the slave_ok flag, in case of old servers)
             # so that the query is satisfied.
@@ -72,9 +74,9 @@ module Mongo
         options
       end
 
-      def command(server)
+      def command(connection)
         sel = super
-        update_selector_for_read_pref(sel, server)
+        update_selector_for_read_pref(sel, connection)
       end
 
       # Adds $readPreference field to the command document.
@@ -89,11 +91,12 @@ module Mongo
       # $readPreference is not sent to pre-OP_MSG replica set members.
       #
       # @param [ Hash ] sel Existing command document.
-      # @param [ Server ] server The server that the command is to be sent to.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash ] New command document to send to the server.
-      def update_selector_for_read_pref(sel, server)
-        if read && server.mongos? && read_pref = read.to_mongos
+      def update_selector_for_read_pref(sel, connection)
+        if read && connection.server.mongos? && read_pref = read.to_mongos
           Mongo::Lint.validate_camel_case_read_preference(read_pref)
           sel = sel[:$query] ? sel : {:$query => sel}
           sel = sel.merge(:$readPreference => read_pref)
