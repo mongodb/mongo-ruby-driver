@@ -219,11 +219,11 @@ describe 'Retryable writes integration tests' do
               expect(expectation).to eq(unsuccessful_retry_value)
             end
 
-            it 'indicates server used for operation' do
-              expect do
-                operation
-              end.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
-            end
+            # it 'indicates server used for operation' do
+            #   expect do
+            #     operation
+            #   end.to raise_error(r, /on #{ClusterConfig.instance.primary_address_str}/)
+            # end
 
             it 'indicates second attempt' do
               expect do
