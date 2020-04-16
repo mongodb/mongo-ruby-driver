@@ -36,7 +36,7 @@ module Mongo
       #
       # @since 2.5.2
       def execute(server, client:)
-        validate!
+        validate!(server)
         op = if server.features.op_msg_enabled?
             self.class::OpMsg.new(spec)
           elsif !acknowledged_write?
@@ -73,13 +73,13 @@ module Mongo
 
       private
 
-      def validate!
+      def validate!(server)
         if !acknowledged_write?
           if collation
             raise Error::UnsupportedCollation.new(
                 Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE)
           end
-          if array_filters
+          if array_filters(server)
             raise Error::UnsupportedArrayFilters.new(
                 Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE)
           end
