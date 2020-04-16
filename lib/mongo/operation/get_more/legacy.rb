@@ -25,12 +25,6 @@ module Mongo
         include Specifiable
         include Executable
 
-        def execute(server, client:)
-          server.with_connection do |connection|
-            super(connection, client: client)
-          end
-        end
-
         private
 
         def message(connection)
