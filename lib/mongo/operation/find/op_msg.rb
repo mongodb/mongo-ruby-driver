@@ -16,18 +16,7 @@ module Mongo
   module Operation
     class Find
 
-      # Execute the operation.
-      #
-      # @example
-      #   operation.execute(connection, client: nil)
-      #
-      # @param [ Mongo::Server::Connection ] connection The connection over which
-      #   to send the operation.
-      # @param [ Mongo::Client ] client The client that will be used to
-      #   perform auto-encryption if it is necessary to encrypt the command
-      #   being executed (optional).
-      #
-      # @return [ Mongo::Operation::Find::Result ] The operation result.
+      # A MongoDB find operation sent as an op message.
       #
       # @api private
       #
