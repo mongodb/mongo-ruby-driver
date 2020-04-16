@@ -41,7 +41,7 @@ describe 'Server' do
       it 'can be used for reads' do
         result = view.send(:send_initial_query, server)
         # Driver falls back to the oldest MongoDB protocol
-        expect(result).to be_a(Mongo::Operation::Find::Legacy::Result)
+        expect(result).to be_a(Mongo::Operation::Find::Result)
       end
     end
   end

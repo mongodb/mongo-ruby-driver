@@ -78,7 +78,7 @@ module Mongo
         private
 
         def initial_query_op(server, session)
-          if server.features.find_command_enabled?
+          if server.with_connection { |connection| connection.features }.find_command_enabled?
             initial_command_op(session)
           else
             Operation::Find.new(Builder::OpQuery.new(self).specification)

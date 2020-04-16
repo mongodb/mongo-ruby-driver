@@ -356,7 +356,7 @@ module Mongo
         end
 
         def validate_array_filters!(server, filters)
-          if filters && !server.features.array_filters_enabled?
+          if filters && !server.with_connection { |connection| connection.features }.array_filters_enabled?
             raise Error::UnsupportedArrayFilters.new
           end
         end

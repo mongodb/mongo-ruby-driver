@@ -58,7 +58,7 @@ module Mongo
           send_initial_query(server, session, name_only: true)
         end
         cursor.map do |info|
-          if cursor.server.features.list_collections_enabled?
+          if cursor.server.with_connection { |connection| connection.features }.list_collections_enabled?
             info['name']
           else
             (info['name'] &&

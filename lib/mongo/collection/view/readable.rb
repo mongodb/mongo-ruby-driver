@@ -603,7 +603,7 @@ module Mongo
                   :session => session,
                 }.merge!(options))
           cmd.execute(server, client: client).cursor_ids.map do |cursor_id|
-            result = if server.features.find_command_enabled?
+            result = if server.with_connection { |connection| connection.features }.find_command_enabled?
               Operation::GetMore.new({
                 :selector => {:getMore => BSON::Int64.new(cursor_id),
                              :collection => collection.name},

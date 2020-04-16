@@ -173,10 +173,10 @@ module Mongo
     end
 
     def execute_operation(name, values, server, operation_id, result_combiner, session, txn_num = nil)
-      raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
-      raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
+      raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.with_connection { |connection| connection.features }.collation_enabled?
+      raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.with_connection { |connection| connection.features }.array_filters_enabled?
       unpin_maybe(session) do
-        if values.size > server.max_write_batch_size
+        if values.size > server.with_connection { |connection| connection.max_write_batch_size }
           split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
         else
           result = send(name, values, server, operation_id, session, txn_num)

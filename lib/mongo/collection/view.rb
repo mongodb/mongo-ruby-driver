@@ -197,7 +197,7 @@ module Mongo
       end
 
       def validate_collation!(server, coll)
-        if coll &&!server.features.collation_enabled?
+        if coll &&!server.with_connection { |connection| connection.features }.collation_enabled?
           raise Error::UnsupportedCollation.new
         end
       end
