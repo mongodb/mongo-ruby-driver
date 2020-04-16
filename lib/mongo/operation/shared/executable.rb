@@ -35,7 +35,12 @@ module Mongo
       end
 
       def execute(connection, client:, options: {})
-        raise "connection is wrong type" unless connection.is_a?(Mongo::Server::Connection)
+        if Lint.enabled?
+          unless connection.is_a?(Mongo::Server::Connection)
+            raise Error::LintError, "Connection argument is of wrong type: #{connection}"
+          end
+        end
+
         do_execute(connection, client, options).tap do |result|
           validate_result(result, connection.server)
         end
