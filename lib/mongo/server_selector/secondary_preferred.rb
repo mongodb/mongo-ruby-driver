@@ -20,7 +20,7 @@ module Mongo
     #   secondaries preferred, given a list of candidates.
     #
     # @since 2.0.0
-    class SecondaryPreferred
+    class SecondaryPreferred < Base
       include Selectable
 
       # Name of the this read preference in the server's format.
@@ -60,39 +60,33 @@ module Mongo
       end
 
       # Convert this server preference definition into a format appropriate
-      #   for a mongos server.
-      # Note that the server preference is not sent to mongos as part of the query
-      #   selector if there are no tag sets, for maximum backwards compatibility.
+      #   for sending to a MongoDB server (i.e., as a command field).
       #
-      # @example Convert this server preference definition into a format
-      #   for mongos.
-      #   preference = Mongo::ServerSelector::SecondaryPreferred.new
-      #   preference.to_mongos
+      # @return [ Hash ] The server preference formatted as a command field value.
       #
-      # @return [ Hash ] The server preference formatted for a mongos server.
+      # @since 2.0.0
+      def to_doc
+        full_doc
+      end
+
+      # Convert this server preference definition into a value appropriate
+      #   for sending to a mongos.
+      #
+      # This method may return nil if the read preference should not be sent
+      # to a mongos.
+      #
+      # @return [ Hash | nil ] The server preference converted to a mongos
+      #   command field value.
       #
       # @since 2.0.0
       def to_mongos
-        return nil if tag_sets.empty? && max_staleness.nil?
-        to_doc
-      end
-
-      # Convert this server preference definition into a format appropriate
-      #   for a server.
-      #
-      # @example Convert this server preference definition into a format
-      #   for a server.
-      #   preference = Mongo::ServerSelector::SecondaryPreferred.new
-      #   preference.to_doc
-      #
-      # @return [ Hash ] The server preference formatted for a server.
-      #
-      # @since 2.5.0
-      def to_doc
-        @doc ||= (preference = { mode: SERVER_FORMATTED_NAME }
-          preference.merge!({ tags: tag_sets }) unless tag_sets.empty?
-          preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
-          preference)
+        if tag_sets.empty? && max_staleness.nil?
+          # The server preference is not sent to mongos as part of the query
+          # selector if there are no tag sets, for maximum backwards compatibility.
+          nil
+        else
+          to_doc
+        end
       end
 
       private

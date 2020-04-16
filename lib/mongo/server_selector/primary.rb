@@ -20,7 +20,7 @@ module Mongo
     #   of candidates.
     #
     # @since 2.0.0
-    class Primary
+    class Primary < Base
       include Selectable
 
       # Name of the this read preference in the server's format.
@@ -60,33 +60,27 @@ module Mongo
       end
 
       # Convert this server preference definition into a format appropriate
-      #   for a mongos server.
+      #   for sending to a MongoDB server (i.e., as a command field).
       #
-      # @example Convert this server preference definition into a format
-      #   for mongos.
-      #   preference = Mongo::ServerSelector::Primary.new
-      #   preference.to_mongos
+      # @return [ Hash ] The server preference formatted as a command field value.
       #
-      # @return [ nil ] nil
+      # @since 2.5.0
+      def to_doc
+        { mode: SERVER_FORMATTED_NAME }
+      end
+
+      # Convert this server preference definition into a value appropriate
+      #   for sending to a mongos.
+      #
+      # This method may return nil if the read preference should not be sent
+      # to a mongos.
+      #
+      # @return [ Hash | nil ] The server preference converted to a mongos
+      #   command field value.
       #
       # @since 2.0.0
       def to_mongos
         nil
-      end
-
-      # Convert this server preference definition into a format appropriate
-      #   for a mongodb server.
-      #
-      # @example Convert this server preference definition into a format
-      #   for a server.
-      #   preference = Mongo::ServerSelector::Primary.new
-      #   preference.to_doc
-      #
-      # @return [ Hash ] The server preference formatted for a mongodb server.
-      #
-      # @since 2.5.0
-      def to_doc
-        @doc ||= { mode: SERVER_FORMATTED_NAME }
       end
 
       private

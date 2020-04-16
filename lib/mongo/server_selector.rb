@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server_selector/base'
 require 'mongo/server_selector/selectable'
 require 'mongo/server_selector/nearest'
 require 'mongo/server_selector/primary'
