@@ -47,7 +47,9 @@ module Mongo
           return Operation::ListCollections.new(spec).execute(server, client: client)
         end
 
-        super
+        server.with_connection do |connection|
+          super(connection, client: client)
+        end
       end
 
       private
