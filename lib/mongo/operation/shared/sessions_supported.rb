@@ -45,10 +45,10 @@ module Mongo
       # operation (the one which starts the transaction via startTransaction)
       # is allowed to have a read concern, and with it the causal consistency
       # document, specified.
-      def apply_causal_consistency!(selector, server)
+      def apply_causal_consistency!(selector, connection)
         return unless selector[:startTransaction]
 
-        apply_causal_consistency_if_possible(selector, server)
+        apply_causal_consistency_if_possible(selector, connection)
       end
 
       # Adds causal consistency document to the selector, if one can be
@@ -58,8 +58,8 @@ module Mongo
       # causal consistency must be enabled for the session and the session
       # must have the current operation time. Also, topology must be
       # replica set or sharded cluster.
-      def apply_causal_consistency_if_possible(selector, server)
-        if !server.standalone?
+      def apply_causal_consistency_if_possible(selector, connection)
+        if !connection.standalone?
           cc_doc = session.send(:causal_consistency_doc)
           if cc_doc
             rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
@@ -73,9 +73,9 @@ module Mongo
         acknowledged_write? ? [] : [:more_to_come]
       end
 
-      def apply_cluster_time!(selector, server)
-        if !server.standalone?
-          cluster_time = [server.cluster_time, session && session.cluster_time].compact.max
+      def apply_cluster_time!(selector, connection)
+        if !connection.standalone?
+          cluster_time = [connection.cluster_time, session && session.cluster_time].compact.max
 
           if cluster_time
             selector['$clusterTime'] = cluster_time
@@ -119,20 +119,20 @@ module Mongo
         session.validate_read_preference!(selector) if read_command?(selector)
       end
 
-      def command(server)
-        sel = selector(server).dup
+      def command(connection)
+        sel = selector(connection).dup
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
 
-        add_read_preference(sel, server)
+        add_read_preference(sel, connection)
 
-        if server.features.sessions_enabled?
-          apply_cluster_time!(sel, server)
+        if connection.features.sessions_enabled?
+          apply_cluster_time!(sel, connection)
           if session && (acknowledged_write? || session.in_transaction?)
-            apply_session_options(sel, server)
+            apply_session_options(sel, connection)
           end
         elsif session && session.explicit?
-          apply_session_options(sel, server)
+          apply_session_options(sel, connection)
         end
 
         sel
@@ -150,12 +150,13 @@ module Mongo
       # $readPreference is sent to OP_MSG-grokking replica set members.
       #
       # @param [ Hash ] sel Existing command document which will be mutated.
-      # @param [ Server ] server The server that the command is to be sent to.
-      def add_read_preference(sel, server)
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
+      def add_read_preference(sel, connection)
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
-        if server.standalone?
+        if connection.server.standalone?
           # Read preference is never sent to standalones.
-        elsif server.cluster.single?
+        elsif connection.server.cluster.single?
           # In Single topology:
           # - If no read preference is specified by the application, the driver
           #   adds mode: primaryPreferred.
@@ -180,12 +181,12 @@ module Mongo
         end
       end
 
-      def apply_session_options(sel, server)
-        apply_cluster_time!(sel, server)
+      def apply_session_options(sel, connection)
+        apply_cluster_time!(sel, connection)
         sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
         sel.merge!(lsid: session.session_id)
         apply_start_transaction!(sel)
-        apply_causal_consistency!(sel, server)
+        apply_causal_consistency!(sel, connection)
         apply_autocommit!(sel)
         apply_txn_opts!(sel)
         suppress_read_write_concern!(sel)
@@ -198,12 +199,12 @@ module Mongo
         end
       end
 
-      def build_message(server)
+      def build_message(connection)
         super.tap do |message|
           if session
             # Serialize the message to detect client-side problems,
             # such as invalid BSON keys. The message will be serialized again
-            # later prior to being sent to the server.
+            # later prior to being sent to the connection.
             message.serialize(BSON::ByteBuffer.new)
 
             session.update_state!
