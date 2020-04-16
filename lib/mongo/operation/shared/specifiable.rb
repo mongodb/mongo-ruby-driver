@@ -543,14 +543,14 @@ module Mongo
 
       # The array filters.
       #
-      # @param [ Server ] server The server that the operation will be
-      #   executed on.
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
       #
       # @return [ Hash | nil ] The array filters.
       #
       # @since 2.5.2
-      def array_filters(server)
-        sel = selector(server)
+      def array_filters(connection)
+        sel = selector(connection)
         sel[Operation::ARRAY_FILTERS] if sel
       end
 
