@@ -59,7 +59,9 @@ describe Mongo::Operation::Find::Legacy do
     end
 
     let(:message) do
-      query.send(:message, authorized_primary)
+      authorized_primary.with_connection do |connection|
+        query.send(:message, connection)
+      end
     end
 
     it 'applies the correct flags' do
@@ -67,18 +69,30 @@ describe Mongo::Operation::Find::Legacy do
     end
 
     context 'when the server is a secondary' do
+      let(:connection) do
+        double('connection').tap do |conn|
+          allow(conn).to receive(:mongos?) { false }
+          allow(conn).to receive(:features) { authorized_primary.features }
+        end
+      end
 
       let(:secondary_server_single) do
         double('secondary_server').tap do |server|
           allow(server).to receive(:mongos?) { false }
           allow(server).to receive(:standalone?) { false }
+          allow(server).to receive(:with_connection).and_yield(connection)
           allow(server).to receive(:cluster) { cluster_single }
-          allow(server).to receive(:features) { authorized_primary.features }
         end
       end
 
       let(:message) do
-        query.send(:message, secondary_server_single)
+        secondary_server_single.with_connection do |connection|
+          query.send(:message, connection)
+        end
+      end
+
+      before do
+        allow(connection).to receive(:server) { secondary_server_single }
       end
 
       it 'applies the correct flags' do
@@ -97,7 +111,9 @@ describe Mongo::Operation::Find::Legacy do
       end
 
       it 'does not raise an exception' do
-        expect(op.execute(authorized_primary, client: nil)).to be_a(Mongo::Operation::Find::Legacy::Result)
+        authorized_primary.with_connection do |connection|
+          expect(op.execute(connection, client: nil)).to be_a(Mongo::Operation::Find::Legacy::Result)
+        end
       end
     end
   end

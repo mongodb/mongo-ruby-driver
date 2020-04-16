@@ -47,7 +47,12 @@ describe Mongo::Operation::GetMore::Legacy do
 
     it 'creates a get more wire protocol message with correct specs' do
       expect(Mongo::Protocol::GetMore).to receive(:new).with(SpecConfig.instance.test_db, TEST_COLL, to_return, cursor_id).and_call_original
-      begin; op.execute(authorized_primary, client: nil); rescue; end
+      begin
+        authorized_primary.with_connection do |connection|
+          op.execute(connection, client: nil)
+        end
+      rescue
+      end
     end
   end
 end
