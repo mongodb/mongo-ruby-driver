@@ -19,6 +19,7 @@ require 'mongo/operation/shared/object_id_generator'
 require 'mongo/operation/shared/op_msg_or_command'
 require 'mongo/operation/shared/op_msg_or_find_command'
 require 'mongo/operation/shared/op_msg_or_list_indexes_command'
+require 'mongo/operation/shared/collections_info_or_list_collections'
 
 require 'mongo/operation/op_msg_base'
 require 'mongo/operation/command'

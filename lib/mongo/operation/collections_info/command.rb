@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 MongoDB Inc.
+# Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/collections_info/command'
-require 'mongo/operation/collections_info/result'
-
 module Mongo
   module Operation
-
-    # A MongoDB operation to get info on all collections in a given database.
-    #
-    # @api private
-    #
-    # @since 2.0.0
     class CollectionsInfo
-      include Specifiable
-      include CollectionsInfoOrListCollections
+
+      # A MongoDB collectionInfo operation sent as a command message.
+      #
+      # @api private
+      #
+      # @since 2.5.2
+      class Command
+        include Specifiable
+        include Executable
+        include ReadPreferenceSupported
+        include PolymorphicResult
+
+        private
+
+        def selector(connection)
+          {}
+        end
+
+        def message(connection)
+          Protocol::Query.new(db_name, Database::NAMESPACES, command(connection), options(connection))
+        end
+      end
     end
   end
 end
