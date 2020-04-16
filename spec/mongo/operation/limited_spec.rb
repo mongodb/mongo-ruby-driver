@@ -11,6 +11,8 @@ describe Mongo::Operation::Limited do
       end.new({ :options => spec })
     end
 
+    let(:server) { double('server') }
+
     context 'when no limit is provided' do
 
       let(:spec) do
@@ -18,7 +20,7 @@ describe Mongo::Operation::Limited do
       end
 
       it 'returns a limit of -1' do
-        expect(limited.send(:options)).to eq({ :skip => 5, :limit => -1 })
+        expect(limited.send(:options, server)).to eq({ :skip => 5, :limit => -1 })
       end
     end
 
@@ -31,7 +33,7 @@ describe Mongo::Operation::Limited do
         end
 
         it 'returns a limit of -1' do
-          expect(limited.send(:options)).to eq({ :skip => 5, :limit => -1 })
+          expect(limited.send(:options, server)).to eq({ :skip => 5, :limit => -1 })
         end
       end
 
@@ -42,7 +44,7 @@ describe Mongo::Operation::Limited do
         end
 
         it 'returns a limit of -1' do
-          expect(limited.send(:options)).to eq({ :skip => 5, :limit => -1 })
+          expect(limited.send(:options, server)).to eq({ :skip => 5, :limit => -1 })
         end
       end
     end

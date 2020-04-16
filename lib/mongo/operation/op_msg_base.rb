@@ -23,7 +23,7 @@ module Mongo
       private
 
       def message(server)
-        Protocol::Msg.new(flags, options, command(server))
+        Protocol::Msg.new(flags, options(server), command(server))
       end
     end
   end

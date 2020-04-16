@@ -22,7 +22,15 @@ module Mongo
 
       private
 
-      def options(server = nil)
+      # Get the options for executing the operation on a particular server.
+      #
+      # @param [ Server ] server The server that the operation will be
+      #   executed on.
+      #
+      # @return [ Hash ] The options.
+      #
+      # @since 2.0.0
+      def options(server)
         super.merge(limit: -1)
       end
     end

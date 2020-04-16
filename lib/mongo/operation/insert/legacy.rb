@@ -40,7 +40,11 @@ module Mongo
         end
 
         def message(server)
-          opts = !!options[:continue_on_error] ? { :flags => [:continue_on_error] } : {}
+          opts = if options(server)[:continue_on_error]
+            { :flags => [:continue_on_error] }
+          else
+            {}
+          end
           Protocol::Insert.new(db_name, coll_name, documents, opts)
         end
 

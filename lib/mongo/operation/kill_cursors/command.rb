@@ -29,7 +29,7 @@ module Mongo
         private
 
         def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, selector(server), options)
+          Protocol::Query.new(db_name, Database::COMMAND, selector(server), options(server))
         end
       end
     end
