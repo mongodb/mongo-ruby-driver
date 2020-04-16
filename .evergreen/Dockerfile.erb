@@ -140,11 +140,19 @@ FROM <%= base_image %>
   
   <% end %>
   
-  <% if distro =~ /rhel/ %>
+  <% if distro =~ /rhel|ubuntu1604/ %>
   
     # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
+    #
+    # Ubuntu 16.04 apparently also ships a pip that does not work:
+    # https://stackoverflow.com/questions/37495375/python-pip-install-throws-typeerror-unsupported-operand-types-for-retry
+    # Potentially this only affects environments with less than ideal
+    # connectivity (or, perhaps, when python package registry is experiencing
+    # availability issues) when pip must retry to install packages.
+    #
     # rhel apparently does not package pip at all in core repoitories,
     # therefore install it the manual way.
+    #
     # https://pip.pypa.io/en/stable/installing/
     RUN curl --retry 3 -fL https://bootstrap.pypa.io/get-pip.py | python
   
