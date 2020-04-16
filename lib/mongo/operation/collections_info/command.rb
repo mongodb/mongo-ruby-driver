@@ -19,8 +19,6 @@ module Mongo
       # A MongoDB collectionInfo operation sent as a command message.
       #
       # @api private
-      #
-      # @since 2.5.2
       class Command
         include Specifiable
         include Executable

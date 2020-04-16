@@ -29,8 +29,6 @@ module Mongo
       #
       # @return [ Mongo::Operation::CollectionsInfo::Result,
       #           Mongo::Operation::ListCollections::Result ] The operation result.
-      #
-      # @since 2.0.0
       def execute(server, client:)
         server.with_connection do |connection|
           operation = final_operation(connection)
