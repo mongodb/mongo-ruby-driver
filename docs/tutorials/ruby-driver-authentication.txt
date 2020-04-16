@@ -31,10 +31,11 @@ client:
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ],
                              user: 'test',
-                             password: '123' )
+                             password: '123',
+                             database: 'mydb' )
 
   # If using a URI:
-  client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017")
+  client = Mongo::Client.new("mongodb://test:123@127.0.0.1:27017/mydb")
 
 Authentication credentials can be changed on a client instance to obtain
 a new client using the ``Client#with`` method:
@@ -85,7 +86,7 @@ connecting; if no database is specified, ``admin`` database is the default
 database and hence the default auth source. For the ``PLAIN`` mechanism (LDAP),
 the default auth source is the database to which the client is connecting;
 if no database is specified, the ``$external`` database is used as the
-auth source. For the ``GSSAPI`` and ``MONGODB_X509`` mechanisms, the
+auth source. For the ``AWS``, ``GSSAPI`` and ``MONGODB_X509`` mechanisms, the
 auth source is always ``$external``.
 
 .. note::
@@ -177,6 +178,166 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
                              ssl_cert: '/path/to/client.pem',
                              ssl_key: '/path/to/client.pem',
                              ssl_ca_cert: '/path/to/ca.pem' )
+
+
+AWS
+```
+
+*Requires MongoDB Enterprise Edition and server version 4.4 or later.*
+
+The AWS authentication mechanism uses AWS `Identity and Access Management (IAM)
+<https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html>`_
+and AWS `Security Token Service (STS)
+<https://docs.aws.amazon.com/STS/latest/APIReference/Welcome.html>`_
+to prove the client's identity to a MongoDB server. Briefly, AWS authentication
+works as follows:
+
+1. The client uses AWS IAM credentials to create a signature that is sent to
+   the MongoDB server.
+2. The server sends a request to AWS STS using the client's signature.
+3. A successful STS request returns the username (technically, the ARN of
+   the IAM user or role) corresponding to the credentials that the client used.
+   The IAM user ARN is used by the server to look up a defined user, and the
+   client is considered to have authenticated as this user.
+
+.. note::
+
+  Unlike other authentication mechanisms, the username that the application
+  provides when creating a client and the username of the server user are
+  different: the username on the client is the AWS access key ID, but the
+  username on the server is the ARN of the IAM user or role corresponding
+  to the access key ID.
+
+AWS credentials are comprised of:
+
+- The access key ID.
+- The secret access key.
+- The optional session token.
+
+Authentication with `AWS IAM credentials
+<https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html>`_,
+uses the access key ID and the secret access key. Authentication with
+`temporary AWS IAM credentials
+<https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html>`_
+uses all three components.
+
+.. note::
+
+  The driver never sends the secret access key or the session token over
+  the network.
+
+Temporary credentials are used with:
+
+- STS `Assume Role <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-api.html>`_
+  requests.
+- `EC2 instance roles <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html>`_.
+- `ECS task roles <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html>`_.
+- `AWS Lambda environment <https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html>`_.
+
+The Ruby driver allows providing both regular and temporary credentials
+explicitly as Ruby options or URI options. If credentials are not explicitly
+provided, the driver will attempt to retrieve them from environment variables
+described below and from EC2 instance and ECS task metadata endpoints.
+
+Providing Credentials Explicitly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Regular (non-temporary) IAM credentials can be provided as Ruby options,
+as follows:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['mongodb.example.com'],
+    auth_mech: :aws,
+    user: '<AWS-ACCESS-KEY-ID>',
+    password: '<AWS-SECRET-ACCESS-KEY>',
+    database: 'mydb',
+  )
+
+They can also be provided via a URI:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(
+    'mongodb://<AWS-ACCESS-KEY-ID>:<AWS-SECRET-ACCESS-KEY>@mongodb.example.com/mydb?authMechanism=MONGODB-AWS')
+
+.. note::
+
+  When credentials are provided via a URI, they must be percent-escaped.
+
+To provide temporary credentials, specify the session token in the
+authentication mechanism properties as follows:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['mongodb.example.com'],
+    auth_mech: :aws,
+    user: '<AWS-ACCESS-KEY-ID>',
+    password: '<AWS-SECRET-ACCESS-KEY>',
+    auth_mech_properties: {
+      aws_session_token: '<AWS-SESSION-TOKEN>',
+    },
+    database: 'mydb',
+  )
+
+The temporary credentials can also be provided via a URI:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(
+    'mongodb://<AWS-ACCESS-KEY-ID>:<AWS-SECRET-ACCESS-KEY>@mongodb.example.com/mydb?authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:<AWS-SESSION-TOKEN>')
+
+Automatically Retrieving Credentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The client can retrieve credentials from the environment or from EC2 or ECS
+metadata endpoints. To retrieve credentials automatically, specify the
+AWS authentication mechanism but do not specify a username nor a password:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['mongodb.example.com'],
+    auth_mech: :aws,
+    database: 'mydb',
+  )
+
+  # Using a URI:
+  client = Mongo::Client.new(
+    'mongodb://mongodb.example.com/mydb?authMechanism=MONGODB-AWS')
+
+The driver will try to obtain credentials from the following sources, in
+the specified order:
+
+- ``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY`` and ``AWS_SESSION_TOKEN``
+  environment variables. These environment variables are recognized by
+  a variety of AWS-related libraries and tools such as the official
+  AWS Ruby SDK and the AWS CLI. They are also defined when running in an
+  AWS Lambda environment.
+- The AWS `ECS task metadata endpoint
+  <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html>`_.
+  This returns credentials associated with the ECS task role assigned to
+  the container.
+- The AWS `EC2 instance metadata endpoint
+  <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html>`_.
+  This returns credentials associated with the EC2 instance role assigned to
+  the instance.
+
+.. note::
+
+  A credentials source that provides any credentials must provide a complete
+  set of credentials. For example, the driver will raise an error if only
+  one of ``AWS_ACCESS_KEY_ID`` or ``AWS_SECRET_ACCESS_KEY`` environment
+  variables is populated but not the other.
+
+.. note::
+
+  If an application is running in an ECS container on an EC2 instance and
+  `the container is allowed access to the instance metadata
+  <https://aws.amazon.com/premiumsupport/knowledge-center/ecs-container-ec2-metadata/>`_,
+  the driver will attempt to retrieve credentials for the AWS authentication
+  mechanism from the EC2 instance metadata endpoint, thus potentially
+  authenticating as the IAM role assigned to the EC2 instance, if it was not
+  able to retrieve ECS task role credentials from the ECS task endpoint.
 
 
 .. _plain:
@@ -297,7 +458,7 @@ The mechanism can be explicitly set with the credentials:
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ],
-                             database: 'music',
+                             database: 'mydb',
                              user: 'test',
                              password: '123',
                              auth_mech: :mongodb_cr )

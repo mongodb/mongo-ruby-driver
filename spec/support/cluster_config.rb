@@ -49,6 +49,7 @@ class ClusterConfig
     end
   end
 
+  # @return [ Mongo::Address ] The address of the primary in the deployment.
   def primary_address
     determine_cluster_config
     @primary_address
