@@ -292,9 +292,9 @@ Read Preference
 ~~~~~~~~~~~~~~~
 
 Read preference determines the candidate :manual:`replica set</replication/>`
-members to which a query or command can be sent. They consist of a **mode** specified as
-a symbol, an array of hashes known as **tag_sets**, and two timing options:
-**local_threshold** and **server_selection_timeout**.
+members to which a query or command can be sent. They consist of a **mode**
+specified as a symbol, an array of hashes known as **tag_sets**, and two
+timing options: **local_threshold** and **server_selection_timeout**.
 
 ``local_threshold``
   Defines the upper limit in seconds of the latency window
@@ -304,6 +304,12 @@ a symbol, an array of hashes known as **tag_sets**, and two timing options:
 ``server_selection_timeout``
   Defines how long to block for server selection
   before throwing an exception. The default is 30,000 milliseconds, or 30 seconds.
+
+.. note::
+
+  Read preference does not apply to Standalone deployments. When a client
+  is connected to a Standalone deployment, any application-specified read
+  preference is ignored.
 
 For more information on the algorithm used to select a server, please
 refer to the `Server Selection documentation, available on GitHub
@@ -337,17 +343,29 @@ using the ``with`` method:
 Mode
 ~~~~
 
-There are five possible read preference modes. They are ``:primary``,
-``:secondary``, ``:primary_preferred``, ``:secondary_preferred``,
-``:nearest``. Please see the :manual:`read preference documentation in the MongoDB Manual
-</core/read-preference/>` for an explanation of the modes and tag sets.
+There are five possible read preference modes: ``:primary``, ``:secondary``,
+``:primary_preferred``, ``:secondary_preferred`` and``:nearest``.
+Please see the :manual:`read preference documentation in the MongoDB Manual
+</core/read-preference/>` for an explanation of the modes.
+
+.. note::
+
+  When a client is directly connected to a server using the ``:direct_connection``
+  Ruby option or the ``directConnection`` URI option, read preference mode
+  is automatically set to ``:primary_preferred`` to permit read operations
+  against secondaries. If the application specified a ``:primary`` read
+  preference mode, the mode is automatically converted to ``:primary_preferred``.
+  If another read preference mode is specified, it is passed to the server
+  unchanged.
 
 Tag sets
 ~~~~~~~~
 
 The ``tag_sets`` parameter is an ordered list of tag sets used to
 restrict the eligibility of servers for selection, such as for data
-center awareness.
+center awareness. Please see the :manual:`read preference documentation in
+the MongoDB Manual </core/read-preference/>` for an explanation of tag sets.
+
 
 A read preference tag set (T) matches a server tag set (S) – or
 equivalently a server tag set (S) matches a read preference tag set

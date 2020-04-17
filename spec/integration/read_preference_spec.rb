@@ -482,4 +482,30 @@ describe 'Read preference' do
       end
     end
   end
+
+  context 'secondary read with direct connection' do
+    require_topology :replica_set
+
+    let(:address_str) do
+      Mongo::ServerSelector.get(mode: :secondary).
+        select_server(authorized_client.cluster).address.seed
+    end
+
+    let(:secondary_client) do
+      new_local_client([address_str],
+        SpecConfig.instance.all_test_options.merge(connect: :direct))
+    end
+
+    it 'succeeds without read preference' do
+      secondary_client['foo'].find.to_a
+    end
+
+    it 'succeeds with read preference: secondary' do
+      secondary_client['foo', {read: {mode: :secondary}}].find.to_a
+    end
+
+    it 'succeeds with read preference: primary' do
+      secondary_client['foo', {read: {mode: :primary}}].find.to_a
+    end
+  end
 end
