@@ -120,6 +120,12 @@ module Mongo
       end
 
       def command(connection)
+        if Lint.enabled?
+          unless connection.is_a?(Server::Connection)
+            raise Error::LintError, "Connection is not a Connection instance: #{connection}"
+          end
+        end
+
         sel = selector(connection).dup
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
@@ -153,6 +159,12 @@ module Mongo
       # @param [ Server::Connection ] connection The connection that the
       #   operation will be executed on.
       def add_read_preference(sel, connection)
+        if Lint.enabled?
+          unless connection.is_a?(Server::Connection)
+            raise Error::LintError, "Connection is not a Connection instance: #{connection}"
+          end
+        end
+
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
         if connection.server.standalone?
           # Read preference is never sent to standalones.

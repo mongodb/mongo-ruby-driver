@@ -23,6 +23,15 @@ describe Mongo::Operation::Update::OpMsg do
 
   let(:op) { described_class.new(spec) }
 
+  let(:connection) do
+    double('connection').tap do |connection|
+      allow(connection).to receive(:server).and_return(authorized_primary)
+      allow(connection).to receive(:features).and_return(authorized_primary.features)
+      allow(connection).to receive(:standalone?).and_return(authorized_primary.standalone?)
+      allow(connection).to receive(:cluster_time).and_return(authorized_primary.cluster_time)
+    end
+  end
+
   describe '#initialize' do
 
     context 'spec' do
@@ -68,6 +77,8 @@ describe Mongo::Operation::Update::OpMsg do
   end
 
   describe 'write concern' do
+    # https://jira.mongodb.org/browse/RUBY-2224
+    skip_if_linting
 
     context 'when write concern is not specified' do
 
@@ -80,19 +91,21 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       it 'does not include write concern in the selector' do
-        expect(op.send(:command, authorized_primary)[:writeConcern]).to be_nil
+        expect(op.send(:command, connection)[:writeConcern]).to be_nil
       end
     end
 
     context 'when write concern is specified' do
 
       it 'includes write concern in the selector' do
-        expect(op.send(:command, authorized_primary)[:writeConcern]).to eq(write_concern.options)
+        expect(op.send(:command, connection)[:writeConcern]).to eq(write_concern.options)
       end
     end
   end
 
   describe '#message' do
+    # https://jira.mongodb.org/browse/RUBY-2224
+    skip_if_linting
 
     context 'when the server supports OP_MSG' do
       min_server_fcv '3.6'
@@ -126,7 +139,7 @@ describe Mongo::Operation::Update::OpMsg do
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
-          op.send(:message, authorized_primary)
+          op.send(:message, connection)
         end
       end
 
@@ -141,7 +154,7 @@ describe Mongo::Operation::Update::OpMsg do
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
-          op.send(:message, authorized_primary)
+          op.send(:message, connection)
         end
 
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
@@ -156,19 +169,14 @@ describe Mongo::Operation::Update::OpMsg do
 
           before do
             session.instance_variable_set(:@options, { implicit: true })
-            # Topology is standalone, hence there is exactly one server
-            authorized_primary.monitor.stop!
           end
 
           it 'creates the correct OP_MSG message' do
             RSpec::Mocks.with_temporary_scope do
-              # Override description as it gets replaced on every connection
-              description = authorized_primary.description
-              allow(authorized_primary).to receive(:description).and_return(description)
-              allow(description.features).to receive(:sessions_enabled?).and_return(false)
+              expect(connection.features).to receive(:sessions_enabled?).and_return(false)
 
               expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
-              op.send(:message, authorized_primary)
+              op.send(:message, connection)
             end
           end
         end
@@ -201,7 +209,7 @@ describe Mongo::Operation::Update::OpMsg do
             it 'does not send a session id in the command' do
               authorized_client.command(ping:1)
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-              op.send(:message, authorized_primary)
+              op.send(:message, connection)
             end
           end
 
@@ -218,7 +226,7 @@ describe Mongo::Operation::Update::OpMsg do
             it 'creates the correct OP_MSG message' do
               authorized_client.command(ping:1)
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-              op.send(:message, authorized_primary)
+              op.send(:message, connection)
             end
           end
         end
@@ -242,7 +250,7 @@ describe Mongo::Operation::Update::OpMsg do
             authorized_client.command(ping:1)
             RSpec::Mocks.with_temporary_scope do
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-              op.send(:message, authorized_primary)
+              op.send(:message, connection)
             end
           end
         end
