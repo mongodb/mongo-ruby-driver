@@ -15,19 +15,83 @@
 module Mongo
   module Operation
 
-    # Shared behavior of operations that support read preference.
+    # Read preference handling for pre-OP_MSG operation implementations.
+    #
+    # This module is not used by OP_MSG operation classes (those deriving
+    # from OpMsgBase). Instead, read preference for those classes is handled
+    # in SessionsSupported module.
     #
     # @since 2.5.2
+    # @api private
     module ReadPreferenceSupported
 
       private
 
-      SLAVE_OK = :slave_ok
-
+      # Get the options for executing the operation on a particular server.
+      #
+      # @param [ Server ] server The server that the operation will be
+      #   executed on.
+      #
+      # @return [ Hash ] The options.
+      #
+      # @since 2.0.0
       def options(server)
-        update_options_for_slave_ok(super, server)
+        add_slave_ok_flag_maybe(super, server)
       end
 
+      # Adds :slave_ok flag to options based on the read preference specified
+      # in the operation or implied by the topology that the server is a
+      # part of.
+      #
+      # @param [ Hash ] options The options calculated so far.
+      #
+      # @return [ Hash ] The new options.
+      def add_slave_ok_flag_maybe(options, server)
+        add_flag =
+          # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
+          if server.standalone?
+            # Read preference is never sent to standalones.
+            false
+          elsif server.cluster.single?
+            # In Single topology the driver forces primaryPreferred read
+            # preference mode (via the slave_ok flag, in case of old servers)
+            # so that the query is satisfied.
+            true
+          else
+            # In replica sets and sharded clusters, read preference is passed
+            # to the server if one is specified by the application, and there
+            # is no default.
+            read && read.slave_ok?
+          end
+
+        if add_flag
+          options= options.dup
+          (options[:flags] ||= []) << :slave_ok
+        end
+
+        options
+      end
+
+      def command(server)
+        sel = super
+        update_selector_for_read_pref(sel, server)
+      end
+
+      # Adds $readPreference field to the command document.
+      #
+      # $readPreference is only sent when the server is a mongos,
+      # following the rules described in
+      # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#passing-read-preference-to-mongos.
+      # The topology does not matter for figuring out whether to send
+      # $readPreference since the decision is always made based on
+      # server type.
+      #
+      # $readPreference is not sent to pre-OP_MSG replica set members.
+      #
+      # @param [ Hash ] sel Existing command document.
+      # @param [ Server ] server The server that the command is to be sent to.
+      #
+      # @return [ Hash ] New command document to send to the server.
       def update_selector_for_read_pref(sel, server)
         if read && server.mongos? && read_pref = read.to_mongos
           Mongo::Lint.validate_camel_case_read_preference(read_pref)
@@ -36,21 +100,6 @@ module Mongo
         else
           sel
         end
-      end
-
-      def update_options_for_slave_ok(opts, server)
-        if (server.cluster.single? && !server.mongos?) || (read && read.slave_ok?)
-          opts.dup.tap do |o|
-            (o[:flags] ||= []) << SLAVE_OK
-          end
-        else
-          opts
-        end
-      end
-
-      def command(server)
-        sel = super
-        update_selector_for_read_pref(sel, server)
       end
     end
   end

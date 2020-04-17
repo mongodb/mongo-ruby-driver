@@ -71,6 +71,7 @@ describe Mongo::Operation::Find::Legacy do
       let(:secondary_server_single) do
         double('secondary_server').tap do |server|
           allow(server).to receive(:mongos?) { false }
+          allow(server).to receive(:standalone?) { false }
           allow(server).to receive(:cluster) { cluster_single }
           allow(server).to receive(:features) { authorized_primary.features }
         end

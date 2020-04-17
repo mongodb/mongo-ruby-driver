@@ -123,9 +123,8 @@ module Mongo
         sel = selector(server).dup
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
-        unless server.standalone?
-          sel['$readPreference'] = read.to_doc if read
-        end
+
+        add_read_preference(sel, server)
 
         if server.features.sessions_enabled?
           apply_cluster_time!(sel, server)
@@ -137,6 +136,48 @@ module Mongo
         end
 
         sel
+      end
+
+      # Adds $readPreference field to the command document.
+      #
+      # $readPreference is only sent when the server is a mongos,
+      # following the rules described in
+      # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#passing-read-preference-to-mongos.
+      # The topology does not matter for figuring out whether to send
+      # $readPreference since the decision is always made based on
+      # server type.
+      #
+      # $readPreference is sent to OP_MSG-grokking replica set members.
+      #
+      # @param [ Hash ] sel Existing command document which will be mutated.
+      # @param [ Server ] server The server that the command is to be sent to.
+      def add_read_preference(sel, server)
+        # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
+        if server.standalone?
+          # Read preference is never sent to standalones.
+        elsif server.cluster.single?
+          # In Single topology:
+          # - If no read preference is specified by the application, the driver
+          #   adds mode: primaryPreferred.
+          # - If a read preference is specified by the application, the driver
+          #   replaces the mode with primaryPreferred.
+          read_doc = if read
+            BSON::Document.new(read.to_doc)
+          else
+            BSON::Document.new
+          end
+          if [nil, 'primary'].include?(read_doc['mode'])
+            read_doc['mode'] = 'primaryPreferred'
+          end
+          sel['$readPreference'] = read_doc
+        else
+          # In replica sets and sharded clusters, read preference is passed
+          # to the server if one is specified by the application, and there
+          # is no default.
+          if read
+            sel['$readPreference'] = read.to_doc
+          end
+        end
       end
 
       def apply_session_options(sel, server)
