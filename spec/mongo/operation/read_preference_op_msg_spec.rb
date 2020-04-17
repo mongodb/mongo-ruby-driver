@@ -34,6 +34,12 @@ describe Mongo::Operation::SessionsSupported do
     end
   end
 
+  let(:connection) do
+    double('connection').tap do |connection|
+      allow(connection).to receive(:server).and_return(server)
+    end
+  end
+
   describe '#add_read_preference' do
 
     let(:read_pref) do
@@ -42,7 +48,7 @@ describe Mongo::Operation::SessionsSupported do
 
     let(:actual) do
       sel = operation.send(:selector).dup
-      operation.send(:add_read_preference, sel, server)
+      operation.send(:add_read_preference, sel, connection)
       sel
     end
 

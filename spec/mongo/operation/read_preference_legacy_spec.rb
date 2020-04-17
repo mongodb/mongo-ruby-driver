@@ -34,10 +34,16 @@ describe Mongo::Operation::ReadPreferenceSupported do
     end
   end
 
+  let(:connection) do
+    double('connection').tap do |connection|
+      allow(connection).to receive(:server).and_return(server)
+    end
+  end
+
   describe '#add_slave_ok_flag_maybe' do
 
     let(:actual) do
-      operation.send(:add_slave_ok_flag_maybe, operation.send(:options), server)
+      operation.send(:add_slave_ok_flag_maybe, operation.send(:options), connection)
     end
 
     shared_examples_for 'sets the slave_ok flag as expected' do
@@ -203,7 +209,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
     # Behavior of sending $readPreference is the same regardless of topology.
     shared_examples_for '$readPreference in the command' do
       let(:actual) do
-        operation.send(:update_selector_for_read_pref, operation.send(:selector), server)
+        operation.send(:update_selector_for_read_pref, operation.send(:selector), connection)
       end
 
       let(:expected_read_preference) do
