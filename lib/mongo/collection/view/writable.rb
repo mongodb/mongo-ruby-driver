@@ -62,7 +62,7 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
-              if server.max_wire_version < 9 && cmd[:hint] &&
+              if cmd[:hint] &&
                 write_concern && !write_concern.acknowledged?
               then
                 raise Mongo::Error, "Add a descriptive error here"
@@ -149,7 +149,7 @@ module Mongo
             applied_write_concern = applied_write_concern(opts[:session])
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
-              if server.max_wire_version < 9 && cmd[:hint] &&
+              if cmd[:hint] &&
                   applied_write_concern && !applied_write_concern.acknowledged?
               then
                 raise Mongo::Error, "add meaningful description"
@@ -192,7 +192,7 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
-              if server.max_wire_version < 9 && delete_doc[:hint] &&
+              if delete_doc[:hint] &&
                 write_concern && !write_concern.acknowledged?
               then
                 raise Mongo::Error, "Add a descriptive error here"
@@ -235,7 +235,7 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
-              if server.max_wire_version < 9 && delete_doc[:hint] &&
+              if delete_doc[:hint] &&
                 write_concern && !write_concern.acknowledged?
               then
                 raise Mongo::Error, "Add a descriptive error here"
@@ -285,7 +285,7 @@ module Mongo
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
-              if server.max_wire_version < 8 && update_doc[:hint] &&
+              if update_doc[:hint] &&
                   write_concern && !write_concern.acknowledged?
               then
                 raise Mongo::Error, "Add a descriptive error here"
@@ -344,7 +344,7 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
-              if server.max_wire_version < 8 && update_doc[:hint] &&
+              if update_doc[:hint] &&
                   write_concern && !write_concern.acknowledged?
               then
                 raise Mongo::Error, "Add a descriptive error here"
@@ -402,8 +402,7 @@ module Mongo
                 raise Mongo::Error, "Add a descriptive error here"
               end
 
-              if server.max_wire_version < 8 && update_doc[:hint] &&
-                  write_concern && !write_concern.acknowledged?
+              if update_doc[:hint] && write_concern && !write_concern.acknowledged?
               then
                 raise Mongo::Error, "Add a descriptive error here"
               end

@@ -210,7 +210,7 @@ module Mongo
         raise Mongo::Error, "Add a descriptive error here"
       end
 
-      if server.max_wire_version < 9 && hints_present &&
+      if hints_present &&
           spec[:write_concern] && !spec[:write_concern].acknowledged?
       then
         raise Mongo::Error, "Add a descriptive error here"
@@ -227,7 +227,7 @@ module Mongo
         raise Mongo::Error, "Add a descriptive error here"
       end
 
-      if server.max_wire_version < 9 && hints_present &&
+      if hints_present &&
           spec[:write_concern] && !spec[:write_concern].acknowledged?
       then
         raise Mongo::Error, "Add a descriptive error here"
@@ -249,7 +249,7 @@ module Mongo
         raise Mongo::Error, "Add a descriptive error here"
       end
 
-      if server.max_wire_version < 8 && hints_present &&
+      if hints_present &&
           spec[:write_concern] && !spec[:write_concern].acknowledged?
       then
         raise Mongo::Error, "Add a descriptive error here"
@@ -267,7 +267,7 @@ module Mongo
         raise Mongo::Error, "Add a descriptive error here"
       end
 
-      if server.max_wire_version < 8 && hints_present &&
+      if hints_present &&
           spec[:write_concern] && !spec[:write_concern].acknowledged?
       then
         raise Mongo::Error, "Add a descriptive error here"
