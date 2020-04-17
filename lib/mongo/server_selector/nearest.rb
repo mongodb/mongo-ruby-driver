@@ -19,7 +19,7 @@ module Mongo
     #   of candidates.
     #
     # @since 2.0.0
-    class Nearest
+    class Nearest < Base
       include Selectable
 
       # Name of the this read preference in the server's format.
@@ -59,23 +59,26 @@ module Mongo
       end
 
       # Convert this server preference definition into a format appropriate
-      #   for a mongos server.
+      #   for sending to a MongoDB server (i.e., as a command field).
       #
-      # @example Convert this server preference definition into a format
-      #   for mongos.
-      #   preference = Mongo::ServerSelector::Nearest.new
-      #   preference.to_mongos
-      #
-      # @return [ Hash ] The server preference formatted for a mongos server.
+      # @return [ Hash ] The server preference formatted as a command field value.
       #
       # @since 2.0.0
-      def to_mongos
-        @doc ||= (preference = { :mode => SERVER_FORMATTED_NAME }
-          preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
-          preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
-          preference)
+      def to_doc
+        full_doc
       end
-      alias :to_doc :to_mongos
+
+      # Convert this server preference definition into a value appropriate
+      #   for sending to a mongos.
+      #
+      # This method may return nil if the read preference should not be sent
+      # to a mongos.
+      #
+      # @return [ Hash | nil ] The server preference converted to a mongos
+      #   command field value.
+      #
+      # @since 2.0.0
+      alias :to_mongos :to_doc
 
       private
 
