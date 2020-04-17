@@ -25,6 +25,89 @@ describe 'Client construction with AWS auth' do
     end
   end
 
+  context 'credentials specified explicitly' do
+
+    let(:username) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID') }
+    let(:password) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY') }
+    let(:session_token) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN') }
+    let(:address_strs) { SpecConfig.instance.addresses.join(',') }
+
+    context 'regular credentials' do
+      require_auth 'aws-regular'
+
+      context 'via Ruby options' do
+        let(:client) do
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.ssl_options.merge(
+              auth_mech: :aws,
+              user: username,
+              password: password,
+              connect_timeout: 3.34, socket_timeout: 3.35,
+              server_selection_timeout: 3.36))
+        end
+
+        it_behaves_like 'connects successfully'
+
+        it 'uses the expected user' do
+          puts "Authenticated as #{authenticated_user_name}"
+          authenticated_user_name.should =~ /^arn:aws:iam:/
+        end
+      end
+
+      context 'via URI' do
+        let(:client) do
+          new_local_client("mongodb://#{CGI.escape(username)}:#{CGI.escape(password)}@#{address_strs}/test?authMechanism=MONGODB-AWS&serverSelectionTimeoutMS=3.26")
+        end
+
+        it_behaves_like 'connects successfully'
+
+        it 'uses the expected user' do
+          puts "Authenticated as #{authenticated_user_name}"
+          authenticated_user_name.should =~ /^arn:aws:iam:/
+        end
+      end
+    end
+
+    context 'temporary credentials' do
+      require_auth 'aws-assume-role'
+
+      context 'via Ruby options' do
+        let(:client) do
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.ssl_options.merge(
+              auth_mech: :aws,
+              user: username,
+              password: password,
+              auth_mech_properties: {
+                aws_session_token: session_token,
+              },
+              connect_timeout: 3.34, socket_timeout: 3.35,
+              server_selection_timeout: 3.36))
+        end
+
+        it_behaves_like 'connects successfully'
+
+        it 'uses the expected user' do
+          puts "Authenticated as #{authenticated_user_name}"
+          authenticated_user_name.should =~ /^arn:aws:sts:/
+        end
+      end
+
+      context 'via URI' do
+        let(:client) do
+          new_local_client("mongodb://#{CGI.escape(username)}:#{CGI.escape(password)}@#{address_strs}/test?authMechanism=MONGODB-AWS&serverSelectionTimeoutMS=3.26&authMechanismProperties=AWS_SESSION_TOKEN:#{CGI.escape(session_token)}")
+        end
+
+        it_behaves_like 'connects successfully'
+
+        it 'uses the expected user' do
+          puts "Authenticated as #{authenticated_user_name}"
+          authenticated_user_name.should =~ /^arn:aws:sts:/
+        end
+      end
+    end
+  end
+
   context 'credentials specified via environment' do
     require_auth 'aws-regular', 'aws-assume-role'
 
