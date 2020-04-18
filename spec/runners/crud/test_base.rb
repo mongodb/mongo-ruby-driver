@@ -26,6 +26,12 @@ module Mongo
       private
 
       def resolve_target(client, operation)
+        if operation.database_options
+          # Some CRUD spec tests specify "database options". In Ruby there is
+          # no facility to specify options on a database, hence these are
+          # lifted to the client.
+          client = client.with(operation.database_options)
+        end
         case operation.object
         when 'collection'
           client[@spec.collection_name].with(operation.collection_options)

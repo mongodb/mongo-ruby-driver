@@ -97,6 +97,14 @@ module Mongo
         send(op_name, target, Context.new)
       end
 
+      def database_options
+        if opts = @spec['databaseOptions']
+          Utils.convert_operation_options(opts)
+        else
+          nil
+        end
+      end
+
       def collection_options
         Utils.convert_operation_options(@spec['collectionOptions'])
       end
@@ -166,6 +174,24 @@ module Mongo
 
       def db_list_collection_objects(database, context)
         database.collections
+      end
+
+      def create_index(collection, context)
+        # The Ruby driver method uses `key` while the createIndexes server
+        # command and the test specifiecation use 'keys`.
+        opts = BSON::Document.new(options)
+        if opts.key?(:keys)
+          opts[:key] = opts.delete(:keys)
+        end
+        collection.indexes.create_many([opts])
+      end
+
+      def drop_index(collection, context)
+        unless options.keys == %i(name)
+          raise "Only name is allowed when dropping the index"
+        end
+        name = options[:name]
+        collection.indexes.drop_one(name)
       end
 
       def list_indexes(collection, context)

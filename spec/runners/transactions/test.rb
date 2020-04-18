@@ -131,14 +131,21 @@ module Mongo
 
         results = @operations.map do |op|
           target = resolve_target(test_client, op)
-          op.execute(target, @session0, @session1)
+          if op.needs_session?
+            op.execute(target, session0, session1)
+          else
+            # Hack to support write concern operations tests, which are
+            # defined to use transactions format but target pre-3.6 servers
+            # that do not support sessions
+            op.execute(target, nil, nil)
+          end
         end
 
-        session0_id = @session0.session_id
-        session1_id = @session1.session_id
+        session0_id = @session0&.session_id
+        session1_id = @session1&.session_id
 
-        @session0.end_session
-        @session1.end_session
+        @session0&.end_session
+        @session1&.end_session
 
         actual_events = Utils.yamlify_command_events(event_subscriber.started_events)
         actual_events = actual_events.reject do |event|
@@ -148,8 +155,12 @@ module Mongo
 
           # Replace the session id placeholders with the actual session ids.
           payload = e['command_started_event']
-          payload['command']['lsid'] = 'session0' if payload['command']['lsid'] == session0_id
-          payload['command']['lsid'] = 'session1' if payload['command']['lsid'] == session1_id
+          if @session0
+            payload['command']['lsid'] = 'session0' if payload['command']['lsid'] == session0_id
+          end
+          if @session1
+            payload['command']['lsid'] = 'session1' if payload['command']['lsid'] == session1_id
+          end
 
         end
 
@@ -169,8 +180,10 @@ module Mongo
         rescue Mongo::Error
         end
 
-        mongos_each_direct_client do |direct_client|
-          direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
+        if ClusterConfig.instance.fcv_ish >= '4.2'
+          mongos_each_direct_client do |direct_client|
+            direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
+          end
         end
 
         # Insert data into the key vault collection if required to do so by
@@ -198,7 +211,7 @@ module Mongo
         support_client.command(
           create: @spec.collection_name,
           validator: collection_validator,
-          writeConcern: { w: :majority }
+          writeConcern: { w: 'majority' }
         )
 
         coll.insert_many(@data) unless @data.empty?
@@ -215,10 +228,8 @@ module Mongo
 
         # Client-side encryption tests require the use of a separate client
         # without auto_encryption_options for querying results.
-        @result_collection = support_client.use(@spec.database_name)[@spec.collection_name]
-
-        @session0 = test_client.start_session(@session_options[:session0] || {})
-        @session1 = test_client.start_session(@session_options[:session1] || {})
+        result_collection_name = outcome&.collection_name || @spec.collection_name
+        @result_collection = support_client.use(@spec.database_name)[result_collection_name]
       end
 
       def teardown_test
@@ -244,15 +255,23 @@ module Mongo
       def resolve_target(client, operation)
         case operation.object
         when 'session0'
-          @session0
+          session0
         when 'session1'
-          @session1
+          session1
         when 'testRunner'
           # We don't actually use this target in any way.
           nil
         else
           super
         end
+      end
+
+      def session0
+        @session0 ||= test_client.start_session(@session_options[:session0] || {})
+      end
+
+      def session1
+        @session1 ||= test_client.start_session(@session_options[:session1] || {})
       end
     end
   end

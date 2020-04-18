@@ -17,6 +17,7 @@ module Mongo
         contents.sub!(/"retryable-reads-tests"/, '"ruby-driver"')
         contents.sub!(/"transaction-tests"/, '"ruby-driver"')
         contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
+        contents.sub!(/ default_write_concern_db/, ' ruby-driver')
 
         @spec = YAML.load(contents)
         @description = File.basename(test_path)
