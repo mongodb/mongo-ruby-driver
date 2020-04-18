@@ -29,8 +29,7 @@ describe Mongo::Auth::SCRAM do
     end
   end
 
-  context 'when SCRAM-SHA-1 is used' do
-    min_server_fcv '3.0'
+  shared_examples_for 'works correctly' do
 
     before do
       connection.connect!
@@ -45,7 +44,7 @@ describe Mongo::Auth::SCRAM do
             database: 'driver',
             user: 'notauser',
             password: 'password',
-            auth_mech: :scram,
+            auth_mech: auth_mech,
           )
         end
 
@@ -89,71 +88,32 @@ describe Mongo::Auth::SCRAM do
         it_behaves_like 'caches scram credentials', :salted_password
         it_behaves_like 'caches scram credentials', :client_key
         it_behaves_like 'caches scram credentials', :server_key
+
+        context 'if conversation has not verified server signature' do
+          it 'raises an exception' do
+            expect_any_instance_of(Mongo::Auth::SCRAM::Conversation).to receive(:server_verified?).and_return(false)
+            lambda do
+              login
+            end.should raise_error(Mongo::Error::MissingScramServerSignature)
+          end
+        end
       end
     end
+  end
+
+  context 'when SCRAM-SHA-1 is used' do
+    min_server_fcv '3.0'
+
+    let(:auth_mech) { :scram }
+
+    it_behaves_like 'works correctly'
   end
 
   context 'when SCRAM-SHA-256 is used' do
     min_server_fcv '4.0'
 
-    before do
-      connection.connect!
-    end
+    let(:auth_mech) { :scram256 }
 
-    describe '#login' do
-
-      context 'when the user is not authorized' do
-
-        let(:user) do
-          Mongo::Auth::User.new(
-            database: 'driver',
-            user: 'notauser',
-            password: 'password',
-            auth_mech: :scram256,
-          )
-        end
-
-        let(:authenticator) do
-          described_class.new(user)
-        end
-
-        it 'raises an exception' do
-          expect {
-            authenticator.login(connection)
-          }.to raise_error(Mongo::Auth::Unauthorized)
-        end
-
-        context 'when compression is used' do
-          require_compression
-          min_server_fcv '3.6'
-
-          it 'does not compress the message' do
-            expect(Mongo::Protocol::Compressed).not_to receive(:new)
-            expect {
-              authenticator.login(connection)
-            }.to raise_error(Mongo::Auth::Unauthorized)
-          end
-        end
-      end
-
-      context 'when the user is authorized for the database' do
-
-        let(:authenticator) do
-          described_class.new(test_user)
-        end
-
-        let(:login) do
-          authenticator.login(connection)
-        end
-
-        it 'logs the user into the connection' do
-          expect(login['ok']).to eq(1)
-        end
-
-        it_behaves_like 'caches scram credentials', :salted_password
-        it_behaves_like 'caches scram credentials', :client_key
-        it_behaves_like 'caches scram credentials', :server_key
-      end
-    end
+    it_behaves_like 'works correctly'
   end
 end

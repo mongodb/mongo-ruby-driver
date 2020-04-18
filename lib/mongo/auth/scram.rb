@@ -49,7 +49,11 @@ module Mongo
       def login(connection)
         mechanism = user.mechanism || :scram
         conversation = Conversation.new(user, mechanism)
-        converse_multi_step(connection, conversation)
+        converse_multi_step(connection, conversation).tap do
+          unless conversation.server_verified?
+            raise Error::MissingScramServerSignature
+          end
+        end
       end
     end
   end

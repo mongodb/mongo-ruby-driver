@@ -195,6 +195,34 @@ describe Mongo::Auth::SCRAM::Conversation do
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
+
+      context 'when server signature is empty' do
+
+        let(:finalize_payload) do
+          BSON::Binary.new('v=')
+        end
+
+        it 'raises an error' do
+          expect {
+            conversation.continue(continue_document, connection)
+            conversation.finalize(finalize_document, connection)
+          }.to raise_error(Mongo::Error::InvalidSignature)
+        end
+      end
+
+      context 'when server signature is not provided' do
+
+        let(:finalize_payload) do
+          BSON::Binary.new('ok=absolutely')
+        end
+
+        it 'raises an error' do
+          expect {
+            conversation.continue(continue_document, connection)
+            conversation.finalize(finalize_document, connection)
+          }.to raise_error(Mongo::Error::MissingScramServerSignature)
+        end
+      end
     end
   end
 
