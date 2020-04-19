@@ -12,15 +12,17 @@ GridFS
    :depth: 1
    :class: singlecol
 
-The driver provides a clean and simple interface to work with storage of
-chunked files in the database, also known as the pattern "GridFS". The API allows you to either
-work with Grid::File objects or with read and write streams.
+GridFS is a MongoDB driver feature that allows storing arbitrarily large
+files or blobs in the database. This is implemented by the driver
+transparently chunking the blobs on writes and reassembling them on reads.
+Both read and write operations support streaming of data.
 
-Creating a GridFS object ("Grid::FSBucket")
--------------------------------------------
+The GridFS object ("Grid::FSBucket")
+------------------------------------
 
-You can create a GridFS object by calling ``fs`` on a database, with optional
-arguments. ``fs`` returns a ``Grid::FSBucket`` object.
+To use GridFS, call the ``fs`` method on a database to obtain a
+``Mongo::Grid::FSBucket`` obkect. The ``fs`` method supports the following
+optional keyword arguments:
 
 The options that ``Grid::FSBucket`` supports are:
 
@@ -51,7 +53,8 @@ For example, you can create a GridFS bucket object with a particular read prefer
 
 .. code-block:: ruby
 
-  fs_bucket = database.fs( read: { mode: :secondary } )
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  fs_bucket = client.database.fs( read: { mode: :secondary } )
 
 
 Working with write streams
