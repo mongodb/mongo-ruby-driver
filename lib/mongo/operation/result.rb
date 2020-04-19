@@ -303,7 +303,7 @@ module Mongo
           self,
           code: parser.code,
           code_name: parser.code_name,
-          write_concern_error: parser.write_concern_error?,
+          write_concern_error_document: parser.write_concern_error_document,
           write_concern_error_code: parser.write_concern_error_code,
           write_concern_error_code_name: parser.write_concern_error_code_name,
           labels: parser.labels,
