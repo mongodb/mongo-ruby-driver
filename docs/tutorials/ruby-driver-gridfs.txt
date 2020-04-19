@@ -17,6 +17,14 @@ files or blobs in the database. This is implemented by the driver
 transparently chunking the blobs on writes and reassembling them on reads.
 Both read and write operations support streaming of data.
 
+.. note::
+
+  On this page, "file" generally refers to a GridFS file rather than a file
+  on the local filesystem. GridFS files consist of file metadata which
+  includes the file name, and file contents split into chunks. When this page
+  refers to files on a local filesystem, it uses the term "physical file".
+
+
 The GridFS object ("Grid::FSBucket")
 ------------------------------------
 
@@ -53,8 +61,78 @@ For example, you can create a GridFS bucket object with a particular read prefer
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
   fs_bucket = client.database.fs( read: { mode: :secondary } )
+
+
+Writing Files
+-------------
+
+To store a file in GridFS, create a ``Mongo::Grid::File`` object with the
+contents of the file and the metadata, then use the ``insert_one`` method
+to store the ``Mongo::Grid::File`` object in the database:
+
+.. code-block:: ruby
+
+  file = Mongo::Grid::File.new('file contents', filename: 'file-name.txt')
+  fs_bucket.insert_one(file)
+
+To store a physical file in GridFS, you might do something like:
+
+.. code-block:: ruby
+
+  path = '/path/to/file.txt'
+  file = Mongo::Grid::File.new(File.read(path), filename: File.basename(path))
+  fs_bucket.insert_one(file)
+
+To store a blob in GridFS, you might do something like:
+
+.. code-block:: ruby
+
+  path = '/path/to/file.txt'
+  file = Mongo::Grid::File.new('binary data...')
+  fs_bucket.insert_one(file)
+
+When a file is inserted, the ``file_id`` attribute of the ``Mongo::Grid::File``
+object is populated with an ID of the inserted file. This ID is of type
+``BSON::ObjectId``. Each file stored in GridFS has an ID. The file name is
+optional; a file that was created without specifying a file name can still
+be retrieved using its ID.
+
+.. code-block:: ruby
+
+  file.id
+  # => BSON::ObjectId('5e9ccf35e1b8321195bad757')
+
+
+path to the file Files can be stored in the database one at a time. File chunks are inserted
+by default into the ``fs.chunks`` collection and file metadata is inserted
+into the ``fs.files`` collection.
+
+To insert into collections with a name prefix other than `fs`, access the
+filesystem with a ``:fs_name`` option.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  file = Mongo::Grid::File.new('I am a file', :filename => 'new-file.txt')
+
+  client.database.fs(:fs_name => 'grid').insert_one(file)
+
+Note that the first time a file is inserted, it will create the required index
+for you on the ``chunks`` collection. This index is a compound index:
+
+.. code-block:: ruby
+
+  { :files_id => 1, :n => 1 }
+
+Files can also be streamed as an alternative to a direct insert.
+
+.. code-block:: ruby
+
+  client.database.fs.open_upload_stream(filename) do |stream|
+    stream.write(file)
+  end
 
 
 Working with write streams
@@ -239,46 +317,6 @@ The following is a full list of the available options that files support.
      - The file name.
    * - ``:upload_date``
      - The date the file was uploaded (stored).
-
-
-Inserting Files
----------------
-
-Files can be inserted into the database one at a time. File chunks are inserted
-by default into the ``fs.chunks`` collection and file metadata is inserted into the
-``fs.files`` collection.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  file = Mongo::Grid::File.new('I am a file', :filename => 'new-file.txt')
-
-  client.database.fs.insert_one(file)
-
-To insert into collections with a name prefix other than `fs`, access the
-filesystem with a ``:fs_name`` option.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  file = Mongo::Grid::File.new('I am a file', :filename => 'new-file.txt')
-
-  client.database.fs(:fs_name => 'grid').insert_one(file)
-
-Note that the first time a file is inserted, it will create the required index
-for you on the ``chunks`` collection. This index is a compound index:
-
-.. code-block:: ruby
-
-  { :files_id => 1, :n => 1 }
-
-Files can also be streamed as an alternative to a direct insert.
-
-.. code-block:: ruby
-
-  client.database.fs.open_upload_stream(filename) do |stream|
-    stream.write(file)
-  end
 
 Finding Files
 -------------
