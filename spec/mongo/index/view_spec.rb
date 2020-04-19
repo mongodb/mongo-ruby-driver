@@ -505,6 +505,25 @@ describe Mongo::Index::View do
         end
       end
     end
+
+    context 'when using bucket option' do
+
+      let(:spec) do
+        { 'any' => 1 }
+      end
+
+      let(:result) do
+        view.create_many([key: spec, bucket_size: 1])
+      end
+
+      it 'warns of deprecation' do
+        RSpec::Mocks.with_temporary_scope do
+          view.client.should receive(:log_warn).and_call_original
+
+          result
+        end
+      end
+    end
   end
 
   describe '#create_one' do
@@ -590,6 +609,25 @@ describe Mongo::Index::View do
 
         it 'returns ok' do
           expect(result).to be_successful
+        end
+      end
+
+      context 'when using bucket option' do
+
+        let(:spec) do
+          { 'any' => 1 }
+        end
+
+        let(:result) do
+          view.create_one(spec, bucket_size: 1)
+        end
+
+        it 'warns of deprecation' do
+          RSpec::Mocks.with_temporary_scope do
+            view.client.should receive(:log_warn).and_call_original
+
+            result
+          end
         end
       end
     end
