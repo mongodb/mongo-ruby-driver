@@ -478,7 +478,9 @@ module Mongo
       #
       # @since 2.0.0
       def read
-        @read ||= ServerSelector.get(spec[READ]) if spec[READ]
+        @read ||= begin
+          ServerSelector.get(spec[READ]) if spec[READ]
+        end
       end
 
       # Whether the operation is ordered.

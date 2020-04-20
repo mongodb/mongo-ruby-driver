@@ -183,7 +183,8 @@ describe 'Transactions examples' do
         events_coll = session.client.use(:reporting)[:events]
 
         session.start_transaction(read_concern: { level: :snapshot },
-                                  write_concern: { w: :majority })
+                                  write_concern: { w: :majority },
+                                  read: {mode: :primary})
         employees_coll.update_one({ employee: 3 }, { '$set' => { status: 'Inactive'} },
                                   session: session)
         events_coll.insert_one({ employee: 3, status: { new: 'Inactive', old: 'Active' } },
@@ -194,7 +195,9 @@ describe 'Transactions examples' do
       session = client.start_session
 
       begin
-        run_transaction_with_retry(session) { |s| update_employee_info(s) }
+        run_transaction_with_retry(session) do
+          update_employee_info(session)
+        end
       rescue StandardError => e
         # Do something with error
         raise
