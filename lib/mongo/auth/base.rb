@@ -37,9 +37,7 @@ module Mongo
       # Performs a single-step conversation on the given connection.
       def converse_1_step(connection, conversation)
         msg = conversation.start(connection)
-        reply_document = dispatch_msg(connection, conversation, msg)
-        conversation.finalize(reply_document)
-        reply_document
+        dispatch_msg(connection, conversation, msg)
       end
 
       # Performs a two-step conversation on the given connection.
@@ -51,9 +49,7 @@ module Mongo
         msg = conversation.start(connection)
         reply_document = dispatch_msg(connection, conversation, msg)
         msg = conversation.continue(reply_document, connection)
-        reply_document = dispatch_msg(connection, conversation, msg)
-        conversation.finalize(reply_document)
-        reply_document
+        dispatch_msg(connection, conversation, msg)
       end
 
       # Performs the variable-length SASL conversation on the given connection.
@@ -68,8 +64,9 @@ module Mongo
         reply_document = dispatch_msg(connection, conversation, msg)
         msg = conversation.continue(reply_document, connection)
         reply_document = dispatch_msg(connection, conversation, msg)
+        conversation.process_continue_response(reply_document)
         unless reply_document[:done]
-          msg = conversation.finalize(reply_document, connection)
+          msg = conversation.finalize(connection)
           reply_document = dispatch_msg(connection, conversation, msg)
         end
         unless reply_document[:done]

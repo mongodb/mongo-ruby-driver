@@ -44,6 +44,11 @@ module Mongo
           mechanism: full_mechanism,
           payload: BSON::Binary.new(payload),
         )
+        if options = client_first_message_options
+          # Short SCRAM conversation,
+          # https://jira.mongodb.org/browse/DRIVERS-707
+          selector[:options] = options
+        end
         if connection && connection.features.op_msg_enabled?
           selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
           cluster_time = connection.mongos? && connection.cluster_time
@@ -60,6 +65,10 @@ module Mongo
       end
 
       private
+
+      def client_first_message_options
+        nil
+      end
 
       # Helper method to validate that server nonce starts with the client
       # nonce.

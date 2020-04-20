@@ -75,11 +75,35 @@ describe 'Command monitoring' do
     # X.509 auth uses authenticate instead of sasl* commands
     require_no_external_user
 
-    it 'does not nest auth and find' do
-      expect(subscriber.started_events.length).to eq 0
-      client['test-collection'].find(a: 1).first
-      command_names = subscriber.started_events.map(&:command_name)
-      expect(command_names).to eq %w(saslStart saslContinue saslContinue find)
+    shared_examples_for 'does not nest auth and find' do
+      it 'does not nest auth and find' do
+        expect(subscriber.started_events.length).to eq 0
+        client['test-collection'].find(a: 1).first
+        command_names = subscriber.started_events.map(&:command_name)
+        command_names.should == expected_command_names
+      end
+    end
+
+    context 'pre-4.4 servers' do
+      max_server_version '4.2'
+
+      let(:expected_command_names) do
+        # Long SCRAM conversation
+        %w(saslStart saslContinue saslContinue find)
+      end
+
+      it_behaves_like 'does not nest auth and find'
+    end
+
+    context '4.4+ servers' do
+      min_server_fcv '4.4'
+
+      let(:expected_command_names) do
+        # Short SCRAM conversation
+        %w(saslStart saslContinue find)
+      end
+
+      it_behaves_like 'does not nest auth and find'
     end
   end
 

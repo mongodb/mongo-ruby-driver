@@ -91,20 +91,6 @@ module Mongo
             )
           end
         end
-
-        # Finalize the CR conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
-        #
-        # @param [ BSON::Document ] reply_document The reply document of the
-        #   previous message.
-        # @param [ Server::Connection ] connection The connection being
-        #   authenticated.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def finalize(reply_document)
-        end
       end
     end
   end
