@@ -186,23 +186,26 @@ module Mongo
       #   concern error or either one of the two.
       #
       # @since 2.10.0
-      # @api experimental
       def write_concern_error?
-        @write_concern_error
+        !!@write_concern_error_document
       end
+
+      # Returns the write concern error document as it was reported by the
+      # server, if any.
+      #
+      # @return [ Hash | nil ] Write concern error as reported to the server.
+      attr_reader :write_concern_error_document
 
       # @return [ Integer | nil ] The error code for the write concern error,
       #   if a write concern error is present and has a code.
       #
       # @since 2.10.0
-      # @api experimental
       attr_reader :write_concern_error_code
 
       # @return [ String | nil ] The code name for the write concern error,
       #   if a write concern error is present and has a code name.
       #
       # @since 2.10.0
-      # @api experimental
       attr_reader :write_concern_error_code_name
 
       # Create the operation failure.
@@ -219,8 +222,8 @@ module Mongo
       #
       # @option options [ Integer ] :code Error code.
       # @option options [ String ] :code_name Error code name.
-      # @option options [ true | false ] :write_concern_error Whether the
-      #   write concern error is present.
+      # @option options [ Hash ] :write_concern_error_document The
+      #   server-supplied write concern error document, if any.
       # @option options [ Integer ] :write_concern_error_code Error code for
       #   write concern error, if any.
       # @option options [ String ] :write_concern_error_code_name Error code
@@ -235,7 +238,7 @@ module Mongo
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
-        @write_concern_error = !!options[:write_concern_error]
+        @write_concern_error_document = options[:write_concern_error_document]
         @write_concern_error_code = options[:write_concern_error_code]
         @write_concern_error_code_name = options[:write_concern_error_code_name]
         @labels = options[:labels] || []

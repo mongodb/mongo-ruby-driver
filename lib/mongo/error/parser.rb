@@ -112,6 +112,15 @@ module Mongo
         !!write_concern_error_document
       end
 
+      # Returns the write concern error document as it was reported by the
+      # server, if any.
+      #
+      # @return [ Hash | nil ] Write concern error as reported to the server.
+      # @api experimental
+      def write_concern_error_document
+        document['writeConcernError']
+      end
+
       # @return [ Integer | nil ] The error code for the write concern error,
       #   if a write concern error is present and has a code.
       #
@@ -131,10 +140,6 @@ module Mongo
       end
 
       private
-
-      def write_concern_error_document
-        document['writeConcernError']
-      end
 
       def parse!
         @message = ""
