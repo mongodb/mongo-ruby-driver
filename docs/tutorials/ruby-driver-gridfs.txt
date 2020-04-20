@@ -21,15 +21,16 @@ Both read and write operations support streaming of data.
 
   On this page, "file" generally refers to a GridFS file rather than a file
   on the local filesystem. GridFS files consist of file metadata which
-  includes the file name, and file contents split into chunks. When this page
-  refers to files on a local filesystem, it uses the term "physical file".
+  includes the file name and type, and file contents split into chunks.
+  When this page refers to files on a local filesystem, it uses the term
+  "physical file".
 
 
-The GridFS object ("Grid::FSBucket")
-------------------------------------
+The FSBucket Object
+-------------------
 
 To use GridFS, call the ``fs`` method on a database to obtain a
-``Mongo::Grid::FSBucket`` obkect. The ``fs`` method supports the following
+``Mongo::Grid::FSBucket`` object. The ``fs`` method supports the following
 optional keyword arguments:
 
 The options that ``Grid::FSBucket`` supports are:
