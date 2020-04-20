@@ -598,6 +598,7 @@ Ruby Options
    * - ``:write_concern``
      - Specifies write concern options as a ``Hash``.
        Keys in the hash can be ``:w``, ``:wtimeout``, ``:j``, ``:fsync``.
+       Note that ``:wtimeout`` is specified in milliseconds, not seconds.
 
        .. code-block:: ruby
 
