@@ -75,6 +75,15 @@ module Mongo
         # @return [ String ] client_nonce The client nonce.
         attr_reader :client_nonce
 
+        # Whether the client verified the ServerSignature from the server.
+        #
+        # @see https://jira.mongodb.org/browse/SECURITY-621
+        #
+        # @return [ true | fase ] Whether the server's signature was verified.
+        def server_verified?
+          !!@server_verified
+        end
+
         # Continue the SCRAM conversation. This sends the client final message
         # to the server after setting the reply from the previous server
         # communication.
@@ -136,9 +145,16 @@ module Mongo
         # @since 2.0.0
         def finalize(reply_document, connection)
           payload_data = reply_document[PAYLOAD].data
-          @verifier = payload_data.match(VERIFIER)[1]
+          v = payload_data.match(VERIFIER)
+          if v
+            @verifier = v[1]
+          else
+            raise Error::MissingScramServerSignature
+          end
 
-          unless compare_digest(verifier, server_signature)
+          if compare_digest(verifier, server_signature)
+            @server_verified = true
+          else
             raise Error::InvalidSignature.new(verifier, server_signature)
           end
 
