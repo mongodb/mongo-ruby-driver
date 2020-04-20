@@ -196,7 +196,7 @@ module Utils
     # Remove any events from authentication commands.
     events.reject! do |e|
       command_name = e['command_started_event']['command_name']
-      command_name.start_with?('sasl') || command_name == 'authenticate'
+      %w(saslStart saslContinue authenticate getnonce).include?(command_name)
     end
 
     events
@@ -232,18 +232,28 @@ module Utils
           out_k = Utils.underscore(k).to_sym
           v
         when 'writeConcern'
-          # Write concern option is called :write on the client, but
-          # :write_concern on all levels below the client.
-          out_k = :write_concern
-          # The client expects write concern value to only have symbol keys.
-          Hash[v.map do |sub_k, sub_v|
-            [sub_k.to_sym, sub_v]
-          end]
+          if v == {}
+            # Tests added in SPEC-1352 specify {writeConcern: {}} but what
+            # they mean is for the driver to use the default write concern,
+            # which for Ruby means no write concern is specified at all.
+            #
+            # This nil return requires the compact call below to get rid of
+            # the nils before outgoing options are constructed.
+            next nil
+          else
+            # Write concern option is called :write on the client, but
+            # :write_concern on all levels below the client.
+            out_k = :write_concern
+            # The client expects write concern value to only have symbol keys.
+            Hash[v.map do |sub_k, sub_v|
+              [sub_k.to_sym, sub_v]
+            end]
+          end
         else
           raise "Unhandled operation option #{k}"
         end
         [out_k, out_v]
-      end]
+      end.compact]
     else
       {}
     end

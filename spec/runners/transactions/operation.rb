@@ -17,6 +17,10 @@ module Mongo
     class Operation < Mongo::CRUD::Operation
       include RSpec::Matchers
 
+      def needs_session?
+        arguments && arguments['session'] || object =~ /session/
+      end
+
       def execute(target, session0, session1, active_session=nil)
         session = case arguments && arguments['session']
         when 'session0'
