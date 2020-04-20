@@ -1,9 +1,18 @@
 #!/bin/bash
 
-set -o xtrace   # Write all commands first to stderr
-set -o errexit  # Exit the script with error if any of the commands fail
+set -e
+
+if echo "$AUTH" |grep -q ^aws; then
+  # Do not set -x as this will expose passwords in Evergreen logs
+  set +x
+else
+  set -x
+fi
 
 . `dirname "$0"`/functions.sh
+. `dirname "$0"`/functions-aws.sh
+. `dirname "$0"`/functions-server.sh
+. `dirname "$0"`/functions-config.sh
 
 arch=`host_arch`
 
@@ -27,6 +36,11 @@ mkdir -p "$dbdir"
 mongo_version=`echo $MONGODB_VERSION |tr -d .`
 if test $mongo_version = latest; then
   mongo_version=44
+fi
+  
+# Compression is handled via an environment variable, convert to URI option
+if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
+  add_uri_option compressors=zlib
 fi
 
 args="--setParameter enableTestCommands=1"
@@ -55,9 +69,12 @@ if test -n "$MMAPV1"; then
 fi
 if test "$AUTH" = auth; then
   args="$args --auth --username bob --password pwd123"
-fi
-if test "$AUTH" = x509; then
+elif test "$AUTH" = x509; then
   args="$args --auth --username bootstrap --password bootstrap"
+elif echo "$AUTH" |grep -q ^aws; then
+  args="$args --auth --username bootstrap --password bootstrap"
+  args="$args --setParameter authenticationMechanisms=MONGODB-AWS,SCRAM-SHA-1,SCRAM-SHA-256"
+  uri_options="$uri_options&authMechanism=MONGODB-AWS&authSource=\$external"
 fi
 if test "$SSL" = ssl; then
   args="$args --sslMode requireSSL"\
@@ -89,11 +106,7 @@ fi
 
 python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
-install_deps
-
-echo "Running specs"
-which bundle
-bundle --version
+bundle_install
 
 if test "$TOPOLOGY" = sharded-cluster; then
   if test -n "$SINGLE_MONGOS"; then
@@ -115,18 +128,13 @@ fi
 
 if test "$AUTH" = auth; then
   hosts="bob:pwd123@$hosts"
-fi
-
-if test "$AUTH" = x509; then
+elif test "$AUTH" = x509; then
   create_user_cmd="`cat <<'EOT'
     db.getSiblingDB("$external").runCommand(
       {
         createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
         roles: [
-             { role: "dbAdminAnyDatabase", db: "admin" },
-             { role: "readWriteAnyDatabase", db: "admin" },
-             { role: "userAdminAnyDatabase", db: "admin" },
-             { role: "clusterAdmin", db: "admin" },
+             { role: "root", db: "admin" },
         ],
         writeConcern: { w: "majority" , wtimeout: 5000 },
       }
@@ -139,9 +147,50 @@ EOT
     --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
     -u bootstrap -p bootstrap \
     --eval "$create_user_cmd"
-fi
+elif test "$AUTH" = aws-regular; then
+  clear_instance_profile
+  
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 
-if test "$AUTH" = kerberos; then
+  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
+elif test "$AUTH" = aws-assume-role; then
+  clear_instance_profile
+  
+  ./.evergreen/aws -a "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID" \
+    -s "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY" \
+    -r us-east-1 \
+    assume-role "$MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN" >.env.private.gen
+  eval `cat .env.private.gen`
+  export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+  export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+  export MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN=$AWS_SESSION_TOKEN
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+  export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+  export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+
+  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
+
+  uri_options="$uri_options&"\
+"authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
+elif test "$AUTH" = aws-ec2; then
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+  
+  # We need to assign an instance profile to the current instance, otherwise
+  # since we don't place credentials into the environment the test suite
+  # cannot connect to the MongoDB server while bootstrapping.
+  # The EC2 credential retrieval tests clears the instance profile as part
+  # of one of the tests.
+  ruby -Ispec -Ilib -I.evergreen/lib -rec2_setup -e Ec2Setup.new.assign_instance_profile
+elif test "$AUTH" = aws-ecs; then
+  if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
+    # drivers-evergreen-tools performs this operation in its ECS E2E tester.
+    eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
+  fi
+  
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
 
@@ -157,6 +206,7 @@ export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options
 
 set_fcv
 
+echo Preparing the test suite
 bundle exec rake spec:prepare
 
 if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
@@ -166,6 +216,7 @@ if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
 fi
 
 export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
+echo "Running tests"
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 else

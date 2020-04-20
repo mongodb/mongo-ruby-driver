@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Provisions the machine on which this script is running with the
+# required software to be able to run the Ruby driver test suite.
+#
+# This script may be run more than once, in which case it will try to attain
+# the same final machine state as it would have attained on a fresh instance.
+
+set -e
+
+# https://askubuntu.com/questions/132059/how-to-make-a-package-manager-wait-if-another-instance-of-apt-is-running
+while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock; do
+  echo Waiting for existing package manager commands to finish... 1>&2
+  sleep 1
+done
+
+# psmisc is for fuser, which is used for detecting concurrent apt-get runs
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install psmisc
+
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install ruby curl zsh
+
+#sudo env DEBIAN_FRONTEND=noninteractive \
+#  apt-get -y install libcurl4 || sudo apt-get -y install libcurl3
+
+# Need binutils for `strings` utility per
+# https://aws.amazon.com/premiumsupport/knowledge-center/ecs-iam-task-roles-config-errors/
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
+  krb5-user bzip2 libgmp-dev python-pip python2.7-dev binutils

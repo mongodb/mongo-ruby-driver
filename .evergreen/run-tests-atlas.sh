@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -o xtrace   # Write all commands first to stderr
-set -o errexit  # Exit the script with error if any of the commands fail
+set -ex
 
 . `dirname "$0"`/functions.sh
 
@@ -9,7 +8,7 @@ set_env_vars
 
 setup_ruby
 
-install_deps
+bundle_install
 
 echo "Running specs"
 

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Provisions the machine on which this script is running with the
+# required software to be able to build and run a Docker container with the
+# driver's test suite.
+#
+# After this script runs for the first time, the user needs to log out and
+# log back in to be able to issue Docker commands.
+#
+# This script may be run more than once, in which case it will try to attain
+# the same final machine state as it would have attained on a fresh instance.
+
+set -e
+
+sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get -y install docker.io ruby zsh
+sudo gem install dotenv --no-document
+
+user=`whoami`
+
+sudo usermod -aG docker "$user"

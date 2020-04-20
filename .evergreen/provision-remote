@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Copies the current directory to the specified target, then runs the
+# provision script on the target.
+#
+# The current directory is copied into the `work` subdirectory of the user's
+# home directory on the target.
+#
+# The target is meant to be an EC2 instance which will be provisioned with the
+# required software to be able to build and run a Docker container with the
+# driver's test suite.
+
+set -e
+
+target="$1"
+if test -z "$target"; then
+  echo Usage: `basename $0` user@host 1>&2
+  exit 1
+fi
+
+shift
+
+method="$1"
+
+. `dirname $0`/functions-remote.sh
+
+# Waiting for previous apt runs:
+# https://askubuntu.com/questions/132059/how-to-make-a-package-manager-wait-if-another-instance-of-apt-is-running
+
+do_ssh "$target" '
+  while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock; do
+    echo Waiting for existing package manager commands to finish... 1>&2 &&
+    sleep 1
+  done &&
+  
+  if test `id -u` = 0; then
+    apt-get update &&
+    env DEBIAN_FRONTEND=noninteractive apt-get -y install rsync sudo psmisc
+  else
+    sudo apt-get update &&
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y install rsync psmisc
+  fi
+'
+
+do_rsync --delete --exclude .git --exclude .env.private\* -a \
+  --exclude gem-private_key.pem \
+  . $target:work
+
+if test "$method" = local; then
+  script=provision-local
+else
+  script=provision-docker
+fi
+
+do_ssh "$target" "cd work && ./.evergreen/$script"

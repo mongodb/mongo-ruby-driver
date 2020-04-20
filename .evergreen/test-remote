@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Copies the current directory to the specified target, then executes the
+# remaining arguments on the target as a shell command.
+#
+# The current directory is copied into the `work` subdirectory of the user's
+# home directory on the target.
+#
+# There is no provision in this script to specify the private SSH key to use
+# for authentication. It is recommended to use ssh-agent and add the key to the
+# agent. If target allows password authentication (EC2 instances do not
+# generally have password authentication initially configured on them)
+# it is possible to omit ssh-agent setup and enter the password each time it
+# is prompted for.
+#
+# Example:
+#
+# ./.evergreen/test-remote admin@12.34.56.78 \
+#   env MONGODB_VERSION=4.4 AUTH=aws-regular .evergreen/run-tests-aws-auth.sh
+#
+# Note: the private environment files (.env.private*) are copied to the target.
+#   This is done in order to be able to test, for example, AWS authentication
+#   from EC2 instances.
+
+set -e
+
+exec_only=false
+
+while getopts :e option; do
+  case $option in
+    e)
+      exec_only=true
+      ;;
+      
+    *)
+      echo "Unknown option $option" 1>&2
+      exit 1
+      ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+target="$1"
+if test -z "$target"; then
+  echo Usage: `basename $0` user@host 1>&2
+  exit 1
+fi
+
+shift
+
+. `dirname $0`/functions-remote.sh
+
+if ! $exec_only; then
+  do_ssh "$target" -t "sudo pkill -9 mongod; sudo pkill -9 mongos; sudo rm -rf work; sudo rm -rf /db"
+fi
+
+do_rsync --exclude .git -a --exclude gem-private_key.pem \
+  . "$target":work
+
+cmd=`./.evergreen/shell-escape "$@"`
+do_ssh "$target" -t "cd work && $cmd"

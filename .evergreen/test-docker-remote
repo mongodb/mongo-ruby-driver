@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Copies the current directory to the specified target, then runs the
+# test-on-docker script on the target with the remaining arguments.
+#
+# The current directory is copied into the `work` subdirectory of the user's
+# home directory on the target.
+#
+# There is no provision in this script to specify the private SSH key to use
+# for authentication. It is recommended to use ssh-agent and add the key to the
+# agent. If target allows password authentication (EC2 instances do not
+# generally have password authentication initially configured on them)
+# it is possible to omit ssh-agent setup and enter the password each time it
+# is prompted for.
+#
+# Example:
+#
+# ./.evergreen/test-docker-remote admin@12.34.56.78 -p MONGODB_VERSION=4.2
+#
+# Note: the private environment files (.env.private*) are copied to the target.
+#   This is done in order to be able to test, for example, AWS authentication
+#   from EC2 instances.
+
+set -e
+
+target="$1"
+if test -z "$target"; then
+  echo Usage: `basename $0` user@host 1>&2
+  exit 1
+fi
+
+shift
+
+. `dirname $0`/functions-remote.sh
+
+do_rsync --delete --exclude .git -av --exclude gem-private_key.pem \
+  . "$target":work
+
+cmd=`./.evergreen/shell-escape "$@"`
+# To debug the test-on-docker invocation:
+# do_ssh "$target" -t "cd work && set -x && ./.evergreen/test-on-docker $cmd"
+do_ssh "$target" -t "cd work && ./.evergreen/test-on-docker $cmd"

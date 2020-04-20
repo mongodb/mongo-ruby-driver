@@ -109,6 +109,30 @@ functions:
       params:
         file: src/expansion.yml
 
+  "export AWS auth credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          IAM_AUTH_ASSUME_AWS_ACCOUNT="${iam_auth_assume_aws_account}"
+          IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY="${iam_auth_assume_aws_secret_access_key}"
+          IAM_AUTH_ASSUME_ROLE_NAME="${iam_auth_assume_role_name}"
+          IAM_AUTH_EC2_INSTANCE_ACCOUNT="${iam_auth_ec2_instance_account}"
+          IAM_AUTH_EC2_INSTANCE_PROFILE="${iam_auth_ec2_instance_profile}"
+          IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY="${iam_auth_ec2_instance_secret_access_key}"
+          IAM_AUTH_ECS_ACCOUNT="${iam_auth_ecs_account}"
+          IAM_AUTH_ECS_ACCOUNT_ARN="${iam_auth_ecs_account_arn}"
+          IAM_AUTH_ECS_CLUSTER="${iam_auth_ecs_cluster}"
+          IAM_AUTH_ECS_SECRET_ACCESS_KEY="${iam_auth_ecs_secret_access_key}"
+          IAM_AUTH_ECS_SECURITY_GROUP="${iam_auth_ecs_security_group}"
+          IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
+          IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
+          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+          EOT
+
   "export FLE AWS credentials":
     - command: shell.exec
       type: test
@@ -270,6 +294,16 @@ functions:
           ${PREPARE_SHELL}
           ./egos .evergreen/run-tests.sh
 
+  "run AWS auth tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ./egos .evergreen/run-tests-aws-auth.sh
+
   "run Kerberos unit tests":
     - command: shell.exec
       type: test
@@ -322,6 +356,10 @@ tasks:
       commands:
         - func: "export FLE AWS credentials"
         - func: "run tests"
+    - name: "test-aws-auth"
+      commands:
+        - func: "export AWS auth credentials"
+        - func: "run AWS auth tests"
 
 axes:
 
@@ -435,6 +473,22 @@ axes:
         display_name: Kerberos
         variables:
           AUTH: kerberos
+      - id: aws-regular
+        display_name: AWS Auth Regular Credentials
+        variables:
+          AUTH: aws-regular
+      - id: aws-assume-role
+        display_name: AWS Auth Assume Role
+        variables:
+          AUTH: aws-assume-role
+      - id: aws-ec2
+        display_name: AWS Auth EC2 Role
+        variables:
+          AUTH: aws-ec2
+      - id: aws-ecs
+        display_name: AWS Auth ECS Task
+        variables:
+          AUTH: aws-ecs
 
   - id: "ruby"
     display_name: Ruby Version
@@ -480,12 +534,12 @@ axes:
       - id: ubuntu1404
         display_name: "Ubuntu 14.04"
         run_on: ubuntu1404-test
-      - id: ubuntu1204
-        display_name: "Ubuntu 12.04"
-        run_on: ubuntu1204-test
       - id: rhel70
-        display_name: "RHEL 7.0"
+        display_name: "RHEL 7"
         run_on: rhel70-small
+      - id: rhel62
+        display_name: "RHEL 6"
+        run_on: rhel62-small
 
   - id: "compressor"
     display_name: Compressor
@@ -640,7 +694,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['3.0']
       topology: "*"
-      os: ubuntu1204
+      os: ubuntu1404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -651,7 +705,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: ['2.6']
       topology: "*"
-      os: ubuntu1204
+      os: ubuntu1404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -740,7 +794,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "4.2"
       topology: "*"
-      os: ubuntu1604
+      os: rhel70
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -751,7 +805,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "2.6"
       topology: "*"
-      os: ubuntu1204
+      os: rhel62
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -808,7 +862,7 @@ buildvariants:
       mongodb-version: '4.2'
       topology: replica-set
       bson: "*"
-      os: ubuntu1604
+      os: rhel70
     display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
     tasks:
       - name: "test-mlaunch"
@@ -893,3 +947,25 @@ buildvariants:
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
+
+  - matrix_name: aws-auth-regular
+    matrix_spec:
+      auth-and-ssl: aws-regular
+      ruby: [ruby-2.7]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "AWS auth regular: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: "test-aws-auth"
+
+  - matrix_name: aws-auth-temporary
+    matrix_spec:
+      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs]
+      ruby: [ruby-2.7]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "AWS auth temporary: ${auth-and-ssl} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: "test-aws-auth"
