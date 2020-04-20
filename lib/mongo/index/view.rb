@@ -151,8 +151,14 @@ module Mongo
       def create_many(*models)
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
+          indexes = normalize_models(models.flatten, server)
+          indexes.each do |index|
+            if index[:bucketSize] || index['bucketSize']
+              client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
+            end
+          end
           spec = {
-                  indexes: normalize_models(models.flatten, server),
+                  indexes: indexes,
                   db_name: database.name,
                   coll_name: collection.name,
                   session: session

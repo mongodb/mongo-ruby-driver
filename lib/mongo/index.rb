@@ -49,6 +49,7 @@ module Mongo
     # Specify a geoHaystack index.
     #
     # @since 2.0.0
+    # @deprecated
     GEOHAYSTACK = 'geoHaystack'.freeze
 
     # Encodes a text index.
