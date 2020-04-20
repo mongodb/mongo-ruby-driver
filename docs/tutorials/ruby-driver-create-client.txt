@@ -879,10 +879,11 @@ on the client or passed to individual operations under ``:write_concern``.
 TLS Connections
 ---------------
 
-To connect to the MongoDB cluster using TLS, pass ``tls`` Ruby or URI option
-to the ``Mongo::Client`` constructor. TLS must be explicitly configured on the
-client side when the cluster requires TLS connections - there is currently no
-automatic detection of whether TLS is required.
+To connect to the MongoDB cluster using TLS, pass the ``ssl`` Ruby option or
+the ``tls`` URI option to the ``Mongo::Client`` constructor. TLS must be
+explicitly requested on the client side when the deployment requires TLS
+connections - there is currently no automatic detection of whether the
+deployment requires TLS.
 
 The driver will attempt to verify the server's TLS certificate by default, and
 will abort the connection if this verification fails. In order for this
