@@ -32,7 +32,7 @@ module Mongo
 
         def get_result(server, client, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(server, client), @ids)
+          Result.new(dispatch_message(server, client), @ids)
         end
 
         def selector
