@@ -1,15 +1,27 @@
 ========================
-Contribute to the Driver
+Contribute to the Ruby Driver
 ========================
 
 .. default-domain:: mongodb
 
-For Bugs and Feature Requests
+For assistance with MongoDB
+-----------------------------
+If you require assistance with your MongoDB cluster, please contact our support team. They are available at
+<https://support.mongodb.com>`_. for customers with a commercial subscription; otherwise our community forum at <https://feedback.mongodb.com>`_. has 
+engineers happy to assist you. 
+
+
+Feature Requests
 -----------------------------
 
-If you think you have found a bug or want to see a new feature in the
-Ruby driver, please open an issue in `JIRA
-<https://jira.mongodb.org/>`_:
+If you want to see a new feature in the
+Ruby driver, please create a request in our feedback forums
+<https://feedback.mongodb.com>`_.
+
+
+Bug reports
+-----------------------------
+If you have found a reproducible bug in the Ruby Driver, please follow the steps below:
 
 #. `Create a Jira account and login <https://jira.mongodb.org>`_.
 
