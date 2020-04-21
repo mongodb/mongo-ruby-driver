@@ -14,14 +14,14 @@ describe Mongo::Socket do
     end
   end
 
-  describe '#handle_errors' do
+  describe '#map_exceptions' do
     before do
       expect(socket).to receive(:address).and_return('fake-address')
     end
 
     it 'maps timeout exception' do
       expect do
-        socket.send(:handle_errors) do
+        socket.send(:map_exceptions) do
           raise Errno::ETIMEDOUT
         end
       end.to raise_error(Mongo::Error::SocketTimeoutError)
@@ -29,7 +29,7 @@ describe Mongo::Socket do
 
     it 'maps SystemCallError and preserves message' do
       expect do
-        socket.send(:handle_errors) do
+        socket.send(:map_exceptions) do
           raise SystemCallError.new('Test error', Errno::ENFILE::Errno)
         end
       end.to raise_error(Mongo::Error::SocketError, 'Errno::ENFILE: Too many open files in system - Test error (for fake-address)')
@@ -37,7 +37,7 @@ describe Mongo::Socket do
 
     it 'maps IOError and preserves message' do
       expect do
-        socket.send(:handle_errors) do
+        socket.send(:map_exceptions) do
           raise IOError.new('Test error')
         end
       end.to raise_error(Mongo::Error::SocketError, 'IOError: Test error (for fake-address)')
@@ -45,7 +45,7 @@ describe Mongo::Socket do
 
     it 'maps SSLError and preserves message' do
       expect do
-        socket.send(:handle_errors) do
+        socket.send(:map_exceptions) do
           raise OpenSSL::SSL::SSLError.new('Test error')
         end
       end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address) (MongoDB may not be configured with SSL support)')
