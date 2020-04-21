@@ -23,21 +23,10 @@ module Mongo
       # @api private
       class Conversation < SaslConversationBase
 
-        # The client key string.
-        #
-        # @since 2.0.0
-        # @deprecated
-        CLIENT_KEY = 'Client Key'.freeze
-
         # The conversation id field.
         #
         # @since 2.0.0
         ID = 'conversationId'.freeze
-
-        # The iterations key in the responses.
-        #
-        # @since 2.0.0
-        ITERATIONS = /i=(\d+)/.freeze
 
         # The minimum iteration count for SCRAM-SHA-256.
         #
@@ -50,27 +39,6 @@ module Mongo
         #
         # @since 2.0.0
         PAYLOAD = 'payload'.freeze
-
-        # The server nonce key in the responses.
-        #
-        # @since 2.0.0
-        SERVER_NONCE = /r=([^,]*)/.freeze
-
-        # The salt key in the responses.
-        #
-        # @since 2.0.0
-        SALT = /s=([^,]*)/.freeze
-
-        # The server key string.
-        #
-        # @since 2.0.0
-        # @deprecated
-        SERVER_KEY = 'Server Key'.freeze
-
-        # The server signature verifier in the response.
-        #
-        # @since 2.0.0
-        VERIFIER = /v=([^,]*)/.freeze
 
         # @return [ String ] client_nonce The client nonce.
         attr_reader :client_nonce
@@ -99,9 +67,10 @@ module Mongo
         def continue(reply_document, connection)
           @id = reply_document[ID]
           payload_data = reply_document[PAYLOAD].data
-          @server_nonce = payload_data.match(SERVER_NONCE)[1]
-          @salt = payload_data.match(SALT)[1]
-          @iterations = payload_data.match(ITERATIONS)[1].to_i.tap do |i|
+          parsed_data = parse_payload(payload_data)
+          @server_nonce = parsed_data.fetch('r')
+          @salt = Base64.strict_decode64(parsed_data.fetch('s'))
+          @iterations = parsed_data.fetch('i').to_i.tap do |i|
             if i < MIN_ITER_COUNT
               raise Error::InsufficientIterationCount.new(
                 Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
@@ -133,31 +102,24 @@ module Mongo
           end
         end
 
+        # Processes the second response from the server.
+        #
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   continue response.
+        def process_continue_response(reply_document)
+          payload_data = parse_payload(reply_document[PAYLOAD].data)
+          check_server_signature(payload_data)
+        end
+
         # Finalize the SCRAM conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
-        # @param [ BSON::Document ] reply_document The reply document of the
-        #   previous message.
         # @param [ Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply_document, connection)
-          payload_data = reply_document[PAYLOAD].data
-          v = payload_data.match(VERIFIER)
-          if v
-            @verifier = v[1]
-          else
-            raise Error::MissingScramServerSignature
-          end
-
-          if compare_digest(verifier, server_signature)
-            @server_verified = true
-          else
-            raise Error::InvalidSignature.new(verifier, server_signature)
-          end
-
+        def finalize(connection)
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(
               payload: client_empty_message,
@@ -215,6 +177,26 @@ module Mongo
 
         private
 
+        # Parses a payload like a=value,b=value2 into a hash like
+        # {'a' => 'value', 'b' => 'value2'}.
+        #
+        # @param [ String ] payload The payload to parse.
+        #
+        # @return [ Hash ] Parsed key-value pairs.
+        def parse_payload(payload)
+          Hash[payload.split(',').reject { |v| v == '' }.map do |pair|
+            k, v, = pair.split('=', 2)
+            if k == ''
+              raise Error::InvalidServerAuthResponse, 'Payload malformed: missing key'
+            end
+            [k, v]
+          end]
+        end
+
+        def client_first_message_options
+          {skipEmptyExchange: true}
+        end
+
         # @see http://tools.ietf.org/html/rfc5802#section-3
         def client_first_payload
           "n,,#{first_bare}"
@@ -257,7 +239,25 @@ module Mongo
         #
         # @since 2.0.0
         def client_final
-          @client_final ||= client_proof(client_key, client_signature(stored_key(client_key), auth_message))
+          @client_final ||= client_proof(client_key,
+            client_signature(stored_key(client_key),
+            auth_message))
+        end
+
+        # Looks for field 'v' in payload data, if it is present verifies the
+        # server signature. If verification succeeds, sets @server_verified
+        # to true. If verification fails, raises InvalidSignature.
+        #
+        # This method can be called from different conversation steps
+        # depending on whether the short SCRAM conversation is used.
+        def check_server_signature(payload_data)
+          if verifier = payload_data['v']
+            if compare_digest(verifier, server_signature)
+              @server_verified = true
+            else
+              raise Error::InvalidSignature.new(verifier, server_signature)
+            end
+          end
         end
 
         # Client key algorithm implementation.
@@ -329,7 +329,7 @@ module Mongo
           when :scram256
             OpenSSL::PKCS5.pbkdf2_hmac(
               data,
-              Base64.strict_decode64(salt),
+              salt,
               iterations,
               digest.size,
               digest
@@ -337,7 +337,7 @@ module Mongo
           else
             OpenSSL::PKCS5.pbkdf2_hmac_sha1(
               data,
-              Base64.strict_decode64(salt),
+              salt,
               iterations,
               digest.size
             )
@@ -440,13 +440,6 @@ module Mongo
         def stored_key(key)
           h(key)
         end
-
-        # Get the verifier token from the server response.
-        #
-        # @api private
-        #
-        # @since 2.0.0
-        attr_reader :verifier
 
         # Get the without proof message.
         #

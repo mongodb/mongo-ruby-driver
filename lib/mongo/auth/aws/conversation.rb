@@ -55,16 +55,6 @@ module Mongo
           Protocol::Msg.new([], {}, selector)
         end
 
-        # This method does nothing and exists for API compatibility with
-        # other authentication mechanisms only.
-        #
-        # @param [ BSON::Document ] reply_document The reply document of the
-        #   previous message.
-        #
-        # @return [ nil ] Always nil.
-        def finalize(reply_document)
-        end
-
         private
 
         # @return [ String ] The server nonce.

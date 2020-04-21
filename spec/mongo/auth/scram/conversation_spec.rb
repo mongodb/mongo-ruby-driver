@@ -1,8 +1,8 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Auth::SCRAM::Conversation do
   # Test uses global assertions
-  clean_slate
+  clean_slate_for_all_if_possible
 
   let(:conversation) do
     described_class.new(user, mechanism)
@@ -14,6 +14,72 @@ describe Mongo::Auth::SCRAM::Conversation do
       allow(features).to receive(:op_msg_enabled?)
       allow(connection).to receive(:features).and_return(features)
       allow(connection).to receive(:server)
+    end
+  end
+
+  describe '#parse_payload' do
+    let(:user) { double('user') }
+    let(:mechanism) { :scram }
+
+    shared_examples_for 'parses as expected' do
+      it 'parses as expected' do
+        conversation.send(:parse_payload, payload).should == expected
+      end
+    end
+
+    context 'regular payload' do
+      let(:payload) { 'foo=bar,hello=world' }
+      let(:expected) do
+        {'foo' => 'bar', 'hello' => 'world'}
+      end
+
+      it_behaves_like 'parses as expected'
+    end
+
+    context 'equal signs in value' do
+      let(:payload) { 'foo=bar==,hello=world=is=great' }
+      let(:expected) do
+        {'foo' => 'bar==', 'hello' => 'world=is=great'}
+      end
+
+      it_behaves_like 'parses as expected'
+    end
+
+    context 'missing value' do
+      let(:payload) { 'foo=,hello=' }
+      let(:expected) do
+        {'foo' => '', 'hello' => ''}
+      end
+
+      it_behaves_like 'parses as expected'
+    end
+
+    context 'missing key/value pair' do
+      let(:payload) { 'foo=,,hello=' }
+      let(:expected) do
+        {'foo' => '', 'hello' => ''}
+      end
+
+      it_behaves_like 'parses as expected'
+    end
+
+    context 'missing key' do
+      let(:payload) { '=bar' }
+
+      it 'raises an exception' do
+        lambda do
+          conversation.send(:parse_payload, payload)
+        end.should raise_error(Mongo::Error::InvalidServerAuthResponse, /Payload malformed: missing key/)
+      end
+    end
+
+    context 'all keys missing' do
+      let(:payload) { ',,,' }
+      let(:expected) do
+        {}
+      end
+
+      it_behaves_like 'parses as expected'
     end
   end
 
@@ -39,7 +105,6 @@ describe Mongo::Auth::SCRAM::Conversation do
   end
 
   context 'when SCRAM-SHA-1 is used' do
-    min_server_fcv '3.0'
 
     let(:user) do
       Mongo::Auth::User.new(
@@ -162,7 +227,8 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         let(:query) do
           conversation.continue(continue_document, connection)
-          conversation.finalize(finalize_document, connection)
+          conversation.process_continue_response(finalize_document)
+          conversation.finalize(connection)
         end
 
         let(:selector) do
@@ -191,7 +257,8 @@ describe Mongo::Auth::SCRAM::Conversation do
         it 'raises an error' do
           expect {
             conversation.continue(continue_document, connection)
-            conversation.finalize(finalize_document, connection)
+            conversation.process_continue_response(finalize_document)
+            conversation.finalize(connection)
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
@@ -205,7 +272,8 @@ describe Mongo::Auth::SCRAM::Conversation do
         it 'raises an error' do
           expect {
             conversation.continue(continue_document, connection)
-            conversation.finalize(finalize_document, connection)
+            conversation.process_continue_response(finalize_document)
+            conversation.finalize(connection)
           }.to raise_error(Mongo::Error::InvalidSignature)
         end
       end
@@ -216,18 +284,17 @@ describe Mongo::Auth::SCRAM::Conversation do
           BSON::Binary.new('ok=absolutely')
         end
 
-        it 'raises an error' do
-          expect {
-            conversation.continue(continue_document, connection)
-            conversation.finalize(finalize_document, connection)
-          }.to raise_error(Mongo::Error::MissingScramServerSignature)
+        it 'succeeds but does not mark conversation server verified' do
+          conversation.continue(continue_document, connection)
+          conversation.process_continue_response(finalize_document)
+          conversation.finalize(connection)
+          conversation.server_verified?.should be false
         end
       end
     end
   end
 
   context 'when SCRAM-SHA-256 is used' do
-    min_server_fcv '4.0'
 
     let(:user) do
       Mongo::Auth::User.new(
@@ -348,7 +415,8 @@ describe Mongo::Auth::SCRAM::Conversation do
 
         let(:query) do
           conversation.continue(continue_document, connection)
-          conversation.finalize(finalize_document, connection)
+          conversation.process_continue_response(finalize_document)
+          conversation.finalize(connection)
         end
 
         let(:selector) do
@@ -377,7 +445,8 @@ describe Mongo::Auth::SCRAM::Conversation do
         it 'raises an error' do
           expect do
             conversation.continue(continue_document, connection)
-            conversation.finalize(finalize_document, connection)
+            conversation.process_continue_response(finalize_document)
+            conversation.finalize(connection)
           end.to raise_error(Mongo::Error::InvalidSignature)
         end
       end

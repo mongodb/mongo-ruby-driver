@@ -54,18 +54,6 @@ module Mongo
           end
         end
 
-        # Finalize the PLAIN conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
-        #
-        # @param [ BSON::Document ] reply_document The reply document of the
-        #   previous message.
-        #
-        # @return [ nil ] Always nil.
-        #
-        # @since 2.0.0
-        def finalize(reply_document)
-        end
-
         private
 
         def payload
