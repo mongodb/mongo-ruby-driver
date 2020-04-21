@@ -418,7 +418,10 @@ module Mongo
         open_upload_stream(filename, opts) do |stream|
           begin
             stream.write(io)
-          rescue IOError
+          # IOError and SystemCallError are for errors reading the io.
+          # Error::SocketError and Error::SocketTimeoutError are for
+          # writing to MongoDB.
+          rescue IOError, SystemCallError, Error::SocketError, Error::SocketTimeoutError
             begin
               stream.abort
             rescue Error::OperationFailure
