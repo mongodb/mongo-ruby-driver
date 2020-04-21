@@ -43,7 +43,7 @@ describe 'Retryable writes integration tests' do
       before do
         wait_for_all_servers(client.cluster)
 
-        allow(primary_socket).to receive(:write).and_raise(error)
+        allow(primary_socket).to receive(:do_write).and_raise(error)
       end
 
       context 'when the error is retryable' do
@@ -52,10 +52,10 @@ describe 'Retryable writes integration tests' do
           expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
         end
 
-        context 'when the error is a SocketError' do
+        context 'when the error is a socket error' do
 
           let(:error) do
-            Mongo::Error::SocketError
+            IOError.new('first error')
           end
 
           it 'retries writes' do
@@ -64,7 +64,7 @@ describe 'Retryable writes integration tests' do
           end
         end
 
-        context 'when the error is a SocketTimeoutError' do
+        context 'when the error is a socket timeout error' do
 
           let(:error) do
             Mongo::Error::SocketTimeoutError
@@ -126,7 +126,7 @@ describe 'Retryable writes integration tests' do
     context 'when the operation fails on the first attempt and again on the second attempt' do
 
       before do
-        allow(primary_socket).to receive(:write).and_raise(error)
+        allow(primary_socket).to receive(:do_write).and_raise(error)
       end
 
       context 'when the selected server does not support retryable writes' do
@@ -134,24 +134,28 @@ describe 'Retryable writes integration tests' do
         before do
           legacy_primary = double('legacy primary', :retry_writes? => false)
           expect(collection).to receive(:select_server).and_return(primary_server, legacy_primary)
-          expect(primary_socket).to receive(:write).and_raise(error)
+          expect(primary_socket).to receive(:do_write).and_raise(error)
         end
 
-        context 'when the error is a SocketError' do
+        context 'when the error is a socket error' do
 
           let(:error) do
+            IOError.new('first error')
+          end
+
+          let(:exposed_error_class) do
             Mongo::Error::SocketError
           end
 
           it 'does not retry writes and raises the original error' do
             expect do
               operation
-            end.to raise_error(error)
+            end.to raise_error(exposed_error_class, /first error/)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
         end
 
-        context 'when the error is a SocketTimeoutError' do
+        context 'when the error is a socket timeout error' do
 
           let(:error) do
             Mongo::Error::SocketTimeoutError
@@ -181,11 +185,11 @@ describe 'Retryable writes integration tests' do
       end
 
       [
-        [Mongo::Error::SocketError],
-        [Mongo::Error::SocketTimeoutError],
-        [Mongo::Error::OperationFailure, 'not master'],
-        [Mongo::Error::OperationFailure, 'node is recovering'],
-      ].each do |error_cls, error_msg|
+        [IOError, 'first error', Mongo::Error::SocketError],
+        [Errno::ETIMEDOUT, 'first error', Mongo::Error::SocketTimeoutError],
+        [Mongo::Error::OperationFailure, 'first error: not master', Mongo::Error::OperationFailure],
+        [Mongo::Error::OperationFailure, 'first error: node is recovering', Mongo::Error::OperationFailure],
+      ].each do |error_cls, error_msg, exposed_first_error_class|
         # Note: actual exception instances must be different between tests
 
         context "when the first error is a #{error_cls}/#{error_msg}" do
@@ -200,20 +204,24 @@ describe 'Retryable writes integration tests' do
                                                            primary_connection.send(:ssl_options))
             good_socket = primary_connection.address.socket(primary_connection.socket_timeout,
                                                             primary_connection.send(:ssl_options))
-            allow(bad_socket).to receive(:write).and_raise(second_error)
+            allow(bad_socket).to receive(:do_write).and_raise(second_error)
             allow(primary_connection.address).to receive(:socket).and_return(bad_socket, good_socket)
           end
 
-          context 'when the second error is a SocketError' do
+          context 'when the second error is a socket error' do
 
             let(:second_error) do
+              IOError.new('second error')
+            end
+
+            let(:exposed_error_class) do
               Mongo::Error::SocketError
             end
 
             it 'raises the second error' do
               expect do
                 operation
-              end.to raise_error(second_error)
+              end.to raise_error(exposed_error_class, /second error/)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
 
@@ -230,16 +238,20 @@ describe 'Retryable writes integration tests' do
             end
           end
 
-          context 'when the second error is a SocketTimeoutError' do
+          context 'when the second error is a socket timeout error' do
 
             let(:second_error) do
+              Errno::ETIMEDOUT.new('second error')
+            end
+
+            let(:exposed_error_class) do
               Mongo::Error::SocketTimeoutError
             end
 
             it 'raises the second error' do
               expect do
                 operation
-              end.to raise_error(second_error)
+              end.to raise_error(exposed_error_class, /second error/)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
           end
@@ -267,7 +279,7 @@ describe 'Retryable writes integration tests' do
             it 'does not retry writes and raises the first error' do
               expect do
                 operation
-              end.to raise_error(error)
+              end.to raise_error(exposed_first_error_class, /first error/)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
           end
@@ -281,7 +293,7 @@ describe 'Retryable writes integration tests' do
             it 'raises the first error' do
               expect do
                 operation
-              end.to raise_error(error)
+              end.to raise_error(exposed_first_error_class, /first error/)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
 
@@ -315,7 +327,7 @@ describe 'Retryable writes integration tests' do
     end
 
     before do
-      expect(primary_socket).to receive(:write).exactly(:once).and_raise(Mongo::Error::SocketError)
+      expect(primary_socket).to receive(:do_write).exactly(:once).and_raise(Mongo::Error::SocketError)
     end
 
     it 'does not retry writes' do
@@ -337,7 +349,7 @@ describe 'Retryable writes integration tests' do
     end
 
     before do
-      expect(primary_socket).to receive(:write).and_raise(Mongo::Error::SocketError)
+      expect(primary_socket).to receive(:do_write).and_raise(Mongo::Error::SocketError)
     end
 
     it 'does not retry writes' do
