@@ -46,14 +46,14 @@ module Mongo
       # @since 2.0.0
       def connect!
         Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
-          handle_errors do
+          map_exceptions do
             @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
           end
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           begin
             @socket.hostname = @host_name
             @socket.sync_close = true
-            handle_errors do
+            map_exceptions do
               @socket.connect
             end
             verify_certificate!(@socket)
@@ -105,7 +105,7 @@ module Mongo
       #
       # @since 2.0.0
       def readbyte
-        handle_errors do
+        map_exceptions do
           byte = socket.read(1).bytes.to_a[0]
           byte.nil? ? raise(EOFError) : byte
         end

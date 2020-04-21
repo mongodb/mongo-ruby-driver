@@ -107,7 +107,9 @@ module Mongo
     #
     # @since 2.0.0
     def gets(*args)
-      handle_errors { @socket.gets(*args) }
+      map_exceptions do
+        @socket.gets(*args)
+      end
     end
 
     # Will read all data from the socket for the provided number of bytes.
@@ -124,7 +126,7 @@ module Mongo
     #
     # @since 2.0.0
     def read(length)
-      handle_errors do
+      map_exceptions do
         data = read_from_socket(length)
         unless (data.length > 0 || length == 0)
           raise IOError, "Expected to read > 0 bytes but read 0 bytes"
@@ -149,13 +151,12 @@ module Mongo
     #
     # @since 2.0.0
     def readbyte
-      handle_errors { @socket.readbyte }
+      map_exceptions do
+        @socket.readbyte
+      end
     end
 
     # Writes data to the socket instance.
-    #
-    # @example Write to the socket.
-    #   socket.write(data)
     #
     # @param [ Array<Object> ] args The data to be written.
     #
@@ -163,7 +164,7 @@ module Mongo
     #
     # @since 2.0.0
     def write(*args)
-      handle_errors do
+      map_exceptions do
         # This method used to forward arguments to @socket.write in a
         # single call like so:
         #
@@ -332,7 +333,7 @@ module Mongo
       set_keepalive_opts(sock)
     end
 
-    def handle_errors
+    def map_exceptions
       begin
         yield
       rescue Errno::ETIMEDOUT => e
