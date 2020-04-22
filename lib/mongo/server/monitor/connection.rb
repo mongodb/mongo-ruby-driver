@@ -146,8 +146,10 @@ module Mongo
         def ismaster
           ensure_connected do |socket|
             read_with_one_retry(retry_message: retry_message) do
-              socket.write(ISMASTER_BYTES)
-              Protocol::Message.deserialize(socket).documents[0]
+              add_server_diagnostics do
+                socket.write(ISMASTER_BYTES)
+                Protocol::Message.deserialize(socket).documents[0]
+              end
             end
           end
         end
@@ -167,7 +169,9 @@ module Mongo
         # @since 2.0.0
         def connect!
           unless @socket
-            socket = address.socket(socket_timeout, ssl_options, address.options)
+            socket = add_server_diagnostics do
+              address.socket(socket_timeout, ssl_options, address.options)
+            end
             handshake!(socket)
             @socket = socket
           end
@@ -216,8 +220,10 @@ module Mongo
 
         def handshake!(socket)
           if @app_metadata
-            socket.write(@app_metadata.ismaster_bytes)
-            reply = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+            reply = add_server_diagnostics do
+              socket.write(@app_metadata.ismaster_bytes)
+              Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+            end
             set_compressor!(reply)
             reply
           else

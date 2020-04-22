@@ -218,11 +218,13 @@ describe Mongo::Retryable do
 
           before do
             expect(retryable).to receive(:select_server).ordered
-            expect(operation).to receive(:execute).and_raise(error).ordered
+            expect(operation).to receive(:execute).and_raise(error.dup).ordered
 
             expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
             expect(retryable).to receive(:select_server).ordered
-            expect(operation).to receive(:execute).and_raise(error).ordered
+            # Since exception is mutated when notes are added to it,
+            # we need to ensure each attempt starts with a pristine exception.
+            expect(operation).to receive(:execute).and_raise(error.dup).ordered
 
             expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
             expect(retryable).to receive(:select_server).ordered

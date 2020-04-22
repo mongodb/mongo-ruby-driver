@@ -42,6 +42,14 @@ module Mongo
         unless @notes
           @notes = []
         end
+        if Lint.enabled?
+          if @notes.include?(note)
+            # The driver makes an effort to not add duplicated notes, by
+            # keeping track of *when* a particular exception should have the
+            # particular notes attached to it throughout the call stack.
+            raise Error::LintError, "Adding a note which already exists in exception #{self}: #{note}"
+          end
+        end
         @notes << note
       end
 
