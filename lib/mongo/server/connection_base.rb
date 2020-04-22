@@ -149,11 +149,13 @@ module Mongo
           start = Time.now
           result = nil
           begin
-            socket.write(buffer.to_s)
-            result = if message.replyable?
-              Protocol::Message.deserialize(socket, max_message_size, message.request_id, options)
-            else
-              nil
+            result = add_server_diagnostics do
+              socket.write(buffer.to_s)
+              if message.replyable?
+                Protocol::Message.deserialize(socket, max_message_size, message.request_id, options)
+              else
+                nil
+              end
             end
           rescue Exception => e
             total_duration = Time.now - start

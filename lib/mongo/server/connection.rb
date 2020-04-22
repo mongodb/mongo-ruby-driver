@@ -191,7 +191,9 @@ module Mongo
       #   a server description instance from the ismaster response of the
       #   returned socket.
       def do_connect
-        socket = address.socket(socket_timeout, ssl_options, address.options)
+        socket = add_server_diagnostics do
+          address.socket(socket_timeout, ssl_options, address.options)
+        end
 
         begin
           new_description = handshake!(socket)
@@ -272,8 +274,10 @@ module Mongo
       def ping
         bytes = features.op_msg_enabled? ? PING_OP_MSG_BYTES : PING_BYTES
         ensure_connected do |socket|
-          socket.write(bytes)
-          reply = Protocol::Message.deserialize(socket, max_message_size)
+          reply = add_server_diagnostics do
+            socket.write(bytes)
+            Protocol::Message.deserialize(socket, max_message_size)
+          end
           reply.documents[0][Operation::Result::OK] == 1
         end
       end
@@ -319,8 +323,10 @@ module Mongo
           begin
             response, exc, rtt, average_rtt =
               @server.round_trip_time_averager.measure do
-                socket.write(app_metadata.ismaster_bytes)
-                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+                add_server_diagnostics do
+                  socket.write(app_metadata.ismaster_bytes)
+                  Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+                end
               end
 
             if exc

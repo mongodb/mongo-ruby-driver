@@ -130,6 +130,14 @@ describe Mongo::Server::Connection, retry: 3 do
         end
       end
 
+      shared_examples_for 'failing connection with server diagnostics' do
+        it_behaves_like 'failing connection'
+
+        it 'adds server diagnostics' do
+          error.message.should =~ /on #{connection.address}/
+        end
+      end
+
       shared_examples_for 'logs a warning' do
         let(:expected_message) do
           "MONGODB | Failed to handshake with #{address}: #{error.class}: #{error}"
@@ -148,6 +156,20 @@ describe Mongo::Server::Connection, retry: 3 do
 
       end
 
+      shared_examples_for 'adds server diagnostics' do
+        it 'adds server diagnostics' do
+          messages = []
+          expect(Mongo::Logger.logger).to receive(:warn) do |msg|
+            messages << msg
+          end
+
+          expect(error).not_to be nil
+
+          messages.any? { |msg| msg =~ /on #{connection.address}/ }.should be true
+        end
+
+      end
+
       context 'when #handshake! dependency raises a non-network exception' do
 
         let(:exception) do
@@ -155,7 +177,8 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         let(:error) do
-          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+          # The exception is mutated when notes are added to it
+          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception.dup)
           begin
             connection.connect!
           rescue Exception => e
@@ -165,8 +188,10 @@ describe Mongo::Server::Connection, retry: 3 do
           end
         end
 
-        it_behaves_like 'failing connection'
+        it_behaves_like 'failing connection with server diagnostics'
         it_behaves_like 'keeps server type and topology'
+        it_behaves_like 'logs a warning'
+        it_behaves_like 'adds server diagnostics'
       end
 
       context 'when #handshake! dependency raises a network exception' do
@@ -175,7 +200,8 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         let(:error) do
-          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+          # The exception is mutated when notes are added to it
+          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception.dup)
           begin
             connection.connect!
           rescue Exception => e
@@ -185,9 +211,10 @@ describe Mongo::Server::Connection, retry: 3 do
           end
         end
 
-        it_behaves_like 'failing connection'
+        it_behaves_like 'failing connection with server diagnostics'
         it_behaves_like 'marks server unknown'
         it_behaves_like 'logs a warning'
+        it_behaves_like 'adds server diagnostics'
       end
 
       context 'when #authenticate! raises an exception' do

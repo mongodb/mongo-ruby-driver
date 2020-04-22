@@ -172,6 +172,15 @@ describe Mongo::Server::Monitor::Connection do
         end
         expect(result).to be_a(Hash)
       end
+
+      it 'adds server diagnostics' do
+        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
+          # The "on <address>" and "for <address>" bits are in different parts
+          # of the message.
+          expect(msg).to match(/on #{connection.address}/)
+        end
+        expect(result).to be_a(Hash)
+      end
     end
   end
 
@@ -188,6 +197,9 @@ describe Mongo::Server::Monitor::Connection do
       let(:expected_message) { "MONGODB | Failed to handshake with #{address}: Mongo::Error::SocketError: test error" }
 
       it 'logs a warning' do
+        # Note: the mock call below could mock do_write and raise IOError.
+        # It is correct in raising Error::SocketError if mocking write
+        # which performs exception mapping.
         expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
 
         messages = []
@@ -197,9 +209,20 @@ describe Mongo::Server::Monitor::Connection do
 
         expect do
           monitor.connection.connect!
-        end.to raise_error(Mongo::Error::SocketError, 'test error')
+        end.to raise_error(Mongo::Error::SocketError, /test error/)
 
         messages.any? { |msg| msg.include?(expected_message) }.should be true
+      end
+
+      it 'adds server diagnostics' do
+        # Note: the mock call below could mock do_write and raise IOError.
+        # It is correct in raising Error::SocketError if mocking write
+        # which performs exception mapping.
+        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
+
+        expect do
+          monitor.connection.connect!
+        end.to raise_error(Mongo::Error::SocketError, /on #{monitor.connection.address}/)
       end
     end
   end

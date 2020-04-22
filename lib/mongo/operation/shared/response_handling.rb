@@ -85,7 +85,11 @@ module Mongo
       # raised during execution of operations on servers.
       def add_server_diagnostics(server)
         yield
-      rescue Mongo::Error, Mongo::Error::AuthError => e
+      rescue Error::SocketError, Error::SocketTimeoutError
+        # Diagnostics should have already been added by the connection code,
+        # do not add them again.
+        raise
+      rescue Error, Error::AuthError => e
         e.add_note("on #{server.address.seed}")
         raise e
       end

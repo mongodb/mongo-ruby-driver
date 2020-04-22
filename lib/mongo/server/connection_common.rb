@@ -56,6 +56,23 @@ module Mongo
           end
         end
       end
+
+      # Yields to the block and, if the block raises an exception, adds a note
+      # to the exception with the address of the specified server.
+      #
+      # This method is intended to add server address information to exceptions
+      # raised during execution of operations on servers.
+      def add_server_diagnostics
+        yield
+      # Note that the exception should already have been mapped to a
+      # Mongo::Error subclass when it gets to this method.
+      rescue Mongo::Error => e
+        # Server::Monitor::Connection does not reference its server, but
+        # knows its address. Server::Connection delegates the address to its
+        # server.
+        e.add_note("on #{address.seed}")
+        raise e
+      end
     end
   end
 end
