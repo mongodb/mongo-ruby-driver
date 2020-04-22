@@ -150,7 +150,7 @@ setup_ruby() {
 
     # For testing toolchains:
     #toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
-    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-`host_arch`-717e3e0a26debdc100fecee0d093e488ee7a0219.tar.xz
+    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-`host_arch`-291ba4a4e8297f142796e70eee71b99f333e35e1.tar.xz
     curl --retry 3 -fL $toolchain_url |tar Jxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     #export PATH=`pwd`/rubies/python/3/bin:$PATH
