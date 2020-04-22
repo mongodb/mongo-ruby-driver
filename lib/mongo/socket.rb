@@ -165,27 +165,7 @@ module Mongo
     # @since 2.0.0
     def write(*args)
       map_exceptions do
-        # This method used to forward arguments to @socket.write in a
-        # single call like so:
-        #
-        # @socket.write(*args)
-        #
-        # Turns out, when each buffer to be written is large (e.g. 32 MiB),
-        # this write call would take an extremely long time (20+ seconds)
-        # while using 100% CPU. Splitting the writes into chunks produced
-        # massively better performance (0.05 seconds to write the 32 MiB of
-        # data on the same hardware). Unfortunately splitting the data,
-        # one would assume, results in it being copied, but this seems to be
-        # a much more minor issue compared to CPU cost of writing large buffers.
-        args.each do |buf|
-          buf = buf.to_s
-          i = 0
-          while i < buf.length
-            chunk = buf[i...i+WRITE_CHUNK_SIZE]
-            @socket.write(chunk)
-            i += WRITE_CHUNK_SIZE
-          end
-        end
+        do_write(*args)
       end
     end
 
@@ -299,6 +279,39 @@ module Mongo
       # Buffer size for non-SSL reads
       # 64kb
       65536
+    end
+
+    # Writes data to the socket instance.
+    #
+    # This is a separate method from +write+ for ease of mocking in the tests.
+    # This method should not perform any exception mapping, upstream code
+    # sholud map exceptions.
+    #
+    # @param [ Array<Object> ] args The data to be written.
+    #
+    # @return [ Integer ] The length of bytes written to the socket.
+    def do_write(*args)
+      # This method used to forward arguments to @socket.write in a
+      # single call like so:
+      #
+      # @socket.write(*args)
+      #
+      # Turns out, when each buffer to be written is large (e.g. 32 MiB),
+      # this write call would take an extremely long time (20+ seconds)
+      # while using 100% CPU. Splitting the writes into chunks produced
+      # massively better performance (0.05 seconds to write the 32 MiB of
+      # data on the same hardware). Unfortunately splitting the data,
+      # one would assume, results in it being copied, but this seems to be
+      # a much more minor issue compared to CPU cost of writing large buffers.
+      args.each do |buf|
+        buf = buf.to_s
+        i = 0
+        while i < buf.length
+          chunk = buf[i...i+WRITE_CHUNK_SIZE]
+          @socket.write(chunk)
+          i += WRITE_CHUNK_SIZE
+        end
+      end
     end
 
     def unix_socket?(sock)
