@@ -241,6 +241,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
+              apply_hint!(update_doc, server, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -288,6 +289,8 @@ module Mongo
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
+              apply_hint!(update_doc, server, opts)
+
               Operation::Update.new(
                   :updates => [ update_doc ],
                   :db_name => collection.database.name,
@@ -332,6 +335,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
+              apply_hint!(update_doc, server, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -347,6 +351,17 @@ module Mongo
         end
 
         private
+
+        def apply_hint!(doc, server, opts)
+          if hint = opts[:hint]
+            features = server.with_connection { |connection| connection.features }
+            unless features.hints_on_update_enabled?
+              raise Error::UnsupportedHint
+            end
+
+            doc[:hint] = opts[:hint]
+          end
+        end
 
         def apply_array_filters!(doc, server, opts = {})
           if filters = opts[:array_filters] || opts[ARRAY_FILTERS]
