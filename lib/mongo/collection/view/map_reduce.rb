@@ -225,9 +225,10 @@ module Mongo
         end
 
         def valid_server?(server)
-          server.with_connection do |connection|
-            connection.standalone? || connection.mongos? || connection.primary? || secondary_ok?
+          description = server.with_connection do |connection|
+            connection.description
           end
+          description.standalone? || description.mongos? || description.primary? || secondary_ok?
         end
 
         def secondary_ok?

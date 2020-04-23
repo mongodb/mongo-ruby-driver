@@ -24,7 +24,7 @@ describe Mongo::Operation::Delete::OpMsg do
     double('connection').tap do |connection|
       allow(connection).to receive(:server).and_return(authorized_primary)
       allow(connection).to receive(:features).and_return(authorized_primary.features)
-      allow(connection).to receive(:standalone?).and_return(authorized_primary.standalone?)
+      allow(connection).to receive(:description).and_return(authorized_primary.description)
       allow(connection).to receive(:cluster_time).and_return(authorized_primary.cluster_time)
     end
   end

@@ -26,17 +26,23 @@ describe Mongo::Operation::ReadPreferenceSupported do
     end
   end
 
+  let(:description) do
+    double('description').tap do |description|
+      allow(description).to receive(:mongos?).and_return(mongos?)
+      allow(description).to receive(:standalone?).and_return(standalone?)
+    end
+  end
+
   let(:server) do
     double('server').tap do |server|
       allow(server).to receive(:cluster).and_return(cluster)
-      allow(server).to receive(:mongos?).and_return(mongos?)
-      allow(server).to receive(:standalone?).and_return(standalone?)
     end
   end
 
   let(:connection) do
     double('connection').tap do |connection|
       allow(connection).to receive(:server).and_return(server)
+      allow(connection).to receive(:description).and_return(description)
     end
   end
 

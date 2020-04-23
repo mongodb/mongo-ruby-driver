@@ -59,7 +59,7 @@ module Mongo
       # must have the current operation time. Also, topology must be
       # replica set or sharded cluster.
       def apply_causal_consistency_if_possible(selector, connection)
-        if !connection.standalone?
+        if !connection.description.standalone?
           cc_doc = session.send(:causal_consistency_doc)
           if cc_doc
             rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
@@ -74,8 +74,11 @@ module Mongo
       end
 
       def apply_cluster_time!(selector, connection)
-        if !connection.standalone?
-          cluster_time = [connection.cluster_time, session && session.cluster_time].compact.max
+        if !connection.description.standalone?
+          cluster_time = [
+            connection.cluster_time,
+            session&.cluster_time,
+          ].compact.max
 
           if cluster_time
             selector['$clusterTime'] = cluster_time
@@ -166,7 +169,7 @@ module Mongo
         end
 
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
-        if connection.server.standalone?
+        if connection.description.standalone?
           # Read preference is never sent to standalones.
         elsif connection.server.cluster.single?
           # In Single topology:

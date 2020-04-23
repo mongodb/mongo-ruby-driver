@@ -51,7 +51,7 @@ module Mongo
       def add_slave_ok_flag_maybe(options, connection)
         add_flag =
           # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
-          if connection.server.standalone?
+          if connection.description.standalone?
             # Read preference is never sent to standalones.
             false
           elsif connection.server.cluster.single?
@@ -96,7 +96,7 @@ module Mongo
       #
       # @return [ Hash ] New command document to send to the server.
       def update_selector_for_read_pref(sel, connection)
-        if read && connection.server.mongos? && read_pref = read.to_mongos
+        if read && connection.description.mongos? && read_pref = read.to_mongos
           Mongo::Lint.validate_camel_case_read_preference(read_pref)
           sel = sel[:$query] ? sel : {:$query => sel}
           sel = sel.merge(:$readPreference => read_pref)

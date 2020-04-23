@@ -199,11 +199,11 @@ module Mongo
         # TODO verify compression happens later, i.e. when this method runs
         # the message is not compressed.
         if client && client.encrypter && client.encrypter.encrypt?
-          if connection.max_wire_version < 8
+          if connection.description.max_wire_version < 8
             raise Error::CryptError.new(
               "Cannot perform encryption against a MongoDB server older than " +
               "4.2 (wire version less than 8). Currently connected to server " +
-              "with max wire version #{connection.max_wire_version}} " +
+              "with max wire version #{connection.description.max_wire_version}} " +
               "(Auto-encryption requires a minimum MongoDB version of 4.2)"
             )
           end

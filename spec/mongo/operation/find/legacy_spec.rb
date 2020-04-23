@@ -69,19 +69,23 @@ describe Mongo::Operation::Find::Legacy do
     end
 
     context 'when the server is a secondary' do
+      let(:description) do
+        double('description').tap do |description|
+          expect(description).to receive(:mongos?) { false }
+          expect(description).to receive(:standalone?) { false }
+        end
+      end
+
       let(:connection) do
         double('connection').tap do |conn|
-          allow(conn).to receive(:mongos?) { false }
-          allow(conn).to receive(:features) { authorized_primary.features }
+          expect(conn).to receive(:description).at_least(:once).and_return(description)
         end
       end
 
       let(:secondary_server_single) do
         double('secondary_server').tap do |server|
-          allow(server).to receive(:mongos?) { false }
-          allow(server).to receive(:standalone?) { false }
-          allow(server).to receive(:with_connection).and_yield(connection)
-          allow(server).to receive(:cluster) { cluster_single }
+          expect(server).to receive(:with_connection).and_yield(connection)
+          expect(server).to receive(:cluster) { cluster_single }
         end
       end
 

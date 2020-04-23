@@ -1147,7 +1147,8 @@ describe Mongo::BulkWrite do
               end
 
               before do
-                allow_any_instance_of(Mongo::Server::Connection).to receive(:max_write_batch_size).and_return(batch_size - 1)
+                allow_any_instance_of(Mongo::Server::Description).to \
+                  receive(:max_write_batch_size).and_return(batch_size - 1)
               end
 
               let(:requests) do
@@ -1824,7 +1825,8 @@ describe Mongo::BulkWrite do
         end
 
         before do
-          allow_any_instance_of(Mongo::Server::Connection).to receive(:max_write_batch_size).and_return(batch_size - 1)
+          allow_any_instance_of(Mongo::Server::Description).to \
+            receive(:max_write_batch_size).and_return(batch_size - 1)
         end
 
         context 'when a write error occurs' do
