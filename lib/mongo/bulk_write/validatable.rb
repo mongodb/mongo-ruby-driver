@@ -47,6 +47,10 @@ module Mongo
         if document.respond_to?(:keys) && document[:array_filters]
           @has_array_filters = true
         end
+
+        if document.respond_to?(:keys) && document[:hint]
+          @has_hint = true
+        end
       end
 
       private

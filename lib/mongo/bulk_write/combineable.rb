@@ -26,11 +26,11 @@ module Mongo
       attr_reader :requests
 
       # @return [ true, false ] has_collation Whether one or more operations has a collation defined.
-      attr_reader :has_collation
+      # attr_reader :has_collation
 
       # @return [ true, false ] has_array_filters Whether one or more operations specifies an array
       # filters option.
-      attr_reader :has_array_filters
+      # attr_reader :has_array_filters
 
       # Create the ordered combiner.
       #
@@ -46,6 +46,19 @@ module Mongo
         @requests = requests
         @has_collation = false
         @has_array_filters = false
+        @has_hint = false
+      end
+
+      def has_collation?
+        @has_collation
+      end
+
+      def has_array_filters?
+        @has_array_filters
+      end
+
+      def has_hint?
+        @has_hint
       end
 
       private

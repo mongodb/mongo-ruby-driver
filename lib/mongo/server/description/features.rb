@@ -45,7 +45,6 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
-          :hints_on_update => 8,
           :transactions => 7,
           :scram_sha_256 => 7,
           :array_filters => 6,
@@ -53,6 +52,7 @@ module Mongo
           :sessions => 6,
           :collation => 5,
           :max_staleness => 5,
+          :crud_option_validation => 5,
           :find_command => 4,
           :list_collections => 3,
           :list_indexes => 3,
