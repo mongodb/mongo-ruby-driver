@@ -25,13 +25,6 @@ module Mongo
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
 
-      # @return [ true, false ] has_collation Whether one or more operations has a collation defined.
-      # attr_reader :has_collation
-
-      # @return [ true, false ] has_array_filters Whether one or more operations specifies an array
-      # filters option.
-      # attr_reader :has_array_filters
-
       # Create the ordered combiner.
       #
       # @api private
@@ -49,14 +42,20 @@ module Mongo
         @has_hint = false
       end
 
+      # @return [ Boolean ] Whether one or more operation specifies the collation
+      #   option.
       def has_collation?
         @has_collation
       end
 
+      # @return [ Boolean ] Whether one or more operation specifies the
+      #   array_filters option.
       def has_array_filters?
         @has_array_filters
       end
 
+      # @return [ Boolean ] Whether one or more operation specifies the
+      #   hint option.
       def has_hint?
         @has_hint
       end
