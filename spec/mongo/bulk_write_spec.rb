@@ -1141,6 +1141,9 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the number of updates exceeds the max batch size' do
+              # Test uses doubles for server descriptions, doubles are
+              # incompatible with freezing which linting does for descriptions
+              skip_if_linting
 
               let(:batch_size) do
                 11
@@ -1815,6 +1818,9 @@ describe Mongo::BulkWrite do
       end
 
       context 'when the operations need to be split' do
+        # Test uses doubles for server descriptions, doubles are
+        # incompatible with freezing which linting does for descriptions
+        skip_if_linting
 
         let(:batch_size) do
           11

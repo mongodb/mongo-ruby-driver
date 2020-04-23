@@ -381,9 +381,11 @@ module Mongo
     def retry_read(original_error, server_selector, session, &block)
       begin
         server = select_server(cluster, server_selector, session)
-      rescue => e
+      rescue Error, Error::AuthError => e
         original_error.add_note("later retry failed: #{e.class}: #{e}")
-        raise original_error
+
+        # See the corresponding note below in retry_write.
+        raise Error::RaiseOriginalError
       end
 
       log_retry(original_error, message: 'Read retry')
@@ -402,11 +404,13 @@ module Mongo
         end
         e.add_note("attempt 2")
         raise e
-      rescue => e
+      rescue Error, Error::AuthError => e
         e.add_note('modern retry')
         original_error.add_note("later retry failed: #{e.class}: #{e}")
         raise original_error
       end
+    rescue Error::RaiseOriginalError
+      raise original_error
     end
 
     def retry_write(original_error, session, txn_num, &block)
@@ -420,7 +424,14 @@ module Mongo
         # Do not need to add "modern retry" here, it should already be on
         # the first exception.
         original_error.add_note('did not retry because server selected for retry does not supoprt retryable writes')
-        raise original_error
+
+        # When we want to raise the original error, we must not run the
+        # rescue blocks below that add diagnostics because the diagnostics
+        # added would either be rendundant (e.g. modern retry note) or wrong
+        # (e.g. "attempt 2", we are raising the exception produced in the
+        # first attempt and haven't attempted the second time). Use the
+        # special marker class to bypass the ordinarily applicable rescues.
+        raise Error::RaiseOriginalError
       end
       log_retry(original_error, message: 'Write retry')
       yield(server, txn_num, true)
@@ -437,10 +448,12 @@ module Mongo
         original_error.add_note("later retry failed: #{e.class}: #{e}")
         raise original_error
       end
-    rescue => e
+    rescue Error, Error::AuthError => e
       # Do not need to add "modern retry" here, it should already be on
       # the first exception.
       original_error.add_note("later retry failed: #{e.class}: #{e}")
+      raise original_error
+    rescue Error::RaiseOriginalError
       raise original_error
     end
 
