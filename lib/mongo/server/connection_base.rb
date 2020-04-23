@@ -57,6 +57,7 @@ module Mongo
       # @return [ Mongo::Address ] address The address to connect to.
       def_delegators :server, :address
 
+      # @deprecated
       def_delegators :server,
                      :cluster_time,
                      :update_cluster_time
@@ -77,6 +78,7 @@ module Mongo
       # @api private
       attr_reader :description
 
+      # @deprecated
       def_delegators :description,
         :features,
         :max_bson_object_size,

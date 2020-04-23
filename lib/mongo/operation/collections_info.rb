@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/collections_info/command'
 require 'mongo/operation/collections_info/result'
 
 module Mongo
@@ -24,41 +25,7 @@ module Mongo
     # @since 2.0.0
     class CollectionsInfo
       include Specifiable
-      include Executable
-      include ReadPreferenceSupported
-      include PolymorphicResult
-
-      # Execute the operation.
-      #
-      # @example
-      #   operation.execute(server, client: nil)
-      #
-      # @param [ Mongo::Server ] server The server to send the operation to.
-      # @param [ Mongo::Client ] client The client that will be used to
-      #   perform auto-encryption if it is necessary to encrypt the command
-      #   being executed (optional).
-      #
-      # @return [ Mongo::Operation::CollectionsInfo::Result,
-      #           Mongo::Operation::ListCollections::Result ] The operation result.
-      #
-      # @since 2.0.0
-      def execute(server, client:)
-        if server.features.list_collections_enabled?
-          return Operation::ListCollections.new(spec).execute(server, client: client)
-        end
-
-        super
-      end
-
-      private
-
-      def selector(server)
-        {}
-      end
-
-      def message(server)
-        Protocol::Query.new(db_name, Database::NAMESPACES, command(server), options(server))
-      end
+      include CollectionsInfoOrListCollections
     end
   end
 end

@@ -26,7 +26,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { :dropIndexes => coll_name, :index => index_name }
         end
       end

@@ -225,7 +225,10 @@ module Mongo
         end
 
         def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+          description = server.with_connection do |connection|
+            connection.description
+          end
+          description.standalone? || description.mongos? || description.primary? || secondary_ok?
         end
 
         def secondary_ok?
@@ -251,7 +254,7 @@ module Mongo
         end
 
         def fetch_query_op(server, session)
-          if server.features.find_command_enabled?
+          if server.with_connection { |connection| connection.features }.find_command_enabled?
             Operation::Find.new(find_command_spec(session))
           else
             Operation::Find.new(fetch_query_spec)
@@ -263,7 +266,7 @@ module Mongo
         end
 
         def validate_collation!(server)
-          if (view.options[:collation] || options[:collation]) && !server.features.collation_enabled?
+          if (view.options[:collation] || options[:collation]) && !server.with_connection { |connection| connection.features }.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
         end

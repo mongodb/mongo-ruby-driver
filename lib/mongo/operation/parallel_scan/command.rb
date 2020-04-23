@@ -30,19 +30,19 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           sel = { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
           if read_concern
             sel[:readConcern] = Options::Mapper.transform_values_to_strings(
               read_concern)
           end
           sel[:maxTimeMS] = max_time_ms if max_time_ms
-          update_selector_for_read_pref(sel, server)
+          update_selector_for_read_pref(sel, connection)
           sel
         end
 
-        def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end
       end
     end

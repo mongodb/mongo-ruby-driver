@@ -24,16 +24,18 @@ module Mongo
       include PolymorphicLookup
 
       def execute(server, client:)
-        operation = final_operation(server)
-        operation.execute(server, client: client)
+        server.with_connection do |connection|
+          operation = final_operation(connection)
+          operation.execute(connection, client: client)
+        end
       end
 
       private
 
-      def final_operation(server)
-        cls = if server.features.op_msg_enabled?
+      def final_operation(connection)
+        cls = if connection.features.op_msg_enabled?
           polymorphic_class(self.class.name, :OpMsg)
-        elsif server.features.list_indexes_enabled?
+        elsif connection.features.list_indexes_enabled?
           polymorphic_class(self.class.name, :Command)
         else
           polymorphic_class(self.class.name, :Legacy)

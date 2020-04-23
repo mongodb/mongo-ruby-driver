@@ -28,12 +28,12 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { ns: namespace }
         end
 
-        def message(server)
-          Protocol::Query.new(db_name, Index::COLLECTION, command(server), options(server))
+        def message(connection)
+          Protocol::Query.new(db_name, Index::COLLECTION, command(connection), options(connection))
         end
 
         def result_class

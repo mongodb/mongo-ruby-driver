@@ -27,7 +27,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           (spec[SELECTOR] || {}).merge(listCollections: 1)
         end
       end

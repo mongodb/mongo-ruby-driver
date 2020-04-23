@@ -108,7 +108,10 @@ module Mongo
         end
 
         def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+          description = server.with_connection do |connection|
+            connection.description
+          end
+          description.standalone? || description.mongos? || description.primary? || secondary_ok?
         end
 
         def write?
@@ -129,7 +132,7 @@ module Mongo
         end
 
         def validate_collation!(server)
-          if options[:collation] && !server.features.collation_enabled?
+          if options[:collation] && !server.with_connection { |connection| connection.features }.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
         end

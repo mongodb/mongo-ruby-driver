@@ -163,7 +163,7 @@ module Mongo
                   coll_name: collection.name,
                   session: session
                  }
-          spec[:write_concern] = write_concern if server.features.collation_enabled?
+          spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
           Operation::CreateIndex.new(spec).execute(server, client: client)
         end
       end
@@ -241,7 +241,7 @@ module Mongo
                    session: session
                  }
           server = next_primary(nil, session)
-          spec[:write_concern] = write_concern if server.features.collation_enabled?
+          spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
           Operation::DropIndex.new(spec).execute(server, client: client)
         end
       end
@@ -292,7 +292,7 @@ module Mongo
 
       def validate_collation!(model, server)
         if (model[:collation] || model[Operation::COLLATION]) &&
-            !server.features.collation_enabled?
+            !server.with_connection { |connection| connection.features }.collation_enabled?
           raise Error::UnsupportedCollation.new
         end
       end

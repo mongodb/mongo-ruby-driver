@@ -26,7 +26,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { :createUser => user.name }.merge(user.spec)
         end
       end

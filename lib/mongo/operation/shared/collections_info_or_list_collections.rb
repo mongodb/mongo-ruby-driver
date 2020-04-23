@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 MongoDB Inc.
+# Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +14,21 @@
 
 module Mongo
   module Operation
-
-    # Shared behavior of executing the operation as an OpMsg when supported,
-    # as a Command when find command is supported by the server, and as
-    # Legacy otherwise.
-    #
-    # @api private
-    module OpMsgOrFindCommand
+    module CollectionsInfoOrListCollections
       include PolymorphicLookup
 
+      # Execute the operation.
+      #
+      # @example
+      #   operation.execute(server, client: nil)
+      #
+      # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Client ] client The client that will be used to
+      #   perform auto-encryption if it is necessary to encrypt the command
+      #   being executed (optional).
+      #
+      # @return [ Mongo::Operation::CollectionsInfo::Result,
+      #           Mongo::Operation::ListCollections::Result ] The operation result.
       def execute(server, client:)
         server.with_connection do |connection|
           operation = final_operation(connection)
@@ -33,14 +39,17 @@ module Mongo
       private
 
       def final_operation(connection)
-        cls = if connection.features.op_msg_enabled?
-          polymorphic_class(self.class.name, :OpMsg)
-        elsif connection.features.find_command_enabled?
-          polymorphic_class(self.class.name, :Command)
+         op_class = if connection.features.list_collections_enabled?
+          if connection.features.op_msg_enabled?
+            ListCollections::OpMsg
+          else
+            ListCollections::Command
+          end
         else
-          polymorphic_class(self.class.name, :Legacy)
+          CollectionsInfo::Command
         end
-        cls.new(spec)
+
+        op_class.new(spec)
       end
     end
   end

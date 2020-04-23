@@ -27,7 +27,7 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { :usersInfo => user_name }
         end
       end

@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 MongoDB Inc.
+# Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,29 +14,25 @@
 
 module Mongo
   module Operation
-    class Aggregate
+    class CollectionsInfo
 
-      # A MongoDB aggregate operation sent as a command message.
+      # A MongoDB collectionInfo operation sent as a command message.
       #
       # @api private
-      #
-      # @since 2.5.2
       class Command
         include Specifiable
         include Executable
-        include PolymorphicResult
         include ReadPreferenceSupported
-        include WriteConcernSupported
-        include Limited
+        include PolymorphicResult
 
         private
 
-        def write_concern_supported?(connection)
-          connection.features.collation_enabled?
+        def selector(connection)
+          {}
         end
 
         def message(connection)
-          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
+          Protocol::Query.new(db_name, Database::NAMESPACES, command(connection), options(connection))
         end
       end
     end

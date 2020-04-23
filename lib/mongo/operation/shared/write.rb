@@ -36,24 +36,29 @@ module Mongo
       #
       # @since 2.5.2
       def execute(server, client:)
-        validate!(server)
-        op = if server.features.op_msg_enabled?
-            self.class::OpMsg.new(spec)
-          elsif !acknowledged_write?
-            self.class::Legacy.new(spec)
-          else
-            self.class::Command.new(spec)
-          end
-        result = op.execute(server, client: client)
+        result = server.with_connection do |connection|
+          validate!(connection)
+          op = if connection.features.op_msg_enabled?
+              self.class::OpMsg.new(spec)
+            elsif !acknowledged_write?
+              self.class::Legacy.new(spec)
+            else
+              self.class::Command.new(spec)
+            end
+
+          op.execute(connection, client: client)
+        end
+
         validate_result(result, server)
       end
 
       # Execute the bulk write operation.
       #
       # @example
-      #   operation.bulk_execute(server, client: nil)
+      #   operation.bulk_execute(connection, client: nil)
       #
-      # @param [ Mongo::Server ] server The server to send the operation to.
+      # @param [ Mongo::Server::Connection ] connection The connection over
+      #   which to send the operation.
       # @param [ Mongo::Client ] client The client that will be used to
       #   perform auto-encryption if it is necessary to encrypt the command
       #   being executed (optional).
@@ -64,22 +69,24 @@ module Mongo
       #
       # @since 2.5.2
       def bulk_execute(server, client:)
-        if server.features.op_msg_enabled?
-          self.class::OpMsg.new(spec).execute(server, client: client).bulk_result
-        else
-          self.class::Command.new(spec).execute(server, client: client).bulk_result
+        server.with_connection do |connection|
+          if connection.features.op_msg_enabled?
+            self.class::OpMsg.new(spec).execute(connection, client: client).bulk_result
+          else
+            self.class::Command.new(spec).execute(connection, client: client).bulk_result
+          end
         end
       end
 
       private
 
-      def validate!(server)
+      def validate!(connection)
         if !acknowledged_write?
           if collation
             raise Error::UnsupportedCollation.new(
                 Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE)
           end
-          if array_filters(server)
+          if array_filters(connection)
             raise Error::UnsupportedArrayFilters.new(
                 Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE)
           end

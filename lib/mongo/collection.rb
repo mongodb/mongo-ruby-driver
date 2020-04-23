@@ -240,7 +240,7 @@ module Mongo
       operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
         server = next_primary(nil, session)
-        if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
+        if (options[:collation] || options[Operation::COLLATION]) && !server.with_connection { |connection| connection.features }.collation_enabled?
           raise Error::UnsupportedCollation
         end
 

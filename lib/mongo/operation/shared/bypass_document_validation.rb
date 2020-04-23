@@ -22,12 +22,18 @@ module Mongo
 
       private
 
-      def command(server)
+      def command(connection)
+        if Lint.enabled?
+          unless connection.is_a?(Server::Connection)
+            raise Error::LintError, "Connection is not a Connection instance: #{connection}"
+          end
+        end
+
         sel = super
-        add_bypass_document_validation(sel, server)
+        add_bypass_document_validation(sel)
       end
 
-      def add_bypass_document_validation(sel, server)
+      def add_bypass_document_validation(sel)
         return sel unless bypass_document_validation
         sel.merge(bypassDocumentValidation: true)
       end

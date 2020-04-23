@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Mongo::Operation::SessionsSupported do
+  # https://jira.mongodb.org/browse/RUBY-2224
+  skip_if_linting
 
   let(:selector) do
     BSON::Document.new(name: 'test')
@@ -26,11 +28,23 @@ describe Mongo::Operation::SessionsSupported do
     end
   end
 
+  let(:description) do
+    double('description').tap do |description|
+      allow(description).to receive(:mongos?).and_return(mongos?)
+      allow(description).to receive(:standalone?).and_return(standalone?)
+    end
+  end
+
   let(:server) do
     double('server').tap do |server|
       allow(server).to receive(:cluster).and_return(cluster)
-      allow(server).to receive(:mongos?).and_return(mongos?)
-      allow(server).to receive(:standalone?).and_return(standalone?)
+    end
+  end
+
+  let(:connection) do
+    double('connection').tap do |connection|
+      allow(connection).to receive(:server).and_return(server)
+      allow(connection).to receive(:description).and_return(description)
     end
   end
 
@@ -42,7 +56,7 @@ describe Mongo::Operation::SessionsSupported do
 
     let(:actual) do
       sel = operation.send(:selector).dup
-      operation.send(:add_read_preference, sel, server)
+      operation.send(:add_read_preference, sel, connection)
       sel
     end
 

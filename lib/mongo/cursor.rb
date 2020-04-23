@@ -351,7 +351,7 @@ module Mongo
     end
 
     def get_more_operation
-      if @server.features.find_command_enabled?
+      if @server.with_connection { |connection| connection.features }.find_command_enabled?
         spec = Builder::GetMoreCommand.new(self, @session).specification
       else
         spec = Builder::OpGetMore.new(self).specification
@@ -368,7 +368,7 @@ module Mongo
     end
 
     def kill_cursors_op_spec
-      if @server.features.find_command_enabled?
+      if @server.with_connection { |connection| connection.features }.find_command_enabled?
         Builder::KillCursorsCommand.new(self).specification
       else
         Builder::OpKillCursors.new(self).specification

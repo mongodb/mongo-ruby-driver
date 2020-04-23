@@ -34,7 +34,7 @@ module Mongo
           send(IDENTIFIER).first
         end
 
-        def message(server)
+        def message(connection)
           flags = []
           flags << :multi_update if selector[Operation::MULTI]
           flags << :upsert if selector[Operation::UPSERT]

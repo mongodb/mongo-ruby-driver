@@ -29,15 +29,15 @@ module Mongo
 
         private
 
-        def selector(server)
+        def selector(connection)
           { delete: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
             ordered: ordered? }
         end
 
-        def message(server)
+        def message(connection)
           section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
-          Protocol::Msg.new(flags, {}, command(server), section)
+          Protocol::Msg.new(flags, {}, command(connection), section)
         end
       end
     end
