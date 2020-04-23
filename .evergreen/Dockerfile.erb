@@ -172,6 +172,8 @@ WORKDIR /app
   COPY *.gemspec .
   COPY lib/mongo/version.rb lib/mongo/version.rb
   RUN bundle install
+  COPY .evergreen/patch-debuggers .evergreen/patch-debuggers
+  RUN .evergreen/patch-debuggers /opt/rubies
 
 <% end %>
 
