@@ -173,8 +173,10 @@ module Mongo
     end
 
     def execute_operation(name, values, server, operation_id, result_combiner, session, txn_num = nil)
-      raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.with_connection { |connection| connection.features }.collation_enabled?
-      raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.with_connection { |connection| connection.features }.array_filters_enabled?
+      validate_collation!(server)
+      validate_array_filters!(server)
+      validate_hint!(server)
+
       unpin_maybe(session) do
         if values.size > server.with_connection { |connection| connection.description }.max_write_batch_size
           split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
@@ -225,6 +227,32 @@ module Mongo
     def update_many(documents, server, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents)
       Operation::Update.new(spec).bulk_execute(server, client: client)
+    end
+
+    private
+
+    def validate_collation!(server)
+      features = server.with_connection { |connection| connection.features }
+
+      if op_combiner.has_collation? && !features.collation_enabled?
+        raise Error::UnsupportedCollation.new
+      end
+    end
+
+    def validate_array_filters!(server)
+      features = server.with_connection { |connection| connection.features }
+
+      if op_combiner.has_array_filters? && !features.array_filters_enabled?
+        raise Error::UnsupportedArrayFilters.new
+      end
+    end
+
+    def validate_hint!(server)
+      features = server.with_connection { |connection| connection.features }
+
+      if op_combiner.has_hint? && !features.crud_option_validation_enabled?
+        raise Error::UnsupportedHint.new
+      end
     end
   end
 end

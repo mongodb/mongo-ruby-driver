@@ -91,10 +91,9 @@ module Mongo
           Operation::Q => doc[:filter],
           Operation::U => doc[:replacement],
         }.tap do |d|
-          if doc[:upsert]
-            d['upsert'] = true
-          end
+          d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -107,11 +106,10 @@ module Mongo
           Operation::U => doc[:update],
           Operation::MULTI => true,
         }.tap do |d|
-          if doc[:upsert]
-            d['upsert'] = true
-          end
+          d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -123,11 +121,10 @@ module Mongo
           Operation::Q => doc[:filter],
           Operation::U => doc[:update],
         }.tap do |d|
-          if doc[:upsert]
-            d['upsert'] = true
-          end
+          d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 

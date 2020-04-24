@@ -20,7 +20,6 @@ module Mongo
       #
       # @since 2.0.0
       class Features
-
         # List of features and the wire protocol version they appear in.
         #
         # Wire protocol versions map to server releases as follows:
@@ -42,6 +41,10 @@ module Mongo
           :sessions => 6,
           :collation => 5,
           :max_staleness => 5,
+          # Server versions older than 3.4 do not reliably validate options
+          # provided by the client during CRUD operations, requiring the
+          # driver to raise client-side errors when those options are provided.
+          :crud_option_validation => 5,
           :find_command => 4,
           :list_collections => 3,
           :list_indexes => 3,
