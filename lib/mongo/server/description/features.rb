@@ -34,6 +34,10 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
+          # Server versions older than 4.2 do not reliably validate options
+          # provided by the client during findAndModify operations, requiring the
+          # driver to raise client-side errors when those options are provided.
+          :find_and_modify_option_validation => 8,
           :transactions => 7,
           :scram_sha_256 => 7,
           :array_filters => 6,
@@ -42,9 +46,9 @@ module Mongo
           :collation => 5,
           :max_staleness => 5,
           # Server versions older than 3.4 do not reliably validate options
-          # provided by the client during CRUD operations, requiring the
+          # provided by the client during update/delete operations, requiring the
           # driver to raise client-side errors when those options are provided.
-          :crud_option_validation => 5,
+          :update_delete_option_validation => 5,
           :find_command => 4,
           :list_collections => 3,
           :list_indexes => 3,

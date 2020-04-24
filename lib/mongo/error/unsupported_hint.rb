@@ -24,7 +24,8 @@ module Mongo
       DEFAULT_MESSAGE = "The MongoDB server handling this request does not " \
         "support the hint option on this command. The hint option is supported " \
         "on update commands on MongoDB server versions 4.2 and later, and " \
-        "on delete commands on MongoDB server versions 4.4 and later"
+        "on findAndModify and delete commands on MongoDB server versions 4.4 " \
+        "and later"
 
       # Create a new UnsupportedHint error.
       #
