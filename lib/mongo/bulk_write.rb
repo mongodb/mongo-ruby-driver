@@ -253,6 +253,10 @@ module Mongo
       if op_combiner.has_hint? && !features.update_delete_option_validation_enabled?
         raise Error::UnsupportedHint.new
       end
+
+      if op_combiner.has_hint? && write_concern && !write_concern.acknowledged?
+        raise Error::UnsupportedHint.new
+      end
     end
   end
 end

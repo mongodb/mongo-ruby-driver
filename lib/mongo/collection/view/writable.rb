@@ -58,7 +58,7 @@ module Mongo
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
-              apply_hint!(cmd, server, opts)
+              apply_hint!(cmd, server, applied_write_concern, opts)
 
               Operation::Command.new(
                   :selector => cmd,
@@ -141,7 +141,7 @@ module Mongo
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
-              apply_hint!(cmd, server, opts)
+              apply_hint!(cmd, server, applied_write_concern, opts)
 
               Operation::Command.new(
                   :selector => cmd,
@@ -173,7 +173,7 @@ module Mongo
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(delete_doc, server, opts)
-              apply_hint!(delete_doc, server, opts)
+              apply_hint!(delete_doc, server, write_concern, opts)
 
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
@@ -205,7 +205,7 @@ module Mongo
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
-              apply_hint!(delete_doc, server, opts)
+              apply_hint!(delete_doc, server, write_concern, opts)
 
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
@@ -249,7 +249,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, opts)
+              apply_hint!(update_doc, server, write_concern, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -297,7 +297,7 @@ module Mongo
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, opts)
+              apply_hint!(update_doc, server, write_concern, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -343,7 +343,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, opts)
+              apply_hint!(update_doc, server, write_concern, opts)
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -360,7 +360,7 @@ module Mongo
 
         private
 
-        def apply_hint!(doc, server, opts)
+        def apply_hint!(doc, server, write_concern, opts)
           if hint = opts[:hint]
             features = server.with_connection do |connection|
               connection.description.features
@@ -370,6 +370,10 @@ module Mongo
                 !features.find_and_modify_option_validation_enabled?
               raise Error::UnsupportedHint.new
             elsif !features.update_delete_option_validation_enabled?
+              raise Error::UnsupportedHint.new
+            end
+
+            if write_concern && !write_concern.acknowledged?
               raise Error::UnsupportedHint.new
             end
 
