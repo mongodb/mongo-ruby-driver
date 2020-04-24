@@ -950,6 +950,18 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#replace_one' do
+    context 'when a hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 3.4' do
+        max_server_fcv '3.2'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.replace_one({ field: 'testing' }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
 
     context 'when a selector was provided' do
 
@@ -1182,6 +1194,18 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#update_many' do
+    context 'when a hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 3.4' do
+        max_server_fcv '3.2'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
 
     context 'when a selector was provided' do
 
@@ -1420,6 +1444,18 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#update_one' do
+    context 'when a hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 3.4' do
+        max_server_fcv '3.2'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
 
     context 'when a selector was provided' do
 

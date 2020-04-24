@@ -20,17 +20,6 @@ module Mongo
       #
       # @since 2.0.0
       class Features
-        SERVER_VERSIONS = {
-          '2': 2.6,
-          '3': 3.0,
-          '4': 3.2,
-          '5': 3.4,
-          '6': 3.6,
-          '7': 4.0,
-          '8': 4.2,
-          '9': 4.4
-        }
-
         # List of features and the wire protocol version they appear in.
         #
         # Wire protocol versions map to server releases as follows:

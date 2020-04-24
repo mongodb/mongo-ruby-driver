@@ -14,10 +14,25 @@
 
 module Mongo
   class Error
-
     # Raised if the hint option is specified for an operation but the server
     # selected does not support hints.
-    # TODO: error message stuff
-    class UnsupportedHint < Error; end
+    class UnsupportedHint < Error
+
+      # The default error message describing that hints are not supported.
+      #
+      # @api private
+      DEFAULT_MESSAGE = "The MongoDB server handling this request does not " \
+        "support the hint option on this command. The hint option is supported " \
+        "on update commands on MongoDB server versions 4.2 and later, and " \
+        "on delete commands on MongoDB server versions 4.4 and later"
+
+      # Create a new UnsupportedHint error.
+      #
+      # @param [String | nil] message An optional custom error message. If this
+      #   argument is nil, a default message will be supplied.
+      def initialize(message = nil)
+        super(message || DEFAULT_MESSAGE)
+      end
+    end
   end
 end

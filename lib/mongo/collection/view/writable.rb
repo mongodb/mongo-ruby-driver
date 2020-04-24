@@ -354,9 +354,9 @@ module Mongo
 
         def apply_hint!(doc, server, opts)
           if hint = opts[:hint]
-            features = server.with_connection { |connection| connection.features }
-            unless features.crud_option_validation_enabled?
-              raise Error::UnsupportedHint
+            description = server.with_connection { |connection| connection.description }
+            unless description.features.crud_option_validation_enabled?
+              raise Error::UnsupportedHint.new
             end
 
             doc[:hint] = opts[:hint]

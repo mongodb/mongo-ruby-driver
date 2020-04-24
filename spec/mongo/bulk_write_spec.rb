@@ -348,6 +348,28 @@ describe Mongo::BulkWrite do
           end
 
           context 'when bulk executing update_one' do
+            context 'when the write has specified a hint option' do
+              let(:requests) do
+                [{
+                   update_one: {
+                     filter: { _id: 1 },
+                     update: { '$set' => { 'x.$[i].y' => 5 } },
+                     hint: '_id_',
+                   }
+                 }]
+              end
+
+              # Functionality on more recent servers is sufficiently covered by spec tests.
+              context 'on server versions < 3.4' do
+                max_server_fcv '3.2'
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                end
+              end
+            end
 
             context 'when the write has specified arrayFilters' do
 
@@ -392,6 +414,29 @@ describe Mongo::BulkWrite do
           end
 
           context 'when bulk executing update_many' do
+            context 'when the write has specified a hint option' do
+              let(:requests) do
+                [{
+                   update_many: {
+                     filter: { '$or' => [{ _id: 1 }, { _id: 2 }]},
+                     update: { '$set' => { 'x.$[i].y' => 5 } },
+                     hint: '_id_',
+                   }
+                 }]
+              end
+
+              # Functionality on more recent servers is sufficiently covered by spec tests.
+              context 'on server versions < 3.4' do
+                max_server_fcv '3.2'
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                end
+              end
+            end
+
 
             context 'when the write has specified arrayFilters' do
 
@@ -916,6 +961,29 @@ describe Mongo::BulkWrite do
           it 'replaces the document' do
             expect(result.modified_count).to eq(1)
             expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
+          end
+
+          context 'when a hint option is provided' do
+            let(:requests) do
+              [{
+                replace_one: {
+                  filter: { _id: 0 },
+                  replacements: { name: 'test' },
+                  hint: '_id_'
+                }
+              }]
+            end
+
+            # Functionality on more recent servers is sufficiently covered by spec tests.
+            context 'on server versions < 3.4' do
+              max_server_fcv '3.2'
+
+              it 'raises a client-side error' do
+                expect do
+                  bulk_write.execute
+                end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+              end
+            end
           end
 
           context 'when a session is provided' do
