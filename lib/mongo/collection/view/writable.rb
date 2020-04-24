@@ -356,17 +356,14 @@ module Mongo
 
         def apply_hint!(doc, server, opts)
           if hint = opts[:hint]
-
-
-            description = server.with_connection { |connection| connection.description }
-
-            hint_validation_enabled = if doc.key?(Operation::U)
-              description.max_wire_version >= 5
-            elsif doc.key?(:findAndModify)
-              description.max_wire_version >= 8
+            features = server.with_connection do |connection|
+              connection.description.features
             end
 
-            unless hint_validation_enabled
+            if doc.key?(:findAndModify) &&
+                !features.find_and_modify_option_validation_enabled?
+              raise Error::UnsupportedHint.new
+            elsif !features.update_delete_option_validation_enabled?
               raise Error::UnsupportedHint.new
             end
 
