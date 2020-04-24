@@ -374,7 +374,7 @@ module Mongo
             end
 
             if write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedHint.new
+              raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
             end
 
             doc[:hint] = opts[:hint]

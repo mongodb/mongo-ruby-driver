@@ -245,6 +245,22 @@ describe Mongo::BulkWrite do
                }]
             end
 
+            context 'with unacknowledged write concern' do
+              let(:bulk_write) do
+                described_class.new(
+                  collection,
+                  requests,
+                  options.merge(write_concern: { w: 0 })
+                )
+              end
+
+              it 'raises a client-side error' do
+                expect do
+                  bulk_write.execute
+                end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+              end
+            end
+
             # Functionality on more recent servers is sufficiently covered by spec tests.
             context 'on server versions < 3.4' do
               max_server_fcv '3.2'
@@ -391,6 +407,22 @@ describe Mongo::BulkWrite do
                   end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
                 end
               end
+
+              context 'with unacknowledged write concern' do
+                let(:bulk_write) do
+                  described_class.new(
+                    collection,
+                    requests,
+                    options.merge(write_concern: { w: 0 })
+                  )
+                end
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+                end
+              end
             end
 
             context 'when the write has specified arrayFilters' do
@@ -455,6 +487,22 @@ describe Mongo::BulkWrite do
                   expect do
                     bulk_write.execute
                   end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                end
+              end
+
+              context 'with unacknowledged write concern' do
+                let(:bulk_write) do
+                  described_class.new(
+                    collection,
+                    requests,
+                    options.merge(write_concern: { w: 0 })
+                  )
+                end
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
                 end
               end
             end
@@ -724,6 +772,22 @@ describe Mongo::BulkWrite do
                 expect do
                   bulk_write.execute
                 end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+              end
+            end
+
+            context 'with unacknowledged write concern' do
+              let(:bulk_write) do
+                described_class.new(
+                  collection,
+                  requests,
+                  options.merge(write_concern: { w: 0 })
+                )
+              end
+
+              it 'raises a client-side error' do
+                expect do
+                  bulk_write.execute
+                end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
               end
             end
           end
@@ -1026,6 +1090,22 @@ describe Mongo::BulkWrite do
                 expect do
                   bulk_write.execute
                 end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+              end
+            end
+
+            context 'with unacknowledged write concern' do
+              let(:bulk_write) do
+                described_class.new(
+                  collection,
+                  requests,
+                  options.merge(write_concern: { w: 0 })
+                )
+              end
+
+              it 'raises a client-side error' do
+                expect do
+                  bulk_write.execute
+                end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
               end
             end
           end

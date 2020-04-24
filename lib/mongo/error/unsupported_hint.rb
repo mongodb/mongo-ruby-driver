@@ -27,12 +27,34 @@ module Mongo
         "on findAndModify and delete commands on MongoDB server versions 4.4 " \
         "and later"
 
+      # The default error message describing that hints are not supported on
+      #   unacknowledged writes.
+      #
+      # @api private
+      DEFAULT_UNACKNOWLEDGED_MESSAGE = "A hint cannot be specified on an " \
+        "operation being performed with an unacknowledged write concern " \
+        "({ w: 0}). Remove the hint option or perform this operaiton with " \
+        "a write concern of at least { w: 1 }"
+
       # Create a new UnsupportedHint error.
       #
       # @param [String | nil] message An optional custom error message. If this
       #   argument is nil, a default message will be supplied.
-      def initialize(message = nil)
-        super(message || DEFAULT_MESSAGE)
+      # @param [Hash] options
+      #
+      # @option options [Boolean] unacknowledged_write Whether this error is
+      #   being raised because a hint was specified on an unacknowledged write.
+      #   Defaults to false.
+      def initialize(message = nil, options = {})
+        unacknowledged_write = options[:unacknowledged_write] || false
+
+        default_message = if unacknowledged_write
+          DEFAULT_UNACKNOWLEDGED_MESSAGE
+        else
+          DEFAULT_MESSAGE
+        end
+
+        super(message || default_message)
       end
     end
   end
