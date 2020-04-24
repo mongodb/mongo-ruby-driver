@@ -24,6 +24,19 @@ describe Mongo::Collection::View::Writable do
       authorized_collection.insert_many([{ field: 'test1' }])
     end
 
+    context 'when hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 4.2' do
+        max_server_fcv '4.0'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.find_one_and_delete(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
+
     context 'when a matching document is found' do
 
       let(:selector) do
@@ -651,6 +664,18 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#delete_many' do
+    context 'when a hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 3.4' do
+        max_server_fcv '3.2'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.delete_many(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
 
     context 'when a selector was provided' do
 
@@ -813,6 +838,18 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#delete_one' do
+    context 'when a hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 3.4' do
+        max_server_fcv '3.2'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.delete_one(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
 
     context 'when a selector was provided' do
 

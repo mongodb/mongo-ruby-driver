@@ -235,6 +235,28 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: 0).count).to eq(0)
           end
 
+          context 'when the write has specified a hint option' do
+            let(:requests) do
+              [{
+                 delete_one: {
+                   filter: { _id: 1 },
+                   hint: '_id_',
+                 }
+               }]
+            end
+
+            # Functionality on more recent servers is sufficiently covered by spec tests.
+            context 'on server versions < 3.4' do
+              max_server_fcv '3.2'
+
+              it 'raises a client-side error' do
+                expect do
+                  bulk_write.execute
+                end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+              end
+            end
+          end
+
           context 'when a session is provided' do
 
             let(:operation) do
@@ -682,6 +704,28 @@ describe Mongo::BulkWrite do
           it 'deletes the documents' do
             expect(result.deleted_count).to eq(1)
             expect(authorized_collection.find(_id: 0).count).to eq(0)
+          end
+
+          context 'when the write has specified a hint option' do
+            let(:requests) do
+              [{
+                 delete_many: {
+                   filter: { _id: 1 },
+                   hint: '_id_',
+                 }
+               }]
+            end
+
+            # Functionality on more recent servers is sufficiently covered by spec tests.
+            context 'on server versions < 3.4' do
+              max_server_fcv '3.2'
+
+              it 'raises a client-side error' do
+                expect do
+                  bulk_write.execute
+                end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+              end
+            end
           end
 
           context 'when a session is provided' do

@@ -58,6 +58,8 @@ module Mongo
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
+              apply_hint!(cmd, server, opts)
+
               Operation::Command.new(
                   :selector => cmd,
                   :db_name => database.name,
@@ -171,6 +173,8 @@ module Mongo
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(delete_doc, server, opts)
+              apply_hint!(delete_doc, server, opts)
+
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
@@ -201,6 +205,8 @@ module Mongo
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
+              apply_hint!(delete_doc, server, opts)
+
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
