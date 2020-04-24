@@ -218,6 +218,19 @@ describe Mongo::Collection::View::Writable do
       authorized_collection.insert_many([{ field: 'test1', other: 'sth' }])
     end
 
+    context 'when hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 4.2' do
+        max_server_fcv '4.0'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+    end
+
     context 'when a matching document is found' do
 
       let(:selector) do
@@ -433,6 +446,19 @@ describe Mongo::Collection::View::Writable do
 
     before do
       authorized_collection.insert_many([{ field: 'test1' }])
+    end
+
+    context 'when hint option is provided' do
+      # Functionality on more recent servers is sufficiently covered by spec tests.
+      context 'on server versions < 4.2' do
+        max_server_fcv '4.0'
+
+        it 'raises a client-side exception' do
+          expect do
+            view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
     end
 
     context 'when a matching document is found' do

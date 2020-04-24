@@ -3,7 +3,7 @@ runOn:
   # instead relies on the server to raise an error. Support for findAndModify
   # hint was added in 4.3.1 (SERVER-42099), so we'll allow up to 4.3.0
   # (inclusive).
-  - { minServerVersion: "4.2.0", maxServerVersion: "4.3.0" }
+  - { minServerVersion: "4.2.0", maxServerVersion: "4.2.99" }
 
 data:
   - { _id: 1, x: 11 }

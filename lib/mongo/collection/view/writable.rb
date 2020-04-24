@@ -139,6 +139,8 @@ module Mongo
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
+              apply_hint!(cmd, server, opts)
+
               Operation::Command.new(
                   :selector => cmd,
                   :db_name => database.name,
@@ -354,8 +356,17 @@ module Mongo
 
         def apply_hint!(doc, server, opts)
           if hint = opts[:hint]
+
+
             description = server.with_connection { |connection| connection.description }
-            unless description.features.crud_option_validation_enabled?
+
+            hint_validation_enabled = if doc.key?(Operation::U)
+              description.max_wire_version >= 5
+            elsif doc.key?(:findAndModify)
+              description.max_wire_version >= 8
+            end
+
+            unless hint_validation_enabled
               raise Error::UnsupportedHint.new
             end
 
