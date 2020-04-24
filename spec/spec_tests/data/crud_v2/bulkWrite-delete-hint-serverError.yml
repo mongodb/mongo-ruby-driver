@@ -3,7 +3,7 @@ runOn:
   # instead relies on the server to raise an error. Server versions >= 3.4.0
   # raise errors for unknown deleteOne options, and server versions >= 4.3.4
   # support the hint option in deleteOne.
-  - { minServerVersion: "3.4.0", maxServerVersion: "4.3.3" }
+  - { minServerVersion: "3.4.0", maxServerVersion: "4.2.99" }
 
 data:
   - {_id: 1, x: 11}

@@ -3,7 +3,7 @@ runOn:
   # instead relies on the server to raise an error. Server versions >= 4.2.0
   # raise errors for unknown findOneAndModify options, and server versions >= 4.3.4
   # support the hint option in findOneAndModify when remove is true.
-  - { minServerVersion: "4.2.0", maxServerVersion: "4.3.3" }
+  - { minServerVersion: "4.2.0", maxServerVersion: "4.2.99" }
 
 data:
   - { _id: 1, x: 11 }
