@@ -188,10 +188,14 @@ describe Mongo::Server::Connection, retry: 3 do
           end
         end
 
-        it_behaves_like 'failing connection with server diagnostics'
+        # The server diagnostics only apply to network exceptions.
+        # If non-network exceptions can be legitimately raised during
+        # handshake, and it makes sense to indicate which server the
+        # corresponding request was sent to, we should apply server
+        # diagnostics to non-network errors also.
+        it_behaves_like 'failing connection'
         it_behaves_like 'keeps server type and topology'
         it_behaves_like 'logs a warning'
-        it_behaves_like 'adds server diagnostics'
       end
 
       context 'when #handshake! dependency raises a network exception' do

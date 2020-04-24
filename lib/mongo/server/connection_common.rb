@@ -66,7 +66,7 @@ module Mongo
         yield
       # Note that the exception should already have been mapped to a
       # Mongo::Error subclass when it gets to this method.
-      rescue Mongo::Error => e
+      rescue Error::SocketError, Error::SocketTimeoutError => e
         # Server::Monitor::Connection does not reference its server, but
         # knows its address. Server::Connection delegates the address to its
         # server.

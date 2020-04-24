@@ -47,7 +47,7 @@ def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
       res = nil
       begin
         res = test.run(client, num_ops)
-      rescue => e
+      rescue Mongo::Error => e
         res = e
       end
       res
