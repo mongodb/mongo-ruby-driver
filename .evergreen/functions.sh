@@ -43,25 +43,34 @@ _detect_arch() {
       fi
     else
       echo 'Unknown Debian flavor' 1>&2
-      return 1
+      exit 1
     fi
   elif test -f /etc/redhat-release; then
     # RHEL or CentOS
-    if test "`uname -m`" = ppc64le; then
+    if test "`uname -m`" = s390x; then
+      arch=rhel72-s390x
+    elif test "`uname -m`" = ppc64le; then
       arch=rhel71-ppc
-    elif lsb_release -i |grep -q RedHat; then
-      release=`lsb_release -r |awk '{print $2}' |tr -d .`
-      arch="rhel$release"
-    elif lsb_release -i |grep -q CentOS; then
-      release=`lsb_release -r |awk '{print $2}' |cut -c 1 |sed -e s/7/70/ -e s/6/62/`
-      arch="rhel$release"
+    elif lsb_release >/dev/null 2>&1; then
+      if lsb_release -i |grep -q RedHat; then
+        release=`lsb_release -r |awk '{print $2}' |tr -d .`
+        arch="rhel$release"
+      elif lsb_release -i |grep -q CentOS; then
+        release=`lsb_release -r |awk '{print $2}' |cut -c 1 |sed -e s/7/70/ -e s/6/62/ -e s/8/80/`
+        arch="rhel$release"
+      else
+        echo 'Unknown RHEL flavor' 1>&2
+        exit 1
+      fi
     else
-      echo 'Unknown RHEL flavor' 1>&2
-      return 1
+      echo lsb_release missing, using /etc/redhat-release 1>&2
+      release=`grep -o 'release [0-9]' /etc/redhat-release |awk '{print $2}'`
+      release=`echo $release |sed -e s/7/70/ -e s/6/62/ -e s/8/80/`
+      arch=rhel$release
     fi
   else
     echo 'Unknown distro' 1>&2
-    return 1
+    exit 1
   fi
   echo "Detected arch: $arch" 1>&2
   echo $arch
