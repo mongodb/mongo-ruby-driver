@@ -141,6 +141,10 @@ RSpec.configure do |config|
     c.syntax = [:should, :expect]
     c.max_formatted_output_length = 10000
   end
+
+  if config.respond_to?(:fuubar_output_pending_results=)
+    config.fuubar_output_pending_results = false
+  end
 end
 
 EventSubscriber.initialize
