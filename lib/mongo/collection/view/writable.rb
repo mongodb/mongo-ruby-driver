@@ -393,7 +393,6 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern ] The write concern.
         def applied_write_concern(session)
-          byebug
           if wco = options[:write_concern] || options[:write]
             WriteConcern.get(wco)
           else
