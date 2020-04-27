@@ -250,8 +250,12 @@ module Mongo
     def validate_hint!(server)
       features = server.with_connection { |connection| connection.features }
 
-      if op_combiner.has_hint? && !features.update_delete_option_validation_enabled?
-        raise Error::UnsupportedHint.new
+      if op_combiner.has_hint?
+        if write_concern && !write_concern.acknowledged?
+          raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
+        elsif !features.update_delete_option_validation_enabled?
+          raise Error::UnsupportedHint.new
+        end
       end
     end
   end

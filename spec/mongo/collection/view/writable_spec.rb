@@ -10,8 +10,12 @@ describe Mongo::Collection::View::Writable do
     {}
   end
 
+  let(:view_collection) do
+    authorized_collection
+  end
+
   let(:view) do
-    Mongo::Collection::View.new(authorized_collection, selector, options)
+    Mongo::Collection::View.new(view_collection, selector, options)
   end
 
   before do
@@ -33,6 +37,19 @@ describe Mongo::Collection::View::Writable do
           expect do
             view.find_one_and_delete(hint: '_id_')
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.find_one_and_delete(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
         end
       end
     end
@@ -240,6 +257,19 @@ describe Mongo::Collection::View::Writable do
           expect do
             view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
         end
       end
     end
@@ -472,6 +502,19 @@ describe Mongo::Collection::View::Writable do
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+        end
+      end
     end
 
     context 'when a matching document is found' do
@@ -675,6 +718,19 @@ describe Mongo::Collection::View::Writable do
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.delete_many(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+        end
+      end
     end
 
     context 'when a selector was provided' do
@@ -847,6 +903,19 @@ describe Mongo::Collection::View::Writable do
           expect do
             view.delete_one(hint: '_id_')
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.delete_many(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
         end
       end
     end
@@ -1022,6 +1091,19 @@ describe Mongo::Collection::View::Writable do
           expect do
             view.replace_one({ field: 'testing' }, { hint: '_id_' })
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.delete_many(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
         end
       end
     end
@@ -1266,6 +1348,19 @@ describe Mongo::Collection::View::Writable do
           expect do
             view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.delete_many(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
         end
       end
     end
@@ -1516,6 +1611,19 @@ describe Mongo::Collection::View::Writable do
           expect do
             view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
           end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+        end
+      end
+
+      context 'when the write concern is unacknowledged' do
+        let(:view_collection) do
+          client = authorized_client.with(write_concern: { w: 0 })
+          client[authorized_collection.name]
+        end
+
+        it 'raises a client-side error' do
+          expect do
+            view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
         end
       end
     end
