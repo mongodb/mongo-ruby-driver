@@ -39,8 +39,6 @@ module Mongo
         # @option opts [ Hash ] :projection The fields to include or exclude in the returned doc.
         # @option opts [ Hash ] :sort The key and direction pairs by which the result set
         #   will be sorted.
-        # @option opts [ Hash ] :write_concern The write concern options.
-        #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Session ] :session The session to use.
         #
@@ -58,7 +56,7 @@ module Mongo
             cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
-              apply_hint!(cmd, server, applied_write_concern, opts)
+              apply_hint!(cmd, server, opts.merge(write_concern: applied_write_concern))
 
               Operation::Command.new(
                   :selector => cmd,
@@ -85,8 +83,6 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
-        # @option opts [ Hash ] :write_concern The write concern options.
-        #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ BSON::Document ] The document.
@@ -113,8 +109,6 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
-        # @option opts [ Hash ] :write_concern The write concern options.
-        #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         # an update should apply.
@@ -141,7 +135,7 @@ module Mongo
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
-              apply_hint!(cmd, server, applied_write_concern, opts)
+              apply_hint!(cmd, server, opts.merge(write_concern: applied_write_concern))
 
               Operation::Command.new(
                   :selector => cmd,
@@ -173,7 +167,7 @@ module Mongo
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(delete_doc, server, opts)
-              apply_hint!(delete_doc, server, write_concern, opts)
+              apply_hint!(delete_doc, server, opts.merge(write_concern: write_concern))
 
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
@@ -205,7 +199,7 @@ module Mongo
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
-              apply_hint!(delete_doc, server, write_concern, opts)
+              apply_hint!(delete_doc, server, opts.merge(write_concern: write_concern))
 
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
@@ -249,7 +243,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, write_concern, opts)
+              apply_hint!(update_doc, server, opts.merge(write_concern: write_concern))
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -297,7 +291,7 @@ module Mongo
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, write_concern, opts)
+              apply_hint!(update_doc, server, opts.merge(write_concern: write_concern))
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -343,7 +337,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, write_concern, opts)
+              apply_hint!(update_doc, server, opts.merge(write_concern: write_concern))
 
               Operation::Update.new(
                   :updates => [ update_doc ],
@@ -360,10 +354,15 @@ module Mongo
 
         private
 
-        def apply_hint!(doc, server, write_concern, opts)
+        def apply_hint!(doc, server, opts)
           if hint = opts[:hint]
             features = server.with_connection do |connection|
               connection.description.features
+            end
+
+            write_concern = opts[:write_concern]
+            if write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
             end
 
             if doc.key?(:findAndModify) &&
@@ -371,10 +370,6 @@ module Mongo
               raise Error::UnsupportedHint.new
             elsif !features.update_delete_option_validation_enabled?
               raise Error::UnsupportedHint.new
-            end
-
-            if write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
             end
 
             doc[:hint] = opts[:hint]
@@ -398,6 +393,7 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern ] The write concern.
         def applied_write_concern(session)
+          byebug
           if wco = options[:write_concern] || options[:write]
             WriteConcern.get(wco)
           else
