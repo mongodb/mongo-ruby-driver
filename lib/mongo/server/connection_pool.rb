@@ -692,7 +692,7 @@ module Mongo
       private
 
       def create_connection
-        connection = Connection.new(@server, options.merge(generation: generation,
+        connection = Connection.new(@server, **options.merge(generation: generation,
           connection_pool: self))
       end
 

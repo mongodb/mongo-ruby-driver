@@ -82,13 +82,12 @@ module Mongo
       #   Server.
       #
       # @param [ Mongo::Server ] server The server the connection is for.
-      # @param [ Hash ] options The connection options.
       #
       # @option options [ Integer ] :generation Connection pool's generation
       #   for this connection.
       #
       # @since 2.0.0
-      def initialize(server, options = {})
+      def initialize(server, **options)
         @id = server.next_connection_id
         @monitoring = server.monitoring
         @options = options.freeze
@@ -227,7 +226,7 @@ module Mongo
       # @return [ true ] If the disconnect succeeded.
       #
       # @since 2.0.0
-      def disconnect!(options = nil)
+      def disconnect!(**options)
         # Note: @closed may be true here but we also may have a socket.
         # Check the socket and not @closed flag.
         @auth_mechanism = nil
@@ -244,7 +243,7 @@ module Mongo
         # publish it multiple times, unless the socket was reconnected -
         # in that case publish the close event once per socket close.
         unless @close_event_published
-          reason = options && options[:reason]
+          reason = options[:reason]
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionClosed.new(
               address,
@@ -411,7 +410,7 @@ module Mongo
         @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
       end
 
-      def deliver(message, client, options = {})
+      def deliver(message, client, **options)
         begin
           super
         # Important: timeout errors are not handled here
