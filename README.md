@@ -16,10 +16,10 @@ Support & Feedback
 ------------------
 
 For issues, questions or feedback related to the Ruby driver, please look into
-our [support channels](http://www.mongodb.org/about/support). Please
+our [support channels](https://docs.mongodb.com/manual/support). Please
 do not email any of the Ruby developers directly with issues or
 questions - you're more likely to get an answer quickly on the
-[MongoDB Community Forum](https://community.mongodb.com).
+[MongoDB Community Forum](https://developer.mongodb.com/community/forums/tags/c/drivers-odms-connectors/7/ruby-driver).
 
 
 Bugs & Feature Requests
