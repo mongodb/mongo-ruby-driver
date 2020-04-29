@@ -33,7 +33,24 @@ module Mongo
       # @return [ String | nil ] The compressor.
       attr_reader :compressor
 
+      # Determine if the connection is currently connected.
+      #
+      # @example Is the connection connected?
+      #   connection.connected?
+      #
+      # @return [ true, false ] If connected.
+      #
+      # @deprecated
+      def connected?
+        !!@socket && @socket.alive?
+      end
+
       private
+
+      attr_reader :socket
+
+      # @return [ Integer ] pid The process id when the connection was created.
+      attr_reader :pid
 
       def set_compressor!(reply)
         server_compressors = reply['compression']
@@ -72,6 +89,41 @@ module Mongo
         # server.
         e.add_note("on #{address.seed}")
         raise e
+      end
+
+      def ssl_options
+        @ssl_options ||= if options[:ssl]
+          options.select { |k, v| k.to_s.start_with?('ssl') }
+        else
+          {}
+        end.freeze
+      end
+
+      def ensure_connected
+        ensure_same_process!
+        begin
+          connect!
+          result = yield socket
+          success = true
+          result
+        ensure
+          unless success
+            disconnect!(reason: :error)
+          end
+        end
+      end
+
+      def ensure_same_process!
+        if pid != Process.pid
+          # When we reconnect here, CMAP events won't be correctly sent
+          # since the CMAP spec does not permit a connection to be disconnected
+          # and then reconnected
+          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
+          disconnect!(reason: :stale)
+          @closed = false
+          @pid = Process.pid
+          connect!
+        end
       end
     end
   end

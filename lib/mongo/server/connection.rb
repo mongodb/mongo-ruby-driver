@@ -19,7 +19,6 @@ module Mongo
     #
     # @since 2.0.0
     class Connection < ConnectionBase
-      include Connectable
       include Monitoring::Publishable
       include Retryable
       extend Forwardable
@@ -103,12 +102,6 @@ module Mongo
         )
       end
 
-      # @return [ Server::Description ] The server description obtained from
-      #   the handshake on this connection.
-      #
-      # @api private
-      attr_reader :description
-
       # @return [ Time ] The last time the connection was checked back into a pool.
       #
       # @since 2.5.0
@@ -190,25 +183,25 @@ module Mongo
       # @return [ Array<Socket, Server::Description> ] Connected socket and
       #   a server description instance from the ismaster response of the
       #   returned socket.
-      def do_connect
+      private def do_connect
         socket = add_server_diagnostics do
           address.socket(socket_timeout, ssl_options, address.options)
         end
 
         begin
-          new_description = handshake!(socket)
-          unless new_description.arbiter?
-            pending_connection = PendingConnection.new(socket, new_description, @server, monitoring, options.merge(id: id))
-            authenticate!(pending_connection)
+          pending_connection = PendingConnection.new(
+            socket, @server, monitoring, options.merge(id: id))
+          pending_connection.handshake!
+          unless pending_connection.description.arbiter?
+            pending_connection.authenticate!
           end
         rescue Exception
           socket.close
           raise
         end
 
-        [socket, new_description]
+        [socket, pending_connection.description]
       end
-      private :do_connect
 
       # Disconnect the connection.
       #
@@ -310,106 +303,6 @@ module Mongo
       end
 
       private
-
-      # @return [ Server::Description ] The server description calculated from
-      #   ismaster response for this particular connection.
-      def handshake!(socket)
-        unless socket
-          raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
-        end
-
-        response = average_rtt = nil
-        @server.handle_handshake_failure! do
-          begin
-            response, exc, rtt, average_rtt =
-              @server.round_trip_time_averager.measure do
-                add_server_diagnostics do
-                  socket.write(app_metadata.ismaster_bytes)
-                  Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
-                end
-              end
-
-            if exc
-              raise exc
-            end
-          rescue => e
-            log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
-            raise
-          end
-        end
-
-        post_handshake(response, average_rtt)
-      end
-
-      # This is a separate method to keep the nesting level down.
-      #
-      # @return [ Server::Description ] The server description calculated from
-      #   ismaster response for this particular connection.
-      def post_handshake(response, average_rtt)
-        if response["ok"] == 1
-          # Auth mechanism is entirely dependent on the contents of
-          # ismaster response *for this connection*.
-          # Ismaster received by the monitoring connection should advertise
-          # the same wire protocol, but if it doesn't, we use whatever
-          # the monitoring connection advertised for filling out the
-          # server description and whatever the non-monitoring connection
-          # (that's this one) advertised for performing auth on that
-          # connection.
-          @auth_mechanism = if response['saslSupportedMechs']
-            if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
-              :scram256
-            else
-              :scram
-            end
-          else
-            # MongoDB servers < 2.6 are no longer suported.
-            # Wire versions should always be returned in ismaster.
-            # See also https://jira.mongodb.org/browse/RUBY-1584.
-            min_wire_version = response[Description::MIN_WIRE_VERSION]
-            max_wire_version = response[Description::MAX_WIRE_VERSION]
-            features = Description::Features.new(min_wire_version..max_wire_version)
-            if features.scram_sha_1_enabled?
-              :scram
-            else
-              :mongodb_cr
-            end
-          end
-          set_compressor!(response)
-        else
-          @auth_mechanism = nil
-        end
-
-        Description.new(address, response, average_rtt).tap do |new_description|
-          @server.cluster.run_sdam_flow(@server.description, new_description)
-        end
-      end
-
-      def user
-        @user ||= begin
-          user_options = Options::Redacted.new(:auth_mech => default_mechanism).merge(options)
-          if user_options[:auth_mech] == :mongodb_x509
-            user_options[:auth_source] = '$external'
-          end
-          Auth::User.new(user_options)
-        end
-      end
-
-      def authenticate!(pending_connection)
-        if options[:user] || options[:auth_mech]
-          @server.handle_auth_failure! do
-            begin
-              Auth.get(user).login(pending_connection)
-            rescue => e
-              log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
-              raise
-            end
-          end
-        end
-      end
-
-      def default_mechanism
-        @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
-      end
 
       def deliver(message, client, options = {})
         begin

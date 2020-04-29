@@ -82,8 +82,15 @@ describe Mongo::Server::Connection, retry: 3 do
       end
 
       it 'uses scram256' do
-        connection.connect!
-        expect(connection.send(:default_mechanism)).to eq(:scram256)
+        connection
+        RSpec::Mocks.with_temporary_scope do
+          pending_conn = nil
+          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
+            pending_conn = m.call(*args)
+          end
+          connection.connect!
+          expect(pending_conn.send(:default_mechanism)).to eq(:scram256)
+        end
       end
     end
 
@@ -96,10 +103,16 @@ describe Mongo::Server::Connection, retry: 3 do
 
       it 'uses scram' do
         connection
-        # the second Features instantiation is for SDAM event publication
-        expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
-        connection.connect!
-        expect(connection.send(:default_mechanism)).to eq(:scram)
+        RSpec::Mocks.with_temporary_scope do
+          expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+
+          pending_conn = nil
+          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
+            pending_conn = m.call(*args)
+          end
+          connection.connect!
+          expect(pending_conn.send(:default_mechanism)).to eq(:scram)
+        end
       end
     end
 
@@ -110,10 +123,16 @@ describe Mongo::Server::Connection, retry: 3 do
 
       it 'uses mongodb_cr' do
         connection
-        # the second Features instantiation is for SDAM event publication
-        expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
-        connection.connect!
-        expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
+        RSpec::Mocks.with_temporary_scope do
+          expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+
+          pending_conn = nil
+          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
+            pending_conn = m.call(*args)
+          end
+          connection.connect!
+          expect(pending_conn.send(:default_mechanism)).to eq(:mongodb_cr)
+        end
       end
     end
   end

@@ -1,12 +1,10 @@
 require 'spec_helper'
 
 # fails intermittently in evergreen
-describe Mongo::Server::Connection, retry: 3 do
+describe Mongo::Server::Connection do
   class ConnectionSpecTestException < Exception; end
 
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate_for_all
 
   let!(:address) do
     default_address
@@ -115,18 +113,43 @@ describe Mongo::Server::Connection, retry: 3 do
           expect(connection.send(:socket)).to be nil
         end
 
-        it 'attempts to reconnect after failure when asked' do
-          # for some reason referencing error here instead of
-          # copy pasting it like this doesn't work
-          expect(connection).to receive(:authenticate!).and_raise(exception)
-          expect do
-            connection.connect!
-          end.to raise_error(exception)
+        context 'when connection fails' do
+          let(:description) do
+            double('description').tap do |description|
+              allow(description).to receive(:arbiter?).and_return(false)
+            end
+          end
 
-          expect(connection).to receive(:authenticate!).and_raise(ConnectionSpecTestException)
-          expect do
-            connection.connect!
-          end.to raise_error(ConnectionSpecTestException)
+          let(:first_pending_connection) do
+            double('pending connection 1').tap do |conn|
+              allow(conn).to receive(:handshake!)
+              allow(conn).to receive(:description).and_return(description)
+              conn.should receive(:authenticate!).and_raise(exception)
+            end
+          end
+
+          let(:second_pending_connection) do
+            double('pending connection 2').tap do |conn|
+              allow(conn).to receive(:handshake!)
+              allow(conn).to receive(:description).and_return(description)
+              conn.should receive(:authenticate!).and_raise(ConnectionSpecTestException)
+            end
+          end
+
+          it 'attempts to reconnect if asked to connect again' do
+            RSpec::Mocks.with_temporary_scope do
+              Mongo::Server::PendingConnection.should receive(:new).ordered.and_return(first_pending_connection)
+              Mongo::Server::PendingConnection.should receive(:new).ordered.and_return(second_pending_connection)
+
+              expect do
+                connection.connect!
+              end.to raise_error(exception)
+
+              expect do
+                connection.connect!
+              end.to raise_error(ConnectionSpecTestException)
+            end
+          end
         end
       end
 
@@ -255,7 +278,7 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         let(:error) do
-          expect(connection).to receive(:authenticate!).and_raise(exception)
+          expect_any_instance_of(Mongo::Server::PendingConnection).to receive(:authenticate!).and_raise(exception)
           begin
             connection.connect!
           rescue Exception => e
@@ -959,7 +982,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
       it 'sets a new pid' do
         connection.dispatch([ insert ])
-        expect(connection.pid).to eq(1)
+        expect(connection.send(:pid)).to eq(1)
       end
     end
   end

@@ -21,9 +21,8 @@ module Mongo
     class PendingConnection < ConnectionBase
       extend Forwardable
 
-      def initialize(socket, description, server, monitoring, options = {})
+      def initialize(socket, server, monitoring, options = {})
         @socket = socket
-        @description = description
         @options = options
         @server = server
         @monitoring = monitoring
@@ -35,8 +34,100 @@ module Mongo
       #   PendingConnection instance was created.
       attr_reader :id
 
+      # @return [ Server::Description ] The server description calculated from
+      #   ismaster response for this particular connection.
+      def handshake!
+        unless socket
+          raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
+        end
+
+        response = average_rtt = nil
+        @server.handle_handshake_failure! do
+          begin
+            response, exc, rtt, average_rtt =
+              @server.round_trip_time_averager.measure do
+                add_server_diagnostics do
+                  socket.write(app_metadata.ismaster_bytes)
+                  Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+                end
+              end
+
+            if exc
+              raise exc
+            end
+          rescue => e
+            log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+            raise
+          end
+        end
+
+        post_handshake(response, average_rtt)
+      end
+
+      def authenticate!
+        if options[:user] || options[:auth_mech]
+          @server.handle_auth_failure! do
+            begin
+              Auth.get(user).login(self)
+            rescue => e
+              log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+              raise
+            end
+          end
+        end
+      end
+
       def ensure_connected
         yield @socket
+      end
+
+      private
+
+      # This is a separate method to keep the nesting level down.
+      #
+      # @return [ Server::Description ] The server description calculated from
+      #   ismaster response for this particular connection.
+      def post_handshake(response, average_rtt)
+        if response["ok"] == 1
+          # Auth mechanism is entirely dependent on the contents of
+          # ismaster response *for this connection*.
+          # Ismaster received by the monitoring connection should advertise
+          # the same wire protocol, but if it doesn't, we use whatever
+          # the monitoring connection advertised for filling out the
+          # server description and whatever the non-monitoring connection
+          # (that's this one) advertised for performing auth on that
+          # connection.
+          @sasl_supported_mechanisms = response['saslSupportedMechs']
+          set_compressor!(response)
+        else
+          @sasl_supported_mechanisms = nil
+        end
+
+        @description = Description.new(address, response, average_rtt).tap do |new_description|
+          @server.cluster.run_sdam_flow(@server.description, new_description)
+        end
+      end
+
+      def user
+        @user ||= begin
+          user_options = Options::Redacted.new(:auth_mech => default_mechanism).merge(options)
+          if user_options[:auth_mech] == :mongodb_x509
+            user_options[:auth_source] = '$external'
+          end
+          Auth::User.new(user_options)
+        end
+      end
+
+      def default_mechanism
+        if description.features.scram_sha_1_enabled?
+          if @sasl_supported_mechanisms&.include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
+            :scram256
+          else
+            :scram
+          end
+        else
+          :mongodb_cr
+        end
       end
     end
   end

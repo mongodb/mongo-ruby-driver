@@ -529,7 +529,6 @@ module Mongo
 end
 
 require 'mongo/server/app_metadata'
-require 'mongo/server/connectable'
 require 'mongo/server/connection_common'
 require 'mongo/server/connection_base'
 require 'mongo/server/pending_connection'
