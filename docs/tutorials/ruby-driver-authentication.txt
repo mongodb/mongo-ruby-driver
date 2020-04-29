@@ -103,6 +103,28 @@ auth source is always ``$external``.
 Authentication Mechanisms
 -------------------------
 
+MongoDB supports several authentication mechanisms, as detailed in this section.
+Authentication mechanism to use can be explicitly specified when a Client is
+created; if authentication mechanism is not provided by the application, it is
+selected as follows:
+
+- For MongoDB 4.0 and higher, the client performs SCRAM mechanism negotiation
+  with the server. If the user specified in client configuration permits
+  authentication with SCRAM-SHA-256, then SCRAM-SHA-256 is used for
+  authentication. Otherwise SCRAM-SHA-1 is used.
+- For MongoDB 3.0 through 3.6, SCRAM-SHA-1 is used.
+- For MongoDB 2.6, MONGODB-CR is used.
+
+Note that:
+
+- X.509, AWS, LDAP and Kerberos authentication mechanisms must always be
+  explicitly requested.
+- If the MongoDB server that the client is connecting to supports SCRAM,
+  the client will attempt to authenticate using SCRAM if no authentication
+  mechanism is explicitly specified. To authenticate to MongoDB 3.0 and
+  higher servers using MONGODB-CR, the MONGODB-CR mechanism must be
+  explicitly requested.
+
 .. _scram:
 
 SCRAM
@@ -450,7 +472,7 @@ MONGODB-CR
 *Deprecated:* MONGODB-CR mechanism is deprecated as of MongoDB 3.6 and
 removed as of MongoDB 4.0. Please use `SCRAM authentication <scram>`_ instead.
 
-MONGODB-CR was the default authentication mechanism for MongoDB up through
+MONGODB-CR was the default authentication mechanism for MongoDB through
 version 2.6.
 
 The mechanism can be explicitly set with the credentials:
@@ -462,3 +484,11 @@ The mechanism can be explicitly set with the credentials:
                              user: 'test',
                              password: '123',
                              auth_mech: :mongodb_cr )
+
+.. note::
+
+  If the MongoDB server that the client is connecting to supports SCRAM,
+  the client will attempt to authenticate using SCRAM if no authentication
+  mechanism is explicitly specified. To authenticate to MongoDB 3.0 and
+  higher servers using MONGODB-CR, the MONGODB-CR mechanism must be
+  explicitly requested.
