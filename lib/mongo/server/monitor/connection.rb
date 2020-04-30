@@ -21,7 +21,6 @@ module Mongo
       # @since 2.0.0
       class Connection < Server::ConnectionCommon
         include Retryable
-        include Connectable
         include Loggable
 
         # The command used for determining server status.
