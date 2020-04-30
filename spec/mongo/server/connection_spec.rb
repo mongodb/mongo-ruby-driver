@@ -337,7 +337,7 @@ describe Mongo::Server::Connection do
 
     let(:auth_mechanism) do
       if ClusterConfig.instance.server_version >= '3'
-        Mongo::Auth::SCRAM
+        Mongo::Auth::Scram
       else
         Mongo::Auth::CR
       end

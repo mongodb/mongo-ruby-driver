@@ -120,7 +120,7 @@ module Mongo
 
       def default_mechanism
         if description.features.scram_sha_1_enabled?
-          if @sasl_supported_mechanisms&.include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
+          if @sasl_supported_mechanisms&.include?('SCRAM-SHA-256')
             :scram256
           else
             :scram

@@ -41,7 +41,7 @@ module Mongo
           end
         end
         selector = CLIENT_FIRST_MESSAGE.merge(
-          mechanism: full_mechanism,
+          mechanism: auth_mechanism_name,
           payload: BSON::Binary.new(payload),
         )
         if options = client_first_message_options
@@ -65,6 +65,23 @@ module Mongo
       end
 
       private
+
+      # Gets the auth mechanism name for the conversation class.
+      #
+      # Example return: SCRAM-SHA-1.
+      #
+      # @return [ String ] Auth mechanism name.
+      def auth_mechanism_name
+        # self.class.name is e.g. Mongo::Auth::Scram256::Mechanism.
+        # We need Mongo::Auth::Scram::MECHANISM.
+        # Pull out the Scram256 part, get that class off of Auth,
+        # then get the value of MECHANISM constant in Scram256.
+        # With ActiveSupport, this method would be:
+        # self.class.module_parent.const_get(:MECHANISM)
+        parts = self.class.name.split('::')
+        parts.pop
+        Auth.const_get(parts.last).const_get(:MECHANISM)
+      end
 
       def client_first_message_options
         nil

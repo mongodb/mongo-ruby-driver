@@ -17,27 +17,11 @@ module Mongo
 
     # Defines behavior for SCRAM authentication.
     #
-    # @since 2.0.0
     # @api private
-    class SCRAM < Base
+    class Scram < Base
 
-      # The authentication mechanism string for SCRAM-SHA-1.
-      #
-      # @since 2.6.0
-      SCRAM_SHA_1_MECHANISM = 'SCRAM-SHA-1'.freeze
-
-      # The authentication mechanism string for SCRAM-SHA-256.
-      #
-      # @since 2.6.0
-      SCRAM_SHA_256_MECHANISM = 'SCRAM-SHA-256'.freeze
-
-      # Map the user-specified authentication mechanism to the proper names of the mechanisms.
-      #
-      # @since 2.6.0
-      MECHANISMS = {
-        scram: SCRAM_SHA_1_MECHANISM,
-        scram256: SCRAM_SHA_256_MECHANISM,
-      }.freeze
+      # The authentication mechanism string.
+      MECHANISM = 'SCRAM-SHA-1'.freeze
 
       # Log the user in on the given connection.
       #
@@ -47,8 +31,6 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        mechanism = user.mechanism || :scram
-        conversation = Conversation.new(user, mechanism)
         converse_multi_step(connection, conversation).tap do
           unless conversation.server_verified?
             raise Error::MissingScramServerSignature
