@@ -57,7 +57,6 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        conversation = Conversation.new(user)
         converse_1_step(connection, conversation)
       end
     end

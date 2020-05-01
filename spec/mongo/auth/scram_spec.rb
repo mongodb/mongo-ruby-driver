@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Auth::SCRAM do
+describe Mongo::Auth::Scram do
   require_no_external_user
 
   let(:server) do
@@ -91,7 +91,7 @@ describe Mongo::Auth::SCRAM do
 
         context 'if conversation has not verified server signature' do
           it 'raises an exception' do
-            expect_any_instance_of(Mongo::Auth::SCRAM::Conversation).to receive(:server_verified?).and_return(false)
+            expect_any_instance_of(Mongo::Auth::ScramConversationBase).to receive(:server_verified?).and_return(false)
             lambda do
               login
             end.should raise_error(Mongo::Error::MissingScramServerSignature)

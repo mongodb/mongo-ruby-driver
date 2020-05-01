@@ -32,6 +32,10 @@ module Mongo
         @user = user
       end
 
+      def conversation
+        @conversation ||= self.class.const_get(:Conversation).new(user)
+      end
+
       private
 
       # Performs a single-step conversation on the given connection.
@@ -94,14 +98,8 @@ module Mongo
           unless extra.empty?
             msg += " (#{extra})"
           end
-          full_mechanism = if conversation.respond_to?(:full_mechanism)
-            # Scram
-            conversation.full_mechanism
-          else
-            self.class.const_get(:MECHANISM)
-          end
           raise Unauthorized.new(user,
-            used_mechanism: full_mechanism,
+            used_mechanism: self.class.const_get(:MECHANISM),
             message: msg,
             server: connection.server,
           )

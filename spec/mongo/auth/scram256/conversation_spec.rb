@@ -1,7 +1,7 @@
 require 'lite_spec_helper'
 require 'support/shared/scram_conversation'
 
-describe Mongo::Auth::Scram::Conversation do
+describe Mongo::Auth::Scram256::Conversation do
   # Test uses global assertions
   clean_slate_for_all_if_possible
 
@@ -18,14 +18,12 @@ describe Mongo::Auth::Scram::Conversation do
       database: Mongo::Database::ADMIN,
       user: 'user',
       password: 'pencil',
-      # We specify SCRAM-SHA-1 so that we don't accidentally use
-      # SCRAM-SHA-256 on newer server versions.
-      auth_mech: :scram,
+      auth_mech: :scram256,
     )
   end
 
   let(:mechanism) do
-    :scram
+    :scram256
   end
 
   describe '#start' do
@@ -35,7 +33,7 @@ describe Mongo::Auth::Scram::Conversation do
     end
 
     before do
-      expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
+      expect(SecureRandom).to receive(:base64).once.and_return('rOprNGfwEbeRWgbNEkqO')
     end
 
     let(:selector) do
@@ -51,11 +49,11 @@ describe Mongo::Auth::Scram::Conversation do
     end
 
     it 'sets the mechanism' do
-      expect(selector[:mechanism]).to eq('SCRAM-SHA-1')
+      expect(selector[:mechanism]).to eq('SCRAM-SHA-256')
     end
 
     it 'sets the payload' do
-      expect(selector[:payload].data).to eq('n,,n=user,r=NDA2NzU3MDY3MDYwMTgy')
+      expect(selector[:payload].data).to eq('n,,n=user,r=rOprNGfwEbeRWgbNEkqO')
     end
   end
 
@@ -63,14 +61,14 @@ describe Mongo::Auth::Scram::Conversation do
     include_context 'scram continue and finalize replies'
 
     before do
-      expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
+      expect(SecureRandom).to receive(:base64).once.and_return('rOprNGfwEbeRWgbNEkqO')
     end
 
     context 'when the server rnonce starts with the nonce' do
 
       let(:continue_payload) do
         BSON::Binary.new(
-          'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
+          'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         )
       end
 
@@ -88,7 +86,7 @@ describe Mongo::Auth::Scram::Conversation do
 
       it 'sets the payload' do
         expect(selector[:payload].data).to eq(
-          'c=biws,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,p=qYUYNy6SQ9Jucq9rFA9nVgXQdbM='
+          'c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=dHzbZapWIk4jUhN+Ute9ytag9zjfMHgsqmmiz7AndVQ='
         )
       end
 
@@ -101,7 +99,7 @@ describe Mongo::Auth::Scram::Conversation do
 
       let(:continue_payload) do
         BSON::Binary.new(
-          'r=NDA2NzU4MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
+          'r=sOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         )
       end
 
@@ -118,18 +116,18 @@ describe Mongo::Auth::Scram::Conversation do
 
     let(:continue_payload) do
       BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
+        'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
       )
     end
 
     before do
-      expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
+      expect(SecureRandom).to receive(:base64).once.and_return('rOprNGfwEbeRWgbNEkqO')
     end
 
     context 'when the verifier matches the server signature' do
 
       let(:finalize_payload) do
-        BSON::Binary.new('v=gwo9E8+uifshm7ixj441GvIfuUY=')
+        BSON::Binary.new(' v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=')
       end
 
       let(:query) do
@@ -158,44 +156,15 @@ describe Mongo::Auth::Scram::Conversation do
     context 'when the verifier does not match the server signature' do
 
       let(:finalize_payload) do
-        BSON::Binary.new('v=LQ+8yhQeVL2a3Dh+TDJ7xHz4Srk=')
+        BSON::Binary.new('v=7rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=')
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           conversation.continue(continue_document, connection)
           conversation.process_continue_response(finalize_document)
           conversation.finalize(connection)
-        }.to raise_error(Mongo::Error::InvalidSignature)
-      end
-    end
-
-    context 'when server signature is empty' do
-
-      let(:finalize_payload) do
-        BSON::Binary.new('v=')
-      end
-
-      it 'raises an error' do
-        expect {
-          conversation.continue(continue_document, connection)
-          conversation.process_continue_response(finalize_document)
-          conversation.finalize(connection)
-        }.to raise_error(Mongo::Error::InvalidSignature)
-      end
-    end
-
-    context 'when server signature is not provided' do
-
-      let(:finalize_payload) do
-        BSON::Binary.new('ok=absolutely')
-      end
-
-      it 'succeeds but does not mark conversation server verified' do
-        conversation.continue(continue_document, connection)
-        conversation.process_continue_response(finalize_document)
-        conversation.finalize(connection)
-        conversation.server_verified?.should be false
+        end.to raise_error(Mongo::Error::InvalidSignature)
       end
     end
   end

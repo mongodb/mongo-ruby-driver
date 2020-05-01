@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 MongoDB Inc.
+# Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
 
 module Mongo
   module Auth
-    class Scram
+    class Scram256
 
-      # Defines behavior around a single SCRAM-SHA-1 conversation between
+      # Defines behavior around a single SCRAM-SHA-256 conversation between
       # the client and server.
       #
       # @api private
@@ -32,11 +32,12 @@ module Mongo
         #
         # @since 2.0.0
         def hi(data)
-          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
+          OpenSSL::PKCS5.pbkdf2_hmac(
             data,
             salt,
             iterations,
             digest.size,
+            digest,
           )
         end
 
@@ -49,12 +50,12 @@ module Mongo
         # @since 2.0.0
         def salted_password
           @salted_password ||= CredentialCache.cache(cache_key(:salted_password)) do
-            hi(user.hashed_password)
+            hi(user.sasl_prepped_password)
           end
         end
 
         def digest
-          @digest ||= OpenSSL::Digest::SHA1.new.freeze
+          @digest ||= OpenSSL::Digest::SHA256.new.freeze
         end
       end
     end

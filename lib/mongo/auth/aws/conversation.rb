@@ -88,10 +88,6 @@ module Mongo
           @client_nonce ||= SecureRandom.random_bytes(32)
         end
 
-        def full_mechanism
-          'MONGODB-AWS'
-        end
-
         def client_final_payload
           credentials = CredentialsRetriever.new(user).credentials
           request = Request.new(

@@ -16,6 +16,7 @@ require 'mongo/auth/credential_cache'
 require 'mongo/auth/stringprep'
 require 'mongo/auth/conversation_base'
 require 'mongo/auth/sasl_conversation_base'
+require 'mongo/auth/scram_conversation_base'
 require 'mongo/auth/user'
 require 'mongo/auth/roles'
 require 'mongo/auth/base'
@@ -23,6 +24,7 @@ require 'mongo/auth/aws'
 require 'mongo/auth/cr'
 require 'mongo/auth/ldap'
 require 'mongo/auth/scram'
+require 'mongo/auth/scram256'
 require 'mongo/auth/x509'
 
 module Mongo
@@ -62,8 +64,8 @@ module Mongo
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,
-      scram: SCRAM,
-      scram256: SCRAM,
+      scram: Scram,
+      scram256: Scram256,
     }
 
     # Get the authorization strategy for the provided auth mechanism.

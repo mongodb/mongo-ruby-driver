@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 MongoDB Inc.
+# Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,30 +15,17 @@
 module Mongo
   module Auth
 
-    # Defines behavior for LDAP Proxy authentication.
+    # Defines behavior for SCRAM-SHA-256 authentication.
     #
-    # @since 2.0.0
+    # The purpose of this class is to provide the namespace for the
+    # Scram256::Conversation class.
+    #
     # @api private
-    class LDAP < Base
-
+    class Scram256 < Scram
       # The authentication mechanism string.
-      #
-      # @since 2.0.0
-      MECHANISM = 'PLAIN'.freeze
-
-      # Log the user in on the given connection.
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
-      #
-      # @return [ BSON::Document ] The document of the authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
-        converse_1_step(connection, conversation)
-      end
+      MECHANISM = 'SCRAM-SHA-256'.freeze
     end
   end
 end
 
-require 'mongo/auth/ldap/conversation'
+require 'mongo/auth/scram256/conversation'

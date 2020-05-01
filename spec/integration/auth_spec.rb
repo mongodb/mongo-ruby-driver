@@ -195,19 +195,13 @@ describe 'Auth' do
     end
   end
 
-  describe 'scram-sha-1 client key caching' do
-    clean_slate
-    min_server_version '3.0'
-    require_no_external_user
-
-    let(:client) { authorized_client.with(max_pool_size: 2) }
-
+  shared_examples_for 'caches client key' do
     it 'caches' do
       client.close
       Mongo::Auth::CredentialCache.clear
 
       RSpec::Mocks.with_temporary_scope do
-        expect_any_instance_of(Mongo::Auth::SCRAM::Conversation).to receive(:hi).exactly(:once).and_call_original
+        expect_any_instance_of(conversation_class).to receive(:hi).exactly(:once).and_call_original
 
         client.reconnect
         server = client.cluster.next_primary
@@ -218,6 +212,28 @@ describe 'Auth' do
         end
       end
     end
+  end
+
+  describe 'scram-sha-1 client key caching' do
+    clean_slate
+    min_server_version '3.0'
+    require_no_external_user
+
+    let(:client) { authorized_client.with(max_pool_size: 2, auth_mech: :scram) }
+    let(:conversation_class) { Mongo::Auth::Scram::Conversation }
+
+    it_behaves_like 'caches client key'
+  end
+
+  describe 'scram-sha-256 client key caching' do
+    clean_slate
+    min_server_version '4.0'
+    require_no_external_user
+
+    let(:client) { authorized_client.with(max_pool_size: 2, auth_mech: :scram256) }
+    let(:conversation_class) { Mongo::Auth::Scram256::Conversation }
+
+    it_behaves_like 'caches client key'
   end
 
   context 'when only auth source is specified' do
