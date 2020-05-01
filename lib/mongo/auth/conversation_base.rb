@@ -30,6 +30,17 @@ module Mongo
 
       # @return [ Auth::User ] user The user for the conversation.
       attr_reader :user
+
+      # Returns the hash to provide to the server in the handshake
+      # as value of the speculativeAuthenticate key.
+      #
+      # If the auth mechanism does not support speculative authentication,
+      # this method returns nil.
+      #
+      # @return [ Hash | nil ] Speculative authentication document.
+      def speculative_auth_document
+        nil
+      end
     end
   end
 end

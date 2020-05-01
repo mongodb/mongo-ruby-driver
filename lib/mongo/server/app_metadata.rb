@@ -88,8 +88,14 @@ module Mongo
       # @return [ String ] The raw bytes.
       #
       # @since 2.4.0
+      # @deprecated
       def ismaster_bytes
         @ismaster_bytes ||= validate! && serialize.to_s
+      end
+
+      def validated_document
+        validate!
+        document
       end
 
       private

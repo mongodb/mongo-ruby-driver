@@ -57,15 +57,27 @@ module Mongo
       end
 
       # Performs the variable-length SASL conversation on the given connection.
-      def converse_multi_step(connection, conversation)
+      #
+      # @param [ Server::Connection ] connection The connection.
+      # @param [ Auth::*::Conversation ] conversation The conversation.
+      # @param [ BSON::Document | nil ] speculative_auth_result The
+      #   value of speculativeAuthenticate field of ismaster response of
+      #   the handshake on the specified connection.
+      def converse_multi_step(connection, conversation,
+        speculative_auth_result: nil
+      )
         # Although the SASL conversation in theory can have any number of
         # steps, all defined authentication methods have a predefined number
         # of steps, and therefore all of our authenticators have a fixed set
         # of methods that generate payloads with one method per step.
         # We support a maximum of 3 total exchanges (start, continue and
         # finalize) and in practice the first two exchanges always happen.
-        msg = conversation.start(connection)
-        reply_document = dispatch_msg(connection, conversation, msg)
+        if speculative_auth_result
+          reply_document = speculative_auth_result
+        else
+          msg = conversation.start(connection)
+          reply_document = dispatch_msg(connection, conversation, msg)
+        end
         msg = conversation.continue(reply_document, connection)
         reply_document = dispatch_msg(connection, conversation, msg)
         conversation.process_continue_response(reply_document)

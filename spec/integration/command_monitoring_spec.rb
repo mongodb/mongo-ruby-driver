@@ -88,7 +88,7 @@ describe 'Command monitoring' do
       max_server_version '4.2'
 
       let(:expected_command_names) do
-        # Long SCRAM conversation
+        # Long SCRAM conversation.
         %w(saslStart saslContinue saslContinue find)
       end
 
@@ -99,8 +99,8 @@ describe 'Command monitoring' do
       min_server_fcv '4.4'
 
       let(:expected_command_names) do
-        # Short SCRAM conversation
-        %w(saslStart saslContinue find)
+        # Speculative auth + short SCRAM conversation.
+        %w(saslContinue find)
       end
 
       it_behaves_like 'does not nest auth and find'
