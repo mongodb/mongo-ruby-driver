@@ -48,14 +48,12 @@ module Mongo
           if session && session.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
           end
-          if (!within_transaction? && retry_writes?(client)) || ending_transaction?
-            e.add_label('RetryableWriteError')
-          end
+
+          maybe_add_retryable_write_error_label!(e, client)
+
           raise e
         rescue Mongo::Error::SocketTimeoutError => e
-          if (!within_transaction? && retry_writes?(client)) || ending_transaction?
-            e.add_label('RetryableWriteError')
-          end
+          maybe_add_retryable_write_error_label!(e, client)
           raise e
         rescue Mongo::Error::OperationFailure => e
           if session && session.committing_transaction?
@@ -65,27 +63,11 @@ module Mongo
               e.add_label('UnknownTransactionCommitResult')
             end
           end
-          if ((!within_transaction? && retry_writes?(client)) || ending_transaction?) &&
-              e.write_retryable?
-            e.add_label('RetryableWriteError')
-          end
+
+          maybe_add_retryable_write_error_label!(e, client)
+
           raise e
         end
-      end
-
-      # TODO: documentation
-      private def within_transaction?
-        session && session.in_transaction? && !session.ending_transaction?
-      end
-
-      # TODO: documentation
-      private def ending_transaction?
-        session && session.ending_transaction?
-      end
-
-      # TODO: documentation
-      private def retry_writes?(client)
-        client && client.options[:retry_writes]
       end
 
       # Unpins the session if the session is pinned and the yielded to block
@@ -119,6 +101,46 @@ module Mongo
       rescue Error, Error::AuthError => e
         e.add_note("on #{server.address.seed}")
         raise e
+      end
+
+      private
+
+      # A method that will add the RetryableWriteError label to an error if
+      # any of the following conditions are true:
+      #
+      # If the error meets the criteria for a retryable error (i.e. has one
+      #   of the retryable error codes or error messages)
+      #
+      # AND one of the following are true:
+      #
+      # The error occured during a commitTransaction or abortTransaction
+      #   OR the error occured during a write outside of a transaction on a
+      #   client that has the retry_writes set to true.
+      #
+      # If these conditions are met, the original error will be mutated.
+      # If they're not met, the error will not be changed.
+      def maybe_add_retryable_write_error_label!(error, client)
+        in_transaction = session && session.in_transaction?
+        committing_transaction = in_transaction && session.committing_transaction?
+        aborting_transaction = in_transaction && session.aborting_transaction?
+        retry_writes = client && client.options[:retry_writes]
+
+        if (committing_transaction || aborting_transaction ||
+            (!in_transaction && retry_writes)) && error.write_retryable?
+          error.add_label('RetryableWriteError')
+        end
+      end
+
+      # Whether there is currently a session, and whether that session is currently
+      # in a transaction but not committing or aborting.
+      def within_transaction?
+        session && session.in_transaction? && !session.ending_transaction?
+      end
+
+      # Whether there is currently a session, and whether that session is currently
+      # ending a transaction (i.e. committing or aborting).
+      def ending_transaction?
+        session && session.ending_transaction?
       end
     end
   end

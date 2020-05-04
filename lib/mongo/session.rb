@@ -676,14 +676,6 @@ module Mongo
       !!@aborting_transaction
     end
 
-    # @return [ true | false ] Whether the session is currently aborting a
-    #   transaction by committing or aborting it.
-    #
-    # @api private
-    def ending_transaction?
-      committing_transaction? || aborting_transaction?
-    end
-
     # Pins this session to the specified server, which should be a mongos.
     #
     # @param [ Server ] server The server to pin this session to.
