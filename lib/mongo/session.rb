@@ -616,6 +616,7 @@ module Mongo
 
       begin
         unless starting_transaction?
+          @aborting_transaction = true
           write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
             Operation::Command.new(
               selector: { abortTransaction: 1 },
@@ -624,6 +625,7 @@ module Mongo
               txn_num: txn_num
             ).execute(server, client: @client)
           end
+          @aborting_transaction = false
         end
 
         @state = TRANSACTION_ABORTED_STATE
@@ -664,6 +666,22 @@ module Mongo
     # @api private
     def committing_transaction?
       !!@committing_transaction
+    end
+
+    # @return [ true | false ] Whether the session is currently aborting a
+    #   transaction.
+    #
+    # @api private
+    def aborting_transaction?
+      !!@aborting_transaction
+    end
+
+    # @return [ true | false ] Whether the session is currently aborting a
+    #   transaction by committing or aborting it.
+    #
+    # @api private
+    def ending_transaction?
+      committing_transaction? || aborting_transaction?
     end
 
     # Pins this session to the specified server, which should be a mongos.

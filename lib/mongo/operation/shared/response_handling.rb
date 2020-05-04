@@ -22,9 +22,9 @@ module Mongo
 
       private
 
-      def validate_result(result, server)
+      def validate_result(result, client, server)
         unpin_maybe(session) do
-          add_error_labels do
+          add_error_labels(client) do
             add_server_diagnostics(server) do
               result.validate!
             end
@@ -38,7 +38,7 @@ module Mongo
       # and server-side errors (Error::OperationFailure); it does not
       # handle server selection errors (Error::NoServerAvailable), for which
       # labels are added in the server selection code.
-      def add_error_labels
+      def add_error_labels(client)
         begin
           yield
         rescue Mongo::Error::SocketError => e
@@ -47,6 +47,9 @@ module Mongo
           end
           if session && session.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
+          end
+          if (!within_transaction? && client.options[:retry_writes]) || session.ending_transaction? 
+            e.add_label('RetryableWriteError')
           end
           raise e
         rescue Mongo::Error::OperationFailure => e
@@ -57,8 +60,17 @@ module Mongo
               e.add_label('UnknownTransactionCommitResult')
             end
           end
+          if ((!within_transaction? && client.options[:retry_writes]) || session.ending_transaction?) &&
+              e.write_retryable?
+            e.add_label('RetryableWriteError')
+          end
           raise e
         end
+      end
+
+      # TODO: documentation
+      private def within_transaction?
+        session && session.in_transaction? && !session.ending_transaction?
       end
 
       # Unpins the session if the session is pinned and the yielded to block

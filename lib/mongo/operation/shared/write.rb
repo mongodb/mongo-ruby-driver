@@ -49,7 +49,7 @@ module Mongo
           op.execute(connection, client: client)
         end
 
-        validate_result(result, server)
+        validate_result(result, client, server)
       end
 
       # Execute the bulk write operation.

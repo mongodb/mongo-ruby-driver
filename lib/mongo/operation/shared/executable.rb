@@ -24,7 +24,7 @@ module Mongo
 
       def do_execute(connection, client, options = {})
         unpin_maybe(session) do
-          add_error_labels do
+          add_error_labels(client) do
             add_server_diagnostics(connection.server) do
               get_result(connection, client, options).tap do |result|
                 process_result(result, connection.server)
@@ -42,7 +42,7 @@ module Mongo
         end
 
         do_execute(connection, client, options).tap do |result|
-          validate_result(result, connection.server)
+          validate_result(result, client, connection.server)
         end
       end
 
