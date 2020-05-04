@@ -48,12 +48,12 @@ module Mongo
           if session && session.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
           end
-          if (!within_transaction? && client.options[:retry_writes]) || session.ending_transaction?
+          if (!within_transaction? && retry_writes?(client)) || session.ending_transaction?
             e.add_label('RetryableWriteError')
           end
           raise e
         rescue Mongo::Error::SocketTimeoutError => e
-          if (!within_transaction? && client.options[:retry_writes]) || session.ending_transaction?
+          if (!within_transaction? && retry_writes?(client)) || session.ending_transaction?
             e.add_label('RetryableWriteError')
           end
           raise e
@@ -65,7 +65,7 @@ module Mongo
               e.add_label('UnknownTransactionCommitResult')
             end
           end
-          if ((!within_transaction? && client.options[:retry_writes]) || session.ending_transaction?) &&
+          if ((!within_transaction? && retry_writes?(client)) || session.ending_transaction?) &&
               e.write_retryable?
             e.add_label('RetryableWriteError')
           end
@@ -76,6 +76,11 @@ module Mongo
       # TODO: documentation
       private def within_transaction?
         session && session.in_transaction? && !session.ending_transaction?
+      end
+
+      # TODO: documentation
+      private def retry_writes?(client)
+        client && client.options[:retry_writes]
       end
 
       # Unpins the session if the session is pinned and the yielded to block
