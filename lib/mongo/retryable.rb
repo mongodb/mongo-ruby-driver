@@ -298,7 +298,7 @@ module Mongo
         if attempt > client.max_write_retries
           raise e
         end
-        if e.label?('RetryableWriteError')
+        if e.write_retryable? && !(session && session.in_transaction?)
           log_retry(e, message: 'Legacy write retry')
           cluster.scan!(false)
           retry
