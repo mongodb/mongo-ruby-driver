@@ -352,11 +352,13 @@ describe Mongo::Retryable do
       end
     end
 
-    context 'when a not master error occurs' do
+    context 'when an error occurs with a RetryableWriteError label' do
+      let(:error) do
+        Mongo::Error::OperationFailure.new(nil, nil, labels: ['RetryableWriteError'])
+      end
 
       before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('not master')).ordered
+        expect(operation).to receive(:execute).and_raise(error).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -364,33 +366,7 @@ describe Mongo::Retryable do
       it_behaves_like 'executes the operation twice'
     end
 
-    context 'when a node is recovering error occurs' do
-
-      before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('node is recovering')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
-      end
-
-      it_behaves_like 'executes the operation twice'
-    end
-
-    context 'when a retryable error occurs with a code' do
-
-      before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('message missing', nil,
-            :code => 91, :code_name => 'ShutdownInProgress')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
-      end
-
-      it_behaves_like 'executes the operation twice'
-    end
-
-    context 'when a normal operation failure occurs' do
-
+    context 'when an operation failure occurs without a RetryableWriteError label' do
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure).ordered
       end
@@ -402,11 +378,15 @@ describe Mongo::Retryable do
       end
     end
 
-    context 'when a socket error occurs' do
+    context 'when a socket error occurs with a RetryableWriteError label' do
+      let(:error) do
+        error = Mongo::Error::SocketError.new(nil)
+        error.add_label('RetryableWriteError')
+        error
+      end
 
       before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::SocketError.new('socket error')).ordered
+        expect(operation).to receive(:execute).and_raise(error).ordered
       end
 
       it 'raises an exception' do
@@ -416,11 +396,15 @@ describe Mongo::Retryable do
       end
     end
 
-    context 'when a socket timeout occurs' do
+    context 'when a socket timeout occurs with a RetryableWriteError label' do
+      let(:error) do
+        error = Mongo::Error::SocketTimeoutError.new(nil)
+        error.add_label('RetryableWriteError')
+        error
+      end
 
       before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
+        expect(operation).to receive(:execute).and_raise(error).ordered
       end
 
       it 'raises an exception' do
@@ -431,7 +415,6 @@ describe Mongo::Retryable do
     end
 
     context 'when a non-retryable exception occurs' do
-
       before do
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
@@ -443,7 +426,6 @@ describe Mongo::Retryable do
         }.to raise_error(Mongo::Error::UnsupportedCollation)
       end
     end
-
   end
 
   describe '#write_with_retry - modern' do
@@ -477,45 +459,21 @@ describe Mongo::Retryable do
       end
     end
 
-    context 'when a not master error occurs' do
+    context 'when an operation failure error occurs with a RetryableWriteError label' do
+      let(:error) do
+        Mongo::Error::OperationFailure.new(nil, nil, labels: ['RetryableWriteError'])
+      end
 
       before do
         server = cluster.next_primary
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('not master')).ordered
+        expect(operation).to receive(:execute).and_raise(error).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
       it_behaves_like 'executes the operation twice'
     end
 
-    context 'when a node is recovering error occurs' do
-
-      before do
-        server = cluster.next_primary
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('node is recovering')).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
-      end
-
-      it_behaves_like 'executes the operation twice'
-    end
-
-    context 'when a retryable error occurs with a code' do
-
-      before do
-        server = cluster.next_primary
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('message missing', nil,
-            :code => 91, :code_name => 'ShutdownInProgress')).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
-      end
-
-      it_behaves_like 'executes the operation twice'
-    end
-
-    context 'when a normal operation failure occurs' do
-
+    context 'when an operation failure error occurs without a RetryableWriteError label' do
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure).ordered
       end
@@ -527,11 +485,15 @@ describe Mongo::Retryable do
       end
     end
 
-    context 'when a socket error occurs' do
+    context 'when a socket error occurs with a RetryableWriteError label' do
+      let(:error) do
+        error = Mongo::Error::SocketError.new('socket error')
+        error.add_label('RetryableWriteError')
+        error
+      end
 
       before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::SocketError.new('socket error')).ordered
+        expect(operation).to receive(:execute).and_raise(error).ordered
         # This is where the server would be marked unknown, but since
         # we are not tracking which server the operation was sent to,
         # we are not able to assert this.
@@ -542,11 +504,31 @@ describe Mongo::Retryable do
       it_behaves_like 'executes the operation twice'
     end
 
-    context 'when a socket timeout occurs' do
+    context 'when a socket error occurs without a RetryableWriteError label' do
+      let(:error) do
+        Mongo::Error::SocketError.new('socket error')
+      end
 
       before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
+        expect(operation).to receive(:execute).and_raise(error).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketError)
+      end
+    end
+
+    context 'when a socket timeout occurs with a RetryableWriteError label' do
+      let(:error) do
+        error = Mongo::Error::SocketTimeoutError.new('socket timeout error')
+        error.add_label('RetryableWriteError')
+        error
+      end
+
+      before do
+        expect(operation).to receive(:execute).and_raise(error).ordered
         # This is where the server would be marked unknown, but since
         # we are not tracking which server the operation was sent to,
         # we are not able to assert this.
@@ -556,6 +538,22 @@ describe Mongo::Retryable do
       end
 
       it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a socket timeout occurs without a RetryableWriteError label' do
+      let(:error) do
+        Mongo::Error::SocketTimeoutError.new('socket timeout error')
+      end
+
+      before do
+        expect(operation).to receive(:execute).and_raise(error).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketTimeoutError)
+      end
     end
 
     context 'when a non-retryable exception occurs' do
