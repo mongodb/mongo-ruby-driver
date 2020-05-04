@@ -183,7 +183,7 @@ module Mongo
         else
           result = send(name, values, server, operation_id, session, txn_num)
 
-          add_error_labels(client) do
+          add_error_labels(client, session) do
             result_combiner.combine!(result, values.size)
           end
         end
@@ -233,10 +233,6 @@ module Mongo
     end
 
     private
-
-    def session
-      nil
-    end
 
     def validate_collation!(server)
       features = server.with_connection { |connection| connection.features }

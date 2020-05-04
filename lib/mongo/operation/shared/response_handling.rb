@@ -24,7 +24,7 @@ module Mongo
 
       def validate_result(result, client, server)
         unpin_maybe(session) do
-          add_error_labels(client) do
+          add_error_labels(client, session) do
             add_server_diagnostics(server) do
               result.validate!
             end
@@ -38,7 +38,7 @@ module Mongo
       # and server-side errors (Error::OperationFailure); it does not
       # handle server selection errors (Error::NoServerAvailable), for which
       # labels are added in the server selection code.
-      def add_error_labels(client)
+      def add_error_labels(client, session)
         begin
           yield
         rescue Mongo::Error::SocketError => e
@@ -49,11 +49,11 @@ module Mongo
             e.add_label('UnknownTransactionCommitResult')
           end
 
-          maybe_add_retryable_write_error_label!(e, client)
+          maybe_add_retryable_write_error_label!(e, client, session)
 
           raise e
         rescue Mongo::Error::SocketTimeoutError => e
-          maybe_add_retryable_write_error_label!(e, client)
+          maybe_add_retryable_write_error_label!(e, client, session)
           raise e
         rescue Mongo::Error::OperationFailure => e
           if session && session.committing_transaction?
@@ -64,7 +64,7 @@ module Mongo
             end
           end
 
-          maybe_add_retryable_write_error_label!(e, client)
+          maybe_add_retryable_write_error_label!(e, client, session)
 
           raise e
         end
@@ -119,7 +119,7 @@ module Mongo
       #
       # If these conditions are met, the original error will be mutated.
       # If they're not met, the error will not be changed.
-      def maybe_add_retryable_write_error_label!(error, client)
+      def maybe_add_retryable_write_error_label!(error, client, session)
         in_transaction = session && session.in_transaction?
         committing_transaction = in_transaction && session.committing_transaction?
         aborting_transaction = in_transaction && session.aborting_transaction?
@@ -129,18 +129,6 @@ module Mongo
             (!in_transaction && retry_writes)) && error.write_retryable?
           error.add_label('RetryableWriteError')
         end
-      end
-
-      # Whether there is currently a session, and whether that session is currently
-      # in a transaction but not committing or aborting.
-      def within_transaction?
-        session && session.in_transaction? && !session.ending_transaction?
-      end
-
-      # Whether there is currently a session, and whether that session is currently
-      # ending a transaction (i.e. committing or aborting).
-      def ending_transaction?
-        session && session.ending_transaction?
       end
     end
   end
