@@ -625,7 +625,6 @@ module Mongo
               txn_num: txn_num
             ).execute(server, client: @client)
           end
-          @aborting_transaction = false
         end
 
         @state = TRANSACTION_ABORTED_STATE
@@ -636,6 +635,8 @@ module Mongo
       rescue Exception
         @state = TRANSACTION_ABORTED_STATE
         raise
+      ensure
+        @aborting_transaction = false
       end
 
       # No official return value, but return true so that in interactive
