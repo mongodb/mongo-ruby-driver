@@ -48,7 +48,12 @@ module Mongo
           if session && session.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
           end
-          if (!within_transaction? && client.options[:retry_writes]) || session.ending_transaction? 
+          if (!within_transaction? && client.options[:retry_writes]) || session.ending_transaction?
+            e.add_label('RetryableWriteError')
+          end
+          raise e
+        rescue Mongo::Error::SocketTimeoutError => e
+          if (!within_transaction? && client.options[:retry_writes]) || session.ending_transaction?
             e.add_label('RetryableWriteError')
           end
           raise e
