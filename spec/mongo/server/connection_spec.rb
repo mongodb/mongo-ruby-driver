@@ -122,17 +122,13 @@ describe Mongo::Server::Connection do
 
           let(:first_pending_connection) do
             double('pending connection 1').tap do |conn|
-              allow(conn).to receive(:handshake!)
-              allow(conn).to receive(:description).and_return(description)
-              conn.should receive(:authenticate!).and_raise(exception)
+              conn.should receive(:handshake_and_authenticate!).and_raise(exception)
             end
           end
 
           let(:second_pending_connection) do
             double('pending connection 2').tap do |conn|
-              allow(conn).to receive(:handshake!)
-              allow(conn).to receive(:description).and_return(description)
-              conn.should receive(:authenticate!).and_raise(ConnectionSpecTestException)
+              conn.should receive(:handshake_and_authenticate!).and_raise(ConnectionSpecTestException)
             end
           end
 
@@ -162,10 +158,6 @@ describe Mongo::Server::Connection do
       end
 
       shared_examples_for 'logs a warning' do
-        let(:expected_message) do
-          "MONGODB | Failed to handshake with #{address}: #{error.class}: #{error}"
-        end
-
         it 'logs a warning' do
           messages = []
           expect(Mongo::Logger.logger).to receive(:warn) do |msg|
@@ -211,6 +203,10 @@ describe Mongo::Server::Connection do
           end
         end
 
+        let(:expected_message) do
+          "MONGODB | Failed to handshake with #{address}: #{error.class}: #{error}"
+        end
+
         # The server diagnostics only apply to network exceptions.
         # If non-network exceptions can be legitimately raised during
         # handshake, and it makes sense to indicate which server the
@@ -238,6 +234,10 @@ describe Mongo::Server::Connection do
           end
         end
 
+        let(:expected_message) do
+          "MONGODB | Failed to handshake with #{address}: #{error.class}: #{error}"
+        end
+
         it_behaves_like 'failing connection with server diagnostics'
         it_behaves_like 'marks server unknown'
         it_behaves_like 'logs a warning'
@@ -257,7 +257,10 @@ describe Mongo::Server::Connection do
         end
 
         let(:error) do
-          expect(Mongo::Auth).to receive(:get).and_raise(exception)
+          # Speculative auth - would be reported as handshake failure
+          expect(Mongo::Auth).to receive(:get).ordered.and_call_original
+          # The actual authentication call
+          expect(Mongo::Auth).to receive(:get).ordered.and_raise(exception)
           expect(connection.send(:socket)).to be nil
           begin
             connection.connect!
@@ -266,6 +269,10 @@ describe Mongo::Server::Connection do
           else
             nil
           end
+        end
+
+        let(:expected_message) do
+          "MONGODB | Failed to authenticate to #{address}: #{error.class}: #{error}"
         end
 
         it_behaves_like 'failing connection'

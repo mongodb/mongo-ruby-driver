@@ -200,7 +200,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully' do
             RSpec::Mocks.with_temporary_scope do
               mechanism = nil
-              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # With speculative auth, Auth is instantiated twice.
+              expect(Mongo::Auth).to receive(:get).at_least(:once).at_most(:twice).and_wrap_original do |m, user|
                 # copy mechanism here rather than whole user
                 # in case something mutates mechanism later
                 mechanism = user.mechanism
@@ -228,7 +229,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully with SCRAM-SHA-256' do
             RSpec::Mocks.with_temporary_scope do
               mechanism = nil
-              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # With speculative auth, Auth is instantiated twice.
+              expect(Mongo::Auth).to receive(:get).at_least(:once).at_most(:twice).and_wrap_original do |m, user|
                 # copy mechanism here rather than whole user
                 # in case something mutates mechanism later
                 mechanism = user.mechanism
@@ -480,7 +482,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully' do
             RSpec::Mocks.with_temporary_scope do
               mechanism = nil
-              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # With speculative auth, Auth is instantiated twice.
+              expect(Mongo::Auth).to receive(:get).at_least(:once).at_most(:twice).and_wrap_original do |m, user|
                 # copy mechanism here rather than whole user
                 # in case something mutates mechanism later
                 mechanism = user.mechanism
@@ -506,7 +509,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully with SCRAM-SHA-256' do
             RSpec::Mocks.with_temporary_scope do
               mechanism = nil
-              expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # With speculative auth, Auth is instantiated twice.
+              expect(Mongo::Auth).to receive(:get).at_least(:once).at_most(:twice).and_wrap_original do |m, user|
                 # copy mechanism here rather than whole user
                 # in case something mutates mechanism later
                 mechanism = user.mechanism

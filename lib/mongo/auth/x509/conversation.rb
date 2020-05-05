@@ -26,7 +26,7 @@ module Mongo
         # The login message.
         #
         # @since 2.0.0
-        LOGIN = { authenticate: 1 }.freeze
+        LOGIN = { authenticate: 1, mechanism: X509::MECHANISM }.freeze
 
         # Start the X.509 conversation. This returns the first message that
         # needs to be sent to the server.
@@ -38,8 +38,7 @@ module Mongo
         #
         # @since 2.0.0
         def start(connection)
-          login = LOGIN.merge(mechanism: X509::MECHANISM)
-          login[:user] = user.name if user.name
+          login = client_first_document
           if connection && connection.features.op_msg_enabled?
             selector = login
             # The only valid database for X.509 authentication is $external.
@@ -62,6 +61,25 @@ module Mongo
               login,
               limit: -1
             )
+          end
+        end
+
+        # Returns the hash to provide to the server in the handshake
+        # as value of the speculativeAuthenticate key.
+        #
+        # If the auth mechanism does not support speculative authentication,
+        # this method returns nil.
+        #
+        # @return [ Hash | nil ] Speculative authentication document.
+        def speculative_auth_document
+          client_first_document
+        end
+
+        private
+
+        def client_first_document
+          LOGIN.dup.tap do |payload|
+            payload[:user] = user.name if user.name
           end
         end
       end

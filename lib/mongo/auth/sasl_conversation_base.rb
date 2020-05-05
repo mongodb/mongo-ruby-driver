@@ -34,21 +34,7 @@ module Mongo
       #
       # @return [ Protocol::Message ] The first SASL conversation message.
       def start(connection)
-        payload = client_first_payload
-        if Lint.enabled?
-          unless payload.is_a?(String)
-            raise Error::LintError, "Payload must be a string but is a #{payload.class}: #{payload}"
-          end
-        end
-        selector = CLIENT_FIRST_MESSAGE.merge(
-          mechanism: auth_mechanism_name,
-          payload: BSON::Binary.new(payload),
-        )
-        if options = client_first_message_options
-          # Short SCRAM conversation,
-          # https://jira.mongodb.org/browse/DRIVERS-707
-          selector[:options] = options
-        end
+        selector = client_first_document
         if connection && connection.features.op_msg_enabled?
           selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
           cluster_time = connection.mongos? && connection.cluster_time
@@ -85,6 +71,25 @@ module Mongo
 
       def client_first_message_options
         nil
+      end
+
+      def client_first_document
+        payload = client_first_payload
+        if Lint.enabled?
+          unless payload.is_a?(String)
+            raise Error::LintError, "Payload must be a string but is a #{payload.class}: #{payload}"
+          end
+        end
+        doc = CLIENT_FIRST_MESSAGE.merge(
+          mechanism: auth_mechanism_name,
+          payload: BSON::Binary.new(payload),
+        )
+        if options = client_first_message_options
+          # Short SCRAM conversation,
+          # https://jira.mongodb.org/browse/DRIVERS-707
+          doc[:options] = options
+        end
+        doc
       end
 
       # Helper method to validate that server nonce starts with the client

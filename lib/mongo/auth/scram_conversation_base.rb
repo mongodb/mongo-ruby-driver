@@ -27,9 +27,14 @@ module Mongo
       # Create the new conversation.
       #
       # @param [ Auth::User ] user The user to converse about.
-      def initialize(user)
-        super
-        @client_nonce = SecureRandom.base64
+      # @param [ String | nil ] client_nonce The client nonce to use.
+      #   If this conversation is created for a connection that performed
+      #   speculative authentication, this client nonce must be equal to the
+      #   client nonce used for speculative authentication; otherwise, the
+      #   client nonce must not be specified.
+      def initialize(user, client_nonce: nil)
+        super(user)
+        @client_nonce = client_nonce || SecureRandom.base64
       end
 
       # @return [ String ] client_nonce The client nonce.
@@ -136,6 +141,17 @@ module Mongo
             limit: -1,
           )
         end
+      end
+
+      # Returns the hash to provide to the server in the handshake
+      # as value of the speculativeAuthenticate key.
+      #
+      # If the auth mechanism does not support speculative authentication,
+      # this method returns nil.
+      #
+      # @return [ Hash | nil ] Speculative authentication document.
+      def speculative_auth_document
+        client_first_document.merge(db: user.auth_source)
       end
 
       private

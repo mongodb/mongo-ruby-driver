@@ -26,12 +26,22 @@ module Mongo
       # Log the user in on the given connection.
       #
       # @param [ Mongo::Connection ] connection The connection to log into.
+      # @param [ String | nil ] speculative_auth_client_nonce The client
+      #   nonce used in speculative auth on the specified connection that
+      #   produced the specified speculative auth result.
+      # @param [ BSON::Document | nil ] speculative_auth_result The
+      #   value of speculativeAuthenticate field of ismaster response of
+      #   the handshake on the specified connection.
       #
       # @return [ BSON::Document ] The document of the authentication response.
       #
       # @since 2.0.0
-      def login(connection)
-        converse_multi_step(connection, conversation).tap do
+      def login(connection, speculative_auth_client_nonce: nil, speculative_auth_result: nil)
+        @conversation = self.class.const_get(:Conversation).new(
+          user, client_nonce: speculative_auth_client_nonce)
+        converse_multi_step(connection, conversation,
+          speculative_auth_result: speculative_auth_result,
+        ).tap do
           unless conversation.server_verified?
             raise Error::MissingScramServerSignature
           end
