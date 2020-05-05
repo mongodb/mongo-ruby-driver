@@ -2,7 +2,8 @@ require 'spec_helper'
 
 describe 'Bulk writes with retryable errors' do
   require_topology :replica_set
-  min_server_fcv '3.6'
+  # 4.0 required for failCommand
+  min_server_fcv '4.0'
 
   let(:subscriber) { EventSubscriber.new }
 
