@@ -8,10 +8,7 @@ describe 'Bulk writes with retryable errors' do
   let(:subscriber) { EventSubscriber.new }
 
   let(:client) do
-    new_local_client(
-      SpecConfig.instance.addresses,
-      SpecConfig.instance.test_options.merge(options)
-    ).tap do |client|
+    authorized_client.with(options).tap do |client|
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
