@@ -22,9 +22,9 @@ module Mongo
 
       private
 
-      def validate_result(result, server)
+      def validate_result(result, client, server)
         unpin_maybe(session) do
-          add_error_labels do
+          add_error_labels(client, session) do
             add_server_diagnostics(server) do
               result.validate!
             end
@@ -38,7 +38,7 @@ module Mongo
       # and server-side errors (Error::OperationFailure); it does not
       # handle server selection errors (Error::NoServerAvailable), for which
       # labels are added in the server selection code.
-      def add_error_labels
+      def add_error_labels(client, session)
         begin
           yield
         rescue Mongo::Error::SocketError => e
@@ -48,6 +48,12 @@ module Mongo
           if session && session.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
           end
+
+          maybe_add_retryable_write_error_label!(e, client, session)
+
+          raise e
+        rescue Mongo::Error::SocketTimeoutError => e
+          maybe_add_retryable_write_error_label!(e, client, session)
           raise e
         rescue Mongo::Error::OperationFailure => e
           if session && session.committing_transaction?
@@ -57,6 +63,9 @@ module Mongo
               e.add_label('UnknownTransactionCommitResult')
             end
           end
+
+          maybe_add_retryable_write_error_label!(e, client, session)
+
           raise e
         end
       end
@@ -92,6 +101,43 @@ module Mongo
       rescue Error, Error::AuthError => e
         e.add_note("on #{server.address.seed}")
         raise e
+      end
+
+      private
+
+      # A method that will add the RetryableWriteError label to an error if
+      # any of the following conditions are true:
+      #
+      # If the error meets the criteria for a retryable error (i.e. has one
+      #   of the retryable error codes or error messages)
+      #
+      # AND one of the following are true:
+      #
+      # The error occured during a commitTransaction or abortTransaction
+      #   OR the error occured during a write outside of a transaction on a
+      #   client that has the retry_writes set to true.
+      #
+      # If these conditions are met, the original error will be mutated.
+      # If they're not met, the error will not be changed.
+      #
+      # @param [ Mongo::Error ] error The error to which to add the label.
+      # @param [ Mongo::Client | nil ] client The client that is performing
+      #   the operation.
+      # @param [ Mongo::Session ] session The operation's session.
+      #
+      # @note The client argument is optional because some operations, such as
+      #   end_session, do not pass the client as an argument to the execute
+      #   method.
+      def maybe_add_retryable_write_error_label!(error, client, session)
+        in_transaction = session && session.in_transaction?
+        committing_transaction = in_transaction && session.committing_transaction?
+        aborting_transaction = in_transaction && session.aborting_transaction?
+        retry_writes = client && client.options[:retry_writes]
+
+        if (committing_transaction || aborting_transaction ||
+            (!in_transaction && retry_writes)) && error.write_retryable?
+          error.add_label('RetryableWriteError')
+        end
       end
     end
   end

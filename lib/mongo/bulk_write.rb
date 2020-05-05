@@ -182,7 +182,10 @@ module Mongo
           split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
         else
           result = send(name, values, server, operation_id, session, txn_num)
-          result_combiner.combine!(result, values.size)
+
+          add_error_labels(client, session) do
+            result_combiner.combine!(result, values.size)
+          end
         end
       end
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e

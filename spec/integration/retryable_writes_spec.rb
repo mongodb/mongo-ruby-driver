@@ -67,7 +67,7 @@ describe 'Retryable writes integration tests' do
         context 'when the error is a socket timeout error' do
 
           let(:error) do
-            Mongo::Error::SocketTimeoutError.new
+            Errno::ETIMEDOUT.new
           end
 
           it 'retries writes' do
@@ -158,7 +158,7 @@ describe 'Retryable writes integration tests' do
         context 'when the error is a socket timeout error' do
 
           let(:error) do
-            Mongo::Error::SocketTimeoutError.new('first error')
+            Errno::ETIMEDOUT.new('first error')
           end
 
           it 'does not retry writes and raises the original error' do

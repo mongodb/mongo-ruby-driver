@@ -221,7 +221,7 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
-        if session.in_transaction? && !ending_transaction
+        if !e.label?('RetryableWriteError')
           raise e
         end
         retry_write(e, session, txn_num, &block)
@@ -230,7 +230,7 @@ module Mongo
         e.add_note("attempt 1")
         if e.unsupported_retryable_write?
           raise_unsupported_error(e)
-        elsif (session.in_transaction? && !ending_transaction) || !e.write_retryable?
+        elsif !e.label?('RetryableWriteError')
           raise e
         end
 
