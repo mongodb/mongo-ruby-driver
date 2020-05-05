@@ -41,7 +41,7 @@ module Mongo
           # but at this point we don't know the mechanism that ultimately
           # will be used (since this depends on the data returned by
           # the handshake, specifically server version).
-          # However, we know that since only 4.4+ servers support speculative
+          # However, we know that only 4.4+ servers support speculative
           # authentication, and those servers also generally support
           # SCRAM-SHA-256. We expect that user accounts created for 4.4+
           # servers would generally allow SCRAM-SHA-256 authentication;
