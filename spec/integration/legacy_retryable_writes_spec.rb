@@ -54,7 +54,7 @@ describe 'legacy retryable writes integration tests' do
       end
 
       it 'retries the operation' do
-        expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
+        expect(Mongo::Logger.logger).to receive(:warn).once.with(/legacy/).and_call_original
 
         result = client['test'].insert_one(_id: 1)
         expect(result).to be_ok
