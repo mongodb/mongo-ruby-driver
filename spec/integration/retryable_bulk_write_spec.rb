@@ -93,6 +93,10 @@ describe 'Bulk writes with retryable errors' do
   end
 
   context 'when two operations of the same type are split' do
+    # Test uses doubles for server descriptions, doubles are
+    # incompatible with freezing which linting does for descriptions
+    skip_if_linting
+
     before do
       allow_any_instance_of(Mongo::Server::Description).to receive(:max_write_batch_size).and_return(1)
     end
