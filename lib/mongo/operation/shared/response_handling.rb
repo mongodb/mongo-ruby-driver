@@ -134,7 +134,7 @@ module Mongo
         aborting_transaction = in_transaction && session.aborting_transaction?
         modern_retry_writes = client && client.options[:retry_writes]
         legacy_retry_writes = client && !client.options[:retry_writes] &&
-          client.options[:max_write_retries] != 0
+          client.max_write_retries > 0
         retry_writes = modern_retry_writes || legacy_retry_writes
 
         if (committing_transaction || aborting_transaction ||
