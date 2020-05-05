@@ -119,6 +119,15 @@ module Mongo
       #
       # If these conditions are met, the original error will be mutated.
       # If they're not met, the error will not be changed.
+      #
+      # @param [ Mongo::Error ] error The error to which to add the label.
+      # @param [ Mongo::Client | nil ] client The client that is performing
+      #   the operation.
+      # @param [ Mongo::Session ] session The operation's session.
+      #
+      # @note The client argument is optional because some operations, such as
+      #   end_session, do not pass the client as an argument to the execute
+      #   method.
       def maybe_add_retryable_write_error_label!(error, client, session)
         in_transaction = session && session.in_transaction?
         committing_transaction = in_transaction && session.committing_transaction?
