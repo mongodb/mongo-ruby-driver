@@ -4,6 +4,7 @@ describe 'Bulk writes with retryable errors' do
   require_topology :replica_set
   # 4.0 required for failCommand
   min_server_fcv '4.0'
+  require_wired_tiger
 
   let(:subscriber) { EventSubscriber.new }
 
