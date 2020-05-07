@@ -1,5 +1,5 @@
-module PerformsModernRetries
-  shared_examples 'it performs modern retries' do
+module PerformsLegacyRetries
+  shared_examples 'it performs legacy retries' do
     include PrimarySocket
 
     # required for failCommand
@@ -9,7 +9,7 @@ module PerformsModernRetries
       before do
         client.use('admin').command(
           configureFailPoint: 'failCommand',
-          mode: { times: times },
+          mode: { times: 1 },
           data: {
             failCommands: [command_name],
             closeConnection: true,
@@ -17,61 +17,31 @@ module PerformsModernRetries
         )
       end
 
-      context 'when error occurs once' do
-        let(:times) { 1 }
+      it 'does not retry the operation' do
+        expect(Mongo::Logger.logger).not_to receive(:warn).with(/legacy/)
 
-        it 'retries and the operation and succeeds' do
-          expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+        expect do
           perform_operation
-          expect(actual_result).to eq(successful_result)
-        end
-      end
-
-      context 'when error occurs twice' do
-        let(:times) { 2 }
-
-        it 'retries and the operation and fails' do
-          expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-
-          expect do
-            perform_operation
-          end.to raise_error(Mongo::Error::SocketError)
-        end
+        end.to raise_error(Mongo::Error::SocketError)
       end
     end
 
     context 'for ETIMEDOUT' do
-      context 'for server versions < 4.4' do
-        max_server_fcv '4.2'
-
+      context 'on server versions < 4.4' do
         before do
           allow(primary_socket).to receive(:do_write).and_raise(Errno::ETIMEDOUT.new)
         end
 
-        context 'when error occurs once' do
-          it 'retries and the operation and succeeds' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+        it 'does not retry the operation' do
+          expect(Mongo::Logger.logger).not_to receive(:warn).with(/legacy/)
+
+          expect do
             perform_operation
-            expect(actual_result).to eq(successful_result)
-          end
-        end
-
-        context 'when error occurs twice' do
-          before do
-            skip "have to figure this test out"
-          end
-
-          it 'retries and the operation and fails' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-
-            expect do
-              perform_operation
-            end.to raise_error(Mongo::Error::SocketTimeoutError)
-          end
+          end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
       end
 
-      context 'for server versions >= 4.4' do
+      context 'on server versions >= 4.4' do
         min_server_fcv '4.3'
 
         # shorten socket timeout so these tests take less time to run
@@ -80,7 +50,7 @@ module PerformsModernRetries
         before do
           client.use('admin').command(
             configureFailPoint: 'failCommand',
-            mode: { times: times },
+            mode: { times: 1 },
             data: {
               failCommands: [command_name],
               blockConnection: true,
@@ -89,26 +59,12 @@ module PerformsModernRetries
           )
         end
 
-        context 'when error occurs once' do
-          let(:times) { 1 }
+        it 'does not retry the operation' do
+          expect(Mongo::Logger.logger).not_to receive(:warn).with(/legacy/)
 
-          it 'retries and the operation and succeeds' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+          expect do
             perform_operation
-            expect(actual_result).to eq(successful_result)
-          end
-        end
-
-        context 'when error occurs twice' do
-          let(:times) { 2 }
-
-          it 'retries and the operation and fails' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-
-            expect do
-              perform_operation
-            end.to raise_error(Mongo::Error::SocketTimeoutError)
-          end
+          end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
       end
     end
@@ -119,7 +75,7 @@ module PerformsModernRetries
     end
 
     context 'on server versions <= 4.4' do
-      # max_server_fcv '4.2'
+      max_server_fcv '4.2'
 
       context 'for OperationFailure with retryable code' do
         before do
@@ -137,7 +93,7 @@ module PerformsModernRetries
           let(:times) { 1 }
 
           it 'retries and the operation and succeeds' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+            expect(Mongo::Logger.logger).to receive(:warn).once.with(/legacy/).and_call_original
             perform_operation
             expect(actual_result).to eq(successful_result)
           end
@@ -147,11 +103,21 @@ module PerformsModernRetries
           let(:times) { 2 }
 
           it 'retries and the operation and fails' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+            expect(Mongo::Logger.logger).to receive(:warn).once.with(/legacy/).and_call_original
 
             expect do
               perform_operation
             end.to raise_error(Mongo::Error::OperationFailure, /91/)
+          end
+
+          context 'and max_write_retries is set to 2' do
+            let(:max_write_retries) { 2 }
+
+            it 'retries twice and the operation succeeds' do
+              expect(Mongo::Logger.logger).to receive(:warn).twice.with(/legacy/).and_call_original
+              perform_operation
+              expect(actual_result).to eq(successful_result)
+            end
           end
         end
       end
@@ -160,15 +126,13 @@ module PerformsModernRetries
         before do
           client.use('admin').command(
             configureFailPoint: 'failCommand',
-            mode: { times: times },
+            mode: { times: 1 },
             data: {
               failCommands: [command_name],
               errorCode: 5, # a non-retryable error code
             }
           )
         end
-
-        let(:times) { 1 }
 
         it 'raises the error' do
           expect(Mongo::Logger.logger).not_to receive(:warn)

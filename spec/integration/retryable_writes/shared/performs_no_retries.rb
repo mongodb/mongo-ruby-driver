@@ -25,6 +25,8 @@ module PerformsNoRetries
     end
 
     context 'for ETIMEDOUT' do
+      min_server_fcv '4.3'
+
       # shorten socket timeout so these tests take less time to run
       let(:socket_timeout) { 1 }
 
