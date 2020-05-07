@@ -1,10 +1,7 @@
+require_relative './adds_diagnostics'
+
 module PerformsLegacyRetries
   shared_examples 'it performs legacy retries' do
-    include PrimarySocket
-
-    # required for failCommand
-    min_server_fcv '4.0'
-
     context 'for connection error' do
       before do
         client.use('admin').command(
@@ -23,49 +20,37 @@ module PerformsLegacyRetries
         expect do
           perform_operation
         end.to raise_error(Mongo::Error::SocketError)
+
+        expect(actual_result).to eq(expected_failed_result)
       end
     end
 
     context 'for ETIMEDOUT' do
-      context 'on server versions < 4.4' do
-        before do
-          allow(primary_socket).to receive(:do_write).and_raise(Errno::ETIMEDOUT.new)
-        end
+      min_server_fcv '4.3'
 
-        it 'does not retry the operation' do
-          expect(Mongo::Logger.logger).not_to receive(:warn).with(/legacy/)
+      # shorten socket timeout so these tests take less time to run
+      let(:socket_timeout) { 1 }
 
-          expect do
-            perform_operation
-          end.to raise_error(Mongo::Error::SocketTimeoutError)
-        end
+      before do
+        client.use('admin').command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: [command_name],
+            blockConnection: true,
+            blockTimeMS: 1500,
+          }
+        )
       end
 
-      context 'on server versions >= 4.4' do
-        min_server_fcv '4.3'
+      it 'does not retry the operation' do
+        expect(Mongo::Logger.logger).not_to receive(:warn).with(/legacy/)
 
-        # shorten socket timeout so these tests take less time to run
-        let(:socket_timeout) { 1 }
+        expect do
+          perform_operation
+        end.to raise_error(Mongo::Error::SocketTimeoutError)
 
-        before do
-          client.use('admin').command(
-            configureFailPoint: 'failCommand',
-            mode: { times: 1 },
-            data: {
-              failCommands: [command_name],
-              blockConnection: true,
-              blockTimeMS: 1500,
-            }
-          )
-        end
-
-        it 'does not retry the operation' do
-          expect(Mongo::Logger.logger).not_to receive(:warn).with(/legacy/)
-
-          expect do
-            perform_operation
-          end.to raise_error(Mongo::Error::SocketTimeoutError)
-        end
+        expect(actual_result).to eq(expected_failed_result)
       end
     end
 
@@ -95,7 +80,7 @@ module PerformsLegacyRetries
           it 'retries and the operation and succeeds' do
             expect(Mongo::Logger.logger).to receive(:warn).once.with(/legacy/).and_call_original
             perform_operation
-            expect(actual_result).to eq(successful_result)
+            expect(actual_result).to eq(expected_successful_result)
           end
         end
 
@@ -108,7 +93,11 @@ module PerformsLegacyRetries
             expect do
               perform_operation
             end.to raise_error(Mongo::Error::OperationFailure, /91/)
+
+            expect(actual_result).to eq(expected_failed_result)
           end
+
+          it_behaves_like 'it adds diagnostics'
 
           context 'and max_write_retries is set to 2' do
             let(:max_write_retries) { 2 }
@@ -116,7 +105,7 @@ module PerformsLegacyRetries
             it 'retries twice and the operation succeeds' do
               expect(Mongo::Logger.logger).to receive(:warn).twice.with(/legacy/).and_call_original
               perform_operation
-              expect(actual_result).to eq(successful_result)
+              expect(actual_result).to eq(expected_successful_result)
             end
           end
         end
@@ -140,6 +129,8 @@ module PerformsLegacyRetries
           expect do
             perform_operation
           end.to raise_error(Mongo::Error::OperationFailure, /5/)
+
+          expect(actual_result).to eq(expected_failed_result)
         end
       end
     end

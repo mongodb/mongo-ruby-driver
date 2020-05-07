@@ -5,16 +5,17 @@ require_relative './shared/supports_legacy_retries'
 require_relative './shared/does_not_support_retries'
 
 describe 'Retryable writes' do
+  # failCommand was introduced in MongoDB verison 4.0
+  min_server_fcv '4.0'
+
   let(:client) do
     authorized_client.with(
-      write: write_concern,
       socket_timeout: socket_timeout,
       retry_writes: retry_writes,
       max_write_retries: max_write_retries,
     )
   end
 
-  let(:write_concern) { nil }
   let(:socket_timeout) { nil }
   let(:retry_writes) { nil }
   let(:max_write_retries) { nil }
@@ -36,8 +37,12 @@ describe 'Retryable writes' do
       collection.count(_id: 1)
     end
 
-    let(:successful_result) do
+    let(:expected_successful_result) do
       1
+    end
+
+    let(:expected_failed_result) do
+      0
     end
 
     it_behaves_like 'it supports modern retries'
@@ -53,4 +58,6 @@ describe 'Retryable writes' do
 
     it_behaves_like 'it does not support retries'
   end
+
+  # TODO: add more commands to test
 end

@@ -1,9 +1,7 @@
+require_relative './adds_diagnostics'
+
 module PerformsModernRetries
   shared_examples 'it performs modern retries' do
-    include PrimarySocket
-
-    # required for failCommand
-    min_server_fcv '4.0'
 
     context 'for connection error' do
       before do
@@ -20,10 +18,10 @@ module PerformsModernRetries
       context 'when error occurs once' do
         let(:times) { 1 }
 
-        it 'retries and the operation and succeeds' do
+        it 'retries and the operation succeeds' do
           expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
           perform_operation
-          expect(actual_result).to eq(successful_result)
+          expect(actual_result).to eq(expected_successful_result)
         end
       end
 
@@ -36,80 +34,58 @@ module PerformsModernRetries
           expect do
             perform_operation
           end.to raise_error(Mongo::Error::SocketError)
+
+          expect(actual_result).to eq(expected_failed_result)
         end
+
+        it_behaves_like 'it adds diagnostics'
       end
     end
 
     context 'for ETIMEDOUT' do
-      context 'for server versions < 4.4' do
-        max_server_fcv '4.2'
+      # blockConnection option in failCommand was introduced in
+      # server version 4.3
+      min_server_fcv '4.3'
 
-        before do
-          allow(primary_socket).to receive(:do_write).and_raise(Errno::ETIMEDOUT.new)
-        end
+      # shorten socket timeout so these tests take less time to run
+      let(:socket_timeout) { 1 }
 
-        context 'when error occurs once' do
-          it 'retries and the operation and succeeds' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-            perform_operation
-            expect(actual_result).to eq(successful_result)
-          end
-        end
+      before do
+        client.use('admin').command(
+          configureFailPoint: 'failCommand',
+          mode: { times: times },
+          data: {
+            failCommands: [command_name],
+            blockConnection: true,
+            blockTimeMS: 1100,
+          }
+        )
+      end
 
-        context 'when error occurs twice' do
-          before do
-            skip "have to figure this test out"
-          end
+      context 'when error occurs once' do
+        let(:times) { 1 }
 
-          it 'retries and the operation and fails' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-
-            expect do
-              perform_operation
-            end.to raise_error(Mongo::Error::SocketTimeoutError)
-          end
+        it 'retries and the operation succeeds' do
+          expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+          perform_operation
+          expect(actual_result).to eq(expected_successful_result)
         end
       end
 
-      context 'for server versions >= 4.4' do
-        min_server_fcv '4.3'
+      context 'when error occurs twice' do
+        let(:times) { 2 }
 
-        # shorten socket timeout so these tests take less time to run
-        let(:socket_timeout) { 1 }
+        it 'retries and the operation and fails' do
+          expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
 
-        before do
-          client.use('admin').command(
-            configureFailPoint: 'failCommand',
-            mode: { times: times },
-            data: {
-              failCommands: [command_name],
-              blockConnection: true,
-              blockTimeMS: 1500,
-            }
-          )
-        end
-
-        context 'when error occurs once' do
-          let(:times) { 1 }
-
-          it 'retries and the operation and succeeds' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+          expect do
             perform_operation
-            expect(actual_result).to eq(successful_result)
-          end
+          end.to raise_error(Mongo::Error::SocketTimeoutError)
+
+          expect(actual_result).to eq(expected_failed_result)
         end
 
-        context 'when error occurs twice' do
-          let(:times) { 2 }
-
-          it 'retries and the operation and fails' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-
-            expect do
-              perform_operation
-            end.to raise_error(Mongo::Error::SocketTimeoutError)
-          end
-        end
+        it_behaves_like 'it adds diagnostics'
       end
     end
 
@@ -136,10 +112,10 @@ module PerformsModernRetries
         context 'when error occurs once' do
           let(:times) { 1 }
 
-          it 'retries and the operation and succeeds' do
+          it 'retries and the operation succeeds' do
             expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
             perform_operation
-            expect(actual_result).to eq(successful_result)
+            expect(actual_result).to eq(expected_successful_result)
           end
         end
 
@@ -152,7 +128,11 @@ module PerformsModernRetries
             expect do
               perform_operation
             end.to raise_error(Mongo::Error::OperationFailure, /91/)
+
+            expect(actual_result).to eq(expected_failed_result)
           end
+
+          it_behaves_like 'it adds diagnostics'
         end
       end
 
@@ -176,6 +156,8 @@ module PerformsModernRetries
           expect do
             perform_operation
           end.to raise_error(Mongo::Error::OperationFailure, /5/)
+
+          expect(actual_result).to eq(expected_failed_result)
         end
       end
     end
