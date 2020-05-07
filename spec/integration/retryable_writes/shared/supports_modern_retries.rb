@@ -19,6 +19,12 @@ module SupportsModernRetries
     context 'against a replica set or sharded cluster' do
       require_topology :replica_set, :sharded
 
+      before do
+        if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
+          skip 'test requires one mongos'
+        end
+      end
+
       it_behaves_like 'it performs modern retries'
     end
   end

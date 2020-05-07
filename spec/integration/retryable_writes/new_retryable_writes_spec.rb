@@ -5,8 +5,8 @@ require_relative './shared/supports_legacy_retries'
 require_relative './shared/does_not_support_retries'
 
 describe 'Retryable writes' do
-  # failCommand was introduced in MongoDB verison 4.0
-  min_server_fcv '4.0'
+  require_fail_command
+  require_wired_tiger
 
   let(:client) do
     authorized_client.with(
