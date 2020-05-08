@@ -86,6 +86,8 @@ module PerformsModernRetries
         it_behaves_like 'it adds diagnostics'
 
         after do
+          # Assure that the server has completed the operation before moving
+          # on to the next test.
           sleep 1
         end
       end

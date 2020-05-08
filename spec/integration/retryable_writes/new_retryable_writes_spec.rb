@@ -7,12 +7,7 @@ require_relative './shared/does_not_support_retries'
 describe 'Retryable writes' do
   require_fail_command
   require_wired_tiger
-
-  before do
-    if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
-      skip 'test requires one mongos'
-    end
-  end
+  require_no_multi_shard
 
   let(:client) do
     authorized_client.with(

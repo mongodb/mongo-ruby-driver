@@ -52,6 +52,8 @@ module PerformsLegacyRetries
       end
 
       after do
+        # Assure that the server has completed the operation before moving
+        # on to the next test.
         sleep 1
       end
     end
