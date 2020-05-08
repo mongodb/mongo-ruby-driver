@@ -8,7 +8,7 @@ module SupportsModernRetries
     context 'against a standalone server' do
       require_topology :single
 
-      before do
+      before(:all) do
         skip 'RUBY-2171: standalone topology currently uses legacy write retries ' \
           'by default. Standalone should NOT retry when modern retries are enabled.'
       end
@@ -18,12 +18,6 @@ module SupportsModernRetries
 
     context 'against a replica set or sharded cluster' do
       require_topology :replica_set, :sharded
-
-      before do
-        if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
-          skip 'test requires one mongos'
-        end
-      end
 
       it_behaves_like 'it performs modern retries'
     end

@@ -63,7 +63,7 @@ module PerformsLegacyRetries
       # These tests will be implemented in a follow-up PR
     end
 
-    context 'on server versions <= 4.4' do
+    context 'on server versions < 4.4' do
       max_server_fcv '4.2'
 
       context 'for OperationFailure with retryable code' do

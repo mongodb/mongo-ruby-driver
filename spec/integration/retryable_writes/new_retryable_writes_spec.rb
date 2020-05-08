@@ -1,7 +1,6 @@
 require 'spec_helper'
 
-require_relative './shared/supports_modern_retries'
-require_relative './shared/supports_legacy_retries'
+require_relative './shared/supports_retries'
 require_relative './shared/does_not_support_retries'
 
 describe 'Retryable writes' do
@@ -46,8 +45,59 @@ describe 'Retryable writes' do
       0
     end
 
-    it_behaves_like 'it supports modern retries'
-    it_behaves_like 'it supports legacy retries'
+    it_behaves_like 'it supports retries'
+  end
+
+  context 'collection#update_one' do
+    before do
+      collection.insert_one(_id: 1)
+    end
+
+    let(:command_name) { 'update' }
+
+    let(:perform_operation) do
+      collection.update_one({ _id: 1 }, { '$set' => { a: 1 } })
+    end
+
+    let(:actual_result) do
+      collection.count(a: 1)
+    end
+
+    let(:expected_successful_result) do
+      1
+    end
+
+    let(:expected_failed_result) do
+      0
+    end
+
+    it_behaves_like 'it supports retries'
+  end
+
+  context 'collection#replace_one' do
+    before do
+      collection.insert_one(_id: 1)
+    end
+
+    let(:command_name) { 'update' }
+
+    let(:perform_operation) do
+      collection.replace_one({ _id: 1 }, { _id: 2 })
+    end
+
+    let(:actual_result) do
+      collection.count(_id: 2)
+    end
+
+    let(:expected_successful_result) do
+      1
+    end
+
+    let(:expected_failed_result) do
+      0
+    end
+
+    it_behaves_like 'it supports retries'
   end
 
   context 'database#command' do
