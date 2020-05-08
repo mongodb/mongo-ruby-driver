@@ -81,11 +81,13 @@ module PerformsModernRetries
           expect do
             perform_operation
           end.to raise_error(Mongo::Error::SocketTimeoutError)
-
-          expect(actual_result).to eq(expected_failed_result)
         end
 
         it_behaves_like 'it adds diagnostics'
+
+        after do
+          sleep 1
+        end
       end
     end
 

@@ -8,6 +8,12 @@ describe 'Retryable writes' do
   require_fail_command
   require_wired_tiger
 
+  before do
+    if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
+      skip 'test requires one mongos'
+    end
+  end
+
   let(:client) do
     authorized_client.with(
       socket_timeout: socket_timeout,

@@ -1,4 +1,5 @@
 require_relative './adds_diagnostics'
+require 'byebug'
 
 module PerformsLegacyRetries
   shared_examples 'it performs legacy retries' do
@@ -38,7 +39,7 @@ module PerformsLegacyRetries
           data: {
             failCommands: [command_name],
             blockConnection: true,
-            blockTimeMS: 1500,
+            blockTimeMS: 1100,
           }
         )
       end
@@ -49,8 +50,10 @@ module PerformsLegacyRetries
         expect do
           perform_operation
         end.to raise_error(Mongo::Error::SocketTimeoutError)
+      end
 
-        expect(actual_result).to eq(expected_failed_result)
+      after do
+        sleep 1
       end
     end
 
