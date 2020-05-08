@@ -32,8 +32,8 @@ module Mongo
       #   speculative authentication, this client nonce must be equal to the
       #   client nonce used for speculative authentication; otherwise, the
       #   client nonce must not be specified.
-      def initialize(user, client_nonce: nil)
-        super(user)
+      def initialize(user, connection, client_nonce: nil)
+        super
         @client_nonce = client_nonce || SecureRandom.base64
       end
 
@@ -83,11 +83,11 @@ module Mongo
 
         validate_server_nonce!
 
+        selector = CLIENT_CONTINUE_MESSAGE.merge(
+          payload: client_final_message,
+          conversationId: id,
+        )
         if connection && connection.features.op_msg_enabled?
-          selector = CLIENT_CONTINUE_MESSAGE.merge(
-            payload: client_final_message,
-            conversationId: id,
-          )
           selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
           cluster_time = connection.mongos? && connection.cluster_time
           selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
@@ -96,10 +96,7 @@ module Mongo
           Protocol::Query.new(
             user.auth_source,
             Database::COMMAND,
-            CLIENT_CONTINUE_MESSAGE.merge(
-              payload: client_final_message,
-              conversationId: id,
-            ),
+            selector,
             limit: -1,
           )
         end

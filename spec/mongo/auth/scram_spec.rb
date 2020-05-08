@@ -49,13 +49,13 @@ describe Mongo::Auth::Scram do
         end
 
         let(:authenticator) do
-          described_class.new(user)
+          described_class.new(user, connection)
         end
 
         it 'raises an exception' do
-          expect {
-            authenticator.login(connection)
-          }.to raise_error(Mongo::Auth::Unauthorized)
+          expect do
+            authenticator.login
+          end.to raise_error(Mongo::Auth::Unauthorized)
         end
 
         context 'when compression is used' do
@@ -74,11 +74,11 @@ describe Mongo::Auth::Scram do
       context 'when the user is authorized for the database' do
 
         let(:authenticator) do
-          described_class.new(test_user)
+          described_class.new(test_user, connection)
         end
 
         let(:login) do
-          authenticator.login(connection)
+          authenticator.login
         end
 
         it 'logs the user into the connection' do

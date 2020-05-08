@@ -10,7 +10,7 @@ describe Mongo::Auth::X509::Conversation do
   end
 
   let(:conversation) do
-    described_class.new(user)
+    described_class.new(user, double('connection'))
   end
 
   describe '#start' do

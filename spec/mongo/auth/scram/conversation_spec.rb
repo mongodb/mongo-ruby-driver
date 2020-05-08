@@ -8,7 +8,7 @@ describe Mongo::Auth::Scram::Conversation do
   include_context 'scram conversation context'
 
   let(:conversation) do
-    described_class.new(user)
+    described_class.new(user, double('connection'))
   end
 
   it_behaves_like 'scram conversation'

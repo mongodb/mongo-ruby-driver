@@ -26,15 +26,11 @@ module Mongo
       # @since 2.0.0
       MECHANISM = 'MONGODB-X509'.freeze
 
-      # Instantiate a new authenticator.
+      # Initializes the X.509 authenticator.
       #
-      # @example Create the authenticator.
-      #   Mongo::Auth::X509.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
+      # @param [ Auth::User ] user The user to authenticate.
+      # @param [ Mongo::Connection ] connection The connection to authenticate over.
+      def initialize(user, connection, **opts)
         # The only valid database for X.509 authentication is $external.
         if user.auth_source != '$external'
           user_name_msg = if user.name
@@ -48,15 +44,10 @@ module Mongo
         super
       end
 
-      # Log the user in on the given connection.
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
+      # Log the user in on the current connection.
       #
       # @return [ BSON::Document ] The document of the authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
+      def login
         converse_1_step(connection, conversation)
       end
     end

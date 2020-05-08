@@ -23,13 +23,19 @@ module Mongo
 
       # Create the new conversation.
       #
-      # @param [ Auth::User ] user The user to converse about.
-      def initialize(user)
+      # @param [ Auth::User ] user The user to authenticate.
+      # @param [ Mongo::Connection ] connection The connection to authenticate
+      #   over.
+      def initialize(user, connection, **opts)
         @user = user
+        @connection = connection
       end
 
       # @return [ Auth::User ] user The user for the conversation.
       attr_reader :user
+
+      # @return [ Mongo::Connection ] The connection to authenticate over.
+      attr_reader :connection
 
       # Returns the hash to provide to the server in the handshake
       # as value of the speculativeAuthenticate key.

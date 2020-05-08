@@ -27,16 +27,16 @@ describe Mongo::Auth::CR do
       end
 
       let(:cr) do
-        described_class.new(user)
+        described_class.new(user, connection)
       end
 
       let(:login) do
-        cr.login(connection).documents[0]
+        cr.login.documents[0]
       end
 
       it 'raises an exception' do
         expect {
-          cr.login(connection)
+          cr.login
         }.to raise_error(Mongo::Auth::Unauthorized)
       end
 
@@ -47,7 +47,7 @@ describe Mongo::Auth::CR do
         it 'does not compress the message' do
           expect(Mongo::Protocol::Compressed).not_to receive(:new)
           expect {
-            cr.login(connection)
+            cr.login
           }.to raise_error(Mongo::Auth::Unauthorized)
         end
       end
@@ -62,11 +62,11 @@ describe Mongo::Auth::CR do
     end
 
     let(:cr) do
-      described_class.new(root_user)
+      described_class.new(root_user, connection)
     end
 
     let(:login) do
-      cr.login(connection)
+      cr.login
     end
 
     it 'logs the user into the connection' do

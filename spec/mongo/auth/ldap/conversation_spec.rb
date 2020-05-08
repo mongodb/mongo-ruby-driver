@@ -11,7 +11,7 @@ describe Mongo::Auth::LDAP::Conversation do
   end
 
   let(:conversation) do
-    described_class.new(user)
+    described_class.new(user, double('connection'))
   end
 
   describe '#start' do

@@ -17,23 +17,30 @@ module Mongo
 
     # Base class for authenticators.
     #
+    # Each authenticator is instantiated for authentication over a particular
+    # connection.
+    #
     # @api private
     class Base
 
       # @return [ Mongo::Auth::User ] The user to authenticate.
       attr_reader :user
 
-      # Instantiate a new authenticator.
+      # @return [ Mongo::Connection ] The connection to authenticate over.
+      attr_reader :connection
+
+      # Initializes the authenticator.
       #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
+      # @param [ Auth::User ] user The user to authenticate.
+      # @param [ Mongo::Connection ] connection The connection to authenticate
+      #   over.
+      def initialize(user, connection, **opts)
         @user = user
+        @connection = connection
       end
 
       def conversation
-        @conversation ||= self.class.const_get(:Conversation).new(user)
+        @conversation ||= self.class.const_get(:Conversation).new(user, connection)
       end
 
       private
