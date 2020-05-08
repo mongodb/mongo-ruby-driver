@@ -1,5 +1,4 @@
 require_relative './adds_diagnostics'
-require 'byebug'
 
 module PerformsLegacyRetries
   shared_examples 'it performs legacy retries' do
