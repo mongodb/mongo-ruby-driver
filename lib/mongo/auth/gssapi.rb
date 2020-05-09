@@ -1,10 +1,10 @@
-# Copyright (C) 2014-2020 MongoDB Inc.
+# Copyright (C) 2014-2020 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,25 +15,24 @@
 module Mongo
   module Auth
 
-    # Defines behavior for LDAP Proxy authentication.
+    # Defines behavior for Kerberos authentication.
     #
-    # @since 2.0.0
     # @api private
-    class LDAP < Base
+    class Gssapi < Base
 
       # The authentication mechanism string.
       #
       # @since 2.0.0
-      MECHANISM = 'PLAIN'.freeze
+      MECHANISM = 'GSSAPI'.freeze
 
       # Log the user in on the current connection.
       #
       # @return [ BSON::Document ] The document of the authentication response.
       def login
-        converse_1_step(connection, conversation)
+        converse_multi_step(connection, conversation)
       end
     end
   end
 end
 
-require 'mongo/auth/ldap/conversation'
+require 'mongo/auth/gssapi/conversation'

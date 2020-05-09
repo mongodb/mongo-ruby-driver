@@ -22,7 +22,9 @@ CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
 
-unless ENV['CI']
+if ENV['CI']
+  autoload :Byebug, 'byebug'
+else
   # Load debuggers before loading the driver code, so that breakpoints
   # can be placed in the driver code on file/class level.
   begin

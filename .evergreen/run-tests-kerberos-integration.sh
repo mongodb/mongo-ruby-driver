@@ -56,6 +56,7 @@ configure_kerberos_ip_addr
 echo "Install dependencies"
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle_install
+bundle list
 
 export MONGO_RUBY_DRIVER_KERBEROS=1
 export MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1

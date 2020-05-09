@@ -58,7 +58,7 @@ module Mongo
           # going through SCRAM mechanism negotiation.
           default_options = Options::Redacted.new(:auth_mech => :scram256)
           speculative_auth_user = Auth::User.new(default_options.merge(options))
-          speculative_auth = Auth.get(speculative_auth_user)
+          speculative_auth = Auth.get(speculative_auth_user, self)
           speculative_auth_doc = speculative_auth.conversation.speculative_auth_document
         end
 
@@ -149,17 +149,13 @@ module Mongo
         if options[:user] || options[:auth_mech]
           @server.handle_auth_failure! do
             begin
-              auth = Auth.get(resolved_user(speculative_auth_mech: speculative_auth_mech))
-              if speculative_auth_result
-                auth.login(self,
-                  speculative_auth_client_nonce: speculative_auth_client_nonce,
-                  speculative_auth_result: speculative_auth_result,
-                )
-              else
-                # Call without options for compatibility with Kerberos auth
-                # which is maintained in a separate library.
-                auth.login(self)
-              end
+              auth = Auth.get(
+                resolved_user(speculative_auth_mech: speculative_auth_mech),
+                self,
+                speculative_auth_client_nonce: speculative_auth_client_nonce,
+                speculative_auth_result: speculative_auth_result,
+              )
+              auth.login
             rescue => e
               log_warn("Failed to authenticate to #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
               raise

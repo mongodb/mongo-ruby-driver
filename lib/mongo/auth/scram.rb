@@ -23,22 +23,40 @@ module Mongo
       # The authentication mechanism string.
       MECHANISM = 'SCRAM-SHA-1'.freeze
 
-      # Log the user in on the given connection.
+      # Initializes the Scram authenticator.
       #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      # @param [ String | nil ] speculative_auth_client_nonce The client
+      # @param [ Auth::User ] user The user to authenticate.
+      # @param [ Mongo::Connection ] connection The connection to authenticate over.
+      #
+      # @option opts [ String | nil ] speculative_auth_client_nonce The client
       #   nonce used in speculative auth on the specified connection that
       #   produced the specified speculative auth result.
-      # @param [ BSON::Document | nil ] speculative_auth_result The
+      # @option opts [ BSON::Document | nil ] speculative_auth_result The
       #   value of speculativeAuthenticate field of ismaster response of
       #   the handshake on the specified connection.
+      def initialize(user, connection, **opts)
+        super
+        @speculative_auth_client_nonce = opts[:speculative_auth_client_nonce]
+        @speculative_auth_result = opts[:speculative_auth_result]
+      end
+
+      # @return [ String | nil ] The client nonce used in speculative auth on
+      #   the current connection.
+      attr_reader :speculative_auth_client_nonce
+
+      # @return [ BSON::Document | nil ] The value of speculativeAuthenticate
+      #   field of ismaster response of the handshake on the current connection.
+      attr_reader :speculative_auth_result
+
+      def conversation
+        @conversation ||= self.class.const_get(:Conversation).new(
+          user, connection, client_nonce: speculative_auth_client_nonce)
+      end
+
+      # Log the user in on the current connection.
       #
       # @return [ BSON::Document ] The document of the authentication response.
-      #
-      # @since 2.0.0
-      def login(connection, speculative_auth_client_nonce: nil, speculative_auth_result: nil)
-        @conversation = self.class.const_get(:Conversation).new(
-          user, client_nonce: speculative_auth_client_nonce)
+      def login
         converse_multi_step(connection, conversation,
           speculative_auth_result: speculative_auth_result,
         ).tap do

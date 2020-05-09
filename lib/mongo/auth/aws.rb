@@ -17,13 +17,10 @@ module Mongo
     class Aws < Base
       MECHANISM = 'MONGODB-AWS'.freeze
 
-      # Log the user in on the given connection.
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
+      # Log the user in on the current connection.
       #
       # @return [ BSON::Document ] The document of the authentication response.
-      def login(connection)
-        conversation = Conversation.new(user)
+      def login
         converse_2_step(connection, conversation)
       end
 

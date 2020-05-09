@@ -897,7 +897,7 @@ buildvariants:
   - matrix_name: "kerberos-integration-ubuntu"
     matrix_spec:
       # Other Rubies segfault
-      ruby: [ruby-2.5, ruby-2.4, jruby-9.2]
+      ruby: [ruby-2.5, ruby-2.4]
     display_name: "Kerberos integration Ubuntu ${ruby}"
     run_on:
       - ubuntu1604-test
@@ -907,7 +907,7 @@ buildvariants:
   - matrix_name: "kerberos-integration-rhel"
     matrix_spec:
       # Other Rubies segfault
-      ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
+      ruby: [ruby-2.7, ruby-2.3]
       os: rhel70
     display_name: "Kerberos integration RHEL ${ruby} ${os}"
     tasks:

@@ -29,14 +29,10 @@ module Mongo
       # @since 2.0.0
       MECHANISM = 'MONGODB-CR'.freeze
 
-      # Log the user in on the given connection.
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
+      # Log the user in on the current connection.
       #
       # @return [ BSON::Document ] The document of the authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
+      def login
         converse_2_step(connection, conversation)
       end
     end

@@ -22,6 +22,7 @@ require 'mongo/auth/roles'
 require 'mongo/auth/base'
 require 'mongo/auth/aws'
 require 'mongo/auth/cr'
+require 'mongo/auth/gssapi'
 require 'mongo/auth/ldap'
 require 'mongo/auth/scram'
 require 'mongo/auth/scram256'
@@ -61,6 +62,7 @@ module Mongo
     # @since 2.0.0
     SOURCES = {
       aws: Aws,
+      gssapi: Gssapi,
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,
@@ -68,20 +70,28 @@ module Mongo
       scram256: Scram256,
     }
 
-    # Get the authorization strategy for the provided auth mechanism.
+    # Get an authenticator for the provided user to authenticate over the
+    # provided connection.
     #
-    # @example Get the strategy.
-    #   Auth.get(user)
+    # @param [ Auth::User ] user The user to authenticate.
+    # @param [ Mongo::Connection ] connection The connection to authenticate over.
     #
-    # @param [ Auth::User ] user The user object.
+    # @option opts [ String | nil ] speculative_auth_client_nonce The client
+    #   nonce used in speculative auth on the specified connection that
+    #   produced the specified speculative auth result.
+    # @option opts [ BSON::Document | nil ] speculative_auth_result The
+    #   value of speculativeAuthenticate field of ismaster response of
+    #   the handshake on the specified connection.
     #
-    # @return [ CR, X509, LDAP, Kerberos ] The auth strategy.
+    # @return [ Auth::Aws | Auth::CR | Auth::Gssapi | Auth::LDAP |
+    #   Auth::Scram | Auth::Scram256 | Auth::X509 ] The authenticator.
     #
     # @since 2.0.0
-    def get(user)
+    # @api private
+    def get(user, connection, **opts)
       mechanism = user.mechanism
       raise InvalidMechanism.new(mechanism) if !SOURCES.has_key?(mechanism)
-      SOURCES[mechanism].new(user)
+      SOURCES[mechanism].new(user, connection, **opts)
     end
 
     # Raised when trying to authorize with an invalid configuration

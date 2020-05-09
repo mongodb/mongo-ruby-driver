@@ -23,7 +23,7 @@ describe Mongo::Auth::X509 do
       end
 
       it 'works' do
-        described_class.new(user)
+        described_class.new(user, connection)
       end
     end
 
@@ -35,7 +35,7 @@ describe Mongo::Auth::X509 do
 
       it 'raises InvalidConfiguration' do
         expect do
-          described_class.new(user)
+          described_class.new(user, connection)
         end.to raise_error(Mongo::Auth::InvalidConfiguration, /User specifies auth source 'foo', but the only valid auth source for X.509 is '\$external'/)
       end
     end
@@ -53,16 +53,16 @@ describe Mongo::Auth::X509 do
       end
 
       let(:x509) do
-        described_class.new(user)
+        described_class.new(user, connection)
       end
 
       let(:login) do
-        x509.login(connection).documents[0]
+        x509.login.documents[0]
       end
 
       it 'attempts to log the user into the connection' do
         expect do
-          x509.login(connection)
+          x509.login
         end.to raise_error(Mongo::Auth::Unauthorized)
       end
     end
