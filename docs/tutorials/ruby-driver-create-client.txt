@@ -183,22 +183,22 @@ When the driver connects to a
 URI, keep in mind the following:
 
 1. SRV URI lookup is performed synchronously when the client is constructed.
-  If this lookup fails for any reason, client construction will fail with an
-  exception. When a client is constructed with a list of hosts, the driver
-  will attempt to contact and monitor those hosts for as long as the client
-  object exists. If one of these hosts does not resolve initially but becomes
-  resolvable later, the driver will be able to establish a connection to such
-  a host when it becomes available. The initial SRV URI lookup must succeed
-  on the first attempt; subsequent host lookups will be retried by the driver
-  as needed.
+   If this lookup fails for any reason, client construction will fail with an
+   exception. When a client is constructed with a list of hosts, the driver
+   will attempt to contact and monitor those hosts for as long as the client
+   object exists. If one of these hosts does not resolve initially but becomes
+   resolvable later, the driver will be able to establish a connection to such
+   a host when it becomes available. The initial SRV URI lookup must succeed
+   on the first attempt; subsequent host lookups will be retried by the driver
+   as needed.
 2. The driver looks up URI options in the DNS TXT records corresponding to the
-  SRV records. These options can be overridden by URI options specified in the
-  URI and by Ruby options, in this order.
+   SRV records. These options can be overridden by URI options specified in the
+   URI and by Ruby options, in this order.
 3. If the topology of the constructed ``Client`` object is unknown or a
-  sharded cluster, the driver will begin monitoring the specified SRV DNS
-  records for changes and will automatically update the list of servers in the
-  cluster. The updates will stop if the topology becomes a single or a replica
-  set.
+   sharded cluster, the driver will begin monitoring the specified SRV DNS
+   records for changes and will automatically update the list of servers in the
+   cluster. The updates will stop if the topology becomes a single or a replica
+   set.
 
 
 .. _ruby-driver-client-options:
