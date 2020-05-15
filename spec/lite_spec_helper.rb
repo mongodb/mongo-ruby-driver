@@ -75,7 +75,7 @@ require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
 
-require 'runners/server_discovery_and_monitoring'
+require 'runners/sdam'
 require 'runners/server_selection_rtt'
 require 'runners/server_selection'
 require 'runners/sdam_monitoring'
