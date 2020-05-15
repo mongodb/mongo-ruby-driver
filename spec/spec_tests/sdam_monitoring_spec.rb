@@ -1,6 +1,8 @@
 require 'lite_spec_helper'
 
-require_relative '../runners/sdam/verifier'
+require 'runners/sdam'
+require 'runners/sdam/verifier'
+require 'runners/sdam_monitoring'
 
 describe 'SDAM Monitoring' do
   include Mongo::SDAM

@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'runners/server_selection'
+
 describe 'Max Staleness Spec' do
 
   include Mongo::ServerSelection::Read

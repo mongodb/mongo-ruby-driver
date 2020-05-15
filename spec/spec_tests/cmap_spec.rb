@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'runners/cmap'
+
 # Temporary scopes in all of the tests are needed to exclude endSessions
 # commands being sent during cleanup from interfering with assertions.
 

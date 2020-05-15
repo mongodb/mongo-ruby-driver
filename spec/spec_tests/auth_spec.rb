@@ -1,5 +1,7 @@
 require 'lite_spec_helper'
 
+require 'runners/auth'
+
 describe 'Auth' do
   include Mongo::Auth
 

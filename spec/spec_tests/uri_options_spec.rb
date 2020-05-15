@@ -1,5 +1,7 @@
 require 'lite_spec_helper'
 
+require 'runners/connection_string'
+
 describe 'Uri Options' do
   include Mongo::ConnectionString
 
