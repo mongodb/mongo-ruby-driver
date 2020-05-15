@@ -85,6 +85,14 @@ module Mongo
         :max_message_size,
         :mongos?
 
+      # Connection pool generation from which this connection was created.
+      # May be nil.
+      #
+      # @return [ Integer | nil ] Connection pool generation.
+      def generation
+        options[:generation]
+      end
+
       def app_metadata
         @app_metadata ||= begin
           same = true

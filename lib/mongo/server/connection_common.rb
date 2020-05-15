@@ -88,6 +88,10 @@ module Mongo
         # knows its address. Server::Connection delegates the address to its
         # server.
         e.add_note("on #{address.seed}")
+        if respond_to?(:generation)
+          # Non-monitoring connections
+          e.generation = generation
+        end
         raise e
       end
 

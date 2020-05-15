@@ -58,6 +58,10 @@ class Mongo::Cluster
     def update_server_descriptions
       servers_list.each do |server|
         if server.address == updated_desc.address
+          unless updated_desc.topology_version_gte?(server.description)
+            return false
+          end
+
           @server_description_changed = server.description != updated_desc
 
           # Always update server description, so that fields that do not

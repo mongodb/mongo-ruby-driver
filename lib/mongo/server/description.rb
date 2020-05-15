@@ -214,6 +214,7 @@ module Mongo
           hosts
           arbiters
           passives
+          topology_version
 
           freeze
         end
@@ -417,6 +418,30 @@ module Mongo
       # @since 2.2.2
       def set_version
         config[SET_VERSION]
+      end
+
+      # @return [ TopologyVersion | nil ] The topology version.
+      def topology_version
+        unless defined?(@topology_version)
+          @topology_version = config['topologyVersion'] &&
+            TopologyVersion.new(config['topologyVersion'])
+        end
+        @topology_version
+      end
+
+      # Returns whether topology version in this description is potentially
+      # newer than topology version in another description.
+      #
+      # @param [ Server::Description ] other_desc The other server description.
+      #
+      # @return [ true | false ] Whether topology version in this description
+      #   is potentially newer.
+      def topology_version_gte?(other_desc)
+        if topology_version.nil? || other_desc.topology_version.nil?
+          true
+        else
+          topology_version.gte?(other_desc.topology_version)
+        end
       end
 
       # Get the lastWriteDate from the lastWrite subdocument in the config.

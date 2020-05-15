@@ -56,8 +56,8 @@ module Sdam
       verify_description_matches(expected.data['newDescription'], actual.new_description)
     end
 
-    def verify_description_matches(expected, actual)
-      case expected['type']
+    def verify_description_matches(server_spec, actual)
+      case server_spec['type']
       when 'Standalone'
         expect(actual).to be_standalone
       when 'RSPrimary'
@@ -76,12 +76,30 @@ module Sdam
         expect(actual).to be_other
       end
 
-      expect(actual.address.to_s).to eq(expected['address'])
-      expect(actual.arbiters).to eq(expected['arbiters'])
-      expect(actual.hosts).to eq(expected['hosts'])
-      expect(actual.passives).to eq(expected['passives'])
-      expect(actual.primary_host).to eq(expected['primary'])
-      expect(actual.replica_set_name).to eq(expected['setName'])
+      if server_spec['arbiters']
+        expect(actual.arbiters).to eq(server_spec['arbiters'])
+      end
+      if server_spec['hosts']
+        expect(actual.hosts).to eq(server_spec['hosts'])
+      end
+      if server_spec['passives']
+        expect(actual.passives).to eq(server_spec['passives'])
+      end
+      if server_spec['primary']
+        expect(actual.primary_host).to eq(server_spec['primary'])
+      end
+      expect(actual.replica_set_name).to eq(server_spec['setName'])
+
+      if server_spec['topologyVersion']
+        # In the Ruby TopologyVersion object, the counter is a
+        # Ruby integer. It would serialize to BSON int.
+        # The expected topology version specifies counter as a
+        # BSON long.
+        # Parse expected value as extended json and compare
+        # Ruby objects.
+        expected_tv = server_spec['topologyVersion']
+        expect(actual.topology_version).to eq(expected_tv)
+      end
     end
 
     def verify_server_closed_event(expected, actual)

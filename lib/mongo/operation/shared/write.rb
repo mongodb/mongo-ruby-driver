@@ -36,7 +36,7 @@ module Mongo
       #
       # @since 2.5.2
       def execute(server, client:)
-        result = server.with_connection do |connection|
+        server.with_connection do |connection|
           validate!(connection)
           op = if connection.features.op_msg_enabled?
               self.class::OpMsg.new(spec)
@@ -46,10 +46,9 @@ module Mongo
               self.class::Command.new(spec)
             end
 
-          op.execute(connection, client: client)
+          result = op.execute(connection, client: client)
+          validate_result(result, client, connection)
         end
-
-        validate_result(result, client, server)
       end
 
       # Execute the bulk write operation.
