@@ -137,7 +137,7 @@ module Mongo
             # Hack to support write concern operations tests, which are
             # defined to use transactions format but target pre-3.6 servers
             # that do not support sessions
-            op.execute(target, nil, nil)
+            op.execute(target || support_client, nil, nil)
           end
         end
 

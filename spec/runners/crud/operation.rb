@@ -152,52 +152,6 @@ module Mongo
         find(collection, context).first
       end
 
-      def client_list_databases(client, context)
-        client.list_databases
-      end
-
-      def client_list_database_names(client, context)
-        client.list_databases({}, true)
-      end
-
-      def client_list_database_objects(client, context)
-        client.list_mongo_databases
-      end
-
-      def db_list_collections(database, context)
-        database.list_collections
-      end
-
-      def db_list_collection_names(database, context)
-        database.collection_names
-      end
-
-      def db_list_collection_objects(database, context)
-        database.collections
-      end
-
-      def create_index(collection, context)
-        # The Ruby driver method uses `key` while the createIndexes server
-        # command and the test specifiecation use 'keys`.
-        opts = BSON::Document.new(options)
-        if opts.key?(:keys)
-          opts[:key] = opts.delete(:keys)
-        end
-        collection.indexes.create_many([opts])
-      end
-
-      def drop_index(collection, context)
-        unless options.keys == %i(name)
-          raise "Only name is allowed when dropping the index"
-        end
-        name = options[:name]
-        collection.indexes.drop_one(name)
-      end
-
-      def list_indexes(collection, context)
-        collection.indexes.to_a
-      end
-
       def watch(collection, context)
         collection.watch
       end
@@ -291,6 +245,34 @@ module Mongo
 
       # ddl
 
+      def client_list_databases(client, context)
+        client.list_databases
+      end
+
+      def client_list_database_names(client, context)
+        client.list_databases({}, true)
+      end
+
+      def client_list_database_objects(client, context)
+        client.list_mongo_databases
+      end
+
+      def db_list_collections(database, context)
+        database.list_collections
+      end
+
+      def db_list_collection_names(database, context)
+        database.collection_names
+      end
+
+      def db_list_collection_objects(database, context)
+        database.collections
+      end
+
+      def create_collection(database, context)
+        database[arguments.fetch('collection')].create(session: context.session)
+      end
+
       def rename(collection, context)
         collection.client.use(:admin).command({
           renameCollection: "#{collection.database.name}.#{collection.name}",
@@ -300,6 +282,73 @@ module Mongo
 
       def drop(collection, context)
         collection.drop
+      end
+
+      def drop_collection(database, context)
+        database[arguments.fetch('collection')].drop
+      end
+
+      def create_index(collection, context)
+        # The Ruby driver method uses `key` while the createIndexes server
+        # command and the test specifiecation use 'keys`.
+        opts = BSON::Document.new(options)
+        if opts.key?(:keys)
+          opts[:key] = opts.delete(:keys)
+        end
+        session = opts.delete(:session)
+        collection.indexes(session: session && context.send(session)).create_many([opts])
+      end
+
+      def drop_index(collection, context)
+        unless options.keys == %i(name)
+          raise "Only name is allowed when dropping the index"
+        end
+        name = options[:name]
+        collection.indexes.drop_one(name)
+      end
+
+      def list_indexes(collection, context)
+        collection.indexes.to_a
+      end
+
+      # special
+
+      def assert_collection_exists(client, context)
+        c = client.use(dn = arguments.fetch('database'))
+        unless c.database.collection_names.include?(cn = arguments.fetch('collection'))
+          raise "Collection #{cn} does not exist in database #{dn}, but must"
+        end
+      end
+
+      def assert_collection_not_exists(client, context)
+        c = client.use(dn = arguments.fetch('database'))
+        if c.database.collection_names.include?(cn = arguments.fetch('collection'))
+          raise "Collection #{cn} exists in database #{dn}, but must not"
+        end
+      end
+
+      def assert_index_exists(client, context)
+        c = client.use(dn = arguments.fetch('database'))
+        coll = c[cn = arguments.fetch('collection')]
+        unless coll.indexes.map { |doc| doc['name'] }.include?(ixn = arguments.fetch('index'))
+          raise "Index #{ixn} does not exist in collection #{cn} in database #{dn}, but must"
+        end
+      end
+
+      def assert_index_not_exists(client, context)
+        c = client.use(dn = arguments.fetch('database'))
+        coll = c[cn = arguments.fetch('collection')]
+        begin
+          if coll.indexes.map { |doc| doc['name'] }.include?(ixn = arguments.fetch('index'))
+            raise "Index #{ixn} exists in collection #{cn} in database #{dn}, but must not"
+          end
+        rescue Mongo::Error::OperationFailure => e
+          if e.to_s =~ /ns does not exist/
+            # Success.
+          else
+            raise
+          end
+        end
       end
 
       # options & arguments
