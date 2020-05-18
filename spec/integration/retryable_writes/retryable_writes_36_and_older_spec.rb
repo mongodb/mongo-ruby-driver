@@ -19,6 +19,12 @@ describe 'Retryable writes integration tests' do
   # eligible servers as would be the case in a multi-shard sharded cluster
   require_no_multi_shard
 
+  # Note: these tests are deprecated in favor of the tests in the file
+  # spec/integration/retryable_writes/retryable_writes_40_and_newer_spec.rb
+  # If you are changing functionality in the driver that only impacts server
+  # versions 4.0 or newer, test that functionality in the other test file.
+  max_server_fcv '3.6'
+
   before do
     authorized_collection.delete_many
   end
