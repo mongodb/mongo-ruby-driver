@@ -49,6 +49,12 @@ module PerformsNoRetries
           perform_operation
         end.to raise_error(Mongo::Error::SocketTimeoutError)
       end
+
+      after do
+        # Assure that the server has completed the operation before moving
+        # on to the next test.
+        sleep 1
+      end
     end
 
     context 'on server versions >= 4.4' do
