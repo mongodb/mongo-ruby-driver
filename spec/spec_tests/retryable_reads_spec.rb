@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'runners/crud'
+
 describe 'Retryable reads spec tests' do
   require_wired_tiger
   require_no_multi_shard
