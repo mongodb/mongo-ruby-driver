@@ -50,6 +50,25 @@ module Mongo
     # @param [ TopologyVersion ] other The other topology version.
     #
     # @return [ true | false ] Whether this topology version is potentially newer.
+    # @api private
+    def gt?(other)
+      if process_id != other.process_id
+        true
+      else
+        counter > other.counter
+      end
+    end
+
+    # Returns whether this topology version is potentially newer than or equal
+    # to another topology version.
+    #
+    # Note that there is no total ordering of topology versions - given
+    # two topology versions, each may be "potentially newer" than the other one.
+    #
+    # @param [ TopologyVersion ] other The other topology version.
+    #
+    # @return [ true | false ] Whether this topology version is potentially newer.
+    # @api private
     def gte?(other)
       if process_id != other.process_id
         true

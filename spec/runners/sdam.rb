@@ -93,6 +93,8 @@ module Mongo
       #   the phase.
       attr_reader :responses
 
+      attr_reader :application_errors
+
       # Create the new phase.
       #
       # @example Create the new phase.
@@ -104,7 +106,8 @@ module Mongo
       # @since 2.0.0
       def initialize(phase, uri)
         @phase = phase
-        @responses = @phase['responses'].map{ |response| Response.new(response, uri) }
+        @responses = @phase['responses']&.map{ |response| Response.new(response, uri) }
+        @application_errors = @phase['applicationErrors']&.map{ |error_spec| ApplicationError.new(error_spec) }
         @outcome = Outcome.new(BSON::ExtJSON.parse_obj(@phase['outcome']))
       end
     end
@@ -133,6 +136,37 @@ module Mongo
         @uri = uri
         @address = response[0]
         @ismaster = BSON::ExtJSON.parse_obj(response[1])
+      end
+    end
+
+    class ApplicationError
+      def initialize(spec)
+        @spec = spec
+      end
+
+      def address_str
+        @spec.fetch('address')
+      end
+
+      def when
+        Utils.underscore(@spec.fetch('when'))
+      end
+
+      def max_wire_version
+        @spec['max_wire_version']
+      end
+
+      def generation
+        @spec['generation']
+      end
+
+      def type
+        Utils.underscore(@spec.fetch('type'))
+      end
+
+      def result
+        msg = Mongo::Protocol::Msg.new([], {}, BSON::ExtJSON.parse_obj(@spec['response']))
+        Mongo::Operation::Result.new([msg])
       end
     end
 

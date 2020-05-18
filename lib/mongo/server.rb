@@ -430,8 +430,8 @@ module Mongo
     # @api private
     def handle_handshake_failure!
       yield
-    rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError
-      unknown!
+    rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError => e
+      unknown!(generation: e.generation)
       raise
     end
 
@@ -452,9 +452,9 @@ module Mongo
     rescue Mongo::Error::SocketTimeoutError
       # possibly cluster is slow, do not give up on it
       raise
-    rescue Mongo::Error::SocketError
+    rescue Mongo::Error::SocketError => e
       # non-timeout network error
-      unknown!
+      unknown!(generation: e.generation)
       raise
     rescue Auth::Unauthorized
       # auth error, keep server description and topology as they are
@@ -487,19 +487,42 @@ module Mongo
     # Marks server unknown and publishes the associated SDAM event
     # (server description changed).
     #
+    # If the generation is passed in options, the server will only be marked
+    # unknown if the passed generation is no older than the current generation
+    # of the server's connection pool.
+    #
     # @param [ Hash ] options Options.
     #
+    # @option options [ Integer ] :generation Connection pool generation of
+    #   the connection that was used for the operation that produced the error.
     # @option options [ true | false ] :keep_connection_pool Usually when the
     #   new server description is unknown, the connection pool on the
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
+    # @option options [ TopologyVersion ] :topology_version Topology version
+    #   of the error response that is causing the server to be marked unknown.
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
+      if options[:generation] && options[:generation] < pool.generation
+        return
+      end
+
+      if options[:topology_version] && description.topology_version &&
+        !options[:topology_version].gt?(description.topology_version)
+      then
+        return
+      end
+
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
-      cluster.run_sdam_flow(description, Description.new(address), options)
+      config = {}
+      if options[:topology_version]
+        config['topologyVersion'] = options[:topology_version]
+      end
+      new_description = Description.new(address, config)
+      cluster.run_sdam_flow(description, new_description, options)
     end
 
     # @api private

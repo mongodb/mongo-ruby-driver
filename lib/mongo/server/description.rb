@@ -430,12 +430,29 @@ module Mongo
       end
 
       # Returns whether topology version in this description is potentially
+      # newer than or equal to topology version in another description.
+      #
+      # @param [ Server::Description ] other_desc The other server description.
+      #
+      # @return [ true | false ] Whether topology version in this description
+      #   is potentially newer or equal.
+      # @api private
+      def topology_version_gt?(other_desc)
+        if topology_version.nil? || other_desc.topology_version.nil?
+          true
+        else
+          topology_version.gt?(other_desc.topology_version)
+        end
+      end
+
+      # Returns whether topology version in this description is potentially
       # newer than topology version in another description.
       #
       # @param [ Server::Description ] other_desc The other server description.
       #
       # @return [ true | false ] Whether topology version in this description
       #   is potentially newer.
+      # @api private
       def topology_version_gte?(other_desc)
         if topology_version.nil? || other_desc.topology_version.nil?
           true
@@ -631,7 +648,7 @@ module Mongo
       #
       # @since 2.0.0
       def unknown?
-        config.empty? || !ok?
+        config.empty? || config.keys == %w(topologyVersion) || !ok?
       end
 
       # @api private
