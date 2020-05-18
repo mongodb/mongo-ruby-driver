@@ -293,11 +293,17 @@ module Mongo
       private
 
       def deliver(message, client, options = {})
-        begin
+        handle_errors do
           super
+        end
+      end
+
+      def handle_errors
+        begin
+          yield
         # Important: timeout errors are not handled here
-        rescue Error::SocketError
-          @server.unknown!
+        rescue Error::SocketError => e
+          @server.unknown!(generation: e.generation)
           raise
         end
       end

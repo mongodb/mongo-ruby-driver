@@ -6,6 +6,14 @@ require 'runners/sdam/verifier'
 describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
 
+  class Executor
+    include Mongo::Operation::Executable
+
+    def session
+      nil
+    end
+  end
+
   SERVER_DISCOVERY_TESTS.each do |file|
 
     spec = Mongo::SDAM::Spec.new(file)
@@ -40,6 +48,27 @@ describe 'Server Discovery and Monitoring' do
         @client && @client.close
       end
 
+      def raise_application_error(error, connection = nil)
+        case error.type
+        when :network
+          exc = Mongo::Error::SocketError.new
+          exc.generation = error.generation
+          raise exc
+        when :timeout
+          exc = Mongo::Error::SocketTimeoutError.new
+          exc.generation = error.generation
+          raise exc
+        when :command
+          result = error.result
+          if error.generation
+            allow(connection).to receive(:generation).and_return(error.generation)
+          end
+          Executor.new.send(:process_result_for_sdam, result, connection)
+        else
+          raise NotImplementedError, "Error type #{error.type} is not implemented"
+        end
+      end
+
       spec.phases.each_with_index do |phase, index|
 
         context("Phase: #{index + 1}") do
@@ -47,7 +76,7 @@ describe 'Server Discovery and Monitoring' do
           before do
             allow(@client.cluster).to receive(:connected?).and_return(true)
 
-            phase.responses.each do |response|
+            phase.responses&.each do |response|
               server = find_server(@client, response.address)
               unless server
                 server = Mongo::Server.new(
@@ -68,6 +97,35 @@ describe 'Server Discovery and Monitoring' do
               new_description = Mongo::Server::Description.new(
                 server.description.address, result, 0.5)
               @client.cluster.run_sdam_flow(server.description, new_description)
+            end
+
+            phase.application_errors&.each do |error|
+              server = find_server(@client, error.address_str)
+              unless server
+                raise NotImplementedError, 'Errors can only be produced on known servers'
+              end
+
+              begin
+                case error.when
+                when :before_handshake_completes
+                  connection = Mongo::Server::Connection.new(server,
+                    generation: server.pool.generation)
+                  server.handle_handshake_failure! do
+                    raise_application_error(error, connection)
+                  end
+                when :after_handshake_completes
+                  connection = Mongo::Server::Connection.new(server,
+                    generation: server.pool.generation)
+                  allow(connection).to receive(:description).and_return(server.description)
+                  connection.send(:handle_errors) do
+                    raise_application_error(error, connection)
+                  end
+                else
+                  raise NotImplementedError, "Error position #{error.when} is not implemented"
+                end
+              rescue Mongo::Error
+                # This was the exception we raised
+              end
             end
           end
 

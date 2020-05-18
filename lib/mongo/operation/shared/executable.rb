@@ -71,6 +71,16 @@ module Mongo
       def process_result(result, connection)
         connection.server.update_cluster_time(result)
 
+        process_result_for_sdam(result, connection)
+
+        if session
+          session.process(result)
+        end
+
+        result
+      end
+
+      def process_result_for_sdam(result, connection)
         if (result.not_master? || result.node_recovering?) &&
           connection.generation >= connection.server.pool.generation
         then
@@ -81,16 +91,14 @@ module Mongo
             keep_pool = connection.description.server_version_gte?('4.2')
           end
 
-          connection.server.unknown!(keep_connection_pool: keep_pool)
+          connection.server.unknown!(
+            keep_connection_pool: keep_pool,
+            generation: connection.generation,
+            topology_version: result.topology_version,
+          )
 
           connection.server.scan_semaphore.signal
         end
-
-        if session
-          session.process(result)
-        end
-
-        result
       end
     end
   end

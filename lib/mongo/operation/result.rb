@@ -321,6 +321,15 @@ module Mongo
       end
       private :raise_operation_failure
 
+      # @return [ TopologyVersion | nil ] The topology version.
+      def topology_version
+        unless defined?(@topology_version)
+          @topology_version = first_document['topologyVersion'] &&
+            TopologyVersion.new(first_document['topologyVersion'])
+        end
+        @topology_version
+      end
+
       # Get the number of documents written by the server.
       #
       # @example Get the number of documents written.
