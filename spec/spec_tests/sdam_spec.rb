@@ -1,5 +1,7 @@
 require 'lite_spec_helper'
 
+require_relative '../runners/sdam/verifier'
+
 describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
 
@@ -130,6 +132,14 @@ describe 'Server Discovery and Monitoring' do
                     expect(server.description).to be_unknown
                   end
                 end
+              end
+
+              let(:verifier) { Sdam::Verifier.new }
+
+              it "#{address_str} server description has expected values" do
+                actual = @client.cluster.topology.server_descriptions[address_str]
+
+                verifier.verify_description_matches(server_spec, actual)
               end
             end
 

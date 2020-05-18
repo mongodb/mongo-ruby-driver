@@ -22,10 +22,10 @@ module Mongo
 
       private
 
-      def validate_result(result, client, server)
+      def validate_result(result, client, connection)
         unpin_maybe(session) do
           add_error_labels(client, session) do
-            add_server_diagnostics(server) do
+            add_server_diagnostics(connection) do
               result.validate!
             end
           end
@@ -92,14 +92,15 @@ module Mongo
       #
       # This method is intended to add server address information to exceptions
       # raised during execution of operations on servers.
-      def add_server_diagnostics(server)
+      def add_server_diagnostics(connection)
         yield
       rescue Error::SocketError, Error::SocketTimeoutError
         # Diagnostics should have already been added by the connection code,
         # do not add them again.
         raise
       rescue Error, Error::AuthError => e
-        e.add_note("on #{server.address.seed}")
+        e.add_note("on #{connection.address.seed}")
+        e.generation = connection.generation
         raise e
       end
 

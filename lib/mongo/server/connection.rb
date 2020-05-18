@@ -113,15 +113,6 @@ module Mongo
       # @since 2.9.0
       attr_reader :id
 
-      # Connection pool generation from which this connection was created.
-      # May be nil.
-      #
-      # @since 2.7.0
-      # @api private
-      def generation
-        options[:generation]
-      end
-
       # The connection pool from which this connection was created.
       # May be nil.
       #

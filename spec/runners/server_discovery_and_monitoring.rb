@@ -50,15 +50,6 @@ module Mongo
       client.cluster.servers_list.detect{ |s| s.address.to_s == address_str }
     end
 
-    # Helper to convert an extended JSON ObjectId electionId to BSON::ObjectId.
-    #
-    # @since 2.1.0
-    def self.convert_election_ids(docs)
-      docs.each do |doc |
-        doc['electionId'] = BSON::ObjectId.from_string(doc['electionId']['$oid']) if doc['electionId']
-      end
-    end
-
     # Represents a specification.
     #
     # @since 2.0.0
@@ -113,8 +104,8 @@ module Mongo
       # @since 2.0.0
       def initialize(phase, uri)
         @phase = phase
-        @responses = @phase['responses'].map{ |response| Response.new(SDAM::convert_election_ids(response), uri) }
-        @outcome = Outcome.new(@phase['outcome'])
+        @responses = @phase['responses'].map{ |response| Response.new(response, uri) }
+        @outcome = Outcome.new(BSON::ExtJSON.parse_obj(@phase['outcome']))
       end
     end
 
@@ -141,7 +132,7 @@ module Mongo
       def initialize(response, uri)
         @uri = uri
         @address = response[0]
-        @ismaster = response[1]
+        @ismaster = BSON::ExtJSON.parse_obj(response[1])
       end
     end
 
@@ -179,14 +170,14 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(outcome)
-        @servers = process_servers(outcome['servers']) if outcome['servers']
+        @servers = outcome['servers'] if outcome['servers']
         @set_name = outcome['setName']
         @topology_type = outcome['topologyType']
         @logical_session_timeout = outcome['logicalSessionTimeoutMinutes']
-        @events = process_events(outcome['events']) if outcome['events']
+        @events = map_events(outcome['events']) if outcome['events']
         @compatible = outcome['compatible']
         if outcome['maxElectionId']
-          @max_election_id = BSON::ObjectId.from_string(outcome['maxElectionId']['$oid'])
+          @max_election_id = outcome['maxElectionId']
         end
         @max_set_version = outcome['maxSetVersion']
       end
@@ -209,15 +200,9 @@ module Mongo
 
       private
 
-      def process_events(events)
+      def map_events(events)
         events.map do |event|
           Event.new(event.keys.first, event.values.first)
-        end
-      end
-
-      def process_servers(servers)
-        servers.each do |s|
-          SDAM::convert_election_ids([ s[1] ])
         end
       end
     end

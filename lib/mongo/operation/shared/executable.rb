@@ -25,9 +25,9 @@ module Mongo
       def do_execute(connection, client, options = {})
         unpin_maybe(session) do
           add_error_labels(client, session) do
-            add_server_diagnostics(connection.server) do
+            add_server_diagnostics(connection) do
               get_result(connection, client, options).tap do |result|
-                process_result(result, connection.server)
+                process_result(result, connection)
               end
             end
           end
@@ -42,7 +42,7 @@ module Mongo
         end
 
         do_execute(connection, client, options).tap do |result|
-          validate_result(result, client, connection.server)
+          validate_result(result, client, connection)
         end
       end
 
@@ -68,23 +68,28 @@ module Mongo
         message(connection)
       end
 
-      def process_result(result, server)
-        server.update_cluster_time(result)
+      def process_result(result, connection)
+        connection.server.update_cluster_time(result)
 
-        if result.not_master? || result.node_recovering?
+        if (result.not_master? || result.node_recovering?) &&
+          connection.generation >= connection.server.pool.generation
+        then
           if result.node_shutting_down?
             keep_pool = false
           else
             # Max wire version needs to be examined while the server is known
-            keep_pool = server.description.server_version_gte?('4.2')
+            keep_pool = connection.description.server_version_gte?('4.2')
           end
 
-          server.unknown!(keep_connection_pool: keep_pool)
+          connection.server.unknown!(keep_connection_pool: keep_pool)
 
-          server.scan_semaphore.signal
+          connection.server.scan_semaphore.signal
         end
 
-        session.process(result) if session
+        if session
+          session.process(result)
+        end
+
         result
       end
     end

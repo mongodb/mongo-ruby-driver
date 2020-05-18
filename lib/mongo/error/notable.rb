@@ -15,8 +15,9 @@
 module Mongo
   class Error < StandardError
 
-    # A module encapsulating note tracking functionality, since currently
-    # the driver does not have a single exception hierarchy root.
+    # A module encapsulating functionality to manage data attached to
+    # exceptions in the driver, since the driver does not currently have a
+    # single exception hierarchy root.
     #
     # @since 2.11.0
     # @api private
@@ -52,6 +53,12 @@ module Mongo
         end
         @notes << note
       end
+
+      # Returns connection pool generation for the connection on which the
+      # error occurred.
+      #
+      # @return [ Integer | nil ] Connection pool generation.
+      attr_accessor :generation
 
       # @api public
       def to_s
