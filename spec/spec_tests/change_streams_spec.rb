@@ -1,4 +1,6 @@
 require 'spec_helper'
+
+require 'runners/crud'
 require 'runners/change_streams/spec'
 
 describe 'ChangeStreams' do

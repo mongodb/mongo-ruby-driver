@@ -1,5 +1,7 @@
 require 'lite_spec_helper'
 
+require 'runners/connection_string'
+
 describe 'DNS Seedlist Discovery' do
   require_external_connectivity
 

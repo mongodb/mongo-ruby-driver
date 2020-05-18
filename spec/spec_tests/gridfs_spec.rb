@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'runners/gridfs'
+
 describe 'GridFS' do
   include Mongo::GridFS
 

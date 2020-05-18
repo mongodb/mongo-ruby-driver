@@ -1,5 +1,8 @@
 require 'spec_helper'
 
+require 'runners/crud'
+require 'runners/transactions'
+
 describe 'Transactions' do
   require_wired_tiger
 

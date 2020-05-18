@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'runners/command_monitoring'
+
 describe 'Command Monitoring Events' do
 
   COMMAND_MONITORING_TESTS.each do |file|

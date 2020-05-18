@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'runners/server_selection_rtt'
+
 describe 'Server Selection moving average round trip time calculation' do
 
   include Mongo::ServerSelection::RTT
