@@ -32,7 +32,7 @@ module Mongo
       # The default interval between server status refreshes is 10 seconds.
       #
       # @since 2.0.0
-      HEARTBEAT_INTERVAL = 10.freeze
+      DEFAULT_HEARTBEAT_INTERVAL = 10.freeze
 
       # The minimum time between forced server scans. Is
       # minHeartbeatFrequencyMS in the SDAM spec.
@@ -60,6 +60,8 @@ module Mongo
       #
       # @option options [ Float ] :connect_timeout The timeout, in seconds, to
       #   use when establishing the monitoring connection.
+      # @option options [ Float ] :heartbeat_interval The interval between
+      #   regular server checks.
       # @option options [ Logger ] :logger A custom logger to use.
       # @option options [ Float ] :socket_timeout The timeout, in seconds, to
       #   execute operations on the monitoring connection.
@@ -90,6 +92,13 @@ module Mongo
       # @return [ Hash ] options The server options.
       attr_reader :options
 
+      # The interval between regular server checks.
+      #
+      # @return [ Float ] The heartbeat interval, in seconds.
+      def heartbeat_interval
+        options[:heartbeat_interval] || DEFAULT_HEARTBEAT_INTERVAL
+      end
+
       # @deprecated
       def_delegators :server, :last_scan
 
@@ -113,7 +122,7 @@ module Mongo
       # @since 2.0.0
       def do_work
         scan!
-        server.scan_semaphore.wait(server.cluster.heartbeat_interval)
+        server.scan_semaphore.wait(heartbeat_interval)
       end
 
       # Stop the background thread and wait for to terminate for a reasonable

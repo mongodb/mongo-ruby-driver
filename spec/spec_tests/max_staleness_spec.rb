@@ -59,7 +59,7 @@ describe 'Max Staleness Spec' do
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
           allow(c).to receive(:heartbeat_interval).and_return(
-            spec.heartbeat_frequency || Mongo::Server::Monitor::HEARTBEAT_INTERVAL)
+            spec.heartbeat_frequency || Mongo::Server::Monitor::DEFAULT_HEARTBEAT_INTERVAL)
         end
       end
 
