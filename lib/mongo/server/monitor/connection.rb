@@ -19,6 +19,7 @@ module Mongo
       # This class models the monitor connections and their behavior.
       #
       # @since 2.0.0
+      # @api private
       class Connection < Server::ConnectionCommon
         include Retryable
         include Loggable
@@ -57,27 +58,6 @@ module Mongo
         #
         # @since 2.5.0
         ISMASTER_OP_MSG_BYTES = ISMASTER_OP_MSG_MESSAGE.serialize.to_s.freeze
-
-        # The default time in seconds to timeout a connection attempt.
-        #
-        # @since 2.1.2
-        #
-        # @deprecated Please use Server::CONNECT_TIMEOUT instead. Will be removed in 3.0.0
-        CONNECT_TIMEOUT = 10.freeze
-
-        # Key for compression algorithms in the response from the server during handshake.
-        #
-        # @since 2.5.0
-        # @deprecated
-        COMPRESSION = 'compression'.freeze
-
-        # Warning message that the server has no compression algorithms in common with those requested
-        #   by the client.
-        #
-        # @since 2.5.0
-        # @deprecated
-        COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
-                                'Compression will not be used.'.freeze
 
         # Creates a new connection object to the specified target address
         # with the specified options.
@@ -118,7 +98,7 @@ module Mongo
         # @since 2.0.0
         def initialize(address, options = {})
           @address = address
-          @options = options.freeze
+          @options = options.dup.freeze
           @app_metadata = options[:app_metadata]
           @socket = nil
           @pid = Process.pid
@@ -210,10 +190,8 @@ module Mongo
         #
         # @since 2.4.3
         def socket_timeout
-          @timeout ||= options[:connect_timeout] || Server::CONNECT_TIMEOUT
+          options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
-        # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
-        alias :timeout :socket_timeout
 
         private
 

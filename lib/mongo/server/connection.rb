@@ -265,9 +265,6 @@ module Mongo
 
       # Get the timeout to execute an operation on a socket.
       #
-      # @example Get the timeout to execute an operation on a socket.
-      #   connection.timeout
-      #
       # @return [ Float ] The operation timeout in seconds.
       #
       # @since 2.0.0

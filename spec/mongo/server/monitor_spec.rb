@@ -234,7 +234,7 @@ describe Mongo::Server::Monitor do
       end
 
       it 'sets the value as the timeout on the connection' do
-        expect(monitor.connection.timeout).to eq(connect_timeout)
+        expect(monitor.connection.socket_timeout).to eq(connect_timeout)
       end
 
       it 'set the value as the timeout on the socket' do
