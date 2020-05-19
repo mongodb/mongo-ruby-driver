@@ -76,5 +76,14 @@ module Mongo
         counter >= other.counter
       end
     end
+
+    # Converts the object to a document suitable for being sent to the server.
+    #
+    # @return [ BSON::Document ] The document.
+    #
+    # @api private
+    def to_doc
+      BSON::Document.new(self).merge(counter: BSON::Int64.new(counter))
+    end
   end
 end
