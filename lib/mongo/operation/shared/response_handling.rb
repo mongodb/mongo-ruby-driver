@@ -24,7 +24,7 @@ module Mongo
 
       def validate_result(result, client, connection)
         unpin_maybe(session) do
-          add_error_labels(client, session) do
+          add_error_labels(client, connection, session) do
             add_server_diagnostics(connection) do
               result.validate!
             end
@@ -38,7 +38,7 @@ module Mongo
       # and server-side errors (Error::OperationFailure); it does not
       # handle server selection errors (Error::NoServerAvailable), for which
       # labels are added in the server selection code.
-      def add_error_labels(client, session)
+      def add_error_labels(client, connection, session)
         begin
           yield
         rescue Mongo::Error::SocketError => e
@@ -49,11 +49,11 @@ module Mongo
             e.add_label('UnknownTransactionCommitResult')
           end
 
-          maybe_add_retryable_write_error_label!(e, client, session)
+          maybe_add_retryable_write_error_label!(e, connection, client, session)
 
           raise e
         rescue Mongo::Error::SocketTimeoutError => e
-          maybe_add_retryable_write_error_label!(e, client, session)
+          maybe_add_retryable_write_error_label!(e, connection, client, session)
           raise e
         rescue Mongo::Error::OperationFailure => e
           if session && session.committing_transaction?
@@ -64,7 +64,7 @@ module Mongo
             end
           end
 
-          maybe_add_retryable_write_error_label!(e, client, session)
+          maybe_add_retryable_write_error_label!(e, connection, client, session)
 
           raise e
         end
