@@ -317,6 +317,7 @@ module Mongo
       FLAGS = Array.new(16).tap do |arr|
         arr[0] = :checksum_present
         arr[1] = :more_to_come
+        arr[16] = :exhaust_allowed
       end.freeze
 
       # @!attribute
