@@ -109,19 +109,22 @@ module Mongo
       # A method that will add the RetryableWriteError label to an error if
       # any of the following conditions are true:
       #
-      # If the error meets the criteria for a retryable error (i.e. has one
+      # The error meets the criteria for a retryable error (i.e. has one
       #   of the retryable error codes or error messages)
       #
-      # AND one of the following are true:
+      # AND the server does not support adding the RetryableWriteError label OR
+      #   the error is a network error (i.e. the driver must add the label)
       #
-      # The error occured during a commitTransaction or abortTransaction
+      # AND the error occured during a commitTransaction or abortTransaction
       #   OR the error occured during a write outside of a transaction on a
-      #   client that has the retry_writes set to true.
+      #   client that has retry writes enabled.
       #
       # If these conditions are met, the original error will be mutated.
       # If they're not met, the error will not be changed.
       #
       # @param [ Mongo::Error ] error The error to which to add the label.
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
       # @param [ Mongo::Client | nil ] client The client that is performing
       #   the operation.
       # @param [ Mongo::Session ] session The operation's session.
@@ -129,17 +132,34 @@ module Mongo
       # @note The client argument is optional because some operations, such as
       #   end_session, do not pass the client as an argument to the execute
       #   method.
-      def maybe_add_retryable_write_error_label!(error, client, session)
+      def maybe_add_retryable_write_error_label!(error, connection, client, session)
         in_transaction = session && session.in_transaction?
         committing_transaction = in_transaction && session.committing_transaction?
         aborting_transaction = in_transaction && session.aborting_transaction?
         modern_retry_writes = client && client.options[:retry_writes]
         legacy_retry_writes = client && !client.options[:retry_writes] &&
           client.max_write_retries > 0
-        retry_writes = modern_retry_writes || legacy_retry_writes
 
-        if (committing_transaction || aborting_transaction ||
-            (!in_transaction && retry_writes)) && error.write_retryable?
+        # An operation is retryable if it meets one of the following criteria:
+        # - It is a commitTransaction or abortTransaction
+        # - It does not occur during a transaction and the client has enabled
+        #   modern or legacy writes
+        #
+        # Note: any write operation within a transaction (excepting commit and
+        # abort is NOT a retryable operation)
+        retryable_operation = committing_transaction || aborting_transaction ||
+          (!in_transaction && (modern_retry_writes || legacy_retry_writes))
+
+        # An operation should add the RetryableWriteError label if one of the
+        # following conditions is met:
+        # - The server does not support adding the RetryableWriteError label
+        # - The error is a network error
+        should_add_error_label =
+          !connection.description.features.retryable_write_error_label_enabled? ||
+          error.is_a?(Mongo::Error::SocketError) ||
+          error.is_a?(Mongo::Error::SocketTimeoutError)
+
+        if retryable_operation && should_add_error_label && error.write_retryable?
           error.add_label('RetryableWriteError')
         end
       end

@@ -86,7 +86,7 @@ tests:
         result:
           # Note, the server will return the errorLabel in this case.
           errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "UnknownTransactionCommitResult"]
       - name: abortTransaction
         object: session0
 
@@ -143,7 +143,7 @@ tests:
         result:
           # Note, the server will return the errorLabel in this case.
           errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "UnknownTransactionCommitResult"]
       - name: abortTransaction
         object: session0
 
@@ -200,7 +200,7 @@ tests:
         result:
           # Note, the server will return the errorLabel in this case.
           errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "UnknownTransactionCommitResult"]
       - name: abortTransaction
         object: session0
 
@@ -261,7 +261,7 @@ tests:
         result:
           # Note, the server will return the errorLabel in this case.
           errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "UnknownTransactionCommitResult"]
 
     expectations:
       - command_started_event:
@@ -295,7 +295,7 @@ tests:
       collection:
         data: []
 
-  - description: add transient label to connection errors
+  - description: add TransientTransactionError label to connection errors, but do not add RetryableWriteError label
 
     failPoint:
       configureFailPoint: failCommand
@@ -315,7 +315,10 @@ tests:
             _id: 1
         result: &transient_label_only
           errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
+          # While a connection error would normally be retryable, these are not because
+          # they occur within a transaction; ensure the driver does not add the
+          # RetryableWriteError label to these errors.
+          errorLabelsOmit: ["RetryableWriteError", "UnknownTransactionCommitResult"]
       - name: find
         object: collection
         arguments:
@@ -408,7 +411,7 @@ tests:
       collection:
         data: []
 
-  - description: add unknown commit label to connection errors
+  - description: add RetryableWriteError and UnknownTransactionCommitResult labels to connection errors
 
     failPoint:
       configureFailPoint: failCommand
@@ -431,7 +434,7 @@ tests:
       - name: commitTransaction
         object: session0
         result:
-          errorLabelsContain: ["UnknownTransactionCommitResult"]
+          errorLabelsContain: ["RetryableWriteError", "UnknownTransactionCommitResult"]
           errorLabelsOmit: ["TransientTransactionError"]
       - name: commitTransaction
         object: session0
@@ -492,14 +495,15 @@ tests:
         data:
           - _id: 1
 
-  - description: add unknown commit label to retryable commit errors
+  - description: add RetryableWriteError and UnknownTransactionCommitResult labels to retryable commit errors
 
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
-          errorCode: 11602  # InterruptedDueToReplStateChange 
+          errorCode: 11602  # InterruptedDueToReplStateChange
+          errorLabels: ["RetryableWriteError"]
 
     operations:
       - name: startTransaction
@@ -515,7 +519,7 @@ tests:
       - name: commitTransaction
         object: session0
         result:
-          errorLabelsContain: ["UnknownTransactionCommitResult"]
+          errorLabelsContain: ["RetryableWriteError", "UnknownTransactionCommitResult"]
           errorLabelsOmit: ["TransientTransactionError"]
       - name: commitTransaction
         object: session0
@@ -576,7 +580,7 @@ tests:
         data:
           - _id: 1
 
-  - description: add unknown commit label to writeConcernError ShutdownInProgress
+  - description: add RetryableWriteError and UnknownTransactionCommitResult labels to writeConcernError ShutdownInProgress
 
     failPoint:
       configureFailPoint: failCommand
@@ -586,6 +590,7 @@ tests:
           writeConcernError:
             code: 91
             errmsg: Replication is being shut down
+            errorLabels: ["RetryableWriteError"]
 
     operations:
       - name: startTransaction
@@ -605,7 +610,7 @@ tests:
       - name: commitTransaction
         object: session0
         result:
-          errorLabelsContain: ["UnknownTransactionCommitResult"]
+          errorLabelsContain: ["RetryableWriteError", "UnknownTransactionCommitResult"]
           errorLabelsOmit: ["TransientTransactionError"]
       - name: commitTransaction
         object: session0
@@ -668,7 +673,67 @@ tests:
         data:
           - _id: 1
 
-  - description: add unknown commit label to writeConcernError WriteConcernFailed
+  - description: do not add RetryableWriteError label to writeConcernError ShutdownInProgress that occurs within transaction
+
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 1 }
+      data:
+          failCommands: ["insert"]
+          writeConcernError:
+            code: 91
+            errmsg: Replication is being shut down
+
+    operations:
+      - name: startTransaction
+        object: session0
+        arguments:
+          options:
+            writeConcern:
+              w: majority
+      - name: insertOne
+        object: collection
+        arguments:
+          session: session0
+          document:
+            _id: 1
+        result:
+          errorLabelsContain: []
+          errorLabelsOmit: ["RetryableWriteError", "TransientTransactionError", "UnknownTransactionCommitResult"]
+      - name: abortTransaction
+        object: session0
+
+    expectations:
+      - command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - _id: 1
+            ordered: true
+            readConcern:
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction: true
+            autocommit: false
+          command_name: insert
+          database_name: *database_name
+      - command_started_event:
+          command:
+            abortTransaction: 1
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction:
+            autocommit: false
+          command_name: abortTransaction
+          database_name: admin
+
+    outcome:
+      collection:
+        data: []
+
+  - description: add UnknownTransactionCommitResult label to writeConcernError WriteConcernFailed
 
     failPoint:
       configureFailPoint: failCommand
@@ -698,7 +763,7 @@ tests:
         object: session0
         result:
           errorLabelsContain: ["UnknownTransactionCommitResult"]
-          errorLabelsOmit: ["TransientTransactionError"]
+          errorLabelsOmit: ["RetryableWriteError", "TransientTransactionError"]
       - name: commitTransaction
         object: session0
 
@@ -748,7 +813,7 @@ tests:
         data:
           - _id: 1
 
-  - description: add unknown commit label to writeConcernError WriteConcernFailed with wtimeout
+  - description: add UnknownTransactionCommitResult label to writeConcernError WriteConcernFailed with wtimeout
 
     failPoint:
       configureFailPoint: failCommand
@@ -780,7 +845,7 @@ tests:
         object: session0
         result:
           errorLabelsContain: ["UnknownTransactionCommitResult"]
-          errorLabelsOmit: ["TransientTransactionError"]
+          errorLabelsOmit: ["RetryableWriteError", "TransientTransactionError"]
       - name: commitTransaction
         object: session0
 
@@ -830,7 +895,7 @@ tests:
         data:
           - _id: 1
 
-  - description: omit unknown commit label to writeConcernError UnsatisfiableWriteConcern
+  - description: omit UnknownTransactionCommitResult label from writeConcernError UnsatisfiableWriteConcern
 
     failPoint:
       configureFailPoint: failCommand
@@ -859,7 +924,7 @@ tests:
       - name: commitTransaction
         object: session0
         result:
-          errorLabelsOmit: ["TransientTransactionError", "UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "TransientTransactionError", "UnknownTransactionCommitResult"]
 
     expectations:
       - command_started_event:
@@ -895,7 +960,7 @@ tests:
         data:
           - _id: 1
 
-  - description: omit unknown commit label to writeConcernError UnknownReplWriteConcern
+  - description: omit UnknownTransactionCommitResult label from writeConcernError UnknownReplWriteConcern
 
     failPoint:
       configureFailPoint: failCommand
@@ -924,7 +989,7 @@ tests:
       - name: commitTransaction
         object: session0
         result:
-          errorLabelsOmit: ["TransientTransactionError", "UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteConcern", "TransientTransactionError", "UnknownTransactionCommitResult"]
 
     expectations:
       - command_started_event:
@@ -952,6 +1017,250 @@ tests:
             autocommit: false
             writeConcern:
               w: majority
+          command_name: commitTransaction
+          database_name: admin
+
+    outcome:
+      collection:
+        data:
+          - _id: 1
+
+  - description: do not add UnknownTransactionCommitResult label to MaxTimeMSExpired inside transactions
+
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 1 }
+      data:
+        failCommands: ["aggregate"]
+        errorCode: 50  # MaxTimeMSExpired
+
+    operations:
+      - name: startTransaction
+        object: session0
+      - name: insertOne
+        object: collection
+        arguments:
+          session: session0
+          document:
+            _id: 1
+        result:
+          insertedId: 1
+      - name: aggregate
+        object: collection
+        arguments:
+          pipeline:
+            - $project:
+                _id: 1
+          maxTimeMS: 60000
+          session: session0
+        result:
+          errorLabelsOmit: ["RetryableWriteError", "UnknownTransactionCommitResult", "TransientTransactionError"]
+      - name: abortTransaction
+        object: session0
+
+    expectations:
+      - command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - _id: 1
+            ordered: true
+            readConcern:
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction: true
+            autocommit: false
+            writeConcern:
+          command_name: insert
+          database_name: *database_name
+      - command_started_event:
+          command:
+            aggregate: *collection_name
+            pipeline:
+              - $project:
+                  _id: 1
+            cursor: {}
+            readConcern:
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            autocommit: false
+            maxTimeMS: 60000
+          command_name: aggregate
+          database_name: *database_name
+      - command_started_event:
+          command:
+            abortTransaction: 1
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction:
+            autocommit: false
+            writeConcern:
+          command_name: abortTransaction
+          database_name: admin
+
+    outcome:
+      collection:
+        data: []
+
+  - description: add UnknownTransactionCommitResult label to MaxTimeMSExpired
+
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 1 }
+      data:
+          failCommands: ["commitTransaction"]
+          errorCode: 50  # MaxTimeMSExpired
+
+    operations:
+      - name: startTransaction
+        object: session0
+        arguments:
+          options:
+            writeConcern:
+              w: majority
+            maxCommitTimeMS: 60000
+      - name: insertOne
+        object: collection
+        arguments:
+          session: session0
+          document:
+            _id: 1
+        result:
+          insertedId: 1
+      - name: commitTransaction
+        object: session0
+        result:
+          errorLabelsContain: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "TransientTransactionError"]
+      - name: commitTransaction
+        object: session0
+
+    expectations:
+      - command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - _id: 1
+            ordered: true
+            readConcern:
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction: true
+            autocommit: false
+            writeConcern:
+          command_name: insert
+          database_name: *database_name
+      - command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction:
+            autocommit: false
+            writeConcern:
+              w: majority
+            maxTimeMS: 60000
+          command_name: commitTransaction
+          database_name: admin
+      - command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction:
+            autocommit: false
+            # commitTransaction applies w:majority on retries
+            writeConcern: { w: majority, wtimeout: 10000 }
+            maxTimeMS: 60000
+          command_name: commitTransaction
+          database_name: admin
+
+    outcome:
+      collection:
+        data:
+          - _id: 1
+
+  - description: add UnknownTransactionCommitResult label to writeConcernError MaxTimeMSExpired
+
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 1 }
+      data:
+          failCommands: ["commitTransaction"]
+          writeConcernError:
+            code: 50  # MaxTimeMSExpired
+            errmsg: operation exceeded time limit
+
+    operations:
+      - name: startTransaction
+        object: session0
+        arguments:
+          options:
+            writeConcern:
+              w: majority
+            maxCommitTimeMS: 60000
+      - name: insertOne
+        object: collection
+        arguments:
+          session: session0
+          document:
+            _id: 1
+        result:
+          insertedId: 1
+      - name: commitTransaction
+        object: session0
+        result:
+          errorLabelsContain: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["RetryableWriteError", "TransientTransactionError"]
+      - name: commitTransaction
+        object: session0
+
+    expectations:
+      - command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - _id: 1
+            ordered: true
+            readConcern:
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction: true
+            autocommit: false
+            writeConcern:
+          command_name: insert
+          database_name: *database_name
+      - command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction:
+            autocommit: false
+            writeConcern:
+              w: majority
+            maxTimeMS: 60000
+          command_name: commitTransaction
+          database_name: admin
+      - command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber:
+              $numberLong: "1"
+            startTransaction:
+            autocommit: false
+            # commitTransaction applies w:majority on retries
+            writeConcern: { w: majority, wtimeout: 10000 }
+            maxTimeMS: 60000
           command_name: commitTransaction
           database_name: admin
 
