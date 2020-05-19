@@ -111,6 +111,19 @@ module Mongo
         # @return [ Mongo::Address ] address The address to connect to.
         attr_reader :address
 
+        # Returns the monitoring socket timeout.
+        #
+        # Note that monitoring connections use the connect timeout value as
+        # the socket timeout value. See the Server Discovery and Monitoring
+        # specification for details.
+        #
+        # @return [ Float ] The socket timeout in seconds.
+        #
+        # @since 2.4.3
+        def socket_timeout
+          options[:connect_timeout] || Server::CONNECT_TIMEOUT
+        end
+
         # Sends the preserialized ismaster request and returns the result.
         #
         # If there is any error during the ismaster request (such as a network
@@ -177,20 +190,6 @@ module Mongo
             @socket = nil
           end
           true
-        end
-
-        # Get the socket timeout.
-        #
-        # @example Get the socket timeout.
-        #   connection.socket_timeout
-        #
-        # @return [ Float ] The socket timeout in seconds. Note that the Monitor's connection
-        #  uses the connect timeout value for calling ismaster. See the Server Discovery and
-        #  Monitoring specification for details.
-        #
-        # @since 2.4.3
-        def socket_timeout
-          options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
 
         private
