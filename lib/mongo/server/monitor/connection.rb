@@ -198,7 +198,8 @@ module Mongo
           if @app_metadata
             reply = add_server_diagnostics do
               socket.write(@app_metadata.ismaster_bytes)
-              Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+              msg = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE)
+              msg.documents.first
             end
             set_compressor!(reply)
             reply
