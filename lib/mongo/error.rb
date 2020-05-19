@@ -130,16 +130,6 @@ module Mongo
       @write_concern_error_labels.include?(label)
     end
 
-    # Whether the error has a particular label as a standard error label or an
-    # error label associated with the write concern error.
-    #
-    # @param [ String ] label The label to check for the presence of.
-    #
-    # @return [ Boolean ] Whether the error has the given label.
-    def label_or_write_concern_label?(label)
-      label?(label) || write_concern_error_label?(label)
-    end
-
     # Gets the set of labels associated with the error.
     #
     # @example
