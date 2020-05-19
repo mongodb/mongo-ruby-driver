@@ -22,6 +22,7 @@ module Mongo
       class Connection < Server::ConnectionCommon
         include Retryable
         include Loggable
+        extend Forwardable
 
         # The command used for determining server status.
         #
@@ -116,8 +117,8 @@ module Mongo
         #   what the name implies,
         #
         # @since 2.0.0
-        def initialize(address, options = {})
-          @address = address
+        def initialize(server, options = {})
+          @server = server
           @options = options.freeze
           @app_metadata = options[:app_metadata]
           @socket = nil
@@ -125,11 +126,14 @@ module Mongo
           @compressor = nil
         end
 
-        # @return [ Hash ] options The passed in options.
+        # @return [ Hash ] The passed in options.
         attr_reader :options
 
-        # @return [ Mongo::Address ] address The address to connect to.
-        attr_reader :address
+        # @return [ Mongo::Server ] The server this connection is monitoring.
+        attr_reader :server
+
+        # @return [ Mongo::Address ] The address to connect to.
+        def_delegator :server, :address
 
         # Sends the preserialized ismaster request and returns the result.
         #
@@ -171,8 +175,20 @@ module Mongo
             socket = add_server_diagnostics do
               address.socket(socket_timeout, ssl_options, address.options)
             end
-            handshake!(socket)
+            result, exc, rtt, average_rtt = server.round_trip_time_averager.measure do
+              handshake!(socket)
+            end
+            if exc
+              raise exc
+            end
             @socket = socket
+
+            # Run the ismaster response from the monitoring connection through
+            # the SDAM flow. Note that we don't do this for ismaster responses
+            # (during handshake) on non-monitoring connections.
+            new_description = Description.new(server.address, result,
+              server.round_trip_time_averager.average_round_trip_time)
+            server.cluster.run_sdam_flow(server.description, new_description)
           end
           true
         end
@@ -218,16 +234,18 @@ module Mongo
         private
 
         def handshake!(socket)
-          if @app_metadata
-            reply = add_server_diagnostics do
-              socket.write(@app_metadata.ismaster_bytes)
-              Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
-            end
-            set_compressor!(reply)
-            reply
+          payload = if @app_metadata
+            @app_metadata.ismaster_bytes
           else
-            log_warn("Asked to handshake with #{address} but there was no app metadata provided")
+            log_warn("No app metadata provided for handshake with #{address}")
+            ISMASTER_BYTES
           end
+          reply = add_server_diagnostics do
+            socket.write(payload)
+            Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+          end
+          set_compressor!(reply)
+          reply
         rescue => e
           log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
           raise

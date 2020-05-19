@@ -74,7 +74,7 @@ module Mongo
         @monitoring = monitoring
         @options = options.freeze
         # This is a Mongo::Server::Monitor::Connection
-        @connection = Connection.new(server.address, options)
+        @connection = Connection.new(server, options)
         @mutex = Mutex.new
         @scan_started_at = nil
       end
