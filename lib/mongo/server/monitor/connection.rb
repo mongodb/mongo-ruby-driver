@@ -195,17 +195,19 @@ module Mongo
         private
 
         def handshake!(socket)
-          if @app_metadata
-            reply = add_server_diagnostics do
-              socket.write(@app_metadata.ismaster_bytes)
-              msg = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE)
-              msg.documents.first
-            end
-            set_compressor!(reply)
-            reply
+          payload = if @app_metadata
+            @app_metadata.ismaster_bytes
           else
-            log_warn("Asked to handshake with #{address} but there was no app metadata provided")
+            log_warn("No app metadata provided for handshake with #{address}")
+            ISMASTER_BYTES
           end
+          reply = add_server_diagnostics do
+            socket.write(payload)
+            msg = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE)
+            msg.documents.first
+          end
+          set_compressor!(reply)
+          reply
         rescue => e
           log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
           raise
