@@ -162,11 +162,7 @@ module Mongo
       # @param [ Server::Connection ] connection The connection that the
       #   operation will be executed on.
       def add_read_preference(sel, connection)
-        if Lint.enabled?
-          unless connection.is_a?(Server::Connection)
-            raise Error::LintError, "Connection is not a Connection instance: #{connection}"
-          end
-        end
+        Lint.assert_type(connection, Server::Connection)
 
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
         if connection.description.standalone?

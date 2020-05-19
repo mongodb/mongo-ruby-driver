@@ -62,24 +62,28 @@ module Mongo
           if single_statement?(operation)
             write_concern = write_concern(session)
             write_with_retry(session, write_concern) do |server, txn_num|
-              execute_operation(
+              server.with_connection do |connection|
+                execute_operation(
                   operation.keys.first,
                   operation.values.flatten,
-                  server,
+                  connection,
                   operation_id,
                   result_combiner,
                   session,
                   txn_num)
+              end
             end
           else
             nro_write_with_retry(session, write_concern) do |server|
-              execute_operation(
+              server.with_connection do |connection|
+                execute_operation(
                   operation.keys.first,
                   operation.values.flatten,
-                  server,
+                  connection,
                   operation_id,
                   result_combiner,
                   session)
+              end
             end
           end
         end
@@ -172,18 +176,18 @@ module Mongo
       }
     end
 
-    def execute_operation(name, values, server, operation_id, result_combiner, session, txn_num = nil)
-      validate_collation!(server)
-      validate_array_filters!(server)
-      validate_hint!(server)
+    def execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num = nil)
+      validate_collation!(connection)
+      validate_array_filters!(connection)
+      validate_hint!(connection)
 
       unpin_maybe(session) do
-        if values.size > server.with_connection { |connection| connection.description }.max_write_batch_size
-          split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
+        if values.size > connection.description.max_write_batch_size
+          split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
         else
-          result = send(name, values, server, operation_id, session, txn_num)
+          result = send(name, values, connection, operation_id, session, txn_num)
 
-          add_server_diagnostics(server) do
+          add_server_diagnostics(connection) do
             add_error_labels(client, session) do
               result_combiner.combine!(result, values.size)
             end
@@ -193,7 +197,7 @@ module Mongo
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
       unpin_maybe(session) do
-        split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
+        split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
       end
     end
 
@@ -201,64 +205,58 @@ module Mongo
       @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
-    def split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
-      execute_operation(name, values.shift(values.size / 2), server, operation_id, result_combiner, session, txn_num)
+    def split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values.shift(values.size / 2), connection, operation_id, result_combiner, session, txn_num)
 
       txn_num = session.next_txn_num if txn_num
-      execute_operation(name, values, server, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num)
     end
 
-    def delete_one(documents, server, operation_id, session, txn_num)
+    def delete_one(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
-      Operation::Delete.new(spec).bulk_execute(server, client: client)
+      Operation::Delete.new(spec).bulk_execute(connection, client: client)
     end
 
-    def delete_many(documents, server, operation_id, session, txn_num)
+    def delete_many(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:deletes => documents)
-      Operation::Delete.new(spec).bulk_execute(server, client: client)
+      Operation::Delete.new(spec).bulk_execute(connection, client: client)
     end
 
-    def insert_one(documents, server, operation_id, session, txn_num)
+    def insert_one(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
-      Operation::Insert.new(spec).bulk_execute(server, client: client)
+      Operation::Insert.new(spec).bulk_execute(connection, client: client)
     end
 
-    def update_one(documents, server, operation_id, session, txn_num)
+    def update_one(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
-      Operation::Update.new(spec).bulk_execute(server, client: client)
+      Operation::Update.new(spec).bulk_execute(connection, client: client)
     end
     alias :replace_one :update_one
 
-    def update_many(documents, server, operation_id, session, txn_num)
+    def update_many(documents, connection, operation_id, session, txn_num)
       spec = base_spec(operation_id, session).merge(:updates => documents)
-      Operation::Update.new(spec).bulk_execute(server, client: client)
+      Operation::Update.new(spec).bulk_execute(connection, client: client)
     end
 
     private
 
-    def validate_collation!(server)
-      features = server.with_connection { |connection| connection.features }
-
-      if op_combiner.has_collation? && !features.collation_enabled?
+    def validate_collation!(connection)
+      if op_combiner.has_collation? && !connection.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
     end
 
-    def validate_array_filters!(server)
-      features = server.with_connection { |connection| connection.features }
-
-      if op_combiner.has_array_filters? && !features.array_filters_enabled?
+    def validate_array_filters!(connection)
+      if op_combiner.has_array_filters? && !connection.features.array_filters_enabled?
         raise Error::UnsupportedArrayFilters.new
       end
     end
 
-    def validate_hint!(server)
-      features = server.with_connection { |connection| connection.features }
-
+    def validate_hint!(connection)
       if op_combiner.has_hint?
         if write_concern && !write_concern.acknowledged?
           raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
-        elsif !features.update_delete_option_validation_enabled?
+        elsif !connection.features.update_delete_option_validation_enabled?
           raise Error::UnsupportedHint.new
         end
       end

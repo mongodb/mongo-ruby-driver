@@ -67,13 +67,13 @@ module Mongo
       #           Mongo::Operation::Update::BulkResult ] The bulk result.
       #
       # @since 2.5.2
-      def bulk_execute(server, client:)
-        server.with_connection do |connection|
-          if connection.features.op_msg_enabled?
-            self.class::OpMsg.new(spec).execute(connection, client: client).bulk_result
-          else
-            self.class::Command.new(spec).execute(connection, client: client).bulk_result
-          end
+      def bulk_execute(connection, client:)
+        Lint.assert_type(connection, Server::Connection)
+
+        if connection.features.op_msg_enabled?
+          self.class::OpMsg.new(spec).execute(connection, client: client).bulk_result
+        else
+          self.class::Command.new(spec).execute(connection, client: client).bulk_result
         end
       end
 
