@@ -177,9 +177,9 @@ module Mongo
     end
 
     def execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num = nil)
-      validate_collation!(connection.server)
-      validate_array_filters!(connection.server)
-      validate_hint!(connection.server)
+      validate_collation!(connection)
+      validate_array_filters!(connection)
+      validate_hint!(connection)
 
       unpin_maybe(session) do
         if values.size > connection.description.max_write_batch_size
@@ -240,29 +240,23 @@ module Mongo
 
     private
 
-    def validate_collation!(server)
-      features = server.with_connection { |connection| connection.features }
-
-      if op_combiner.has_collation? && !features.collation_enabled?
+    def validate_collation!(connection)
+      if op_combiner.has_collation? && !connection.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
     end
 
-    def validate_array_filters!(server)
-      features = server.with_connection { |connection| connection.features }
-
-      if op_combiner.has_array_filters? && !features.array_filters_enabled?
+    def validate_array_filters!(connection)
+      if op_combiner.has_array_filters? && !connection.features.array_filters_enabled?
         raise Error::UnsupportedArrayFilters.new
       end
     end
 
-    def validate_hint!(server)
-      features = server.with_connection { |connection| connection.features }
-
+    def validate_hint!(connection)
       if op_combiner.has_hint?
         if write_concern && !write_concern.acknowledged?
           raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
-        elsif !features.update_delete_option_validation_enabled?
+        elsif !connection.features.update_delete_option_validation_enabled?
           raise Error::UnsupportedHint.new
         end
       end
