@@ -22,22 +22,23 @@ module Mongo
     # operations performed by the driver.
     #
     # @since 2.0.0
+    # @api private
     class Monitor
       include Loggable
       extend Forwardable
       include Event::Publisher
       include BackgroundThread
 
-      # The default time for a server to refresh its status is 10 seconds.
+      # The default interval between server status refreshes is 10 seconds.
       #
       # @since 2.0.0
-      HEARTBEAT_FREQUENCY = 10.freeze
+      HEARTBEAT_INTERVAL = 10.freeze
 
       # The minimum time between forced server scans. Is
       # minHeartbeatFrequencyMS in the SDAM spec.
       #
       # @since 2.0.0
-      MIN_SCAN_FREQUENCY = 0.5.freeze
+      MIN_SCAN_INTERVAL = 0.5.freeze
 
       # The weighting factor (alpha) for calculating the average moving round trip time.
       #
@@ -101,17 +102,6 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
-      # Get the refresh interval for the server. This will be defined via an
-      # option or will default to 10.
-      #
-      # @return [ Float ] The heartbeat interval, in seconds.
-      #
-      # @since 2.0.0
-      # @deprecated
-      def heartbeat_frequency
-        server.cluster.heartbeat_interval
-      end
-
       # Runs the server monitor. Refreshing happens on a separate thread per
       # server.
       #
@@ -144,8 +134,8 @@ module Mongo
       # Perform a check of the server with throttling, and update
       # the server's description and average round trip time.
       #
-      # If the server was checked less than MIN_SCAN_FREQUENCY seconds
-      # ago, sleep until MIN_SCAN_FREQUENCY seconds have passed since the last
+      # If the server was checked less than MIN_SCAN_INTERVAL seconds
+      # ago, sleep until MIN_SCAN_INTERVAL seconds have passed since the last
       # check. Then perform the check which involves running isMaster
       # on the server being monitored and updating the server description
       # as a result.
@@ -243,7 +233,7 @@ module Mongo
         last_time = [server.last_scan, @scan_started_at].compact.max
         if last_time
           difference = (Time.now - last_time)
-          throttle_time = (MIN_SCAN_FREQUENCY - difference)
+          throttle_time = (MIN_SCAN_INTERVAL - difference)
           sleep(throttle_time) if throttle_time > 0
         end
         @scan_started_at = Time.now
