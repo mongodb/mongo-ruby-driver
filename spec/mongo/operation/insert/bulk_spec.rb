@@ -99,7 +99,9 @@ describe Mongo::Operation::Insert do
       end
 
       let(:inserted_ids) do
-        op.bulk_execute(authorized_primary, client: nil).inserted_ids
+        authorized_primary.with_connection do |connection|
+          op.bulk_execute(connection, client: nil).inserted_ids
+        end
       end
 
       let(:collection_ids) do
@@ -128,7 +130,9 @@ describe Mongo::Operation::Insert do
       context 'when the insert succeeds' do
 
         let(:response) do
-          op.bulk_execute(authorized_primary, client: nil)
+          authorized_primary.with_connection do |connection|
+            op.bulk_execute(connection, client: nil)
+          end
         end
 
         it 'inserts the documents into the database' do
@@ -146,7 +150,9 @@ describe Mongo::Operation::Insert do
         end
 
         let(:response) do
-          op.bulk_execute(authorized_primary, client: nil)
+          authorized_primary.with_connection do |connection|
+            op.bulk_execute(connection, client: nil)
+          end
         end
 
         it 'inserts the documents into the database' do
@@ -183,7 +189,9 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'aborts after first error' do
-            failing_insert.bulk_execute(authorized_primary, client: nil)
+            authorized_primary.with_connection do |connection|
+              failing_insert.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -197,7 +205,9 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'aborts after first error' do
-            failing_insert.bulk_execute(authorized_primary, client: nil)
+            authorized_primary.with_connection do |connection|
+              failing_insert.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -228,7 +238,9 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'does not abort after first error' do
-            failing_insert.bulk_execute(authorized_primary, client: nil)
+            authorized_primary.with_connection do |connection|
+              failing_insert.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find.count).to eq(2)
           end
         end
@@ -243,7 +255,9 @@ describe Mongo::Operation::Insert do
         context 'when the insert fails' do
 
           it 'does not after first error' do
-            failing_insert.bulk_execute(authorized_primary, client: nil)
+            authorized_primary.with_connection do |connection|
+              failing_insert.bulk_execute(connection, client: nil)
+            end
             expect(authorized_collection.find.count).to eq(2)
           end
         end
