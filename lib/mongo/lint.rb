@@ -1,6 +1,16 @@
 module Mongo
+
   # @api private
   module Lint
+
+    # Raises LintError if +obj+ is not of type +cls+.
+    module_function def assert_type(obj, cls)
+      return unless enabled?
+      unless obj.is_a?(cls)
+        raise Error::LintError, "Expected #{obj} to be a #{cls}"
+      end
+    end
+
     def validate_underscore_read_preference(read_pref)
       return unless enabled?
       return if read_pref.nil?
