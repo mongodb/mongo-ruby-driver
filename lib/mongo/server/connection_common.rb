@@ -90,7 +90,7 @@ module Mongo
         # server.
         note = "on #{address.seed}"
         if respond_to?(:id)
-          note << ", connection #{id}"
+          note << ", connection #{generation}:#{id}"
         end
         e.add_note(note)
         if respond_to?(:generation)
