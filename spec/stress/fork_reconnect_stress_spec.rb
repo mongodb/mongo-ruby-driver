@@ -40,7 +40,8 @@ describe 'fork reconnect' do
     end
 
     context 'when parent is operating on client during the fork' do
-      let(:client) { authorized_client.with(max_pool_size: 5) }
+      let(:client) { authorized_client.with(max_pool_size: 5,
+        wait_queue_timeout: 10, socket_timeout: 2, connect_timeout: 2) }
 
       it 'works' do
         client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
