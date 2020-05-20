@@ -112,8 +112,10 @@ describe 'fork reconnect' do
 
   describe 'client' do
     it 'works after fork' do
-      client.cluster.next_primary.pool.clear
-      client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+      # Perform a write so that we discover the current primary.
+      # Previous test may have stepped down the server that authorized client
+      # considers the primary.
+      client['foo'].insert_one(test: 1)
 
       if pid = fork
         Process.wait(pid)
