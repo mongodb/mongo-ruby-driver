@@ -216,6 +216,17 @@ module Mongo
         def retry_message
           "Retrying ismaster in monitor for #{address}"
         end
+
+        def ensure_connected
+          if pid != Process.pid
+            log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
+            disconnect!
+            connect!
+            @pid = Process.pid
+          end
+
+          super
+        end
       end
     end
   end

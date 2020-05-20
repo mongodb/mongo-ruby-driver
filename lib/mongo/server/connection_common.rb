@@ -45,12 +45,13 @@ module Mongo
         !!@socket && @socket.alive?
       end
 
+      # @return [ Integer ] pid The process id when the connection was created.
+      # @api private
+      attr_reader :pid
+
       private
 
       attr_reader :socket
-
-      # @return [ Integer ] pid The process id when the connection was created.
-      attr_reader :pid
 
       def set_compressor!(reply)
         server_compressors = reply['compression']
@@ -108,7 +109,6 @@ module Mongo
       end
 
       def ensure_connected
-        ensure_same_process!
         begin
           connect!
           result = yield socket
@@ -118,19 +118,6 @@ module Mongo
           unless success
             disconnect!(reason: :error)
           end
-        end
-      end
-
-      def ensure_same_process!
-        if pid != Process.pid
-          # When we reconnect here, CMAP events won't be correctly sent
-          # since the CMAP spec does not permit a connection to be disconnected
-          # and then reconnected
-          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
-          disconnect!(reason: :stale)
-          @closed = false
-          @pid = Process.pid
-          connect!
         end
       end
     end
