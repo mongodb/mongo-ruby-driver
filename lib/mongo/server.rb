@@ -72,6 +72,7 @@ module Mongo
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
             app_metadata: Monitor::AppMetadata.new(cluster.options),
+            heartbeat_interval: cluster.heartbeat_interval,
         ))
         unless _monitor == false
           start_monitoring

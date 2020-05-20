@@ -359,7 +359,7 @@ module Mongo
     # @since 2.10.0
     # @api private
     def heartbeat_interval
-      options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+      options[:heartbeat_frequency] || Server::Monitor::DEFAULT_HEARTBEAT_INTERVAL
     end
 
     # Whether the cluster object is in the process of connecting to its cluster.
