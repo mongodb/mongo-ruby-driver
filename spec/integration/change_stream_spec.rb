@@ -148,6 +148,14 @@ describe 'Change stream integration', retry: 4 do
 
           it_behaves_like 'raises an exception'
         end
+
+        context 'when the error is ElectionInProgress' do
+          let(:error_code) { 216 }
+
+          let(:error_labels) { [] }
+
+          it_behaves_like 'raises an exception'
+        end
       end
 
       context 'error on a getMore other than first' do

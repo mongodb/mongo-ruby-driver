@@ -143,7 +143,6 @@ module Mongo
         {code_name: 'StaleShardVersion', code: 63},
         {code_name: 'FailedToSatisfyReadPreference', code: 133},
         {code_name: 'StaleEpoch', code: 150},
-        {code_name: 'ElectionInProgress', code: 216},
         {code_name: 'RetryChangeStream', code: 234},
         {code_name: 'StaleConfig', code: 13388},
       ].freeze
