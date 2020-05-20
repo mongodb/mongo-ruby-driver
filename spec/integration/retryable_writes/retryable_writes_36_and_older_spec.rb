@@ -272,7 +272,7 @@ describe 'Retryable writes integration tests' do
             it 'raises the second error' do
               expect do
                 operation
-              end.to raise_error(Mongo::Error::OperationFailure, /second error: not master/)
+              end.to raise_error(Mongo::Error, /second error: not master/)
               expect(expectation).to eq(unsuccessful_retry_value)
             end
           end
