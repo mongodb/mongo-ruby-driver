@@ -385,7 +385,7 @@ module Mongo
 
         if Lint.enabled?
           unless connection.connected?
-            raise Error::LintError, 'Connection pool checked out a disconnected connection'
+            raise Error::LintError, "Connection pool for #{address} checked out a disconnected connection #{connection.id}"
           end
         end
 
