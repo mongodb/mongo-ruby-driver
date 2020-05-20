@@ -66,16 +66,15 @@ describe 'fork reconnect' do
         Process.wait(pid)
         $?.exitstatus.should == 0
       else
-        operation
+        Utils.wrap_forked_child do
+          operation
 
-        child_socket = connection.send(:socket).send(:socket)
-        # fileno of child_socket may equal to fileno of socket,
-        # as socket would've been closed first and file descriptors can be
-        # reused by the kernel.
-        child_socket.object_id.should == socket.object_id
-
-        # Exec so that we do not close any clients etc. in the child.
-        exec('/bin/true')
+          child_socket = connection.send(:socket).send(:socket)
+          # fileno of child_socket may equal to fileno of socket,
+          # as socket would've been closed first and file descriptors can be
+          # reused by the kernel.
+          child_socket.object_id.should == socket.object_id
+        end
       end
 
       # The child closes the connection's socket, but this races with the
@@ -94,14 +93,13 @@ describe 'fork reconnect' do
         Process.wait(pid)
         $?.exitstatus.should == 0
       else
-        new_conn_id = server.with_connection do |connection|
-          connection.id
+        Utils.wrap_forked_child do
+          new_conn_id = server.with_connection do |connection|
+            connection.id
+          end
+
+          new_conn_id.should_not == conn_id
         end
-
-        new_conn_id.should_not == conn_id
-
-        # Exec so that we do not close any clients etc. in the child.
-        exec('/bin/true')
       end
 
       parent_conn_id = server.with_connection do |connection|
@@ -121,10 +119,9 @@ describe 'fork reconnect' do
         Process.wait(pid)
         $?.exitstatus.should == 0
       else
-        client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
-
-        # Exec so that we do not close any clients etc. in the child.
-        exec('/bin/true')
+        Utils.wrap_forked_child do
+          client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+        end
       end
 
       # Perform a read which can be retried, so that the socket close

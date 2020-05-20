@@ -21,12 +21,11 @@ describe 'fork reconnect' do
         if pid = fork
           pids << pid
         else
-          while Time.now < deadline
-            client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+          Utils.wrap_forked_child do
+            while Time.now < deadline
+              client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+            end
           end
-
-          # Exec so that we do not close any clients etc. in the child.
-          exec('/bin/true')
         end
       end
 
@@ -72,12 +71,11 @@ describe 'fork reconnect' do
           if pid = fork
             pids << pid
           else
-            while Time.now < deadline
-              client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+            Utils.wrap_forked_child do
+              while Time.now < deadline
+                client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+              end
             end
-
-            # Exec so that we do not close any clients etc. in the child.
-            exec('/bin/true')
           end
         end
 
