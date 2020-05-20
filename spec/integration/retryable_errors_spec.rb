@@ -89,7 +89,7 @@ describe 'Failing retryable operations' do
 
     shared_context 'write operation' do
       let(:fail_point_command) do
-        {
+        command = {
           configureFailPoint: 'failCommand',
           mode: {times: 2},
           data: {
@@ -97,6 +97,15 @@ describe 'Failing retryable operations' do
             errorCode: 11600,
           },
         }
+
+        if ClusterConfig.instance.short_server_version >= '4.3'
+          # Server versions 4.4 and newer will add the RetryableWriteError
+          # label to all retryable errors, and the driver must not add the label
+          # if it is not already present.
+          command[:data][:errorLabels] = ['RetryableWriteError']
+        end
+
+        command
       end
 
       let(:set_fail_point) do

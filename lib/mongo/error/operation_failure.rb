@@ -227,6 +227,8 @@ module Mongo
       #   write concern error, if any.
       # @option options [ String ] :write_concern_error_code_name Error code
       #   name for write concern error, if any.
+      # @option options [ Array<String> ] :write_concern_error_labels Error
+      #   labels for the write concern error, if any.
       # @option options [ Array<String> ] :labels The set of labels associated
       #   with the error.
       # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
@@ -240,6 +242,7 @@ module Mongo
         @write_concern_error_document = options[:write_concern_error_document]
         @write_concern_error_code = options[:write_concern_error_code]
         @write_concern_error_code_name = options[:write_concern_error_code_name]
+        @write_concern_error_labels = options[:write_concern_error_labels] || []
         @labels = options[:labels] || []
         @wtimeout = !!options[:wtimeout]
       end

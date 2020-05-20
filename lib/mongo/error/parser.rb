@@ -139,6 +139,12 @@ module Mongo
         write_concern_error_document && write_concern_error_document['codeName']
       end
 
+      # @return [ Array<String> | nil ] The error labels associated with this
+      # write concern error, if there is a write concern error present.
+      def write_concern_error_labels
+        write_concern_error_document && write_concern_error_document['errorLabels']
+      end
+
       private
 
       def parse!

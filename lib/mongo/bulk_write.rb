@@ -188,7 +188,7 @@ module Mongo
           result = send(name, values, connection, operation_id, session, txn_num)
 
           add_server_diagnostics(connection) do
-            add_error_labels(client, session) do
+            add_error_labels(client, connection, session) do
               result_combiner.combine!(result, values.size)
             end
           end

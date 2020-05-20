@@ -34,6 +34,7 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
+          :retryable_write_error_label => 9,
           # Server versions older than 4.2 do not reliably validate options
           # provided by the client during findAndModify operations, requiring the
           # driver to raise client-side errors when those options are provided.

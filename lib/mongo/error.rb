@@ -104,6 +104,7 @@ module Mongo
     def initialize(msg = nil)
       super
       @labels = []
+      @write_concern_error_labels = []
     end
 
     # Does the error have the given label?
@@ -120,6 +121,15 @@ module Mongo
       @labels.include?(label)
     end
 
+    # Does the write concern error have the given label?
+    #
+    # @param [ String ] label The label to check for the presence of.
+    #
+    # @return [ Boolean ] Whether the write concern error has the given label.
+    def write_concern_error_label?(label)
+      @write_concern_error_labels.include?(label)
+    end
+
     # Gets the set of labels associated with the error.
     #
     # @example
@@ -130,6 +140,13 @@ module Mongo
     # @since 2.7.0
     def labels
       @labels.dup
+    end
+
+    # The set of error labels associated with the write concern error.
+    #
+    # @return [ Array<String> ] The list of error labels.
+    def write_concern_error_labels
+      @write_concern_error_labels.dup
     end
 
     # Adds the specified label to the error instance, if the label is not
