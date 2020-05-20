@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'fork reconnect' do
+  only_mri
+
   let(:client) { authorized_client }
   let(:server) { client.cluster.next_primary }
 
