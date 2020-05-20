@@ -221,7 +221,7 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
-        if !e.label?('RetryableWriteError') 
+        if !e.label?('RetryableWriteError')
           raise e
         end
         retry_write(e, session, txn_num, &block)
@@ -230,7 +230,7 @@ module Mongo
         e.add_note("attempt 1")
         if e.unsupported_retryable_write?
           raise_unsupported_error(e)
-        elsif !e.label?('RetryableWriteError') 
+        elsif !e.label?('RetryableWriteError')
           raise e
         end
 
@@ -298,7 +298,7 @@ module Mongo
         if attempt > client.max_write_retries
           raise e
         end
-        if e.label?('RetryableWriteError') 
+        if e.label?('RetryableWriteError')
           log_retry(e, message: 'Legacy write retry')
           cluster.scan!(false)
           retry
