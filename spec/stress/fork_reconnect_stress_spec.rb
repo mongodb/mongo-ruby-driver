@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'fork reconnect' do
+  only_mri
+
   before(:all) do
     if !SpecConfig.instance.stress_spec?
       skip 'Stress spec not enabled'
