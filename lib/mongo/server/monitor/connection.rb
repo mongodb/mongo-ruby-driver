@@ -19,6 +19,7 @@ module Mongo
       # This class models the monitor connections and their behavior.
       #
       # @since 2.0.0
+      # @api private
       class Connection < Server::ConnectionCommon
         include Retryable
         include Loggable
@@ -57,27 +58,6 @@ module Mongo
         #
         # @since 2.5.0
         ISMASTER_OP_MSG_BYTES = ISMASTER_OP_MSG_MESSAGE.serialize.to_s.freeze
-
-        # The default time in seconds to timeout a connection attempt.
-        #
-        # @since 2.1.2
-        #
-        # @deprecated Please use Server::CONNECT_TIMEOUT instead. Will be removed in 3.0.0
-        CONNECT_TIMEOUT = 10.freeze
-
-        # Key for compression algorithms in the response from the server during handshake.
-        #
-        # @since 2.5.0
-        # @deprecated
-        COMPRESSION = 'compression'.freeze
-
-        # Warning message that the server has no compression algorithms in common with those requested
-        #   by the client.
-        #
-        # @since 2.5.0
-        # @deprecated
-        COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
-                                'Compression will not be used.'.freeze
 
         # Creates a new connection object to the specified target address
         # with the specified options.
@@ -118,7 +98,7 @@ module Mongo
         # @since 2.0.0
         def initialize(address, options = {})
           @address = address
-          @options = options.freeze
+          @options = options.dup.freeze
           @app_metadata = options[:app_metadata]
           @socket = nil
           @pid = Process.pid
@@ -130,6 +110,19 @@ module Mongo
 
         # @return [ Mongo::Address ] address The address to connect to.
         attr_reader :address
+
+        # Returns the monitoring socket timeout.
+        #
+        # Note that monitoring connections use the connect timeout value as
+        # the socket timeout value. See the Server Discovery and Monitoring
+        # specification for details.
+        #
+        # @return [ Float ] The socket timeout in seconds.
+        #
+        # @since 2.4.3
+        def socket_timeout
+          options[:connect_timeout] || Server::CONNECT_TIMEOUT
+        end
 
         # Sends the preserialized ismaster request and returns the result.
         #
@@ -199,35 +192,22 @@ module Mongo
           true
         end
 
-        # Get the socket timeout.
-        #
-        # @example Get the socket timeout.
-        #   connection.socket_timeout
-        #
-        # @return [ Float ] The socket timeout in seconds. Note that the Monitor's connection
-        #  uses the connect timeout value for calling ismaster. See the Server Discovery and
-        #  Monitoring specification for details.
-        #
-        # @since 2.4.3
-        def socket_timeout
-          @timeout ||= options[:connect_timeout] || Server::CONNECT_TIMEOUT
-        end
-        # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
-        alias :timeout :socket_timeout
-
         private
 
         def handshake!(socket)
-          if @app_metadata
-            reply = add_server_diagnostics do
-              socket.write(@app_metadata.ismaster_bytes)
-              Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
-            end
-            set_compressor!(reply)
-            reply
+          payload = if @app_metadata
+            @app_metadata.ismaster_bytes
           else
-            log_warn("Asked to handshake with #{address} but there was no app metadata provided")
+            log_warn("No app metadata provided for handshake with #{address}")
+            ISMASTER_BYTES
           end
+          reply = add_server_diagnostics do
+            socket.write(payload)
+            msg = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE)
+            msg.documents.first
+          end
+          set_compressor!(reply)
+          reply
         rescue => e
           log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
           raise
