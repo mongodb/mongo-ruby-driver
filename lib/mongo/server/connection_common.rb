@@ -87,7 +87,11 @@ module Mongo
         # Server::Monitor::Connection does not reference its server, but
         # knows its address. Server::Connection delegates the address to its
         # server.
-        e.add_note("on #{address.seed}")
+        note = "on #{address.seed}"
+        if respond_to?(:id)
+          note << ", connection #{id}"
+        end
+        e.add_note(note)
         if respond_to?(:generation)
           # Non-monitoring connections
           e.generation = generation
