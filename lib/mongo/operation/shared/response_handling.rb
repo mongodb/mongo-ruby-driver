@@ -156,6 +156,7 @@ module Mongo
         # - The error is a network error
         should_add_error_label =
           !connection.description.features.retryable_write_error_label_enabled? ||
+          error.write_concern_error_label?('RetryableWriteError') ||
           error.is_a?(Mongo::Error::SocketError) ||
           error.is_a?(Mongo::Error::SocketTimeoutError)
 
