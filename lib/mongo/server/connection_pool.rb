@@ -432,6 +432,11 @@ module Mongo
             Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id, self)
           )
 
+          if connection.error?
+            connection.disconnect!(reason: :error)
+            return
+          end
+
           if closed?
             connection.disconnect!(reason: :pool_closed)
             return

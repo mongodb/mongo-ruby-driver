@@ -133,6 +133,11 @@ module Mongo
         !!@closed
       end
 
+      # @api private
+      def error?
+        !!@error
+      end
+
       # Establishes a network connection to the target address.
       #
       # If the connection is already established, this method does nothing.
@@ -298,9 +303,12 @@ module Mongo
       def handle_errors
         begin
           yield
-        # Important: timeout errors are not handled here
         rescue Error::SocketError => e
+          @error = e
           @server.unknown!(generation: e.generation)
+          raise
+        rescue Error::SocketTimeoutError => e
+          @error = e
           raise
         end
       end
