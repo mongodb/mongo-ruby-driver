@@ -63,4 +63,22 @@ describe 'fork reconnect' do
 
     it_behaves_like 'reconnects the connection'
   end
+
+  describe 'client' do
+    it 'works after fork' do
+      client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+
+      if pid = fork
+        Process.wait(pid)
+        $?.exitstatus.should == 0
+      else
+        client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+
+        # Exec so that we do not close any clients etc. in the child.
+        exec('/bin/true')
+      end
+
+      client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+    end
+  end
 end
