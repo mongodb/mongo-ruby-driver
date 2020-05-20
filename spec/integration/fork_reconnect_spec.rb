@@ -115,6 +115,9 @@ describe 'fork reconnect' do
       # Perform a write so that we discover the current primary.
       # Previous test may have stepped down the server that authorized client
       # considers the primary.
+      # In standalone deployments there are no retries, hence execute the
+      # operation twice manually.
+      client['foo'].insert_one(test: 1) rescue nil
       client['foo'].insert_one(test: 1)
 
       if pid = fork
