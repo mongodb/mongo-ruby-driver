@@ -199,8 +199,7 @@ describe 'SDAM error handling' do
       expect(server.monitor.connection).not_to be nil
       set_subscribers
       RSpec::Mocks.with_temporary_scope do
-        socket = server.monitor.connection.send(:socket)
-        expect(socket).to receive(:write).twice.and_raise(exception)
+        expect(server.monitor.connection).to receive(:ismaster).and_raise(exception)
         server.monitor.scan!
       end
       expect_server_state_change
