@@ -40,17 +40,14 @@ describe 'fork reconnect' do
       # was in the child process.
       operation
 
-      parent_socket = connection.send(:socket).send(:socket)
-      # fileno of child_socket may equal to fileno of socket,
-      # as socket would've been closed first and file descriptors can be
-      # reused by the kernel.
-      parent_socket.object_id.should == socket.object_id
+      # The child closes the connection's socket, but this races with the
+      # parent. The parent can retain the original socket for a while.
     end
   end
 
   describe 'non-monitoring connection' do
     let(:connection) do
-      Mongo::Server::Connection.new(server)
+      Mongo::Server::Connection.new(server, server.options)
     end
 
     let(:operation) do
@@ -79,16 +76,8 @@ describe 'fork reconnect' do
         exec('/bin/true')
       end
 
-      # Connection should remain serviceable in the parent.
-      # The operation here will be invoked again, since the earlier invocation
-      # was in the child process.
-      operation
-
-      parent_socket = connection.send(:socket).send(:socket)
-      # fileno of child_socket may equal to fileno of socket,
-      # as socket would've been closed first and file descriptors can be
-      # reused by the kernel.
-      parent_socket.object_id.should == socket.object_id
+      # The child closes the connection's socket, but this races with the
+      # parent. The parent can retain the original socket for a while.
     end
   end
 
@@ -123,6 +112,7 @@ describe 'fork reconnect' do
 
   describe 'client' do
     it 'works after fork' do
+      client.cluster.next_primary.pool.clear
       client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
 
       if pid = fork
@@ -135,7 +125,9 @@ describe 'fork reconnect' do
         exec('/bin/true')
       end
 
-      client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+      # Perform a read which can be retried, so that the socket close
+      # performed by the child is recovered from.
+      client['foo'].find(test: 1)
     end
   end
 end
