@@ -42,7 +42,11 @@ describe 'fork reconnect' do
     end
 
     context 'when parent is operating on client during the fork' do
-      let(:client) { authorized_client.with(max_pool_size: 5,
+      # This test intermittently fails in evergreen with pool size of 5,
+      # with a number o fpending connections in the pool.
+      # The reason could be that handshaking is slow or operations are slow
+      # post handshakes.
+      let(:client) { authorized_client.with(max_pool_size: 10,
         wait_queue_timeout: 10, socket_timeout: 2, connect_timeout: 2) }
 
       it 'works' do
