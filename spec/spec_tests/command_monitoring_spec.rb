@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+require 'runners/crud'
 require 'runners/command_monitoring'
 
 describe 'Command Monitoring Events' do
