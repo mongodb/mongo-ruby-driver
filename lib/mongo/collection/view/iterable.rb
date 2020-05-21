@@ -81,6 +81,12 @@ module Mongo
           if server.with_connection { |connection| connection.features }.find_command_enabled?
             initial_command_op(session)
           else
+            # Server versions that do not have the find command feature
+            # (versions older than 3.2) do not support the allow_disk_use option
+            # but perform no validation and will not raise an error if it is
+            # specified. If the allow_disk_use option is specified, raise an error
+            # to alert the user.
+            raise Error::UnsupportedAllowDiskUse.new if options.key?(:allow_disk_use)
             Operation::Find.new(Builder::OpQuery.new(self).specification)
           end
         end

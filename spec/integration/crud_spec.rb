@@ -7,6 +7,34 @@ describe 'CRUD operations' do
     collection.delete_many
   end
 
+  describe 'find' do
+    context 'when allow_disk_use is true' do
+      # Other cases are adequately covered by spec tests.
+      context 'on server version < 3.2' do
+        max_server_fcv '3.0'
+
+        it 'raises an exception' do
+          expect do
+            collection.find({}, { allow_disk_use: true }).first
+          end.to raise_error(Mongo::Error::UnsupportedAllowDiskUse, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
+        end
+      end
+    end
+
+    context 'when allow_disk_use is false' do
+      # Other cases are adequately covered by spec tests.
+      context 'on server version < 3.2' do
+        max_server_fcv '3.0'
+
+        it 'raises an exception' do
+          expect do
+            collection.find({}, { allow_disk_use: false }).first
+          end.to raise_error(Mongo::Error::UnsupportedAllowDiskUse, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
+        end
+      end
+    end
+  end
+
   describe 'insert' do
     context 'inserting a BSON::Int64' do
       before do
