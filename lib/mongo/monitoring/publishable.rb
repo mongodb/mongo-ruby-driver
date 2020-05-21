@@ -57,7 +57,7 @@ module Mongo
 
       def command_completed(result, address, operation_id, payload, duration)
         document = result ? (result.documents || []).first : nil
-        if error?(document)
+        if document && (document['ok'] && document['ok'] != 1 || document.key?('$err'))
           parser = Error::Parser.new(document)
           command_failed(document, address, operation_id, payload, parser.message, duration)
         else
@@ -87,10 +87,6 @@ module Mongo
 
       def duration(start)
         Time.now - start
-      end
-
-      def error?(document)
-        document && (document['ok'] == 0 || document.key?('$err'))
       end
 
       def monitoring?
