@@ -8,6 +8,10 @@ describe 'fork reconnect' do
   # another shard with a dead connection).
   require_no_multi_shard
 
+  # On Ruby 2.3 $?.exitstatus is sometimes nil after Process.wait returns which
+  # is not supposed to happen.
+  ruby_version_gte '2.4'
+
   let(:client) { authorized_client }
   let(:server) { client.cluster.next_primary }
 
