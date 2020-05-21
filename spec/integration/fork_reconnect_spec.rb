@@ -31,8 +31,8 @@ describe 'fork reconnect' do
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
       if pid = fork
-        Process.wait(pid)
-        $?.exitstatus.should == 0
+        pid, status = Process.wait2(pid)
+        status.exitstatus.should == 0
       else
         operation
 
@@ -72,8 +72,8 @@ describe 'fork reconnect' do
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
       if pid = fork
-        Process.wait(pid)
-        $?.exitstatus.should == 0
+        pid, status = Process.wait2(pid)
+        status.exitstatus.should == 0
       else
         Utils.wrap_forked_child do
           operation
@@ -99,8 +99,8 @@ describe 'fork reconnect' do
       end
 
       if pid = fork
-        Process.wait(pid)
-        $?.exitstatus.should == 0
+        pid, status = Process.wait2(pid)
+        status.exitstatus.should == 0
       else
         Utils.wrap_forked_child do
           new_conn_id = server.with_connection do |connection|
@@ -130,8 +130,8 @@ describe 'fork reconnect' do
       client['foo'].insert_one(test: 1)
 
       if pid = fork
-        Process.wait(pid)
-        $?.exitstatus.should == 0
+        pid, status = Process.wait2(pid)
+        status.exitstatus.should == 0
       else
         Utils.wrap_forked_child do
           client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)

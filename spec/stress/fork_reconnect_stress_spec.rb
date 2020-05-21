@@ -50,8 +50,8 @@ describe 'fork reconnect' do
       end
 
       pids.each do |pid|
-        Process.wait(pid)
-        $?.exitstatus.should == 0
+        pid, status = Process.wait2(pid)
+        status.exitstatus.should == 0
       end
     end
 
@@ -102,8 +102,8 @@ describe 'fork reconnect' do
         threads.map(&:join)
 
         pids.each do |pid|
-          Process.wait(pid)
-          $?.exitstatus.should == 0
+          pid, status = Process.wait2(pid)
+          status.exitstatus.should == 0
         end
       end
 
