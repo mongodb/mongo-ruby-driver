@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Connection pool timing test' do
   before(:all) do
     if !SpecConfig.instance.stress_spec?
-      skip 'Stress spec not enabled'
+      skip 'Set STRESS=1 in environment to run stress tests'
     end
 
     ClientRegistry.instance.close_all_clients

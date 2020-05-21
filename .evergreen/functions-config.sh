@@ -2,7 +2,7 @@
 
 show_local_instructions() {
   echo To test this configuration locally:
-  params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY STRESS_SPEC=true"
+  params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY STRESS=1"
   if test -n "$AUTH"; then
     params="$params AUTH=$AUTH"
   fi

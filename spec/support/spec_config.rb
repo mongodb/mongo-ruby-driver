@@ -115,7 +115,7 @@ class SpecConfig
   end
 
   def stress_spec?
-    !!ENV['STRESS_SPEC']
+    !!ENV['STRESS']
   end
 
   # Test suite configuration

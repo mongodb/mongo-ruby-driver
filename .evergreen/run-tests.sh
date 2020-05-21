@@ -219,6 +219,8 @@ export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
 echo "Running tests"
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
+elif test "$STRESS" = 1; then
+  bundle exec rspec spec/stress
 else
   bundle exec rake spec:ci
 fi

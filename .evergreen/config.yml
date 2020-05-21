@@ -97,7 +97,7 @@ functions:
             export MMAPV1="${MMAPV1}"
             export FLE="${FLE}"
 
-            export STRESS_SPEC=true
+            export STRESS="${STRESS}"
           EOT
 
           # See what we've done
@@ -589,6 +589,14 @@ axes:
         variables:
           LINT: '1'
 
+  - id: stress
+    display_name: Stress
+    values:
+      - id: on
+        display_name: On
+        variables:
+          STRESS: '1'
+
   - id: "as"
     display_name: ActiveSupport
     values:
@@ -790,6 +798,17 @@ buildvariants:
       topology: '*'
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "stress"
+    matrix_spec:
+      stress: on
+      ruby: "ruby-2.7"
+      mongodb-version: ["4.4"]
+      topology: '*'
+      os: ubuntu1604
+    display_name: "${mongodb-version} ${topology} ${stress} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
