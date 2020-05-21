@@ -207,15 +207,27 @@ module Mongo
             )
           end
 
-          result, exc, rtt, average_rtt = server.round_trip_time_averager.measure do
-            connection.ismaster
-          end
-          if exc
+          # The duration we publish in heartbeat succeeded/failed events is
+          # the time spent on the entire heartbeat. This could include time
+          # to connect the socket (including TLS handshake), not just time
+          # spent on ismaster call itself.
+          # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
+          # requires that the duration exposed here start from "sending the
+          # message" (ismaster). This requirement does not make sense if,
+          # for example, we were never able to connect to the server at all
+          # and thus ismaster was never sent.
+          start_time = Time.now
+
+          begin
+            result = server.round_trip_time_averager.measure do
+              connection.ismaster
+            end
+          rescue => exc
             log_debug("Error running ismaster on #{server.address}: #{exc.class}: #{exc}:\n#{exc.backtrace[0..5].join("\n")}")
             if monitoring.monitoring?
               monitoring.failed(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatFailed.new(server.address, rtt, exc)
+                Monitoring::Event::ServerHeartbeatFailed.new(server.address, Time.now-start_time, exc)
               )
             end
             result = {}
@@ -223,7 +235,7 @@ module Mongo
             if monitoring.monitoring?
               monitoring.succeeded(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, rtt)
+                Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, Time.now-start_time)
               )
             end
           end

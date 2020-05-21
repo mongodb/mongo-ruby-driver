@@ -34,7 +34,12 @@ module Mongo
         start = Time.now
         begin
           rv = yield
-        rescue Exception => exc
+        rescue Error::SocketError, Error::SocketTimeoutError
+          # If we encountered a network error, the round-trip is not
+          # complete and thus RTT for it does not make sense.
+          raise
+        rescue Error, Error::AuthError => exc
+          # For other errors, RTT is valid.
         end
         last_round_trip_time = Time.now - start
 
@@ -46,7 +51,11 @@ module Mongo
           update_average_round_trip_time
         end
 
-        [rv, exc, last_round_trip_time, average_round_trip_time]
+        if exc
+          raise exc
+        else
+          rv
+        end
       end
 
       private
