@@ -107,19 +107,14 @@ module Mongo
         ismaster_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND,
           ismaster_doc, :limit => -1)
 
-        response = average_rtt = nil
+        response = nil
         @server.handle_handshake_failure! do
           begin
-            response, exc, rtt, average_rtt =
-              @server.round_trip_time_averager.measure do
-                add_server_diagnostics do
-                  socket.write(ismaster_command.serialize.to_s)
-                  Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents.first
-                end
+            response = @server.round_trip_time_averager.measure do
+              add_server_diagnostics do
+                socket.write(ismaster_command.serialize.to_s)
+                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents.first
               end
-
-            if exc
-              raise exc
             end
           rescue => e
             log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
@@ -127,7 +122,7 @@ module Mongo
           end
         end
 
-        post_handshake(response, average_rtt)
+        post_handshake(response, @server.round_trip_time_averager.average_round_trip_time)
 
         response
       end
