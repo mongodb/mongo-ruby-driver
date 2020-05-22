@@ -289,6 +289,38 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
       end
 
+      context 'when the files collection is empty but indexes already exist with double values' do
+        before do
+          fs.files_collection.indexes.create_one(
+            { filename: 1.0, uploadDate: 1.0 },
+            name: 'filename_1_uploadDate_1'
+          )
+
+          fs.chunks_collection.indexes.create_one(
+            { files_id: 1.0, n: 1.0 },
+            name: 'files_id_1_n_1',
+            unique: true
+          )
+        end
+
+        it 'does not raise an exception' do
+          expect do
+            stream.write(file)
+          end.not_to raise_error
+        end
+
+        it 'does not create new indexes' do
+          stream.write(file)
+
+          files_indexes = fs.files_collection.indexes.map { |index| index['key'] }
+          chunks_indexes = fs.chunks_collection.indexes.map { |index| index['key'] }
+
+          # Ruby parses the index keys with integer values
+          expect(files_indexes).to eq([{ '_id' => 1 }, { 'filename' => 1, 'uploadDate' => 1 }])
+          expect(chunks_indexes).to eq([{ '_id' => 1 }, { 'files_id' => 1, 'n' => 1 }])
+        end
+      end
+
       context 'when the files collection is not empty' do
 
         before do
