@@ -68,6 +68,20 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#allow_disk_use' do
+    let(:new_view) do
+      view.allow_disk_use
+    end
+
+    it 'sets the flag' do
+      expect(new_view.options[:allow_disk_use]).to be true
+    end
+
+    it 'returns the new View' do
+      expect(new_view).not_to be(view)
+    end
+  end
+
   describe '#aggregate' do
 
      let(:documents) do

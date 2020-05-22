@@ -116,6 +116,10 @@ module Mongo
       # @param [ Hash ] filter The query filter.
       # @param [ Hash ] options The additional query options.
       #
+      # @option options [ true, false ] :allow_disk_use When set to true, the
+      #   server can write temporary data to disk while executing the find
+      #   operation. This option is only available on MongoDB server versions
+      #   4.4 and newer.
       # @option options :comment [ String ] Associate a comment with the query.
       # @option options :batch_size [ Integer ] The number of docs to return in
       #   each response from MongoDB.

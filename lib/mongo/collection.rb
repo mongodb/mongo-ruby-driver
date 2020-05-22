@@ -293,6 +293,10 @@ module Mongo
     # @param [ Hash ] filter The filter to use in the find.
     # @param [ Hash ] options The options for the find.
     #
+    # @option options [ true, false ] :allow_disk_use When set to true, the
+    #   server can write temporary data to disk while executing the find
+    #   operation. This option is only available on MongoDB server versions
+    #   4.4 and newer.
     # @option options [ true, false ] :allow_partial_results Allows the query to get partial
     #   results if some shards are down.
     # @option options [ Integer ] :batch_size The number of documents returned in each batch

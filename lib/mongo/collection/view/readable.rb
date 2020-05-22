@@ -48,6 +48,14 @@ module Mongo
           Aggregation.new(self, pipeline, options)
         end
 
+        # Allows the server to write temporary data to disk while executing
+        # a find operation.
+        #
+        # @return [ View ] The new view.
+        def allow_disk_use
+          configure(:allow_disk_use, true)
+        end
+
         # Allows the query to get partial results if some shards are down.
         #
         # @example Allow partial results.
