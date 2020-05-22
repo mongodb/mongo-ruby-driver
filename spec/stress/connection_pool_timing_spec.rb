@@ -1,13 +1,10 @@
 require 'spec_helper'
 
 describe 'Connection pool timing test' do
+  require_stress
+  clean_slate_for_all
+
   before(:all) do
-    if !SpecConfig.instance.stress_spec?
-      skip 'Set STRESS=1 in environment to run stress tests'
-    end
-
-    ClientRegistry.instance.close_all_clients
-
     # This set up is taken from the step_down_spec file. In a future PR, ClusterTools
     # may be modified so this set up is no longer necessary.
     if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set

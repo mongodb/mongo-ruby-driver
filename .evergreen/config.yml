@@ -97,7 +97,7 @@ functions:
             export MMAPV1="${MMAPV1}"
             export FLE="${FLE}"
 
-            export STRESS="${STRESS}"
+            export STRESS=1
           EOT
 
           # See what we've done
@@ -597,6 +597,14 @@ axes:
         variables:
           STRESS: '1'
 
+  - id: fork
+    display_name: Fork
+    values:
+      - id: on
+        display_name: On
+        variables:
+          FORK: '1'
+
   - id: "as"
     display_name: ActiveSupport
     values:
@@ -801,9 +809,9 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "stress"
+  - matrix_name: "fork"
     matrix_spec:
-      stress: on
+      fork: on
       ruby: "ruby-2.7"
       mongodb-version: ["4.4"]
       topology: '*'

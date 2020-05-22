@@ -12,11 +12,8 @@ describe 'fork reconnect' do
   # is not supposed to happen.
   ruby_version_gte '2.4'
 
-  before(:all) do
-    if !SpecConfig.instance.stress_spec?
-      skip 'Set STRESS=1 in environment to run stress tests'
-    end
-  end
+  require_stress
+  require_fork
 
   let(:client) { authorized_client }
 
