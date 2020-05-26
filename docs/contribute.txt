@@ -49,7 +49,7 @@ Request Product Features
 To request a feature which is not specific to the Ruby driver, or which
 affects more than the driver alone (for example, a feature which requires
 MongoDB server support), please submit your idea through the
-`MongoDB Feedback Forum `<https://feedback.mongodb.com/forums/924286-drivers>`.
+`MongoDB Feedback Forum <https://feedback.mongodb.com/forums/924286-drivers>`_.
 
 
 Contribute Code
