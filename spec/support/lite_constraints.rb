@@ -122,4 +122,20 @@ module LiteConstraints
       end
     end
   end
+
+  def require_stress
+    before(:all) do
+      if !SpecConfig.instance.stress?
+        skip 'Set STRESS=1 in environment to run stress tests'
+      end
+    end
+  end
+
+  def require_fork
+    before(:all) do
+      if !SpecConfig.instance.fork?
+        skip 'Set FORK=1 in environment to run fork tests'
+      end
+    end
+  end
 end

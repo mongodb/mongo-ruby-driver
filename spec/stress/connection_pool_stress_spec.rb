@@ -1,11 +1,7 @@
 require 'spec_helper'
 
 describe 'Connection pool stress test' do
-  before(:all) do
-    if !SpecConfig.instance.stress_spec?
-      skip 'Stress spec not enabled'
-    end
-  end
+  require_stress
 
   let(:options) do
     { max_pool_size: 5, min_pool_size: 3 }

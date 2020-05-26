@@ -14,8 +14,9 @@ describe Mongo::Cluster do
   end
 
   let(:cluster_without_io) do
-    described_class.new(SpecConfig.instance.addresses, monitoring,
-      SpecConfig.instance.test_options.merge(monitoring_io: false))
+    register_cluster(
+      described_class.new(SpecConfig.instance.addresses, monitoring,
+        SpecConfig.instance.test_options.merge(monitoring_io: false)))
   end
 
   let(:cluster) { cluster_without_io }

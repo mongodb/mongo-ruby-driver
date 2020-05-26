@@ -65,9 +65,8 @@ describe 'Client after reconnect' do
     end
 
     let(:client) do
-      ClientRegistry.instance.register_local_client(
-        Mongo::Client.new(uri, SpecConfig.instance.ssl_options.merge(
-          server_selection_timeout: 3.86, logger: logger)))
+      new_local_client(uri, SpecConfig.instance.ssl_options.merge(
+        server_selection_timeout: 3.86, logger: logger))
     end
 
     let(:wait_for_discovery) do

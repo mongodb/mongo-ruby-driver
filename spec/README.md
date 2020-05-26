@@ -490,11 +490,26 @@ set names:
 However, as noted in the caveats section, changing the database name used by
 the test suite is not supported.
 
+## Special Tests
+
 Some tests require internet connectivity, for example to test DNS seed lists
 and SRV URIs. These tests can be skipped by setting the following environment
 variable:
 
-    EXTERNAL_DISABLED=true
+    EXTERNAL_DISABLED=1
+
+Some tests are designed to validate the driver's behavior under load, or
+otherwise execute a large number of operations which may take a sizable amount
+of time. Such tests are skipped by default and can be run by setting the
+following environment variable:
+
+    STRESS=1
+
+Some tests fork the process to validate the driver's behavior when forking is
+involved. These tests are skipped by default and can be run by setting the
+following environment variable:
+
+    FORK=1
 
 ## Debug Logging
 

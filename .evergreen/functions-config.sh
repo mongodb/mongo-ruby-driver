@@ -2,7 +2,7 @@
 
 show_local_instructions() {
   echo To test this configuration locally:
-  params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY STRESS_SPEC=true"
+  params="MONGODB_VERSION=$MONGODB_VERSION TOPOLOGY=$TOPOLOGY RVM_RUBY=$RVM_RUBY"
   if test -n "$AUTH"; then
     params="$params AUTH=$AUTH"
   fi
@@ -38,6 +38,12 @@ show_local_instructions() {
   fi
   if test -n "$MMAPV1"; then
     params="$params MMAPV1=$MMAPV1"
+  fi
+  if test -n "$STRESS"; then
+    params="$params STRESS=$STRESS"
+  fi
+  if test -n "$FORK"; then
+    params="$params FORK=$FORK"
   fi
   # $0 has the current script being executed which is also the script that
   # was initially invoked EXCEPT for the AWS configurations which use the

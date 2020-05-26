@@ -146,7 +146,8 @@ describe Mongo::Server::Monitor::Connection do
         expect([Socket, OpenSSL::SSL::SSLSocket]).to include(socket.class)
 
         expect(socket).to receive(:write).and_raise(IOError)
-        expect(socket).to receive(:write).and_call_original
+        # The retry is done on a new socket instance.
+        #expect(socket).to receive(:write).and_call_original
 
         connection.ismaster
       end

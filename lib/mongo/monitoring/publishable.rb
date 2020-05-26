@@ -45,18 +45,19 @@ module Mongo
       private
 
       def command_started(address, operation_id, payload,
-        socket_object_id: nil, connection_id: nil
+        socket_object_id: nil, connection_id: nil, connection_generation: nil
       )
         monitoring.started(
           Monitoring::COMMAND,
           Event::CommandStarted.generate(address, operation_id, payload,
-            socket_object_id: socket_object_id, connection_id: connection_id)
+            socket_object_id: socket_object_id, connection_id: connection_id,
+            connection_generation: connection_generation)
         )
       end
 
       def command_completed(result, address, operation_id, payload, duration)
         document = result ? (result.documents || []).first : nil
-        if error?(document)
+        if document && (document['ok'] && document['ok'] != 1 || document.key?('$err'))
           parser = Error::Parser.new(document)
           command_failed(document, address, operation_id, payload, parser.message, duration)
         else
@@ -86,10 +87,6 @@ module Mongo
 
       def duration(start)
         Time.now - start
-      end
-
-      def error?(document)
-        document && (document['ok'] == 0 || document.key?('$err'))
       end
 
       def monitoring?

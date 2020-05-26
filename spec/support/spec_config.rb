@@ -114,8 +114,12 @@ class SpecConfig
     RUBY_PLATFORM
   end
 
-  def stress_spec?
-    !!ENV['STRESS_SPEC']
+  def stress?
+    %w(1 true yes).include?(ENV['STRESS']&.downcase)
+  end
+
+  def fork?
+    %w(1 true yes).include?(ENV['FORK']&.downcase)
   end
 
   # Test suite configuration

@@ -61,7 +61,8 @@ describe Mongo::Server::Monitor do
 
       it 'retries the ismaster' do
         expect(socket).to receive(:write).once.and_raise(Mongo::Error::SocketError)
-        expect(socket).to receive(:write).and_call_original
+        # Retry is done on a new socket instance.
+        #expect(socket).to receive(:write).and_call_original
         expect(cluster).to receive(:run_sdam_flow)
         monitor.scan!
       end
@@ -108,15 +109,20 @@ describe Mongo::Server::Monitor do
           default_address
         end
 
+        let(:original_connection) do
+          monitor.connection
+        end
+
         let(:socket) do
           monitor.connection.connect!
           monitor.connection.__send__(:socket)
         end
 
         before do
-          expect(socket).to receive(:write).twice.and_raise(Mongo::Error::SocketError)
           server.unknown!
           expect(server.description).to be_unknown
+          expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
+          original_connection
           monitor.scan!
         end
 
@@ -124,8 +130,9 @@ describe Mongo::Server::Monitor do
           expect(server.description).to be_unknown
         end
 
-        it 'disconnects the connection' do
-          expect(monitor.connection).to_not be_connected
+        it 'reconnects the connection' do
+          expect(original_connection).to be monitor.connection
+          expect(monitor.connection).to be_connected
         end
       end
     end

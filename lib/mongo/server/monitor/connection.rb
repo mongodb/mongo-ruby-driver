@@ -136,8 +136,8 @@ module Mongo
         #
         # @since 2.2.0
         def ismaster
-          ensure_connected do |socket|
-            read_with_one_retry(retry_message: retry_message) do
+          read_with_one_retry(retry_message: retry_message) do
+            ensure_connected do |socket|
               add_server_diagnostics do
                 socket.write(ISMASTER_BYTES)
                 Protocol::Message.deserialize(socket).documents[0]
@@ -215,6 +215,17 @@ module Mongo
 
         def retry_message
           "Retrying ismaster in monitor for #{address}"
+        end
+
+        def ensure_connected
+          if pid != Process.pid
+            log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
+            disconnect!
+            connect!
+            @pid = Process.pid
+          end
+
+          super
         end
       end
     end

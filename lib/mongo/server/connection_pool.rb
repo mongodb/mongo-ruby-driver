@@ -292,6 +292,7 @@ module Mongo
         end
 
         deadline = Time.now + wait_timeout
+        pid = Process.pid
         connection = nil
         # It seems that synchronize sets up its own loop, thus a simple break
         # is insufficient to break the outer loop
@@ -303,6 +304,13 @@ module Mongo
             @lock.synchronize do
               until @available_connections.empty?
                 connection = @available_connections.pop
+
+                if connection.pid != pid
+                  log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
+                  connection.disconnect!(reason: :stale)
+                  @populate_semaphore.signal
+                  next
+                end
 
                 if connection.generation != generation
                   # Stale connections should be disconnected in the clear
@@ -385,7 +393,7 @@ module Mongo
 
         if Lint.enabled?
           unless connection.connected?
-            raise Error::LintError, 'Connection pool checked out a disconnected connection'
+            raise Error::LintError, "Connection pool for #{address} checked out a disconnected connection #{connection.generation}:#{connection.id}"
           end
         end
 
@@ -423,6 +431,11 @@ module Mongo
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id, self)
           )
+
+          if connection.error?
+            connection.disconnect!(reason: :error)
+            return
+          end
 
           if closed?
             connection.disconnect!(reason: :pool_closed)

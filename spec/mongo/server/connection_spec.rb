@@ -971,6 +971,7 @@ describe Mongo::Server::Connection do
       end
     end
 
+=begin this is now handled by connection pool
     context 'when the process is forked' do
 
       let(:insert) do
@@ -992,6 +993,7 @@ describe Mongo::Server::Connection do
         expect(connection.send(:pid)).to eq(1)
       end
     end
+=end
   end
 
   describe '#initialize' do

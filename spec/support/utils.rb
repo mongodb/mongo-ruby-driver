@@ -436,4 +436,16 @@ module Utils
       sleep 3
     end
   end
+
+  module_function def wrap_forked_child
+    begin
+      yield
+    rescue => e
+      STDERR.puts "Failing process #{Process.pid} due to #{e.class}: #{e}"
+      exec('/bin/false')
+    else
+      # Exec so that we do not close any clients etc. in the child.
+      exec('/bin/true')
+    end
+  end
 end
