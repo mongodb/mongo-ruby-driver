@@ -20,7 +20,7 @@ module Mongo
     #
     # @since 2.5.0
     #
-    # @deprecated All instances of this error will be replaced with
+    # @deprecated RUBY-2260 All instances of this error will be replaced with
     #   UnsupportedOption in version 3.0
     class UnsupportedArrayFilters < Error
 
