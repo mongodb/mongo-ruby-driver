@@ -22,7 +22,7 @@ module Mongo
     #
     # @deprecated RUBY-2260 All instances of this error will be replaced with
     #   UnsupportedOption in version 3.0
-    class UnsupportedCollation < Error
+    class UnsupportedCollation < UnsupportedOption
 
       # The default error message describing that collations is not supported.
       #

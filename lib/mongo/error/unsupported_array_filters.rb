@@ -20,9 +20,11 @@ module Mongo
     #
     # @since 2.5.0
     #
-    # @deprecated RUBY-2260 All instances of this error will be replaced with
-    #   UnsupportedOption in version 3.0
-    class UnsupportedArrayFilters < Error
+    # @deprecated RUBY-2260 In driver version 3.0, this error class will be 
+    #   replaced with UnsupportedOption. To handle this error, catch
+    #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
+    #   in your application when upgrading to version 3.0 of the driver.
+    class UnsupportedArrayFilters < UnsupportedOption
 
       # The default error message describing that array filters are not supported.
       #

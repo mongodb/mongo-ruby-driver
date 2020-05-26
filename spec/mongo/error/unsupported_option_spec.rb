@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Error::UnsupportedOption do
-  describe '#self.hint_error' do
+  describe '.hint_error' do
     context 'with no options' do
       let(:error) { described_class.hint_error }
 
@@ -28,7 +28,7 @@ describe Mongo::Error::UnsupportedOption do
     end
   end
 
-  describe '#self.allow_disk_use_error' do
+  describe '.allow_disk_use_error' do
     let(:error) { described_class.allow_disk_use_error }
 
     it 'creates an error with a default message' do
