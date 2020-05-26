@@ -4,43 +4,78 @@ Contribute to the Driver
 
 .. default-domain:: mongodb
 
-For Bugs and Feature Requests
------------------------------
+Report Bugs and Request Ruby Driver-Specific Features
+-----------------------------------------------------
 
-If you think you have found a bug or want to see a new feature in the
-Ruby driver, please open an issue in `JIRA
-<https://jira.mongodb.org/>`_:
+To report a bug in the driver or request a feature specific to the Ruby driver:
 
-#. `Create a Jira account and login <https://jira.mongodb.org>`_.
+1. Visit `our issue tracker <https://jira.mongodb.org/>`_ and login
+   (or create an account if you do not have one already).
+2. Navigate to the `RUBY project <https://jira.mongodb.org/browse/RUBY>`_.
+3. Click :guilabel:`Create Issue` and fill out all of the applicable form
+   fields.
 
-#. Navigate to the `Ruby project
-   <https://jira.mongodb.org/browse/RUBY>`_.
+When creating an issue, please keep in mind that all information in JIRA
+for the RUBY project, as well as the core server (the SERVER project),
+is publicly visible.
 
-#. Click :guilabel:`Create Issue`. Provide as much information as
-   possible about the issue, including:
+**PLEASE DO:**
 
-   - Steps to reproduce it.
+- Provide as much information as possible about the issue.
+- Provide detailed steps for reproducing the issue.
+- Provide any applicable code snippets, stack traces and log data.
+  Do not include any sensitive data or server logs.
+- Specify version numbers of the driver and MongoDB server.
 
-   - Version information for the driver and MongoDB.
+**PLEASE DO NOT:**
 
-   - Any applicable code snippets, stack traces and log data. Do not
-     include any sensitive data or server logs.
+- Provide any sensitive data or server logs.
+- Report potential security issues publicly (see 'Security Issues' below).
 
 .. note::
 
-   Bug reports in JIRA for the driver and the Core Server (i.e. **SERVER**)
+   Bug reports in JIRA for the Ruby driver and the core server (the **SERVER**)
    projects are public.
 
-If you identify a security vulnerability in a driver or any other
-MongoDB project, please report it according to the instructions found
+If you identified a potential security vulnerability in the Ruby driver or
+any other MongoDB product, please report it according to the instructions found
 in the :manual:`Create a Vulnerability Report
 </tutorial/create-a-vulnerability-report>`.
 
-Contribute to the MongoDB Ruby Driver
--------------------------------------
 
-The MongoDB Ruby driver source is located at
-`<https://github.com/mongodb/mongo-ruby-driver>`_.
+Request Product Features
+------------------------
 
-For instructions on contributing to the driver, see
-`<https://github.com/mongodb/mongo-ruby-driver/blob/master/CONTRIBUTING.md>`_.
+To request a feature which is not specific to the Ruby driver, or which
+affects more than the driver alone (for example, a feature which requires
+MongoDB server support), please submit your idea through the
+`MongoDB Feedback Forum <https://feedback.mongodb.com/forums/924286-drivers>`_.
+
+
+Contribute Code
+---------------
+
+The MongoDB Ruby driver source is located
+`at GitHub <https://github.com/mongodb/mongo-ruby-driver>`_.
+
+The list of known issues in the driver is available 
+`in JIRA <https://jira.mongodb.org/browse/RUBY>`_.
+
+We recommend creating a JIRA ticket before starting work on a bug fix or
+an improvement to the driver, to obtain feedback from the Ruby driver team
+as to the proposed changes. A JIRA ticket is not required to submit
+a pull request but it is appreciated, especially for non-trivial changes.
+
+Pull requests should be made against the ``master`` branch and
+include relevant tests, if applicable. The Ruby driver team will backport
+the changes to the stable branches, if needed.
+
+A MongoDB deployment is required to run the tests. Setup procedures and
+recommendations for various deployments, as well as how to configure the
+driver's test suite for the deployments, are covered in the `spec
+readme <https://github.com/mongodb/mongo-ruby-driver/blob/master/spec/README.md>`.
+
+The driver is tested on `Evergreen <https://github.com/evergreen-ci/evergreen>`_,
+MongoDB's in-house continuous integration platform. After a pull request
+is created, one of the Ruby driver team engineers will schedule an Evergreen
+build.

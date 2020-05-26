@@ -58,6 +58,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       :titlesonly:
 
       installation
+      support
       quick-start
       /tutorials/ruby-driver-create-client
       /tutorials/ruby-driver-authentication
@@ -82,4 +83,4 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       API <http://api.mongodb.com/ruby/current/>
       /reference/driver-compatibility
       /reference/additional-resources
-      /contribute
+      contribute
