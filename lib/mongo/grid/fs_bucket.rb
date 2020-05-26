@@ -70,6 +70,8 @@ module Mongo
       # @param [ Hash ] selector The selector to use in the find.
       # @param [ Hash ] options The options for the find.
       #
+      # @option options [ true, false ] :allow_disk_use Whether the server can
+      #   write temporary data to disk while executing the find operation.
       # @option options [ Integer ] :batch_size The number of documents returned in each batch
       #   of results from MongoDB.
       # @option options [ Integer ] :limit The max number of docs to return from the query.

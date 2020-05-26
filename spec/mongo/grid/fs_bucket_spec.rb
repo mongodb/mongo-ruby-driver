@@ -193,6 +193,24 @@ describe Mongo::Grid::FSBucket do
         fs.find({filename: 'test.txt'}, options)
       end
 
+      context 'when provided allow_disk_use' do
+        context 'when allow_disk_use is true' do
+          let(:options) { { allow_disk_use: true } }
+
+          it 'sets allow_disk_use on the view' do
+            expect(view.options[:allow_disk_use]).to be true
+          end
+        end
+
+        context 'when allow_disk_use is false' do
+          let(:options) { { allow_disk_use: false } }
+
+          it 'sets allow_disk_use on the view' do
+            expect(view.options[:allow_disk_use]).to be false
+          end
+        end
+      end
+
       context 'when provided batch_size' do
 
         let(:options) do
