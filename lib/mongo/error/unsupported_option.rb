@@ -24,6 +24,11 @@ module Mongo
         "commands on MongoDB server versions 4.4 and later"
 
       # @api private
+      UNACKNOWLEDGED_HINT_MESSAGE = "The hint option cannot be specified on " \
+        "an unacknowledged write operation. Remove the hint option or perform " \
+        "this operation with a write concern of at least { w: 1 }"
+
+      # @api private
       ALLOW_DISK_USE_MESSAGE = "The MongoDB server handling this request does not support the allow_disk_use " \
         "option on this command. The allow_disk_use option is supported on find commands " \
         "on MongoDB server versions 4.4 and later"
@@ -32,7 +37,7 @@ module Mongo
         unacknowledged_write = options[:unacknowledged_write] || false
 
         error_message = if unacknowledged_write
-          self.unacknowledged_write_message('hint')
+          UNACKNOWLEDGED_HINT_MESSAGE
         else
           HINT_MESSAGE
         end
@@ -42,14 +47,6 @@ module Mongo
 
       def self.allow_disk_use_error
         self.new(ALLOW_DISK_USE_MESSAGE)
-      end
-
-      private
-
-      def self.unacknowledged_write_message(option_name)
-        "The #{option_name} option cannot be specified on an unacknowledged " \
-        "write operation. Remove the #{option_name} option or perform this " \
-        "operation with a write concern of at least { w: 1 }"
       end
     end
   end

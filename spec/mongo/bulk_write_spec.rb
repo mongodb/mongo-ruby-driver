@@ -257,7 +257,7 @@ describe Mongo::BulkWrite do
               it 'raises a client-side error' do
                 expect do
                   bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+                end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
               end
             end
 
@@ -268,7 +268,7 @@ describe Mongo::BulkWrite do
               it 'raises a client-side error' do
                 expect do
                   bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
               end
             end
           end
@@ -404,7 +404,7 @@ describe Mongo::BulkWrite do
                 it 'raises a client-side error' do
                   expect do
                     bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
                 end
               end
 
@@ -420,7 +420,7 @@ describe Mongo::BulkWrite do
                 it 'raises a client-side error' do
                   expect do
                     bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
                 end
               end
             end
@@ -486,7 +486,7 @@ describe Mongo::BulkWrite do
                 it 'raises a client-side error' do
                   expect do
                     bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
                 end
               end
 
@@ -502,7 +502,7 @@ describe Mongo::BulkWrite do
                 it 'raises a client-side error' do
                   expect do
                     bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
                 end
               end
             end
@@ -771,7 +771,7 @@ describe Mongo::BulkWrite do
               it 'raises a client-side error' do
                 expect do
                   bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
               end
             end
 
@@ -787,7 +787,7 @@ describe Mongo::BulkWrite do
               it 'raises a client-side error' do
                 expect do
                   bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+                end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
               end
             end
           end
@@ -1089,7 +1089,7 @@ describe Mongo::BulkWrite do
               it 'raises a client-side error' do
                 expect do
                   bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+                end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
               end
             end
 
@@ -1105,7 +1105,7 @@ describe Mongo::BulkWrite do
               it 'raises a client-side error' do
                 expect do
                   bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+                end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
               end
             end
           end

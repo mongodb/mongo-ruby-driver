@@ -362,14 +362,14 @@ module Mongo
 
             write_concern = opts[:write_concern]
             if write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedHint.new(nil, unacknowledged_write: true)
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
             end
 
             if doc.key?(:findAndModify) &&
                 !features.find_and_modify_option_validation_enabled?
-              raise Error::UnsupportedHint.new
+              raise Error::UnsupportedOption.hint_error
             elsif !features.update_delete_option_validation_enabled?
-              raise Error::UnsupportedHint.new
+              raise Error::UnsupportedOption.hint_error
             end
 
             doc[:hint] = opts[:hint]

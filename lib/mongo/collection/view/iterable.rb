@@ -86,7 +86,7 @@ module Mongo
             # but perform no validation and will not raise an error if it is
             # specified. If the allow_disk_use option is specified, raise an error
             # to alert the user.
-            raise Error::UnsupportedAllowDiskUse.new if options.key?(:allow_disk_use)
+            raise Error::UnsupportedOption.allow_disk_use_error if options.key?(:allow_disk_use)
             Operation::Find.new(Builder::OpQuery.new(self).specification)
           end
         end

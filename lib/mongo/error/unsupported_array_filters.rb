@@ -19,6 +19,9 @@ module Mongo
     # selected does not support array filters.
     #
     # @since 2.5.0
+    #
+    # @deprecated All instances of this error will be replaced with
+    #   UnsupportedOption in version 3.0
     class UnsupportedArrayFilters < Error
 
       # The default error message describing that array filters are not supported.

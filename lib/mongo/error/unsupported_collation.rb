@@ -19,6 +19,9 @@ module Mongo
     # support collations.
     #
     # @since 2.4.0
+    #
+    # @deprecated All instances of this error will be replaced with
+    #   UnsupportedOption in version 3.0
     class UnsupportedCollation < Error
 
       # The default error message describing that collations is not supported.
