@@ -71,6 +71,8 @@ module Mongo
 
       def_delegators :@result, :operation_time
 
+      # @!method connection_description
+      #
       # @return [ Server::Description ] Server description of the server that
       #   the operation that this exception refers to was performed on.
       #
