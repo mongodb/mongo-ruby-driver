@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'fork reconnect' do
+  require_fork
   only_mri
 
   # On multi-shard sharded clusters a succeeding write request does not
@@ -13,7 +14,6 @@ describe 'fork reconnect' do
   ruby_version_gte '2.4'
 
   require_stress
-  require_fork
 
   let(:client) { authorized_client }
 

@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'fork reconnect' do
+  require_fork
   only_mri
 
   # On multi-shard sharded clusters a succeeding write request does not
