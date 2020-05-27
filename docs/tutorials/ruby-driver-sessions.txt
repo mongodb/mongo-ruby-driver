@@ -1,8 +1,8 @@
 .. _sessions:
 
-========
+********
 Sessions
-========
+********
 
 .. default-domain:: mongodb
 
@@ -21,7 +21,7 @@ and passed to operation methods that should be executed in the context of that s
 Please note that session objects are not thread safe. They must only be used by one thread at a time.
 
 Creating a session from a ``Mongo::Client``
--------------------------------------------
+===========================================
 
 A session can be created by calling the ``start_session`` method on a client:
 
@@ -44,7 +44,7 @@ the session, it risks getting errors due to the session going stale before it is
 
 
 Using a session
----------------
+===============
 A session object can be passed to most driver methods so that the operation can be executed in the
 context of that session. Please see the API docs for which methods support a session argument.
 
@@ -77,14 +77,14 @@ the ``Mongo::Collection::View``:
 
 
 Unacknowledged Writes
----------------------
+=====================
 
 Unacknowledged writes are only allowed outside the session mechanism; if an explicit session is supplied for an
 unacknowledged write, the driver will not send the session id with the operation. Similarly, the driver will not use
 an implicit session for an unacknowledged write.
 
 Causal Consistency
-------------------
+==================
 A causally consistent session will let you read your writes and guarantee monotonically increasing
 reads from secondaries.
 To create a causally consistent session, set the ``causal_consistency`` option to true:
@@ -112,7 +112,7 @@ Note that if you set the causal_consistency option to nil as in ``(causal_consis
 as false.
 
 End a session
--------------
+=============
 To end a session, call the ``end_session`` method:
 
 .. code-block:: ruby

@@ -1,6 +1,6 @@
-=================
+*****************
 Creating a Client
-=================
+*****************
 
 .. default-domain:: mongodb
 
@@ -11,7 +11,7 @@ Creating a Client
    :class: singlecol
 
 Using ``Mongo::Client``
------------------------
+=======================
 
 To connect to a MongoDB deployment, create a ``Mongo::Client`` object.
 Provide a list of hosts and options or a :manual:`connection string URI
@@ -204,7 +204,7 @@ URI, keep in mind the following:
 .. _ruby-driver-client-options:
 
 Client Options
---------------
+==============
 
 ``Mongo::Client``'s constructor accepts a number of options configuring the
 behavior of the driver. The options can be provided in the options hash as
@@ -795,7 +795,7 @@ URI options are explained in detail in the :manual:`Connection URI reference
      - ``:zlib_compression_level => Integer``
 
 Timeout Options
----------------
+===============
 
 ``server_selection_timeout``
 ````````````````````````````
@@ -877,7 +877,7 @@ on the client or passed to individual operations under ``:write_concern``.
 
 
 TLS Connections
----------------
+===============
 
 To connect to the MongoDB cluster using TLS, pass the ``ssl`` Ruby option or
 the ``tls`` URI option to the ``Mongo::Client`` constructor. TLS must be
@@ -955,7 +955,7 @@ trusted CA certificates.
 
 
 IPv4/IPv6 Connections
----------------------
+=====================
 
 When a client is constructed with ``localhost`` as the host name, it will
 attempt an IPv4 connection only (i.e. if ``localhost`` resolves to
@@ -972,7 +972,7 @@ The driver does not currently implement the Happy Eyeballs algorithm.
 
 
 TCP Keepalive Configuration
----------------------------
+===========================
 
 The driver sets TCP keepalive by default. The following default values are also set if the system
 value can be determined and if the driver default value is less than the system value.
@@ -987,7 +987,7 @@ for instructions on setting these values at the system level.
 
 
 Details on Connection Pooling
------------------------------
+=============================
 
 ``Mongo::Client`` instances have a connection pool per server that the client
 is connected to. The pool creates connections on demand to support concurrent
@@ -1066,7 +1066,7 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 
 
 Usage with Forking Servers
---------------------------
+==========================
 
 *Note:* Applications using Mongoid should follow `Mongoid's forking guidance
 <https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
@@ -1120,7 +1120,7 @@ parent remains alive.
 
 
 Details on Retryable Reads
---------------------------
+==========================
 
 The driver implements two mechanisms for retrying reads: modern and legacy.
 As of driver version 2.9.0, the modern mechanism is used by default, and the
@@ -1192,7 +1192,7 @@ To disable all read retries, set the following client options:
 
 
 Details on Retryable Writes
----------------------------
+===========================
 
 The driver implements two mechanisms for retrying writes: modern and legacy.
 As of driver version 2.9.0, the modern mechanism is used by default on servers
@@ -1253,7 +1253,7 @@ To disable all write retries, set the following client options:
 ``retry_writes: false, max_write_retries: 0``.
 
 Logging
--------
+=======
 
 You can either use the default global driver logger or set your own. To set your own:
 
@@ -1292,7 +1292,7 @@ option to the client instance.
 
 
 Development Configuration
--------------------------
+=========================
 
 Driver's default configuration is suitable for production deployment.
 In development, some settings can be adjusted to provide a better developer
@@ -1305,7 +1305,7 @@ experience.
 
 
 Production Configuration
-------------------------
+========================
 
 Please consider the following when deploying an application using the Ruby
 driver in production:

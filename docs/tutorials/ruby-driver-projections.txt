@@ -1,6 +1,6 @@
-===========
+***********
 Projections
-===========
+***********
 
 .. default-domain:: mongodb
 

@@ -1,8 +1,8 @@
 .. _gridfs:
 
-======
+******
 GridFS
-======
+******
 
 .. default-domain:: mongodb
 
@@ -17,7 +17,7 @@ chunked files in the database, also known as the pattern "GridFS". The API allow
 work with Grid::File objects or with read and write streams.
 
 Creating a GridFS object ("Grid::FSBucket")
--------------------------------------------
+===========================================
 
 You can create a GridFS object by calling ``fs`` on a database, with optional
 arguments. ``fs`` returns a ``Grid::FSBucket`` object.
@@ -55,7 +55,7 @@ For example, you can create a GridFS bucket object with a particular read prefer
 
 
 Working with write streams
---------------------------
+==========================
 
 To upload a file to GridFS using a write stream, you can either open a stream
 and write to it directly or write the entire contents of an ``IO`` object to
@@ -111,7 +111,7 @@ The options can be provided as the last argument to the write stream methods:
 
 
 Working with read streams
--------------------------
+=========================
 
 To download a file from GridFS using a read stream, you can either open a
 read stream and read from it directly or download the entire file all at once.
@@ -172,7 +172,7 @@ the underlying read streams. Please consult the API documentation for each
 method to determine whether it supports a particular option.
 
 Finding file metadata
----------------------
+=====================
 
 You can retrieve documents containing metadata about files in the GridFS files collection.
 
@@ -181,7 +181,7 @@ You can retrieve documents containing metadata about files in the GridFS files c
   fs_bucket.find(filename: 'my-file.txt')
 
 Deleting files
---------------
+==============
 
 You can delete a file by id.
 
@@ -191,7 +191,7 @@ You can delete a file by id.
 
 
 Working with Grid::File objects
--------------------------------
+===============================
 
 This object can be used to wrap a file to be inserted into the database using
 GridFS and the object that is retrieved.
@@ -239,7 +239,7 @@ The following is a full list of the available options that files support.
 
 
 Inserting Files
----------------
+===============
 
 Files can be inserted into the database one at a time. File chunks are inserted
 by default into the ``fs.chunks`` collection and file metadata is inserted into the
@@ -278,7 +278,7 @@ Files can also be streamed as an alternative to a direct insert.
   end
 
 Finding Files
--------------
+=============
 
 To retrieve a file from the database, call ``find_one`` with the appropriate filter.
 
@@ -299,7 +299,7 @@ Files can also be streamed as an alternative to a direct find.
 
 
 Deleting Files
---------------
+==============
 
 To delete a file, pass the file object to ``delete_one``.
 

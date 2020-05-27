@@ -1,6 +1,6 @@
-==============
+**************
 Authentication
-==============
+**************
 
 .. default-domain:: mongodb
 
@@ -22,7 +22,7 @@ user management, see the :ref:`User Management tutorial<user-management>`.
 
 
 Providing credentials
----------------------
+=====================
 
 If authentication is enabled, provide credentials when creating a new
 client:
@@ -58,7 +58,7 @@ one step:
 .. _auth-source:
 
 Auth Source
------------
+===========
 
 A user's auth source is the database where that user's authentication
 credentials are stored.
@@ -101,7 +101,7 @@ auth source is always ``$external``.
 
 
 Authentication Mechanisms
--------------------------
+=========================
 
 MongoDB supports several authentication mechanisms, as detailed in this section.
 Authentication mechanism to use can be explicitly specified when a Client is

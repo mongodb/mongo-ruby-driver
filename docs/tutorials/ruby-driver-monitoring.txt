@@ -1,6 +1,6 @@
-==========
+**********
 Monitoring
-==========
+**********
 
 .. default-domain:: mongodb
 
@@ -22,7 +22,7 @@ These events are organized into the following categories:
 Topology and server events are part of Server Discovery and Monitoring (SDAM).
 
 Command Monitoring
-------------------
+==================
 
 All user-initiated commands that are sent to the server publish events that
 can be subscribed to for fine grained information. The monitoring API
@@ -95,7 +95,7 @@ Sample output:
 .. _sdam:
 
 Server Discovery And Monitoring
--------------------------------
+===============================
 
 The Ruby driver implements `Server Discovery And Monitoring (SDAM) specification
 <https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring>`_.
@@ -278,7 +278,7 @@ Sample output:
 
 
 Server Heartbeats
------------------
+=================
 
 The application can be notified of each server heartbeat by subscribing
 to SERVER_HEARTBEAT topic. A server heartbeat listener must implement
@@ -343,7 +343,7 @@ Sample output:
   D, [2018-09-23T13:44:10.707778 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | SUCCEEDED | 0.000772381s
 
 Connection Pool And Connection Monitoring
------------------------------------------
+=========================================
 
 Each client maintains a connection pool for each server in the deployment that
 it is aware of, and publishes events for both connection pools and individual
@@ -398,7 +398,7 @@ Sample output:
 
 
 Disabling Monitoring
---------------------
+====================
 
 To turn off monitoring, set the client monitoring option to ``false``:
 

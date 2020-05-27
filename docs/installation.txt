@@ -1,6 +1,6 @@
-============
+************
 Installation
-============
+************
 
 .. default-domain:: mongodb
 
@@ -11,7 +11,7 @@ The Ruby driver is bundled as a gem and is hosted on `Rubygems
 .. _ruby-driver-install:
 
 Install the Gem
----------------
+===============
 
 The driver can be installed manually or with bundler.
 
@@ -23,7 +23,7 @@ To install the mongo gem manually:
 
 
 What's New
-----------
+==========
 
 Please consult the `releases page on GitHub
 <https://github.com/mongodb/mongo-ruby-driver/releases>`_ for the list
@@ -31,7 +31,7 @@ of improvements and changes in each version of the driver.
 
 
 TLS/SSL and the Ruby Driver
----------------------------
+===========================
 
 Industry best practices, and some regulations, require the use of TLS 1.1 or newer. Though no application changes are
 required for the Ruby driver to make use of the newest protocols, some operating systems or versions may not provide

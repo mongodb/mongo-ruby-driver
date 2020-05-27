@@ -1,8 +1,8 @@
 .. _change-streams:
 
-==============
+**************
 Change Streams
-==============
+**************
 
 .. default-domain:: mongodb
 
@@ -38,7 +38,7 @@ getMores to be called in a loop in the background.
 .. _here: https://github.com/jruby/jruby/issues/4212
 
 Watching for Changes on a Collection
-------------------------------------
+====================================
 
 A collection change stream is created by calling the ``#watch`` method on a
 collection:
@@ -85,7 +85,7 @@ operator format:
   end
 
 Watching for Changes on a Database
-----------------------------------
+==================================
 
 A database change stream notifies on changes on any collection within the
 database as well as database-wide events, such as the database being dropped.
@@ -104,7 +104,7 @@ database object:
 
 
 Watching for Changes on a Cluster
----------------------------------
+=================================
 
 A cluster change stream notifies on changes on any collection, any database
 within the cluster as well as cluster-wide events.
@@ -122,7 +122,7 @@ client object (not the cluster object):
 
 
 Closing a Change Stream
------------------------
+=======================
 
 You can close a change stream by calling its ``#close`` method:
 
@@ -132,7 +132,7 @@ You can close a change stream by calling its ``#close`` method:
 
 
 Resuming a Change Stream
-------------------------
+========================
 
 The driver will automatically retry getMore operations on a change stream
 once. Initial aggregation is never retried. In practical terms this means
