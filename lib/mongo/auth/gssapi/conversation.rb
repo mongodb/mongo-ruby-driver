@@ -34,7 +34,8 @@ module Mongo
         #   Conversation.new(user, 'test.example.com')
         #
         # @param [ Auth::User ] user The user to converse about.
-        # @param [ String ] host The host to talk to.
+        # @param [ Mongo::Connection ] connection The connection to
+        #   authenticate over.
         #
         # @since 2.0.0
         def initialize(user, connection, **opts)
