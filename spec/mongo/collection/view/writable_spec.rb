@@ -36,7 +36,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.find_one_and_delete(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -49,7 +49,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.find_one_and_delete(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -256,7 +256,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -269,7 +269,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -499,7 +499,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -512,7 +512,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -715,7 +715,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -728,7 +728,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -902,7 +902,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.delete_one(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -915,7 +915,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -1090,7 +1090,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.replace_one({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -1103,7 +1103,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -1347,7 +1347,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -1360,7 +1360,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -1610,7 +1610,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side exception' do
           expect do
             view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
         end
       end
 
@@ -1623,7 +1623,7 @@ describe Mongo::Collection::View::Writable do
         it 'raises a client-side error' do
           expect do
             view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedHint, /A hint cannot be specified on an operation being performed with an unacknowledged write concern/)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end

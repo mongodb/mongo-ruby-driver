@@ -19,7 +19,12 @@ module Mongo
     # support collations.
     #
     # @since 2.4.0
-    class UnsupportedCollation < Error
+    #
+    # @deprecated RUBY-2260 In driver version 3.0, this error class will be 
+    #   replaced with UnsupportedOption. To handle this error, catch
+    #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
+    #   in your application when upgrading to version 3.0 of the driver.
+    class UnsupportedCollation < UnsupportedOption
 
       # The default error message describing that collations is not supported.
       #

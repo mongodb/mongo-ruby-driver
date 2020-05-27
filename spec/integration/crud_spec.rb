@@ -16,7 +16,7 @@ describe 'CRUD operations' do
         it 'raises an exception' do
           expect do
             collection.find({}, { allow_disk_use: true }).first
-          end.to raise_error(Mongo::Error::UnsupportedAllowDiskUse, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
         end
       end
     end
@@ -29,7 +29,7 @@ describe 'CRUD operations' do
         it 'raises an exception' do
           expect do
             collection.find({}, { allow_disk_use: false }).first
-          end.to raise_error(Mongo::Error::UnsupportedAllowDiskUse, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
         end
       end
     end
