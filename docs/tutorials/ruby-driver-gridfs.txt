@@ -125,6 +125,13 @@ The metadata is passed in the optional final parameter as follows:
     end
   end
 
+.. note::
+
+  The default content type set by the driver is ``binary/octet-stream``
+  which is not a standard MIME type. To use ``application-octet-stream`` as
+  the content type for binary data, specify it manually in the file
+  metadata in the write operations.
+
 File API
 ````````
 
