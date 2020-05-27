@@ -85,7 +85,7 @@ module Mongo
       # @return [ CollectionView ] The collection view.
       #
       # @since 2.1.0
-      def find(selector = nil, **options)
+      def find(selector = nil, options = {})
         opts = options.merge(read: read_preference) if read_preference
         files_collection.find(selector, opts || options)
       end
@@ -231,8 +231,8 @@ module Mongo
       # @yieldparam [ Hash ] The read stream.
       #
       # @since 2.1.0
-      def open_download_stream(id, **options)
-        read_stream(id, options).tap do |stream|
+      def open_download_stream(id, options = nil)
+        read_stream(id, options || {}).tap do |stream|
           if block_given?
             begin
               yield stream
@@ -375,7 +375,7 @@ module Mongo
       # @yieldparam [ Hash ] The write stream.
       #
       # @since 2.1.0
-      def open_upload_stream(filename, **opts)
+      def open_upload_stream(filename, opts = {})
         write_stream(filename, opts).tap do |stream|
           if block_given?
             begin
@@ -466,11 +466,11 @@ module Mongo
       #
       # @option opts [ BSON::Document ] :file_info_doc For internal
       #   driver use only. A BSON document to use as file information.
-      def read_stream(id, **opts)
+      def read_stream(id, opts)
         Stream.get(self, Stream::READ_MODE, { file_id: id }.update(options).update(opts))
       end
 
-      def write_stream(filename, **opts)
+      def write_stream(filename, opts)
         Stream.get(self, Stream::WRITE_MODE, { filename: filename }.update(options).update(opts))
       end
 
