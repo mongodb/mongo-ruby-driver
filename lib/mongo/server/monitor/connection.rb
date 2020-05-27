@@ -21,7 +21,6 @@ module Mongo
       # @since 2.0.0
       # @api private
       class Connection < Server::ConnectionCommon
-        include Retryable
         include Loggable
 
         # The command used for determining server status.
@@ -67,14 +66,6 @@ module Mongo
         # object to create the network connection.
         #
         # @note Monitoring connections do not authenticate.
-        #
-        # @api private
-        #
-        # @example Create the connection.
-        #   Connection.new(address)
-        #
-        # @note Connection must never be directly instantiated outside of a
-        #   Monitor.
         #
         # @param [ Mongo::Address ] address The address the connection is for.
         # @param [ Hash ] options The connection options.
@@ -124,25 +115,28 @@ module Mongo
           options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
 
-        # Sends the preserialized ismaster request and returns the result.
+        # Sends a message and returns the result.
         #
-        # If there is any error during the ismaster request (such as a network
-        # error), the request is retried.
+        # @param [ Protocol::Message ] The message to send.
         #
-        # @example Send a preserialized ismaster message.
-        #   connection.ismaster
+        # @return [ Protocol::Message ] The result.
+        def dispatch(message)
+          dispatch_bytes(message.serialize.to_s)
+        end
+
+        # Sends a preserialized message and returns the result.
         #
-        # @return [ BSON::Document ] The ismaster result.
+        # @param [ String ] The serialized message to send.
         #
-        # @since 2.2.0
-        def ismaster
-          read_with_one_retry(retry_message: retry_message) do
-            ensure_connected do |socket|
-              add_server_diagnostics do
-                socket.write(ISMASTER_BYTES)
-                Protocol::Message.deserialize(socket).documents[0]
-              end
-            end
+        # @return [ Protocol::Message ] The result.
+        def dispatch_bytes(bytes)
+          unless connected?
+            raise ArgumentError, "Trying to dispatch on an unconnected connection #{self}"
+          end
+
+          add_server_diagnostics do
+            socket.write(bytes)
+            Protocol::Message.deserialize(socket)
           end
         end
 
@@ -160,12 +154,12 @@ module Mongo
         #
         # @since 2.0.0
         def connect!
-          unless @socket
-            socket = add_server_diagnostics do
-              address.socket(socket_timeout, ssl_options, address.options)
-            end
-            handshake!(socket)
-            @socket = socket
+          if @socket
+            raise ArgumentError, 'Monitoring connection already connected'
+          end
+
+          @socket = add_server_diagnostics do
+            address.socket(socket_timeout, ssl_options, address.options)
           end
           true
         end
@@ -192,40 +186,20 @@ module Mongo
           true
         end
 
-        private
-
-        def handshake!(socket)
+        def handshake!
           payload = if @app_metadata
             @app_metadata.ismaster_bytes
           else
             log_warn("No app metadata provided for handshake with #{address}")
             ISMASTER_BYTES
           end
-          reply = add_server_diagnostics do
-            socket.write(payload)
-            msg = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE)
-            msg.documents.first
-          end
+          message = dispatch_bytes(payload)
+          reply = message.documents.first
           set_compressor!(reply)
           reply
         rescue => e
           log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
           raise
-        end
-
-        def retry_message
-          "Retrying ismaster in monitor for #{address}"
-        end
-
-        def ensure_connected
-          if pid != Process.pid
-            log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
-            disconnect!
-            connect!
-            @pid = Process.pid
-          end
-
-          super
         end
       end
     end

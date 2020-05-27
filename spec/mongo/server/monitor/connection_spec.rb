@@ -33,7 +33,7 @@ describe Mongo::Server::Monitor::Connection do
           app_metadata: Mongo::Server::Monitor::AppMetadata.new(options),
         }.update(options))
     ).tap do |monitor|
-      monitor.run!
+      monitor.scan!
     end
   end
 
@@ -119,111 +119,6 @@ describe Mongo::Server::Monitor::Connection do
 
       it 'uses the connect_timeout as the socket_timeout' do
         expect(connection.send(:socket).timeout).to eq(10)
-      end
-    end
-  end
-
-  describe '#ismaster' do
-    let(:options) do
-      SpecConfig.instance.test_options
-    end
-
-    let(:result) { connection.ismaster }
-
-    it 'returns a hash' do
-      expect(result).to be_a(Hash)
-    end
-
-    it 'is successful' do
-      expect(result['ok']).to eq(1.0)
-    end
-
-    context 'network error during ismaster' do
-      let(:result) do
-        connection
-
-        socket = connection.send(:socket).send(:socket)
-        expect([Socket, OpenSSL::SSL::SSLSocket]).to include(socket.class)
-
-        expect(socket).to receive(:write).and_raise(IOError)
-        # The retry is done on a new socket instance.
-        #expect(socket).to receive(:write).and_call_original
-
-        connection.ismaster
-      end
-
-      before do
-        # Since we set expectations on the connection, kill the
-        # background thread (but without disconnecting the connection).
-        # Note also that we need to have the connection connected in
-        # the first place, thus the scan! call here.
-        monitor.scan!
-        monitor.instance_variable_get('@thread').kill
-        monitor.instance_variable_get('@thread').join
-      end
-
-      it 'retries ismaster and is successful' do
-        expect(result).to be_a(Hash)
-        expect(result['ok']).to eq(1.0)
-      end
-
-      it 'logs the retry' do
-        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
-          expect(msg).to match(/Retrying ismaster in monitor for #{connection.address}/)
-        end
-        expect(result).to be_a(Hash)
-      end
-
-      it 'adds server diagnostics' do
-        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
-          # The "on <address>" and "for <address>" bits are in different parts
-          # of the message.
-          expect(msg).to match(/on #{connection.address}/)
-        end
-        expect(result).to be_a(Hash)
-      end
-    end
-  end
-
-  describe '#connect!' do
-    context 'network error' do
-      before do
-        address
-        monitor.instance_variable_get('@thread').kill
-        monitor.connection.disconnect!
-      end
-
-      let(:options) { SpecConfig.instance.test_options }
-
-      let(:expected_message) { "MONGODB | Failed to handshake with #{address}: Mongo::Error::SocketError: test error" }
-
-      it 'logs a warning' do
-        # Note: the mock call below could mock do_write and raise IOError.
-        # It is correct in raising Error::SocketError if mocking write
-        # which performs exception mapping.
-        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
-
-        messages = []
-        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
-          messages << msg
-        end
-
-        expect do
-          monitor.connection.connect!
-        end.to raise_error(Mongo::Error::SocketError, /test error/)
-
-        messages.any? { |msg| msg.include?(expected_message) }.should be true
-      end
-
-      it 'adds server diagnostics' do
-        # Note: the mock call below could mock do_write and raise IOError.
-        # It is correct in raising Error::SocketError if mocking write
-        # which performs exception mapping.
-        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
-
-        expect do
-          monitor.connection.connect!
-        end.to raise_error(Mongo::Error::SocketError, /on #{monitor.connection.address}/)
       end
     end
   end

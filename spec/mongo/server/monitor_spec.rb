@@ -54,15 +54,8 @@ describe Mongo::Server::Monitor do
         {monitoring_io: false}
       end
 
-      let(:socket) do
-        monitor.connection.connect!
-        monitor.connection.__send__(:socket)
-      end
-
-      it 'retries the ismaster' do
-        expect(socket).to receive(:write).once.and_raise(Mongo::Error::SocketError)
-        # Retry is done on a new socket instance.
-        #expect(socket).to receive(:write).and_call_original
+      it 'runs sdam flow on unknown description' do
+        expect(monitor).to receive(:ismaster).once.and_raise(Mongo::Error::SocketError)
         expect(cluster).to receive(:run_sdam_flow)
         monitor.scan!
       end
@@ -109,20 +102,10 @@ describe Mongo::Server::Monitor do
           default_address
         end
 
-        let(:original_connection) do
-          monitor.connection
-        end
-
-        let(:socket) do
-          monitor.connection.connect!
-          monitor.connection.__send__(:socket)
-        end
-
         before do
           server.unknown!
           expect(server.description).to be_unknown
-          expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
-          original_connection
+          expect(monitor).to receive(:ismaster).and_raise(Mongo::Error::SocketError)
           monitor.scan!
         end
 
@@ -130,9 +113,8 @@ describe Mongo::Server::Monitor do
           expect(server.description).to be_unknown
         end
 
-        it 'reconnects the connection' do
-          expect(original_connection).to be monitor.connection
-          expect(monitor.connection).to be_connected
+        it 'disconnects the connection' do
+          expect(monitor.connection).to be nil
         end
       end
     end
@@ -241,11 +223,12 @@ describe Mongo::Server::Monitor do
       end
 
       it 'sets the value as the timeout on the connection' do
+        monitor.scan!
         expect(monitor.connection.socket_timeout).to eq(connect_timeout)
       end
 
       it 'set the value as the timeout on the socket' do
-        monitor.connection.connect!
+        monitor.scan!
         expect(monitor.connection.send(:socket).timeout).to eq(connect_timeout)
       end
     end
@@ -256,6 +239,75 @@ describe Mongo::Server::Monitor do
       expect do
         monitor.log_warn('test warning')
       end.not_to raise_error
+    end
+  end
+
+  describe '#do_scan' do
+
+    let(:result) { monitor.send(:do_scan) }
+
+    it 'returns a hash' do
+      expect(result).to be_a(Hash)
+    end
+
+    it 'is successful' do
+      expect(result['ok']).to eq(1.0)
+    end
+
+    context 'network error during ismaster' do
+      let(:result) do
+        expect(monitor).to receive(:ismaster).and_raise(IOError)
+        # The retry is done on a new socket instance.
+        #expect(socket).to receive(:write).and_call_original
+
+        monitor.send(:do_scan)
+      end
+
+      it 'adds server diagnostics' do
+        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
+          # The "on <address>" and "for <address>" bits are in different parts
+          # of the message.
+          expect(msg).to match(/on #{server.address}/)
+        end
+        expect(result).to be_a(Hash)
+      end
+    end
+
+    context 'network error during connection' do
+      let(:options) { SpecConfig.instance.test_options }
+
+      let(:expected_message) { "MONGODB | Failed to handshake with #{address}: Mongo::Error::SocketError: test error" }
+
+      before do
+        monitor.connection.should be nil
+      end
+
+      it 'logs a warning' do
+        # Note: the mock call below could mock do_write and raise IOError.
+        # It is correct in raising Error::SocketError if mocking write
+        # which performs exception mapping.
+        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
+
+        messages = []
+        expect(Mongo::Logger.logger).to receive(:warn).at_least(:once) do |msg|
+          messages << msg
+        end
+
+        monitor.scan!.should be_unknown
+
+        messages.any? { |msg| msg.include?(expected_message) }.should be true
+      end
+
+      it 'adds server diagnostics' do
+        # Note: the mock call below could mock do_write and raise IOError.
+        # It is correct in raising Error::SocketError if mocking write
+        # which performs exception mapping.
+        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
+
+        expect do
+          monitor.send(:ismaster)
+        end.to raise_error(Mongo::Error::SocketError, /on #{server.address}/)
+      end
     end
   end
 end

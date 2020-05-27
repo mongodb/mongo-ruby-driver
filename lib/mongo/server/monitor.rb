@@ -76,10 +76,8 @@ module Mongo
         @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
-        # This is a Mongo::Server::Monitor::Connection
-        @connection = Connection.new(server.address, options)
         @mutex = Mutex.new
-        @scan_started_at = nil
+        @next_earliest_scan = @next_wanted_scan = Time.now
       end
 
       # @return [ Server ] server The server that this monitor is monitoring.
@@ -122,7 +120,10 @@ module Mongo
       # @since 2.0.0
       def do_work
         scan!
-        server.scan_semaphore.wait(heartbeat_interval)
+        delta = @next_wanted_scan - Time.now
+        if delta > 0
+          server.scan_semaphore.wait(delta)
+        end
       end
 
       # Stop the background thread and wait for to terminate for a reasonable
@@ -136,7 +137,7 @@ module Mongo
         super.tap do
           # Important: disconnect should happen after the background thread
           # terminates.
-          connection.disconnect!
+          connection&.disconnect!
         end
       end
 
@@ -149,31 +150,40 @@ module Mongo
       # on the server being monitored and updating the server description
       # as a result.
       #
-      # If the server check fails for any reason (such as a network error),
-      # the check is retried by this method.
-      #
-      # If the server check fails twice, this method updates the server
-      # description accordingly but does not raise an exception.
-      #
       # @note If the system clock moves backwards, this method can sleep
       #   for a very long time.
       #
       # @note The return value of this method is deprecated. In version 3.0.0
       #   this method will not have a return value.
       #
-      # @example Run a scan.
-      #   monitor.scan!
-      #
       # @return [ Description ] The updated description.
       #
       # @since 2.0.0
       def scan!
-        throttle_scan_frequency!
-        result = ismaster
-        new_description = Description.new(server.address, result,
-          server.round_trip_time_averager.average_round_trip_time)
-        server.cluster.run_sdam_flow(server.description, new_description)
-        server.description
+        # Ordinarily the background thread would invoke this method.
+        # But it is also possible to invoke scan! directly on a monitor.
+        # Allow only one scan to be performed at a time.
+        @mutex.synchronize do
+          throttle_scan_frequency!
+
+          result = do_scan
+
+          old_description = server.description
+
+          new_description = Description.new(server.address, result,
+            server.round_trip_time_averager.average_round_trip_time)
+
+          server.cluster.run_sdam_flow(server.description, new_description)
+
+          server.description.tap do |new_description|
+            if new_description.unknown? && !old_description.unknown?
+              @next_earliest_scan = @next_wanted_scan = Time.now
+            else
+              @next_earliest_scan = Time.now + MIN_SCAN_INTERVAL
+              @next_wanted_scan = Time.now + heartbeat_interval
+            end
+          end
+        end
       end
 
       # Restarts the server monitor unless the current thread is alive.
@@ -198,66 +208,82 @@ module Mongo
         server.scan_semaphore.signal
       end
 
-      def ismaster
-        @mutex.synchronize do
+      def do_scan
+        if monitoring.monitoring?
+          monitoring.started(
+            Monitoring::SERVER_HEARTBEAT,
+            Monitoring::Event::ServerHeartbeatStarted.new(server.address)
+          )
+        end
+
+        # The duration we publish in heartbeat succeeded/failed events is
+        # the time spent on the entire heartbeat. This could include time
+        # to connect the socket (including TLS handshake), not just time
+        # spent on ismaster call itself.
+        # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
+        # requires that the duration exposed here start from "sending the
+        # message" (ismaster). This requirement does not make sense if,
+        # for example, we were never able to connect to the server at all
+        # and thus ismaster was never sent.
+        start_time = Time.now
+
+        begin
+          result = ismaster
+        rescue => exc
+          log_warn("Error running ismaster on #{server.address}: #{exc.class}: #{exc}:\n#{exc.backtrace[0..5].join("\n")}")
           if monitoring.monitoring?
-            monitoring.started(
+            monitoring.failed(
               Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatStarted.new(server.address)
+              Monitoring::Event::ServerHeartbeatFailed.new(server.address, Time.now-start_time, exc)
             )
           end
+          result = {}
+        else
+          if monitoring.monitoring?
+            monitoring.succeeded(
+              Monitoring::SERVER_HEARTBEAT,
+              Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, Time.now-start_time)
+            )
+          end
+        end
+        result
+      end
 
-          # The duration we publish in heartbeat succeeded/failed events is
-          # the time spent on the entire heartbeat. This could include time
-          # to connect the socket (including TLS handshake), not just time
-          # spent on ismaster call itself.
-          # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
-          # requires that the duration exposed here start from "sending the
-          # message" (ismaster). This requirement does not make sense if,
-          # for example, we were never able to connect to the server at all
-          # and thus ismaster was never sent.
-          start_time = Time.now
+      def ismaster
+        if @connection && @connection.pid != Process.pid
+          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{@connection.pid}, new pid #{Process.pid}")
+          @connection.disconnect!
+          @connection = nil
+        end
 
-          begin
-            result = server.round_trip_time_averager.measure do
-              connection.ismaster
-            end
-          rescue => exc
-            log_debug("Error running ismaster on #{server.address}: #{exc.class}: #{exc}:\n#{exc.backtrace[0..5].join("\n")}")
-            if monitoring.monitoring?
-              monitoring.failed(
-                Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatFailed.new(server.address, Time.now-start_time, exc)
-              )
-            end
-            result = {}
-          else
-            if monitoring.monitoring?
-              monitoring.succeeded(
-                Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, Time.now-start_time)
-              )
+        if @connection
+          result = server.round_trip_time_averager.measure do
+            begin
+              message = @connection.dispatch_bytes(Monitor::Connection::ISMASTER_BYTES)
+              message.documents.first
+            rescue Mongo::Error
+              @connection = nil
+              raise
             end
           end
-          result
+        else
+          connection = Connection.new(server.address, options)
+          connection.connect!
+          result = server.round_trip_time_averager.measure do
+            connection.handshake!
+          end
+          @connection = connection
         end
+        result
       end
 
       # @note If the system clock is set to a time in the past, this method
       #   can sleep for a very long time.
       def throttle_scan_frequency!
-        # Normally server.last_scan indicates when the previous scan
-        # completed, but if scan! is manually invoked repeatedly then
-        # server.last_scan won't be updated and multiple scans with no
-        # cooldown can be obtained. Guard against repeated direct scan!
-        # invocation also.
-        last_time = [server.last_scan, @scan_started_at].compact.max
-        if last_time
-          difference = (Time.now - last_time)
-          throttle_time = (MIN_SCAN_INTERVAL - difference)
-          sleep(throttle_time) if throttle_time > 0
+        delta = @next_earliest_scan - Time.now
+        if delta > 0
+          sleep(delta)
         end
-        @scan_started_at = Time.now
       end
     end
   end
