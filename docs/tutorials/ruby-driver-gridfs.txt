@@ -9,7 +9,7 @@ GridFS
 .. contents:: On this page
    :local:
    :backlinks: none
-   :depth: 1
+   :depth: 2
    :class: singlecol
 
 GridFS is a MongoDB driver feature that allows storing arbitrarily large
