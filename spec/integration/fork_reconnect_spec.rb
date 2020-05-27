@@ -16,27 +16,23 @@ describe 'fork reconnect' do
   let(:server) { client.cluster.next_primary }
 
   describe 'monitoring connection' do
-    let(:connection) do
-      Mongo::Server::Monitor::Connection.new(server.address, server.options)
-    end
-
-    let(:operation) do
-      connection.ismaster.should be_a(Hash)
+    let(:monitor) do
+      Mongo::Server::Monitor.new(server, [], Mongo::Monitoring.new, server.options)
     end
 
     it 'reconnects' do
-      connection.connect!
+      monitor.send(:do_scan).should be_a(Hash)
 
-      socket = connection.send(:socket).send(:socket)
+      socket = monitor.connection.send(:socket).send(:socket)
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
       if pid = fork
         pid, status = Process.wait2(pid)
         status.exitstatus.should == 0
       else
-        operation
+        monitor.send(:do_scan).should be_a(Hash)
 
-        child_socket = connection.send(:socket).send(:socket)
+        child_socket = monitor.connection.send(:socket).send(:socket)
         # fileno of child_socket may equal to fileno of socket,
         # as socket would've been closed first and file descriptors can be
         # reused by the kernel.
@@ -49,7 +45,7 @@ describe 'fork reconnect' do
       # Connection should remain serviceable in the parent.
       # The operation here will be invoked again, since the earlier invocation
       # was in the child process.
-      operation
+      monitor.send(:do_scan).should be_a(Hash)
 
       # The child closes the connection's socket, but this races with the
       # parent. The parent can retain the original socket for a while.
