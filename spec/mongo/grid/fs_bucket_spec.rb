@@ -1240,6 +1240,18 @@ describe Mongo::Grid::FSBucket do
         it 'sets the alias option on the write stream' do
           expect(stream.options[:aliases]).to eq(stream_options[:aliases])
         end
+
+        context 'when aliases is of an unusual type' do
+
+          let(:stream_options) do
+            { aliases: 700 }
+          end
+
+          it 'sets the alias option on the write stream to the specified value' do
+            stream.options[:aliases].should == 700
+          end
+
+        end
       end
     end
   end

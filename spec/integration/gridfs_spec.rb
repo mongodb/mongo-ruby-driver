@@ -80,6 +80,24 @@ describe 'GridFS integration tests' do
           file3 = bucket.find_one(filename: 'hello.txt')
           file3.should be nil
         end
+
+        context 'when aliases is of an unusual type' do
+          let(:metadata) do
+            {
+              aliases: 700,
+            }
+          end
+
+          it 'sets preserves the type and the value' do
+            id = bucket.upload_from_stream('hello.txt', io, metadata)
+            id.should be_a(BSON::ObjectId)
+
+            file = bucket.find_one(_id: id)
+            file.should be_a(Mongo::Grid::File)
+
+            file.info.aliases.should == 700
+          end
+        end
       end
     end
   end
