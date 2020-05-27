@@ -170,6 +170,13 @@ module Mongo
         end
         alias :size :length
 
+        # Get the aliases from the file information document.
+        #
+        # @return [ Array | Object ] The aliases from file information document.
+        def aliases
+          document[:aliases]
+        end
+
         # Get the additional metadata from the file information document.
         #
         # @example Get additional metadata.
@@ -256,7 +263,7 @@ module Mongo
             :chunkSize => Chunk::DEFAULT_SIZE,
             # MongoDB stores times with millisecond precision
             :uploadDate => Time.now.utc.round(3),
-            :contentType => DEFAULT_CONTENT_TYPE
+            :contentType => DEFAULT_CONTENT_TYPE,
           )
         end
       end
