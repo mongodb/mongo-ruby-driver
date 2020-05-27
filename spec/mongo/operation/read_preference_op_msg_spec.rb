@@ -149,6 +149,53 @@ describe Mongo::Operation::SessionsSupported do
       end
     end
 
+    shared_examples_for 'sends read preference correctly for mongos' do
+      %i(primary_preferred secondary nearest).each do |_mode|
+        active_mode = _mode
+
+        context "when read preference mode is #{active_mode}" do
+          let(:mode) { active_mode }
+
+          it_behaves_like 'adds read preference'
+        end
+      end
+
+      context 'when read preference mode is primary' do
+        let(:mode) { 'primary' }
+        it_behaves_like 'does not modify selector'
+      end
+
+      context 'when read preference mode is secondary_preferred' do
+        let(:mode) { 'secondary_preferred' }
+
+        let(:read_pref) do
+          Mongo::ServerSelector.get(mode: mode, tag_sets: tag_sets)
+        end
+
+        let(:tag_sets) { nil }
+
+        context 'without tag_sets specified' do
+          it_behaves_like 'does not modify selector'
+        end
+
+        context 'with empty tag_sets' do
+          let(:tag_sets) { [] }
+
+          it_behaves_like 'does not modify selector'
+        end
+
+        context 'with tag_sets specified' do
+          let(:tag_sets) { [{ dc: 'ny' }] }
+
+          let(:expected_read_preference) do
+            { mode: 'secondaryPreferred', tags: tag_sets }
+          end
+
+          it_behaves_like 'adds read preference'
+        end
+      end
+    end
+
     context 'in single topology' do
       let(:single?) { true }
 
@@ -165,7 +212,7 @@ describe Mongo::Operation::SessionsSupported do
         let(:standalone?) { false }
         let(:mongos?) { true }
 
-        it_behaves_like 'changes read preference to allow secondary reads'
+        it_behaves_like 'sends read preference correctly for mongos'
       end
 
       context 'when the server is a replica set member' do
@@ -193,7 +240,7 @@ describe Mongo::Operation::SessionsSupported do
         let(:standalone?) { false }
         let(:mongos?) { true }
 
-        it_behaves_like 'sends user-specified read preference'
+        it_behaves_like 'sends read preference correctly for mongos'
       end
 
       context 'when the server is a replica set member' do

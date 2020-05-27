@@ -167,6 +167,17 @@ module Mongo
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
         if connection.description.standalone?
           # Read preference is never sent to standalones.
+        elsif connection.description.mongos?
+          # When server is a mongos:
+          # - $readPreference is never sent when mode is 'primary'
+          # - When mode is 'secondaryPreferred' $readPreference is only sent
+          #   when a non-mode field (i.e. tag_sets) is present
+          # - Otherwise $readPreference is sent
+          if read && read.to_doc[:mode] == 'secondaryPreferred'
+            sel['$readPreference'] = read.to_doc unless read.to_mongos.nil?
+          elsif read && read.to_doc[:mode] != 'primary'
+            sel['$readPreference'] = read.to_doc
+          end
         elsif connection.server.cluster.single?
           # In Single topology:
           # - If no read preference is specified by the application, the driver
