@@ -15,7 +15,7 @@
 module Mongo
   class Error
 
-    # This exception is raised when the server returned {done: true} in a
+    # This exception is raised when the server returned +{done: true}+ in a
     # SCRAM conversation but did not provide a ServerSignature.
     class MissingScramServerSignature < Error
       def initialize(msg = nil)
