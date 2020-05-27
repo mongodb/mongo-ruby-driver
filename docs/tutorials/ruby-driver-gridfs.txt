@@ -71,9 +71,9 @@ Writing to GridFS
 Stream API
 ``````````
 
-To store data in GridFS, use the ``open_upload_stream`` method on a
-``FSBucket`` to obtain a writable stream, and write the file contents and
-the metadata to the stream.
+To write data stored in an IO-like object into GridFS, use the
+``upload_from_stream`` method on an ``FSBucket`` to obtain a writable stream
+and write the file contents and the metadata to the stream.
 
 For example, to store a physical file whose path is in the variable ``path``
 to GridFS, one might do:
@@ -81,12 +81,11 @@ to GridFS, one might do:
 .. code-block:: ruby
 
   File.open(path) do |file|
-    fs_bucket.open_upload_stream(File.basename(path)) do |stream|
-      stream.write(file)
-    end
+    fs_bucket.upload_from_stream(File.basename(path), file)
   end
 
-Alternatively, to control the buffer size manually, one might do:
+To control the buffer size manually, use the ``open_upload_stream`` method
+to obtain the stream object:
 
 .. code-block:: ruby
 
@@ -98,7 +97,33 @@ Alternatively, to control the buffer size manually, one might do:
     end
   end
 
-Similar code can be used to write an IO-like object to GridFS.
+Metadata
+````````
+
+GridFS supports storing :manual:`predefined metadata fields
+</core/gridfs/#the-files-collection>` and :manual:`arbitrary metadata
+</core/gridfs/#files.metadata>` with the file contents.
+The metadata is passed in the optional final parameter as follows:
+
+.. code-block:: ruby
+
+  metadata = {
+    # Predefined fields
+    content_type: 'application/octet-stream',
+    
+    # Arbitrary fields
+    metadata: {
+      uploaded_user_id: 42,
+    },
+  }
+  
+  File.open(path) do |file|
+    fs_bucket.upload_from_stream(File.basename(path), file, metadata)
+    
+    fs_bucket.open_upload_stream(File.basename(path), metadata) do |stream|
+      # ...
+    end
+  end
 
 File API
 ````````
