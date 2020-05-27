@@ -399,3 +399,11 @@ To delete a file, pass the file object to ``delete_one``.
   fs = client.database.fs
   file = fs.find_one(:filename => 'new-file.txt')
   fs.delete_one(file)
+
+To delete all files from GridFS, use ``delete_many`` methods on the files
+and chunks collections, as follows:
+
+.. code-block:: ruby
+
+  fs.files_collection.delete_many
+  fs.chunks_collection.delete_many
