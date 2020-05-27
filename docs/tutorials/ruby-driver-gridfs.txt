@@ -30,10 +30,17 @@ The FSBucket Object
 -------------------
 
 To use GridFS, call the ``fs`` method on a database to obtain a
-``Mongo::Grid::FSBucket`` object. The ``fs`` method supports the following
-optional keyword arguments:
+``Mongo::Grid::FSBucket`` object:
 
-The options that ``Grid::FSBucket`` supports are:
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], database: 'music')
+  fs_bucket = client.database.fs
+  
+  # With options:
+  fs_bucket = client.database.fs(read: {mode: :secondary})
+
+The ``fs`` method supports the following optional keyword arguments:
 
 .. list-table::
    :header-rows: 1
@@ -41,62 +48,78 @@ The options that ``Grid::FSBucket`` supports are:
 
    * - Option
      - Description
-   * - ``:bucket_name``
-     - The name of the GridFS Bucket. Default is ``fs``.
    * - ``:fs_name``
-     - The name of the GridFS Bucket. Takes precedence over ``bucket_name``.
-       Default is ``fs``.
+     - The name of the GridFS Bucket. Default is ``fs``.
+   * - ``:bucket_name``
+     - Legacy alias for ``:fs_name``. If both ``:fs_name`` and ``:bucket_name``
+       are provided, ``:fs_name`` takes precedence. Default is ``fs``.
    * - ``:chunk_size``
      - Specifies the size of each file chunk in the database.
    * - ``:write_concern``
-     - The write concern to use when uploading files. Please see the
+     - The write concern to use when writing files. Please see the
        :ref:`Write Concern <write-concern>` section under CRUD operations
        for how to work with write concerns.
    * - ``:write``
      - Deprecated. Same as ``:write_concern``.
    * - ``:read``
-     - The read preference to use when downloading files.
+     - The read preference to use when reading files.
 
 
-For example, you can create a GridFS bucket object with a particular read preference:
+Writing to GridFS
+-----------------
+
+Stream API
+``````````
+
+To store data in GridFS, use the ``open_upload_stream`` method on a
+``FSBucket`` to obtain a writable stream, and write the file contents and
+the metadata to the stream.
+
+For example, to store a physical file whose path is in the variable ``path``
+to GridFS, one might do:
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
-  fs_bucket = client.database.fs( read: { mode: :secondary } )
+  File.open(path) do |file|
+    fs_bucket.open_upload_stream(File.basename(path)) do |stream|
+      stream.write(file)
+    end
+  end
 
+Alternatively, to control the buffer size manually, one might do:
 
-Writing Files
--------------
+.. code-block:: ruby
 
-To store a file in GridFS, create a ``Mongo::Grid::File`` object with the
-contents of the file and the metadata, then use the ``insert_one`` method
-to store the ``Mongo::Grid::File`` object in the database:
+  File.open(path) do |file|
+    fs_bucket.open_upload_stream(File.basename(path)) do |stream|
+      while buf = file.read(65536)
+        stream.write(buf)
+      end
+    end
+  end
+
+Similar code can be used to write an IO-like object to GridFS.
+
+File API
+````````
+
+GridFS provides an alternative API using ``Mongo::Grid::File`` objects.
+To store data in GridFS, create a GridFS file object and call ``insert_one``
+on the bucket to store the file:
 
 .. code-block:: ruby
 
   file = Mongo::Grid::File.new('file contents', filename: 'file-name.txt')
   fs_bucket.insert_one(file)
 
-To store a physical file in GridFS, you might do something like:
-
-.. code-block:: ruby
-
-  path = '/path/to/file.txt'
-  file = Mongo::Grid::File.new(File.read(path), filename: File.basename(path))
-  fs_bucket.insert_one(file)
-
-To store a blob in GridFS, you might do something like:
-
-.. code-block:: ruby
-
-  path = '/path/to/file.txt'
-  file = Mongo::Grid::File.new('binary data...')
-  fs_bucket.insert_one(file)
+The GridFS file API may be more convenient when the data to be stored is
+already present in memory. With that said, most applications should use the
+stream API to avoid loading the contents of each GridFS file into memory at
+once.
 
 When a file is inserted, the ``file_id`` attribute of the ``Mongo::Grid::File``
-object is populated with an ID of the inserted file. This ID is of type
-``BSON::ObjectId``. Each file stored in GridFS has an ID. The file name is
+object is populated with the id of the inserted file. This id is of type
+``BSON::ObjectId``. Each file stored in GridFS has an id. The file name is
 optional; a file that was created without specifying a file name can still
 be retrieved using its ID.
 
