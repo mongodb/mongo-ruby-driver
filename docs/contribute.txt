@@ -1,11 +1,11 @@
-========================
+************************
 Contribute to the Driver
-========================
+************************
 
 .. default-domain:: mongodb
 
 Report Bugs and Request Ruby Driver-Specific Features
------------------------------------------------------
+=====================================================
 
 To report a bug in the driver or request a feature specific to the Ruby driver:
 
@@ -44,7 +44,7 @@ in the :manual:`Create a Vulnerability Report
 
 
 Request Product Features
-------------------------
+========================
 
 To request a feature which is not specific to the Ruby driver, or which
 affects more than the driver alone (for example, a feature which requires
@@ -53,7 +53,7 @@ MongoDB server support), please submit your idea through the
 
 
 Contribute Code
----------------
+===============
 
 The MongoDB Ruby driver source is located
 `at GitHub <https://github.com/mongodb/mongo-ruby-driver>`_.

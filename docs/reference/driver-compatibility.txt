@@ -1,8 +1,8 @@
 .. _reference-compatibility-ruby:
 
-====================
+********************
 Driver Compatibility
-====================
+********************
 
 .. default-domain:: mongodb
 
@@ -15,7 +15,7 @@ Driver Compatibility
 .. _reference-compatibility-mongodb-ruby:
 
 MongoDB Compatibility
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 .. include:: /includes/ruby-driver-compatibility-matrix-mongodb.rst
 
@@ -165,7 +165,7 @@ The driver does not support older versions of MongoDB.
 .. _reference-compatibility-language-ruby:
 
 Ruby Compatibility
-~~~~~~~~~~~~~~~~~~
+==================
 
 The following compatibility table specifies the recommended
 version(s) of the MongoDB Ruby driver for use with a specific version of
@@ -378,7 +378,7 @@ for that Ruby version is deprecated.
 The driver does not support older versions of Ruby.
 
 Rails/ActiveSupport Compatibility
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=================================
 
 The Ruby driver does not depend on ActiveSupport. However, when an
 application uses ActiveSupport or Ruby on Rails,
@@ -394,7 +394,7 @@ Applications using Mongoid 7.0.6 or newer do not need to explicitly load
 the driver's ActiveSupport code, since Mongoid automatically does so.
 
 Atlas Compatibility
-~~~~~~~~~~~~~~~~~~~
+===================
 
 `Driver version 2.6.1 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.1>`_
 or higher is recommended when using MongoDB Atlas, as this version has
@@ -405,7 +405,7 @@ When running on JRuby and connecting to Atlas Free Tier,
 or higher and Java 8 or higher are required.
 
 ``mongo_kerberos`` Compatibility
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+================================
 
 The following compatibility table specifies the version(s) of the
 :ref:`mongo_kerberos library <kerberos>` to use with a specific version of
@@ -424,7 +424,7 @@ the driver.
 
 
 JRuby Kerberos
-~~~~~~~~~~~~~~
+==============
 
 If the ``mongo_kerberos`` gem is used for Kerberos authentication with JRuby, the the JVM system
 property "sun.security.jgss.native" to will be set to "true" in order to facilitate the use of

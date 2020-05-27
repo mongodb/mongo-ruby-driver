@@ -1,8 +1,8 @@
 .. _user-management:
 
-===============
+***************
 User Management
-===============
+***************
 
 .. default-domain:: mongodb
 
@@ -39,7 +39,7 @@ For more information about users and user management, see MongoDB's
 
 
 Users and Databases
--------------------
+===================
 
 When a client connects to the server, MongoDB distinguishes the database
 that the client will perform operations on from the `auth source <auth-source>`_
@@ -64,7 +64,7 @@ the purposes of user management.
 
 
 Creating Users
---------------
+==============
 
 There are two ways to create a new database user with the Ruby Driver.
 
@@ -132,7 +132,7 @@ replica set.
 
 
 User Information
-----------------
+================
 
 To view information about a user that already exists in the database, use the
 ``info`` method:
@@ -158,7 +158,7 @@ currently exist in a database.
 
 
 Updating Users
---------------
+==============
 
 To update a user that already exists in the database, you can use the
 ``update`` method in one of two ways. The first way is to specify the name of
@@ -202,7 +202,7 @@ is performed on a replica set.
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
 
 Removing Users
---------------
+==============
 
 To remove a user from the database, use the ``remove`` method:
 

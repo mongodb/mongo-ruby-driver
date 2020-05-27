@@ -1,8 +1,8 @@
 .. _client-side-encryption:
 
-======================
+**********************
 Client-Side Encryption
-======================
+**********************
 
 .. default-domain:: mongodb
 
@@ -27,7 +27,7 @@ including server administrators, cannot read the encrypted data.
   have a negative performance impact.
 
 Installation
-------------
+============
 
 Client-side encryption requires the installation of additional packages.
 
@@ -83,7 +83,7 @@ path used to spawn the daemon), it is necessary to pass different options to the
 section of this tutorial for more information.
 
 Automatic Encryption
---------------------
+====================
 
 Automatic encryption is a feature that allows users to configure a
 ``Mongo::Client`` instance to always encrypt specific document fields when
@@ -206,7 +206,7 @@ master key and create data keys, see the following sections of this tutorial:
 - `Creating A Data Key`_
 
 Explicit Encryption
--------------------
+===================
 Explicit encryption is a feature that allows users to encrypt and decrypt
 individual pieces of data such as strings, integers, or symbols. Explicit
 encryption is a community feature and does not require an enterprise build
@@ -300,7 +300,7 @@ master key and create data keys, see the following sections of this tutorial:
 - `Creating A Data Key`_,
 
 Creating a Master Key
----------------------
+=====================
 Both automatic encryption and explicit encryption require an encryption master key.
 This master key is used to encrypt data keys, which are in turn used to encrypt
 user data. The master key can be generated in one of two ways: by creating a
@@ -336,7 +336,7 @@ For more information about creating a master key, see the
 section of the MongoDB manual.
 
 Creating a Data Key
--------------------
+===================
 Once you have created a master key, create a data key by calling the
 ``#create_data_key`` method on an instance of the ``Mongo::ClientEncryption``
 class. This method generates a new data key and inserts it into the key vault
@@ -427,7 +427,7 @@ For more information about creating a data key, see the
 section of the MongoDB manual.
 
 Auto-Encryption Options
------------------------
+=======================
 Automatic encryption can be configured on a ``Mongo::Client`` using the
 ``auto_encryption_options`` option ``Hash``. This section provides an overview
 of the fields inside ``auto_encryption_options`` and explains how to choose their

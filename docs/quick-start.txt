@@ -1,6 +1,6 @@
-===========
+***********
 Quick Start
-===========
+***********
 
 .. default-domain:: mongodb
 
@@ -11,7 +11,7 @@ Quick Start
    :class: singlecol
 
 Prerequisites
--------------
+=============
 
 - A running MongoDB instance on localhost using the default port, 27017.
 - The Ruby MongoDB driver. See :ref:`installation <ruby-driver-install>`
@@ -24,7 +24,7 @@ Prerequisites
 
 
 Make a Connection
------------------
+=================
 
 Use ``Mongo::Client`` to establish a connection to a running MongoDB
 instance.
@@ -45,7 +45,7 @@ You can also use a URI connection string:
   :ref:`Client options <ruby-driver-client-options>`
 
 Access a Database and a Collection
-----------------------------------
+==================================
 
 The following examples demonstrate how to access a particular database
 and show its collections:
@@ -68,7 +68,7 @@ If the collection does not exist, the server will create it the first
 time you put data into it.
 
 Insert a Document
------------------
+=================
 
 To insert a single document into a collection, use the
 ``insert_one`` method.
@@ -107,7 +107,7 @@ To insert multiple documents into a collection, use the
   result.inserted_count # returns 2 because two documents were inserted
 
 Query the Collection
---------------------
+====================
 
 Use the ``find`` method to create collection queries.
 
@@ -158,7 +158,7 @@ The example should print the following:
   :ref:`Query Options<ruby-driver-query-options>`, :ref:`Read Preference<ruby-driver-read-preference>`
 
 Update Documents
-----------------
+================
 
 There are several update methods, including ``update_one`` and
 ``update_many``. ``update_one`` updates a single document, while
@@ -201,7 +201,7 @@ to update all the documents in the collection.
   :ref:`Other update options<ruby-driver-updating>`
 
 Delete Documents
-----------------
+================
 
 Use the ``delete_one`` or ``delete_many`` methods to delete documents
 from a collection (either singly or several at once).
@@ -233,7 +233,7 @@ matches a regular expression to find a string which begins with "S".
   puts result.deleted_count # returns the number of documents deleted
 
 Create Indexes
---------------
+==============
 
 Use the ``create_one`` or ``create_many`` methods to create indexes
 singly or several at once.
@@ -264,7 +264,7 @@ different from ``create_one``.
   :ref:`Index options <ruby-driver-index-options>`
 
 Complete Sample App
--------------------
+===================
 
 A sample app using the Ruby driver for several common use cases
 is available for download from

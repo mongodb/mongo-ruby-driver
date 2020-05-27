@@ -2,9 +2,9 @@
 
 .. _ruby-language-center:
 
-===================
+*******************
 Ruby MongoDB Driver
-===================
+*******************
 
 .. default-domain:: mongodb
 
@@ -14,14 +14,14 @@ can be used on its own, but it also serves as the basis of several
 object mapping libraries.
 
 Get Started
------------
+===========
 
 To get started with the Ruby driver, see :doc:`/installation` and
 :doc:`/quick-start`. Continue to :doc:`/ruby-driver-tutorials`
 for high level documentation for common operations.
 
 BSON
-----
+====
 
 The Ruby BSON implementation is packaged in a separate gem with C and
 Java extensions for speed depending on the runtime enviroment.
@@ -29,7 +29,7 @@ Java extensions for speed depending on the runtime enviroment.
 For reference on the Ruby BSON gem, see :doc:`/bson-tutorials`.
 
 Object Mappers
---------------
+==============
 
 Because MongoDB is so easy to use, the basic Ruby driver can be the
 best solution for many applications. But if you need validations,

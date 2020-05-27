@@ -1,6 +1,6 @@
-========
+********
 Indexing
-========
+********
 
 .. default-domain:: mongodb
 
@@ -21,7 +21,7 @@ The driver provides the ability to create, drop and view
 
 
 Creating Indexes
-----------------
+================
 
 Indexes can be created one at a time, or several can be created in a single
 operation. When creating multiple indexes on MongoDB 3.0 and later, the indexes
@@ -98,7 +98,7 @@ when creating indexes. These options mirror the options supported by the
 
 
 Dropping Indexes
-----------------
+================
 
 To drop an index, call ``indexes#drop_one`` or ``indexes#drop_all``.
 
@@ -112,7 +112,7 @@ To drop an index, call ``indexes#drop_one`` or ``indexes#drop_all``.
 
 
 Listing Indexes
----------------
+===============
 
 To list the indexes, iterate the ``indexes`` object:
 

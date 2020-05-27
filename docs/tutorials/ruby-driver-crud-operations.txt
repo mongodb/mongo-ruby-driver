@@ -1,6 +1,6 @@
-===============
+***************
 CRUD Operations
-===============
+***************
 
 .. default-domain:: mongodb
 
@@ -14,7 +14,7 @@ CRUD operations are those which deal with creating, reading, updating,
 and deleting documents.
 
 Key-value Pair Notation
------------------------
+=======================
 
 Key-value pairs appear in many different contexts in the MongoDB Ruby
 driver, and there are some quirks of syntax with regard to how they can
@@ -58,7 +58,7 @@ version of Ruby:
 
 
 Creating Documents
-------------------
+==================
 
 To insert documents into a collection, select a
 collection on the client and call ``insert_one`` or ``insert_many``.
@@ -131,7 +131,7 @@ object, or with ``Decimal128.from_string()``.
    # => BSON::Decimal128('428.79')
 
 Reading
--------
+=======
 
 The Ruby driver provides a fluent interface for queries using the ``find``
 method on the collection. Various options are available
@@ -381,7 +381,7 @@ the empty tag set is a subset of any tag set. This means the default
 .. _ruby-driver-updating:
 
 Updating
---------
+========
 
 Updating documents is possible by executing a single or
 multiple update, or by using the ``$findAndModify`` command.
@@ -474,7 +474,7 @@ the modification occurs.
   doc # Return the document after the update.
 
 Deleting
---------
+========
 
 ``delete_one``
 
@@ -502,7 +502,7 @@ Deleting
 .. _write-concern:
 
 Write Concern
--------------
+=============
 
 All write operations in MongoDB are executed with a write concern which is
 the level of acknowledgment requested from MongoDB for the particular write.
@@ -671,7 +671,7 @@ and the syntax is the camel case one that MongoDB server recognizes, not the
 underscore one that Ruby driver uses.
 
 A Note about the BSON Symbol type
----------------------------------
+=================================
 
 Because the BSON specification deprecated the BSON symbol type, the `bson` gem 
 will serialize Ruby symbols into BSON strings when used on its own. However, in

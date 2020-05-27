@@ -1,6 +1,6 @@
-=========
+*********
 Databases
-=========
+*********
 
 .. default-domain:: mongodb
 
@@ -11,7 +11,7 @@ Databases
    :class: singlecol
 
 Databases
----------
+=========
 
 The driver provides various helpers on database objects for executing
 commands, getting collection lists, and administrative tasks.

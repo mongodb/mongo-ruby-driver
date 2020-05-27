@@ -1,6 +1,6 @@
-===============
+***************
 Bulk Operations
-===============
+***************
 
 .. default-domain:: mongodb
 
@@ -25,35 +25,35 @@ The ``bulk_write`` method takes three arguments:
 Valid bulk write operations are the following:
 
 insert_one
-----------
+==========
 
 .. code-block:: ruby
 
     { :insert_one => { :x => 1 } }
 
 insert_many
------------
+===========
 
 .. code-block:: ruby
 
     { :insert_many => [ { :x => 1 }, { :x => 2 } ] }
 
 delete_one
-----------
+==========
 
 .. code-block:: ruby
 
     { :delete_one => { :filter => { :x => 1 } } }
 
 delete_many
------------
+===========
 
 .. code-block:: ruby
 
     { :delete_many => { :filter => { :x => 1 } } }
 
 replace_one
------------
+===========
 
 .. code-block:: ruby
 
@@ -63,7 +63,7 @@ replace_one
      }
 
 update_one
-----------
+==========
 
 .. code-block:: ruby
 
@@ -73,7 +73,7 @@ update_one
      }
 
 update_many
------------
+===========
 
 .. code-block:: ruby
 

@@ -1,6 +1,6 @@
-==========
+**********
 Collations
-==========
+**********
 
 .. default-domain:: mongodb
 
@@ -11,7 +11,7 @@ Collations
    :class: singlecol
 
 Overview
---------
+========
 
 .. versionadded:: 3.4
 
@@ -42,7 +42,7 @@ strings.  As such, the sort order of the words would be:
     cote < coté < côte < côté
 
 Usage
------
+=====
 
 You can specify a default collation for collections and indexes when
 they are created, or specify a collation for CRUD operations and
@@ -135,7 +135,7 @@ value than the collation on the index.
                               "collation" => { "locale" => "en_US", "strength" => 2 })
 
 Operations that Support Collation
----------------------------------
+=================================
 
 All reading, updating, and deleting methods support collation. Some
 examples are listed below.

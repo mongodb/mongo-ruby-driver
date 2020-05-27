@@ -1,6 +1,6 @@
-============
+************
 Transactions
-============
+************
 
 .. default-domain:: mongodb
 
@@ -17,7 +17,7 @@ Version 4.0 of the MongoDB server introduces
 versions of MongoDB.) Ruby driver version 2.6.0 adds support for transactions.
 
 Using Transactions
-------------------
+==================
 
 In order to start a transaction, the application must have a :ref:`session <sessions>`.
 
@@ -76,7 +76,7 @@ which are read concern, write concern and read preference:
 
 
 Low Level API
--------------
+=============
 
 A transaction can be started by calling the ``start_transaction`` method on a session:
 
@@ -145,7 +145,7 @@ session if one is in progress:
 
 
 Retrying Commits
-----------------
+================
 
 The transaction commit `can be retried
 <https://docs.mongodb.com/manual/core/transactions/#retry-commit-operation>`_
@@ -165,7 +165,7 @@ if it fails. Here is the Ruby code to do so:
 
 
 Transaction Nesting
--------------------
+===================
 
 MongoDB does not support nesting transactions. Attempting to call
 ``start_transaction`` or ``with_transaction`` when a transaction is already
