@@ -57,10 +57,14 @@ class SpecSetup
   end
 
   def admin_unauthorized_client
-    ClientRegistry.instance.global_client('admin_unauthorized')
+    ClientRegistry.instance.global_client('admin_unauthorized').with(
+      socket_timeout: 5, connect_timeout: 5,
+    )
   end
 
   def admin_authorized_test_client
-    ClientRegistry.instance.global_client('root_authorized')
+    ClientRegistry.instance.global_client('root_authorized').with(
+      socket_timeout: 5, connect_timeout: 5,
+    )
   end
 end
