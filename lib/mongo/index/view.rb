@@ -133,7 +133,7 @@ module Mongo
       # @since 2.0.0
       def create_one(keys, options = {})
         create_options = { commit_quorum: options.delete(:commit_quorum) }
-        create_many({ key: keys }.merge(options), options: create_options)
+        create_many_with_options([{ key: keys }.merge(options)], create_options)
       end
 
       # Creates multiple indexes on the collection.
@@ -161,7 +161,11 @@ module Mongo
       # @return [ Result ] The result of the command.
       #
       # @since 2.0.0
-      def create_many(*models, options: {})
+      def create_many(*models)
+        create_many_with_options(models)
+      end
+
+      def create_many_with_options(models, options={})
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
 
