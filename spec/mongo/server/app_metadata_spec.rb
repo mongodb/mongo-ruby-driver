@@ -1,4 +1,5 @@
 require 'spec_helper'
+require_relative './app_metadata_shared'
 
 describe Mongo::Server::AppMetadata do
 
@@ -125,14 +126,20 @@ describe Mongo::Server::AppMetadata do
   end
 
   describe '#document' do
+    let(:document) do
+      app_metadata.send(:document)
+    end
+
     context 'when user is given and auth_mech is not given' do
       let(:app_metadata) do
         described_class.new(user: 'foo')
       end
 
       it 'includes saslSupportedMechs' do
-        expect(app_metadata.send(:document)[:saslSupportedMechs]).to eq('admin.foo')
+        expect(document[:saslSupportedMechs]).to eq('admin.foo')
       end
     end
+
+    it_behaves_like 'app metadata document'
   end
 end

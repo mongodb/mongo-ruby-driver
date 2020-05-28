@@ -168,11 +168,18 @@ module Mongo
       end
 
       def platform
+        if BSON::Environment.jruby?
+          ruby_versions = ["JRuby #{JRUBY_VERSION}", "like Ruby #{RUBY_VERSION}"]
+          platforms = [RUBY_PLATFORM, "JVM #{java.lang.System.get_property('java.version')}"]
+        else
+          ruby_versions = ["Ruby #{RUBY_VERSION}"]
+          platforms = [RUBY_PLATFORM]
+        end
         [
           @platform,
-          RUBY_VERSION,
-          RUBY_PLATFORM,
-          RbConfig::CONFIG['build']
+          *ruby_versions,
+          *platforms,
+          RbConfig::CONFIG['build'],
         ].compact.join(', ')
       end
     end
