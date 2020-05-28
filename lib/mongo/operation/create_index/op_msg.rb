@@ -27,7 +27,10 @@ module Mongo
         private
 
         def selector(connection)
-          { :createIndexes => coll_name, :indexes => indexes, :commitQuorum => commit_quorum }
+          selector = { :createIndexes => coll_name, :indexes => indexes }
+          selector[:commitQuorum] = commit_quorum if commit_quorum
+
+          selector
         end
       end
     end

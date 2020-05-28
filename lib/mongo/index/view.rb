@@ -182,14 +182,17 @@ module Mongo
               client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
             end
           end
+
           spec = {
-                  indexes: indexes,
-                  db_name: database.name,
-                  coll_name: collection.name,
-                  session: session,
-                  commit_quorum: options[:commit_quorum]
-                 }
+            indexes: indexes,
+            db_name: database.name,
+            coll_name: collection.name,
+            session: session,
+           }
+
           spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
+          spec[:commit_quorum] = options[:commit_quorum] if options[:commit_quorum]
+
           Operation::CreateIndex.new(spec).execute(server, client: client)
         end
       end
