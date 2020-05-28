@@ -27,7 +27,7 @@ module Mongo
         private
 
         def selector(connection)
-          { :createIndexes => coll_name, :indexes => indexes }
+          { :createIndexes => coll_name, :indexes => indexes, :commitQuorum => commit_quorum }
         end
       end
     end

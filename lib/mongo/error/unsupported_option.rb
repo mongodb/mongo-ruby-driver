@@ -45,9 +45,19 @@ module Mongo
         "allow_disk_use option is supported on find commands on MongoDB " \
         "server versions 4.4 and later"
 
+      # @api private
+      #
+      # The error message provided when the user passes the commit_quorum option
+      # to a createIndexes operation against a server that does not support
+      # that option.
+      COMMIT_QUORUM_MESSAGE = "The MongoDB server handling this request does " \
+        "not support the commit_quorum option on this command. The commit_quorum " \
+        "option is supported on createIndexes commands on MongoDB server versions " \
+        "4.4 and later"
+
       # Raise an error about an unsupported hint option.
       #
-      # @param [ Hash ] options 
+      # @param [ Hash ] options
       #
       # @option options [ Boolean ] unacknowledged_write Whether this error
       #   pertains to a hint option passed to an unacknowledged write. Defaults
@@ -69,12 +79,20 @@ module Mongo
 
       # Raise an error about an unsupported allow_disk_use option.
       #
-      # @param [ Hash ] options 
+      # @param [ Hash ] options
       #
       # @return [ Mongo::Error::UnsupportedOption ] An error with a default
       #   error message.
       def self.allow_disk_use_error
         new(ALLOW_DISK_USE_MESSAGE)
+      end
+
+      # Raise an error about an unsupported commit_quorum option.
+      #
+      # @return [ Mongo::Error::UnsupportedOption ] An error with a default
+      #   error message.
+      def self.commit_quorum_error
+        new(COMMIT_QUORUM_MESSAGE)
       end
     end
   end

@@ -120,6 +120,10 @@ module Mongo
       #   a geo index.
       # @option options [ Hash ] :partial_filter_expression  Specify a filter for a partial
       #   index.
+      # @option options [ String | Integer ] :commit_quorum Specify how many
+      #   data-bearing members of a replica set, including the primary, must
+      #   complete the index builds successfully before the primary marks
+      #   the indexes as ready.
       #
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
@@ -128,7 +132,8 @@ module Mongo
       #
       # @since 2.0.0
       def create_one(keys, options = {})
-        create_many({ key: keys }.merge(options))
+        create_options = { commit_quorum: options.delete(:commit_quorum) }
+        create_many({ key: keys }.merge(options), options: create_options)
       end
 
       # Creates multiple indexes on the collection.
@@ -144,13 +149,33 @@ module Mongo
       #
       # @param [ Array<Hash> ] models The index specifications. Each model MUST
       #   include a :key option.
+      # @param [ Hash ] options Options relating index creation.
+      #
+      # @option options [ String | Integer ] :commit_quorum Specify how many
+      #   data-bearing members of a replica set, including the primary, must
+      #   complete the index builds successfully before the primary marks
+      #   the indexes as ready. Supported values are integers from 0 to the
+      #   number of data-bearing members of the replica set, "majority,"
+      #   replica set tag names, and "votingMembers." Default is "votingMembers."
       #
       # @return [ Result ] The result of the command.
       #
       # @since 2.0.0
-      def create_many(*models)
+      def create_many(*models, options: {})
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
+
+          # While server versions 3.4 and newer generally perform option
+          # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
+          # the server would accept the commitQuorum option and use it internally
+          # (see SERVER-47193). As a result, the drivers specifications require
+          # drivers to perform validation and raise an error when the commitQuorum
+          # option is passed to servers that don't support it.
+          connection = server.with_connection { |connection| connection }
+          if connection.description.max_wire_version < 9 && options[:commit_quorum]
+            raise Error::UnsupportedOption.commit_quorum_error
+          end
+
           indexes = normalize_models(models.flatten, server)
           indexes.each do |index|
             if index[:bucketSize] || index['bucketSize']
@@ -161,7 +186,8 @@ module Mongo
                   indexes: indexes,
                   db_name: database.name,
                   coll_name: collection.name,
-                  session: session
+                  session: session,
+                  commit_quorum: options[:commit_quorum]
                  }
           spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
           Operation::CreateIndex.new(spec).execute(server, client: client)

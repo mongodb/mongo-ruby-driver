@@ -39,4 +39,16 @@ describe Mongo::Error::UnsupportedOption do
       )
     end
   end
+
+  describe '.commit_quorum_error' do
+    let(:error) { described_class.commit_quorum_error }
+
+    it 'creates an error with a default message' do
+      expect(error.message).to eq(
+        "The MongoDB server handling this request does not support the commit_quorum " \
+        "option on this command. The commit_quorum option is supported on createIndexes commands " \
+        "on MongoDB server versions 4.4 and later"
+      )
+    end
+  end
 end

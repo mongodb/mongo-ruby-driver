@@ -532,6 +532,11 @@ module Mongo
         @spec[:txn_num]
       end
 
+      # TODO: documentation
+      def commit_quorum
+        @spec[:commit_quorum]
+      end
+
       # The command.
       #
       # @return [ Hash ] The command.

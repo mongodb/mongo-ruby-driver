@@ -705,6 +705,59 @@ describe Mongo::Index::View do
         expect(indexes[:partialFilterExpression]).to eq(expression)
       end
     end
+
+    context 'when providing commit_quorum option' do
+      require_topology :replica_set, :sharded
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.3'
+
+        let(:subscriber) { EventSubscriber.new }
+
+        before do
+          authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+
+        let(:indexes) do
+          authorized_collection.indexes.get('x_1')
+        end
+
+        context 'when commit_quorum value is supported' do
+          let!(:result) { view.create_one({ 'x' => 1 }, commit_quorum: 'majority') }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(indexes).to_not be_nil
+          end
+
+          it 'passes the commit_quorum option to the server' do
+            expect(subscriber.started_events.length).to eq(1)
+            command = subscriber.started_events.first.command
+            expect(command['commitQuorum']).to eq('majority')
+          end
+        end
+
+        context 'when commit_quorum value is not supported' do
+          it 'raises an exception' do
+            expect do
+              view.create_one({ 'x' => 1 }, commit_quorum: 'unsupported-value')
+            end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration/)
+          end
+        end
+      end
+
+      context 'on server versions < 4.4' do
+        max_server_fcv '4.2'
+
+        it 'raises an exception' do
+          expect do
+            view.create_one({ 'x' => 1 }, commit_quorum: 'majority')
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the commit_quorum option/)
+        end
+      end
+    end
   end
 
   describe '#get' do
