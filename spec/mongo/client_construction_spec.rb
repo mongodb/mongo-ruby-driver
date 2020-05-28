@@ -743,16 +743,38 @@ describe Mongo::Client do
           new_local_client_nmio(['127.0.0.1:27017'])
         end
 
-        let(:platform_string) do
-          [
-            RUBY_VERSION,
-            RUBY_PLATFORM,
-            RbConfig::CONFIG['build']
-          ].join(', ')
+        context 'mri' do
+          only_mri
+
+          let(:platform_string) do
+            [
+              "Ruby #{RUBY_VERSION}",
+              RUBY_PLATFORM,
+              RbConfig::CONFIG['build']
+            ].join(', ')
+          end
+
+          it 'does not include the platform info in the app metadata' do
+            expect(app_metadata.send(:full_client_document)[:platform]).to eq(platform_string)
+          end
         end
 
-        it 'does not include the platform info in the app metadata' do
-          expect(app_metadata.send(:full_client_document)[:platform]).to eq(platform_string)
+        context 'jruby' do
+          require_jruby
+
+          let(:platform_string) do
+            [
+              "JRuby #{JRUBY_VERSION}",
+              "like Ruby #{RUBY_VERSION}",
+              RUBY_PLATFORM,
+              "JVM #{java.lang.System.get_property('java.version')}",
+              RbConfig::CONFIG['build']
+            ].join(', ')
+          end
+
+          it 'does not include the platform info in the app metadata' do
+            expect(app_metadata.send(:full_client_document)[:platform]).to eq(platform_string)
+          end
         end
       end
     end
