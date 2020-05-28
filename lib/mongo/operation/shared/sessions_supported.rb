@@ -173,10 +173,11 @@ module Mongo
           # - When mode is 'secondaryPreferred' $readPreference is only sent
           #   when a non-mode field (i.e. tag_sets) is present
           # - Otherwise $readPreference is sent
-          if read && read.to_doc[:mode] == 'secondaryPreferred'
-            sel['$readPreference'] = read.to_doc unless read.to_mongos.nil?
-          elsif read && read.to_doc[:mode] != 'primary'
-            sel['$readPreference'] = read.to_doc
+          if read
+            doc = read.to_mongos
+            if doc
+              sel['$readPreference'] = doc
+            end
           end
         elsif connection.server.cluster.single?
           # In Single topology:
@@ -194,9 +195,8 @@ module Mongo
           end
           sel['$readPreference'] = read_doc
         else
-          # In replica sets and sharded clusters, read preference is passed
-          # to the server if one is specified by the application, and there
-          # is no default.
+          # In replica sets, read preference is passed to the server if one
+          # is specified by the application, and there is no default.
           if read
             sel['$readPreference'] = read.to_doc
           end
