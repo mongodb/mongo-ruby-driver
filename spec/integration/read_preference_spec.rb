@@ -77,11 +77,11 @@ describe 'Read preference' do
       it_behaves_like 'does not send read preference when reading'
     end
 
-    context 'RS, sharded cluster' do
+    context 'replica set' do
       # Supposedly read preference should only be sent in a sharded cluster
       # topology. However, transactions spec tests contain read preference
       # assertions also when they are run in RS topologies.
-      require_topology :sharded, :replica_set
+      require_topology :replica_set
 
       context 'pre-OP_MSG server' do
         max_server_version '3.4'
@@ -94,6 +94,13 @@ describe 'Read preference' do
 
         it_behaves_like 'sends expected read preference when reading'
       end
+    end
+
+    context 'sharded cluster' do
+      # Driver does not send $readPreference document to mongos when
+      # specified mode is primary.
+      require_topology :sharded
+      it_behaves_like 'does not send read preference when reading'
     end
   end
 
@@ -264,18 +271,41 @@ describe 'Read preference' do
     shared_examples_for 'sends expected read preference' do
       it_behaves_like 'non-transactional read preference examples'
 
-      it 'sends expected read preference when starting transaction' do
-        collection.insert_one(hello: 'world')
+      context 'on sharded cluster' do
+        require_topology :sharded
 
-        session = client.start_session(session_options)
-        session.with_transaction(tx_options) do
-          res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
-          expect(res).to eq(1)
+        it 'does not send read preference' do
+          # Driver does not send $readPreference document to mongos when
+          # specified mode is primary.
+          collection.insert_one(hello: 'world')
+
+          session = client.start_session(session_options)
+          session.with_transaction(tx_options) do
+            res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+            expect(res).to eq(1)
+          end
+
+          event = subscriber.single_command_started_event('find')
+          actual_preference = event.command['$readPreference']
+          expect(actual_preference).to be_nil
         end
+      end
 
-        event = subscriber.single_command_started_event('find')
-        actual_preference = event.command['$readPreference']
-        expect(actual_preference).to eq(expected_read_preference)
+      context 'on replica set' do
+        require_topology :replica_set
+        it 'sends expected read preference when starting transaction' do
+          collection.insert_one(hello: 'world')
+
+          session = client.start_session(session_options)
+          session.with_transaction(tx_options) do
+            res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+            expect(res).to eq(1)
+          end
+
+          event = subscriber.single_command_started_event('find')
+          actual_preference = event.command['$readPreference']
+          expect(actual_preference).to eq(expected_read_preference)
+        end
       end
     end
 
