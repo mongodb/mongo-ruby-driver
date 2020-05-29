@@ -58,7 +58,7 @@ module Mongo
       def tags_allowed?
         true
       end
-      #
+
       # Whether the hedge option is allowed to be defined for this server preference.
       #
       # @return [ true ] true

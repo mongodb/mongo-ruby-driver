@@ -36,6 +36,10 @@ module Mongo
       #   in seconds, that a secondary can suffer and still be eligible for a read.
       #   A value of -1 is treated identically to nil, which is to not
       #   have a maximum staleness.
+      # @option options [ Hash | nil ] hedge A Hash specifying whether to enable hedged
+      #   reads on the server. Hedged reads are not enabled by default. When
+      #   specifying this option, it must be in the format: { enabled: true },
+      #   where the value of the :enabled key is a boolean value.
       #
       # @raise [ Error::InvalidServerPreference ] If tag sets are specified
       #   but not allowed.
@@ -452,8 +456,7 @@ module Mongo
               [true, false].include?(@hedge[:enabled])
             raise Error::InvalidServerPreference.new(
               "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
-              "format { enabled: true }, where the value of the :enabled key is " \
-              "a Boolean"
+              "format { enabled: true }"
             )
           end
         end
