@@ -49,7 +49,10 @@ module Mongo
         @options = options.freeze
         @tag_sets = (options[:tag_sets] || []).freeze
         @max_staleness = options[:max_staleness]
+        @hedge = options[:hedge]
+
         validate!
+        validate_hedge_value!
       end
 
       # @return [ Hash ] options The options.
@@ -75,9 +78,9 @@ module Mongo
       #
       # @since 2.0.0
       def ==(other)
-        name == other.name &&
-          tag_sets == other.tag_sets &&
-            max_staleness == other.max_staleness
+        name == other.name && hedge == other.hedge &&
+          max_staleness == other.max_staleness && tag_sets == other.tag_sets
+        end
       end
 
       # Inspect the server selector.
@@ -89,7 +92,7 @@ module Mongo
       #
       # @since 2.2.0
       def inspect
-        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect}>"
+        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect} hedge=#{hedge}>"
       end
 
       # Select a server from the specified cluster, taking into account
@@ -466,6 +469,19 @@ module Mongo
               "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS}) and (the cluster's heartbeat_frequency " +
               "setting + `Mongo::Cluster::IDLE_WRITE_PERIOD_SECONDS`) (#{min_cluster_staleness})"
             raise Error::InvalidServerPreference.new(msg)
+          end
+        end
+      end
+
+      def validate_hedge_value!
+        if @hedge
+          unless @hedge.is_a?(Hash) && @hedge.key?(:enabled) && 
+              @hedge[:enabled].is_a?(Boolean)
+            raise Error::InvalidServerPreference.new(
+              "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
+              "format { enabled: true }, where the value of the :enabled key is " \
+              "a Boolean"
+            )
           end
         end
       end
