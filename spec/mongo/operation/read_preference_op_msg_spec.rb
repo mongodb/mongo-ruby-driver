@@ -241,6 +241,55 @@ describe Mongo::Operation::SessionsSupported do
         let(:mongos?) { true }
 
         it_behaves_like 'sends read preference correctly for mongos'
+
+        context 'when read preference mode is secondary_preferred' do
+          let(:read_pref) do
+            Mongo::ServerSelector.get(
+              mode: mode,
+              tag_sets: tag_sets,
+              hedge: hedge
+            )
+          end
+
+          let(:mode) { 'secondary_preferred' }
+          let(:tag_sets) { nil }
+          let(:hedge) { nil }
+
+          context 'when tag_sets and hedge are not specified' do
+            it_behaves_like 'does not modify selector'
+          end
+
+          context 'when tag_sets are specified' do
+            let(:tag_sets) { [{ dc: 'ny' }] }
+
+            let(:expected_read_preference) do
+              { mode: 'secondaryPreferred', tags: tag_sets }
+            end
+
+            it_behaves_like 'adds read preference'
+          end
+
+          context 'when hedge is specified' do
+            let(:hedge) { { enabled: true } }
+
+            let(:expected_read_preference) do
+              { mode: 'secondaryPreferred', hedge: hedge }
+            end
+
+            it_behaves_like 'adds read preference'
+          end
+
+          context 'when hedge and tag_sets are specified' do
+            let(:hedge) { { enabled: true } }
+            let(:tag_sets) { [{ dc: 'ny' }] }
+
+            let(:expected_read_preference) do
+              { mode: 'secondaryPreferred', tags: tag_sets, hedge: hedge }
+            end
+
+            it_behaves_like 'adds read preference'
+          end
+        end
       end
 
       context 'when the server is a replica set member' do

@@ -2,6 +2,8 @@ shared_context 'server selector' do
 
   let(:max_staleness) { nil }
   let(:tag_sets) { [] }
+  let(:hedge) { nil }
+
   let(:tag_set) do
     { 'test' => 'tag' }
   end
@@ -20,7 +22,7 @@ shared_context 'server selector' do
       expect(server.unknown?).to be true
     end
   end
-  let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness } }
+  let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness, hedge: hedge } }
   let(:selector) { described_class.new(options) }
   let(:monitoring) do
     Mongo::Monitoring.new(monitoring: false)
@@ -115,6 +117,84 @@ shared_examples 'a server selector accepting tag sets' do
         it 'returns false' do
           expect(selector).not_to eq(other)
         end
+      end
+    end
+  end
+end
+
+shared_examples 'a server selector accepting hedge' do
+  describe '#initialize' do
+    context 'when hedge is not provided' do
+      it 'initializes successfully' do
+        expect do
+          selector
+        end.not_to raise_error
+      end
+    end
+
+    context 'when hedge is not a Hash' do
+      let(:hedge) { true }
+
+      it 'raises an exception' do
+        expect do
+          selector
+        end.to raise_error(Mongo::Error::InvalidServerPreference, /`hedge` value \(true\) is invalid/)
+      end
+    end
+
+    context 'when hedge is an empty Hash' do
+      let(:hedge) { {} }
+
+      it 'raises an exception' do
+        expect do
+          selector
+        end.to raise_error(Mongo::Error::InvalidServerPreference, /`hedge` value \({}\) is invalid/)
+      end
+    end
+
+    context 'when hedge is a Hash with data' do
+      let(:hedge) { { enabled: false } }
+
+      it 'initializes successfully' do
+        expect do
+          selector
+        end.not_to raise_error
+      end
+    end
+  end
+
+  describe '#hedge' do
+    context 'when hedge is not provided' do
+      it 'returns nil' do
+        expect(selector.hedge).to be_nil
+      end
+    end
+
+    context 'when hedge is a Hash with data' do
+      let(:hedge) { { enabled: false } }
+
+      it 'returns the same Hash' do
+        expect(selector.hedge).to eq({ enabled: false })
+      end
+    end
+  end
+
+  describe '#==' do
+    let(:other_selector) { described_class.new(hedge: { enabled: false }) }
+
+    context 'when hedges are the same' do
+      let(:hedge) { { enabled: false } }
+
+      it 'returns true' do
+        expect(selector).to eq(other_selector)
+      end
+    end
+
+    context 'when hedges are different' do
+      let(:hedge) { { enabled: true } }
+
+      it 'returns false' do
+        expect(selector).not_to eq(other_selector)
       end
     end
   end

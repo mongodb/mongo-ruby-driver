@@ -52,7 +52,6 @@ module Mongo
         @hedge = options[:hedge]
 
         validate!
-        validate_hedge_value!
       end
 
       # @return [ Hash ] options The options.
@@ -67,6 +66,10 @@ module Mongo
       # @since 2.4.0
       attr_reader :max_staleness
 
+      # @return [ Hash | nil ] hedge The document specifying whether to enable
+      #   hedged reads.
+      attr_reader :hedge
+
       # Check equality of two server selector.
       #
       # @example Check server selector equality.
@@ -80,7 +83,6 @@ module Mongo
       def ==(other)
         name == other.name && hedge == other.hedge &&
           max_staleness == other.max_staleness && tag_sets == other.tag_sets
-        end
       end
 
       # Inspect the server selector.
@@ -440,6 +442,21 @@ module Mongo
         elsif @max_staleness && !max_staleness_allowed?
           raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_SUPPORT)
         end
+
+        if @hedge
+          unless hedge_allowed?
+            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_HEDGE_SUPPORT)
+          end
+
+          unless @hedge.is_a?(Hash) && @hedge.key?(:enabled) &&
+              [true, false].include?(@hedge[:enabled])
+            raise Error::InvalidServerPreference.new(
+              "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
+              "format { enabled: true }, where the value of the :enabled key is " \
+              "a Boolean"
+            )
+          end
+        end
       end
 
       def validate_max_staleness_support!(server)
@@ -469,19 +486,6 @@ module Mongo
               "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS}) and (the cluster's heartbeat_frequency " +
               "setting + `Mongo::Cluster::IDLE_WRITE_PERIOD_SECONDS`) (#{min_cluster_staleness})"
             raise Error::InvalidServerPreference.new(msg)
-          end
-        end
-      end
-
-      def validate_hedge_value!
-        if @hedge
-          unless @hedge.is_a?(Hash) && @hedge.key?(:enabled) && 
-              @hedge[:enabled].is_a?(Boolean)
-            raise Error::InvalidServerPreference.new(
-              "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
-              "format { enabled: true }, where the value of the :enabled key is " \
-              "a Boolean"
-            )
           end
         end
       end

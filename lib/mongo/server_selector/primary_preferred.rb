@@ -58,6 +58,13 @@ module Mongo
       def tags_allowed?
         true
       end
+      #
+      # Whether the hedge option is allowed to be defined for this server preference.
+      #
+      # @return [ true ] true
+      def hedge_allowed?
+        true
+      end
 
       # Convert this server preference definition into a format appropriate
       #   for sending to a MongoDB server (i.e., as a command field).

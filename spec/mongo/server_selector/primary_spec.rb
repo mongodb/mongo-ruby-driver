@@ -50,6 +50,24 @@ describe Mongo::ServerSelector::Primary do
     end
   end
 
+  describe '#hedge' do
+    context 'hedge not provided' do
+      it 'returns an empty array' do
+        expect(selector.hedge).to be_nil
+      end
+    end
+
+    context 'hedge provided' do
+      let(:hedge) { { enabled: true } }
+
+      it 'raises an error' do
+        expect {
+          selector.tag_sets
+        }.to raise_error(Mongo::Error::InvalidServerPreference)
+      end
+    end
+  end
+
   describe '#to_mongos' do
 
     it 'returns nil' do
