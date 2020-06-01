@@ -13,7 +13,6 @@ describe Mongo::ServerSelector::SecondaryPreferred do
 
   it_behaves_like 'a server selector accepting tag sets'
   it_behaves_like 'a server selector accepting hedge'
-  it_behaves_like 'a server selector accepting hedge'
 
   describe '#initialize' do
 
