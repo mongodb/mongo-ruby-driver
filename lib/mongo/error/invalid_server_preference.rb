@@ -30,6 +30,11 @@ module Mongo
       # @since 2.4.0
       NO_MAX_STALENESS_SUPPORT = 'max_staleness cannot be set for this read preference.'.freeze
 
+      # Error message when hedge is specified for a read preference that does not support it.
+      #
+      # @api private
+      NO_HEDGE_SUPPORT = 'The hedge option cannot be set for this read preference'.freeze
+
       # Error message for when the max staleness is not at least twice the heartbeat frequency.
       #
       # @since 2.4.0

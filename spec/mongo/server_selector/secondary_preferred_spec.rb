@@ -12,6 +12,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
   it_behaves_like 'a server selector with sensitive data in its options'
 
   it_behaves_like 'a server selector accepting tag sets'
+  it_behaves_like 'a server selector accepting hedge'
 
   describe '#initialize' do
 
@@ -107,10 +108,26 @@ describe Mongo::ServerSelector::SecondaryPreferred do
         expect(selector.to_mongos).to eq(expected)
       end
     end
+
+    context 'hedge provided' do
+      let(:hedge) { { enabled: true } }
+
+      it 'returns a formatted read preference' do
+        expect(selector.to_mongos).to eq({ mode: 'secondaryPreferred', hedge: { enabled: true } })
+      end
+    end
+
+    context 'hedge not provided' do
+      let(:hedge) { nil }
+
+      it 'returns nil' do
+        expect(selector.to_mongos).to be_nil
+      end
+    end
+
   end
 
   describe '#select' do
-
     context 'no candidates' do
       let(:candidates) { [] }
 

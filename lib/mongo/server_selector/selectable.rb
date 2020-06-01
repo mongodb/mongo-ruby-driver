@@ -36,6 +36,10 @@ module Mongo
       #   in seconds, that a secondary can suffer and still be eligible for a read.
       #   A value of -1 is treated identically to nil, which is to not
       #   have a maximum staleness.
+      # @option options [ Hash | nil ] hedge A Hash specifying whether to enable hedged
+      #   reads on the server. Hedged reads are not enabled by default. When
+      #   specifying this option, it must be in the format: { enabled: true },
+      #   where the value of the :enabled key is a boolean value.
       #
       # @raise [ Error::InvalidServerPreference ] If tag sets are specified
       #   but not allowed.
@@ -46,9 +50,11 @@ module Mongo
         if options[:max_staleness] == -1
           options.delete(:max_staleness)
         end
-        @options = options.freeze
-        @tag_sets = (options[:tag_sets] || []).freeze
+        @options = options
+        @tag_sets = options[:tag_sets] || []
         @max_staleness = options[:max_staleness]
+        @hedge = options[:hedge]
+
         validate!
       end
 
@@ -64,6 +70,10 @@ module Mongo
       # @since 2.4.0
       attr_reader :max_staleness
 
+      # @return [ Hash | nil ] hedge The document specifying whether to enable
+      #   hedged reads.
+      attr_reader :hedge
+
       # Check equality of two server selector.
       #
       # @example Check server selector equality.
@@ -75,9 +85,8 @@ module Mongo
       #
       # @since 2.0.0
       def ==(other)
-        name == other.name &&
-          tag_sets == other.tag_sets &&
-            max_staleness == other.max_staleness
+        name == other.name && hedge == other.hedge &&
+          max_staleness == other.max_staleness && tag_sets == other.tag_sets
       end
 
       # Inspect the server selector.
@@ -89,7 +98,7 @@ module Mongo
       #
       # @since 2.2.0
       def inspect
-        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect}>"
+        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect} hedge=#{hedge}>"
       end
 
       # Select a server from the specified cluster, taking into account
@@ -436,6 +445,20 @@ module Mongo
           raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_TAG_SUPPORT)
         elsif @max_staleness && !max_staleness_allowed?
           raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_SUPPORT)
+        end
+
+        if @hedge
+          unless hedge_allowed?
+            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_HEDGE_SUPPORT)
+          end
+
+          unless @hedge.is_a?(Hash) && @hedge.key?(:enabled) &&
+              [true, false].include?(@hedge[:enabled])
+            raise Error::InvalidServerPreference.new(
+              "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
+              "format { enabled: true }"
+            )
+          end
         end
       end
 

@@ -31,6 +31,7 @@ module Mongo
           preference = { :mode => self.class.const_get(:SERVER_FORMATTED_NAME) }
           preference.update(tags: tag_sets) unless tag_sets.empty?
           preference.update(maxStalenessSeconds: max_staleness) if max_staleness
+          preference.update(hedge: hedge) if hedge
           preference
         end
       end

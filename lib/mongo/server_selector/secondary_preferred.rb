@@ -59,6 +59,13 @@ module Mongo
         true
       end
 
+      # Whether the hedge option is allowed to be defined for this server preference.
+      #
+      # @return [ true ] true
+      def hedge_allowed?
+        true
+      end
+
       # Convert this server preference definition into a format appropriate
       #   for sending to a MongoDB server (i.e., as a command field).
       #
@@ -80,7 +87,7 @@ module Mongo
       #
       # @since 2.0.0
       def to_mongos
-        if tag_sets.empty? && max_staleness.nil?
+        if tag_sets.empty? && max_staleness.nil? && hedge.nil?
           # The server preference is not sent to mongos as part of the query
           # selector if there are no tag sets, for maximum backwards compatibility.
           nil

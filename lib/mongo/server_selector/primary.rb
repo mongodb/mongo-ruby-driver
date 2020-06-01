@@ -59,6 +59,13 @@ module Mongo
         false
       end
 
+      # Whether the hedge option is allowed to be defined for this server preference.
+      #
+      # @return [ false ] false
+      def hedge_allowed?
+        false
+      end
+
       # Convert this server preference definition into a format appropriate
       #   for sending to a MongoDB server (i.e., as a command field).
       #
