@@ -50,10 +50,10 @@ module Mongo
         if options[:max_staleness] == -1
           options.delete(:max_staleness)
         end
-        @options = options.dup.freeze
-        @tag_sets = (options[:tag_sets] || []).dup.freeze
-        @max_staleness = options[:max_staleness].dup.freeze
-        @hedge = options[:hedge].dup.freeze
+        @options = options
+        @tag_sets = options[:tag_sets] || []
+        @max_staleness = options[:max_staleness]
+        @hedge = options[:hedge]
 
         validate!
       end
