@@ -977,7 +977,7 @@ TCP Keepalive Configuration
 The driver sets TCP keepalive by default. The following default values are also set if the system
 value can be determined and if the driver default value is less than the system value.
 
-- ``tcp_keepalive_time``: 300 seconds
+- ``tcp_keepalive_time``: 120 seconds
 - ``tcp_keepalive_intvl``: 10 seconds
 - ``tcp_keepalive_cnt``: 9 probes
 

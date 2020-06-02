@@ -277,7 +277,7 @@ describe Mongo::Address do
 
       if Socket.const_defined?(:TCP_KEEPIDLE)
         it 'sets the socket TCP_KEEPIDLE option' do
-          expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE).int).to be <= 300
+          expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE).int).to be <= 120
         end
       end
     end
