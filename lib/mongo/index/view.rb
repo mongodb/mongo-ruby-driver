@@ -149,6 +149,22 @@ module Mongo
       #
       # @param [ Array<Hash> ] models The index specifications. Each model MUST
       #   include a :key option.
+      #
+      # @return [ Result ] The result of the command.
+      #
+      # @since 2.0.0
+      def create_many(*models)
+        create_many_with_options(models)
+      end
+
+      # Creates multiple indexes on the collection and accepts options relating
+      #   to index creation.
+      #
+      # @note On MongoDB 3.0.0 and higher, the indexes will be created in
+      #   parallel on the server.
+      #
+      # @param [ Array<Hash> ] models The index specifications. Each model MUST
+      #   include a :key option.
       # @param [ Hash ] options Options relating index creation.
       #
       # @option options [ String | Integer ] :commit_quorum Specify how many
@@ -159,12 +175,6 @@ module Mongo
       #   replica set tag names, and "votingMembers." Default is "votingMembers."
       #
       # @return [ Result ] The result of the command.
-      #
-      # @since 2.0.0
-      def create_many(*models)
-        create_many_with_options(models)
-      end
-
       def create_many_with_options(models, options={})
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
