@@ -192,10 +192,10 @@ module Mongo
             db_name: database.name,
             coll_name: collection.name,
             session: session,
+            commit_quorum: options[:commit_quorum]
            }
 
           spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
-          spec[:commit_quorum] = options[:commit_quorum] if options[:commit_quorum]
 
           Operation::CreateIndex.new(spec).execute(server, client: client)
         end

@@ -532,7 +532,13 @@ module Mongo
         @spec[:txn_num]
       end
 
-      # TODO: documentation
+      # For createIndexes operations, the number of votes that a primary must
+      # wait for before commiting an index. Potential values are:
+      # - an integer from 0 to the number of members of the replica set
+      # - "majority" indicating that a majority of data bearing nodes must vote
+      # - "votingMembers" which means that all voting data bearing nodes must vote
+      #
+      # @return [ nil | Integer | String ] The commitQuorum value of the operation.
       def commit_quorum
         @spec[:commit_quorum]
       end
