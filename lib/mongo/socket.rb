@@ -322,7 +322,7 @@ module Mongo
 
     DEFAULT_TCP_KEEPCNT = 9
 
-    DEFAULT_TCP_KEEPIDLE = 300
+    DEFAULT_TCP_KEEPIDLE = 120
 
     def set_keepalive_opts(sock)
       sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, true)
