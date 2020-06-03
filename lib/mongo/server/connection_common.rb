@@ -111,10 +111,10 @@ module Mongo
       def ensure_connected
         begin
           unless socket
-            raise ArgumentError, "Connection #{self} is not connected"
+            raise ArgumentError, "Connection #{generation}:#{id} for #{address.seed} is not connected"
           end
           if @error
-            raise ArgumentError, "Connection #{self} is perished"
+            raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished"
           end
           result = yield socket
           success = true

@@ -152,12 +152,12 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
+        if error?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
+        end
+
         if closed?
-          if Lint.enabled?
-            raise Error::LintError, "Reconnecting closed connections is no longer supported (for #{address})"
-          else
-            log_warn("Reconnecting closed connections is deprecated (for #{address})")
-          end
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
         end
 
         unless @socket

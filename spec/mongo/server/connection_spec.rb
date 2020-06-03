@@ -687,44 +687,22 @@ describe Mongo::Server::Connection do
           /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
-      context 'linting' do
-        require_linting
+      it 'marks connection perished' do
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::UnexpectedResponse)
 
-        it 'does not permit sending over the connection' do
-          expect {
-            connection.dispatch([ query_alice ])
-          }.to raise_error(Mongo::Error::UnexpectedResponse)
-
-          expect do
-            connection.dispatch([ query_alice ]).documents
-          end.to raise_error(Mongo::Error::LintError, /Trying to deliver a message over a disconnected connection/)
-        end
-
-        it 'marks the connection no longer usable' do
-          expect {
-            connection.dispatch([ query_alice ])
-          }.to raise_error(Mongo::Error::UnexpectedResponse)
-
-          expect do
-            connection.connect!
-          end.to raise_error(Mongo::Error::LintError, /Reconnecting closed connections is no longer supported/)
-        end
+        connection.should be_error
       end
 
-      context 'not linting' do
-        skip_if_linting
+      it 'makes the connection no longer usable' do
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::UnexpectedResponse)
 
-        it 'does not affect subsequent requests but warns' do
-          expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
-
-          expect {
-            connection.dispatch([ query_alice ])
-          }.to raise_error(Mongo::Error::UnexpectedResponse)
-
-          docs = connection.dispatch([ query_alice ]).documents
-          expect(docs).to_not be_empty
-          expect(docs.first['name']).to eq('alice')
-        end
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::ConnectionPerished)
       end
     end
 
@@ -847,9 +825,9 @@ describe Mongo::Server::Connection do
           end.to raise_error(Mongo::Error::SocketError)
         end
 
-        it 'disconnects and raises the exception' do
+        it 'marks connection perished' do
           result
-          expect(connection).to_not be_connected
+          expect(connection).to be_error
         end
 
         it 'disconnects connection pool' do
@@ -881,9 +859,9 @@ describe Mongo::Server::Connection do
           end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
 
-        it 'disconnects the used connection' do
+        it 'marks connection perished' do
           result
-          expect(connection).to_not be_connected
+          expect(connection).to be_error
         end
 
 =begin These assertions require a working cluster with working SDAM flow, which the tests do not configure
