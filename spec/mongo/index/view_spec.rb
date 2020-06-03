@@ -258,6 +258,65 @@ describe Mongo::Index::View do
           end
         end
 
+        context 'when commit quorum options are specified' do
+          require_topology :replica_set, :sharded
+          context 'on server versions >= 4.4' do
+            min_server_fcv '4.3'
+
+            let(:subscriber) { EventSubscriber.new }
+
+            before do
+              authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+            end
+
+            context 'when commit_quorum value is supported' do
+              let!(:result) do
+                view.create_many(
+                  { key: { random: 1 }, unique: true },
+                  { key: { testing: -1 }, unique: true },
+                  { commit_quorum: 'majority' }
+                )
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'passes the commit_quorum option to the server' do
+                expect(subscriber.started_events.length).to eq(1)
+                command = subscriber.started_events.first.command
+                expect(command['commitQuorum']).to eq('majority')
+              end
+            end
+
+            context 'when commit_quorum value is not supported' do
+              it 'raises an exception' do
+                expect do
+                  view.create_many(
+                    { key: { random: 1 }, unique: true },
+                    { key: { testing: -1 }, unique: true },
+                    { commit_quorum: 'unsupported-value' }
+                  )
+                end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration/)
+              end
+            end
+          end
+
+          context 'on server versions < 4.4' do
+            max_server_fcv '4.2'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many(
+                  { key: { random: 1 }, unique: true },
+                  { key: { testing: -1 }, unique: true },
+                  { commit_quorum: 'majority' }
+                )
+              end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the commit_quorum option/)
+            end
+          end
+        end
+
         context 'when collation is specified' do
           min_server_fcv '3.4'
 

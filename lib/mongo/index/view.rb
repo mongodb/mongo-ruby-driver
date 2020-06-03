@@ -133,7 +133,7 @@ module Mongo
       # @since 2.0.0
       def create_one(keys, options = {})
         create_options = { commit_quorum: options.delete(:commit_quorum) }
-        create_many_with_options([{ key: keys }.merge(options)], create_options)
+        create_many({ key: keys }.merge(options), create_options)
       end
 
       # Creates multiple indexes on the collection.
@@ -144,40 +144,36 @@ module Mongo
       #     { key: { age: -1 }, background: true }
       #   ])
       #
+      # @example Create multiple indexes with options.
+      #   view.create_many(
+      #     { key: { name: 1 }, unique: true },
+      #     { key: { age: -1 }, background: true },
+      #     { commit_quorum: 'majority' }
+      #   )
+      #
       # @note On MongoDB 3.0.0 and higher, the indexes will be created in
       #   parallel on the server.
       #
       # @param [ Array<Hash> ] models The index specifications. Each model MUST
-      #   include a :key option.
+      #   include a :key option, except for the last item in the Array, which
+      #   may be a Hash specifying options relevant to the createIndexes operation.
+      #   The following options are accepted:
+      #   - commit_quorum: Specify how many data-bearing members of a replica set,
+      #     including the primary, must complete the index builds successfully
+      #     before the primary marks the indexes as ready.
       #
       # @return [ Result ] The result of the command.
       #
       # @since 2.0.0
       def create_many(*models)
-        create_many_with_options(models)
-      end
-
-      # Creates multiple indexes on the collection and accepts options relating
-      #   to index creation.
-      #
-      # @note On MongoDB 3.0.0 and higher, the indexes will be created in
-      #   parallel on the server.
-      #
-      # @param [ Array<Hash> ] models The index specifications. Each model MUST
-      #   include a :key option.
-      # @param [ Hash ] options Options relating index creation.
-      #
-      # @option options [ String | Integer ] :commit_quorum Specify how many
-      #   data-bearing members of a replica set, including the primary, must
-      #   complete the index builds successfully before the primary marks
-      #   the indexes as ready. Supported values are integers from 0 to the
-      #   number of data-bearing members of the replica set, "majority,"
-      #   replica set tag names, and "votingMembers." Default is "votingMembers."
-      #
-      # @return [ Result ] The result of the command.
-      def create_many_with_options(models, options={})
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
+
+          models = models.flatten
+          options = {}
+          if models && !models.last.key?(:key)
+            options = models.pop
+          end
 
           # While server versions 3.4 and newer generally perform option
           # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
@@ -190,7 +186,7 @@ module Mongo
             raise Error::UnsupportedOption.commit_quorum_error
           end
 
-          indexes = normalize_models(models.flatten, server)
+          indexes = normalize_models(models, server)
           indexes.each do |index|
             if index[:bucketSize] || index['bucketSize']
               client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
