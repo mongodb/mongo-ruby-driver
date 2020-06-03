@@ -735,37 +735,6 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  context 'when the connection does not finish authenticating before the thread is killed' do
-    let!(:pool) do
-      server.pool
-    end
-
-    let(:options) do
-      { min_pool_size:0, max_pool_size: 1 }
-    end
-
-    before do
-      pool
-      ClientRegistry.instance.close_all_clients
-    end
-
-    it 'creates a new connection' do
-      t = Thread.new do
-        expect {
-          pool.with_connection do |c|
-            expect(c).to receive(:connect!).and_raise(Mongo::Error)
-            c.send(:ensure_connected) { |socket| socket}
-          end
-        }.to raise_error(Mongo::Error)
-        expect(pool.size).to be(0)
-      end
-      t.join
-
-      expect(pool.check_out).to be_a(Mongo::Server::Connection)
-      expect(pool.size).to be(1)
-    end
-  end
-
   describe '#close_idle_sockets' do
     let!(:pool) do
       server.pool
