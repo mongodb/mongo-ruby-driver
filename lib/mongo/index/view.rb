@@ -132,6 +132,8 @@ module Mongo
       #
       # @since 2.0.0
       def create_one(keys, options = {})
+        options = options.dup
+
         create_options = { commit_quorum: options.delete(:commit_quorum) }
         create_many({ key: keys }.merge(options), create_options)
       end
@@ -181,8 +183,8 @@ module Mongo
           # (see SERVER-47193). As a result, the drivers specifications require
           # drivers to perform validation and raise an error when the commitQuorum
           # option is passed to servers that don't support it.
-          connection = server.with_connection { |connection| connection }
-          if connection.description.max_wire_version < 9 && options[:commit_quorum]
+          description = server.with_connection { |connection| connection.description }
+          if description.max_wire_version < 9 && options[:commit_quorum]
             raise Error::UnsupportedOption.commit_quorum_error
           end
 
@@ -201,7 +203,7 @@ module Mongo
             commit_quorum: options[:commit_quorum]
            }
 
-          spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
+          spec[:write_concern] = write_concern if description.features.collation_enabled?
 
           Operation::CreateIndex.new(spec).execute(server, client: client)
         end
