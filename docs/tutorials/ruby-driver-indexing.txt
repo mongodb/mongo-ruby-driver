@@ -123,19 +123,14 @@ to the Array passed as the argument to ``indexes#create_many``:
     { commit_quorum: 'majority' },
   ])
 
-commit_quorum
-`````````````
-Available on MongoDB server versions 4.4 and later.
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
 
-How many voting, data-bearing members of a replica set must complete the index
-build successfully before the primary marks the index as ready.
-
-Possible values of the commit_quorum option are:
-- integers from 0 to the number of voting, data-bearing nodes of the replica set.
-- "majority" meaning the majority of voting, data-bearing nodes must complete
-  the index build.
-- "votingMembers" meaning all voting members of the replica set must complete
-  the index build.
+   * - Option
+     - Description
+   * - ``:commit_quorum``
+     - New in MongoDB 4.4; how many voting, data-bearing members of a replica set must complete the index build before the index is ready. Possible values are integers, "majority", or "votingMembers".
 
 Dropping Indexes
 ================
