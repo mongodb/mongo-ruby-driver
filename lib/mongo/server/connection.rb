@@ -306,7 +306,7 @@ module Mongo
           yield
         rescue Error::SocketError => e
           @error = e
-          @server.unknown!(generation: e.generation)
+          @server.unknown!(generation: e.generation, stop_push_monitor: true)
           raise
         rescue Error::SocketTimeoutError => e
           @error = e

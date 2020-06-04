@@ -25,6 +25,9 @@ describe 'Connections' do
       # RSpec::Expectations::ExpectationNotMetError: expected Mongo::Error::SocketError, got #<NameError: undefined method `write' for class `Mongo::Socket'>
       fails_on_jruby
 
+      # 4.4 has two monitors and thus our socket mocks get hit twice
+      max_server_version '4.2'
+
       let(:exception) { Mongo::Error::SocketError }
 
       let(:error) do
@@ -43,6 +46,7 @@ describe 'Connections' do
       end
 
       context 'with sdam event subscription' do
+
         let(:subscriber) { EventSubscriber.new }
         let(:client) do
           ClientRegistry.instance.global_client('authorized').with(app_name: 'connection_integration').tap do |client|

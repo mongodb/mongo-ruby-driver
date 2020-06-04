@@ -64,7 +64,7 @@ module Mongo
       @connection_id_gen = Class.new do
         include Id
       end
-      @scan_semaphore = Semaphore.new
+      @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {})
       @last_scan = nil
@@ -432,7 +432,7 @@ module Mongo
     def handle_handshake_failure!
       yield
     rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError => e
-      unknown!(generation: e.generation)
+      unknown!(generation: e.generation, stop_push_monitor: true)
       raise
     end
 
@@ -455,7 +455,7 @@ module Mongo
       raise
     rescue Mongo::Error::SocketError => e
       # non-timeout network error
-      unknown!(generation: e.generation)
+      unknown!(generation: e.generation, stop_push_monitor: true)
       raise
     rescue Auth::Unauthorized
       # auth error, keep server description and topology as they are
@@ -503,6 +503,8 @@ module Mongo
     #   on 4.2+ servers).
     # @option options [ TopologyVersion ] :topology_version Topology version
     #   of the error response that is causing the server to be marked unknown.
+    # @option options [ true | false ] :stop_push_monitor Whether to stop
+    #   the PushMonitor associated with the server, if any.
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
@@ -514,6 +516,10 @@ module Mongo
         !options[:topology_version].gt?(description.topology_version)
       then
         return
+      end
+
+      if options[:stop_push_monitor]
+        monitor&.stop_push_monitor!
       end
 
       # SDAM flow will update description on the server without in-place
@@ -562,3 +568,4 @@ require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
 require 'mongo/server/round_trip_time_averager'
+require 'mongo/server/push_monitor'

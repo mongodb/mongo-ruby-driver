@@ -135,6 +135,11 @@ module Mongo
         #
         # @return [ Protocol::Message ] The result.
         def dispatch_bytes(bytes)
+          write_bytes(bytes)
+          read_response
+        end
+
+        def write_bytes(bytes)
           unless connected?
             raise ArgumentError, "Trying to dispatch on an unconnected connection #{self}"
           end
@@ -142,6 +147,17 @@ module Mongo
           add_server_connection_id do
             add_server_diagnostics do
               socket.write(bytes)
+            end
+          end
+        end
+
+        def read_response
+          unless connected?
+            raise ArgumentError, "Trying to read on an unconnected connection #{self}"
+          end
+
+          add_server_connection_id do
+            add_server_diagnostics do
               Protocol::Message.deserialize(socket)
             end
           end
