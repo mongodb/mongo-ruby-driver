@@ -33,7 +33,7 @@ specification as the first argument and options as the second argument:
 .. code-block:: ruby
 
   client[:bands].indexes.create_one(genre: 1)
-  
+
   client[:bands].indexes.create_one(
     { name: 1 },
     unique: true, expire_after: 120,
@@ -96,6 +96,46 @@ when creating indexes. These options mirror the options supported by the
    * - ``:partial_filter_expression``
      - A filter for a partial index.
 
+Create options
+--------------
+When creating indexes on MongoDB 4.4 and later, you may specify options relating
+to index creation (in addition to the existing options that pertain to individual
+indexes). Currently, the only available create option is :commit_quorum.
+
+To specify create options when creating a single index, pass additional options
+to the second argument of ``indexes#create_one``:
+
+.. code-block:: ruby
+
+  client[:bands].indexes.create_one(
+    { name: 1 },
+    unique: true, expire_after: 120, commit_quorum: 'majority'
+  )
+
+To specify create options when creating multiple indexes, add a final element
+to the Array passed as the argument to ``indexes#create_many``:
+
+.. code-block:: ruby
+
+  client[:bands].indexes.create_many([
+    { key: { genre: 1 } },
+    { key: { name: 1 }, unique: true, expire_after: 120 },
+    { commit_quorum: 'majority' },
+  ])
+
+commit_quorum
+`````````````
+Available on MongoDB server versions 4.4 and later.
+
+How many voting, data-bearing members of a replica set must complete the index
+build successfully before the primary marks the index as ready.
+
+Possible values of the commit_quorum option are:
+- integers from 0 to the number of voting, data-bearing nodes of the replica set.
+- "majority" meaning the majority of voting, data-bearing nodes must complete
+  the index build.
+- "votingMembers" meaning all voting members of the replica set must complete
+  the index build.
 
 Dropping Indexes
 ================
@@ -106,7 +146,7 @@ To drop an index, call ``indexes#drop_one`` or ``indexes#drop_all``.
 
   # Drops the name_1 index.
   client[:bands].indexes.drop_one( 'name_1' )
-  
+
   # Drops all indexes in the collection.
   client[:bands].indexes.drop_all
 
