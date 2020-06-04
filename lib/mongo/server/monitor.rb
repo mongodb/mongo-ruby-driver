@@ -262,6 +262,7 @@ module Mongo
               message = @connection.dispatch_bytes(Monitor::Connection::ISMASTER_BYTES)
               message.documents.first
             rescue Mongo::Error
+              @connection.disconnect!
               @connection = nil
               raise
             end
