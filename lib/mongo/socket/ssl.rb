@@ -79,6 +79,12 @@ module Mongo
       # @param [ Hash ] options The options.
       #
       # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ Address ] :connection_address Address of the
+      #   connection that created this socket.
+      # @option options [ Integer ] :connection_generation Generation of the
+      #   connection (for non-monitoring connections) that created this socket.
+      # @option options [ true | false ] :monitor Whether this socket was
+      #   created by a monitoring connection.
       #
       # @since 2.0.0
       def initialize(host, port, host_name, timeout, family, options = {})

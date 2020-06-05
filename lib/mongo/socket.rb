@@ -57,6 +57,29 @@ module Mongo
     # @return [ Float ] timeout The socket timeout.
     attr_reader :timeout
 
+    # @return [ Address ] Address of the connection that created this socket.
+    #
+    # @api private
+    def connection_address
+      options[:connection_address]
+    end
+
+    # @return [ Integer ] Generation of the connection (for non-monitoring
+    #   connections) that created this socket.
+    #
+    # @api private
+    def connection_generation
+      options[:connection_generation]
+    end
+
+    # @return [ true | false ] Whether this socket was created by a monitoring
+    #   connection.
+    #
+    # @api private
+    def monitor?
+      !!options[:monitor]
+    end
+
     # Is the socket connection alive?
     #
     # @example Is the socket alive?
