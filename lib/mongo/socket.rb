@@ -350,15 +350,15 @@ module Mongo
       begin
         yield
       rescue Errno::ETIMEDOUT => e
-        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{address})"
+        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{human_address})"
       rescue IOError, SystemCallError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{address})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{address}) (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address}) (#{SSL_ERROR})"
       end
     end
 
-    def address
+    def human_address
       raise NotImplementedError
     end
   end

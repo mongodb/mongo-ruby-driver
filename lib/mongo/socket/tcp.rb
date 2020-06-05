@@ -78,7 +78,7 @@ module Mongo
 
       private
 
-      def address
+      def human_address
         "#{host}:#{port} (no TLS)"
       end
     end

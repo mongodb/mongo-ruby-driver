@@ -42,10 +42,10 @@ describe Mongo::Socket::SSL, retry: 3 do
     OpenSSL::PKey.read(key_string)
   end
 
-  describe '#address' do
+  describe '#human_address' do
     it 'returns the address and tls indicator' do
       addr = socket.instance_variable_get(:@tcp_socket).remote_address
-      expect(socket.send(:address)).to eq("#{addr.ip_address}:#{addr.ip_port} (#{default_address}, TLS)")
+      expect(socket.send(:human_address)).to eq("#{addr.ip_address}:#{addr.ip_port} (#{default_address}, TLS)")
     end
   end
 

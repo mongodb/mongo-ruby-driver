@@ -292,7 +292,7 @@ module Mongo
         16384
       end
 
-      def address
+      def human_address
         "#{host}:#{port} (#{host_name}:#{port}, TLS)"
       end
     end

@@ -6,17 +6,17 @@ describe Mongo::Socket do
     described_class.new
   end
 
-  describe '#address' do
+  describe '#human_address' do
     it 'raises NotImplementedError' do
       expect do
-        socket.send(:address)
+        socket.send(:human_address)
       end.to raise_error(NotImplementedError)
     end
   end
 
   describe '#map_exceptions' do
     before do
-      expect(socket).to receive(:address).and_return('fake-address')
+      expect(socket).to receive(:human_address).and_return('fake-address')
     end
 
     it 'maps timeout exception' do

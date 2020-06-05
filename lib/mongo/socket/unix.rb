@@ -43,7 +43,7 @@ module Mongo
 
       private
 
-      def address
+      def human_address
         path
       end
     end
