@@ -42,7 +42,7 @@ module Mongo
       #
       # @deprecated
       def connected?
-        !!@socket && @socket.alive?
+        !!socket
       end
 
       # @return [ Integer ] pid The process id when the connection was created.
