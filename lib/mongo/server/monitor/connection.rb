@@ -163,7 +163,7 @@ module Mongo
 
           @socket = add_server_diagnostics do
             address.socket(socket_timeout, ssl_options, address.options.merge(
-              connection_address: address, monitor: true))
+              connection_address: address, monitor: true).update(ssl_options))
           end
           true
         end

@@ -189,9 +189,9 @@ module Mongo
         return specific_address.socket(socket_timeout, ssl_options, options)
       end
 
-      options = Hash[Options::Redacted.new(
+      options = {
         connect_timeout: Server::CONNECT_TIMEOUT,
-      ).update(options).map { |k, v| [k.to_sym, v] }]
+      }.update(Hash[options.map { |k, v| [k.to_sym, v] }])
 
       # When the driver connects to "localhost", it only attempts IPv4
       # connections. When the driver connects to other hosts, it will
