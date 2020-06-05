@@ -100,8 +100,8 @@ module Mongo
       # @deprecated
       def_delegators :server, :last_scan
 
-      # The compressor is determined during the handshake, so it must be an attribute
-      # of the connection.
+      # The compressor is determined during the handshake, so it must be an
+      # attribute of the connection.
       #
       # @deprecated
       def_delegators :connection, :compressor
@@ -126,8 +126,8 @@ module Mongo
         end
       end
 
-      # Stop the background thread and wait for to terminate for a reasonable
-      # amount of time.
+      # Stop the background thread and wait for it to terminate for a
+      # reasonable amount of time.
       #
       # @return [ true | false ] Whether the thread was terminated.
       #
