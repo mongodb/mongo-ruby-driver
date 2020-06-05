@@ -42,7 +42,8 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(host, port, host_name, timeout, family, options = {})
-        @host, @port, @host_name, @timeout, @options = host, port, host_name, timeout, options
+        super(timeout, options)
+        @host, @port, @host_name = host, port, host_name
         @context = create_context(options)
         @family = family
         @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)

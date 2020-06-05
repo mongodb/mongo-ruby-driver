@@ -39,7 +39,8 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(path, timeout, options = {})
-        @path, @timeout, @options = path, timeout, options
+        super(timeout, options)
+        @path = path
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
       end

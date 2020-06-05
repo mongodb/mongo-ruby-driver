@@ -45,6 +45,25 @@ module Mongo
     # @api private
     WRITE_CHUNK_SIZE = 65536
 
+    # Initializes common socket attributes.
+    #
+    # @param [ Float ] timeout The socket timeout value.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Float ] :connect_timeout Connect timeout.
+    # @option options [ Address ] :connection_address Address of the
+    #   connection that created this socket.
+    # @option options [ Integer ] :connection_generation Generation of the
+    #   connection (for non-monitoring connections) that created this socket.
+    # @option options [ true | false ] :monitor Whether this socket was
+    #   created by a monitoring connection.
+    #
+    # @api private
+    def initialize(timeout, options)
+      @timeout = timeout
+      @options = options
+    end
+
     # @return [ Integer ] family The type of host family.
     attr_reader :family
 
