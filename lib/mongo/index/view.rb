@@ -120,6 +120,10 @@ module Mongo
       #   a geo index.
       # @option options [ Hash ] :partial_filter_expression  Specify a filter for a partial
       #   index.
+      # @option options [ String | Integer ] :commit_quorum Specify how many
+      #   data-bearing members of a replica set, including the primary, must
+      #   complete the index builds successfully before the primary marks
+      #   the indexes as ready.
       #
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
@@ -128,7 +132,10 @@ module Mongo
       #
       # @since 2.0.0
       def create_one(keys, options = {})
-        create_many({ key: keys }.merge(options))
+        options = options.dup
+
+        create_options = { commit_quorum: options.delete(:commit_quorum) }
+        create_many({ key: keys }.merge(options), create_options)
       end
 
       # Creates multiple indexes on the collection.
@@ -139,11 +146,23 @@ module Mongo
       #     { key: { age: -1 }, background: true }
       #   ])
       #
+      # @example Create multiple indexes with options.
+      #   view.create_many(
+      #     { key: { name: 1 }, unique: true },
+      #     { key: { age: -1 }, background: true },
+      #     { commit_quorum: 'majority' }
+      #   )
+      #
       # @note On MongoDB 3.0.0 and higher, the indexes will be created in
       #   parallel on the server.
       #
       # @param [ Array<Hash> ] models The index specifications. Each model MUST
-      #   include a :key option.
+      #   include a :key option, except for the last item in the Array, which
+      #   may be a Hash specifying options relevant to the createIndexes operation.
+      #   The following options are accepted:
+      #   - commit_quorum: Specify how many data-bearing members of a replica set,
+      #     including the primary, must complete the index builds successfully
+      #     before the primary marks the indexes as ready.
       #
       # @return [ Result ] The result of the command.
       #
@@ -151,19 +170,41 @@ module Mongo
       def create_many(*models)
         client.send(:with_session, @options) do |session|
           server = next_primary(nil, session)
-          indexes = normalize_models(models.flatten, server)
+
+          models = models.flatten
+          options = {}
+          if models && !models.last.key?(:key)
+            options = models.pop
+          end
+
+          # While server versions 3.4 and newer generally perform option
+          # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
+          # the server would accept the commitQuorum option and use it internally
+          # (see SERVER-47193). As a result, the drivers specifications require
+          # drivers to perform validation and raise an error when the commitQuorum
+          # option is passed to servers that don't support it.
+          description = server.with_connection { |connection| connection.description }
+          if description.max_wire_version < 9 && options[:commit_quorum]
+            raise Error::UnsupportedOption.commit_quorum_error
+          end
+
+          indexes = normalize_models(models, server)
           indexes.each do |index|
             if index[:bucketSize] || index['bucketSize']
               client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
             end
           end
+
           spec = {
-                  indexes: indexes,
-                  db_name: database.name,
-                  coll_name: collection.name,
-                  session: session
-                 }
-          spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
+            indexes: indexes,
+            db_name: database.name,
+            coll_name: collection.name,
+            session: session,
+            commit_quorum: options[:commit_quorum]
+           }
+
+          spec[:write_concern] = write_concern if description.features.collation_enabled?
+
           Operation::CreateIndex.new(spec).execute(server, client: client)
         end
       end

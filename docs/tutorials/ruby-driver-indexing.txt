@@ -33,7 +33,7 @@ specification as the first argument and options as the second argument:
 .. code-block:: ruby
 
   client[:bands].indexes.create_one(genre: 1)
-  
+
   client[:bands].indexes.create_one(
     { name: 1 },
     unique: true, expire_after: 120,
@@ -96,6 +96,40 @@ when creating indexes. These options mirror the options supported by the
    * - ``:partial_filter_expression``
      - A filter for a partial index.
 
+The :commit_quorum option
+-------------------------
+On MongoDB server versions 4.4 and newer, the ``:commit_quorum`` option may be
+specified on index creation. This option differs from other index options in that
+it determines server behavior during index creation, rather than determining
+the behavior of an individual index.
+
+The ``:commit_quorum`` option specifies how many voting, data-bearing members
+of a replica set must complete the index build before the index is ready.
+Possible values are integers (0 to the number of voting, data-bearing members
+of the replica set), "majority", or "votingMembers".
+
+To specify ``:commit_quorum`` when creating one index, add another option
+to the second argument of the ``indexes#create_one`` method:
+
+.. code-block:: ruby
+
+  client[:bands].indexes.create_one(
+    { name: 1 },
+    unique: true, expire_after: 120, commit_quorum: 'majority'
+  )
+
+To specify create options when creating multiple indexes, add a Hash specifying
+``:commit_quorum`` as a final element to the Array of indexes passed to
+``indexes#create_many``. Note that this Hash MUST be the final element in the
+Array.
+
+.. code-block:: ruby
+
+  client[:bands].indexes.create_many([
+    { key: { genre: 1 } },
+    { key: { name: 1 }, unique: true, expire_after: 120 },
+    { commit_quorum: 'majority' },
+  ])
 
 Dropping Indexes
 ================
@@ -106,7 +140,7 @@ To drop an index, call ``indexes#drop_one`` or ``indexes#drop_all``.
 
   # Drops the name_1 index.
   client[:bands].indexes.drop_one( 'name_1' )
-  
+
   # Drops all indexes in the collection.
   client[:bands].indexes.drop_all
 
