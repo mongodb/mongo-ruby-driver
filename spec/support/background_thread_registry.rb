@@ -42,7 +42,11 @@ class BackgroundThreadRegistry
           if record.object.respond_to?(:options)
             msg << "\n  with options: #{record.object.options}"
           end
-          msg << "\n  in #{record.example.id} #{record.example.full_description}"
+          if record.example
+            msg << "\n  in #{record.example.id} #{record.example.full_description}"
+          else
+            msg << "\n  not in an example"
+          end
         end
         raise msg
       end

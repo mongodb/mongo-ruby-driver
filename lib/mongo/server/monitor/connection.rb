@@ -36,7 +36,10 @@ module Mongo
         # The case matters here for fail points.
         #
         # @since 2.5.0
-        ISMASTER_OP_MSG = { isMaster: 1, '$db' => Database::ADMIN }.freeze
+        ISMASTER_OP_MSG = {
+          isMaster: 1,
+          '$db' => Database::ADMIN,
+        }.freeze
 
         # The constant for the ismaster command.
         #
