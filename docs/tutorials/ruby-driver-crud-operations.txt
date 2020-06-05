@@ -521,7 +521,7 @@ In driver versions 2.9 and below, client, collection and GridFS objects
 took write concern options in the ``:write`` option with session and
 transaction objects employing the ``:write_concern`` option.
 
-Below are some examples of passing write concerns to client and colection
+Below are some examples of passing write concerns to client and collection
 objects. The ``:write_concern`` option can be provided when constructing
 new client and collection objects,  or to the ``#with`` methods.
 
@@ -532,10 +532,10 @@ GridFS examples are provided on the :ref:`GridFS <gridfs>` page.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   alt_client = client.with(write_concern: {w: :majority})
-  
+
   collection = client[:artists, write_concern: {w: 3}]
   alt_collection = collection.with(write_concern: {w: :majority})
-  
+
   # Uses w: 3
   collection.insert_one({name: 'SUN Project'})
   # Uses w: :majority
@@ -550,7 +550,7 @@ backwards compatibility, but is deprecated:
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write: {w: 2})
   alt_client = client.with(write: {w: :majority})
-  
+
   collection = client[:artists, write: {w: 3}]
   alt_collection = collection.with(write: {w: :majority})
 
@@ -562,7 +562,7 @@ values must be identical or an exception will be raised:
   # OK
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 3}, write: {w: 3})
-  
+
   # Error
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 3}, write: {w: :majority})
@@ -575,10 +575,10 @@ the last provided option wins in case of naming differences:
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   alt_client = client.with(write: {w: 3})
-  
+
   alt_client.options[:write]
   # => {"w"=>3}
-  
+
   alt_client.options[:write_concern]
   # => nil
 
@@ -596,34 +596,34 @@ transaction option, the ``:write`` option is not recognized by any
 driver version.
 
 .. code-block:: ruby
-  
+
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   collection = client[:artists, write_concern: {w: :majority}]
-  
-  
+
+
   session = client.start_session
   session.with_transaction do
     collection.insert_one({test: 1}, session: session)
-  
+
     # Uses w: 2 when committing
   end
-  
-  
+
+
   session = client.start_session(default_transaction_options:
     {write_concern: {w: 3})
   )
   session.with_transaction do
     collection.insert_one({test: 1}, session: session)
-  
+
     # Uses w: 3 when committing
   end
-  
-  
+
+
   session = client.start_session
   session.with_transaction(write_concern: {w: 3}) do
     collection.insert_one({test: 1}, session: session)
-  
+
     # Uses w: 3 when committing
   end
 
@@ -632,36 +632,36 @@ write concern hash rather than individual elements. For example, ``j: true``
 is not inherited in the following case:
 
 .. code-block:: ruby
-  
+
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 1, j: true})
   collection = client[:artists, write_concern: {w: 2}]
-  
+
   collection.write_concern.options
   # => #<Mongo::WriteConcern::Acknowledged:0x47289650367880 options={:w=>2}>
 
 Although CRUD operations accept an options hash, they currently do not
 recognize the ``:write_concern`` option:
-  
+
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   collection = client[:artists, write_concern: {w: :majority}]
-  
+
   # Still uses w: :majority
   collection.insert_one({name: 'SUN Project'}, write_concern: {w: 1})
 
 The easiest workaround for this is to use ``#with`` to obtain a new collection
 instance with the desired write concern:
-  
+
 .. code-block:: ruby
 
   # Uses w: 1
   collection.with(write_concern: {w: 1}).insert_one(name: 'SUN Project')
 
 Write concern can also be manually specified in ``Database#command``:
-  
+
 .. code-block:: ruby
 
     client.database.command(create: 'foo-collection', writeConcern: {w: :majority})
@@ -673,7 +673,7 @@ underscore one that Ruby driver uses.
 A Note about the BSON Symbol type
 =================================
 
-Because the BSON specification deprecated the BSON symbol type, the `bson` gem 
+Because the BSON specification deprecated the BSON symbol type, the `bson` gem
 will serialize Ruby symbols into BSON strings when used on its own. However, in
 order to maintain backwards compatibility with older datasets, the Ruby driver
 overrides this behavior to serialize Ruby symbols as BSON symbols. This is
