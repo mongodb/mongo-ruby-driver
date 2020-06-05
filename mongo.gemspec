@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
-  if File.exists?('gem-private_key.pem')
+  if File.exist?('gem-private_key.pem')
     s.signing_key     = 'gem-private_key.pem'
     s.cert_chain      = ['gem-public_cert.pem']
   else

@@ -76,7 +76,7 @@ end
 
 namespace :release do
   task :check_private_key do
-    unless File.exists?('gem-private_key.pem')
+    unless File.exist?('gem-private_key.pem')
       raise "No private key present, cannot release"
     end
   end
