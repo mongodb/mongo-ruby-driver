@@ -99,6 +99,18 @@ module Mongo
       !!options[:monitor]
     end
 
+    # @return [ String ] Human-readable summary of the socket for debugging.
+    #
+    # @api private
+    def summary
+      fileno = @socket&.fileno rescue '<no socket>' || '<no socket>'
+      if monitor?
+        "#{connection_address}:m #{fileno}"
+      else
+        "#{connection_address}:c:#{connection_generation} #{fileno}"
+      end
+    end
+
     # Is the socket connection alive?
     #
     # @example Is the socket alive?
