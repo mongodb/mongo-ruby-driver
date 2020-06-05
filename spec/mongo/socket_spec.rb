@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Socket do
 
   let(:socket) do
-    described_class.new
+    described_class.new(0, {})
   end
 
   describe '#human_address' do
