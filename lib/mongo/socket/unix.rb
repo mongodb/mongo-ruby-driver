@@ -20,9 +20,6 @@ module Mongo
     # @since 2.0.0
     class Unix < Socket
 
-      # @return [ String ] path The path to connect to.
-      attr_reader :path
-
       # Initializes a new Unix socket.
       #
       # @example Create the Unix socket.
@@ -46,6 +43,9 @@ module Mongo
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
       end
+
+      # @return [ String ] path The path to connect to.
+      attr_reader :path
 
       private
 

@@ -20,34 +20,6 @@ module Mongo
     # @since 2.0.0
     class TCP < Socket
 
-      # @return [ String ] host The host to connect to.
-      attr_reader :host
-
-      # @return [ Integer ] port The port to connect to.
-      attr_reader :port
-
-      # Establishes a socket connection.
-      #
-      # @example Connect the socket.
-      #   sock.connect!
-      #
-      # @note This method mutates the object by setting the socket
-      #   internally.
-      #
-      # @return [ TCP ] The connected socket instance.
-      #
-      # @since 2.0.0
-      def connect!
-        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
-          socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          map_exceptions do
-            socket.connect(::Socket.pack_sockaddr_in(port, host))
-          end
-          self
-        end
-      end
-      private :connect!
-
       # Initializes a new TCP socket.
       #
       # @example Create the TCP socket.
@@ -81,6 +53,34 @@ module Mongo
           raise
         end
       end
+
+      # @return [ String ] host The host to connect to.
+      attr_reader :host
+
+      # @return [ Integer ] port The port to connect to.
+      attr_reader :port
+
+      # Establishes a socket connection.
+      #
+      # @example Connect the socket.
+      #   sock.connect!
+      #
+      # @note This method mutates the object by setting the socket
+      #   internally.
+      #
+      # @return [ TCP ] The connected socket instance.
+      #
+      # @since 2.0.0
+      def connect!
+        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
+          socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+          map_exceptions do
+            socket.connect(::Socket.pack_sockaddr_in(port, host))
+          end
+          self
+        end
+      end
+      private :connect!
 
       private
 
