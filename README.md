@@ -1,4 +1,6 @@
-MongoDB Ruby Driver [![Gem Version][rubygems-img]][rubygems-url]
+MongoDB Ruby Driver
+[![Gem Version][rubygems-img]][rubygems-url]
+[![Inline docs][inch-img]][inch-url]
 ================================================================
 
 The officially supported Ruby driver for [MongoDB](https://www.mongodb.org/).
@@ -106,3 +108,5 @@ License
 
 [rubygems-img]: https://badge.fury.io/rb/mongo.svg
 [rubygems-url]: http://badge.fury.io/rb/mongo
+[inch-img]: http://inch-ci.org/github/mongodb/mongo-ruby-driver.svg?branch=master
+[inch-url]: http://inch-ci.org/github/mongodb/mongo-ruby-driver
