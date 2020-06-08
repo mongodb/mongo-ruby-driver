@@ -180,42 +180,44 @@ module Mongo
     # @return [ Mongo::Socket::SSL | Mongo::Socket::TCP | Mongo::Socket::Unix ]
     #   The socket.
     #
-    # @raise [ Exception ] If network connection failed.
+    # @raise [ Mongo::Error ] If network connection failed.
     #
     # @since 2.0.0
     def socket(socket_timeout, ssl_options = {}, options = {})
-      if seed.downcase =~ Unix::MATCH
-        specific_address = Unix.new(seed.downcase)
-        return specific_address.socket(socket_timeout, ssl_options, options)
-      end
-
-      options = {
-        connect_timeout: Server::CONNECT_TIMEOUT,
-      }.update(options)
-
-      # When the driver connects to "localhost", it only attempts IPv4
-      # connections. When the driver connects to other hosts, it will
-      # attempt both IPv4 and IPv6 connections.
-      family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-      error = nil
-      # Sometimes Socket#getaddrinfo returns the same info more than once
-      # (multiple identical items in the returned array). It does not make
-      # sense to try to connect to the same address more than once, thus
-      # eliminate duplicates here.
-      infos = ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
-      results = infos.map do |info|
-        [info[4], info[3]]
-      end.uniq
-      results.each do |family, address_str|
-        begin
-          specific_address = FAMILY_MAP[family].new(address_str, port, host)
-          socket = specific_address.socket(socket_timeout, ssl_options, options)
-          return socket
-        rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
-          error = e
+      map_exceptions do
+        if seed.downcase =~ Unix::MATCH
+          specific_address = Unix.new(seed.downcase)
+          return specific_address.socket(socket_timeout, ssl_options, options)
         end
+
+        options = {
+          connect_timeout: Server::CONNECT_TIMEOUT,
+        }.update(options)
+
+        # When the driver connects to "localhost", it only attempts IPv4
+        # connections. When the driver connects to other hosts, it will
+        # attempt both IPv4 and IPv6 connections.
+        family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+        error = nil
+        # Sometimes Socket#getaddrinfo returns the same info more than once
+        # (multiple identical items in the returned array). It does not make
+        # sense to try to connect to the same address more than once, thus
+        # eliminate duplicates here.
+        infos = ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+        results = infos.map do |info|
+          [info[4], info[3]]
+        end.uniq
+        results.each do |family, address_str|
+          begin
+            specific_address = FAMILY_MAP[family].new(address_str, port, host)
+            socket = specific_address.socket(socket_timeout, ssl_options, options)
+            return socket
+          rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
+            error = e
+          end
+        end
+        raise error
       end
-      raise error
     end
 
     # Get the address as a string.
@@ -246,6 +248,18 @@ module Mongo
         when Unix::MATCH then Unix.parse(address)
         when IPv6::MATCH then IPv6.parse(address)
         else IPv4.parse(address)
+      end
+    end
+
+    def map_exceptions
+      begin
+        yield
+      rescue Errno::ETIMEDOUT => e
+        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{self})"
+      rescue IOError, SystemCallError => e
+        raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
+      rescue OpenSSL::SSL::SSLError => e
+        raise Error::SocketError, "#{e.class}: #{e} (for #{self}) (#{SSL_ERROR})"
       end
     end
   end
