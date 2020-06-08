@@ -293,7 +293,8 @@ Read Preference
 
 Read preference determines the candidate :manual:`replica set</replication/>`
 members to which a query or command can be sent. They consist of a **mode**
-specified as a symbol, an array of hashes known as **tag_sets**, and two
+specified as a symbol, an array of hashes known as **tag_sets**, 
+the ``hedge`` option, which is a Hash specifying hedged read behavior, and two
 timing options: **local_threshold** and **server_selection_timeout**.
 
 ``local_threshold``
@@ -377,6 +378,31 @@ matches a secondary server with tag set ``{ dc: 'ny', rack: 2, size: 'large' }``
 A tag set that is an empty document matches any server, because
 the empty tag set is a subset of any tag set. This means the default
 ``tag_sets`` parameter ``[{}]`` matches all servers.
+
+Hedge
+~~~~~
+
+The ``hedge`` parameter is a Hash that specifies whether the server should use
+hedged reads. With hedged reads, sharded clusters can route read operations to
+two replica set members and return results from the first respondent.
+
+The ``hedge`` option may only be specified on non-primary read preferences. It
+must be provided as Hash with the key ``enabled`` set to ``true`` or ``false``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(
+    [ '127.0.0.1:27017' ],
+    read: { mode: :secondary, hedge: { enabled: true } },
+  )
+
+See the :manual:`MongoDB Manual </core/read-preference-hedge-option>` for
+more information about hedged reads.
+
+.. note::
+
+  The ``hedge`` option is only available on MongoDB server versions 4.4 and newer.
+  Attempting to use this option on older server versions will result in an error.
 
 .. _ruby-driver-updating:
 
