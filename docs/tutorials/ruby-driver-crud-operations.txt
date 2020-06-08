@@ -497,7 +497,10 @@ including ``update_one``, ``update_many``, ``replace_one``,
        conventions of a particular language.
    * - ``hint``
      - The index to use for this operation. May be specified as a Hash
-       (e.g. { _id: 1 }) or as a String (e.g. "_id_").
+       (e.g. { _id: 1 }) or as a String (e.g. "_id_"). Supported on MongoDB
+       server versions 4.2 and newer for ``update_one``, ``update_many``, and
+       ``replace_one`` commands, and on server versions 4.4 and newer for all
+       findAndModify commands.
    * - ``projection``
      - The fields to exclude or include in the operation result (only available
        on ``find_one_and_delete``, ``find_one_and_replace``, and
@@ -575,7 +578,8 @@ to ``delete_one`` and ``delete_many`` operations.
        conventions of a particular language.
    * - ``hint``
      - The index to use for this operation. May be specified as a Hash
-       (e.g. { _id: 1 }) or as a String (e.g. "_id_").
+       (e.g. { _id: 1 }) or as a String (e.g. "_id_"). Supported on MongoDB
+       server versions 4.4 and newer.
    * - ``session``
      - The session to use for this operation.
 
