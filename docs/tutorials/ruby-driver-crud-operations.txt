@@ -461,7 +461,7 @@ the modification occurs.
 Update Options
 ~~~~~~~~~~~~~~
 
-To add options to an update command, specify them as key value pairs in the options
+To add options to an update command, specify them as key-value pairs in the options
 Hash argument.
 
 .. code-block:: ruby
@@ -505,9 +505,13 @@ including ``update_one``, ``update_many``, ``replace_one``,
      - The fields to exclude or include in the operation result (only available
        on ``find_one_and_delete``, ``find_one_and_replace``, and
        ``find_one_and_update`` commands).
+   * - ``return_document``
+     - A symbol specifying whether to return the updated document as it was before or
+       after the update. Potential values are ``:before`` or ``:after``.
+       (Only available on ``find_one_and_update`` and ``find_one_and_replace`` commands).
    * - ``sort``
      - How to sort the results of a findAndModify command. Specified as a Hash
-       key value pair, where the key is the name of the field to sort by, and
+       key-value pair, where the key is the name of the field to sort by, and
        the value is either 1 or -1, specifying a sort in ascending or descending
        order (only available on ``find_one_and_delete``, ``find_one_and_replace``,
        and ``find_one_and_update`` commands).
@@ -552,7 +556,7 @@ Deleting
 Delete Options
 ~~~~~~~~~~~~~~
 
-To add options to a delete command, specify them as key value pairs in the
+To add options to a delete command, specify them as key-value pairs in the
 options Hash argument.
 
 .. code-block:: ruby
