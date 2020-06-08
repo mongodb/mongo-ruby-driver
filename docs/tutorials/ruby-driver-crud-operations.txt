@@ -458,23 +458,8 @@ the modification occurs.
   doc = artists.find_one_and_update( { :name => 'José James' }, { '$set' => { :name => 'José' } } )
   doc # Return the document before the update.
 
-``find_one_and_replace``
-
-.. code-block:: ruby
-
-  doc = artists.find(:name => 'José James').
-    find_one_and_replace( { '$set' => { :name => 'José' } }, :return_document => :after )
-  doc # Return the document after the update.
-
-  doc = artists.find_one_and_replace(
-    { :name => 'José James' },
-    { '$set' => { :name => 'José' } },
-    :return_document => :after
-  )
-  doc # Return the document after the update.
-
 Update Options
---------------
+``````````````
 
 To add options to an update command, specify them as key value pairs in the options
 Hash argument.
@@ -485,12 +470,6 @@ Hash argument.
   artists = client[:artists]
 
   # Use the _id index to perform this operation
-  result = artists.find(:name => 'Goldie').update_one(
-    { "$inc" => { :plays =>  1 } },
-    { hint: { _id: 1 } }
-  )
-  result.n # Returns 1.
-
   result = artists.update_one(
     { :name => 'Goldie' },
     { "$inc" => { :plays =>  1 } },
@@ -537,6 +516,7 @@ including ``update_one``, ``update_many``, ``replace_one``,
 
 For more information about update options, see the MongoDB server documentation
 on the following commands:
+
 - :manual:`update </reference/command/update>`
 - :manual:`findAndModify </reference/command/findAndModify>`
 
