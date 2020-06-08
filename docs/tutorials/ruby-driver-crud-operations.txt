@@ -469,11 +469,13 @@ Hash argument.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
   artists = client[:artists]
 
-  # Use the _id index to perform this operation
+  artists.indexes.create_one(name: 1)
+
+  # Force the server to use the name index to perform this operation
   result = artists.update_one(
     { :name => 'Goldie' },
     { "$inc" => { :plays =>  1 } },
-    { hint: { _id: 1 } }
+    { hint: { name: 1 } }
   )
   result.n # Returns 1.
 
@@ -499,8 +501,9 @@ including ``update_one``, ``update_many``, ``replace_one``,
      - The index to use for this operation. May be specified as a Hash
        (e.g. { _id: 1 }) or as a String (e.g. "_id_"). Supported on MongoDB
        server versions 4.2 and newer for ``update_one``, ``update_many``, and
-       ``replace_one`` commands, and on server versions 4.4 and newer for all
-       findAndModify commands.
+       ``replace_one`` commands, and on server versions 4.4 and newer for
+       ``find_one_and_delete``, ``find_one_and_update``, and ``find_one_and_replace``
+       commands.
    * - ``projection``
      - The fields to exclude or include in the operation result (only available
        on ``find_one_and_delete``, ``find_one_and_replace``, and
@@ -510,7 +513,7 @@ including ``update_one``, ``update_many``, ``replace_one``,
        after the update. Potential values are ``:before`` or ``:after``.
        (Only available on ``find_one_and_update`` and ``find_one_and_replace`` commands).
    * - ``sort``
-     - How to sort the results of a findAndModify command. Specified as a Hash
+     - How to sort the results of a find and modify command. Specified as a Hash
        key-value pair, where the key is the name of the field to sort by, and
        the value is either 1 or -1, specifying a sort in ascending or descending
        order (only available on ``find_one_and_delete``, ``find_one_and_replace``,
@@ -564,8 +567,10 @@ options Hash argument.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
   artists = client[:artists]
 
-  # Use the _id index to perform this operation
-  result = artists.find(:name => 'Björk').delete_one(hint: { _id: 1 })
+  artists.indexes.create_one(name: 1)
+
+  # Force the server to use the name index to perform this operation
+  result = artists.find(:name => 'Björk').delete_one(hint: { name: 1 })
   result.deleted_count # Returns 1.
 
 The following is a full list of the available options that can be added
