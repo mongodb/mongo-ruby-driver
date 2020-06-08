@@ -166,7 +166,7 @@ notation.
 .. _ruby-driver-query-options:
 
 Query Options
-~~~~~~~~~~~~~
+-------------
 
 To add options to a query, chain the appropriate methods after the
 ``find`` method. Note that the underlying object, the ``Mongo::Collection::View``,
@@ -459,7 +459,7 @@ the modification occurs.
   doc # Return the document before the update.
 
 Update Options
-``````````````
+--------------
 
 To add options to an update command, specify them as key value pairs in the options
 Hash argument.
@@ -559,9 +559,6 @@ options Hash argument.
 
   # Use the _id index to perform this operation
   result = artists.find(:name => 'Björk').delete_one(hint: { _id: 1 })
-  result.deleted_count # Returns 1.
-
-  result = artists.delete_one({ name: 'Björk' }, { hint: { _id: 1 } })
   result.deleted_count # Returns 1.
 
 The following is a full list of the available options that can be added
