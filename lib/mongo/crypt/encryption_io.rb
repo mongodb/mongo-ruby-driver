@@ -251,38 +251,55 @@ module Mongo
         host, port = endpoint.split(':')
         port ||= 443 # Default port for AWS KMS API
 
+        # Create TCPSocket and set nodelay option
+        tcp_socket = TCPSocket.open(host, port)
         begin
-          # Create TCPSocket and set nodelay option
-          tcp_socket = TCPSocket.open(host, port)
           tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
 
           ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
-          ssl_socket.sync_close = true # tcp_socket will be closed when ssl_socket is closed
-          ssl_socket.hostname = "#{host}:#{port}" # perform SNI
+          begin
+            # tcp_socket will be closed when ssl_socket is closed
+            ssl_socket.sync_close = true
+            # perform SNI
+            ssl_socket.hostname = "#{host}:#{port}"
 
-          Timeout.timeout(
-            SOCKET_TIMEOUT,
-            Error::SocketTimeoutError,
-            'Socket connection timed out'
-          ) do
-            ssl_socket.connect
+            Timeout.timeout(
+              SOCKET_TIMEOUT,
+              Error::SocketTimeoutError,
+              "KMS socket connection timed out after #{SOCKET_TIMEOUT} seconds",
+            ) do
+              ssl_socket.connect
+            end
+
+            yield(ssl_socket)
+          ensure
+            begin
+              Timeout.timeout(
+                SOCKET_TIMEOUT,
+                Error::SocketTimeoutError,
+                'KMS SSL socket close timed out'
+              ) do
+                ssl_socket.sysclose
+              end
+            rescue
+            end
           end
-
-          yield(ssl_socket)
-        rescue => e
-          raise Error::KmsError, "Error decrypting data key. #{e.class}: #{e.message}"
         ensure
-          # If there is an error during socket creation, the
-          # ssl_socket object won't exist in this scope and this line will
-          # raise an exception
-          Timeout.timeout(
-            SOCKET_TIMEOUT,
-            Error::SocketTimeoutError,
-            'Socket close timed out'
-          ) do
-            ssl_socket.sysclose rescue nil
+          # Still close tcp socket manually in case ssl socket creation
+          # fails.
+          begin
+            Timeout.timeout(
+              SOCKET_TIMEOUT,
+              Error::SocketTimeoutError,
+              'KMS TCP socket close timed out'
+            ) do
+              tcp_socket.close
+            end
+          rescue
           end
         end
+      rescue => e
+        raise Error::KmsError, "Error decrypting data key: #{e.class}: #{e.message}"
       end
     end
   end

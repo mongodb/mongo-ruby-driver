@@ -8,9 +8,9 @@ describe Mongo::Socket::Unix do
     described_class.new(path, 5)
   end
 
-  describe '#address' do
+  describe '#human_address' do
     it 'returns the path' do
-      expect(socket.send(:address)).to eq(path)
+      expect(socket.send(:human_address)).to eq(path)
     end
   end
 

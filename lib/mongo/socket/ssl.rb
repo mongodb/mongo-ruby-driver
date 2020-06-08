@@ -21,6 +21,42 @@ module Mongo
     class SSL < Socket
       include OpenSSL
 
+      # Initializes a new SSL socket.
+      #
+      # @example Create the SSL socket.
+      #   SSL.new('::1', 27017, 30)
+      #
+      # @param [ String ] host The hostname or IP address.
+      # @param [ Integer ] port The port number.
+      # @param [ Float ] timeout The socket timeout value.
+      # @param [ Integer ] family The socket family.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ Address ] :connection_address Address of the
+      #   connection that created this socket.
+      # @option options [ Integer ] :connection_generation Generation of the
+      #   connection (for non-monitoring connections) that created this socket.
+      # @option options [ true | false ] :monitor Whether this socket was
+      #   created by a monitoring connection.
+      #
+      # @since 2.0.0
+      def initialize(host, port, host_name, timeout, family, options = {})
+        super(timeout, options)
+        @host, @port, @host_name = host, port, host_name
+        @context = create_context(options)
+        @family = family
+        @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
+        begin
+          @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+          set_socket_options(@tcp_socket)
+          connect!
+        rescue
+          @tcp_socket.close
+          raise
+        end
+      end
+
       # @return [ SSLContext ] context The ssl context.
       attr_reader :context
 
@@ -66,35 +102,6 @@ module Mongo
         end
       end
       private :connect!
-
-      # Initializes a new SSL socket.
-      #
-      # @example Create the SSL socket.
-      #   SSL.new('::1', 27017, 30)
-      #
-      # @param [ String ] host The hostname or IP address.
-      # @param [ Integer ] port The port number.
-      # @param [ Float ] timeout The socket timeout value.
-      # @param [ Integer ] family The socket family.
-      # @param [ Hash ] options The options.
-      #
-      # @option options [ Float ] :connect_timeout Connect timeout.
-      #
-      # @since 2.0.0
-      def initialize(host, port, host_name, timeout, family, options = {})
-        @host, @port, @host_name, @timeout, @options = host, port, host_name, timeout, options
-        @context = create_context(options)
-        @family = family
-        @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
-        begin
-          @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          set_socket_options(@tcp_socket)
-          connect!
-        rescue
-          @tcp_socket.close
-          raise
-        end
-      end
 
       # Read a single byte from the socket.
       #
@@ -292,7 +299,7 @@ module Mongo
         16384
       end
 
-      def address
+      def human_address
         "#{host}:#{port} (#{host_name}:#{port}, TLS)"
       end
     end

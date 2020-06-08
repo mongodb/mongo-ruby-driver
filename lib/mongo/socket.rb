@@ -45,6 +45,25 @@ module Mongo
     # @api private
     WRITE_CHUNK_SIZE = 65536
 
+    # Initializes common socket attributes.
+    #
+    # @param [ Float ] timeout The socket timeout value.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Float ] :connect_timeout Connect timeout.
+    # @option options [ Address ] :connection_address Address of the
+    #   connection that created this socket.
+    # @option options [ Integer ] :connection_generation Generation of the
+    #   connection (for non-monitoring connections) that created this socket.
+    # @option options [ true | false ] :monitor Whether this socket was
+    #   created by a monitoring connection.
+    #
+    # @api private
+    def initialize(timeout, options)
+      @timeout = timeout
+      @options = options
+    end
+
     # @return [ Integer ] family The type of host family.
     attr_reader :family
 
@@ -56,6 +75,41 @@ module Mongo
 
     # @return [ Float ] timeout The socket timeout.
     attr_reader :timeout
+
+    # @return [ Address ] Address of the connection that created this socket.
+    #
+    # @api private
+    def connection_address
+      options[:connection_address]
+    end
+
+    # @return [ Integer ] Generation of the connection (for non-monitoring
+    #   connections) that created this socket.
+    #
+    # @api private
+    def connection_generation
+      options[:connection_generation]
+    end
+
+    # @return [ true | false ] Whether this socket was created by a monitoring
+    #   connection.
+    #
+    # @api private
+    def monitor?
+      !!options[:monitor]
+    end
+
+    # @return [ String ] Human-readable summary of the socket for debugging.
+    #
+    # @api private
+    def summary
+      fileno = @socket&.fileno rescue '<no socket>' || '<no socket>'
+      if monitor?
+        "#{connection_address}:m #{fileno}"
+      else
+        "#{connection_address}:c:#{connection_generation} #{fileno}"
+      end
+    end
 
     # Is the socket connection alive?
     #
@@ -350,15 +404,15 @@ module Mongo
       begin
         yield
       rescue Errno::ETIMEDOUT => e
-        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{address})"
+        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{human_address})"
       rescue IOError, SystemCallError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{address})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{address}) (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address}) (#{SSL_ERROR})"
       end
     end
 
-    def address
+    def human_address
       raise NotImplementedError
     end
   end

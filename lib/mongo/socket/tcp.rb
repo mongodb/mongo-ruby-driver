@@ -20,6 +20,41 @@ module Mongo
     # @since 2.0.0
     class TCP < Socket
 
+      # Initializes a new TCP socket.
+      #
+      # @example Create the TCP socket.
+      #   TCP.new('::1', 27017, 30, Socket::PF_INET)
+      #   TCP.new('127.0.0.1', 27017, 30, Socket::PF_INET)
+      #
+      # @param [ String ] host The hostname or IP address.
+      # @param [ Integer ] port The port number.
+      # @param [ Float ] timeout The socket timeout value.
+      # @param [ Integer ] family The socket family.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ Address ] :connection_address Address of the
+      #   connection that created this socket.
+      # @option options [ Integer ] :connection_generation Generation of the
+      #   connection (for non-monitoring connections) that created this socket.
+      # @option options [ true | false ] :monitor Whether this socket was
+      #   created by a monitoring connection.
+      #
+      # @since 2.0.0
+      def initialize(host, port, timeout, family, options = {})
+        super(timeout, options)
+        @host, @port = host, port
+        @family = family
+        @socket = ::Socket.new(family, SOCK_STREAM, 0)
+        begin
+          set_socket_options(@socket)
+          connect!
+        rescue
+          @socket.close
+          raise
+        end
+      end
+
       # @return [ String ] host The host to connect to.
       attr_reader :host
 
@@ -48,37 +83,9 @@ module Mongo
       end
       private :connect!
 
-      # Initializes a new TCP socket.
-      #
-      # @example Create the TCP socket.
-      #   TCP.new('::1', 27017, 30, Socket::PF_INET)
-      #   TCP.new('127.0.0.1', 27017, 30, Socket::PF_INET)
-      #
-      # @param [ String ] host The hostname or IP address.
-      # @param [ Integer ] port The port number.
-      # @param [ Float ] timeout The socket timeout value.
-      # @param [ Integer ] family The socket family.
-      # @param [ Hash ] options The options.
-      #
-      # @option options [ Float ] :connect_timeout Connect timeout.
-      #
-      # @since 2.0.0
-      def initialize(host, port, timeout, family, options = {})
-        @host, @port, @timeout, @options = host, port, timeout, options
-        @family = family
-        @socket = ::Socket.new(family, SOCK_STREAM, 0)
-        begin
-          set_socket_options(@socket)
-          connect!
-        rescue
-          @socket.close
-          raise
-        end
-      end
-
       private
 
-      def address
+      def human_address
         "#{host}:#{port} (no TLS)"
       end
     end
