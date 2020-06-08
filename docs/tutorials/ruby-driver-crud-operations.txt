@@ -458,20 +458,77 @@ the modification occurs.
   doc = artists.find_one_and_update( { :name => 'José James' }, { '$set' => { :name => 'José' } } )
   doc # Return the document before the update.
 
-``find_one_and_replace``
+Update Options
+~~~~~~~~~~~~~~
+
+To add options to an update command, specify them as key-value pairs in the options
+Hash argument.
 
 .. code-block:: ruby
 
-  doc = artists.find(:name => 'José James').
-    find_one_and_replace( { '$set' => { :name => 'José' } }, :return_document => :after )
-  doc # Return the document after the update.
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
 
-  doc = artists.find_one_and_replace(
-    { :name => 'José James' },
-    { '$set' => { :name => 'José' } },
-    :return_document => :after
+  artists.indexes.create_one(name: 1)
+
+  # Force the server to use the name index to perform this operation
+  result = artists.update_one(
+    { :name => 'Goldie' },
+    { "$inc" => { :plays =>  1 } },
+    { hint: { name: 1 } }
   )
-  doc # Return the document after the update.
+  result.n # Returns 1.
+
+The following is a list of the options that can be added to update operations,
+including ``update_one``, ``update_many``, ``replace_one``,
+``find_one_and_delete``, ``find_one_and_update``, and ``find_one_and_replace``.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``array_filters``
+     - An Array of filter documents that determine which array elements to modify
+       for an update operation on an array field.
+   * - ``bypass_document_validation``
+     - Whether to skip document-level validation before writing the document.
+   * - ``collation``
+     - Specifies a set of rules to use when comparing strings complying with the
+       conventions of a particular language.
+   * - ``hint``
+     - The index to use for this operation. May be specified as a Hash
+       (e.g. { _id: 1 }) or as a String (e.g. "_id_"). Supported on MongoDB
+       server versions 4.2 and newer for ``update_one``, ``update_many``, and
+       ``replace_one`` commands, and on server versions 4.4 and newer for
+       ``find_one_and_delete``, ``find_one_and_update``, and ``find_one_and_replace``
+       commands.
+   * - ``projection``
+     - The fields to exclude or include in the operation result (only available
+       on ``find_one_and_delete``, ``find_one_and_replace``, and
+       ``find_one_and_update`` commands).
+   * - ``return_document``
+     - A symbol specifying whether to return the updated document as it was before or
+       after the update. Potential values are ``:before`` or ``:after``.
+       (Only available on ``find_one_and_update`` and ``find_one_and_replace`` commands).
+   * - ``sort``
+     - How to sort the results of a find and modify command. Specified as a Hash
+       key-value pair, where the key is the name of the field to sort by, and
+       the value is either 1 or -1, specifying a sort in ascending or descending
+       order (only available on ``find_one_and_delete``, ``find_one_and_replace``,
+       and ``find_one_and_update`` commands).
+   * - ``session``
+     - The session to use for this operation.
+   * - ``upsert``
+     - Whether to upsert if the document doesn't exist. Cannot be used on
+       ``find_one_and_delete`` operation.
+
+For more information about update options, see the MongoDB server documentation
+on the following commands:
+
+- :manual:`update </reference/command/update>`
+- :manual:`findAndModify </reference/command/findAndModify>`
 
 Deleting
 ========
@@ -499,6 +556,45 @@ Deleting
   result = artists.delete_many(:label => 'Mute')
   result.deleted_count # Returns the number deleted.
 
+Delete Options
+~~~~~~~~~~~~~~
+
+To add options to a delete command, specify them as key-value pairs in the
+options Hash argument.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+
+  artists.indexes.create_one(name: 1)
+
+  # Force the server to use the name index to perform this operation
+  result = artists.find(:name => 'Björk').delete_one(hint: { name: 1 })
+  result.deleted_count # Returns 1.
+
+The following is a full list of the available options that can be added
+to ``delete_one`` and ``delete_many`` operations.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``collation``
+     - Specifies a set of rules to use when comparing strings complying with the
+       conventions of a particular language.
+   * - ``hint``
+     - The index to use for this operation. May be specified as a Hash
+       (e.g. { _id: 1 }) or as a String (e.g. "_id_"). Supported on MongoDB
+       server versions 4.4 and newer.
+   * - ``session``
+     - The session to use for this operation.
+
+For more information about update options, see the MongoDB server documentation
+on the :manual:`delete command. </reference/command/delete>`
+
 .. _write-concern:
 
 Write Concern
@@ -521,7 +617,7 @@ In driver versions 2.9 and below, client, collection and GridFS objects
 took write concern options in the ``:write`` option with session and
 transaction objects employing the ``:write_concern`` option.
 
-Below are some examples of passing write concerns to client and colection
+Below are some examples of passing write concerns to client and collection
 objects. The ``:write_concern`` option can be provided when constructing
 new client and collection objects,  or to the ``#with`` methods.
 
@@ -532,10 +628,10 @@ GridFS examples are provided on the :ref:`GridFS <gridfs>` page.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   alt_client = client.with(write_concern: {w: :majority})
-  
+
   collection = client[:artists, write_concern: {w: 3}]
   alt_collection = collection.with(write_concern: {w: :majority})
-  
+
   # Uses w: 3
   collection.insert_one({name: 'SUN Project'})
   # Uses w: :majority
@@ -550,7 +646,7 @@ backwards compatibility, but is deprecated:
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write: {w: 2})
   alt_client = client.with(write: {w: :majority})
-  
+
   collection = client[:artists, write: {w: 3}]
   alt_collection = collection.with(write: {w: :majority})
 
@@ -562,7 +658,7 @@ values must be identical or an exception will be raised:
   # OK
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 3}, write: {w: 3})
-  
+
   # Error
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 3}, write: {w: :majority})
@@ -575,10 +671,10 @@ the last provided option wins in case of naming differences:
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   alt_client = client.with(write: {w: 3})
-  
+
   alt_client.options[:write]
   # => {"w"=>3}
-  
+
   alt_client.options[:write_concern]
   # => nil
 
@@ -596,34 +692,34 @@ transaction option, the ``:write`` option is not recognized by any
 driver version.
 
 .. code-block:: ruby
-  
+
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   collection = client[:artists, write_concern: {w: :majority}]
-  
-  
+
+
   session = client.start_session
   session.with_transaction do
     collection.insert_one({test: 1}, session: session)
-  
+
     # Uses w: 2 when committing
   end
-  
-  
+
+
   session = client.start_session(default_transaction_options:
     {write_concern: {w: 3})
   )
   session.with_transaction do
     collection.insert_one({test: 1}, session: session)
-  
+
     # Uses w: 3 when committing
   end
-  
-  
+
+
   session = client.start_session
   session.with_transaction(write_concern: {w: 3}) do
     collection.insert_one({test: 1}, session: session)
-  
+
     # Uses w: 3 when committing
   end
 
@@ -632,36 +728,36 @@ write concern hash rather than individual elements. For example, ``j: true``
 is not inherited in the following case:
 
 .. code-block:: ruby
-  
+
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 1, j: true})
   collection = client[:artists, write_concern: {w: 2}]
-  
+
   collection.write_concern.options
   # => #<Mongo::WriteConcern::Acknowledged:0x47289650367880 options={:w=>2}>
 
 Although CRUD operations accept an options hash, they currently do not
 recognize the ``:write_concern`` option:
-  
+
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   collection = client[:artists, write_concern: {w: :majority}]
-  
+
   # Still uses w: :majority
   collection.insert_one({name: 'SUN Project'}, write_concern: {w: 1})
 
 The easiest workaround for this is to use ``#with`` to obtain a new collection
 instance with the desired write concern:
-  
+
 .. code-block:: ruby
 
   # Uses w: 1
   collection.with(write_concern: {w: 1}).insert_one(name: 'SUN Project')
 
 Write concern can also be manually specified in ``Database#command``:
-  
+
 .. code-block:: ruby
 
     client.database.command(create: 'foo-collection', writeConcern: {w: :majority})
@@ -673,7 +769,7 @@ underscore one that Ruby driver uses.
 A Note about the BSON Symbol type
 =================================
 
-Because the BSON specification deprecated the BSON symbol type, the `bson` gem 
+Because the BSON specification deprecated the BSON symbol type, the `bson` gem
 will serialize Ruby symbols into BSON strings when used on its own. However, in
 order to maintain backwards compatibility with older datasets, the Ruby driver
 overrides this behavior to serialize Ruby symbols as BSON symbols. This is

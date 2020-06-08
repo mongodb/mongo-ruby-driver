@@ -605,6 +605,8 @@ module Mongo
     #
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ Result ] The response from the database.
     #
@@ -623,6 +625,8 @@ module Mongo
     #
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ Result ] The response from the database.
     #
@@ -669,6 +673,8 @@ module Mongo
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ Result ] The response from the database.
     #
@@ -694,6 +700,8 @@ module Mongo
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ Result ] The response from the database.
     #
@@ -719,6 +727,8 @@ module Mongo
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ Result ] The response from the database.
     #
@@ -745,6 +755,8 @@ module Mongo
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
@@ -781,6 +793,8 @@ module Mongo
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ BSON::Document ] The document.
     #
@@ -815,6 +829,8 @@ module Mongo
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Hash | String ] :hint The index to use for this operation.
+    #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     #
     # @return [ BSON::Document ] The document.
     #
