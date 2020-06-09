@@ -78,17 +78,44 @@ module Mongo
       #   ipv4.socket(5, :ssl => true)
       #
       # @param [ Float ] socket_timeout The socket timeout.
-      # @param [ Hash ] ssl_options SSL options.
       # @param [ Hash ] options The options.
       #
       # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ true | false ] :ssl Whether to use SSL.
+      # @option options [ String ] :ssl_ca_cert
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_ca_cert_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_cert
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_cert_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ OpenSSL::PKey ] :ssl_key_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key_pass_phrase
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify_certificate
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify_hostname
+      #   Same as the corresponding Client/Socket::SSL option.
       #
       # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP ] The socket.
       #
       # @since 2.0.0
-      def socket(socket_timeout, ssl_options = {}, options = {})
-        unless ssl_options.empty?
-          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET, ssl_options.merge(options))
+      # @api private
+      def socket(socket_timeout, options = {})
+        if options[:ssl]
+          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET, options)
         else
           Socket::TCP.new(host, port, socket_timeout, Socket::PF_INET, options)
         end

@@ -181,8 +181,8 @@ module Mongo
       #   returned socket.
       private def do_connect
         socket = add_server_diagnostics do
-          address.socket(socket_timeout, ssl_options, address.options.merge(
-            connection_address: address, connection_generation: generation).update(ssl_options))
+          address.socket(socket_timeout, ssl_options.merge(
+            connection_address: address, connection_generation: generation))
         end
 
         begin

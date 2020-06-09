@@ -104,7 +104,12 @@ module Mongo
         @ssl_options ||= if options[:ssl]
           options.select { |k, v| k.to_s.start_with?('ssl') }
         else
-          {}
+          # Due to the way options are propagated from the client, if we
+          # decide that we don't want to use TLS we need to have the ssl
+          # options explicitly set to false or the value provided to the
+          # connection might be overwritten by the default inherited from
+          # the client.
+          {ssl: false}
         end.freeze
       end
 

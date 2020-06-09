@@ -65,7 +65,7 @@ describe Mongo::Address::IPv4 do
     context 'when ssl options are provided' do
 
       let(:socket) do
-        resolver.socket(5, :ssl => true)
+        resolver.socket(5, ssl: true)
       end
 
       it 'returns an ssl socket' do

@@ -177,7 +177,7 @@ describe 'Auth' do
     context 'attempting to connect to a tls server without tls' do
       require_tls
 
-      let(:options) { {} }
+      let(:options) { {ssl: false} }
 
       it 'reports host, port and tls status' do
         begin

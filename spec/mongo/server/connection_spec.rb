@@ -1070,7 +1070,7 @@ describe Mongo::Server::Connection do
         end
 
         it 'does not set the ssl options' do
-          expect(connection.send(:ssl_options)).to be_empty
+          expect(connection.send(:ssl_options)).to eq(ssl: false)
         end
       end
 
@@ -1085,7 +1085,7 @@ describe Mongo::Server::Connection do
         end
 
         it 'does not set the ssl options' do
-          expect(connection.send(:ssl_options)).to be_empty
+          expect(connection.send(:ssl_options)).to eq(ssl: false)
         end
       end
     end
