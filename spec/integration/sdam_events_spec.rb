@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'runners/sdam_monitoring'
 
 describe 'SDAM events' do
   let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
