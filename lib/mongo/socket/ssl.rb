@@ -39,8 +39,64 @@ module Mongo
       #   connection (for non-monitoring connections) that created this socket.
       # @option options [ true | false ] :monitor Whether this socket was
       #   created by a monitoring connection.
+      # @option options [ String ] :ssl_ca_cert The file containing concatenated
+      #   certificate authority certificates used to validate certs passed from the
+      #   other end of the connection. Intermediate certificates should NOT be
+      #   specified in files referenced by this option. One of :ssl_ca_cert,
+      #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is
+      #   required when using :ssl_verify.
+      # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object
+      #   An array of OpenSSL::X509::Certificate objects representing the
+      #   certificate authority certificates used to validate certs passed from
+      #   the other end of the connection. Intermediate certificates should NOT
+      #   be specified in files referenced by this option. One of :ssl_ca_cert,
+      #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority)
+      #   is required when using :ssl_verify.
+      # @option options [ String ] :ssl_ca_cert_string A string containing
+      #   certificate authority certificate used to validate certs passed from the
+      #   other end of the connection. This option allows passing only one CA
+      #   certificate to the driver. Intermediate certificates should NOT
+      #   be specified in files referenced by this option. One of :ssl_ca_cert,
+      #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is
+      #   required when using :ssl_verify.
+      # @option options [ String ] :ssl_cert The certificate file used to identify
+      #   the connection against MongoDB. A certificate chain may be passed by
+      #   specifying the client certificate first followed by any intermediate
+      #   certificates up to the CA certificate. The file may also contain the
+      #   certificate's private key, which will be ignored. This option, if present,
+      #   takes precedence over the values of :ssl_cert_string and :ssl_cert_object
+      # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object The OpenSSL::X509::Certificate
+      #   used to identify the connection against MongoDB. Only one certificate
+      #   may be passed through this option.
+      # @option options [ String ] :ssl_cert_string A string containing the PEM-encoded
+      #   certificate used to identify the connection against MongoDB. A certificate
+      #   chain may be passed by specifying the client certificate first followed
+      #   by any intermediate certificates up to the CA certificate. The string
+      #   may also contain the certificate's private key, which will be ignored,
+      #   This option, if present, takes precedence over the value of :ssl_cert_object
+      # @option options [ String ] :ssl_key The private keyfile used to identify the
+      #   connection against MongoDB. Note that even if the key is stored in the same
+      #   file as the certificate, both need to be explicitly specified. This option,
+      #   if present, takes precedence over the values of :ssl_key_string and :ssl_key_object
+      # @option options [ OpenSSL::PKey ] :ssl_key_object The private key used to identify the
+      #   connection against MongoDB
+      # @option options [ String ] :ssl_key_pass_phrase A passphrase for the private key.
+      # @option options [ String ] :ssl_key_string A string containing the PEM-encoded private key
+      #   used to identify the connection against MongoDB. This parameter, if present,
+      #   takes precedence over the value of option :ssl_key_object
+      # @option options [ true, false ] :ssl_verify Whether to perform peer certificate validation and
+      #   hostname verification. Note that the decision of whether to validate certificates will be
+      #   overridden if :ssl_verify_certificate is set, and the decision of whether to validate
+      #   hostnames will be overridden if :ssl_verify_hostname is set.
+      # @option options [ true, false ] :ssl_verify_certificate Whether to perform peer certificate
+      #   validation. This setting overrides :ssl_verify with respect to whether certificate
+      #   validation is performed.
+      # @option options [ true, false ] :ssl_verify_hostname Whether to perform peer hostname
+      #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
+      #   is performed.
       #
       # @since 2.0.0
+      # @api private
       def initialize(host, port, host_name, timeout, family, options = {})
         super(timeout, options)
         @host, @port, @host_name = host, port, host_name

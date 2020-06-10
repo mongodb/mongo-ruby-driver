@@ -38,6 +38,7 @@ module Mongo
       #   created by a monitoring connection.
       #
       # @since 2.0.0
+      # @api private
       def initialize(path, timeout, options = {})
         super(timeout, options)
         @path = path

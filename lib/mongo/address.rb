@@ -75,7 +75,7 @@ module Mongo
       end
       @seed = seed
       @host, @port = parse_host_port
-      @options = options
+      @options = Hash[options.map { |k, v| [k.to_sym, v] }]
     end
 
     # @return [ String ] seed The seed address.
@@ -172,10 +172,36 @@ module Mongo
     #   address.socket(5, :ssl => true)
     #
     # @param [ Float ] socket_timeout The socket timeout.
-    # @param [ Hash ] ssl_options SSL options.
-    # @param [ Hash ] options The options.
+    # @param [ Hash ] opts The options.
     #
-    # @option options [ Float ] :connect_timeout Connect timeout.
+    # @option opts [ Float ] :connect_timeout Connect timeout.
+    # @option opts [ true | false ] :ssl Whether to use SSL.
+    # @option opts [ String ] :ssl_ca_cert
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ String ] :ssl_ca_cert_string
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ String ] :ssl_cert
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ OpenSSL::X509::Certificate ] :ssl_cert_object
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ String ] :ssl_cert_string
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ String ] :ssl_key
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ OpenSSL::PKey ] :ssl_key_object
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ String ] :ssl_key_pass_phrase
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ String ] :ssl_key_string
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ true, false ] :ssl_verify
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ true, false ] :ssl_verify_certificate
+    #   Same as the corresponding Client/Socket::SSL option.
+    # @option opts [ true, false ] :ssl_verify_hostname
+    #   Same as the corresponding Client/Socket::SSL option.
     #
     # @return [ Mongo::Socket::SSL | Mongo::Socket::TCP | Mongo::Socket::Unix ]
     #   The socket.
@@ -183,16 +209,17 @@ module Mongo
     # @raise [ Mongo::Error ] If network connection failed.
     #
     # @since 2.0.0
-    def socket(socket_timeout, ssl_options = {}, options = {})
+    # @api private
+    def socket(socket_timeout, opts = {})
+      opts = {
+        connect_timeout: Server::CONNECT_TIMEOUT,
+      }.update(options).update(Hash[opts.map { |k, v| [k.to_sym, v] }])
+
       map_exceptions do
         if seed.downcase =~ Unix::MATCH
           specific_address = Unix.new(seed.downcase)
-          return specific_address.socket(socket_timeout, ssl_options, options)
+          return specific_address.socket(socket_timeout, opts)
         end
-
-        options = {
-          connect_timeout: Server::CONNECT_TIMEOUT,
-        }.update(Hash[options.map { |k, v| [k.to_sym, v] }])
 
         # When the driver connects to "localhost", it only attempts IPv4
         # connections. When the driver connects to other hosts, it will
@@ -210,7 +237,7 @@ module Mongo
         results.each do |family, address_str|
           begin
             specific_address = FAMILY_MAP[family].new(address_str, port, host)
-            socket = specific_address.socket(socket_timeout, ssl_options, options)
+            socket = specific_address.socket(socket_timeout, opts)
             return socket
           rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
             error = e
