@@ -265,9 +265,13 @@ describe Mongo::Index::View do
 
             let(:subscriber) { EventSubscriber.new }
 
-            before do
-              authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+            let(:client) do
+              authorized_client.tap do |client|
+                client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              end
             end
+
+            let(:authorized_collection) { client['view-subscribed'] }
 
             context 'when commit_quorum value is supported' do
               let!(:result) do
@@ -278,13 +282,17 @@ describe Mongo::Index::View do
                 )
               end
 
+              let(:events) do
+                subscriber.command_started_events('createIndexes')
+              end
+
               it 'returns ok' do
                 expect(result).to be_successful
               end
 
               it 'passes the commit_quorum option to the server' do
-                expect(subscriber.started_events.length).to eq(1)
-                command = subscriber.started_events.first.command
+                expect(events.length).to eq(1)
+                command = events.first.command
                 expect(command['commitQuorum']).to eq('majority')
               end
             end
@@ -772,9 +780,13 @@ describe Mongo::Index::View do
 
         let(:subscriber) { EventSubscriber.new }
 
-        before do
-          authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
         end
+
+        let(:authorized_collection) { client['view-subscribed'] }
 
         let(:indexes) do
           authorized_collection.indexes.get('x_1')
@@ -791,9 +803,13 @@ describe Mongo::Index::View do
             expect(indexes).to_not be_nil
           end
 
+          let(:events) do
+            subscriber.command_started_events('createIndexes')
+          end
+
           it 'passes the commit_quorum option to the server' do
-            expect(subscriber.started_events.length).to eq(1)
-            command = subscriber.started_events.first.command
+            expect(events.length).to eq(1)
+            command = events.first.command
             expect(command['commitQuorum']).to eq('majority')
           end
         end

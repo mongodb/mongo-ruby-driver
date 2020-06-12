@@ -2,8 +2,18 @@ require 'spec_helper'
 
 describe Mongo::Collection do
 
+  let(:subscriber) { EventSubscriber.new }
+
+  let(:client) do
+    authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
+  let(:authorized_collection) { client['collection_spec'] }
+
   before do
-    authorized_collection.drop
+    authorized_client['collection_spec'].drop
   end
 
   let(:collection_invalid_write_concern) do
@@ -12,10 +22,6 @@ describe Mongo::Collection do
 
   let(:collection_with_validator) do
     authorized_client[:validating]
-  end
-
-  let(:client) do
-    authorized_client
   end
 
   describe '#==' do
@@ -246,6 +252,7 @@ describe Mongo::Collection do
           authorized_client.with(client_options).tap do |client|
             expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
               mode: :primary_preferred))
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
           end
         end
 
@@ -276,12 +283,6 @@ describe Mongo::Collection do
 
           let(:client_options) do
             {read: { mode: :primary_preferred }}
-          end
-
-          let(:subscriber) { EventSubscriber.new }
-
-          before do
-            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
           end
 
           shared_examples_for "uses collection's read preference when reading" do
@@ -1206,10 +1207,6 @@ describe Mongo::Collection do
           { session: session }
         end
 
-        let(:client) do
-          subscribed_client
-        end
-
         let(:session) do
           client.start_session
         end
@@ -1220,7 +1217,7 @@ describe Mongo::Collection do
 
         let(:command) do
           client[TEST_COLL].find({}, session: session).explain
-          EventSubscriber.started_events.find { |c| c.command_name == 'explain' }.command
+          subscriber.started_events.find { |c| c.command_name == 'explain' }.command
         end
 
         it 'sends the session id' do
@@ -1237,7 +1234,7 @@ describe Mongo::Collection do
 
         let(:command) do
           operation
-          EventSubscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
+          subscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
         end
 
         it_behaves_like 'an operation supporting causally consistent reads'
@@ -1437,7 +1434,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do
@@ -1519,20 +1516,16 @@ describe Mongo::Collection do
     context 'when the documents are sent with OP_MSG' do
       min_server_fcv '3.6'
 
-      let(:client) do
-        subscribed_client
-      end
-
       let(:documents) do
         [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
       end
 
       before do
-        client[TEST_COLL].insert_many(documents)
+        authorized_collection.insert_many(documents)
       end
 
       let(:insert_events) do
-        EventSubscriber.started_events.select { |e| e.command_name == 'insert' }
+        subscriber.started_events.select { |e| e.command_name == 'insert' }
       end
 
       it 'sends the documents in one OP_MSG' do
@@ -1680,7 +1673,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do
@@ -1890,7 +1883,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'aggregate' }.command
+        subscriber.started_events.find { |cmd| cmd.command_name == 'aggregate' }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -2095,7 +2088,7 @@ describe Mongo::Collection do
 
         let(:command) do
           operation
-          EventSubscriber.started_events.find { |cmd| cmd.command_name == 'count' }.command
+          subscriber.started_events.find { |cmd| cmd.command_name == 'count' }.command
         end
 
         it_behaves_like 'an operation supporting causally consistent reads'
@@ -2213,7 +2206,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'distinct' }.command
+        subscriber.started_events.find { |cmd| cmd.command_name == 'distinct' }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -2375,7 +2368,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do
@@ -2547,7 +2540,7 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
-    context 'when unacknowledged writes is used with an explicit session' do
+    context 'when unacknowledged writes are used with an explicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
         authorized_collection.with(write: { w: 0 })
@@ -2560,10 +2553,10 @@ describe Mongo::Collection do
       it_behaves_like 'an explicit session with an unacknowledged write'
     end
 
-    context 'when unacknowledged writes is used with an implicit session' do
+    context 'when unacknowledged writes are used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do
@@ -2731,7 +2724,6 @@ describe Mongo::Collection do
     end
 
     context 'when a session is not provided' do
-      let(:client) { subscribed_client }
       let(:collection) { client['test'] }
 
       let(:cursors) do
@@ -2748,7 +2740,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        event = EventSubscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
+        event = subscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
         expect(event).not_to be_nil
         event.command
       end
@@ -2770,7 +2762,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        event = EventSubscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
+        event = subscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
         expect(event).not_to be_nil
         event.command
       end
@@ -3173,7 +3165,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do
@@ -3595,7 +3587,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do
@@ -3953,10 +3945,6 @@ describe Mongo::Collection do
     context 'when the documents are sent with OP_MSG' do
       min_server_fcv '3.6'
 
-      let(:client) do
-        subscribed_client
-      end
-
       let(:documents) do
         [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
       end
@@ -3967,7 +3955,7 @@ describe Mongo::Collection do
       end
 
       let(:update_events) do
-        EventSubscriber.started_events.select { |e| e.command_name == 'update' }
+        subscriber.started_events.select { |e| e.command_name == 'update' }
       end
 
       it 'sends the documents in one OP_MSG' do
@@ -4017,7 +4005,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        subscribed_client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[TEST_COLL]
       end
 
       let(:operation) do

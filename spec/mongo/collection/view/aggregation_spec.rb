@@ -232,8 +232,12 @@ describe Mongo::Collection::View::Aggregation do
         { session: session }
       end
 
+      let(:subscriber) { EventSubscriber.new }
+
       let(:client) do
-        subscribed_client
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
       end
 
       let(:session) do
@@ -246,7 +250,7 @@ describe Mongo::Collection::View::Aggregation do
 
       let(:command) do
         aggregation.explain
-        EventSubscriber.started_events.find { |c| c.command_name == 'aggregate'}.command
+        subscriber.started_events.find { |c| c.command_name == 'aggregate'}.command
       end
 
       it 'sends the session id' do

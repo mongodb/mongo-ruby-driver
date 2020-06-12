@@ -5,19 +5,23 @@ describe 'Cursor reaping' do
   # in MRI, I don't currently know how to force GC to run in JRuby
   only_mri
 
-  let(:client) { subscribed_client }
+  let(:subscriber) { EventSubscriber.new }
+
+  let(:client) do
+    authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
   let(:collection) { client['cursor_reaping_spec'] }
 
-  before(:all) do
+  before do
     data = [{a: 1}] * 10
-    ClientRegistry.instance.global_client('subscribed')['cursor_reaping_spec'].insert_many(data)
+    authorized_client['cursor_reaping_spec'].delete_many
+    authorized_client['cursor_reaping_spec'].insert_many(data)
   end
 
   context 'a no-timeout cursor' do
-    before do
-      EventSubscriber.clear_events!
-    end
-
     it 'reaps nothing when we do not query' do
       # this is a base line test to ensure that the reaps in the other test
       # aren't done on some global cursor
@@ -26,7 +30,7 @@ describe 'Cursor reaping' do
       # just the scope, no query is happening
       collection.find.batch_size(2).no_cursor_timeout
 
-      events = EventSubscriber.started_events.select do |event|
+      events = subscriber.started_events.select do |event|
         event.command['killCursors']
       end
 
@@ -58,14 +62,14 @@ describe 'Cursor reaping' do
       # force periodic executor to run because its frequency is not configurable
       client.cluster.instance_variable_get('@periodic_executor').execute
 
-      started_event = EventSubscriber.started_events.detect do |event|
+      started_event = subscriber.started_events.detect do |event|
         event.command['killCursors'] &&
         event.command['cursors'].map { |c| Utils.int64_value(c) }.include?(cursor_id)
       end
 
       expect(started_event).not_to be_nil
 
-      succeeded_event = EventSubscriber.succeeded_events.detect do |event|
+      succeeded_event = subscriber.succeeded_events.detect do |event|
         event.command_name == 'killCursors' && event.request_id == started_event.request_id
       end
 

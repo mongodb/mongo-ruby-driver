@@ -157,8 +157,12 @@ describe Mongo::Session::SessionPool do
       pool.checkout
     end
 
+    let(:subscriber) { EventSubscriber.new }
+
     let(:client) do
-      subscribed_client
+      authorized_client.tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
     end
 
     context 'when the number of ids is not larger than 10,000' do
@@ -175,7 +179,7 @@ describe Mongo::Session::SessionPool do
 
       let(:end_sessions_command) do
         pool.end_sessions
-        EventSubscriber.started_events.find { |c| c.command_name == 'endSessions'}
+        subscriber.started_events.find { |c| c.command_name == 'endSessions'}
       end
 
       it 'sends the endSessions command with all the session ids' do
@@ -219,7 +223,7 @@ describe Mongo::Session::SessionPool do
       end
 
       let(:end_sessions_commands) do
-        EventSubscriber.started_events.select { |c| c.command_name == 'endSessions'}
+        subscriber.started_events.select { |c| c.command_name == 'endSessions'}
       end
 
       it 'sends the command more than once' do

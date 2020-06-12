@@ -116,9 +116,7 @@ class ClientRegistry
       global_client('authorized').with(
         retry_writes: true,
         server_selection_timeout: 4.97,
-      ).tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-      end
+      )
     # Provides an authorized mongo client that uses legacy read retry logic.
     when 'authorized_without_retry_reads'
       global_client('authorized').with(
@@ -137,18 +135,14 @@ class ClientRegistry
       global_client('authorized').with(
         retry_writes: false,
         server_selection_timeout: 4.99,
-      ).tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-      end
+      )
     # Provides an authorized mongo client that does not retry writes
     # using either modern or legacy mechanisms.
     when 'authorized_without_any_retry_writes'
       global_client('authorized').with(
         retry_writes: false, max_write_retries: 0,
         server_selection_timeout: 4.99,
-      ).tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-      end
+      )
     # Provides an authorized mongo client that does not retry reads or writes
     # at all.
     when 'authorized_without_any_retries'
@@ -187,19 +181,6 @@ class ClientRegistry
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(client_options),
       )
-    # A client that has an event subscriber for commands.
-    when 'subscribed'
-      Mongo::Client.new(
-        SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          database: SpecConfig.instance.test_db,
-        ).merge(SpecConfig.instance.credentials_or_external_user(
-          user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password,
-        ))
-      ).tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-      end
     else
       raise "Don't know how to construct global client #{name}"
     end
