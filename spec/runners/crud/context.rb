@@ -19,6 +19,9 @@ module Mongo
     Context = KeywordStruct.new(
       :session0,
       :session1,
+      :sdam_subscriber,
+      :threads,
+      :primary_address,
     )
   end
 end
