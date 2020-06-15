@@ -2,7 +2,6 @@ require 'lite_spec_helper'
 
 require 'runners/sdam'
 require 'runners/sdam/verifier'
-require 'runners/sdam_monitoring'
 
 describe 'SDAM Monitoring' do
   include Mongo::SDAM
@@ -14,7 +13,7 @@ describe 'SDAM Monitoring' do
     context("#{spec.description} (#{file.sub(%r'.*/data/sdam_monitoring/', '')})") do
 
       before(:all) do
-        @subscriber = Mongo::SDAMMonitoring::PhasedTestSubscriber.new
+        @subscriber = PhasedEventSubscriber.new
         sdam_proc = lambda do |client|
           client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
           client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)

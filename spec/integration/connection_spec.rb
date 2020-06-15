@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'runners/sdam_monitoring'
 
 describe 'Connections' do
   clean_slate
@@ -44,7 +43,7 @@ describe 'Connections' do
       end
 
       context 'with sdam event subscription' do
-        let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
+        let(:subscriber) { EventSubscriber.new }
         let(:client) do
           ClientRegistry.instance.global_client('authorized').with(app_name: 'connection_integration').tap do |client|
             client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)
@@ -56,12 +55,12 @@ describe 'Connections' do
         end
 
         it 'publishes server description changed event' do
-          expect(subscriber.events).to be_empty
+          expect(subscriber.succeeded_events).to be_empty
 
           wait_for_all_servers(client.cluster)
 
           connection
-          subscriber.events.clear
+          subscriber.succeeded_events.clear
           error
 
           event = subscriber.first_event('server_description_changed_event')
