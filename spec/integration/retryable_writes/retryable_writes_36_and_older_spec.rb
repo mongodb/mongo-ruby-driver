@@ -32,7 +32,7 @@ describe 'Retryable writes integration tests' do
   let(:check_collection) do
     # Verify data in the collection using another client instance to avoid
     # having the verification read trigger cluster scans on the writing client
-    subscribed_client[TEST_COLL]
+    root_authorized_client[TEST_COLL]
   end
 
   let(:primary_connection) do

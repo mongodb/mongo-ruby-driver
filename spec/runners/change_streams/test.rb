@@ -86,7 +86,8 @@ module Mongo
 
         setup_fail_point(client)
 
-        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
+        @subscriber = EventSubscriber.new
+        client.subscribe(Mongo::Monitoring::COMMAND, @subscriber)
 
         @target = case @target_type
                  when 'client'
@@ -183,7 +184,7 @@ module Mongo
       end
 
       def events
-        EventSubscriber.started_events.reduce([]) do |evs, e|
+        @subscriber.started_events.reduce([]) do |evs, e|
           next evs if IGNORE_COMMANDS.include?(e.command_name)
 
           command = e.command.dup

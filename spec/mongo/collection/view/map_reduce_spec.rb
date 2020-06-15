@@ -239,12 +239,16 @@ describe Mongo::Collection::View::MapReduce do
             Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
           end
 
+          let(:subscriber) { EventSubscriber.new }
+
           let(:client) do
-            subscribed_client
+            authorized_client.tap do |client|
+              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+            end
           end
 
           let(:find_command) do
-            EventSubscriber.started_events[-1].command
+            subscriber.started_events[-1].command
           end
 
           before do

@@ -123,10 +123,6 @@ end
 
 shared_examples 'an explicit session with an unacknowledged write' do
 
-  before do
-    EventSubscriber.clear_events!
-  end
-
   context 'when sessions are supported' do
     min_server_fcv '3.6'
 
@@ -135,8 +131,10 @@ shared_examples 'an explicit session with an unacknowledged write' do
     end
 
     it 'does not add a session id to the operation' do
+      subscriber.clear_events!
       operation
-      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
 
@@ -149,24 +147,24 @@ shared_examples 'an explicit session with an unacknowledged write' do
 
     it 'does not add a session id to the operation' do
       expect(Mongo::Session).not_to receive(:new)
+      subscriber.clear_events!
       operation
-      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
 end
 
 shared_examples 'an implicit session with an unacknowledged write' do
 
-  before do
-    EventSubscriber.clear_events!
-  end
-
   context 'when sessions are supported' do
     min_server_fcv '3.6'
 
     it 'does not add a session id to the operation' do
+      subscriber.clear_events!
       operation
-      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
 
@@ -174,16 +172,22 @@ shared_examples 'an implicit session with an unacknowledged write' do
     max_server_version '3.4'
 
     it 'does not add a session id to the operation' do
+      subscriber.clear_events!
       operation
-      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
 end
 
 shared_examples 'an operation supporting causally consistent reads' do
 
+  let(:subscriber) { EventSubscriber.new }
+
   let(:client) do
-    subscribed_client
+    authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
   end
 
   context 'when connected to a standalone' do
@@ -615,8 +619,12 @@ shared_examples 'an operation updating cluster time' do
     client.start_session
   end
 
+  let(:subscriber) { EventSubscriber.new }
+
   let(:client) do
-    subscribed_client
+    authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
   end
 
   shared_examples_for 'does not update the cluster time of the cluster' do
@@ -637,7 +645,7 @@ shared_examples 'an operation updating cluster time' do
 
         let(:reply_cluster_time) do
           operation_with_session
-          EventSubscriber.succeeded_events[-1].reply['$clusterTime']
+          subscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it 'updates the cluster time of the cluster', retry: 3 do
@@ -660,7 +668,7 @@ shared_examples 'an operation updating cluster time' do
 
         let!(:reply_cluster_time) do
           operation_with_session
-          EventSubscriber.succeeded_events[-1].reply['$clusterTime']
+          subscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it_behaves_like 'does not update the cluster time of the cluster'
@@ -681,7 +689,7 @@ shared_examples 'an operation updating cluster time' do
 
       let(:reply_cluster_time) do
         operation
-        EventSubscriber.succeeded_events[-1].reply['$clusterTime']
+        subscriber.succeeded_events[-1].reply['$clusterTime']
       end
 
       it_behaves_like 'does not update the cluster time of the cluster'
@@ -692,7 +700,7 @@ shared_examples 'an operation updating cluster time' do
 
     let(:reply_cluster_time) do
       operation_with_session
-      EventSubscriber.succeeded_events[-1].reply['$clusterTime']
+      subscriber.succeeded_events[-1].reply['$clusterTime']
     end
 
     context 'when the cluster is sharded or a replica set' do
@@ -707,7 +715,7 @@ shared_examples 'an operation updating cluster time' do
 
         let(:second_command_cluster_time) do
           second_operation
-          EventSubscriber.started_events[-1].command['$clusterTime']
+          subscriber.non_auth_command_started_events[-1].command['$clusterTime']
         end
 
         context 'when the advanced cluster time is greater than the existing cluster time' do
@@ -745,7 +753,7 @@ shared_examples 'an operation updating cluster time' do
 
         let(:second_command_cluster_time) do
           second_operation
-          EventSubscriber.started_events[-1].command['$clusterTime']
+          subscriber.non_auth_command_started_events[-1].command['$clusterTime']
         end
 
         it 'includes the received cluster time in the second command', retry: 3 do
@@ -765,7 +773,7 @@ shared_examples 'an operation updating cluster time' do
 
       let(:second_command_cluster_time) do
         second_operation
-        EventSubscriber.started_events[-1].command['$clusterTime']
+        subscriber.non_auth_command_started_events[-1].command['$clusterTime']
       end
 
       it 'does not update the cluster time of the cluster' do

@@ -600,16 +600,18 @@ describe Mongo::Client do
         root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
       end
 
+      let(:subscriber) { EventSubscriber.new }
+
       let(:client) do
         ClientRegistry.instance.new_local_client(
           SpecConfig.instance.addresses, client_options
         ).tap do |cl|
-          cl.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
         end
       end
 
       let(:command) do
-        EventSubscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
+        subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
       end
 
       before do

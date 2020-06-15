@@ -206,7 +206,7 @@ describe Mongo::Collection::View::Readable do
 
       let(:command) do
         operation
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'mapReduce' }.command
+        subscriber.started_events.find { |cmd| cmd.command_name == 'mapReduce' }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'

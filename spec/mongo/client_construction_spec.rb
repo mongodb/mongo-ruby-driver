@@ -3,6 +3,8 @@ require 'spec_helper'
 describe Mongo::Client do
   clean_slate
 
+  let(:subscriber) { EventSubscriber.new }
+
   describe '.new' do
     context 'with scan: false' do
       it 'does not perform i/o' do
@@ -1253,7 +1255,7 @@ describe Mongo::Client do
 
     it 'copies monitoring subscribers' do
       monitoring.subscribers.clear
-      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       expect(monitoring.present_subscribers.length).to eq(1)
       expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
 
@@ -1264,12 +1266,12 @@ describe Mongo::Client do
 
     it 'does not change subscribers on original client' do
       monitoring.subscribers.clear
-      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       expect(monitoring.present_subscribers.length).to eq(1)
       expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
 
-      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
-      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       expect(new_monitoring.present_subscribers.length).to eq(1)
       expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(3)
       # original client should not have gotten any of the new subscribers
@@ -1297,7 +1299,7 @@ describe Mongo::Client do
 
     it 'resets monitoring subscribers' do
       monitoring.subscribers.clear
-      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       expect(monitoring.present_subscribers.length).to eq(1)
       expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
 
@@ -1310,12 +1312,12 @@ describe Mongo::Client do
 
     it 'does not change subscribers on original client' do
       monitoring.subscribers.clear
-      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       expect(monitoring.present_subscribers.length).to eq(1)
       expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
 
-      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
-      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       # 7 default subscribers + heartbeat
       expect(new_monitoring.present_subscribers.length).to eq(8)
       # the heartbeat subscriber on the original client is not inherited
@@ -1758,7 +1760,6 @@ describe Mongo::Client do
     # in #with, the consistent behavior is to never transfer sdam_proc to
     # the new client.
     context 'when sdam_proc is given on original client' do
-      let(:subscriber) { EventSubscriber.new }
 
       let(:sdam_proc) do
         Proc.new do |client|

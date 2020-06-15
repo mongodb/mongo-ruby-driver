@@ -335,8 +335,12 @@ describe Mongo::Database do
         client.start_session
       end
 
+      let(:subscriber) { EventSubscriber.new }
+
       let(:client) do
-        subscribed_client
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
       end
 
       it_behaves_like 'an operation using a session'
@@ -344,7 +348,7 @@ describe Mongo::Database do
 
 
       let(:full_command) do
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'ismaster' }.command
+        subscriber.started_events.find { |cmd| cmd.command_name == 'ismaster' }.command
       end
 
       it 'does not add a afterClusterTime field' do

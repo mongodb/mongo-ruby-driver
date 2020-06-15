@@ -434,6 +434,14 @@ describe Mongo::Cursor do
   context 'when an implicit session is used' do
     min_server_fcv '3.6'
 
+    let(:subscriber) { EventSubscriber.new }
+
+    let(:subscribed_client) do
+      authorized_client.tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+    end
+
     let(:collection) do
       subscribed_client[TEST_COLL]
     end
@@ -456,7 +464,7 @@ describe Mongo::Cursor do
     end
 
     let(:find_events) do
-      EventSubscriber.started_events.select { |e| e.command_name == "find" }
+      subscriber.started_events.select { |e| e.command_name == "find" }
     end
 
     context 'when all results are retrieved in the first response' do

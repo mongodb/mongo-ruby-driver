@@ -29,11 +29,11 @@ describe 'Step down behavior' do
     end
   end
 
-  let(:event_subscriber) { EventSubscriber.new }
+  let(:subscriber) { EventSubscriber.new }
 
   let(:test_client) do
     authorized_client_without_any_retries.with(server_selection_timeout: 20).tap do |client|
-      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, event_subscriber)
+      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
     end
   end
 
@@ -48,8 +48,8 @@ describe 'Step down behavior' do
 
     let(:subscribed_client) do
       test_client.tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-        client.subscribe(Mongo::Monitoring::CONNECTION_POOL, EventSubscriber)
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
       end
     end
 
@@ -65,13 +65,13 @@ describe 'Step down behavior' do
     it 'continues through step down' do
 
       subscribed_client.cluster.next_primary.pool.clear
-      event_subscriber.clear_events!
+      subscriber.clear_events!
 
       # get the first item
       item = enum.next
       expect(item['test']).to eq(1)
 
-      connection_created_events = EventSubscriber.published_events.select do |event|
+      connection_created_events = subscriber.published_events.select do |event|
         event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCreated)
       end
       expect(connection_created_events).not_to be_empty
@@ -79,7 +79,7 @@ describe 'Step down behavior' do
       current_primary = subscribed_client.cluster.next_primary
       ClusterTools.instance.change_primary
 
-      EventSubscriber.clear_events!
+      subscriber.clear_events!
 
       # exhaust the batch
       9.times do
@@ -90,14 +90,14 @@ describe 'Step down behavior' do
       item = enum.next
       expect(item['test']).to eq(1)
 
-      get_more_events = EventSubscriber.started_events.select do |event|
+      get_more_events = subscriber.started_events.select do |event|
         event.command['getMore']
       end
 
       expect(get_more_events.length).to eq(1)
 
       # getMore should have been sent on the same connection as find
-      connection_created_events = EventSubscriber.published_events.select do |event|
+      connection_created_events = subscriber.published_events.select do |event|
         event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCreated)
       end
       expect(connection_created_events).to be_empty
@@ -155,13 +155,13 @@ describe 'Step down behavior' do
       let(:fail_point_code) { 10107 }
 
       it 'keeps connection open' do
-        event_subscriber.clear_events!
+        subscriber.clear_events!
 
         expect do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
-        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
+        expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
       end
     end
 
@@ -174,13 +174,13 @@ describe 'Step down behavior' do
       let(:fail_point_code) { 10107 }
 
       it 'closes the connection' do
-        event_subscriber.clear_events!
+        subscriber.clear_events!
 
         expect do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
-        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+        expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
       end
     end
 
@@ -191,13 +191,13 @@ describe 'Step down behavior' do
       let(:fail_point_code) { 11600 }
 
       it 'closes the connection' do
-        event_subscriber.clear_events!
+        subscriber.clear_events!
 
         expect do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /11600/)
 
-        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+        expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
       end
     end
   end

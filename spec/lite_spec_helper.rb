@@ -136,8 +136,6 @@ RSpec.configure do |config|
   end
 end
 
-EventSubscriber.initialize
-
 if SpecConfig.instance.active_support?
   require "active_support/time"
   require 'mongo/active_support'

@@ -4,8 +4,16 @@ describe 'Failing retryable operations' do
   # Requirement for fail point
   min_server_fcv '4.0'
 
+  let(:subscriber) { EventSubscriber.new }
+
+  let(:client_options) do
+    {}
+  end
+
   let(:client) do
-    subscribed_client
+    authorized_client.with(client_options).tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
   end
 
   let(:collection) do
@@ -83,7 +91,7 @@ describe 'Failing retryable operations' do
       end
 
       let(:events) do
-        EventSubscriber.command_started_events('find')
+        subscriber.command_started_events('find')
       end
     end
 
@@ -128,7 +136,7 @@ describe 'Failing retryable operations' do
       end
 
       let(:events) do
-        EventSubscriber.command_started_events('insert')
+        subscriber.command_started_events('insert')
       end
     end
 
@@ -141,6 +149,7 @@ describe 'Failing retryable operations' do
       end
 
       it 'publishes two events' do
+        operation_exception
 
         expect(events.length).to eq(2)
       end
@@ -155,6 +164,7 @@ describe 'Failing retryable operations' do
       end
 
       it 'publishes one event' do
+        operation_exception
 
         expect(events.length).to eq(1)
       end
@@ -217,8 +227,8 @@ describe 'Failing retryable operations' do
       context 'modern read retries' do
         require_wired_tiger_on_36
 
-        let(:client) do
-          subscribed_client.with(retry_reads: true)
+        let(:client_options) do
+          {retry_reads: true}
         end
 
         it_behaves_like 'failing retry'
@@ -226,8 +236,8 @@ describe 'Failing retryable operations' do
       end
 
       context 'legacy read retries' do
-        let(:client) do
-          subscribed_client.with(retry_reads: false, read_retry_interval: 0)
+        let(:client_options) do
+          {retry_reads: false, read_retry_interval: 0}
         end
 
         it_behaves_like 'failing retry'
@@ -236,8 +246,8 @@ describe 'Failing retryable operations' do
     end
 
     context 'when read retries are disabled' do
-      let(:client) do
-        subscribed_client.with(retry_reads: false, max_read_retries: 0)
+      let(:client_options) do
+        {retry_reads: false, max_read_retries: 0}
       end
 
       include_context 'read operation'
@@ -252,8 +262,8 @@ describe 'Failing retryable operations' do
       context 'modern write retries' do
         require_wired_tiger_on_36
 
-        let(:client) do
-          subscribed_client.with(retry_writes: true)
+        let(:client_options) do
+          {retry_writes: true}
         end
 
         it_behaves_like 'failing retry'
@@ -261,8 +271,8 @@ describe 'Failing retryable operations' do
       end
 
       context 'legacy write' do
-        let(:client) do
-          subscribed_client.with(retry_writes: false)
+        let(:client_options) do
+          {retry_writes: false}
         end
 
         it_behaves_like 'failing retry'
