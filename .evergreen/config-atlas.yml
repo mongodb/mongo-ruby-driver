@@ -359,6 +359,7 @@ buildvariants:
   - matrix_name: "all"
     matrix_spec: { ruby: '*' }
     #matrix_spec: { }
+    display_name: "Atlas tests ${ruby}"
     run_on:
       - ubuntu1604-test
     tasks:
