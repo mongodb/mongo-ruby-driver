@@ -86,7 +86,7 @@ module Mongo
         # @return [ String ] formatted_time ISO8601-formatted time of the
         #   request, as would be used in X-Amz-Date header.
         def formatted_time
-          @formatted_time ||= @time.utc.strftime('%Y%m%dT%H%M%SZ')
+          @formatted_time ||= @time.getutc.strftime('%Y%m%dT%H%M%SZ')
         end
 
         # @return [ String ] formatted_date YYYYMMDD formatted date of the request.
