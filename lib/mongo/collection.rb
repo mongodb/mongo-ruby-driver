@@ -450,7 +450,7 @@ module Mongo
     # @return [ Integer ] The document count.
     #
     # @since 2.6.0
-    def count_documents(filter, options = {})
+    def count_documents(filter = {}, options = {})
       View.new(self, filter, options).count_documents(options)
     end
 
