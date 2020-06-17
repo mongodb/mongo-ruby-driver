@@ -429,7 +429,7 @@ module Mongo
       View.new(self, filter || {}, options).count(options)
     end
 
-    # Gets the number of of matching documents in the collection. Unlike the deprecated #count
+    # Gets the number of matching documents in the collection. Unlike the deprecated #count
     # method, this will return the exact number of documents matching the filter rather than the estimate.
     #
     # @example Get the number of documents in the collection.
@@ -450,7 +450,7 @@ module Mongo
     # @return [ Integer ] The document count.
     #
     # @since 2.6.0
-    def count_documents(filter, options = {})
+    def count_documents(filter = {}, options = {})
       View.new(self, filter, options).count_documents(options)
     end
 

@@ -127,13 +127,13 @@ describe 'CRUD operations' do
   describe 'upsert' do
     context 'with default write concern' do
       it 'upserts' do
-        collection.count_documents({}).should == 0
+        collection.count_documents.should == 0
 
         res = collection.find(_id: 'foo').update_one({'$set' => {foo: 'bar'}}, upsert: true)
 
         res.documents.first['upserted'].length.should == 1
 
-        collection.count_documents({}).should == 1
+        collection.count_documents.should == 1
       end
     end
 
@@ -147,7 +147,7 @@ describe 'CRUD operations' do
       end
 
       it 'upserts' do
-        unack_collection.count_documents({}).should == 0
+        unack_collection.count_documents.should == 0
 
         res = unack_collection.find(_id: 'foo').update_one({'$set' => {foo: 'bar'}}, upsert: true)
 
@@ -155,7 +155,7 @@ describe 'CRUD operations' do
         # persisted (hopefully)
         sleep 0.25
 
-        unack_collection.count_documents({}).should == 1
+        unack_collection.count_documents.should == 1
       end
     end
   end

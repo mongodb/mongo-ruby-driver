@@ -2000,6 +2000,39 @@ describe Mongo::Collection do
   end
 
   describe '#count_documents' do
+
+    before do
+      authorized_collection.delete_many
+    end
+
+    context 'no argument provided' do
+
+      context 'when collection is empty' do
+        it 'returns 0 matching documents' do
+          expect(authorized_collection.count_documents).to eq(0)
+        end
+      end
+
+      context 'when collection is not empty' do
+
+        let(:documents) do
+          documents = []
+          1.upto(10) do |index|
+            documents << { key: 'a', _id: "in#{index}" }
+          end
+          documents
+        end
+
+        before do
+          authorized_collection.insert_many(documents)
+        end
+
+        it 'returns 10 matching documents' do
+          expect(authorized_collection.count_documents).to eq(10)
+        end
+      end
+    end
+
     context 'when transactions are enabled' do
       require_wired_tiger
       require_transaction_support

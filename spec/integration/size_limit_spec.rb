@@ -36,7 +36,7 @@ describe 'BSON & command size limits' do
     end
 
     authorized_collection.insert_many(documents)
-    authorized_collection.count_documents({}).should == 8
+    authorized_collection.count_documents.should == 8
   end
 
   # This test ensures that document which are too big definitely fail insertion.
@@ -49,7 +49,7 @@ describe 'BSON & command size limits' do
     lambda do
       authorized_collection.insert_many(documents)
     end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
-    authorized_collection.count_documents({}).should == 0
+    authorized_collection.count_documents.should == 0
   end
 
   it 'allows user-provided documents to be exactly 16MiB' do
@@ -89,6 +89,6 @@ describe 'BSON & command size limits' do
     end
 
     authorized_collection.insert_many(documents)
-    authorized_collection.count_documents({}).should == 3
+    authorized_collection.count_documents.should == 3
   end
 end
