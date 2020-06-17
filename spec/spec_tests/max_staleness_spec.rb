@@ -127,6 +127,11 @@ describe 'Max Staleness Spec' do
 
         if spec.server_available?
 
+          it 'has non-empty suitable servers' do
+            spec.suitable_servers.should be_a(Array)
+            spec.suitable_servers.should_not be_empty
+          end
+
           it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
             expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)
           end
@@ -137,11 +142,16 @@ describe 'Max Staleness Spec' do
 
         else
 
+          # Runner does not handle non-empty suitable servers with
+          # no servers in latency window.
+          it 'has empty suitable servers' do
+            expect(spec.suitable_servers).to eq([])
+          end
+
           it 'Raises a NoServerAvailable Exception' do
             expect do
               server_selector.select_server(cluster)
             end.to raise_exception(Mongo::Error::NoServerAvailable)
-            expect(spec.suitable_servers).to eq([])
           end
 
         end
