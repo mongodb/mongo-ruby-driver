@@ -2002,11 +2002,9 @@ describe Mongo::Collection do
   describe '#count_documents' do
 
         context 'no argument provided' do
-
-          # no arguments
           let(:view) do
             described_class.new(authorized_collection, {}, {})
-          end 
+          end
 
           before do
             authorized_collection.delete_many
@@ -2038,11 +2036,9 @@ describe Mongo::Collection do
               documents << { key: 'c', _id: "3" }
 
               authorized_collection.insert_many(documents)
-              puts authorized_collection.count_documents()
               expect(authorized_collection.count_documents()).to eq(3)
             end
           end
-
         end
 
     context 'when transactions are enabled' do
