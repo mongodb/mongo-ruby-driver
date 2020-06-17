@@ -143,6 +143,7 @@ describe 'Max Staleness Spec' do
             expect do
               server_selector.select_server(cluster)
             end.to raise_exception(Mongo::Error::NoServerAvailable)
+            expect(spec.suitable_servers).to eq([])
           end
         end
       end
