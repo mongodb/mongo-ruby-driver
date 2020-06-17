@@ -116,40 +116,34 @@ describe 'Max Staleness Spec' do
 
       if spec.error?
 
-        context 'when the max staleness is invalid' do
+        it 'Raises an InvalidServerPreference exception' do
 
-          it 'Raises an InvalidServerPreference exception' do
-
-            expect do
-              server_selector.select_server(cluster)
-            end.to raise_exception(Mongo::Error::InvalidServerPreference)
-          end
+          expect do
+            server_selector.select_server(cluster)
+          end.to raise_exception(Mongo::Error::InvalidServerPreference)
         end
 
       else
 
-        context 'when the max staleness is valid' do
+        if spec.server_available?
 
-          context 'when there are available servers' do
-
-            it 'Finds all suitable servers in the latency window', if: spec.replica_set? && spec.server_available? do
-              expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)
-            end
-
-            it 'Finds the most suitable server in the latency window', if: spec.server_available? do
-              expect(in_latency_window).to include(server_selector.select_server(cluster))
-            end
+          it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
+            expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)
           end
 
-          context 'when there are no available servers', if: !spec.server_available? do
-
-            it 'Raises a NoServerAvailable Exception' do
-              expect do
-                server_selector.select_server(cluster)
-              end.to raise_exception(Mongo::Error::NoServerAvailable)
-              expect(spec.suitable_servers).to eq([])
-            end
+          it 'Finds the most suitable server in the latency window' do
+            expect(in_latency_window).to include(server_selector.select_server(cluster))
           end
+
+        else
+
+          it 'Raises a NoServerAvailable Exception' do
+            expect do
+              server_selector.select_server(cluster)
+            end.to raise_exception(Mongo::Error::NoServerAvailable)
+            expect(spec.suitable_servers).to eq([])
+          end
+
         end
       end
     end
