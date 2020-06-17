@@ -114,36 +114,41 @@ describe 'Max Staleness Spec' do
         allow(cluster).to receive(:addresses).and_return(candidate_servers.map(&:address))
       end
 
-      context 'when the max staleness is invalid' do
+      if spec.error?
 
-        it 'Raises an InvalidServerPreference exception', if: spec.error? do
+        context 'when the max staleness is invalid' do
 
-          expect do
-            server_selector.select_server(cluster)
-          end.to raise_exception(Mongo::Error::InvalidServerPreference)
-        end
-      end
+          it 'Raises an InvalidServerPreference exception' do
 
-      context 'when the max staleness is valid' do
-
-        context 'when there are available servers' do
-
-          it 'Finds all suitable servers in the latency window', if: (spec.replica_set? && !spec.error? && spec.server_available?) do
-            expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)
-          end
-
-          it 'Finds the most suitable server in the latency window', if: (!spec.error? && spec.server_available?) do
-            expect(in_latency_window).to include(server_selector.select_server(cluster))
-          end
-        end
-
-        context 'when there are no available servers', if: (!spec.error? && !spec.server_available?) do
-
-          it 'Raises a NoServerAvailable Exception' do
             expect do
               server_selector.select_server(cluster)
-            end.to raise_exception(Mongo::Error::NoServerAvailable)
-            expect(spec.suitable_servers).to eq([])
+            end.to raise_exception(Mongo::Error::InvalidServerPreference)
+          end
+        end
+
+      else
+
+        context 'when the max staleness is valid' do
+
+          context 'when there are available servers' do
+
+            it 'Finds all suitable servers in the latency window', if: spec.replica_set? && spec.server_available? do
+              expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)
+            end
+
+            it 'Finds the most suitable server in the latency window', if: spec.server_available? do
+              expect(in_latency_window).to include(server_selector.select_server(cluster))
+            end
+          end
+
+          context 'when there are no available servers', if: !spec.server_available? do
+
+            it 'Raises a NoServerAvailable Exception' do
+              expect do
+                server_selector.select_server(cluster)
+              end.to raise_exception(Mongo::Error::NoServerAvailable)
+              expect(spec.suitable_servers).to eq([])
+            end
           end
         end
       end
