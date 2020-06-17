@@ -2001,45 +2001,39 @@ describe Mongo::Collection do
 
   describe '#count_documents' do
 
-        context 'no argument provided' do
-          let(:view) do
-            described_class.new(authorized_collection, {}, {})
-          end
+    context 'no argument provided' do
 
-          before do
-            authorized_collection.delete_many
-          end
-
-          context 'empty collection' do
-            it 'returns true' do
-              expect(view.count_documents()).to eq(view.count_documents({}))
-            end
-          end
-
-          context 'nonempty collection' do
-            it 'returns false' do
-              documents = []
-              1.upto(10) do |index|
-                documents << { key: 'a', _id: "in#{index}" }
-              end
-
-              authorized_collection.insert_many(documents)
-              expect(authorized_collection.count_documents()).to eq(10)
-            end
-          end
-
-          context 'nonempty collection' do
-            it 'returns false' do
-              documents = []
-              documents << { key: 'a', _id: "1" }
-              documents << { key: 'b', _id: "2" }
-              documents << { key: 'c', _id: "3" }
-
-              authorized_collection.insert_many(documents)
-              expect(authorized_collection.count_documents()).to eq(3)
-            end
-          end
+    # populate documents to add to collection
+      let(:documents) do
+        documents = []
+        1.upto(10) do |index|
+          documents << { key: 'a', _id: "in#{index}" }
         end
+        documents
+      end
+
+      let(:other_collection) do
+        authorized_client[:other]
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+        other_collection.delete_many
+      end
+
+      context 'empty collection' do
+        it 'returns 0 matching documents' do
+          expect(other_collection.count_documents).to eq(0)
+        end
+      end
+
+      context 'nonempty collection' do
+        it 'returns 10 matching documents' do
+          expect(authorized_collection.count_documents).to eq(10)
+        end
+      end
+
+    end
 
     context 'when transactions are enabled' do
       require_wired_tiger

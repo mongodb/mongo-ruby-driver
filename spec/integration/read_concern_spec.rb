@@ -17,7 +17,7 @@ describe 'read concern' do
 
   let(:sent_read_concern) do
     subscriber.clear_events!
-    collection.count_documents()
+    collection.count_documents
     subscriber.started_events.find { |c| c.command_name == 'aggregate' }.command[:readConcern]
   end
 

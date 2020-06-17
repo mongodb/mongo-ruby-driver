@@ -20,6 +20,6 @@ describe 'SSL connections with URI options' do
 
   it 'successfully connects and runs an operation' do
     client = new_local_client(uri)
-    expect { client[:foo].count_documents() }.not_to raise_error
+    expect { client[:foo].count_documents }.not_to raise_error
   end
 end
