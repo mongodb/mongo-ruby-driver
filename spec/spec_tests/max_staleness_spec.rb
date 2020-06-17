@@ -137,6 +137,7 @@ describe 'Max Staleness Spec' do
           end
 
           it 'Finds the most suitable server in the latency window' do
+            in_latency_window.length.should == 1
             expect(in_latency_window).to include(server_selector.select_server(cluster))
           end
 
