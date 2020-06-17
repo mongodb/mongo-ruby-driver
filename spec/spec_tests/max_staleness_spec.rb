@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 require 'runners/server_selection'
 
@@ -44,6 +44,10 @@ describe 'Max Staleness Spec' do
             opts.delete(:heartbeat_frequency)
           end
         end.merge!(server_selection_timeout: 0.2, connect_timeout: 0.1)
+      end
+
+      let(:app_metadata) do
+        Mongo::Server::AppMetadata.new({})
       end
 
       let(:cluster) do
