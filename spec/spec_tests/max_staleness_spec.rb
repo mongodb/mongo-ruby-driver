@@ -116,7 +116,7 @@ describe 'Max Staleness Spec' do
 
       context 'when the max staleness is invalid' do
 
-        it 'Raises an InvalidServerPreference exception', if: spec.invalid_max_staleness? do
+        it 'Raises an InvalidServerPreference exception', if: spec.error? do
 
           expect do
             server_selector.select_server(cluster)
@@ -128,16 +128,16 @@ describe 'Max Staleness Spec' do
 
         context 'when there are available servers' do
 
-          it 'Finds all suitable servers in the latency window', if: (spec.replica_set? && !spec.invalid_max_staleness? && spec.server_available?) do
+          it 'Finds all suitable servers in the latency window', if: (spec.replica_set? && !spec.error? && spec.server_available?) do
             expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)
           end
 
-          it 'Finds the most suitable server in the latency window', if: (!spec.invalid_max_staleness? && spec.server_available?) do
+          it 'Finds the most suitable server in the latency window', if: (!spec.error? && spec.server_available?) do
             expect(in_latency_window).to include(server_selector.select_server(cluster))
           end
         end
 
-        context 'when there are no available servers', if: (!spec.invalid_max_staleness? && !spec.server_available?) do
+        context 'when there are no available servers', if: (!spec.error? && !spec.server_available?) do
 
           it 'Raises a NoServerAvailable Exception' do
             expect do

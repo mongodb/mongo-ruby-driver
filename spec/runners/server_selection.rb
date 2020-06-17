@@ -98,15 +98,10 @@ module Mongo
           !in_latency_window.empty?
         end
 
-        # Is the max staleness setting invalid.
+        # Whether the test requires an error to be raised during server selection.
         #
-        # @example Will the max staleness setting be valid with other options.
-        #   spec.invalid_max_staleness?
-        #
-        # @return [ true, false ] If an error will be raised by the max staleness setting.
-        #
-        # @since 2.4.0
-        def invalid_max_staleness?
+        # @return [ true, false ] Whether the test expects an error.
+        def error?
           @test['error']
         end
 
