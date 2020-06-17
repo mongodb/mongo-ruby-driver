@@ -2001,38 +2001,36 @@ describe Mongo::Collection do
 
   describe '#count_documents' do
 
-    context 'no argument provided' do
-
     # populate documents to add to collection
-      let(:documents) do
-        documents = []
-        1.upto(10) do |index|
-          documents << { key: 'a', _id: "in#{index}" }
-        end
-        documents
+    let(:documents) do
+      documents = []
+      1.upto(10) do |index|
+        documents << { key: 'a', _id: "in#{index}" }
       end
+      documents
+    end
 
-      let(:other_collection) do
-        authorized_client[:other]
-      end
+    let(:other_collection) do
+      authorized_client[:other]
+    end
 
-      before do
-        authorized_collection.insert_many(documents)
-        other_collection.delete_many
-      end
+    before do
+      authorized_collection.insert_many(documents)
+      other_collection.delete_many
+    end
 
-      context 'empty collection' do
+    context 'no argument provided' do
+      context 'when collection is empty' do
         it 'returns 0 matching documents' do
           expect(other_collection.count_documents).to eq(0)
         end
       end
 
-      context 'nonempty collection' do
+      context 'when collection is not empty' do
         it 'returns 10 matching documents' do
           expect(authorized_collection.count_documents).to eq(10)
         end
       end
-
     end
 
     context 'when transactions are enabled' do
