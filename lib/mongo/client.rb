@@ -489,7 +489,10 @@ module Mongo
           end
         end
 
-        yield(self) if block_given?
+        if block_given? then 
+          yield(self)
+          self.close
+        end
       rescue
         begin
           @cluster.disconnect!
