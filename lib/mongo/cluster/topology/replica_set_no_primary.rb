@@ -73,8 +73,9 @@ module Mongo
         # @return [ true, false ] If a readable server is present.
         #
         # @since 2.4.0
+        # @deprecated
         def has_readable_server?(cluster, server_selector = nil)
-          (server_selector || ServerSelector.primary).candidates(cluster).any?
+          !(server_selector || ServerSelector.primary).try_select_server(cluster).nil?
         end
 
         # Determine if the topology would select a writable server for the

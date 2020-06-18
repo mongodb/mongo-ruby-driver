@@ -93,16 +93,11 @@ module Mongo
       # Select servers taking into account any defined tag sets and
       #   local threshold, with the primary preferred.
       #
-      # @example Select servers given a list of candidates,
-      #   with the primary preferred.
-      #   preference = Mongo::ServerSelector::PrimaryPreferred.new
-      #   preference.select([candidate_1, candidate_2])
-      #
       # @return [ Array ] A list of servers matching tag sets and acceptable
       #   latency with the primary preferred.
       #
       # @since 2.0.0
-      def select(candidates)
+      def select_in_replica_set(candidates)
         primary = primary(candidates)
         secondaries = near_servers(secondaries(candidates))
         primary.first ? primary : secondaries

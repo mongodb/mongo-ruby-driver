@@ -92,14 +92,10 @@ module Mongo
       # Select the near servers taking into account any defined tag sets and
       #   local threshold between the nearest server and other servers.
       #
-      # @example Select nearest servers given a list of candidates.
-      #   preference = Mongo::ServerSelector::Nearest.new
-      #   preference.select_server(cluster)
-      #
       # @return [ Array ] The nearest servers from the list of candidates.
       #
       # @since 2.0.0
-      def select(candidates)
+      def select_in_replica_set(candidates)
         matching_servers = filter_stale_servers(candidates, primary(candidates).first)
         matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
         near_servers(matching_servers)

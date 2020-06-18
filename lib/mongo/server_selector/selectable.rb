@@ -183,6 +183,7 @@ module Mongo
         if cluster.replica_set?
           validate_max_staleness_value_early!
         end
+
         if cluster.addresses.empty?
           if Lint.enabled?
             unless cluster.servers.empty?
@@ -192,37 +193,21 @@ module Mongo
           msg = "Cluster has no addresses, and therefore will never have a server"
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
+
 =begin Add this check in version 3.0.0
         unless cluster.connected?
           msg = 'Cluster is disconnected'
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 =end
+
         loop do
-          servers = candidates(cluster)
-          if Lint.enabled?
-            servers.each do |server|
-              # It is possible for a server to have a nil average RTT here
-              # because the ARTT comes from description which may be updated
-              # by a background thread while server selection is running.
-              # Currently lint mode is not a public feature, if/when this
-              # changes (https://jira.mongodb.org/browse/RUBY-1576) the
-              # requirement for ARTT to be not nil would need to be removed.
-              if server.average_round_trip_time.nil?
-                raise Error::LintError, "Server #{server.address} has nil average rtt"
-              end
-            end
-          end
-          if servers && !servers.compact.empty?
+          server = try_select_server(cluster)
+
+          if server
             unless cluster.topology.compatible?
               raise Error::UnsupportedFeatures, cluster.topology.compatibility_error.to_s
             end
-
-            # This list of servers may be ordered in a specific way
-            # by the selector (e.g. for secondary preferred, the first
-            # server may be a secondary and the second server may be primary)
-            # and we should take the first server here respecting the order
-            server = servers.first
 
             if session && session.starting_transaction? && cluster.sharded?
               session.pin(server)
@@ -296,6 +281,36 @@ module Mongo
         @local_threshold ||= (options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD)
       end
 
+      # Tries to find a suitable server, returns the server if one is available
+      # or nil if there isn't a suitable server.
+      #
+      # @return [ Server | nil ] A suitable server, if one exists.
+      def try_select_server(cluster)
+        servers = candidates(cluster)
+
+        # This list of servers may be ordered in a specific way
+        # by the selector (e.g. for secondary preferred, the first
+        # server may be a secondary and the second server may be primary)
+        # and we should take the first server here respecting the order
+        server = servers.first
+
+        if server
+          if Lint.enabled?
+            # It is possible for a server to have a nil average RTT here
+            # because the ARTT comes from description which may be updated
+            # by a background thread while server selection is running.
+            # Currently lint mode is not a public feature, if/when this
+            # changes (https://jira.mongodb.org/browse/RUBY-1576) the
+            # requirement for ARTT to be not nil would need to be removed.
+            if server.average_round_trip_time.nil?
+              raise Error::LintError, "Server #{server.address} has nil average rtt"
+            end
+          end
+        end
+
+        server
+      end
+
       # Get the potential candidates to select from the cluster.
       #
       # @example Get the server candidates.
@@ -308,7 +323,9 @@ module Mongo
       # @since 2.4.0
       def candidates(cluster)
         if cluster.single?
-          cluster.servers.each { |server| validate_max_staleness_support!(server) }
+          cluster.servers.each do |server|
+            validate_max_staleness_support!(server)
+          end
         elsif cluster.sharded?
           local_threshold = local_threshold_with_cluster(cluster)
           near_servers(cluster.servers, local_threshold).each do |server|
@@ -316,7 +333,7 @@ module Mongo
           end
         else
           validate_max_staleness_value!(cluster) unless cluster.unknown?
-          select(cluster.servers)
+          select_in_replica_set(cluster.servers)
         end
       end
 

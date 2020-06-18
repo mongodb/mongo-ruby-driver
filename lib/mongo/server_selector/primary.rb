@@ -94,14 +94,10 @@ module Mongo
 
       # Select the primary server from a list of candidates.
       #
-      # @example Select the primary server given a list of candidates.
-      #   preference = Mongo::ServerSelector::Primary.new
-      #   preference.select([candidate_1, candidate_2])
-      #
       # @return [ Array ] The primary server from the list of candidates.
       #
       # @since 2.0.0
-      def select(candidates)
+      def select_in_replica_set(candidates)
         primary(candidates)
       end
 

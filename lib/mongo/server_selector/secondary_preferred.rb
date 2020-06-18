@@ -101,16 +101,11 @@ module Mongo
       # Select servers taking into account any defined tag sets and
       #   local threshold, with secondaries.
       #
-      # @example Select servers given a list of candidates,
-      #   with secondaries preferred.
-      #   preference = Mongo::ServerSelector::SecondaryPreferred.new
-      #   preference.select([candidate_1, candidate_2])
-      #
       # @return [ Array ] A list of servers matching tag sets and acceptable
       #   latency with secondaries preferred.
       #
       # @since 2.0.0
-      def select(candidates)
+      def select_in_replica_set(candidates)
         near_servers(secondaries(candidates)) + primary(candidates)
       end
 
