@@ -136,9 +136,9 @@ describe 'Max Staleness Spec' do
             expect(server_selector.send(:select_in_replica_set, cluster.servers)).to match_array(in_latency_window)
           end
 
-          it 'Finds the most suitable server in the latency window' do
+          it 'selects the expected server' do
             in_latency_window.length.should == 1
-            expect(in_latency_window).to include(server_selector.select_server(cluster))
+            [server_selector.select_server(cluster)].should == in_latency_window
           end
 
         else
