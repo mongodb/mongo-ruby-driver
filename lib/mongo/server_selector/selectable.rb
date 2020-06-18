@@ -285,6 +285,7 @@ module Mongo
       # or nil if there isn't a suitable server.
       #
       # @return [ Server | nil ] A suitable server, if one exists.
+      # @api private
       def try_select_server(cluster)
         servers = candidates(cluster)
 
