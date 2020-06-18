@@ -67,6 +67,8 @@ describe 'Max Staleness Spec' do
         end
       end
 
+      let(:ignore_latency) { false }
+
       let(:candidate_servers) do
         spec.candidate_servers.collect do |server|
           features = double('features').tap do |feat|
@@ -77,7 +79,13 @@ describe 'Max Staleness Spec' do
           Mongo::Server.new(address, cluster, monitoring, listeners,
             {monitoring_io: false}.update(options)
           ).tap do |s|
-            allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'] / 1000.0) if server['avg_rtt_ms']
+            allow(s).to receive(:average_round_trip_time) do
+              if ignore_latency
+                0
+              elsif server['avg_rtt_ms']
+                server['avg_rtt_ms'] / 1000.0
+              end
+            end
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
@@ -88,6 +96,13 @@ describe 'Max Staleness Spec' do
               Time.at(server['lastUpdateTime'].to_f / 1000))
             allow(s).to receive(:features).and_return(features)
           end
+        end
+      end
+
+      let(:suitable_servers) do
+        spec.suitable_servers.collect do |server|
+          Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
+            options.merge(monitoring_io: false))
         end
       end
 
@@ -132,13 +147,27 @@ describe 'Max Staleness Spec' do
             spec.suitable_servers.should_not be_empty
           end
 
-          it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
-            expect(server_selector.send(:select_in_replica_set, cluster.servers)).to match_array(in_latency_window)
-          end
-
           it 'selects the expected server' do
             in_latency_window.length.should == 1
             [server_selector.select_server(cluster)].should == in_latency_window
+          end
+
+          context 'candidate servers without taking latency into account' do
+            let(:ignore_latency) { true }
+
+            let(:expected_addresses) do
+              suitable_servers.map(&:address).map(&:seed).sort
+            end
+
+            let(:actual_addresses) do
+              # Since we remove the latency requirement, the servers
+              # may be returned in arbitrary order.
+              server_selector.send(:candidates, cluster).map(&:address).map(&:seed).sort
+            end
+
+            it 'identifies expected servers' do
+              actual_addresses.should == expected_addresses
+            end
           end
 
         else

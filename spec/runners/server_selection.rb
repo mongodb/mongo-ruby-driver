@@ -73,19 +73,6 @@ module Mongo
           @type = Mongo::Cluster::Topology.const_get(@test['topology_description']['type'])
         end
 
-        # Whether this spec describes a replica set.
-        #
-        # @example Determine if the spec describes a replica set.
-        #   spec.replica_set?
-        #
-        # @return [true, false] If the spec describes a replica set.
-        #
-        # @since 2.0.0
-        def replica_set?
-          type == Mongo::Cluster::Topology::ReplicaSetNoPrimary ||
-          type == Mongo::Cluster::Topology::ReplicaSetWithPrimary
-        end
-
         # Does this spec expect a server to be found.
         #
         # @example Will a server be found with this spec.
@@ -117,9 +104,6 @@ module Mongo
         #
         # @since 2.0.0
         def in_latency_window
-          if read_preference['mode'] == :secondary_preferred && primary
-            return @in_latency_window.push(primary).uniq
-          end
           @in_latency_window
         end
 
@@ -129,13 +113,7 @@ module Mongo
         #
         # @since 2.0.0
         def candidate_servers
-          @candidate_servers.select { |s| !['Unknown', 'PossiblePrimary'].include?(s['type']) }
-        end
-
-        private
-
-        def primary
-          @candidate_servers.find { |s| s['type'] == 'RSPrimary' }
+          @candidate_servers
         end
       end
     end
