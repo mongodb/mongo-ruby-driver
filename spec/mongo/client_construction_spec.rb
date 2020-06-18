@@ -1243,20 +1243,36 @@ describe Mongo::Client do
       end
 =end
     end
-    
+
     context 'when making a block client' do
       let(:block_client) do
-          c = nil
+        c = nil
+        Mongo::Client.new(
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
+        ) do |client|
+          c = client
+        end
+        c
+      end
+
+      it 'is closed after block' do
+        expect(block_client.cluster.connected?).to eq(false)
+      end
+
+      it 'is throws an exceptions and is still closed' do
+        block_client_raise = nil
+        begin 
           Mongo::Client.new(
             SpecConfig.instance.addresses,
             SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
           ) do |client|
-            c = client
-          end
-          c
+            block_client_raise = client
+            raise "This is an error!"
+          end     
+        rescue StandardError => e      
+          expect(block_client_raise.cluster.connected?).to eq(false)
         end
-      it 'is closed after block' do
-        expect(block_client.cluster.connected?).to eq(false)
       end
     end
   end
