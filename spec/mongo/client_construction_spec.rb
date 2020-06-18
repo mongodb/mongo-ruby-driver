@@ -1243,6 +1243,41 @@ describe Mongo::Client do
       end
 =end
     end
+
+    context 'when making a block client' do
+      context 'when the block doesn\'t raise an error' do
+        let(:block_client) do
+          c = nil
+          Mongo::Client.new(
+            SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
+          ) do |client|
+            c = client
+          end
+          c
+        end
+
+        it 'is closed after block' do
+          expect(block_client.cluster.connected?).to eq(false)
+        end
+      end
+
+      context 'when the block raises an error' do
+        it 'it is closed after the block' do
+          block_client_raise = nil
+          expect do  
+            Mongo::Client.new(
+              SpecConfig.instance.addresses,
+              SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
+            ) do |client|
+              block_client_raise = client
+              raise "This is an error!"
+            end
+          end.to raise_error(StandardError, "This is an error!")  
+          expect(block_client_raise.cluster.connected?).to eq(false)
+        end
+      end
+    end
   end
 
   shared_examples_for 'duplicated client with duplicated monitoring' do

@@ -489,7 +489,6 @@ module Mongo
           end
         end
 
-        yield(self) if block_given?
       rescue
         begin
           @cluster.disconnect!
@@ -498,6 +497,14 @@ module Mongo
           # Drop this exception so that the original exception is raised
         end
         raise
+      end
+
+      if block_given? 
+        begin 
+          yield(self)
+        ensure
+          close
+        end
       end
     end
 
