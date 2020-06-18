@@ -1243,6 +1243,15 @@ describe Mongo::Client do
       end
 =end
     end
+
+    context 'when making a block client' do
+      let(:block_client) do
+        new_block_local_client(['127.0.0.1:27017'])
+      end
+      it 'is closed after block' do
+        expect(block_client.cluster.connected?).to eq(false)
+      end
+    end
   end
 
   shared_examples_for 'duplicated client with duplicated monitoring' do

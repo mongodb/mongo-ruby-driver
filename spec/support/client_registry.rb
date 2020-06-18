@@ -194,6 +194,20 @@ class ClientRegistry
       end
     end
   end
+  
+  def new_block_local_client(*args)
+    c = nil
+    Mongo::Client.new(
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
+    ) do |client|
+      @lock.synchronize do
+        @local_clients << client
+      end
+      c = client
+    end
+    c
+  end
 
   def register_local_client(client)
     @lock.synchronize do

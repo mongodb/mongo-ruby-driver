@@ -8,6 +8,10 @@ module ClientRegistryMacros
       monitoring_io: false).merge(options || {}))
   end
 
+  def new_block_local_client(address, options=nil)
+    ClientRegistry.instance.new_block_local_client(address, options)
+  end
+
   def close_local_clients
     ClientRegistry.instance.close_local_clients
   end
