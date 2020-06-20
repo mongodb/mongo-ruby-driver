@@ -82,6 +82,35 @@ module Mongo
           @connection_generation = connection_generation
         end
 
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @api experimental
+        def summary
+          "#<#{short_class_name} #{database_name}.#{command_name} command=#{command_summary}>"
+        end
+
+        # Returns the command, formatted as a string, with automatically added
+        # keys elided ($clusterTime, lsid, signature).
+        #
+        # @return [ String ] The command summary.
+        private def command_summary
+          command = self.command
+          remove_keys = %w($clusterTime lsid signature)
+          if remove_keys.any? { |k| command.key?(k) }
+            command = Hash[command.reject { |k, v| remove_keys.include?(k) }]
+            suffix = ' ...'
+          else
+            suffix = ''
+          end
+          command.map do |k, v|
+            "#{k}=#{v.inspect}"
+          end.join(' ') + suffix
+        end
+
         # Create the event from a wire protocol message payload.
         #
         # @example Create the event.
