@@ -934,7 +934,7 @@ buildvariants:
   - matrix_name: "kerberos-integration-rhel"
     matrix_spec:
       # Other Rubies segfault
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-2.7]
       os: rhel70
     display_name: "Kerberos integration RHEL ${ruby} ${os}"
     tasks:
