@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-autoload :Net, 'net/http'
+module Net
+  autoload :HTTP, 'net/http'
+end
 
 module Mongo
   module Auth
