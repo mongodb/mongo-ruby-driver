@@ -30,6 +30,22 @@ module Mongo
     # @since 2.9.0
     CONNECTION_POOL = 'ConnectionPool'.freeze
 
+    # The built-in subscriptions to be added to any client by default if monitoring is enabled
+    #
+    # @since 2.13.0
+    DEFAULT_SUBSCRIPTIONS = {
+      command: true,
+      # CMAP events are not logged by default because this will create
+      # log entries for every operation performed by the driver.
+      connection_pool: false,
+      server_opening: true,
+      server_closed: true,
+      server_description_changes: true,
+      topology_opening: true,
+      topology_changed: true,
+      topology_closed: true
+    }.freeze
+
     # Server closed topic.
     #
     # @since 2.4.0
@@ -198,10 +214,19 @@ module Mongo
     # @example Create the new monitoring.
     #   Monitoring.new(:monitoring => true)
     #
+    # @example Enabling monitoring with all defaults, but without subscribing the built-in default subscriber for the {Mongo::Monitoring::COMMAND} topic
+    #   Mongo::Monitoring.new(:monitoring => { :builtins => { :command => false } })
+    #
+    # @example Enabling monitoring with all defaults, but with enabling the built-in subscriber for the {Mongo:::monitoring =>:CONNECTION_POOL} topic
+    #   Mongo::Monitoring.new(:monitoring => { :builtins => { :connection_pool => true } })
+    #
+    # @example Disabling all builtin monitoring subscribers
+    #   Mongo::Monitoring.new(:monitoring => { :builtins => false })
+    #
     # @param [ Hash ] options Options. Client constructor forwards its
     #   options to Monitoring constructor, although Monitoring recognizes
     #   only a subset of the options recognized by Client.
-    # @option options [ true, false ] :monitoring If false is given, the
+    # @option options [ true, false, Hash ] :monitoring If false is given, the
     #   Monitoring instance is initialized without global monitoring event
     #   subscribers and will not publish SDAM events. Command monitoring events
     #   will still be published, and the driver will still perform SDAM and
@@ -211,28 +236,39 @@ module Mongo
     #   succeed for all event types, but subscribers to SDAM events will
     #   not be invoked. Values other than false result in default behavior
     #   which is to perform normal SDAM event publication.
+    #   The built-in subscribers can be enabled or disabled one-by-one
+    #   by providing a Hash (see examples).
     #
     # @since 2.1.0
     # @api private
     def initialize(options = {})
       @options = options
-      if options[:monitoring] != false
-        Global.subscribers.each do |topic, subscribers|
-          subscribers.each do |subscriber|
-            subscribe(topic, subscriber)
-          end
+      return if options[:monitoring] == false
+
+      Global.subscribers.each do |topic, subscribers|
+        subscribers.each do |subscriber|
+          subscribe(topic, subscriber)
         end
-        subscribe(COMMAND, CommandLogSubscriber.new(options))
-        # CMAP events are not logged by default because this will create
-        # log entries for every operation performed by the driver.
-        #subscribe(CONNECTION_POOL, CmapLogSubscriber.new(options))
-        subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
-        subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
-        subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
-        subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
-        subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
-        subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options))
       end
+
+      builtin_enabled = if options[:monitoring].is_a?(Hash) && options.dig(:monitoring, :builtins) == false
+                          {}
+                        elsif options[:monitoring].is_a?(Hash) && options.dig(:monitoring, :builtins).is_a?(Hash)
+                          DEFAULT_SUBSCRIPTIONS.map do |key, default|
+                            [key, options.dig(:monitoring, :builtins, key) || default]
+                          end.to_h
+                        else
+                          DEFAULT_SUBSCRIPTIONS
+                        end
+
+      subscribe(COMMAND, CommandLogSubscriber.new(options)) if builtin_enabled[:command]
+      subscribe(CONNECTION_POOL, CmapLogSubscriber.new(options)) if builtin_enabled[:connection_pool]
+      subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options)) if builtin_enabled[:server_opening]
+      subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options)) if builtin_enabled[:server_closed]
+      subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options)) if builtin_enabled[:server_description_changes]
+      subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options)) if builtin_enabled[:topology_opening]
+      subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options)) if builtin_enabled[:topology_changed]
+      subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options)) if builtin_enabled[:topology_closed]
     end
 
     # @api private
