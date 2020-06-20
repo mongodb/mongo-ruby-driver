@@ -180,3 +180,12 @@ class PhasedEventSubscriber < EventSubscriber
     end
   end
 end
+
+class VerboseEventSubscriber < EventSubscriber
+  %w(started succeeded failed published).each do |meth|
+    define_method(meth) do |event|
+      puts event.summary
+      super(event)
+    end
+  end
+end

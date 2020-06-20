@@ -457,4 +457,25 @@ module Utils
       exec('/bin/true')
     end
   end
+
+  module_function def subscribe_all(client, subscriber)
+    subscribe_all_sdam_proc(subscriber).call(client)
+  end
+
+  module_function def subscribe_all_sdam_proc(subscriber)
+    lambda do |client|
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, subscriber)
+
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+
+      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
 end

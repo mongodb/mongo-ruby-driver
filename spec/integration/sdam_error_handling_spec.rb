@@ -13,9 +13,15 @@ describe 'SDAM error handling' do
   # shard cluster where multiple servers are equally eligible
   require_no_multi_shard
 
+  let(:diagnostic_subscriber) { VerboseEventSubscriber.new }
+
   let(:client) do
     new_local_client(SpecConfig.instance.addresses,
-      SpecConfig.instance.all_test_options.merge(Utils.disable_retries_client_options))
+      SpecConfig.instance.all_test_options.merge(
+        socket_timeout: 3, connect_timeout: 3,
+        sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
+        **Utils.disable_retries_client_options)
+    )
   end
 
   let(:server) { client.cluster.next_primary }
@@ -190,13 +196,6 @@ describe 'SDAM error handling' do
   describe 'when there is an error on monitoring connection' do
     clean_slate_for_all
 
-    let(:client) do
-      new_local_client(SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          connect_timeout: 1, socket_timeout: 1,
-      ))
-    end
-
     let(:subscriber) { EventSubscriber.new }
 
     let(:set_subscribers) do
@@ -218,6 +217,7 @@ describe 'SDAM error handling' do
       it 'marks server unknown' do
         expect(server).not_to be_unknown
 
+        #subscriber.clear_events!
         events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
         events.should be_empty
 
@@ -237,6 +237,7 @@ describe 'SDAM error handling' do
 
     shared_examples_for 'clears connection pool - cmap event' do
       it 'clears connection pool' do
+        #subscriber.clear_events!
         events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
         events.should be_empty
 
