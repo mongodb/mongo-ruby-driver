@@ -85,6 +85,15 @@ module Utils
   end
   module_function :camelize
 
+  module_function def disable_retries_client_options
+    {
+      retry_reads: false,
+      retry_writes: false,
+      max_read_retries: 0,
+      max_write_retries: 0,
+    }
+  end
+
   # Converts camel case clientOptions, as used in spec tests,
   # to Ruby driver underscore options.
   def convert_client_options(spec_test_options)

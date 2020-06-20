@@ -13,7 +13,10 @@ describe 'SDAM error handling' do
   # shard cluster where multiple servers are equally eligible
   require_no_multi_shard
 
-  let(:client) { authorized_client_without_any_retries }
+  let(:client) do
+    new_local_client(SpecConfig.instance.addresses,
+      SpecConfig.instance.all_test_options.merge(Utils.disable_retries_client_options))
+  end
 
   let(:server) { client.cluster.next_primary }
 
