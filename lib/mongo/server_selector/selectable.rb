@@ -332,9 +332,12 @@ module Mongo
           near_servers(cluster.servers, local_threshold).each do |server|
             validate_max_staleness_support!(server)
           end
-        else
-          validate_max_staleness_value!(cluster) unless cluster.unknown?
+        elsif cluster.replica_set?
+          validate_max_staleness_value!(cluster)
           select_in_replica_set(cluster.servers)
+        else
+          # Unknown cluster - no servers
+          []
         end
       end
 
