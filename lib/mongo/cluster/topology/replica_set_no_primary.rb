@@ -90,7 +90,7 @@ module Mongo
         #
         # @since 2.4.0
         def has_writable_server?(cluster)
-          cluster.servers.any?{ |server| server.primary? }
+          !ServerSelector.primary.try_select_server(cluster).nil?
         end
 
         # A replica set topology is a replica set.
