@@ -97,9 +97,12 @@ module Mongo
       #
       # @since 2.0.0
       def select_in_replica_set(candidates)
-        primary = primary(candidates)
-        secondaries = near_servers(secondaries(candidates))
-        primary.first ? primary : secondaries
+        primaries = primary(candidates)
+        if primaries.first
+          primaries
+        else
+          near_servers(secondaries(candidates))
+        end
       end
 
       def max_staleness_allowed?
