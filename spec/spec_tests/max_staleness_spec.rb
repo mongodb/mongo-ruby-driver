@@ -163,9 +163,30 @@ describe 'Max Staleness Spec' do
             spec.suitable_servers.should_not be_empty
           end
 
-          it 'selects the expected server' do
-            in_latency_window.length.should == 1
-            [server_selector.select_server(cluster)].should == in_latency_window
+          if spec.in_latency_window.length == 1
+
+            it 'selects the expected server' do
+              [server_selector.select_server(cluster)].should == in_latency_window
+            end
+
+          else
+
+            it 'selects a server in the suitable list' do
+              in_latency_window.should include(server_selector.select_server(cluster))
+            end
+
+            let(:expected_addresses) do
+              in_latency_window.map(&:address).map(&:seed).sort
+            end
+
+            let(:actual_addresses) do
+              server_selector.suitable_servers(cluster).map(&:address).map(&:seed).sort
+            end
+
+            it 'identifies expected suitable servers' do
+              actual_addresses.should == expected_addresses
+            end
+
           end
 
           context 'candidate servers without taking latency into account' do
