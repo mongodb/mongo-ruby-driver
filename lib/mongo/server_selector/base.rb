@@ -353,9 +353,11 @@ module Mongo
           end
         elsif cluster.sharded?
           local_threshold = local_threshold_with_cluster(cluster)
-          near_servers(candidates(cluster), local_threshold).each do |server|
+          servers = candidates(cluster)
+          servers.each do |server|
             validate_max_staleness_support!(server)
           end
+          near_servers(servers, local_threshold)
         elsif cluster.replica_set?
           validate_max_staleness_value!(cluster)
           candidates(cluster)
