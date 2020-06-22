@@ -307,4 +307,27 @@ describe Mongo::Session do
       end
     end
   end
+
+  describe '#with_session' do
+    context 'when block doesn\'t raise an error' do 
+      it 'closes the session after the block' do 
+        block_session = nil
+        authorized_client.with_session do |session| 
+          block_session = session 
+        end
+        expect(block_session.ended?).to be true
+      end
+    end
+
+    context 'when block raises an error' do
+      it 'closes the session after the block' do
+        block_session = nil
+        authorized_client.with_session do |session|
+          block_session = session
+          raise 'This is an error!'
+        end
+        expect(block_session.ended?).to be true
+      end
+    end
+  end
 end
