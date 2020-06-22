@@ -43,7 +43,7 @@ describe 'Max Staleness Spec' do
           SpecConfig.instance.test_options.dup.tap do |opts|
             opts.delete(:heartbeat_frequency)
           end
-        end.merge!(server_selection_timeout: 0.2, connect_timeout: 0.1)
+        end.merge!(server_selection_timeout: 0.1, connect_timeout: 0.1)
       end
 
       let(:app_metadata) do
@@ -52,6 +52,7 @@ describe 'Max Staleness Spec' do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:server_selection_semaphore)
           allow(c).to receive(:connected?).and_return(true)
           allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
@@ -67,6 +68,13 @@ describe 'Max Staleness Spec' do
         end
       end
 
+      # One of the spec test assertions is on the set of servers that are
+      # eligible for selection without taking latency into account.
+      # In the driver, latency is taken into account at various points during
+      # server selection, hence there isn't a method that can be called to
+      # retrieve the list of servers without accounting for latency.
+      # Work around this by executing server selection with all servers set
+      # to zero latency, when evaluating the candidate server set.
       let(:ignore_latency) { false }
 
       let(:candidate_servers) do
@@ -89,12 +97,16 @@ describe 'Max Staleness Spec' do
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
+            allow(s).to receive(:mongos?).and_return(server['type'] == 'Mongos')
+            allow(s).to receive(:standalone?).and_return(server['type'] == 'Standalone')
+            allow(s).to receive(:unknown?).and_return(server['type'] == 'Unknown')
             allow(s).to receive(:connectable?).and_return(true)
             allow(s).to receive(:last_write_date).and_return(
               Time.at(server['lastWrite']['lastWriteDate']['$numberLong'].to_f / 1000)) if server['lastWrite']
             allow(s).to receive(:last_scan).and_return(
               Time.at(server['lastUpdateTime'].to_f / 1000))
             allow(s).to receive(:features).and_return(features)
+            allow(s).to receive(:replica_set_name).and_return('foo')
           end
         end
       end
@@ -125,7 +137,11 @@ describe 'Max Staleness Spec' do
       end
 
       before do
-        allow(cluster).to receive(:servers).and_return(candidate_servers)
+        allow(cluster).to receive(:servers_list).and_return(candidate_servers)
+        allow(cluster).to receive(:servers) do
+          # Copy Cluster#servers definition because clusters is a double
+          cluster.topology.servers(cluster.servers_list)
+        end
         allow(cluster).to receive(:addresses).and_return(candidate_servers.map(&:address))
       end
 
@@ -160,12 +176,29 @@ describe 'Max Staleness Spec' do
             end
 
             let(:actual_addresses) do
+              servers = server_selector.send(:suitable_servers, cluster)
+
+              # The tests expect that only secondaries are "suitable" for
+              # server selection with secondary preferred read preference.
+              # In actuality, primaries are also suitable, and the driver
+              # returns the primaries also. Remove primaries from the
+              # actual set when read preference is secondary preferred.
+              # HOWEVER, if a test ends up selecting a primary, then it
+              # includes that primary into its suitable servers. Therefore
+              # only remove primaries when the number of suitable servers
+              # is greater than 1.
+              servers.delete_if do |server|
+                server_selector.is_a?(Mongo::ServerSelector::SecondaryPreferred) &&
+                  server.primary? &&
+                  servers.length > 1
+              end
+
               # Since we remove the latency requirement, the servers
               # may be returned in arbitrary order.
-              server_selector.send(:candidates, cluster).map(&:address).map(&:seed).sort
+              servers.map(&:address).map(&:seed).sort
             end
 
-            it 'identifies expected servers' do
+            it 'identifies expected suitable servers' do
               actual_addresses.should == expected_addresses
             end
           end
