@@ -287,7 +287,7 @@ module Mongo
       # @return [ Server | nil ] A suitable server, if one exists.
       # @api private
       def try_select_server(cluster)
-        servers = candidates(cluster)
+        servers = suitable_servers(cluster)
 
         # This list of servers may be ordered in a specific way
         # by the selector (e.g. for secondary preferred, the first
@@ -312,29 +312,49 @@ module Mongo
         server
       end
 
-      # Get the potential candidates to select from the cluster.
+      # Returns servers of acceptable types from the cluster.
       #
-      # @example Get the server candidates.
-      #   selectable.candidates(cluster)
+      # Does not perform staleness validation, staleness filtering or
+      # latency filtering.
       #
       # @param [ Cluster ] cluster The cluster.
       #
       # @return [ Array<Server> ] The candidate servers.
       #
-      # @since 2.4.0
+      # @api private
       def candidates(cluster)
         if cluster.single?
-          cluster.servers.each do |server|
+          cluster.servers
+        elsif cluster.sharded?
+          cluster.servers
+        elsif cluster.replica_set?
+          select_in_replica_set(cluster.servers)
+        else
+          # Unknown cluster - no servers
+          []
+        end
+      end
+
+      # Returns servers satisfying the server selector from the cluster.
+      #
+      # @param [ Cluster ] cluster The cluster.
+      #
+      # @return [ Array<Server> ] The suitable servers.
+      #
+      # @api private
+      def suitable_servers(cluster)
+        if cluster.single?
+          candidates(cluster).each do |server|
             validate_max_staleness_support!(server)
           end
         elsif cluster.sharded?
           local_threshold = local_threshold_with_cluster(cluster)
-          near_servers(cluster.servers, local_threshold).each do |server|
+          near_servers(candidates(cluster), local_threshold).each do |server|
             validate_max_staleness_support!(server)
           end
         elsif cluster.replica_set?
           validate_max_staleness_value!(cluster)
-          select_in_replica_set(cluster.servers)
+          candidates(cluster)
         else
           # Unknown cluster - no servers
           []
