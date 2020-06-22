@@ -20,7 +20,6 @@ module Mongo
     #
     # @since 2.0.0
     class Nearest < Base
-      include Selectable
 
       # Name of the this read preference in the server's format.
       #
