@@ -145,7 +145,7 @@ module Authorization
     #
     # @since 2.2.6
     context.let(:default_address) do
-      SpecConfig.instance.addresses.first
+      Mongo::Address.new(SpecConfig.instance.addresses.first)
     end
 
     # Get a default app metadata.
