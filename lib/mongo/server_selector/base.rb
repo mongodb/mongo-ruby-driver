@@ -328,6 +328,10 @@ module Mongo
         elsif cluster.sharded?
           cluster.servers
         elsif cluster.replica_set?
+          servers = cluster.servers
+          servers.each do |server|
+            validate_max_staleness_support!(server)
+          end
           select_in_replica_set(cluster.servers)
         else
           # Unknown cluster - no servers
