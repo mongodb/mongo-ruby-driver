@@ -16,7 +16,6 @@ module Mongo
 
   module ServerSelector
 
-    # @api private
     class Base
 
       # Initialize the server selector.
@@ -43,7 +42,7 @@ module Mongo
       # @raise [ Error::InvalidServerPreference ] If tag sets are specified
       #   but not allowed.
       #
-      # @since 2.0.0
+      # @api private
       def initialize(options = nil)
         options = options ? options.dup : {}
         if options[:max_staleness] == -1
@@ -285,6 +284,7 @@ module Mongo
       # or nil if there isn't a suitable server.
       #
       # @return [ Server | nil ] A suitable server, if one exists.
+      #
       # @api private
       def try_select_server(cluster)
         servers = suitable_servers(cluster)
