@@ -323,16 +323,16 @@ module Mongo
       #
       # @api private
       def candidates(cluster)
+        servers = cluster.servers
+        servers.each do |server|
+          validate_max_staleness_support!(server)
+        end
         if cluster.single?
-          cluster.servers
+          servers
         elsif cluster.sharded?
-          cluster.servers
+          servers
         elsif cluster.replica_set?
-          servers = cluster.servers
-          servers.each do |server|
-            validate_max_staleness_support!(server)
-          end
-          select_in_replica_set(cluster.servers)
+          select_in_replica_set(servers)
         else
           # Unknown cluster - no servers
           []
@@ -348,15 +348,10 @@ module Mongo
       # @api private
       def suitable_servers(cluster)
         if cluster.single?
-          candidates(cluster).each do |server|
-            validate_max_staleness_support!(server)
-          end
+          candidates(cluster)
         elsif cluster.sharded?
           local_threshold = local_threshold_with_cluster(cluster)
           servers = candidates(cluster)
-          servers.each do |server|
-            validate_max_staleness_support!(server)
-          end
           near_servers(servers, local_threshold)
         elsif cluster.replica_set?
           validate_max_staleness_value!(cluster)
