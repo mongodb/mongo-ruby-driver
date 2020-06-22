@@ -564,7 +564,7 @@ describe Mongo::ServerSelector do
     end
   end
 
-  describe '#candidates' do
+  describe '#suitable_servers' do
     let(:selector) { Mongo::ServerSelector::Primary.new(options) }
 
     let(:cluster) { double('cluster') }
@@ -602,7 +602,7 @@ describe Mongo::ServerSelector do
           end
 
           it 'returns an empty list' do
-            expect(selector.candidates(cluster)).to eq([])
+            expect(selector.suitable_servers(cluster)).to eq([])
           end
         end
       end
