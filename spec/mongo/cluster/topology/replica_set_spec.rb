@@ -150,7 +150,13 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:cluster) do
-      double('cluster', servers: servers, single?: false, sharded?: false, unknown?: false)
+      double('cluster',
+        servers: servers,
+        single?: false,
+        replica_set?: true,
+        sharded?: false,
+        unknown?: false,
+      )
     end
 
     context 'when the read preference is primary' do
@@ -327,7 +333,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       end
 
       let(:cluster) do
-        double('cluster', servers: [ primary, secondary ])
+        double('cluster',
+          single?: false,
+          replica_set?: true,
+          sharded?: false,
+          servers: [ primary, secondary ],
+        )
       end
 
       it 'returns true' do
@@ -342,7 +353,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       end
 
       let(:cluster) do
-        double('cluster', servers: [ server ])
+        double('cluster',
+          single?: false,
+          replica_set?: true,
+          sharded?: false,
+          servers: [ server ],
+        )
       end
 
       it 'returns false' do

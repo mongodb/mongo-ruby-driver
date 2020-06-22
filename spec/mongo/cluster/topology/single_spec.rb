@@ -87,8 +87,10 @@ describe Mongo::Cluster::Topology::Single do
       topology.servers([ mongos, standalone, standalone_two, replica_set ])
     end
 
-    it 'returns only the first standalone server' do
-      expect(servers).to eq([ standalone ])
+    it 'returns all data-bearing non-unknown servers' do
+      # mongos and replica_set do not have ok: 1 in their descriptions,
+      # and are considered unknown.
+      expect(servers).to eq([ standalone, standalone_two ])
     end
   end
 
