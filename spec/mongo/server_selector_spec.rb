@@ -198,7 +198,7 @@ describe Mongo::ServerSelector do
   describe "#select_server" do
     skip_if_linting
 
-    context 'when #select returns a list of nils' do
+    context 'when #select_in_replica_set returns a list of nils' do
 
       let(:servers) do
         [ make_server(:primary) ]
@@ -224,7 +224,7 @@ describe Mongo::ServerSelector do
 
       let(:read_pref) do
         described_class.get(mode: :primary).tap do |pref|
-          allow(pref).to receive(:select).and_return([ nil, nil ])
+          allow(pref).to receive(:select_in_replica_set).and_return([ nil, nil ])
         end
       end
 

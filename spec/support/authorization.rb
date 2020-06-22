@@ -145,7 +145,7 @@ module Authorization
     #
     # @since 2.2.6
     context.let(:default_address) do
-      authorized_client.cluster.next_primary.address
+      SpecConfig.instance.addresses.first
     end
 
     # Get a default app metadata.
