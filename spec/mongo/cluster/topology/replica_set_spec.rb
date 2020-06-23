@@ -168,7 +168,11 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true) ]
+          [ double('server',
+            primary?: true,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -197,7 +201,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true, secondary?: false) ]
+          [ double('server',
+            primary?: true,
+            secondary?: false,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -266,7 +275,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a secondary does not exist' do
 
         let(:servers) do
-          [ double('server', secondary?: false, primary?: true) ]
+          [ double('server',
+            secondary?: false,
+            primary?: true,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -295,7 +309,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true, secondary?: false) ]
+          [ double('server',
+            primary?: true,
+            secondary?: false,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -325,11 +344,19 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     context 'when a primary server exists' do
 
       let(:primary) do
-        double('server', :primary? => true)
+        double('server',
+          :primary? => true,
+          # for runs with linting enabled
+          average_round_trip_time: 42,
+        )
       end
 
       let(:secondary) do
-        double('server', :primary? => false)
+        double('server',
+          :primary? => false,
+          # for runs with linting enabled
+          average_round_trip_time: 42,
+        )
       end
 
       let(:cluster) do
