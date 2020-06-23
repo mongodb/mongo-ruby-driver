@@ -121,6 +121,9 @@ module Mongo
 end
 
 def define_server_selection_spec_tests(test_paths)
+  # Linter insists that a server selection semaphore is present when
+  # performing server selection.
+  skip_if_linting
 
   test_paths.each do |file|
 
