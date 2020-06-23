@@ -313,6 +313,7 @@ describe Mongo::Session do
       it 'closes the session after the block' do 
         block_session = nil
         authorized_client.start_session do |session| 
+          expect(session.ended?).to be false
           block_session = session 
         end
         expect(block_session.ended?).to be true
