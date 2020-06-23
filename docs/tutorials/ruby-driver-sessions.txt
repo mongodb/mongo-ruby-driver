@@ -136,3 +136,6 @@ To end a session, call the ``end_session`` method:
 The Ruby driver will then add the id for the corresponding server session to a pool for reuse.
 When a client is closed, the driver will send a command to the server to end all sessions it has cached
 in its server session pool. You may see this command in your logs when a client is closed.
+
+Note that when using the block syntax for ``start_session`` the session is automatically ended after
+the block finishes executing.
