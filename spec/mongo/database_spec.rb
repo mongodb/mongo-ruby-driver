@@ -153,7 +153,80 @@ describe Mongo::Database do
         expect(collection_names).to include('0_dalmatians')
         expect(collection_names).to include('1_dalmatians')
       end
+    end
 
+    context 'when provided a filter' do
+
+      before do
+        database[:users2].drop
+        database[:users2].create
+      end
+
+      let(:result) do
+        database.collection_names(filter: { name: 'users2' })
+      end
+
+      it 'returns users2 collection' do
+        expect(result.length).to eq(1)
+        expect(result.first).to eq('users2')
+      end
+    end
+
+    context 'when provided authorized_collections or not' do
+
+      require_topology :replica_set, :sharded
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.2'
+
+        let(:database) do
+          described_class.new(client, SpecConfig.instance.test_db)
+        end
+
+        let(:subscriber) { EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        context 'when authorized_collections is provided' do
+          let(:options) do
+            { authorized_collections: true }
+          end
+
+          let!(:result) do
+            database.collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes original options to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['authorizedCollections']).to eq(true)
+          end
+        end
+
+        context 'when no options are provided' do
+          let!(:result) do
+            database.collection_names
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes default values to server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to eq(false)
+          end
+        end
+      end
     end
   end
 
@@ -239,6 +312,98 @@ describe Mongo::Database do
         end
       end
     end
+
+    context 'when provided a filter' do
+
+      let(:result) do
+        database.collection_names(filter: { name: 'acol' })
+      end
+
+      it 'returns acol collections' do
+        expect(result.length).to eq(1)
+        expect(result.first).to eq('acol')
+      end
+    end
+
+    context 'when provided authorized_collections or name_only options or not' do
+      require_topology :replica_set, :sharded
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.2'
+
+        let(:database) do
+          described_class.new(client, SpecConfig.instance.test_db)
+        end
+
+        let(:subscriber) { EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        context 'when both are provided' do
+          let(:options) do
+            { name_only: true, authorized_collections: true }
+          end
+
+          let!(:result) do
+            database.list_collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes original options to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to eq(true)
+          end
+        end
+
+        context 'when name_only is provided' do
+          let(:options) do
+            { name_only: false }
+          end
+
+          let!(:result) do
+            database.list_collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes original options to server with authorizedCollections as default false' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(false)
+            expect(command['authorizedCollections']).to eq(false)
+          end
+        end
+
+        context 'when no options provided' do
+
+          let!(:result) do
+            database.list_collections
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes default options to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(false)
+            expect(command['authorizedCollections']).to eq(false)
+          end
+        end
+      end
+    end
+
   end
 
   describe '#collections' do
@@ -302,6 +467,91 @@ describe Mongo::Database do
         expect {
           database.collections
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when provided a filter' do
+
+      let(:database) do
+        described_class.new(unauthorized_client, SpecConfig.instance.test_db)
+      end
+
+      let(:collection2) do
+        Mongo::Collection.new(database, 'users2')
+      end
+
+      before do
+        database[:users1].drop
+        database[:users1].create
+
+        database[:users2].drop
+        database[:users2].create
+      end
+
+      let(:result) do
+        database.collections(filter: { name: 'users2' })
+      end
+
+      it 'returns users2 collection' do
+        expect(result.length).to eq(1)
+        expect(database.collections).to include(collection2)
+      end
+    end
+
+    context 'when provided authorized_collections or not' do
+
+      require_topology :replica_set, :sharded
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.2'
+
+        let(:database) do
+          described_class.new(client, SpecConfig.instance.test_db)
+        end
+
+        let(:subscriber) { EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        context 'when authorized_collections are provided' do
+          let(:options) do
+            { authorized_collections: false }
+          end
+
+          let!(:result) do
+            database.collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes original authorized_collections to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to eq(false)
+          end
+        end
+
+        context 'when no options are provided' do
+          let!(:result) do
+            database.collections
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes default authorizedCollections to server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['authorizedCollections']).to eq(false)
+          end
+        end
       end
     end
   end

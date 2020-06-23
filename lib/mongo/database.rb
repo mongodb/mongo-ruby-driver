@@ -113,6 +113,16 @@ module Mongo
     # @note The set of returned collection names depends on the version of
     #   MongoDB server that fulfills the request.
     #
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
+    #
     # @return [ Array<String> ] Names of the collections.
     #
     # @since 2.0.0
@@ -129,6 +139,13 @@ module Mongo
     # @param [ Hash ] options
     #
     # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :name_only Indicates whether command
+    #   should return just collection/view names and type or return both the
+    #   name and other information
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
     #
@@ -136,8 +153,8 @@ module Mongo
     #   collection in the database.
     #
     # @since 2.0.5
-    def list_collections(**options)
-      View.new(self).list_collections(**options)
+    def list_collections(options = {})
+      View.new(self).list_collections(options)
     end
 
     # Get all the non-system collections that belong to this database.
@@ -145,11 +162,21 @@ module Mongo
     # @note The set of returned collections depends on the version of
     #   MongoDB server that fulfills the request.
     #
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned. 
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
+    #
     # @return [ Array<Mongo::Collection> ] The collections.
     #
     # @since 2.0.0
-    def collections
-      collection_names.map { |name| collection(name) }
+    def collections(options = {})
+      collection_names(options).map { |name| collection(name) }
     end
 
     # Execute a command on the database.

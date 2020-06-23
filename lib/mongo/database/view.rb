@@ -47,6 +47,13 @@ module Mongo
       #
       # @option options [ Integer ] :batch_size  The batch size for results
       #   returned from the listCollections command.
+      # @option options [ Hash ] :filter A filter on the collections returned.
+      # @option options [ true, false ] :authorized_collections A flag, when
+      #   set to true and used with nameOnly: true, that allows a user without the
+      #   required privilege to run the command when access control is enforced
+      #
+      #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+      #   for more information and usage.
       #
       # @return [ Array<String> ] The names of all non-system collections.
       #
@@ -55,7 +62,8 @@ module Mongo
         @batch_size = options[:batch_size]
         session = client.send(:get_session, options)
         cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session, name_only: true)
+          options[:name_only] = true
+          send_initial_query(server, session, options)
         end
         cursor.map do |info|
           if cursor.server.with_connection { |connection| connection.features }.list_collections_enabled?
@@ -81,15 +89,23 @@ module Mongo
       # @param [ Hash ] options
       #
       # @option options [ Hash ] :filter A filter on the collections returned.
+      # @option options [ true, false ] :name_only Indicates whether command
+      #   should return just collection/view names and type or return both the
+      #   name and other information
+      # @option options [ true, false ] :authorized_collections A flag, when
+      #   set to true and used with nameOnly: true, that allows a user without the
+      #   required privilege to run the command when access control is enforced
+      #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/
       #   for more information and usage.
       #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
       # @since 2.0.5
-      def list_collections(**options)
+
+      def list_collections(options = {})
         session = client.send(:get_session)
-        collections_info(session, ServerSelector.primary, **options)
+        collections_info(session, ServerSelector.primary, options)
       end
 
       # Create the new database view.
@@ -164,8 +180,12 @@ module Mongo
           db_name: @database.name,
           session: session
         }.tap do |spec|
-          spec[:selector][:nameOnly] = true if options[:name_only]
+          # nameOnly and authorizedCollections default to false
+          if options[:name_only] ? (spec[:selector][:nameOnly] = true) : (spec[:selector][:nameOnly] = false)
+          end
           spec[:selector][:filter] = options[:filter] if options[:filter]
+          if options[:authorized_collections] ? (spec[:selector][:authorizedCollections] = true) : (spec[:selector][:authorizedCollections] = false)
+          end
         end
       end
 
