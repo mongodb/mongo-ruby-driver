@@ -331,5 +331,14 @@ describe Mongo::Session do
         expect(block_session.ended?).to be true
       end
     end
+
+    context 'when block returns value' do
+      it 'is returned by the function' do
+        res = authorized_client.start_session do |session| 
+          4
+        end
+        expect(res).to be 4
+      end
+    end
   end
 end
