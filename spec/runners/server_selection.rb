@@ -154,12 +154,10 @@ def define_server_selection_spec_tests(test_paths)
 
       let(:options) do
         if spec.heartbeat_frequency
-          SpecConfig.instance.test_options.merge(heartbeat_frequency: spec.heartbeat_frequency)
+          {heartbeat_frequency: spec.heartbeat_frequency}
         else
-          SpecConfig.instance.test_options.dup.tap do |opts|
-            opts.delete(:heartbeat_frequency)
-          end
-        end.merge!(server_selection_timeout: 0.1, connect_timeout: 0.1)
+          {server_selection_timeout: 0.1, connect_timeout: 0.1}
+        end
       end
 
       let(:cluster) do
@@ -246,6 +244,10 @@ def define_server_selection_spec_tests(test_paths)
 
       let(:server_selector) do
         Mongo::ServerSelector.get(server_selector_definition)
+      end
+
+      let(:app_metadata) do
+        Mongo::Server::AppMetadata.new({})
       end
 
       before do
