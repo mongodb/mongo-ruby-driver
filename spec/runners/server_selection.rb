@@ -157,9 +157,9 @@ def define_server_selection_spec_tests(test_paths)
 
       let(:options) do
         if spec.heartbeat_frequency
-          {heartbeat_frequency: spec.heartbeat_frequency}
+          {server_selection_timeout: 0.1, heartbeat_frequency: spec.heartbeat_frequency}
         else
-          {server_selection_timeout: 0.1, connect_timeout: 0.1}
+          {server_selection_timeout: 0.1}
         end
       end
 
