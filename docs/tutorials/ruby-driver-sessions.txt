@@ -90,12 +90,6 @@ A session can be created by calling the ``start_session`` method on a client:
 
   session = client.start_session
 
-Keep in mind that when starting a session this way you must remember to end it as well:
-
-.. code-block:: ruby
-
-  session.end_session
-
 Unacknowledged Writes
 =====================
 
