@@ -443,7 +443,12 @@ module Mongo
         @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
-        @srv_records = nil
+        if addresses.any? { |addr| addr =~ /mongodb(\+srv)?:\/\// }
+          raise "Protocol should not be included in host list. Did you mean to not use an array?"
+        else
+          @srv_records = nil
+        end
+   
       end
 
       # Special handling for sdam_proc as it is only used during client

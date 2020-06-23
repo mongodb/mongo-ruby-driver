@@ -1277,6 +1277,26 @@ describe Mongo::Client do
           expect(block_client_raise.cluster.connected?).to eq(false)
         end
       end
+
+      context 'when the hosts given include the protocol' do
+        it 'raises an error on mongodb://' do
+          expect do 
+            Mongo::Client.new(['mongodb://127.0.0.1:27017/test'])
+          end.to raise_error(StandardError, "Protocol should not be included in host list. Did you mean to not use an array?")
+        end
+
+        it 'raises an error on mongodb+srv://' do
+          expect do 
+            Mongo::Client.new(['mongodb+srv://127.0.0.1:27017/test'])
+          end.to raise_error(StandardError, "Protocol should not be included in host list. Did you mean to not use an array?")
+        end
+
+        it 'raises an error on multiple items' do
+          expect do 
+            Mongo::Client.new(['127.0.0.1:27017', 'mongodb+srv://127.0.0.1:27017/test'])
+          end.to raise_error(StandardError, "Protocol should not be included in host list. Did you mean to not use an array?")
+        end
+      end
     end
   end
 
