@@ -193,6 +193,7 @@ describe 'change streams examples in Ruby' do
       expect(change['fullDocument']).not_to be_nil
       expect(change['fullDocument']['_id']).not_to be_nil
       expect(change['fullDocument']['username']).to eq('alice')
+      expect(change['newField']).to eq('this is an added field!')
       expect(change['ns']).not_to be_nil
       expect(change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(change['ns']['coll']).to eq(inventory.name)
