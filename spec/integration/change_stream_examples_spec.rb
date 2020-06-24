@@ -178,8 +178,8 @@ describe 'change streams examples in Ruby' do
           { "$match" => { 'fullDocument.username' => 'alice' } },
           { "$addFields" => { 'newField' => 'this is an added field!' } }
         ];
-        changeStream = inventory.watch(pipeline).to_enum
-        changeStream.next
+        cursor = inventory.watch(pipeline).to_enum
+        cursor.next
 
         # End Changestream Example 4
       end
