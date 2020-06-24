@@ -443,6 +443,12 @@ module Mongo
         @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
+        addresses.each do |addr| 
+          if addr =~ /\Amongodb(\+srv)?:\/\//i
+            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
+          end
+        end
+        
         @srv_records = nil
       end
 
