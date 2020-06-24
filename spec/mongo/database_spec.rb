@@ -156,6 +156,7 @@ describe Mongo::Database do
     end
 
     context 'when provided a filter' do
+      min_server_version '3.0'
 
       before do
         database['users2'].drop
@@ -310,19 +311,7 @@ describe Mongo::Database do
           expect(result).to include('admin.acol')
         end
       end
-    end
-
-    context 'when provided a filter' do
-
-      let(:result) do
-        database.collection_names(filter: { name: 'acol' })
-      end
-
-      it 'returns acol collections' do
-        expect(result.length).to eq(1)
-        expect(result.first).to eq('acol')
-      end
-    end
+    end 
 
     context 'when provided authorized_collections or name_only options or not' do
 
@@ -469,6 +458,7 @@ describe Mongo::Database do
     end
 
     context 'when provided a filter' do
+      min_server_version '3.0'
 
       let(:database) do
         described_class.new(authorized_client, SpecConfig.instance.test_db)
