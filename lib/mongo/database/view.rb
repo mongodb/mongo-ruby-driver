@@ -100,8 +100,7 @@ module Mongo
       #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
-      # @since 2.0.5
-
+      # @since 2.0.5 
       def list_collections(options = {})
         session = client.send(:get_session)
         collections_info(session, ServerSelector.primary, options)

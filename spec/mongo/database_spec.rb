@@ -471,7 +471,7 @@ describe Mongo::Database do
     context 'when provided a filter' do
 
       let(:database) do
-        described_class.new(unauthorized_client, SpecConfig.instance.test_db)
+        described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
 
       let(:collection2) do
