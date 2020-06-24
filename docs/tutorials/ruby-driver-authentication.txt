@@ -470,7 +470,7 @@ MONGODB-CR
 ``````````
 
 *Deprecated:* MONGODB-CR mechanism is deprecated as of MongoDB 3.6 and
-removed as of MongoDB 4.0. Please use `SCRAM authentication <scram>`_ instead.
+removed as of MongoDB 4.0. Please use `SCRAM authentication <#scram>`_ instead.
 
 MONGODB-CR was the default authentication mechanism for MongoDB through
 version 2.6.

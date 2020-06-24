@@ -878,8 +878,17 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      get_session(options.merge(implicit: false)) or
+      session = get_session(options.merge(implicit: false)) or
         raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
+      if block_given?
+        begin 
+          yield session
+        ensure
+          session.end_session
+        end
+      else
+        session
+      end
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
