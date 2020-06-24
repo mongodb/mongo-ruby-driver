@@ -48,6 +48,18 @@ specify the Atlas deployment URI:
 The driver will discover all nodes in the cluster and connect to them as
 needed.
 
+Block Syntax
+````````````
+
+Another way to create a Mongo::Client object is to use the block syntax:
+
+.. code-block:: ruby
+
+  Mongo::Client.new(...) do |client|
+    # work with the client
+  end
+
+Note that when creating a client using this syntax, the client is automatically closed after the block finishes executing.
 
 Database
 ````````
@@ -1063,6 +1075,8 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 .. code-block:: ruby
 
     client.close
+
+Note that when creating a client using the `block syntax <#block-syntax>`_ described above, the client is automatically closed after the block finishes executing.
 
 
 Usage with Forking Servers
