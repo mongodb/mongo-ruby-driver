@@ -164,9 +164,9 @@ module Mongo
     #
     # @param [ Hash ] options
     #
-    # @option options [ Hash ] :filter A filter on the collections returned. 
+    # @option options [ Hash ] :filter A filter on the collections returned.
     # @option options [ true, false ] :authorized_collections A flag, when
-    #   set to true and used with nameOnly: true, that allows a user without the
+    #   set to true and used with name_only: true, that allows a user without the
     #   required privilege to run the command when access control is enforced
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/

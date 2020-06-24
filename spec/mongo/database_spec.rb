@@ -92,8 +92,8 @@ describe Mongo::Database do
     end
 
     before do
-      database[:users].drop
-      database[:users].create
+      database['users'].drop
+      database['users'].create
     end
 
     let(:actual) do
@@ -158,8 +158,8 @@ describe Mongo::Database do
     context 'when provided a filter' do
 
       before do
-        database[:users2].drop
-        database[:users2].create
+        database['users2'].drop
+        database['users2'].create
       end
 
       let(:result) do
@@ -174,9 +174,8 @@ describe Mongo::Database do
 
     context 'when provided authorized_collections or not' do
 
-      require_topology :replica_set, :sharded
-      context 'on server versions >= 4.4' do
-        min_server_fcv '4.2'
+      context 'on server versions >= 4.0' do
+        min_server_fcv '4.0'
 
         let(:database) do
           described_class.new(client, SpecConfig.instance.test_db)
@@ -203,7 +202,7 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'passes original options to the server' do
+          it 'passes authorized_collections to the server' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['authorizedCollections']).to eq(true)
@@ -219,11 +218,11 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'passes default values to server' do
+          it 'authorized_collections not passed to server' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to eq(false)
+            expect(command['authorizedCollections']).to be_nil
           end
         end
       end
@@ -243,8 +242,8 @@ describe Mongo::Database do
     end
 
     before do
-      database[:acol].drop
-      database[:acol].create
+      database['acol'].drop
+      database['acol'].create
     end
 
     context 'server 3.0+' do
@@ -256,8 +255,8 @@ describe Mongo::Database do
 
       context 'with more than one collection' do
         before do
-          database[:anothercol].drop
-          database[:anothercol].create
+          database['anothercol'].drop
+          database['anothercol'].create
 
           expect(database.collections.length).to be > 1
         end
@@ -326,9 +325,9 @@ describe Mongo::Database do
     end
 
     context 'when provided authorized_collections or name_only options or not' do
-      require_topology :replica_set, :sharded
-      context 'on server versions >= 4.4' do
-        min_server_fcv '4.2'
+
+      context 'on server versions >= 4.0' do
+        min_server_fcv '4.0'
 
         let(:database) do
           described_class.new(client, SpecConfig.instance.test_db)
@@ -376,11 +375,11 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'passes original options to server with authorizedCollections as default false' do
+          it 'no options passed to server because false' do
             expect(events.length).to eq(1)
             command = events.first.command
-            expect(command['nameOnly']).to eq(false)
-            expect(command['authorizedCollections']).to eq(false)
+            expect(command['nameOnly']).to be_nil
+            expect(command['authorizedCollections']).to be_nil
           end
         end
 
@@ -394,16 +393,15 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'passes default options to the server' do
+          it 'no options passed to server because none provided' do
             expect(events.length).to eq(1)
             command = events.first.command
-            expect(command['nameOnly']).to eq(false)
-            expect(command['authorizedCollections']).to eq(false)
+            expect(command['nameOnly']).to be_nil
+            expect(command['authorizedCollections']).to be_nil
           end
         end
       end
     end
-
   end
 
   describe '#collections' do
@@ -419,8 +417,8 @@ describe Mongo::Database do
       end
 
       before do
-        database[:users].drop
-        database[:users].create
+        database['users'].drop
+        database['users'].create
       end
 
       it 'returns collection objects for each name' do
@@ -481,11 +479,11 @@ describe Mongo::Database do
       end
 
       before do
-        database[:users1].drop
-        database[:users1].create
+        database['users1'].drop
+        database['users1'].create
 
-        database[:users2].drop
-        database[:users2].create
+        database['users2'].drop
+        database['users2'].create
       end
 
       let(:result) do
@@ -500,9 +498,8 @@ describe Mongo::Database do
 
     context 'when provided authorized_collections or not' do
 
-      require_topology :replica_set, :sharded
-      context 'on server versions >= 4.4' do
-        min_server_fcv '4.2'
+      context 'on server versions >= 4.0' do
+        min_server_fcv '4.0'
 
         let(:database) do
           described_class.new(client, SpecConfig.instance.test_db)
@@ -529,11 +526,11 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'passes original authorized_collections to the server' do
+          it 'authorized_collections not passed to server because false' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to eq(false)
+            expect(command['authorizedCollections']).to be_nil
           end
         end
 
@@ -546,10 +543,10 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'passes default authorizedCollections to server' do
+          it 'authorized_collections not passed to server because not provided' do
             expect(events.length).to eq(1)
             command = events.first.command
-            expect(command['authorizedCollections']).to eq(false)
+            expect(command['authorizedCollections']).to be_nil
           end
         end
       end

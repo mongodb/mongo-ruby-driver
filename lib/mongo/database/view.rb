@@ -49,8 +49,8 @@ module Mongo
       #   returned from the listCollections command.
       # @option options [ Hash ] :filter A filter on the collections returned.
       # @option options [ true, false ] :authorized_collections A flag, when
-      #   set to true and used with nameOnly: true, that allows a user without the
-      #   required privilege to run the command when access control is enforced
+      #   set to true, that allows a user without the required privilege
+      #   to run the command when access control is enforced
       #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/
       #   for more information and usage.
@@ -62,8 +62,7 @@ module Mongo
         @batch_size = options[:batch_size]
         session = client.send(:get_session, options)
         cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          options[:name_only] = true
-          send_initial_query(server, session, options)
+          send_initial_query(server, session, options.merge(name_only: true))
         end
         cursor.map do |info|
           if cursor.server.with_connection { |connection| connection.features }.list_collections_enabled?
@@ -180,12 +179,9 @@ module Mongo
           db_name: @database.name,
           session: session
         }.tap do |spec|
-          # nameOnly and authorizedCollections default to false
-          if options[:name_only] ? (spec[:selector][:nameOnly] = true) : (spec[:selector][:nameOnly] = false)
-          end
+          spec[:selector][:nameOnly] = true if options[:name_only]
           spec[:selector][:filter] = options[:filter] if options[:filter]
-          if options[:authorized_collections] ? (spec[:selector][:authorizedCollections] = true) : (spec[:selector][:authorizedCollections] = false)
-          end
+          spec[:selector][:authorizedCollections] = true if options[:authorized_collections]
         end
       end
 
