@@ -175,10 +175,9 @@ describe 'change streams examples in Ruby' do
         # Start Changestream Example 4
 
         pipeline = [
-          { $match => { 'fullDocument.username' => 'alice' } },
-          { $addFields => { 'newField' => 'this is an added field!' } }
+          { "$match" => { 'fullDocument.username' => 'alice' } },
+          { "$addFields" => { 'newField' => 'this is an added field!' } }
         ];
-        inventory = db[:inventory]
         changeStream = inventory.watch(pipeline).to_enum
         changeStream.next
 
