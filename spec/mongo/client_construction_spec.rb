@@ -1282,19 +1282,31 @@ describe Mongo::Client do
         it 'raises an error on mongodb://' do
           expect do 
             Mongo::Client.new(['mongodb://127.0.0.1:27017/test'])
-          end.to raise_error(StandardError, "Protocol should not be included in host list. Did you mean to not use an array?")
+          end.to raise_error(ArgumentError, "Host 'mongodb://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
 
         it 'raises an error on mongodb+srv://' do
           expect do 
             Mongo::Client.new(['mongodb+srv://127.0.0.1:27017/test'])
-          end.to raise_error(StandardError, "Protocol should not be included in host list. Did you mean to not use an array?")
+          end.to raise_error(ArgumentError, "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
 
         it 'raises an error on multiple items' do
           expect do 
             Mongo::Client.new(['127.0.0.1:27017', 'mongodb+srv://127.0.0.1:27017/test'])
-          end.to raise_error(StandardError, "Protocol should not be included in host list. Did you mean to not use an array?")
+          end.to raise_error(ArgumentError, "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
+        end
+
+        it 'raises an error only at beginning of string' do
+          expect do 
+            Mongo::Client.new(['somethingmongodb://127.0.0.1:27017/test', 'mongodb+srv://127.0.0.1:27017/test'])
+          end.to raise_error(ArgumentError, "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
+        end
+
+        it 'raises an error with different case' do
+          expect do 
+            Mongo::Client.new(['MongOdB://127.0.0.1:27017/test'])
+          end.to raise_error(ArgumentError, "Host 'MongOdB://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
       end
     end
