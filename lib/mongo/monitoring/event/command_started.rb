@@ -90,7 +90,7 @@ module Mongo
         #
         # @api experimental
         def summary
-          "#<#{short_class_name} #{database_name}.#{command_name} command=#{command_summary}>"
+          "#<#{short_class_name} address=#{address} #{database_name}.#{command_name} command=#{command_summary}>"
         end
 
         # Returns the command, formatted as a string, with automatically added

@@ -75,7 +75,7 @@ module Mongo
         #
         # @api experimental
         def summary
-          "#<#{short_class_name} #{database_name}.#{command_name}>"
+          "#<#{short_class_name} address=#{address} #{database_name}.#{command_name}>"
         end
 
         # Create the event from a wire protocol message payload.
