@@ -54,6 +54,7 @@ Block Syntax
 Another way to create a Mongo::Client object is to use the block syntax:
 
 .. code-block:: ruby
+
   Mongo::Client.new(...) do |client|
     # work with the client
   end
