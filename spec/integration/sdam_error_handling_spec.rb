@@ -19,7 +19,8 @@ describe 'SDAM error handling' do
     new_local_client(SpecConfig.instance.addresses,
       SpecConfig.instance.all_test_options.merge(
         socket_timeout: 3, connect_timeout: 3,
-        sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
+        # Uncomment to print all events to stdout:
+        #sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
         **Utils.disable_retries_client_options)
     )
   end
