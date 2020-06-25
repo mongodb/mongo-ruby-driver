@@ -817,7 +817,7 @@ module Mongo
     #
     # @option opts [ true, false ] :authorized_databases A flag that determines
     #   which databases are returned based on user privileges when access control
-    #   enabled
+    #   is enabled
     #
     #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
     #   for more information and usage.
@@ -840,7 +840,7 @@ module Mongo
     #
     # @option opts [ true, false ] :authorized_databases A flag that determines
     #   which databases are returned based on user privileges when access control
-    #   enabled
+    #   is enabled
     #
     #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
     #   for more information and usage.
