@@ -31,10 +31,14 @@ functions:
       params:
         working_dir: "src"
         script: |
-          set -ex
+          set -e
           
-          curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
-          chmod +x ./egos
+          # Python version:
+          #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
+          
+          # C version:
+          curl -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
+          gcc -O2 -g -oegos -lrt egos.c
 
   "create expansions":
     # Make an evergreen expansion file with dynamic values
