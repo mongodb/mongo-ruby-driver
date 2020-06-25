@@ -107,13 +107,13 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
   end
 
-  describe '#select' do
+  describe '#select_in_replica_set' do
 
     context 'no candidates' do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(selector.send(:select, candidates)).to be_empty
+        expect(selector.send(:select_in_replica_set, candidates)).to be_empty
       end
     end
 
@@ -121,7 +121,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:candidates) { [primary] }
 
       it 'returns an array with the primary' do
-        expect(selector.send(:select, candidates)).to eq( [primary] )
+        expect(selector.send(:select_in_replica_set, candidates)).to eq( [primary] )
       end
     end
 
@@ -129,7 +129,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:candidates) { [secondary] }
 
       it 'returns an array with the secondary' do
-        expect(selector.send(:select, candidates)).to eq( [secondary] )
+        expect(selector.send(:select_in_replica_set, candidates)).to eq( [secondary] )
       end
     end
 
@@ -138,7 +138,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:expected) { [primary] }
 
       it 'returns an array with the primary' do
-        expect(selector.send(:select, candidates)).to eq(expected)
+        expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
       end
     end
 
@@ -147,7 +147,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:expected) { [primary] }
 
       it 'returns an array with the primary' do
-        expect(selector.send(:select, candidates)).to eq(expected)
+        expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
       end
     end
 
@@ -168,7 +168,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [primary] }
 
           it 'returns array with primary' do
-            expect(selector.send(:select, candidates)).to eq([primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([primary])
           end
         end
 
@@ -176,7 +176,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [matching_primary] }
 
           it 'returns array with matching primary' do
-            expect(selector.send(:select, candidates)).to eq([matching_primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_primary])
           end
         end
 
@@ -184,7 +184,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [matching_secondary] }
 
           it 'returns array with matching secondary' do
-            expect(selector.send(:select, candidates)).to eq([matching_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_secondary])
           end
         end
 
@@ -192,7 +192,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [secondary] }
 
           it 'returns an empty array' do
-            expect(selector.send(:select, candidates)).to be_empty
+            expect(selector.send(:select_in_replica_set, candidates)).to be_empty
           end
         end
       end
@@ -203,7 +203,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [primary, secondary, secondary] }
 
           it 'returns an array with the primary' do
-            expect(selector.send(:select, candidates)).to eq([primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([primary])
           end
         end
 
@@ -211,7 +211,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [matching_primary, secondary, secondary] }
 
           it 'returns an array of the primary' do
-            expect(selector.send(:select, candidates)).to eq([matching_primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_primary])
           end
         end
 
@@ -220,7 +220,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:expected) { [primary] }
 
           it 'returns an array of the primary' do
-            expect(selector.send(:select, candidates)).to eq(expected)
+            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
           end
         end
 
@@ -229,7 +229,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:expected) { [primary] }
 
           it 'returns an array of the primary ' do
-            expect(selector.send(:select, candidates)).to eq(expected)
+            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
           end
         end
 
@@ -238,7 +238,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:expected) { [primary] }
 
           it 'returns an array of the primary' do
-            expect(selector.send(:select, candidates)).to eq(expected)
+            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
           end
         end
       end
@@ -254,7 +254,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [far_primary] }
 
           it 'returns array with far primary' do
-            expect(selector.send(:select, candidates)).to eq([far_primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_primary])
           end
         end
 
@@ -262,7 +262,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           let(:candidates) { [far_secondary] }
 
           it 'returns array with far primary' do
-            expect(selector.send(:select, candidates)).to eq([far_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_secondary])
           end
 
         end
@@ -277,7 +277,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [primary] }
 
             it 'returns an array of the primary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
 
@@ -286,7 +286,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [primary] }
 
             it 'returns an array of the primary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
 
@@ -295,7 +295,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [far_primary] }
 
             it 'returns an array of the far primary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
 
@@ -304,7 +304,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [far_primary] }
 
             it 'returns an array of the far primary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
 
@@ -315,7 +315,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
               let(:expected) { [primary] }
 
               it 'returns an array of the primary' do
-                expect(selector.send(:select, candidates)).to eq(expected)
+                expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
               end
             end
 
@@ -324,7 +324,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
               let(:expected) { [far_primary] }
 
               it 'returns an array with primary' do
-                expect(selector.send(:select, candidates)).to eq(expected)
+                expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
               end
             end
           end
@@ -337,7 +337,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [secondary] }
 
             it 'returns an array with the secondary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
 
@@ -346,7 +346,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [secondary] }
 
             it 'returns an array of the secondary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
 
@@ -355,7 +355,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             let(:expected) { [secondary, secondary] }
 
             it 'returns an array of the secondary' do
-              expect(selector.send(:select, candidates)).to eq(expected)
+              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
             end
           end
         end

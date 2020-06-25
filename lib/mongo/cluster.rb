@@ -395,7 +395,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      topology.servers(servers_list.compact).compact
+      topology.servers(servers_list)
     end
 
     # The addresses in the cluster.

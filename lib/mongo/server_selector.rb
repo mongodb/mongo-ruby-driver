@@ -13,7 +13,6 @@
 # limitations under the License.
 
 require 'mongo/server_selector/base'
-require 'mongo/server_selector/selectable'
 require 'mongo/server_selector/nearest'
 require 'mongo/server_selector/primary'
 require 'mongo/server_selector/primary_preferred'

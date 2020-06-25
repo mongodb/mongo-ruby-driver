@@ -22,7 +22,19 @@ shared_context 'server selector' do
       expect(server.unknown?).to be true
     end
   end
-  let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness, hedge: hedge } }
+  let(:server_selection_timeout_options) do
+    {
+      server_selection_timeout: 0.1,
+    }
+  end
+  let(:options) do
+    {
+      mode: name,
+      tag_sets: tag_sets,
+      max_staleness: max_staleness,
+      hedge: hedge,
+    }
+  end
   let(:selector) { described_class.new(options) }
   let(:monitoring) do
     Mongo::Monitoring.new(monitoring: false)

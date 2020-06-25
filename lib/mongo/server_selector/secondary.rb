@@ -21,7 +21,6 @@ module Mongo
     #
     # @since 2.0.0
     class Secondary < Base
-      include Selectable
 
       # Name of the this read preference in the server's format.
       #
@@ -93,14 +92,10 @@ module Mongo
       # Select the secondary servers taking into account any defined tag sets and
       #   local threshold between the nearest secondary and other secondaries.
       #
-      # @example Select secondary servers given a list of candidates.
-      #   preference = Mongo::ServerSelector::Secondary.new
-      #   preference.select([candidate_1, candidate_2])
-      #
       # @return [ Array ] The secondary servers from the list of candidates.
       #
       # @since 2.0.0
-      def select(candidates)
+      def select_in_replica_set(candidates)
         near_servers(secondaries(candidates))
       end
 

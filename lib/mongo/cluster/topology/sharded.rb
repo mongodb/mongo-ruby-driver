@@ -97,7 +97,7 @@ module Mongo
         #
         # @since 2.0.0
         def servers(servers)
-          servers.select{ |server| server.mongos? }
+          servers.select { |server| server.mongos? }
         end
 
         # A sharded topology is sharded.

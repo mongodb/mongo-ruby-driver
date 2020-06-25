@@ -106,13 +106,13 @@ describe Mongo::ServerSelector::Secondary do
     end
   end
 
-  describe '#select' do
+  describe '#select_in_replica_set' do
 
     context 'no candidates' do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(selector.send(:select, candidates)).to be_empty
+        expect(selector.send(:select_in_replica_set, candidates)).to be_empty
       end
     end
 
@@ -120,7 +120,7 @@ describe Mongo::ServerSelector::Secondary do
       let(:candidates) { [primary] }
 
       it 'returns an empty array' do
-        expect(selector.send(:select, candidates)).to be_empty
+        expect(selector.send(:select_in_replica_set, candidates)).to be_empty
       end
     end
 
@@ -128,7 +128,7 @@ describe Mongo::ServerSelector::Secondary do
       let(:candidates) { [secondary] }
 
       it 'returns array with secondary' do
-        expect(selector.send(:select, candidates)).to eq([secondary])
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([secondary])
       end
     end
 
@@ -136,7 +136,7 @@ describe Mongo::ServerSelector::Secondary do
       let(:candidates) { [primary, secondary] }
 
       it 'returns array with secondary' do
-        expect(selector.send(:select, candidates)).to eq([secondary])
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([secondary])
       end
     end
 
@@ -144,7 +144,7 @@ describe Mongo::ServerSelector::Secondary do
       let(:candidates) { [secondary, secondary, primary] }
 
       it 'returns array with all secondaries' do
-        expect(selector.send(:select, candidates)).to eq([secondary, secondary])
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([secondary, secondary])
       end
     end
 
@@ -158,7 +158,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [primary] }
 
           it 'returns an empty array' do
-            expect(selector.send(:select, candidates)).to be_empty
+            expect(selector.send(:select_in_replica_set, candidates)).to be_empty
           end
         end
 
@@ -166,7 +166,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [secondary] }
 
           it 'returns an empty array' do
-            expect(selector.send(:select, candidates)).to be_empty
+            expect(selector.send(:select_in_replica_set, candidates)).to be_empty
           end
         end
 
@@ -174,7 +174,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [matching_secondary] }
 
           it 'returns an array with matching secondary' do
-            expect(selector.send(:select, candidates)).to eq([matching_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_secondary])
           end
         end
       end
@@ -185,7 +185,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [primary, secondary, secondary] }
 
           it 'returns an emtpy array' do
-            expect(selector.send(:select, candidates)).to be_empty
+            expect(selector.send(:select_in_replica_set, candidates)).to be_empty
           end
         end
 
@@ -193,7 +193,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [secondary, matching_secondary]}
 
           it 'returns array with matching secondary' do
-            expect(selector.send(:select, candidates)).to eq([matching_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_secondary])
           end
         end
 
@@ -201,7 +201,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [matching_secondary, matching_secondary] }
 
           it 'returns an array with both matching secondaries' do
-            expect(selector.send(:select, candidates)).to eq([matching_secondary, matching_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_secondary, matching_secondary])
           end
         end
       end
@@ -217,7 +217,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [far_primary] }
 
           it 'returns an empty array' do
-            expect(selector.send(:select, candidates)).to be_empty
+            expect(selector.send(:select_in_replica_set, candidates)).to be_empty
           end
         end
 
@@ -225,7 +225,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(selector.send(:select, candidates)).to eq([far_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_secondary])
           end
         end
       end
@@ -236,7 +236,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [primary, far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(selector.send(:select, candidates)).to eq([far_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_secondary])
           end
         end
 
@@ -244,7 +244,7 @@ describe Mongo::ServerSelector::Secondary do
           let(:candidates) { [far_primary, far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(selector.send(:select, candidates)).to eq([far_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_secondary])
           end
         end
 
@@ -254,7 +254,7 @@ describe Mongo::ServerSelector::Secondary do
             let(:candidates) { [primary, secondary, far_secondary] }
 
             it 'returns an array with near secondary' do
-              expect(selector.send(:select, candidates)).to eq([secondary])
+              expect(selector.send(:select_in_replica_set, candidates)).to eq([secondary])
             end
           end
 
@@ -262,7 +262,7 @@ describe Mongo::ServerSelector::Secondary do
             let(:candidates) { [far_primary, secondary, secondary] }
 
             it 'returns an array with two secondaries' do
-              expect(selector.send(:select, candidates)).to eq([secondary, secondary])
+              expect(selector.send(:select_in_replica_set, candidates)).to eq([secondary, secondary])
             end
           end
         end
