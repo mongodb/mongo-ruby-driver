@@ -3,9 +3,9 @@ require 'spec_helper'
 describe 'SDAM error handling' do
   clean_slate_for_all
 
-  after(:all) do
-    # The tests install global RSpec expectations, close all clients afterward
-    # to avoid leaking expectations into subsequent tests.
+  after do
+    # Close all clients after every test to avoid leaking expectations into
+    # subsequent tests because we set global assertions on sockets.
     ClientRegistry.instance.close_all_clients
   end
 
