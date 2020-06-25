@@ -595,6 +595,7 @@ describe Mongo::Client do
     end
 
     context 'when name_only is true' do
+      min_server_fcv '3.6'
 
       let(:client_options) do
         root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
@@ -623,10 +624,8 @@ describe Mongo::Client do
       end
     end
 
-    context 'when authorized_databases is present' do
+    context 'when authorized_databases is provided' do
       min_server_fcv '4.0'
-
-      include_context 'ensure test db exists'
 
       let(:client_options) do
         root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
@@ -650,18 +649,30 @@ describe Mongo::Client do
         { authorized_databases: true }
       end
 
+      let(:noAuthDb) do
+        { authorized_databases: false }
+      end
+
       before do
         client.list_databases({}, true, authDb)
+        client.list_databases({}, true, noAuthDb)
       end
 
-      it 'sends the command with the authorizedDatabases flag set to false' do
+      let(:events) do
+        subscriber.command_started_events('listDatabases')
+      end
+
+      it 'sends the command with the authorizedDatabases flag set to true' do
+        expect(events.length).to eq(2)
+        command = events.first.command
         expect(command[:authorizedDatabases]).to be(true)
       end
+
+      it 'sends the command with the authorizedDatabases flag set to nil' do
+        command = events.last.command
+        expect(command[:authorizedDatabases]).to be_nil
+      end
     end
-
-
-
-
   end
 
   describe '#list_mongo_databases' do

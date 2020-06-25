@@ -815,17 +815,19 @@ module Mongo
     # @param [ Hash ] filter The filter criteria for getting a list of databases.
     # @param [ Hash ] opts The command options.
     #
+    # @option opts [ true, false ] :authorized_databases A flag that determines
+    #   which databases are returned based on user privileges when access control
+    #   enabled
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   for more information and usage.
+    #
     # @return [ Array<String> ] The names of the databases.
     #
     # @since 2.0.5
-    # ORIGINAL CODE
-    #def database_names(filter = {}, opts = {})
-      #list_databases(filter, true, opts).collect{ |info| info['name'] }
-    #end
     def database_names(filter = {}, opts = {})
       list_databases(filter, true, opts).collect{ |info| info['name'] }
     end
-
 
     # Get info for each database.
     #
@@ -836,21 +838,20 @@ module Mongo
     # @param [ true, false ] name_only Whether to only return each database name without full metadata.
     # @param [ Hash ] opts The command options.
     #
+    # @option opts [ true, false ] :authorized_databases A flag that determines
+    #   which databases are returned based on user privileges when access control
+    #   enabled
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   for more information and usage.
+    #
     # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
-    # ORIGINAL CODE
-    #def list_databases(filter = {}, name_only = false, opts = {})
-      #cmd = { listDatabases: 1 }
-      #cmd[:nameOnly] = !!name_only
-      #cmd[:filter] = filter unless filter.empty?
-      #use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
-    #end
     def list_databases(filter = {}, name_only = false, opts = {})
       cmd = { listDatabases: 1 }
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
-      #cmd[:filter] = opts[:filter] if opts[:filter]
       cmd[:authorizedDatabases] = true if opts[:authorized_databases]
       use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
     end
