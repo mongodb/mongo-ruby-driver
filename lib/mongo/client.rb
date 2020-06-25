@@ -443,12 +443,12 @@ module Mongo
         @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
-        addresses.each do |addr| 
+        addresses.each do |addr|
           if addr =~ /\Amongodb(\+srv)?:\/\//i
             raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
           end
         end
-        
+
         @srv_records = nil
       end
 
@@ -505,8 +505,8 @@ module Mongo
         raise
       end
 
-      if block_given? 
-        begin 
+      if block_given?
+        begin
           yield(self)
         ensure
           close
@@ -818,9 +818,14 @@ module Mongo
     # @return [ Array<String> ] The names of the databases.
     #
     # @since 2.0.5
+    # ORIGINAL CODE
+    #def database_names(filter = {}, opts = {})
+      #list_databases(filter, true, opts).collect{ |info| info['name'] }
+    #end
     def database_names(filter = {}, opts = {})
       list_databases(filter, true, opts).collect{ |info| info['name'] }
     end
+
 
     # Get info for each database.
     #
@@ -834,10 +839,19 @@ module Mongo
     # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
+    # ORIGINAL CODE
+    #def list_databases(filter = {}, name_only = false, opts = {})
+      #cmd = { listDatabases: 1 }
+      #cmd[:nameOnly] = !!name_only
+      #cmd[:filter] = filter unless filter.empty?
+      #use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
+    #end
     def list_databases(filter = {}, name_only = false, opts = {})
       cmd = { listDatabases: 1 }
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
+      #cmd[:filter] = opts[:filter] if opts[:filter]
+      cmd[:authorizedDatabases] = true if opts[:authorized_databases]
       use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
     end
 
@@ -881,7 +895,7 @@ module Mongo
       session = get_session(options.merge(implicit: false)) or
         raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
       if block_given?
-        begin 
+        begin
           yield session
         ensure
           session.end_session

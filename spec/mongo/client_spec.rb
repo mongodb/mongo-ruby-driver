@@ -622,6 +622,46 @@ describe Mongo::Client do
         expect(command[:nameOnly]).to be(true)
       end
     end
+
+    context 'when authorized_databases is present' do
+      min_server_fcv '4.0'
+
+      include_context 'ensure test db exists'
+
+      let(:client_options) do
+        root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
+      end
+
+      let(:subscriber) { EventSubscriber.new }
+
+      let(:client) do
+        ClientRegistry.instance.new_local_client(
+          SpecConfig.instance.addresses, client_options
+        ).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:command) do
+        subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
+      end
+
+      let(:authDb) do
+        { authorized_databases: true }
+      end
+
+      before do
+        client.list_databases({}, true, authDb)
+      end
+
+      it 'sends the command with the authorizedDatabases flag set to false' do
+        expect(command[:authorizedDatabases]).to be(true)
+      end
+    end
+
+
+
+
   end
 
   describe '#list_mongo_databases' do
