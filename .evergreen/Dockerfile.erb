@@ -32,6 +32,10 @@ FROM <%= base_image %>
     apt-get update && \
     apt-get install -y curl zsh
 
+<% else %>
+
+  RUN echo assumeyes=1 |tee -a /etc/yum.conf
+
 <% end %>
 
 <% if ruby_head? %>
