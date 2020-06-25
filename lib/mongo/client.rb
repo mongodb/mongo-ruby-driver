@@ -443,12 +443,12 @@ module Mongo
         @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
-        addresses.each do |addr| 
+        addresses.each do |addr|
           if addr =~ /\Amongodb(\+srv)?:\/\//i
             raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
           end
         end
-        
+
         @srv_records = nil
       end
 
@@ -505,8 +505,8 @@ module Mongo
         raise
       end
 
-      if block_given? 
-        begin 
+      if block_given?
+        begin
           yield(self)
         ensure
           close
@@ -815,6 +815,13 @@ module Mongo
     # @param [ Hash ] filter The filter criteria for getting a list of databases.
     # @param [ Hash ] opts The command options.
     #
+    # @option opts [ true, false ] :authorized_databases A flag that determines
+    #   which databases are returned based on user privileges when access control
+    #   is enabled
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   for more information and usage.
+    #
     # @return [ Array<String> ] The names of the databases.
     #
     # @since 2.0.5
@@ -831,6 +838,13 @@ module Mongo
     # @param [ true, false ] name_only Whether to only return each database name without full metadata.
     # @param [ Hash ] opts The command options.
     #
+    # @option opts [ true, false ] :authorized_databases A flag that determines
+    #   which databases are returned based on user privileges when access control
+    #   is enabled
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   for more information and usage.
+    #
     # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
@@ -838,6 +852,7 @@ module Mongo
       cmd = { listDatabases: 1 }
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
+      cmd[:authorizedDatabases] = true if opts[:authorized_databases]
       use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
     end
 
@@ -881,7 +896,7 @@ module Mongo
       session = get_session(options.merge(implicit: false)) or
         raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
       if block_given?
-        begin 
+        begin
           yield session
         ensure
           session.end_session
