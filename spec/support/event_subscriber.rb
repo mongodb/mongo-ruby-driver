@@ -35,27 +35,28 @@ class EventSubscriber
 
   attr_reader :published_events
 
-  # Cache the succeeded event.
-  #
-  # @param [ Event ] event The event.
-  #
-  # @since 2.5.0
-  def succeeded(event)
-    @mutex.synchronize do
-      succeeded_events << event
-      all_events << event
+  def initialize
+    @mutex = Mutex.new
+    clear_events!
+  end
+
+  # Event retrieval
+
+  def select_started_events(cls)
+    started_events.select do |event|
+      event.is_a?(cls)
     end
   end
 
-  # Cache the started event.
-  #
-  # @param [ Event ] event The event.
-  #
-  # @since 2.5.0
-  def started(event)
-    @mutex.synchronize do
-      started_events << event
-      all_events << event
+  def select_succeeded_events(cls)
+    succeeded_events.select do |event|
+      event.is_a?(cls)
+    end
+  end
+
+  def select_published_events(cls)
+    published_events.select do |event|
+      event.is_a?(cls)
     end
   end
 
@@ -86,15 +87,46 @@ class EventSubscriber
     events.first
   end
 
-  def select_started_events(cls)
-    started_events.select do |event|
-      event.is_a?(cls)
+  # Get the first succeeded event published for the name, and then delete it.
+  #
+  # @param [ String ] name The event name.
+  #
+  # @return [ Event ] The matching event.
+  def first_event(name)
+    cls = MAPPINGS[name]
+    if cls.nil?
+      raise ArgumentError, "Bogus event name #{name}"
+    end
+    matching = succeeded_events.find do |event|
+      cls === event
+    end
+    succeeded_events.delete(matching)
+    matching
+  end
+
+  # Event recording
+
+  # Cache the started event.
+  #
+  # @param [ Event ] event The event.
+  #
+  # @since 2.5.0
+  def started(event)
+    @mutex.synchronize do
+      started_events << event
+      all_events << event
     end
   end
 
-  def select_succeeded_events(cls)
-    succeeded_events.select do |event|
-      event.is_a?(cls)
+  # Cache the succeeded event.
+  #
+  # @param [ Event ] event The event.
+  #
+  # @since 2.5.0
+  def succeeded(event)
+    @mutex.synchronize do
+      succeeded_events << event
+      all_events << event
     end
   end
 
@@ -107,12 +139,6 @@ class EventSubscriber
     @mutex.synchronize do
       failed_events << event
       all_events << event
-    end
-  end
-
-  def select_published_events(cls)
-    published_events.select do |event|
-      event.is_a?(cls)
     end
   end
 
@@ -133,28 +159,6 @@ class EventSubscriber
     @failed_events = []
     @published_events = []
     self
-  end
-
-  def initialize
-    @mutex = Mutex.new
-    clear_events!
-  end
-
-  # Get the first succeeded event published for the name, and then delete it.
-  #
-  # @param [ String ] name The event name.
-  #
-  # @return [ Event ] The matching event.
-  def first_event(name)
-    cls = MAPPINGS[name]
-    if cls.nil?
-      raise ArgumentError, "Bogus event name #{name}"
-    end
-    matching = succeeded_events.find do |event|
-      cls === event
-    end
-    succeeded_events.delete(matching)
-    matching
   end
 end
 
