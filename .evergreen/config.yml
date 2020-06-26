@@ -305,7 +305,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           set -x
-          ./egos .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
   "run tests":
     - command: shell.exec
@@ -315,7 +315,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          ./egos .evergreen/run-tests.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests.sh
 
   "run AWS auth tests":
     - command: shell.exec
@@ -325,7 +325,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          ./egos .evergreen/run-tests-aws-auth.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-aws-auth.sh
 
   "run Kerberos unit tests":
     - command: shell.exec
@@ -335,7 +335,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          ./egos .evergreen/run-tests-kerberos-unit.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-kerberos-unit.sh
 
   "run Kerberos integration tests":
     - command: shell.exec
@@ -345,7 +345,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          ./egos .evergreen/run-tests-kerberos-integration.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-kerberos-integration.sh
 
 pre:
   - func: "fetch source"

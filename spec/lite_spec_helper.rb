@@ -20,6 +20,10 @@ CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
 
+# Disable output buffering: https://www.rubyguides.com/2019/02/ruby-io/
+STDOUT.sync = true
+STDERR.sync = true
+
 if ENV['CI']
   autoload :Byebug, 'byebug'
 else
