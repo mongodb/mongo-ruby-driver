@@ -77,8 +77,13 @@ class EventSubscriber
 
   # Locates command stated events for the specified command name,
   # asserts that there is exactly one such event, and returns it.
-  def single_command_started_event(command_name)
-    events = started_events.select do |event|
+  def single_command_started_event(command_name, include_auth: false)
+    events = if include_auth
+      started_events
+    else
+      non_auth_command_started_events
+    end
+    events.select! do |event|
       event.command[command_name]
     end
     if events.length != 1

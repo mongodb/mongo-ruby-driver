@@ -478,4 +478,20 @@ module Utils
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
+
+  # Creates an event subscriber, subscribes it to command events on the
+  # specified client, invokes the passed block, asserts there is exactly one
+  # command event published, asserts the command event published has the
+  # specified command name, and returns the published event.
+  module_function def get_command_event(client, command_name, include_auth: false)
+    subscriber = EventSubscriber.new
+    client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    begin
+      yield client
+    ensure
+      client.unsubscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+
+    subscriber.single_command_started_event(command_name, include_auth: include_auth)
+  end
 end

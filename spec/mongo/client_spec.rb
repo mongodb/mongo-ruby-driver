@@ -597,26 +597,10 @@ describe Mongo::Client do
     context 'when name_only is true' do
       min_server_fcv '3.6'
 
-      let(:client_options) do
-        root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
-      end
-
-      let(:subscriber) { EventSubscriber.new }
-
-      let(:client) do
-        ClientRegistry.instance.new_local_client(
-          SpecConfig.instance.addresses, client_options
-        ).tap do |cl|
-          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
-      end
-
       let(:command) do
-        subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
-      end
-
-      before do
-        client.list_databases({}, true)
+        Utils.get_command_event(authorized_client, 'listDatabases') do |client|
+          client.list_databases({}, true)
+        end.command
       end
 
       it 'sends the command with the nameOnly flag set to true' do
