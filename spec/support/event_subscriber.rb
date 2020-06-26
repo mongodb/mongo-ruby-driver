@@ -3,6 +3,21 @@
 # @since 2.5.0
 class EventSubscriber
 
+  # The mappings of event names to types.
+  #
+  # @since 2.4.0
+  MAPPINGS = {
+    'topology_opening_event' => Mongo::Monitoring::Event::TopologyOpening,
+    'topology_description_changed_event' => Mongo::Monitoring::Event::TopologyChanged,
+    'topology_closed_event' => Mongo::Monitoring::Event::TopologyClosed,
+    'server_opening_event' => Mongo::Monitoring::Event::ServerOpening,
+    'server_description_changed_event' => Mongo::Monitoring::Event::ServerDescriptionChanged,
+    'server_closed_event' => Mongo::Monitoring::Event::ServerClosed
+  }.freeze
+
+  # All events.
+  attr_reader :all_events
+
   # The started events.
   #
   # @since 2.5.0
@@ -27,7 +42,8 @@ class EventSubscriber
   # @since 2.5.0
   def succeeded(event)
     @mutex.synchronize do
-      succeeded_events.push(event)
+      succeeded_events << event
+      all_events << event
     end
   end
 
@@ -38,7 +54,8 @@ class EventSubscriber
   # @since 2.5.0
   def started(event)
     @mutex.synchronize do
-      started_events.push(event)
+      started_events << event
+      all_events << event
     end
   end
 
@@ -70,13 +87,13 @@ class EventSubscriber
   end
 
   def select_started_events(cls)
-    @started_events.select do |event|
+    started_events.select do |event|
       event.is_a?(cls)
     end
   end
 
   def select_succeeded_events(cls)
-    @succeeded_events.select do |event|
+    succeeded_events.select do |event|
       event.is_a?(cls)
     end
   end
@@ -88,19 +105,21 @@ class EventSubscriber
   # @since 2.5.0
   def failed(event)
     @mutex.synchronize do
-      failed_events.push(event)
+      failed_events << event
+      all_events << event
     end
   end
 
   def select_published_events(cls)
-    @published_events.select do |event|
+    published_events.select do |event|
       event.is_a?(cls)
     end
   end
 
   def published(event)
     @mutex.synchronize do
-      @published_events << event
+      published_events << event
+      all_events << event
     end
   end
 
@@ -108,6 +127,7 @@ class EventSubscriber
   #
   # @since 2.5.1
   def clear_events!
+    @all_events = []
     @started_events = []
     @succeeded_events = []
     @failed_events = []
@@ -118,5 +138,54 @@ class EventSubscriber
   def initialize
     @mutex = Mutex.new
     clear_events!
+  end
+
+  # Get the first succeeded event published for the name, and then delete it.
+  #
+  # @param [ String ] name The event name.
+  #
+  # @return [ Event ] The matching event.
+  def first_event(name)
+    cls = MAPPINGS[name]
+    if cls.nil?
+      raise ArgumentError, "Bogus event name #{name}"
+    end
+    matching = succeeded_events.find do |event|
+      cls === event
+    end
+    succeeded_events.delete(matching)
+    matching
+  end
+end
+
+# Only handles succeeded events correctly.
+class PhasedEventSubscriber < EventSubscriber
+  def initialize
+    super
+    @phase_events = {}
+  end
+
+  def phase_finished(phase_index)
+    @phase_events[phase_index] = succeeded_events
+    @succeeded_events = []
+  end
+
+  def phase_events(phase_index)
+    @phase_events[phase_index]
+  end
+
+  def event_count
+    @phase_events.inject(0) do |sum, event|
+      sum + event.length
+    end
+  end
+end
+
+class VerboseEventSubscriber < EventSubscriber
+  %w(started succeeded failed published).each do |meth|
+    define_method(meth) do |event|
+      puts event.summary
+      super(event)
+    end
   end
 end

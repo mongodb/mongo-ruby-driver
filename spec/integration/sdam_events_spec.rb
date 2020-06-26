@@ -1,8 +1,7 @@
 require 'spec_helper'
-require 'runners/sdam_monitoring'
 
 describe 'SDAM events' do
-  let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
+  let(:subscriber) { EventSubscriber.new }
 
   describe 'server closed event' do
     it 'is published when client is closed' do
@@ -12,11 +11,11 @@ describe 'SDAM events' do
 
       # get the client connected
       client.database.command(ismaster: 1)
-      expect(subscriber.events).to be_empty
+      expect(subscriber.succeeded_events).to be_empty
 
       client.close
 
-      expect(subscriber.events).not_to be_empty
+      expect(subscriber.succeeded_events).not_to be_empty
       event = subscriber.first_event('server_closed_event')
       expect(event).not_to be_nil
     end
@@ -30,11 +29,11 @@ describe 'SDAM events' do
 
       # get the client connected
       client.database.command(ismaster: 1)
-      expect(subscriber.events).to be_empty
+      expect(subscriber.succeeded_events).to be_empty
 
       client.close
 
-      expect(subscriber.events).not_to be_empty
+      expect(subscriber.succeeded_events).not_to be_empty
       event = subscriber.first_event('topology_closed_event')
       expect(event).not_to be_nil
 

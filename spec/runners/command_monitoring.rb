@@ -260,8 +260,9 @@ module Mongo
       # @param [ Mongo::Collection ] collection The collection.
       #
       # @since 2.1.0
-      def run(collection)
+      def run(collection, subscriber)
         collection.insert_many(@data)
+        subscriber.clear_events!
         @operation.execute(collection)
       end
     end
@@ -336,38 +337,6 @@ module Mongo
       # @since 2.1.0
       def matcher
         "match_#{event_type}"
-      end
-    end
-
-    # The test subscriber to track the events.
-    #
-    # @since 2.1.0
-    class TestSubscriber
-
-      def started(event)
-        command_started_event[event.command_name] = event
-      end
-
-      def succeeded(event)
-        command_succeeded_event[event.command_name] = event
-      end
-
-      def failed(event)
-        command_failed_event[event.command_name] = event
-      end
-
-      private
-
-      def command_started_event
-        @started_events ||= BSON::Document.new
-      end
-
-      def command_succeeded_event
-        @succeeded_events ||= BSON::Document.new
-      end
-
-      def command_failed_event
-        @failed_events ||= BSON::Document.new
       end
     end
   end

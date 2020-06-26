@@ -31,6 +31,12 @@ module Mongo
       def summary
         "#<#{self.class}>"
       end
+
+      private
+
+      def short_class_name
+        self.class.name.sub(/^Mongo::Monitoring::Event::/, '')
+      end
     end
   end
 end

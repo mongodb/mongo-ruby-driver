@@ -50,7 +50,7 @@ module Mongo
         # @since 2.7.0
         # @api experimental
         def summary
-          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          "#<#{short_class_name}" +
           " address=#{address} topology=#{topology.summary}>"
         end
       end

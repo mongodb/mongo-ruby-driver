@@ -85,6 +85,15 @@ module Utils
   end
   module_function :camelize
 
+  module_function def disable_retries_client_options
+    {
+      retry_reads: false,
+      retry_writes: false,
+      max_read_retries: 0,
+      max_write_retries: 0,
+    }
+  end
+
   # Converts camel case clientOptions, as used in spec tests,
   # to Ruby driver underscore options.
   def convert_client_options(spec_test_options)
@@ -446,6 +455,27 @@ module Utils
     else
       # Exec so that we do not close any clients etc. in the child.
       exec('/bin/true')
+    end
+  end
+
+  module_function def subscribe_all(client, subscriber)
+    subscribe_all_sdam_proc(subscriber).call(client)
+  end
+
+  module_function def subscribe_all_sdam_proc(subscriber)
+    lambda do |client|
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, subscriber)
+
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+
+      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
 end

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'runners/sdam_monitoring'
 
 describe Mongo::Cluster do
 
@@ -344,13 +343,13 @@ describe Mongo::Cluster do
       end
 
       let(:monitoring) { Mongo::Monitoring.new }
-      let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
+      let(:subscriber) { EventSubscriber.new }
 
       it 'publishes server closed event once' do
         monitoring.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
         expect(cluster.disconnect!).to be(true)
         expect(subscriber.first_event('server_closed_event')).not_to be nil
-        subscriber.events.clear
+        subscriber.succeeded_events.clear
         expect(cluster.disconnect!).to be(true)
         expect(subscriber.first_event('server_closed_event')).to be nil
       end

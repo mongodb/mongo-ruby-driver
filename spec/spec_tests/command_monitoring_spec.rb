@@ -20,7 +20,7 @@ describe 'Command Monitoring Events' do
         end
 
         let(:subscriber) do
-          Mongo::CommandMonitoring::TestSubscriber.new
+          EventSubscriber.new
         end
 
         let(:monitoring) do
@@ -32,25 +32,35 @@ describe 'Command Monitoring Events' do
           authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
         end
 
-        after do
-          monitoring.subscribers[Mongo::Monitoring::COMMAND].delete(subscriber)
-          authorized_collection.find.delete_many
-        end
-
-        test.expectations.each do |expectation|
+        test.expectations.each_with_index do |expectation, index|
 
           it "generates a #{expectation.event_name} for #{expectation.command_name}" do
             begin
-              test.run(authorized_collection)
-              event = subscriber.send(expectation.event_type)[expectation.command_name]
-              expect(event).to send(expectation.matcher, expectation)
+              test.run(authorized_collection, subscriber)
+              check_event(subscriber, index, expectation)
             rescue Mongo::Error::OperationFailure, Mongo::Error::BulkWriteError
-              event = subscriber.send(expectation.event_type)[expectation.command_name]
-              expect(event).to send(expectation.matcher, expectation)
+              check_event(subscriber, index, expectation)
             end
           end
         end
       end
     end
+  end
+
+  def check_event(subscriber, index, expectation)
+    subscriber.all_events.length.should > index
+    # TODO move this filtering into EventSubscriber
+    events = subscriber.all_events.reject do |event|
+      (
+        event.is_a?(Mongo::Monitoring::Event::CommandStarted) ||
+        event.is_a?(Mongo::Monitoring::Event::CommandSucceeded) ||
+        event.is_a?(Mongo::Monitoring::Event::CommandFailed)
+      ) &&
+      %w(authenticate getnonce saslStart saslContinue).include?(event.command_name)
+    end
+    actual_event = events[index]
+    expected_event_type = expectation.event_type.sub(/_event$/, '')
+    Utils.underscore(actual_event.class.name.sub(/.*::/, '')).to_s.should == expected_event_type
+    expect(actual_event).to send(expectation.matcher, expectation)
   end
 end

@@ -67,6 +67,17 @@ module Mongo
           @duration = duration
         end
 
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @api experimental
+        def summary
+          "#<#{short_class_name} address=#{address} #{database_name}.#{command_name}>"
+        end
+
         # Create the event from a wire protocol message payload.
         #
         # @example Create the event.
