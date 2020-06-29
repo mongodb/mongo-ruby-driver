@@ -941,6 +941,28 @@ describe Mongo::Collection do
         it_behaves_like 'a failed operation using a session'
       end
     end
+
+    context 'when collation has a strength' do 
+      let(:band_collection) do 
+        described_class.new(database, :bands)
+      end
+
+      before do
+        band_collection.delete_many({})
+        band_collection.insert_many([{ name: "Depeche Mode" }, { name: "New Order" }])
+      end
+
+      let(:options) do 
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+      let(:band_result) do 
+        band_collection.find({ name: 'DEPECHE MODE' }, options)
+      end
+
+      it 'finds Capitalize from UPPER CASE' do 
+        expect(band_result.count_documents).to eq(1)
+      end
+    end
   end
 
   describe '#drop' do

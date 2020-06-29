@@ -193,7 +193,9 @@ module Mongo
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
           pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
-          opts.select! { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
+          opts = opts.select { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
+          opts[:collation] = @options[:collation] unless opts[:collation]
+
           first = aggregate(pipeline, opts).first
           return 0 unless first
           first['n'].to_i
