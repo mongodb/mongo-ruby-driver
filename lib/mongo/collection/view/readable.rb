@@ -194,7 +194,7 @@ module Mongo
           pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
           opts = opts.select { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
-          opts[:collation] = @options[:collation] unless opts[:collation]
+          opts[:collation] ||= collation
 
           first = aggregate(pipeline, opts).first
           return 0 unless first

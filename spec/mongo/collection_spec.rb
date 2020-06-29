@@ -948,7 +948,7 @@ describe Mongo::Collection do
       end
 
       before do
-        band_collection.delete_many({})
+        band_collection.delete_many
         band_collection.insert_many([{ name: "Depeche Mode" }, { name: "New Order" }])
       end
 
