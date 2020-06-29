@@ -537,8 +537,15 @@ module Mongo
     # @since 2.0.0
     def insert_one(document, opts = {})
       client.send(:with_session, opts) do |session|
-        write_concern = write_concern_with_session(session) 
+
+        if opts.has_key?(:write_concern) ? (write_concern = WriteConcern.get(opts[:write_concern])) : (write_concern = write_concern_with_session(session))
+        end 
+
         write_with_retry(session, write_concern) do |server, txn_num|
+
+        #original code
+        #write_concern = write_concern_with_session(session)
+        #write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Insert.new(
               :documents => [ document ],
               :db_name => database.name,

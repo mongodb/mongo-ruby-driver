@@ -1601,6 +1601,7 @@ describe Mongo::Collection do
         expect(result.inserted_count).to be(0)
       end
     end
+
   end
 
   describe '#insert_one' do
@@ -1683,8 +1684,6 @@ describe Mongo::Collection do
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
 
-
-
     # NEW TESTS
     context 'when write_concern is passed in as option' do
       min_server_fcv '4.0'
@@ -1705,16 +1704,20 @@ describe Mongo::Collection do
         subscriber.command_started_events('insert')
       end
 
+      let(:collection) do
+        authorized_collection.with(write_concern: {w:3})
+      end
+
       let!(:operation) do
-        authorized_collection.with(write_concern: {w:3}).insert_one({name: 'grace'}, {session:session, write_concern: {w:4}})
+        collection.insert_one({name: 'grace'}, {session:session, write_concern: {w:1}})
       end
 
       it 'inserted successfully' do
-        #expect(operation.written_count).to eq(1)
+        expect(operation.written_count).to eq(1)
         expect(events.length).to eq(1)
         command = events.first.command
-        expect(command['writeConcern']['w']).to eq(3)
-
+        expect(command['writeConcern']).to_not be_nil
+        expect(command['writeConcern']['w']).to eq(1)
       end
     end
 
@@ -4718,6 +4721,45 @@ describe Mongo::Collection do
             }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
           end
         end
+      end
+    end
+
+    # NEW TESTS
+    context 'when the collection updates write concern' do
+      min_server_fcv '3.2'
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:subscriber) { EventSubscriber.new }
+
+      let(:client) do
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:events) do
+        subscriber.command_started_events('findAndModify')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: { w: 2 })
+      end
+
+      let(:document) do
+        collection.find_one_and_update(selector,
+                                       { '$set' => {field: 'testing'}},
+                                        {:return_document => :after, write_concern: {w:1}})
+      end
+
+      it 'uses the write concern' do
+        expect(document['field']).to eq('testing')
+        expect(events.length).to eq(1)
+        command = events.first.command
+        expect(command['writeConcern']).to_not be_nil
+        expect(command['writeConcern']['w']).to eq(1)
       end
     end
   end
