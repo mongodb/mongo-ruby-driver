@@ -1602,6 +1602,32 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when write concern passed in as option' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:events) do
+        subscriber.command_started_events('insert')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 2})
+      end
+
+      let!(:command) do
+       Utils.get_command_event(authorized_client, 'insert') do |client|
+         collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session:session, write_concern: {w: 3})
+       end.command
+     end
+
+      it 'inserts many successfully with correct write concern' do
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(3)
+      end
+    end
   end
 
   describe '#insert_one' do
@@ -1684,20 +1710,10 @@ describe Mongo::Collection do
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
 
-    # NEW TESTS
     context 'when write_concern is passed in as option' do
-      min_server_fcv '4.0'
 
       let(:session) do
         authorized_client.start_session
-      end
-
-      let(:subscriber) { EventSubscriber.new }
-
-      let(:client) do
-        authorized_client.tap do |client|
-          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
       end
 
       let(:events) do
@@ -1705,19 +1721,19 @@ describe Mongo::Collection do
       end
 
       let(:collection) do
-        authorized_collection.with(write_concern: {w:3})
+        authorized_collection.with(write_concern: {w: 3})
       end
 
-      let!(:operation) do
-        collection.insert_one({name: 'grace'}, {session:session, write_concern: {w:1}})
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'insert') do |client|
+          collection.insert_one({name: 'test1'}, session:session, write_concern: {w: 1})
+        end.command
       end
 
-      it 'inserted successfully' do
-        expect(operation.written_count).to eq(1)
+      it 'inserted successfully with correct write_concern' do
         expect(events.length).to eq(1)
-        command = events.first.command
-        expect(command['writeConcern']).to_not be_nil
-        expect(command['writeConcern']['w']).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(1)
       end
     end
 
@@ -1825,6 +1841,46 @@ describe Mongo::Collection do
             expect(result3.written_count).to eq(1)
           end
         end
+      end
+    end
+  end
+
+  describe '#bulk_write' do
+
+    context 'when write concern passed in as an option' do
+      min_server_fcv '3.2'
+
+      let(:requests) do
+        [
+          { insert_one: { _id: 0 }},
+          { insert_one: { _id: 1 }},
+          { insert_one: { _id: 2 }}
+        ]
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'insert') do |client|
+          collection.bulk_write(requests, session: session, write_concern: {w: 3})
+        end.command
+      end
+
+      let(:events) do
+        subscriber.command_started_events('insert')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 2})
+      end
+
+      it 'inserted successfully' do
+        expect(collection.count).to eq(3)
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(3)
       end
     end
   end
@@ -2549,6 +2605,41 @@ describe Mongo::Collection do
         expect(authorized_collection.find(name: 'bang').count).to eq(1)
       end
     end
+
+    context 'when write concern is passed in as an option' do
+
+      before do
+        authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
+      end
+
+      let(:selector) do
+        {name: 'test2'}
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:events) do
+        subscriber.command_started_events('delete')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 2})
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'delete') do |client|
+          collection.delete_one(selector, session:session, write_concern: {w: 3})
+        end.command
+      end
+
+      it 'deletes successfully with the correct write concern' do
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(3)
+      end
+    end
   end
 
   describe '#delete_many' do
@@ -2737,6 +2828,41 @@ describe Mongo::Collection do
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
         expect(authorized_collection.find(name: 'bang').count).to eq(2)
+      end
+    end
+
+    context 'when write concern is passed in as an option' do
+
+      before do
+        collection.insert_many([{ name: 'test1' }, { name: 'test2' }, { name: 'test3'}])
+      end
+
+      let(:selector) do
+        {name: 'test1'}
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:events) do
+        subscriber.command_started_events('delete')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 1})
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'delete') do |client|
+          collection.delete_many(selector, session: session, write_concern: {w: 2})
+        end.command
+      end
+
+      it 'deletes many successfully with correct write concern' do
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(2)
       end
     end
   end
@@ -3245,6 +3371,43 @@ describe Mongo::Collection do
 
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
+
+    context 'when write concern is passed in as an option' do
+
+      before do
+        authorized_collection.insert_one({field: 'test1'})
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:events) do
+        subscriber.command_started_events('update')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 3})
+      end
+
+      let(:updated) do
+        collection.find(field: 'test4').first
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'update') do |client|
+          collection.replace_one(selector, { field: 'test4'},
+                                 session:session, :return_document => :after, write_concern: {w: 1})
+       end.command
+      end
+
+      it 'replaced successfully with the correct write concern' do
+        expect(updated[:field]).to eq('test4')
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(1)
+      end
+    end
   end
 
   describe '#update_many' do
@@ -3667,6 +3830,37 @@ describe Mongo::Collection do
 
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
+
+    context 'when write_concern is passed in as an option' do
+
+      before do
+        collection.insert_many([{ field: 'test' }, { field: 'test2' }], session: session)
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 1})
+      end
+
+      let(:events) do
+        subscriber.command_started_events('update')
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'update') do |client|
+          collection.update_many(selector, {'$set'=> { field: 'testing' }}, session: session, write_concern: {w: 3})
+        end.command
+      end
+
+      it 'inserted successfully' do
+        expect(events.length).to eq(1)
+        expect(collection.options[:write_concern]).to eq(w: 1)
+        expect(command[:writeConcern][:w]).to eq(3)
+      end
+    end
   end
 
   describe '#update_one' do
@@ -4085,6 +4279,38 @@ describe Mongo::Collection do
 
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
+
+    context 'when write_concern is passed in as an option' do
+
+      before do
+        collection.insert_many([{ field: 'test1' }, { field: 'test2' }], session: session)
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 1})
+      end
+
+      let(:events) do
+        subscriber.command_started_events('update')
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'update') do |client|
+          collection.update_one(selector, { '$set'=> { field: 'testing' } }, session: session, write_concern: {w: 2})
+        end.command
+      end
+
+      it 'inserted successfully' do
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(2)
+        expect(collection.options[:write_concern]).to eq(w:1)
+      end
+    end
   end
 
   describe '#find_one_and_delete' do
@@ -4300,6 +4526,38 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when write_concern is passed in as an option' do
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: {w: 2})
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'findAndModify') do |client|
+          collection.find_one_and_delete(selector, session: session, write_concern: {w: 3})
+        end.command
+      end
+
+      let(:events) do
+        subscriber.command_started_events('findAndModify')
+      end
+
+      it 'uses the write concern' do
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(3)
       end
     end
   end
@@ -4724,20 +4982,10 @@ describe Mongo::Collection do
       end
     end
 
-    # NEW TESTS
-    context 'when the collection updates write concern' do
-      min_server_fcv '3.2'
+    context 'when write concern is passed in as an option' do
 
       let(:session) do
         authorized_client.start_session
-      end
-
-      let(:subscriber) { EventSubscriber.new }
-
-      let(:client) do
-        authorized_client.tap do |client|
-          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
       end
 
       let(:events) do
@@ -4745,21 +4993,28 @@ describe Mongo::Collection do
       end
 
       let(:collection) do
-        authorized_collection.with(write_concern: { w: 2 })
+        authorized_collection.with(write_concern: {w: 2})
       end
 
-      let(:document) do
-        collection.find_one_and_update(selector,
-                                       { '$set' => {field: 'testing'}},
-                                        {:return_document => :after, write_concern: {w:1}})
+      let(:selector) do
+        {field: 'test1'}
       end
 
-      it 'uses the write concern' do
-        expect(document['field']).to eq('testing')
+      before do
+        collection.insert_one({field: 'test1'}, session: session)
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'findAndModify') do |client|
+          collection.find_one_and_update(selector, { '$set' => {field: 'testing'}},
+                                         :return_document => :after, write_concern: {w: 1})
+        end.command
+      end
+
+      it 'find and update successfully with correct write concern' do
         expect(events.length).to eq(1)
-        command = events.first.command
-        expect(command['writeConcern']).to_not be_nil
-        expect(command['writeConcern']['w']).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(1)
       end
     end
   end
@@ -5073,6 +5328,39 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when write concern is passed in as option' do
+
+      before do
+        authorized_collection.insert_one({field: 'test1'})
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:events) do
+        subscriber.command_started_events('findAndModify')
+      end
+
+      let(:collection) do
+        authorized_collection.with(write_concern: { w: 2 })
+      end
+
+      let!(:command) do
+        Utils.get_command_event(authorized_client, 'findAndModify') do |client|
+          collection.find_one_and_replace(selector,
+                                         { '$set' => {field: 'test5'}},
+                                         :return_document => :after, write_concern: {w: 1}, session: session)
+        end.command
+      end
+
+      it 'find and replace successfully with correct write concern' do
+        expect(events.length).to eq(1)
+        expect(command[:writeConcern]).to_not be_nil
+        expect(command[:writeConcern][:w]).to eq(1)
       end
     end
   end
