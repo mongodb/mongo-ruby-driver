@@ -1602,7 +1602,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write concern passed in as option' do
+    context 'when write_concern, bypass_document_validation passed in as option' do
 
       let(:session) do
         authorized_client.start_session
@@ -1618,14 +1618,15 @@ describe Mongo::Collection do
 
       let!(:command) do
        Utils.get_command_event(authorized_client, 'insert') do |client|
-         collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session:session, write_concern: {w: 3})
+         collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session:session, write_concern: {w: 3}, bypass_document_validation: true)
        end.command
      end
 
-      it 'inserts many successfully with correct write concern' do
+      it 'inserts many successfully with correct options' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:bypassDocumentValidation]).to be(true)
       end
     end
   end
@@ -1710,7 +1711,7 @@ describe Mongo::Collection do
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
 
-    context 'when write_concern is passed in as option' do
+    context 'when write_concern, bypass_document_validation are passed in as options' do
 
       let(:session) do
         authorized_client.start_session
@@ -1726,14 +1727,15 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'insert') do |client|
-          collection.insert_one({name: 'test1'}, session:session, write_concern: {w: 1})
+          collection.insert_one({name: 'test1'}, session:session, write_concern: {w: 1}, bypass_document_validation: true)
         end.command
       end
 
-      it 'inserted successfully with correct write_concern' do
+      it 'insert successfully with options passed down' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(1)
+        expect(command[:bypassDocumentValidation]).to be(true)
       end
     end
 
@@ -1864,7 +1866,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'insert') do |client|
-          collection.bulk_write(requests, session: session, write_concern: {w: 3})
+          collection.bulk_write(requests, session: session, write_concern: {w: 3}, bypass_document_validation: true)
         end.command
       end
 
@@ -1876,11 +1878,12 @@ describe Mongo::Collection do
         authorized_collection.with(write_concern: {w: 2})
       end
 
-      it 'inserted successfully' do
+      it 'inserts successfully and passes down options' do
         expect(collection.count).to eq(3)
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:bypassDocumentValidation]).to eq(true)
       end
     end
   end
@@ -2630,7 +2633,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'delete') do |client|
-          collection.delete_one(selector, session:session, write_concern: {w: 3})
+          collection.delete_one(selector, session:session, write_concern: {w: 3}, bypass_document_validation: true)
         end.command
       end
 
@@ -2638,6 +2641,7 @@ describe Mongo::Collection do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(3)
+        #expect(command[:bypassDocumentValidation]).to eq(true)
       end
     end
   end
@@ -2855,7 +2859,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'delete') do |client|
-          collection.delete_many(selector, session: session, write_concern: {w: 2})
+          collection.delete_many(selector, session: session, write_concern: {w: 2}, bypass_document_validation: true)
         end.command
       end
 
@@ -2863,6 +2867,7 @@ describe Mongo::Collection do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(2)
+        #expect(command[:bypassDocumentValidation]).to be(true)
       end
     end
   end
@@ -3397,15 +3402,17 @@ describe Mongo::Collection do
       let!(:command) do
         Utils.get_command_event(authorized_client, 'update') do |client|
           collection.replace_one(selector, { field: 'test4'},
-                                 session:session, :return_document => :after, write_concern: {w: 1})
+                                 session: session, :return_document => :after, write_concern: {w: 2},
+                                 bypass_document_validation: true)
        end.command
       end
 
-      it 'replaced successfully with the correct write concern' do
+      it 'replaced successfully with the correct options' do
         expect(updated[:field]).to eq('test4')
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
-        expect(command[:writeConcern][:w]).to eq(1)
+        expect(command[:writeConcern][:w]).to eq(2)
+        expect(command[:bypassDocumentValidation]).to be(true)
       end
     end
   end
@@ -3831,7 +3838,7 @@ describe Mongo::Collection do
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
 
-    context 'when write_concern is passed in as an option' do
+    context 'when write_concern, bypass_document_validation are passed in as options' do
 
       before do
         collection.insert_many([{ field: 'test' }, { field: 'test2' }], session: session)
@@ -3851,14 +3858,15 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'update') do |client|
-          collection.update_many(selector, {'$set'=> { field: 'testing' }}, session: session, write_concern: {w: 3})
+          collection.update_many(selector, {'$set'=> { field: 'testing' }}, session: session, write_concern: {w: 3}, bypass_document_validation: true)
         end.command
       end
 
-      it 'inserted successfully' do
+      it 'inserted successfully with correct options' do
         expect(events.length).to eq(1)
         expect(collection.options[:write_concern]).to eq(w: 1)
         expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:bypassDocumentValidation]).to be(true)
       end
     end
   end
@@ -4300,7 +4308,8 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'update') do |client|
-          collection.update_one(selector, { '$set'=> { field: 'testing' } }, session: session, write_concern: {w: 2})
+          collection.update_one(selector, { '$set'=> { field: 'testing' } }, session: session, write_concern: {w: 2},
+            bypass_document_validation: true, :return_document => :after)
         end.command
       end
 
@@ -4309,6 +4318,7 @@ describe Mongo::Collection do
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(2)
         expect(collection.options[:write_concern]).to eq(w:1)
+        #expect(command[:bypass_document_validation]).to be(true)
       end
     end
   end
@@ -4529,7 +4539,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is passed in as an option' do
+    context 'when write_concern and bypass_document_validation are passed into options' do
 
       before do
         authorized_collection.delete_many
@@ -4546,7 +4556,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'findAndModify') do |client|
-          collection.find_one_and_delete(selector, session: session, write_concern: {w: 3})
+          collection.find_one_and_delete(selector, session: session, write_concern: {w: 3}, bypass_document_validation: true)
         end.command
       end
 
@@ -4554,10 +4564,11 @@ describe Mongo::Collection do
         subscriber.command_started_events('findAndModify')
       end
 
-      it 'uses the write concern' do
+      it 'passes down options to command' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:bypassDocumentValidation]).to eq(true)
       end
     end
   end
@@ -4982,7 +4993,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write concern is passed in as an option' do
+    context 'when write concern, upsert and bypass_document_validation are passed in as options' do
 
       let(:session) do
         authorized_client.start_session
@@ -5007,14 +5018,17 @@ describe Mongo::Collection do
       let!(:command) do
         Utils.get_command_event(authorized_client, 'findAndModify') do |client|
           collection.find_one_and_update(selector, { '$set' => {field: 'testing'}},
-                                         :return_document => :after, write_concern: {w: 1})
+                                         :return_document => :after, write_concern: {w: 1}, upsert: true,
+                                         bypass_document_validation: false)
         end.command
       end
 
-      it 'find and update successfully with correct write concern' do
+      it 'find and update successfully with correct options passed' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(1)
+        expect(command[:upsert]).to eq(true)
+        expect(command[:bypassDocumentValidation]).to be_nil
       end
     end
   end
@@ -5331,7 +5345,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write concern is passed in as option' do
+    context 'when write concern, upsert and bypass_document_validation are passed in as options' do
 
       before do
         authorized_collection.insert_one({field: 'test1'})
@@ -5351,16 +5365,18 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'findAndModify') do |client|
-          collection.find_one_and_replace(selector,
-                                         { '$set' => {field: 'test5'}},
-                                         :return_document => :after, write_concern: {w: 1}, session: session)
+          collection.find_one_and_replace(selector, { '$set' => {field: 'test5'}},
+                                         :return_document => :after, write_concern: {w: 1},
+                                         session: session, upsert: false, bypass_document_validation: false)
         end.command
       end
 
-      it 'find and replace successfully with correct write concern' do
+      it 'find and replace successfully with correct options passed down' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(1)
+        expect(command[:upsert]).to be_nil
+        expect(command[:bypassDocumentValidation]).to be_nil
       end
     end
   end
