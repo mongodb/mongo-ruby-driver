@@ -191,6 +191,7 @@ module Mongo
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
+                  :bypass_document_validation => !!opts[:bypass_document_validation], 
                   :session => session
               ).execute(server, client: client)
             end
@@ -231,6 +232,7 @@ module Mongo
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
+                  :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
                   :txn_num => txn_num
               ).execute(server, client: client)
@@ -266,7 +268,7 @@ module Mongo
                         }
           if opts[:upsert]
             update_doc['upsert'] = true
-          end 
+          end
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
               WriteConcern.get(opts[:write_concern])

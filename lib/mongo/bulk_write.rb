@@ -170,6 +170,7 @@ module Mongo
         :ordered => ordered?,
         :operation_id => operation_id,
         :bypass_document_validation => !!options[:bypass_document_validation],
+        :max_time_ms => options[:max_time_ms],
         :options => options,
         :id_generator => client.options[:id_generator],
         :session => session
