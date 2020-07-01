@@ -21,22 +21,7 @@ module Mongo
         arguments && arguments['session'] || object =~ /session/
       end
 
-      def execute(target, session0, session1, active_session=nil)
-        session = case arguments && arguments['session']
-        when 'session0'
-          session0
-        when 'session1'
-          session1
-        else
-          # active session could be nil
-          active_session
-        end
-
-        context = Context.new(
-          session0,
-          session1,
-          session)
-
+      def execute(target, context)
         op_name = Utils.underscore(name).to_sym
         if op_name == :with_transaction
           args = [target]
@@ -102,7 +87,7 @@ module Mongo
         command_value = cmd.delete(command_name)
         cmd = { command_name.to_sym => command_value }.merge(cmd)
 
-        opts = Utils.snakeize_hash(context.transform_arguments(options)).dup
+        opts = Utils.snakeize_hash(transformed_options(context)).dup
         opts[:read] = opts.delete(:read_preference)
         database.command(cmd, opts).documents.first
       end
@@ -151,7 +136,7 @@ module Mongo
       end
 
       def targeted_fail_point(collection, context)
-        args = context.transform_arguments(options)
+        args = transformed_options(context)
         session = args[:session]
         unless session.pinned_server
           raise ArgumentError, 'Targeted fail point requires session to be pinned to a server'
@@ -169,7 +154,7 @@ module Mongo
       end
 
       def assert_session_pinned(collection, context)
-        args = context.transform_arguments(options)
+        args = transformed_options(context)
         session = args[:session]
         unless session.pinned_server
           raise ArgumentError, 'Expected session to be pinned'
@@ -177,7 +162,7 @@ module Mongo
       end
 
       def assert_session_unpinned(collection, context)
-        args = context.transform_arguments(options)
+        args = transformed_options(context)
         session = args[:session]
         if session.pinned_server
           raise ArgumentError, 'Expected session to not be pinned'

@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'support/keyword_struct'
+
 module Mongo
   module CRUD
-    class Context
-      def transform_arguments(arguments)
-        arguments
-      end
-    end
+    Context = KeywordStruct.new(
+      :session0,
+      :session1,
+    )
   end
 end
