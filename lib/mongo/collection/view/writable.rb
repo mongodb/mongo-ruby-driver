@@ -52,6 +52,9 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
+          if opts[:bypass_document_validation]
+            cmd[:bypassDocumentValidation] = true
+          end
 
           with_session(opts) do |session|
             applied_write_concern = applied_write_concern(session)
@@ -165,6 +168,8 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ Result ] The response from the database.
         #
@@ -172,7 +177,11 @@ module Mongo
         def delete_many(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(session)
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(delete_doc, server, opts)
               apply_hint!(delete_doc, server, opts.merge(write_concern: write_concern))
@@ -182,6 +191,7 @@ module Mongo
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
+                  :bypass_document_validation => !!opts[:bypass_document_validation], 
                   :session => session
               ).execute(server, client: client)
             end
@@ -199,6 +209,8 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ Result ] The response from the database.
         #
@@ -206,7 +218,11 @@ module Mongo
         def delete_one(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(session)
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
               apply_hint!(delete_doc, server, opts.merge(write_concern: write_concern))
@@ -216,6 +232,7 @@ module Mongo
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
+                  :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
                   :txn_num => txn_num
               ).execute(server, client: client)
@@ -239,6 +256,8 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ Result ] The response from the database.
         #
@@ -251,7 +270,12 @@ module Mongo
             update_doc['upsert'] = true
           end
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(session)
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
+
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
@@ -288,6 +312,8 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ Result ] The response from the database.
         #
@@ -301,7 +327,11 @@ module Mongo
             update_doc['upsert'] = true
           end
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(session)
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
             nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
@@ -337,6 +367,8 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ Result ] The response from the database.
         #
@@ -349,7 +381,11 @@ module Mongo
             update_doc['upsert'] = true
           end
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(session)
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
