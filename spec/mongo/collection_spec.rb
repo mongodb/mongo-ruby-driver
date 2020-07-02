@@ -3407,8 +3407,8 @@ describe Mongo::Collection do
       let!(:command) do
         Utils.get_command_event(authorized_client, 'update') do |client|
           collection.replace_one(selector, { field: 'test4'},
-                                 session: session, :return_document => :after, write_concern: {w: 2},
-                                 upsert: true, bypass_document_validation: true)
+            session: session, :return_document => :after, write_concern: {w: 2},
+            upsert: true, bypass_document_validation: true)
        end.command
       end
 
