@@ -1617,11 +1617,11 @@ describe Mongo::Collection do
       end
 
       let!(:command) do
-       Utils.get_command_event(authorized_client, 'insert') do |client|
-         collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session,
-           write_concern: {w: 3}, bypass_document_validation: true)
-       end.command
-     end
+        Utils.get_command_event(authorized_client, 'insert') do |client|
+          collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session,
+            write_concern: {w: 3}, bypass_document_validation: true)
+        end.command
+      end
 
       it 'inserts many successfully with correct options sent to server' do
         expect(events.length).to eq(1)

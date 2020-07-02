@@ -65,7 +65,7 @@ module Mongo
           # If the max_await_time_ms option is set, then we set maxTimeMS on
           # the get more command.
           if view.respond_to?(:max_await_time_ms)
-            if view.max_await_time_ms && view.options[:await_data] 
+            if view.max_await_time_ms && view.options[:await_data]
               command[:maxTimeMS] = view.max_await_time_ms
             end
           end
