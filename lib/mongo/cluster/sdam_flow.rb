@@ -431,15 +431,12 @@ class Mongo::Cluster
       # the server - in case of a stale primary, the server reported itself
       # as being a primary but updated_desc here will be unknown.
 
-      # We do not notify on unknown -> unknown changes.
-      # This can also be important for tests which have real i/o
-      # happening against bogus addresses which yield unknown responses
-      # and that also mock responses with the resulting race condition,
-      # though tests should avoid performing real i/o with monitoring_io: false
-      # option.
-      if updated_desc.unknown? && previous_desc.unknown?
-        return
-      end
+      # We used to not notify on Unknown -> Unknown server changes.
+      # Technically these are valid state changes (or at least as valid as
+      # other server description changes when the description has not
+      # changed meaningfully but the events are still published).
+      # The current version of the driver notifies on Unknown -> Unknown
+      # transitions.
 
       # Avoid dispatching events when updated description is the same as
       # previous description. This allows this method to be called multiple
