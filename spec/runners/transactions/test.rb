@@ -132,12 +132,17 @@ module Mongo
         results = @operations.map do |op|
           target = resolve_target(test_client, op)
           if op.needs_session?
-            op.execute(target, session0, session1)
+            context = CRUD::Context.new(
+              session0: session0,
+              session1: session1,
+            )
+
+            op.execute(target, context)
           else
             # Hack to support write concern operations tests, which are
             # defined to use transactions format but target pre-3.6 servers
             # that do not support sessions
-            op.execute(target || support_client, nil, nil)
+            op.execute(target || support_client, CRUD::Context.new)
           end
         end
 

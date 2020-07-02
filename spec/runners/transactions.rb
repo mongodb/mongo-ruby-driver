@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'runners/transactions/context'
 require 'runners/transactions/operation'
 require 'runners/transactions/spec'
 require 'runners/transactions/test'

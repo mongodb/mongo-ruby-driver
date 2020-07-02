@@ -114,31 +114,31 @@ module Mongo
       # read operations
 
       def aggregate(collection, context)
-        collection.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
+        collection.aggregate(arguments['pipeline'], transformed_options(context)).to_a
       end
 
       def db_aggregate(database, context)
-        database.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
+        database.aggregate(arguments['pipeline'], transformed_options(context)).to_a
       end
 
       def count(collection, context)
-        collection.count(arguments['filter'], context.transform_arguments(options))
+        collection.count(arguments['filter'], transformed_options(context))
       end
 
       def count_documents(collection, context)
-        collection.count_documents(arguments['filter'], context.transform_arguments(options))
+        collection.count_documents(arguments['filter'], transformed_options(context))
       end
 
       def distinct(collection, context)
-        collection.distinct(arguments['fieldName'], arguments['filter'], context.transform_arguments(options))
+        collection.distinct(arguments['fieldName'], arguments['filter'], transformed_options(context))
       end
 
       def estimated_document_count(collection, context)
-        collection.estimated_document_count(context.transform_arguments(options))
+        collection.estimated_document_count(transformed_options(context))
       end
 
       def find(collection, context)
-        opts = context.transform_arguments(options)
+        opts = transformed_options(context)
         if arguments['modifiers']
           opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers']))
         end
@@ -183,7 +183,7 @@ module Mongo
       # write operations
 
       def bulk_write(collection, context)
-        result = collection.bulk_write(requests, context.transform_arguments(options))
+        result = collection.bulk_write(requests, transformed_options(context))
         return_doc = {}
         return_doc['deletedCount'] = result.deleted_count || 0
         return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
@@ -197,50 +197,50 @@ module Mongo
       end
 
       def delete_many(collection, context)
-        result = collection.delete_many(arguments['filter'], context.transform_arguments(options))
+        result = collection.delete_many(arguments['filter'], transformed_options(context))
         { 'deletedCount' => result.deleted_count }
       end
 
       def delete_one(collection, context)
-        result = collection.delete_one(arguments['filter'], context.transform_arguments(options))
+        result = collection.delete_one(arguments['filter'], transformed_options(context))
         { 'deletedCount' => result.deleted_count }
       end
 
       def insert_many(collection, context)
-        result = collection.insert_many(arguments['documents'], context.transform_arguments(options))
+        result = collection.insert_many(arguments['documents'], transformed_options(context))
         { 'insertedIds' => result.inserted_ids }
       end
 
       def insert_one(collection, context)
-        result = collection.insert_one(arguments['document'], context.transform_arguments(options))
+        result = collection.insert_one(arguments['document'], transformed_options(context))
         { 'insertedId' => result.inserted_id }
       end
 
       def replace_one(collection, context)
-        result = collection.replace_one(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
+        result = collection.replace_one(arguments['filter'], arguments['replacement'], transformed_options(context))
         update_return_doc(result)
       end
 
       def update_many(collection, context)
-        result = collection.update_many(arguments['filter'], arguments['update'], context.transform_arguments(options))
+        result = collection.update_many(arguments['filter'], arguments['update'], transformed_options(context))
         update_return_doc(result)
       end
 
       def update_one(collection, context)
-        result = collection.update_one(arguments['filter'], arguments['update'], context.transform_arguments(options))
+        result = collection.update_one(arguments['filter'], arguments['update'], transformed_options(context))
         update_return_doc(result)
       end
 
       def find_one_and_delete(collection, context)
-        collection.find_one_and_delete(arguments['filter'], context.transform_arguments(options))
+        collection.find_one_and_delete(arguments['filter'], transformed_options(context))
       end
 
       def find_one_and_replace(collection, context)
-        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
+        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], transformed_options(context))
       end
 
       def find_one_and_update(collection, context)
-        collection.find_one_and_update(arguments['filter'], arguments['update'], context.transform_arguments(options))
+        collection.find_one_and_update(arguments['filter'], arguments['update'], transformed_options(context))
       end
 
       # ddl
@@ -428,6 +428,27 @@ module Mongo
         return_doc['matchedCount'] = result.matched_count
         return_doc['modifiedCount'] = result.modified_count if result.modified_count
         return_doc
+      end
+
+      def transformed_options(context)
+        opts = options.dup
+        if opts[:session]
+          opts[:session] = case opts[:session]
+          when 'session0'
+            unless context.session0
+              raise "Trying to use session0 but it is not in context"
+            end
+            context.session0
+          when 'session1'
+            unless context.session1
+              raise "Trying to use session1 but it is not in context"
+            end
+            context.session1
+          else
+            raise "Invalid session name '#{opts[:session]}'"
+          end
+        end
+        opts
       end
     end
   end
