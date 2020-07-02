@@ -32,7 +32,7 @@ tests:
         object: testRunner
         arguments:
           event: ServerMarkedUnknownEvent
-          count: 1
+          count: 2
 # https://jira.mongodb.org/browse/DRIVERS-1314
 #       - name: waitForEvent
 #         object: testRunner
@@ -112,7 +112,7 @@ tests:
         object: testRunner
         arguments:
           event: ServerMarkedUnknownEvent
-          count: 1
+          count: 2
       - name: waitForEvent
         object: testRunner
         arguments:
@@ -130,7 +130,7 @@ tests:
         object: testRunner
         arguments:
           event: ServerMarkedUnknownEvent
-          count: 1
+          count: 2
       - name: assertEventCount
         object: testRunner
         arguments:
