@@ -35,10 +35,22 @@ class EventSubscriber
 
   attr_reader :published_events
 
-  def initialize
+  # @param [ String ] name Optional name for the event subscriber.
+  def initialize(name: nil)
     @mutex = Mutex.new
     clear_events!
+    @name = name
   end
+
+  def to_s
+    %Q`#<EventSubscriber:#{@name ? "\"#{@name}\"" : '%x' % object_id} \
+started=#{started_events.length} \
+succeeded=#{succeeded_events.length} \
+failed=#{failed_events.length} \
+published=#{published_events.length}>`
+  end
+
+  alias :inspect :to_s
 
   # Event retrieval
 

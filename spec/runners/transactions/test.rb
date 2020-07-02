@@ -125,7 +125,7 @@ module Mongo
       end
 
       def sdam_subscriber
-        @sdam_subscriber ||= EventSubscriber.new
+        @sdam_subscriber ||= EventSubscriber.new(name: 'sdam subscriber')
       end
 
       # Run the test.
