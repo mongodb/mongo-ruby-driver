@@ -47,6 +47,7 @@ module Mongo
           # legacy retries which is contrary to what the tests want.
           max_read_retries: 0,
           max_write_retries: 0,
+          app_name: 'Tx spec - test client',
         }.update(Utils.convert_client_options(test['clientOptions'] || {}))
 
         @fail_point_command = test['failPoint']
@@ -113,11 +114,26 @@ module Mongo
       end
 
       def test_client
-        @test_client ||= ClientRegistry.instance.global_client(
-          'authorized_without_retry_writes'
-        ).with(@client_options.merge(
-          database: @spec.database_name,
-        ))
+        @test_client ||= begin
+          sdam_proc = lambda do |test_client|
+            test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
+
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_CLOSED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
+          end
+
+          ClientRegistry.instance.new_local_client(
+            SpecConfig.instance.addresses,
+            SpecConfig.instance.all_test_options.merge(
+              database: @spec.database_name,
+              sdam_proc: sdam_proc,
+            ).merge(@client_options))
+        end
       end
 
       def command_subscriber
@@ -137,16 +153,6 @@ module Mongo
       #
       # @since 2.6.0
       def run
-        test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
-
-        test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
-        test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
-        test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
-        test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, sdam_subscriber)
-        test_client.subscribe(Mongo::Monitoring::SERVER_CLOSED, sdam_subscriber)
-        test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, sdam_subscriber)
-        test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
-
         @threads = {}
 
         results = @operations.map do |op|
