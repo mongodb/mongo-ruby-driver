@@ -1642,14 +1642,14 @@ describe Mongo::Collection do
       let!(:command) do
         Utils.get_command_event(authorized_client, 'insert') do |client|
           collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session,
-            write_concern: {w: 3}, bypass_document_validation: true)
+            write_concern: {w: 1}, bypass_document_validation: true)
         end.command
       end
 
       it 'inserts many successfully with correct options sent to server' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
-        expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:writeConcern][:w]).to eq(1)
         expect(command[:bypassDocumentValidation]).to be(true)
       end
     end
@@ -1892,7 +1892,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'insert') do |client|
-          collection.bulk_write(requests, session: session, write_concern: {w: 3},
+          collection.bulk_write(requests, session: session, write_concern: {w: 1},
             bypass_document_validation: true)
         end.command
       end
@@ -1909,7 +1909,7 @@ describe Mongo::Collection do
         expect(collection.count).to eq(3)
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
-        expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:writeConcern][:w]).to eq(1)
         expect(command[:bypassDocumentValidation]).to eq(true)
       end
     end
@@ -2661,7 +2661,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'delete') do |client|
-          collection.delete_one(selector, session: session, write_concern: {w: 3},
+          collection.delete_one(selector, session: session, write_concern: {w: 1},
             bypass_document_validation: true)
         end.command
       end
@@ -2669,7 +2669,7 @@ describe Mongo::Collection do
       it 'deletes one successfully with correct options sent to server' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
-        expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:writeConcern][:w]).to eq(1)
         expect(command[:bypassDocumentValidation]).to eq(true)
       end
     end
@@ -3893,14 +3893,14 @@ describe Mongo::Collection do
       let!(:command) do
         Utils.get_command_event(authorized_client, 'update') do |client|
           collection.update_many(selector, {'$set'=> { field: 'testing' }}, session: session,
-            write_concern: {w: 3}, bypass_document_validation: true, upsert: true)
+            write_concern: {w: 2}, bypass_document_validation: true, upsert: true)
         end.command
       end
 
       it 'updates many successfully with correct options sent to server' do
         expect(events.length).to eq(1)
         expect(collection.options[:write_concern]).to eq(w: 1)
-        expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:writeConcern][:w]).to eq(2)
         expect(command[:bypassDocumentValidation]).to be(true)
         expect(command[:updates][0][:upsert]).to be(true)
       end
@@ -4596,7 +4596,7 @@ describe Mongo::Collection do
 
       let!(:command) do
         Utils.get_command_event(authorized_client, 'findAndModify') do |client|
-          collection.find_one_and_delete(selector, session: session, write_concern: {w: 3},
+          collection.find_one_and_delete(selector, session: session, write_concern: {w: 2},
             bypass_document_validation: true, max_time_ms: 300)
         end.command
       end
@@ -4608,7 +4608,7 @@ describe Mongo::Collection do
       it 'finds and deletes successfully with correct options sent to server' do
         expect(events.length).to eq(1)
         expect(command[:writeConcern]).to_not be_nil
-        expect(command[:writeConcern][:w]).to eq(3)
+        expect(command[:writeConcern][:w]).to eq(2)
         expect(command[:bypassDocumentValidation]).to eq(true)
         expect(command[:maxTimeMS]).to eq(300)
       end
