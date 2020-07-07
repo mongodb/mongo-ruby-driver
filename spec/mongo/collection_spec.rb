@@ -942,8 +942,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collation has a strength' do 
-      let(:band_collection) do 
+    context 'when collation has a strength' do
+      let(:band_collection) do
         described_class.new(database, :bands)
       end
 
@@ -952,14 +952,14 @@ describe Mongo::Collection do
         band_collection.insert_many([{ name: "Depeche Mode" }, { name: "New Order" }])
       end
 
-      let(:options) do 
+      let(:options) do
         { collation: { locale: 'en_US', strength: 2 } }
       end
-      let(:band_result) do 
+      let(:band_result) do
         band_collection.find({ name: 'DEPECHE MODE' }, options)
       end
 
-      it 'finds Capitalize from UPPER CASE' do 
+      it 'finds Capitalize from UPPER CASE' do
         expect(band_result.count_documents).to eq(1)
       end
     end
@@ -1625,6 +1625,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       let(:session) do
         authorized_client.start_session
@@ -1875,6 +1876,7 @@ describe Mongo::Collection do
 
     context 'when various options passed in' do
       min_server_fcv '3.2'
+      require_topology :replica_set
 
       let(:requests) do
         [
@@ -2635,6 +2637,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       before do
         authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
@@ -2862,6 +2865,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       before do
         collection.insert_many([{ name: 'test1' }, { name: 'test2' }, { name: 'test3'}])
@@ -3405,6 +3409,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       before do
         authorized_collection.insert_one({field: 'test1'})
@@ -3867,6 +3872,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       before do
         collection.insert_many([{ field: 'test' }, { field: 'test2' }], session: session)
@@ -4319,6 +4325,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       before do
         collection.insert_many([{ field: 'test1' }, { field: 'test2' }], session: session)
@@ -4572,6 +4579,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       before do
         authorized_collection.delete_many
@@ -5028,6 +5036,7 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      require_topology :replica_set
 
       let(:session) do
         authorized_client.start_session
