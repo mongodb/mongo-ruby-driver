@@ -270,7 +270,8 @@ module Mongo
       end
 
       def create_collection(database, context)
-        database[arguments.fetch('collection')].create(session: context.session)
+        opts = transformed_options(context)
+        database[arguments.fetch('collection')].create(session: opts[:session])
       end
 
       def rename(collection, context)
