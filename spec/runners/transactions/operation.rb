@@ -121,7 +121,7 @@ module Mongo
           callback['operations'].each do |op_spec|
             op = Operation.new(@crud_test, op_spec)
             target = @crud_test.resolve_target(@crud_test.test_client, op)
-            rv = op.execute(target, context.session0, context.session1, session)
+            rv = op.execute(target, context)
             if rv && rv['exception']
               raise rv['exception']
             end
