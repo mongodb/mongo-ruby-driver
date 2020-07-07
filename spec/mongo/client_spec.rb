@@ -598,7 +598,7 @@ describe Mongo::Client do
       min_server_fcv '3.6'
 
       let(:command) do
-        Utils.get_command_event(authorized_client, 'listDatabases') do |client|
+        Utils.get_command_event(root_authorized_client, 'listDatabases') do |client|
           client.list_databases({}, true)
         end.command
       end
