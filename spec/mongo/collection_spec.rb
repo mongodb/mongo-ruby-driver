@@ -943,6 +943,8 @@ describe Mongo::Collection do
     end
 
     context 'when collation has a strength' do
+      min_server_fcv '3.4'
+
       let(:band_collection) do
         described_class.new(database, :bands)
       end
