@@ -224,7 +224,8 @@ elif test "$FORK" = 1; then
 elif test "$STRESS" = 1; then
   bundle exec rspec spec/integration/fork*spec.rb spec/stress
 else
-  bundle exec rake spec:ci
+  #bundle exec rake spec:ci
+  bundle exec rspec spec/integration/[dhms]* -f Rfc::Aif
 fi
 test_status=$?
 echo "TEST STATUS"
