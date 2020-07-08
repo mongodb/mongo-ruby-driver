@@ -886,21 +886,26 @@ module Mongo
       end
     end
 
-    # Returns whether the deployment that the driver is connected to supports
-    # sessions.
+    # Raises Error::SessionsNotAvailable if the deployment that the driver
+    # is connected to does not support sessions.
     #
     # Session support may change over time, for example due to servers in the
-    # deployment being upgraded or downgraded. This method returns the
-    # current information if the client is connected to at least one data
-    # bearing server. If the client is currently not connected to any data
-    # bearing servers, this method returns the last known value for whether
-    # the deployment supports sessions.
+    # deployment being upgraded or downgraded. If the client is currently not
+    # connected to any data bearing servers, this method considers the state
+    # of session support as of when the client was last connected to at
+    # least one server. If the client has never connected to any servers,
+    # the deployment is considered to not support sessions.
     #
-    # @return [ true | false ] Whether deployment supports sessions.
     # @api private
-    def sessions_supported?
-      if topology.data_bearing_servers?
-        return !!topology.logical_session_timeout
+    def validate_session_support!
+      @state_change_lock.synchronize do
+        @sdam_flow_lock.synchronize do
+          if topology.data_bearing_servers?
+            unless topology.logical_session_timeout
+              raise_sessions_not_supported
+            end
+          end
+        end
       end
 
       # No data bearing servers known - perform server selection to try to
@@ -908,12 +913,24 @@ module Mongo
       # assessment of whether sessions are currently supported.
       begin
         ServerSelector.get(mode: :primary_preferred).select_server(self)
-        !!topology.logical_session_timeout
+        @state_change_lock.synchronize do
+          @sdam_flow_lock.synchronize do
+            unless topology.logical_session_timeout
+              raise_sessions_not_supported
+            end
+          end
+        end
       rescue Error::NoServerAvailable
         # We haven't been able to contact any servers - use last known
-        # value for esssion support.
-        @update_lock.synchronize do
-          @sessions_supported || false
+        # value for session support.
+        @state_change_lock.synchronize do
+          @sdam_flow_lock.synchronize do
+            @update_lock.synchronize do
+              unless @sessions_supported
+                raise_sessions_not_supported
+              end
+            end
+          end
         end
       end
     end
@@ -951,6 +968,22 @@ module Mongo
           end
         end
       end
+    end
+
+    def raise_sessions_not_supported
+      # Intentionally using @servers instead of +servers+ here because we
+      # are supposed to be already holding the @update_lock and we cannot
+      # recursively acquire it again.
+      offending_servers = @servers.select do |server|
+        server.description.data_bearing? && server.logical_session_timeout.nil?
+      end
+      reason = if offending_servers.empty?
+        "There are no known data bearing servers (current seeds: #{@servers.map(&:address).map(&:seed).join(', ')})"
+      else
+        "The following servers have null logical session timeout: #{offending_servers.map(&:address).map(&:seed).join(', ')}"
+      end
+      msg = "The deployment that the driver is connected to does not support sessions: #{reason}"
+      raise Error::SessionsNotSupported, msg
     end
   end
 end

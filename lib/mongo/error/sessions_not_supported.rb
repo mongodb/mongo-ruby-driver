@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2020 MongoDB Inc.
+# Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
 module Mongo
   class Error
 
-    # This exception is raised when a session is attempted to be used and it
-    # is invalid.
+    # This exception is raised when a session is attempted to be used and the
+    # deployment does not support sessions.
     #
-    # @since 2.5.0
-    class InvalidSession < Error
+    # @note The subclassing of InvalidSession only exists for backwards
+    #   compatibility and will be removed in driver version 3.0.
+    class SessionsNotSupported < InvalidSession
 
       # Create the new exception.
       #
-      # @example Create the new exception.
-      #   InvalidSession.new(message)
-      #
       # @param [ String ] message The error message.
       #
-      # @since 2.5.0
+      # @api private
       def initialize(message)
         super(message)
       end
