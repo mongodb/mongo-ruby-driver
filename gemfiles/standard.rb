@@ -39,6 +39,7 @@ def standard_dependencies
     gem 'timeout-interrupt', platforms: :mri
     gem 'concurrent-ruby', platforms: :jruby
     gem 'dotenv'
+    gem 'childprocess'
   end
 
   group :development do

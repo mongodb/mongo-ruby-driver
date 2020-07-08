@@ -71,7 +71,13 @@ namespace :spec do
     SpecConfig.instance.print_summary
   end
 
-  task :ci => ['spec:prepare', :spec]
+  task :ci => ['spec:prepare'] do
+    $: << File.join(File.dirname(__FILE__), 'spec')
+
+    require 'support/spec_organizer'
+
+    SpecOrganizer.new.run
+  end
 end
 
 namespace :release do

@@ -230,6 +230,10 @@ test_status=$?
 echo "TEST STATUS"
 echo ${test_status}
 
+if test -f tmp/rspec-all.json; then
+  mv tmp/rspec-all.json tmp/rspec.json
+fi
+
 kill_jruby
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
