@@ -74,7 +74,7 @@ class SpecConfig
       # TLS options need to be merged for evergreen due to
       # https://github.com/10gen/mongo-orchestration/issues/268
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
-        server_selection_timeout: 5,
+        server_selection_timeout: 5.03,
       ).merge(ssl_options))
 
       begin
@@ -414,15 +414,15 @@ EOT
       # means the test suite hangs for about 4 seconds before
       # failing.
       # Server selection timeout of 1 is insufficient for evergreen.
-      server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 4.01 : 2.01),
+      server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 8.01 : 7.01),
 
       # Since connections are established under the wait queue timeout,
       # the wait queue timeout should be at least as long as the
       # connect timeout.
-      wait_queue_timeout: 4,
-      connect_timeout: 3,
-      socket_timeout: 3,
-      max_idle_time: 5
+      wait_queue_timeout: 6.04,
+      connect_timeout: 2.91,
+      socket_timeout: 5.09,
+      max_idle_time: 100.02,
    }
   end
 
