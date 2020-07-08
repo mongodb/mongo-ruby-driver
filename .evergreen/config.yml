@@ -104,7 +104,7 @@ functions:
             export FLE="${FLE}"
             export FORK="${FORK}"
 
-            export STRESS=1
+            export STRESS="${STRESS}"
           EOT
 
           # See what we've done
@@ -823,7 +823,29 @@ buildvariants:
       mongodb-version: ["4.4"]
       topology: '*'
       os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} ${stress} ${ruby}"
+    display_name: "${mongodb-version} ${topology} fork ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "stress"
+    matrix_spec:
+      stress: on
+      ruby: "ruby-2.7"
+      mongodb-version: ["4.4", '4.2', '4.0', '3.6']
+      topology: replica-set
+      os: ubuntu1604
+    display_name: "${mongodb-version} ${topology} stress ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "stress-old"
+    matrix_spec:
+      stress: on
+      ruby: "ruby-2.5"
+      mongodb-version: ['2.6']
+      topology: replica-set
+      os: ubuntu1404
+    display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
