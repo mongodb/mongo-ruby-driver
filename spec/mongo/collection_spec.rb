@@ -1627,7 +1627,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       let(:session) do
         authorized_client.start_session
@@ -1738,6 +1742,8 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       let(:session) do
         authorized_client.start_session
@@ -1879,6 +1885,9 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       min_server_fcv '3.2'
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       let(:requests) do
         [
@@ -2639,7 +2648,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
@@ -2867,7 +2880,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         collection.insert_many([{ name: 'test1' }, { name: 'test2' }, { name: 'test3'}])
@@ -3411,7 +3428,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         authorized_collection.insert_one({field: 'test1'})
@@ -3874,7 +3895,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         collection.insert_many([{ field: 'test' }, { field: 'test2' }], session: session)
@@ -4327,7 +4352,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         collection.insert_many([{ field: 'test1' }, { field: 'test2' }], session: session)
@@ -4581,7 +4610,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         authorized_collection.delete_many
@@ -5038,7 +5071,11 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # w: 2 requires a replica set
       require_topology :replica_set
+
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       let(:session) do
         authorized_client.start_session
@@ -5392,6 +5429,8 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
+      # https://jira.mongodb.org/browse/RUBY-2306
+      min_server_fcv '3.6'
 
       before do
         authorized_collection.insert_one({field: 'test1'})
