@@ -221,6 +221,8 @@ if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 elif test "$FORK" = 1; then
   bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
+elif test "$STRESS" = 1; then
+  bundle exec rspec spec/integration/fork*spec.rb spec/stress
 else
   bundle exec rake spec:ci
 fi

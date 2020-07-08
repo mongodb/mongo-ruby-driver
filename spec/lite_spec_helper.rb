@@ -109,14 +109,19 @@ RSpec.configure do |config|
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
     config.around(:each) do |example|
-      TimeoutInterrupt.timeout(45) do
+      timeout = if %w(1 true yes).include?(ENV['STRESS']&.downcase)
+        210
+      else
+        45
+      end
+      TimeoutInterrupt.timeout(timeout) do
         example.run
       end
     end
   end
 
   if SpecConfig.instance.ci?
-    if defined?(Rfc)
+    if defined?(Rfc::Rif)
       unless BSON::Environment.jruby?
         Rfc::Rif.output_object_space_stats = true
       end
