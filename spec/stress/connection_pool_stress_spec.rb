@@ -21,9 +21,9 @@ describe 'Connection pool stress test' do
     [].tap do |threads|
       thread_count.times do |i|
         threads << Thread.new do
-          10.times do |j|
+          100.times do |j|
             collection.find(a: i+j).to_a
-            sleep 0.5
+            sleep 0.1
             collection.find(a: i+j).to_a
           end
         end
@@ -132,7 +132,7 @@ describe 'Connection pool stress test' do
     end
 
     context '25 threads, max pool size 5' do
-      let(:thread_count) { 20 }
+      let(:thread_count) { 25 }
 
       it_behaves_like 'does not raise error'
     end
