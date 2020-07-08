@@ -183,17 +183,19 @@ describe 'Connection pool stress test' do
       # The populator calls create_and_add_connection, which calls connection.connect!
       # and raises if an error occurs (eg, an auth error), so in this test we
       # randomly raise errors on this method.
-      expect(server.pool).to receive(:create_and_add_connection).at_least(:once).and_wrap_original { |m, *args|
-        if rand < 0.05
+      expect(server.pool).to receive(:create_and_add_connection).at_least(:once).and_wrap_original do |m, *args|
+        if rand < 0.1
           raise Mongo::Error::SocketError
         else
           m.call(*args)
         end
-      }
+      end
 
-      expect {
+      server.pool.clear(stop_populator: false)
+
+      expect do
         threads.collect { |t| t.join }
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 end
