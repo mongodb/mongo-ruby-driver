@@ -41,7 +41,11 @@ module Mongo
 
         result
       rescue Mongo::Error::OperationFailure => e
-        err_doc = e.instance_variable_get(:@result).send(:first_document)
+        result = e.instance_variable_get(:@result)
+        if result.nil?
+          raise "OperationFailure had nil result: #{e}"
+        end
+        err_doc = result.send(:first_document)
         error_code_name = err_doc['codeName'] || err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName']
         if error_code_name.nil?
           # Sometimes the server does not return the error code name,
