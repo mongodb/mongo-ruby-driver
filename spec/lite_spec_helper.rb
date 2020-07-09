@@ -24,7 +24,7 @@ CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_
 STDOUT.sync = true
 STDERR.sync = true
 
-if ENV['CI']
+if %w(1 true yes).include?(ENV['CI']&.downcase)
   autoload :Byebug, 'byebug'
 else
   # Load debuggers before loading the driver code, so that breakpoints
