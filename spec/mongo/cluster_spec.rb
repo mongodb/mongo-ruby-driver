@@ -594,7 +594,23 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#sessions_supported?' do
+  describe '#validate_session_support!' do
+    shared_examples 'supports sessions' do
+      it 'supports sessions' do
+        lambda do
+          cluster.validate_session_support!
+        end.should_not raise_error
+      end
+    end
+
+    shared_examples 'does not support sessions' do
+      it 'does not support sessions' do
+        lambda do
+          cluster.validate_session_support!
+        end.should raise_error(Mongo::Error::SessionsNotSupported)
+      end
+    end
+
     context 'when client has not contacted any servers' do
 
       let(:cluster) do
@@ -603,9 +619,7 @@ describe Mongo::Cluster do
             monitoring_io: false, server_selection_timeout: 0.183))
       end
 
-      it 'is false' do
-        expect(cluster.send(:sessions_supported?)).to be false
-      end
+      it_behaves_like 'does not support sessions'
     end
 
     context 'when client has contacted servers and then disconnected' do
@@ -628,22 +642,20 @@ describe Mongo::Cluster do
         cluster.servers_list.map(&:unknown!)
       end
 
-      it 'is true' do
-        expect(cluster.send(:sessions_supported?)).to be true
-      end
+      it_behaves_like 'supports sessions'
     end
 
     context 'in server < 3.6' do
       max_server_version '3.4'
+
+      let(:cluster) { client.cluster }
 
       context 'in single topology' do
         require_topology :single
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
 
       context 'in single topology with replica set name set' do
@@ -655,9 +667,7 @@ describe Mongo::Cluster do
               connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
         end
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
 
       context 'in replica set topology' do
@@ -665,9 +675,7 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
 
       context 'in sharded topology' do
@@ -675,14 +683,14 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
     end
 
     context 'in server 3.6+' do
       min_server_fcv '3.6'
+
+      let(:cluster) { client.cluster }
 
       context 'in single topology' do
         require_topology :single
@@ -691,10 +699,8 @@ describe Mongo::Cluster do
 
         # Contrary to the session spec, 3.6 and 4.0 standalone servers
         # report a logical session timeout and thus are considered to
-        # support sessions
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        # support sessions.
+        it_behaves_like 'supports sessions'
       end
 
       context 'in single topology with replica set name set' do
@@ -706,9 +712,7 @@ describe Mongo::Cluster do
               connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
         end
 
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        it_behaves_like 'supports sessions'
       end
 
       context 'in replica set topology' do
@@ -716,9 +720,7 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        it_behaves_like 'supports sessions'
       end
 
       context 'in sharded topology' do
@@ -726,9 +728,7 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        it_behaves_like 'supports sessions'
       end
     end
   end

@@ -893,8 +893,7 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      session = get_session(options.merge(implicit: false)) or
-        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
+      session = get_session!(options.merge(implicit: false))
       if block_given?
         begin
           yield session
@@ -949,6 +948,59 @@ module Mongo
         options)
     end
 
+    # Returns a session to use for operations if possible.
+    #
+    # If :session option is set, validates that session and returns it.
+    # Otherwise, if deployment supports sessions, creates a new session and
+    # returns it. When a new session is created, the session will be implicit
+    # (lifecycle is managed by the driver) if the :implicit option is given,
+    # otherwise the session will be explicit (lifecycle managed by the
+    # application). If deployment does not support session, returns nil.
+    #
+    # @option options [ true | false ] :implicit When no session is passed in,
+    #   whether to create an implicit session.
+    # @option options [ Session ] :session The session to validate and return.
+    #
+    # @return [ Session | nil ] Session object or nil if sessions are not
+    #   supported by the deployment.
+    #
+    # @api private
+    def get_session(options = {})
+      get_session!(options)
+    rescue Error::SessionsNotSupported
+      nil
+    end
+
+    # Creates a session to use for operations if possible and yields it to
+    # the provided block.
+    #
+    # If :session option is set, validates that session and uses it.
+    # Otherwise, if deployment supports sessions, creates a new session and
+    # uses it. When a new session is created, the session will be implicit
+    # (lifecycle is managed by the driver) if the :implicit option is given,
+    # otherwise the session will be explicit (lifecycle managed by the
+    # application). If deployment does not support session, yields nil to
+    # the block.
+    #
+    # When the block finishes, if the session was created and was implicit,
+    # or if an implicit session was passed in, the session is ended which
+    # returns it to the pool of available sessions.
+    #
+    # @option options [ true | false ] :implicit When no session is passed in,
+    #   whether to create an implicit session.
+    # @option options [ Session ] :session The session to validate and return.
+    #
+    # @api private
+    def with_session(options = {}, &block)
+      session = get_session(options)
+
+      yield session
+    ensure
+      if session && session.implicit?
+        session.end_session
+      end
+    end
+
     private
 
     # Create a new encrypter object using the client's auto encryption options
@@ -981,30 +1033,34 @@ module Mongo
       close_encrypter
     end
 
-    # If options[:session] is set, validates that session and returns it.
-    # If deployment supports sessions, creates a new session and returns it.
-    # The session is implicit unless options[:implicit] is given.
-    # If deployment does not support session, returns nil.
+    # Returns a session to use for operations.
     #
-    # @return [ Session | nil ] Session object or nil if sessions are not
-    #   supported by the deployment.
-    def get_session(options = {})
+    # If :session option is set, validates that session and returns it.
+    # Otherwise, if deployment supports sessions, creates a new session and
+    # returns it. When a new session is created, the session will be implicit
+    # (lifecycle is managed by the driver) if the :implicit option is given,
+    # otherwise the session will be explicit (lifecycle managed by the
+    # application). If deployment does not support session, raises
+    # Error::InvalidSession.
+    #
+    # @option options [ true | false ] :implicit When no session is passed in,
+    #   whether to create an implicit session.
+    # @option options [ Session ] :session The session to validate and return.
+    #
+    # @return [ Session ] A session object.
+    #
+    # @raise Error::SessionsNotSupported if sessions are not supported by
+    #   the deployment.
+    #
+    # @api private
+    def get_session!(options = {})
       if options[:session]
         return options[:session].validate!(self)
       end
 
-      if cluster.sessions_supported?
-        Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
-      end
-    end
+      cluster.validate_session_support!
 
-    def with_session(options = {}, &block)
-      session = get_session(options)
-      yield(session)
-    ensure
-      if session && session.implicit?
-        session.end_session
-      end
+      Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
     end
 
     def initialize_copy(original)
