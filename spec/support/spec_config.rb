@@ -99,7 +99,7 @@ class SpecConfig
   # Environment
 
   def ci?
-    !!ENV['CI']
+    %w(1 true yes).include?(ENV['CI']&.downcase)
   end
 
   def mri?

@@ -100,7 +100,7 @@ set_env_vars() {
     unset MONGODB_URI
   fi
 
-  export CI=evergreen
+  export CI=1
 
   # JRUBY_OPTS were initially set for Mongoid
   export JRUBY_OPTS="-J-Xms512m -J-Xmx1536M"
