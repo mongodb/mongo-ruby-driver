@@ -485,6 +485,8 @@ EOT
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'transaction-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'admin' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'admin' },
       ]
     )
   end
