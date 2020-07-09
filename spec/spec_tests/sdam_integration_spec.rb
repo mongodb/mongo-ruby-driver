@@ -9,5 +9,8 @@ describe 'SDAM integration tests' do
   require_no_multi_shard
   require_wired_tiger
 
+  # TODO remove these topology restrictions
+  require_topology :replica_set, :sharded
+
   define_transactions_spec_tests(SDAM_INTEGRATION_TESTS)
 end
