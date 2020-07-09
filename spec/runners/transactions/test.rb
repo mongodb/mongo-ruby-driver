@@ -223,7 +223,7 @@ module Mongo
 
         $distinct_ran ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
           mongos_each_direct_client do |direct_client|
-            direct_client['test'].distinct('foo').to_a
+            direct_client.use(@spec.database_name)['test'].distinct('foo').to_a
           end
         end
 
