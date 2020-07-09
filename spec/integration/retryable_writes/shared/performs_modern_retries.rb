@@ -44,8 +44,8 @@ module PerformsModernRetries
 
     context 'for ETIMEDOUT' do
       # blockConnection option in failCommand was introduced in
-      # server version 4.3
-      min_server_fcv '4.3'
+      # server version 4.4
+      min_server_fcv '4.4'
 
       # shorten socket timeout so these tests take less time to run
       let(:socket_timeout) { 1 }
@@ -94,7 +94,7 @@ module PerformsModernRetries
     end
 
     context 'on server versions >= 4.4' do
-      min_server_fcv '4.3'
+      min_server_fcv '4.4'
 
       context 'for OperationFailure with RetryableWriteError label' do
         before do

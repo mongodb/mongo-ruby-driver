@@ -106,7 +106,7 @@ describe 'Failing retryable operations' do
           },
         }
 
-        if ClusterConfig.instance.short_server_version >= '4.3'
+        if ClusterConfig.instance.short_server_version >= '4.4'
           # Server versions 4.4 and newer will add the RetryableWriteError
           # label to all retryable errors, and the driver must not add the label
           # if it is not already present.
