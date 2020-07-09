@@ -457,8 +457,8 @@ EOT
   # Get the default test user for the suite on versions 2.6 and higher.
   def test_user
     Mongo::Auth::User.new(
-      database: test_db,
-      user: 'test-user',
+      database: 'admin',
+      user: 'ruby-test-user',
       password: 'password',
       roles: [
         { role: Mongo::Auth::Roles::READ_WRITE, db: test_db },
@@ -472,10 +472,12 @@ EOT
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' },
 
-        # For transaction api spec tests
-        #{ role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
-        #{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
-
+        # For spec tests
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'crud-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'default_write_concern_db' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-reads-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'transaction-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
       ]
     )
   end
