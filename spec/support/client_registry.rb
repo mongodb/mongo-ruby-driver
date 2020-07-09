@@ -105,6 +105,7 @@ class ClientRegistry
       }.update(SpecConfig.instance.credentials_or_external_user(
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
+        auth_source: 'admin',
       ))
 
       Mongo::Client.new(

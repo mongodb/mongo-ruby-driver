@@ -65,7 +65,7 @@ describe Mongo::Server::Connection, retry: 3 do
         SpecConfig.instance.test_options.merge(
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
-          auth_source: SpecConfig.instance.test_db,
+          auth_source: 'admin',
         )
       end
 
@@ -74,7 +74,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
 
       before do
-        client = authorized_client.with(database: SpecConfig.instance.test_db)
+        client = authorized_client.with(database: 'admin')
         info = client.database.users.info(SpecConfig.instance.test_user.name)
         expect(info.length).to eq(1)
         # this before block may have made 2 or 3 clients

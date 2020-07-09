@@ -473,10 +473,17 @@ EOT
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' },
 
         # For spec tests
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'crud-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'crud-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'crud-default' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'crud-default' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'default_write_concern_db' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'default_write_concern_db' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'retryable-reads-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-reads-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'transaction-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'transaction-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
       ]
     )
