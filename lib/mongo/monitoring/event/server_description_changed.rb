@@ -63,9 +63,9 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " address=#{address} topology=#{topology.summary}" +
+          " address=#{address}" +
           # TODO Add summaries to descriptions and use them here
-          " prev=#{previous_description.inspect} new=#{new_description.inspect}>"
+          " prev=#{previous_description.server_type.upcase} new=#{new_description.server_type.upcase}>"
         end
       end
     end
