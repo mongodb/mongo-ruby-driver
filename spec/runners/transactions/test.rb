@@ -221,9 +221,10 @@ module Mongo
 
         coll.insert_many(@data) unless @data.empty?
 
-        $distinct_ran ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
+        $distinct_ran ||= {}
+        $distinct_ran[@spec.database_name] ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
           mongos_each_direct_client do |direct_client|
-            direct_client['test'].distinct('foo').to_a
+            direct_client.use(@spec.database_name)['test'].distinct('foo').to_a
           end
         end
 

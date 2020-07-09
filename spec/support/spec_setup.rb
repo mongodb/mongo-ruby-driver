@@ -43,7 +43,7 @@ class SpecSetup
   end
 
   def create_user(client, user)
-    users = client.database.users
+    users = client.use('admin').database.users
     begin
       users.create(user)
     rescue Mongo::Error::OperationFailure => e

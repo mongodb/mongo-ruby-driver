@@ -11,14 +11,6 @@ module Mongo
       def initialize(test_path)
         contents = File.read(test_path)
 
-        # Since Ruby driver binds a client to a database, change the
-        # database name in the spec to the one we are using
-        contents.sub!(/"crud-tests"/, '"ruby-driver"')
-        contents.sub!(/"retryable-reads-tests"/, '"ruby-driver"')
-        contents.sub!(/"transaction-tests"/, '"ruby-driver"')
-        contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
-        contents.sub!(/ default_write_concern_db/, ' ruby-driver')
-
         @spec = YAML.load(contents)
         @description = File.basename(test_path)
         @data = BSON::ExtJSON.parse_obj(@spec['data'])

@@ -8,7 +8,7 @@ describe 'Retryable reads spec tests' do
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client) do
-      authorized_client.with({max_read_retries: 0}.update(test.client_options)).tap do |client|
+      authorized_client.use(spec.database_name).with({max_read_retries: 0}.update(test.client_options)).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
       end
     end
@@ -28,7 +28,7 @@ describe 'Retryable reads spec tests - legacy' do
     end
 
     let(:client) do
-      authorized_client.with(client_options).tap do |client|
+      authorized_client.use(spec.database_name).with(client_options).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
       end
     end
