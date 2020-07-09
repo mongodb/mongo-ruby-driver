@@ -129,8 +129,9 @@ module Mongo
 
           ClientRegistry.instance.new_local_client(
             SpecConfig.instance.addresses,
-            SpecConfig.instance.all_test_options.merge(
+            SpecConfig.instance.authorized_test_options.merge(
               database: @spec.database_name,
+              auth_source: SpecConfig.instance.auth_options[:auth_source] || 'admin',
               sdam_proc: sdam_proc,
             ).merge(@client_options))
         end

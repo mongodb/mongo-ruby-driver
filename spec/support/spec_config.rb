@@ -437,6 +437,14 @@ EOT
     test_options.merge(auth_options)
   end
 
+  def authorized_test_options
+    test_options.merge(credentials_or_external_user(
+      user: test_user.name,
+      password: test_user.password,
+      auth_source: auth_options[:auth_source],
+    ))
+  end
+
   # User objects
 
   # Gets the root system administrator user.
@@ -481,6 +489,8 @@ EOT
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'default_write_concern_db' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'retryable-reads-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-reads-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'sdam-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'sdam-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'transaction-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'transaction-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
