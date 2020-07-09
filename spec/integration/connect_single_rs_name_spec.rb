@@ -18,7 +18,9 @@ describe 'Direct connection with RS name' do
     new_local_client(
       [SpecConfig.instance.addresses.first],
       SpecConfig.instance.test_options.merge(
-        replica_set: replica_set_name, connect: :direct))
+        replica_set: replica_set_name, connect: :direct,
+        server_selection_timeout: 3.32,
+      ))
   end
 
   context 'in replica set' do
@@ -31,7 +33,8 @@ describe 'Direct connection with RS name' do
 
       it 'creates a working client' do
         expect do
-          client.database.command(ismaster: 1)
+          res = client.database.command(ismaster: 1)
+          p res
         end.not_to raise_error
       end
     end
