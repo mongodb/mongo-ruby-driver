@@ -182,7 +182,7 @@ module Mongo
             break
           end
           if Time.now >= deadline
-            raise "Did not receive an event matching #{arguments} in 5 seconds"
+            raise "Did not receive an event matching #{arguments} in 5 seconds; received #{events.length} but expected #{arguments['count']} events"
           else
             sleep 0.1
           end
