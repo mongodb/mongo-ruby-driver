@@ -5,6 +5,8 @@ autoload :ChildProcess, 'childprocess'
 autoload :Tempfile, 'tempfile'
 
 module ChildProcessHelper
+  class SpawnError < StandardError; end
+
   module_function def call(cmd, env: nil, cwd: nil)
     process = ChildProcess.new(*cmd)
     process.io.inherit!
@@ -24,7 +26,7 @@ module ChildProcessHelper
   module_function def check_call(cmd, env: nil, cwd: nil)
     process = call(cmd, env: env, cwd: cwd)
     unless process.exit_code == 0
-      raise "Failed to execute: #{cmd}"
+      raise SpawnError, "Failed to execute: #{cmd}"
     end
   end
 
@@ -69,7 +71,7 @@ module ChildProcessHelper
   module_function def check_output(*args)
     process, output = get_output(*args)
     unless process.exit_code == 0
-      raise "Failed to execute: #{args}"
+      raise SpawnError,"Failed to execute: #{args}"
     end
     output
   end
