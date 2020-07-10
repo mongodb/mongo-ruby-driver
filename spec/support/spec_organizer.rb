@@ -53,12 +53,16 @@ class SpecOrganizer
     end
 
     RUN_PRIORITY.each do |category|
-      if files = buckets[category]
+      if files = buckets.delete(category)
         run_files(category, files)
       end
     end
-    if files = buckets[nil]
+    if files = buckets.delete(nil)
       run_files('remaining', files)
+    end
+
+    unless buckets.empty?
+      raise "Some buckets were not executed: #{buckets.keys.join(', ')}"
     end
   end
 
