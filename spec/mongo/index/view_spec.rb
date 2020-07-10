@@ -261,7 +261,7 @@ describe Mongo::Index::View do
         context 'when commit quorum options are specified' do
           require_topology :replica_set, :sharded
           context 'on server versions >= 4.4' do
-            min_server_fcv '4.3'
+            min_server_fcv '4.4'
 
             let(:subscriber) { EventSubscriber.new }
 
@@ -776,7 +776,7 @@ describe Mongo::Index::View do
     context 'when providing commit_quorum option' do
       require_topology :replica_set, :sharded
       context 'on server versions >= 4.4' do
-        min_server_fcv '4.3'
+        min_server_fcv '4.4'
 
         let(:subscriber) { EventSubscriber.new }
 

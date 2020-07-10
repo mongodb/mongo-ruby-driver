@@ -233,7 +233,7 @@ To provision the instance for running the driver's test suite via Docker, run:
 To run the AWS auth tests using the EC2 instance role credentials, run:
 
     ./.evergreen/test-docker-remote ubuntu@$ip \
-      MONGODB_VERSION=4.3 AUTH=aws-ec2 \
+      MONGODB_VERSION=4.4 AUTH=aws-ec2 \
       -s .evergreen/run-tests-aws-auth.sh \
       -a .env.private
 
@@ -299,7 +299,7 @@ If the public IP address is in the `IP` shell variable, provision the task:
 
 To run the credentials retrieval test on the ECS task, execute:
 
-    ./.evergreen/test-remote root@$IP env AUTH=aws-ecs RVM_RUBY=ruby-2.7 MONGODB_VERSION=4.3 TEST_CMD='rspec spec/integration/aws*spec.rb' .evergreen/run-tests.sh
+    ./.evergreen/test-remote root@$IP env AUTH=aws-ecs RVM_RUBY=ruby-2.7 MONGODB_VERSION=4.4 TEST_CMD='rspec spec/integration/aws*spec.rb' .evergreen/run-tests.sh
 
 To run the test again without rebuilding the remote environment, execute:
 

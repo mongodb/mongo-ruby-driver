@@ -406,8 +406,7 @@ axes:
       - id: "4.4"
         display_name: "4.4"
         variables:
-          # Until 4.4.0 RC0 ships, we use 4.3.x versions.
-          MONGODB_VERSION: "4.3"
+          MONGODB_VERSION: "4.4"
       - id: "4.2"
         display_name: "4.2"
         variables:

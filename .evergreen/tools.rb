@@ -18,15 +18,24 @@ class ServerVersionRegistry
         # with no downloads... skip those.
         !version['downloads'].empty?
       end
+      # Allow RC releases if there isn't a GA release.
+      version ||= info['versions'].detect do |version|
+        version['version'].start_with?(desired_version) &&
+        # Sometimes the download situation is borked and there is a release
+        # with no downloads... skip those.
+        !version['downloads'].empty?
+      end
       if version.nil?
         info = JSON.load(URI.parse('http://downloads.mongodb.org/full.json').open.read)
         versions = info['versions'].select do |version|
           version['version'].start_with?(desired_version) &&
           !version['downloads'].empty?
         end
-        # Get rid of rc, beta etc. versions.
-        versions.delete_if do |version|
-          version['version'].include?('-')
+        # Get rid of rc, beta etc. versions if there is a GA release.
+        if versions.any? { |version| !version.include?('-') }
+          versions.delete_if do |version|
+            version['version'].include?('-')
+          end
         end
         # Versions are ordered with newest first, take the first one i.e. the most
         # recent one.
