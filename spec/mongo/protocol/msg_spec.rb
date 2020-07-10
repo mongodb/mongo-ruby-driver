@@ -425,6 +425,16 @@ describe Mongo::Protocol::Msg do
         expect(message.serialize).to be_a(BSON::ByteBuffer)
       end
     end
+
+    [:more_to_come, :exhaust_allowed].each do |flag|
+      context "with #{flag} flag" do
+        let(:flags) { [flag] }
+
+        it "round trips #{flag} flag" do
+          expect(deserialized.flags).to eq(flags)
+        end
+      end
+    end
   end
 
   describe '#deserialize' do

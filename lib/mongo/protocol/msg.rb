@@ -60,6 +60,13 @@ module Mongo
       #
       # @since 2.5.0
       def initialize(flags, options, main_document, *sequences)
+        if flags
+          flags.each do |flag|
+            unless KNOWN_FLAGS.key?(flag)
+              raise ArgumentError, "Unknown flag: #{flag.inspect}"
+            end
+          end
+        end
         @flags = flags || []
         @options = options
         unless main_document.is_a?(Hash)
@@ -313,10 +320,17 @@ module Mongo
       # @since 2.5.0
       OP_CODE = 2013
 
+      KNOWN_FLAGS = {
+        checksum_present: true,
+        more_to_come: true,
+        exhaust_allowed: true,
+      }
+
       # Available flags for a OP_MSG message.
       FLAGS = Array.new(16).tap do |arr|
         arr[0] = :checksum_present
         arr[1] = :more_to_come
+        arr[16] = :exhaust_allowed
       end.freeze
 
       # @!attribute
