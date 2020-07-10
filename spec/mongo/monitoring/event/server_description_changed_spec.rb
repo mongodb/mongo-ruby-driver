@@ -27,12 +27,9 @@ describe Mongo::Monitoring::Event::ServerDescriptionChanged do
   end
 
   describe '#summary' do
-    skip_if_linting
 
     it 'renders correctly' do
-      expect(topology).to receive(:server_descriptions).and_return({
-        '127.0.0.1:27017' => Mongo::Server::Description.new(Mongo::Address.new('127.0.0.1:27017'))})
-      expect(event.summary).to eq("#<ServerDescriptionChanged address=127.0.0.1:27017 topology=Unknown[127.0.0.1:27017] prev=#{previous_desc.inspect} new=#{updated_desc.inspect}>")
+      expect(event.summary).to eq("#<ServerDescriptionChanged address=127.0.0.1:27017 prev=UNKNOWN new=UNKNOWN>")
     end
   end
 end

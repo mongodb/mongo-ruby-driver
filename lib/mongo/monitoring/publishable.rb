@@ -32,7 +32,7 @@ module Mongo
       def publish_sdam_event(topic, event)
         return unless monitoring?
 
-        log_debug("EVENT: #{event.summary}")
+        #log_debug("EVENT: #{event.summary}")
         monitoring.succeeded(topic, event)
       end
 
