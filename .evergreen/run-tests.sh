@@ -38,11 +38,6 @@ if test $mongo_version = latest; then
   mongo_version=44
 fi
   
-# Compression is handled via an environment variable, convert to URI option
-if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
-  add_uri_option compressors=zlib
-fi
-
 args="--setParameter enableTestCommands=1"
 # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
 # and mlaunch does not support specifying mongod-only parameters:
@@ -216,6 +211,12 @@ if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
 fi
 
 export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
+
+# Compression is handled via an environment variable, convert to URI option
+if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
+  add_uri_option compressors=zlib
+fi
+
 echo "Running tests"
 set +e
 if test -n "$TEST_CMD"; then
