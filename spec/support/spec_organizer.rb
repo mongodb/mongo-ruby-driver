@@ -52,13 +52,27 @@ class SpecOrganizer
       end
     end
 
+    failed = []
+
     RUN_PRIORITY.each do |category|
-      if files = buckets[category]
-        run_files(category, files)
+      if files = buckets.delete(category)
+        unless run_files(category, files)
+          failed << category
+        end
       end
     end
-    if files = buckets[nil]
-      run_files('remaining', files)
+    if files = buckets.delete(nil)
+      unless run_files('remaining', files)
+        failed << 'remaining'
+      end
+    end
+
+    unless buckets.empty?
+      raise "Some buckets were not executed: #{buckets.keys.map(&:to_s).join(', ')}"
+    end
+
+    if failed.any?
+      raise "The following buckets failed: #{failed.keys.map(&:to_s).join(', ')}"
     end
   end
 
@@ -82,6 +96,10 @@ class SpecOrganizer
         end
       end
     end
+
+    true
+  rescue ChildProcessHelper::SpawnError
+    false
   end
 
   def merge_rspec_results
