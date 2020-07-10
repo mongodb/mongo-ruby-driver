@@ -352,6 +352,16 @@ module Mongo
         end
       end
 
+      def configure_fail_point(client, context)
+        fp = arguments.fetch('failPoint')
+        $disable_fail_points ||= []
+        $disable_fail_points << [
+          fp,
+          ClusterConfig.instance.primary_address,
+        ]
+        client.use('admin').database.command(fp)
+      end
+
       # options & arguments
 
       def options

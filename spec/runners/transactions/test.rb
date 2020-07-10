@@ -41,7 +41,14 @@ module Mongo
         @spec = crud_spec
         @data = data
         @description = test['description']
-        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+        @client_options = {
+          # Disable legacy read & write retries, so that when spec tests
+          # disable modern retries we do not retry at all instead of using
+          # legacy retries which is contrary to what the tests want.
+          max_read_retries: 0,
+          max_write_retries: 0,
+          app_name: 'Tx spec - test client',
+        }.update(Utils.convert_client_options(test['clientOptions'] || {}))
 
         @fail_point_command = test['failPoint']
 
@@ -107,15 +114,35 @@ module Mongo
       end
 
       def test_client
-        @test_client ||= ClientRegistry.instance.global_client(
-          'authorized_without_retry_writes'
-        ).with(@client_options.merge(
-          database: @spec.database_name,
-        ))
+        @test_client ||= begin
+          sdam_proc = lambda do |test_client|
+            test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
+
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_CLOSED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
+          end
+
+          ClientRegistry.instance.new_local_client(
+            SpecConfig.instance.addresses,
+            SpecConfig.instance.authorized_test_options.merge(
+              database: @spec.database_name,
+              auth_source: SpecConfig.instance.auth_options[:auth_source] || 'admin',
+              sdam_proc: sdam_proc,
+            ).merge(@client_options))
+        end
       end
 
-      def event_subscriber
-        @event_subscriber ||= EventSubscriber.new
+      def command_subscriber
+        @command_subscriber ||= EventSubscriber.new
+      end
+
+      def sdam_subscriber
+        @sdam_subscriber ||= EventSubscriber.new(name: 'sdam subscriber')
       end
 
       # Run the test.
@@ -127,7 +154,7 @@ module Mongo
       #
       # @since 2.6.0
       def run
-        test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
+        @threads = {}
 
         results = @operations.map do |op|
           target = resolve_target(test_client, op)
@@ -135,14 +162,25 @@ module Mongo
             context = CRUD::Context.new(
               session0: session0,
               session1: session1,
+              sdam_subscriber: sdam_subscriber,
+              threads: @threads,
+              primary_address: @primary_address,
             )
-
-            op.execute(target, context)
           else
             # Hack to support write concern operations tests, which are
             # defined to use transactions format but target pre-3.6 servers
             # that do not support sessions
-            op.execute(target || support_client, CRUD::Context.new)
+            target ||= support_client
+            context = CRUD::Context.new(
+              sdam_subscriber: sdam_subscriber,
+              threads: @threads,
+              primary_address: @primary_address,
+            )
+          end
+
+          op.execute(target, context).tap do
+            @threads = context.threads
+            @primary_address = context.primary_address
           end
         end
 
@@ -152,7 +190,7 @@ module Mongo
         @session0&.end_session
         @session1&.end_session
 
-        actual_events = Utils.yamlify_command_events(event_subscriber.started_events)
+        actual_events = Utils.yamlify_command_events(command_subscriber.started_events)
         actual_events = actual_events.reject do |event|
           event['command_started_event']['command']['endSessions']
         end
