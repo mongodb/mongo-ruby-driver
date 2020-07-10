@@ -118,6 +118,8 @@ module Mongo
           options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
 
+        attr_reader :server_connection_id
+
         # Sends a message and returns the result.
         #
         # @param [ Protocol::Message ] The message to send.
@@ -137,9 +139,11 @@ module Mongo
             raise ArgumentError, "Trying to dispatch on an unconnected connection #{self}"
           end
 
-          add_server_diagnostics do
-            socket.write(bytes)
-            Protocol::Message.deserialize(socket)
+          add_server_connection_id do
+            add_server_diagnostics do
+              socket.write(bytes)
+              Protocol::Message.deserialize(socket)
+            end
           end
         end
 
@@ -200,10 +204,23 @@ module Mongo
           message = dispatch_bytes(payload)
           reply = message.documents.first
           set_compressor!(reply)
+          @server_connection_id = reply['connectionId']
           reply
         rescue => e
           log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
           raise
+        end
+
+        private
+
+        def add_server_connection_id
+          yield
+        rescue Mongo::Error => e
+          if server_connection_id
+            note = "sconn:#{server_connection_id}"
+            e.add_note(note)
+          end
+          raise e
         end
       end
     end

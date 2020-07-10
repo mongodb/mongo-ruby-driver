@@ -755,6 +755,11 @@ module Mongo
       # @since 2.7.0
       attr_reader :last_update_time
 
+      # @api experimental
+      def server_connection_id
+        config['connectionId']
+      end
+
       # Check equality of two descriptions.
       #
       # @example Check description equality.

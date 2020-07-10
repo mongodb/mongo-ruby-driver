@@ -54,6 +54,9 @@ module Mongo
         # @api private
         attr_reader :connection_id
 
+        # @api private
+        attr_reader :server_connection_id
+
         # Create the new event.
         #
         # @example Create the event.
@@ -69,7 +72,7 @@ module Mongo
         # @api private
         def initialize(command_name, database_name, address, request_id,
           operation_id, command, socket_object_id: nil, connection_id: nil,
-          connection_generation: nil
+          connection_generation: nil, server_connection_id: nil
         )
           @command_name = command_name.to_s
           @database_name = database_name
@@ -80,6 +83,7 @@ module Mongo
           @socket_object_id = socket_object_id
           @connection_id = connection_id
           @connection_generation = connection_generation
+          @server_connection_id = server_connection_id
         end
 
         # Returns a concise yet useful summary of the event.
@@ -125,7 +129,8 @@ module Mongo
         # @since 2.1.0
         # @api private
         def self.generate(address, operation_id, payload,
-          socket_object_id: nil, connection_id: nil, connection_generation: nil
+          socket_object_id: nil, connection_id: nil, connection_generation: nil,
+          server_connection_id: nil
         )
           new(
             payload[:command_name],
@@ -142,6 +147,7 @@ module Mongo
             socket_object_id: socket_object_id,
             connection_id: connection_id,
             connection_generation: connection_generation,
+            server_connection_id: server_connection_id,
           )
         end
 
