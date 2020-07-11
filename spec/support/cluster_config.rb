@@ -38,6 +38,10 @@ class ClusterConfig
   # less than 3.4. This method returns FCV on 3.4+ servers when in single
   # or RS topologies, and otherwise returns the major.minor server version.
   def fcv_ish
+    if server_version.nil?
+      raise "Deployment server version not known - check that connection to deployment succeeded"
+    end
+
     if server_version >= '3.4' && topology != :sharded
       fcv
     else
