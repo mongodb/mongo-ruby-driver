@@ -230,7 +230,10 @@ module Mongo
         begin
           result = ismaster
         rescue => exc
-          log_warn("Error running ismaster on #{server.address}: #{exc.class}: #{exc}:\n#{exc.backtrace[0..5].join("\n")}")
+          msg = "Error running ismaster on #{server.address}"
+          Utils.warn_monitor_exception(logger, msg, exc,
+            bg_error_backtrace: options[:bg_error_backtrace],
+          )
           if monitoring.monitoring?
             monitoring.failed(
               Monitoring::SERVER_HEARTBEAT,

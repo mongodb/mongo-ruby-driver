@@ -55,6 +55,7 @@ module Mongo
       :auth_mech_properties,
       :auth_source,
       :auto_encryption_options,
+      :bg_error_backtrace,
       :cleanup,
       :compressors,
       :direct_connection,
@@ -213,6 +214,10 @@ module Mongo
     #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
     # @option options [ Hash ] :auth_mech_properties
     # @option options [ String ] :auth_source The source to authenticate from.
+    # @option options [ true | false | nil | Integer ] :bg_error_backtrace
+    #   Experimental. Set to true to log complete backtraces for errors in
+    #   background threads. Set to false or nil to not log backtraces. Provide
+    #   a positive integer to log up to that many backtrace lines.
     # @option options [ Array<String> ] :compressors A list of potential
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the

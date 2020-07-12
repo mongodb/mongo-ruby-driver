@@ -116,8 +116,11 @@ module Mongo
                 Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents.first
               end
             end
-          rescue => e
-            log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+          rescue => exc
+            msg = "Failed to handshake with #{address}"
+            Utils.warn_monitor_exception(logger, msg, exc,
+              bg_error_backtrace: options[:bg_error_backtrace],
+            )
             raise
           end
         end
@@ -151,8 +154,11 @@ module Mongo
                 speculative_auth_result: speculative_auth_result,
               )
               auth.login
-            rescue => e
-              log_warn("Failed to authenticate to #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+            rescue => exc
+              msg = "Failed to authenticate to #{address}"
+              Utils.warn_monitor_exception(logger, msg, exc,
+                bg_error_backtrace: options[:bg_error_backtrace],
+              )
               raise
             end
           end
