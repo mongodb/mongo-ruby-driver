@@ -1,3 +1,4 @@
+autoload :FileUtils, 'fileutils'
 autoload :Find, 'find'
 autoload :ChildProcessHelper, 'support/child_process_helper'
 
@@ -72,7 +73,7 @@ class SpecOrganizer
     end
 
     if failed.any?
-      raise "The following buckets failed: #{failed.keys.map(&:to_s).join(', ')}"
+      raise "The following buckets failed: #{failed.map(&:to_s).join(', ')}"
     end
   end
 

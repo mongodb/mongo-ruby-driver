@@ -217,6 +217,7 @@ fi
 
 export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
 echo "Running tests"
+set +e
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 elif test "$FORK" = 1; then
@@ -227,8 +228,8 @@ else
   bundle exec rake spec:ci
 fi
 test_status=$?
-echo "TEST STATUS"
-echo ${test_status}
+echo "TEST STATUS: ${test_status}"
+set -e
 
 if test -f tmp/rspec-all.json; then
   mv tmp/rspec-all.json tmp/rspec.json
