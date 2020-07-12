@@ -40,7 +40,7 @@ module Mongo
         @test = YAML.load(File.read(test_path))
 
         @description = @test['description']
-        @pool_options = Utils.snakeize_hash(process_options(@test['poolOptions']))
+        @pool_options = ::Utils.snakeize_hash(process_options(@test['poolOptions']))
         @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
         @processed_ops = []
         @expected_error = @test['error']
