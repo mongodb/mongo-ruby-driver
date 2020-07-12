@@ -1136,6 +1136,19 @@ module Mongo
       if options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
         raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{options[:connect]}"
       end
+
+      if value = options[:bg_error_backtrace]
+        case value
+        when Integer
+          if value <= 0
+            raise ArgumentError, ":bg_error_backtrace option value must be true, false, nil or a positive integer: #{value}"
+          end
+        when true
+          # OK
+        else
+          raise ArgumentError, ":bg_error_backtrace option value must be true, false, nil or a positive integer: #{value}"
+        end
+      end
     end
 
     # Validates all authentication-related options after they are set on the client
