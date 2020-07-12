@@ -182,12 +182,11 @@ WORKDIR /app
 
 <% end %>
 
-COPY . .
-
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
-  PROJECT_DIRECTORY=/app
+  PROJECT_DIRECTORY=/app \
+  <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('$', "\\$").gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
 
-ENV <%= @env.map { |k, v| %Q`#{k}="#{v.gsub('$', "\\$").gsub('"', "\\\"")}"` }.join(" \\\n  ") %>
+COPY . .
 
 <% if expose? %>
 
