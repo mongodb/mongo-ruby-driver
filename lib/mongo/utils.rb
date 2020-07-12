@@ -17,15 +17,27 @@ module Mongo
   # @api private
   module Utils
 
+    class LocalLogger
+      include Loggable
+
+      def initialize(**opts)
+        @options = opts
+      end
+
+      attr_reader :options
+    end
+
     # @option opts [ true | false | nil | Integer ] :bg_error_backtrace
     #   Experimental. Set to true to log complete backtraces for errors in
     #   background threads. Set to false or nil to not log backtraces. Provide
     #   a positive integer to log up to that many backtrace lines.
-    module_function def warn_monitor_exception(logger, msg, exc, **opts)
+    # @option opts [ Logger ] :logger A custom logger to use.
+    # @option opts [ String ] :log_prefix A custom log prefix to use when
+    #   logging.
+    module_function def warn_monitor_exception(msg, exc, **opts)
       bt_excerpt = excerpt_backtrace(exc, **opts)
-      if logger.warn?
-        logger.warn("#{msg}: #{exc.class}: #{exc}#{bt_excerpt}")
-      end
+      logger = LocalLogger.new(opts)
+      logger.log_warn("#{msg}: #{exc.class}: #{exc}#{bt_excerpt}")
     end
 
     # @option opts [ true | false | nil | Integer ] :bg_error_backtrace

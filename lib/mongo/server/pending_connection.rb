@@ -118,7 +118,9 @@ module Mongo
             end
           rescue => exc
             msg = "Failed to handshake with #{address}"
-            Utils.warn_monitor_exception(logger, msg, exc,
+            Utils.warn_monitor_exception(msg, exc,
+              logger: options[:logger],
+              log_prefix: options[:log_prefix],
               bg_error_backtrace: options[:bg_error_backtrace],
             )
             raise
@@ -156,7 +158,9 @@ module Mongo
               auth.login
             rescue => exc
               msg = "Failed to authenticate to #{address}"
-              Utils.warn_monitor_exception(logger, msg, exc,
+              Utils.warn_monitor_exception(msg, exc,
+                logger: options[:logger],
+                log_prefix: options[:log_prefix],
                 bg_error_backtrace: options[:bg_error_backtrace],
               )
               raise
