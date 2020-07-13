@@ -1137,6 +1137,17 @@ module Mongo
         raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{options[:connect]}"
       end
 
+      %i(connect_timeout socket_timeout).each do |key|
+        if value = options[key]
+          unless Numeric === value
+            raise ArgumentError, "#{key} must be a non-negative number: #{value}"
+          end
+          if value < 0
+            raise ArgumentError, "#{key} must be a non-negative number: #{value}"
+          end
+        end
+      end
+
       if value = options[:bg_error_backtrace]
         case value
         when Integer

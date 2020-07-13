@@ -341,6 +341,32 @@ describe Mongo::Client do
             end.should_not raise_error
           end
         end
+
+        %i(socket_timeout connect_timeout).each do |option|
+          context "when #{option} is negative" do
+            let(:options) do
+              { option => -1 }
+            end
+
+            it 'fails client creation' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /#{option} must be a non-negative number/)
+            end
+          end
+
+          context "when #{option} is of the wrong type" do
+            let(:options) do
+              { option => '42' }
+            end
+
+            it 'fails client creation' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /#{option} must be a non-negative number/)
+            end
+          end
+        end
       end
 
       context 'retry_writes option' do
