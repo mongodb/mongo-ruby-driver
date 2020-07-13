@@ -227,7 +227,9 @@ module Mongo
     # Error message describing that sessions are not supported by the server version.
     #
     # @since 2.5.0
+    # @deprecated
     SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
+    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid - do not remove from driver.
 
     # The state of a session in which the last operation was not related to
     # any transaction or no operations have yet occurred.
