@@ -319,6 +319,30 @@ describe Mongo::Client do
         end
       end
 
+      context 'timeout options' do
+        let(:client) do
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.authorized_test_options.merge(options))
+        end
+
+        context 'when network timeouts are zero' do
+          let(:options) do
+            { socket_timeout: 0, connect_timeout: 0 }
+          end
+
+          it 'sets options to zeros' do
+            client.options[:socket_timeout].should == 0
+            client.options[:connect_timeout].should == 0
+          end
+
+          it 'connects and performs operations successfully' do
+            lambda do
+              client.database.command(ping: 1)
+            end.should_not raise_error
+          end
+        end
+      end
+
       context 'retry_writes option' do
         let(:client) do
           new_local_client_nmio(SpecConfig.instance.addresses, options)

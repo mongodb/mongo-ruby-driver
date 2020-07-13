@@ -249,7 +249,7 @@ module Mongo
         return ''.force_encoding('BINARY')
       end
 
-      if _timeout = self.timeout
+      if _timeout = self.timeout and _timeout > 0
         deadline = Time.now + _timeout
       end
 
