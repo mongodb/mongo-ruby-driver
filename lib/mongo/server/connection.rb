@@ -163,7 +163,7 @@ module Mongo
         unless @socket
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
-          @socket, @description = do_connect
+          @socket, @description, @compressor = do_connect
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionReady.new(address, id)
@@ -194,7 +194,7 @@ module Mongo
           raise
         end
 
-        [socket, pending_connection.description]
+        [socket, pending_connection.description, pending_connection.compressor]
       end
 
       # Disconnect the connection.
