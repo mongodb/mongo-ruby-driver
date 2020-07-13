@@ -107,7 +107,7 @@ module Mongo
 
       def run
         change_stream = begin
-          @target.watch(@pipeline, Utils.snakeize_hash(@options))
+          @target.watch(@pipeline, ::Utils.snakeize_hash(@options))
         rescue Mongo::Error::OperationFailure => e
           return {
             result: {

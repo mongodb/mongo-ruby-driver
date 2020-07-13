@@ -301,6 +301,15 @@ Ruby Options
      - ``Hash``
      - none
 
+   * - ``:bg_error_backtrace``
+     - Experimental. Controls whether and how backtraces are logged when
+       errors occur in background threads. If ``true``, the driver will log
+       complete backtraces. If set to a positive integer, the driver will
+       log up to that many backtrace lines. If set to ``false`` or ``nil``,
+       no backtraces will be logged. Other values are an error.
+     - ``true``, ``false``, ``nil``, ``Integer``
+     - none
+
    * - ``:compressors``
      - A list of potential compressors to use, in order of preference. The driver chooses the first
        compressor that is also supported by the server. Currently the driver only supports 'zlib'.

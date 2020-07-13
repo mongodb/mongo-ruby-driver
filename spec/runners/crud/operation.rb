@@ -88,7 +88,7 @@ module Mongo
       #
       # @since 2.0.0
       def execute(target)
-        op_name = Utils.underscore(name)
+        op_name = ::Utils.underscore(name)
         if target.is_a?(Mongo::Database)
           op_name = "db_#{op_name}"
         elsif target.is_a?(Mongo::Client)
@@ -99,14 +99,14 @@ module Mongo
 
       def database_options
         if opts = @spec['databaseOptions']
-          Utils.convert_operation_options(opts)
+          ::Utils.convert_operation_options(opts)
         else
           nil
         end
       end
 
       def collection_options
-        Utils.convert_operation_options(@spec['collectionOptions'])
+        ::Utils.convert_operation_options(@spec['collectionOptions'])
       end
 
       private
@@ -371,7 +371,7 @@ module Mongo
         # bulk write test is an exception in that it has an "options" key
         # with the options.
         arguments.merge(arguments['options'] || {}).each do |spec_k, v|
-          ruby_k = Utils.underscore(spec_k).to_sym
+          ruby_k = ::Utils.underscore(spec_k).to_sym
 
           if v.is_a?(Hash) && v['$numberLong']
             v = v['$numberLong'].to_i
@@ -401,8 +401,8 @@ module Mongo
       end
 
       def bulk_request(request)
-        op_name = Utils.underscore(request['name'])
-        args = Utils.shallow_snakeize_hash(request['arguments'])
+        op_name = ::Utils.underscore(request['name'])
+        args = ::Utils.shallow_snakeize_hash(request['arguments'])
         if args[:document]
           unless args.keys == [:document]
             raise "If :document is given, it must be the only key"
@@ -417,7 +417,7 @@ module Mongo
       end
 
       def transform_return_document(v)
-        Utils.underscore(v).to_sym
+        ::Utils.underscore(v).to_sym
       end
 
       def update
@@ -425,7 +425,7 @@ module Mongo
       end
 
       def transform_read_preference(v)
-        Utils.snakeize_hash(v)
+        ::Utils.snakeize_hash(v)
       end
 
       def read_preference

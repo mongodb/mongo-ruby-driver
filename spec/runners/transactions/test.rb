@@ -48,13 +48,13 @@ module Mongo
           max_read_retries: 0,
           max_write_retries: 0,
           app_name: 'Tx spec - test client',
-        }.update(Utils.convert_client_options(test['clientOptions'] || {}))
+        }.update(::Utils.convert_client_options(test['clientOptions'] || {}))
 
         @fail_point_command = test['failPoint']
 
         @session_options = if opts = test['sessionOptions']
           Hash[opts.map do |session_name, options|
-            [session_name.to_sym, Utils.convert_operation_options(options)]
+            [session_name.to_sym, ::Utils.convert_operation_options(options)]
           end]
         else
           {}
@@ -190,7 +190,7 @@ module Mongo
         @session0&.end_session
         @session1&.end_session
 
-        actual_events = Utils.yamlify_command_events(command_subscriber.started_events)
+        actual_events = ::Utils.yamlify_command_events(command_subscriber.started_events)
         actual_events = actual_events.reject do |event|
           event['command_started_event']['command']['endSessions']
         end

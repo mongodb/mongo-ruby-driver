@@ -22,7 +22,7 @@ module Mongo
       end
 
       def execute(target, context)
-        op_name = Utils.underscore(name).to_sym
+        op_name = ::Utils.underscore(name).to_sym
         if op_name == :with_transaction
           args = [target]
         else
@@ -92,13 +92,13 @@ module Mongo
         command_value = cmd.delete(command_name)
         cmd = { command_name.to_sym => command_value }.merge(cmd)
 
-        opts = Utils.snakeize_hash(transformed_options(context)).dup
+        opts = ::Utils.snakeize_hash(transformed_options(context)).dup
         opts[:read] = opts.delete(:read_preference)
         database.command(cmd, opts).documents.first
       end
 
       def start_transaction(session, context)
-        session.start_transaction(Utils.convert_operation_options(arguments['options']))
+        session.start_transaction(::Utils.convert_operation_options(arguments['options']))
         nil
       end
 
@@ -118,7 +118,7 @@ module Mongo
         end
 
         if arguments['options']
-          options = Utils.snakeize_hash(arguments['options'])
+          options = ::Utils.snakeize_hash(arguments['options'])
         else
           options = nil
         end

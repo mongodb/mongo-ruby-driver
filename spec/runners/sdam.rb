@@ -149,7 +149,7 @@ module Mongo
       end
 
       def when
-        Utils.underscore(@spec.fetch('when'))
+        ::Utils.underscore(@spec.fetch('when'))
       end
 
       def max_wire_version
@@ -161,7 +161,7 @@ module Mongo
       end
 
       def type
-        Utils.underscore(@spec.fetch('type'))
+        ::Utils.underscore(@spec.fetch('type'))
       end
 
       def result

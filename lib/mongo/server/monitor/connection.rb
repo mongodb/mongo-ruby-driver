@@ -206,8 +206,13 @@ module Mongo
           set_compressor!(reply)
           @server_connection_id = reply['connectionId']
           reply
-        rescue => e
-          log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+        rescue => exc
+          msg = "Failed to handshake with #{address}"
+          Utils.warn_monitor_exception(msg, exc,
+            logger: options[:logger],
+            log_prefix: options[:log_prefix],
+            bg_error_backtrace: options[:bg_error_backtrace],
+          )
           raise
         end
 

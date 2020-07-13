@@ -1138,6 +1138,48 @@ describe Mongo::Client do
         end
       end
 
+      context ':bg_error_backtrace option' do
+        [true, false, nil, 42].each do |valid_value|
+          context "valid value: #{valid_value.inspect}" do
+            let(:options) do
+              {bg_error_backtrace: valid_value}
+            end
+
+            it 'is accepted' do
+              client.options[:bg_error_backtrace].should == valid_value
+            end
+          end
+        end
+
+        context 'invalid value type' do
+          let(:options) do
+            {bg_error_backtrace: 'yes'}
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /:bg_error_backtrace option value must be true, false, nil or a positive integer/)
+          end
+        end
+
+        context 'invalid value' do
+          [0, -1, 42.0].each do |invalid_value|
+            context "invalid value: #{invalid_value.inspect}" do
+              let(:options) do
+                {bg_error_backtrace: invalid_value}
+              end
+
+              it 'is rejected' do
+                lambda do
+                  client
+                end.should raise_error(ArgumentError, /:bg_error_backtrace option value must be true, false, nil or a positive integer/)
+              end
+            end
+          end
+        end
+      end
+
       describe ':read option' do
         [
           :primary, :primary_preferred, :secondary, :secondary_preferred,  :nearest
@@ -1265,7 +1307,7 @@ describe Mongo::Client do
       context 'when the block raises an error' do
         it 'it is closed after the block' do
           block_client_raise = nil
-          expect do  
+          expect do
             Mongo::Client.new(
               SpecConfig.instance.addresses,
               SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
@@ -1273,38 +1315,38 @@ describe Mongo::Client do
               block_client_raise = client
               raise "This is an error!"
             end
-          end.to raise_error(StandardError, "This is an error!")  
+          end.to raise_error(StandardError, "This is an error!")
           expect(block_client_raise.cluster.connected?).to eq(false)
         end
       end
 
       context 'when the hosts given include the protocol' do
         it 'raises an error on mongodb://' do
-          expect do 
+          expect do
             Mongo::Client.new(['mongodb://127.0.0.1:27017/test'])
           end.to raise_error(ArgumentError, "Host 'mongodb://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
 
         it 'raises an error on mongodb+srv://' do
-          expect do 
+          expect do
             Mongo::Client.new(['mongodb+srv://127.0.0.1:27017/test'])
           end.to raise_error(ArgumentError, "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
 
         it 'raises an error on multiple items' do
-          expect do 
+          expect do
             Mongo::Client.new(['127.0.0.1:27017', 'mongodb+srv://127.0.0.1:27017/test'])
           end.to raise_error(ArgumentError, "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
 
         it 'raises an error only at beginning of string' do
-          expect do 
+          expect do
             Mongo::Client.new(['somethingmongodb://127.0.0.1:27017/test', 'mongodb+srv://127.0.0.1:27017/test'])
           end.to raise_error(ArgumentError, "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
 
         it 'raises an error with different case' do
-          expect do 
+          expect do
             Mongo::Client.new(['MongOdB://127.0.0.1:27017/test'])
           end.to raise_error(ArgumentError, "Host 'MongOdB://127.0.0.1:27017/test' should not contain protocol. Did you mean to not use an array?")
         end
