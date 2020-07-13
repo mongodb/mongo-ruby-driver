@@ -188,7 +188,7 @@ module Mongo
         # @since 2.0.0
         def disconnect!(options = nil)
           if socket
-            socket.close
+            socket.close rescue nil
             @socket = nil
           end
           true

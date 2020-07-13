@@ -220,7 +220,7 @@ module Mongo
         @auth_mechanism = nil
         @last_checkin = nil
         if socket
-          socket.close
+          socket.close rescue nil
           @socket = nil
         end
         @closed = true
