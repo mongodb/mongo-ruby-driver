@@ -212,7 +212,7 @@ module Mongo
           contents: @result_collection.with(
             read: {mode: 'primary'},
             read_concern: { level: 'local' },
-          ).find.to_a,
+          ).find.sort(_id: 1).to_a,
           events: actual_events,
         }
       end
