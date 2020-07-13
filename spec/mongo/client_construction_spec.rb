@@ -367,6 +367,42 @@ describe Mongo::Client do
             end
           end
         end
+
+        context "when :connect_timeout is very small" do
+          let(:options) do
+            { connect_timeout: 1e-9, server_selection_timeout: 2 }
+          end
+
+          it 'allows client creation' do
+            lambda do
+              client
+            end.should_not raise_error
+          end
+
+          it 'fails server selection due to very small timeout' do
+            lambda do
+              client.database.command(ping: 1)
+            end.should raise_error(Mongo::Error::NoServerAvailable)
+          end
+        end
+
+        context "when :socket_timeout is very small" do
+          let(:options) do
+            { socket_timeout: 1e-9, server_selection_timeout: 2 }
+          end
+
+          it 'allows client creation' do
+            lambda do
+              client
+            end.should_not raise_error
+          end
+
+          it 'fails operations due to very small timeout' do
+            lambda do
+              client.database.command(ping: 1)
+            end.should raise_error(Mongo::Error::SocketTimeoutError)
+          end
+        end
       end
 
       context 'retry_writes option' do
