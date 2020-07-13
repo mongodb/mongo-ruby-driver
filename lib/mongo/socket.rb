@@ -105,9 +105,14 @@ module Mongo
     def summary
       fileno = @socket&.fileno rescue '<no socket>' || '<no socket>'
       if monitor?
-        "#{connection_address}:m #{fileno}"
+        indicator = if options[:push]
+          'pm'
+        else
+          'm'
+        end
+        "#{connection_address};#{indicator};fd=#{fileno}"
       else
-        "#{connection_address}:c:#{connection_generation} #{fileno}"
+        "#{connection_address};c:#{connection_generation};fd=#{fileno}"
       end
     end
 

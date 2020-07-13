@@ -35,6 +35,13 @@ module Mongo
         #   description.
         attr_reader :new_description
 
+        # @return [ true | false ] Whether the heartbeat was awaited.
+        #
+        # @api experimental
+        def awaited?
+          @awaited
+        end
+
         # Create the event.
         #
         # @example Create the event.
@@ -44,13 +51,19 @@ module Mongo
         # @param [ Integer ] topology The topology.
         # @param [ Server::Description ] previous_description The previous description.
         # @param [ Server::Description ] new_description The new description.
+        # @param [ true | false ] awaited Whether the server description was
+        #   a result of processing an awaited ismaster response.
         #
         # @since 2.4.0
-        def initialize(address, topology, previous_description, new_description)
+        # @api private
+        def initialize(address, topology, previous_description, new_description,
+          awaited: false
+        )
           @address = address
           @topology = topology
           @previous_description = previous_description
           @new_description = new_description
+          @awaited = !!awaited
         end
 
         # Returns a concise yet useful summary of the event.
@@ -65,7 +78,17 @@ module Mongo
           "#<#{short_class_name}" +
           " address=#{address}" +
           # TODO Add summaries to descriptions and use them here
-          " prev=#{previous_description.server_type.upcase} new=#{new_description.server_type.upcase}>"
+          " prev=#{previous_description.server_type.upcase} new=#{new_description.server_type.upcase}#{awaited_indicator}>"
+        end
+
+        private
+
+        def awaited_indicator
+          if awaited?
+            ' [awaited]'
+          else
+            ''
+          end
         end
       end
     end

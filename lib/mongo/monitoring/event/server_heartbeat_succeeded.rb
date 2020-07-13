@@ -30,6 +30,11 @@ module Mongo
         # Alias of round_trip_time.
         alias :duration :round_trip_time
 
+        # @return [ true | false ] Whether the heartbeat was awaited.
+        def awaited?
+          @awaited
+        end
+
         # Create the event.
         #
         # @example Create the event.
@@ -37,12 +42,14 @@ module Mongo
         #
         # @param [ Address ] address The server address.
         # @param [ Float ] round_trip_time Duration of ismaster call in seconds.
+        # @param [ true | false ] awaited Whether the heartbeat was awaited.
         #
         # @since 2.7.0
         # @api private
-        def initialize(address, round_trip_time)
+        def initialize(address, round_trip_time, awaited: false)
           @address = address
           @round_trip_time = round_trip_time
+          @awaited = !!awaited
         end
 
         # Returns a concise yet useful summary of the event.

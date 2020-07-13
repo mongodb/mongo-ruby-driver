@@ -24,17 +24,24 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
+        # @return [ true | false ] Whether the heartbeat was awaited.
+        def awaited?
+          @awaited
+        end
+
         # Create the event.
         #
         # @example Create the event.
         #   ServerHeartbeatStarted.new(address)
         #
         # @param [ Address ] address The server address.
+        # @param [ true | false ] awaited Whether the heartbeat was awaited.
         #
         # @since 2.7.0
         # @api private
-        def initialize(address)
+        def initialize(address, awaited: false)
           @address = address
+          @awaited = !!awaited
         end
 
         # Returns a concise yet useful summary of the event.

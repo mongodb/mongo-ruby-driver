@@ -25,12 +25,13 @@ class Mongo::Cluster
   class SdamFlow
     extend Forwardable
 
-    def initialize(cluster, previous_desc, updated_desc)
+    def initialize(cluster, previous_desc, updated_desc, awaited: false)
       @cluster = cluster
       @topology = cluster.topology
       @original_desc = @previous_desc = previous_desc
       @updated_desc = updated_desc
       @servers_to_disconnect = []
+      @awaited = !!awaited
     end
 
     attr_reader :cluster
@@ -50,6 +51,10 @@ class Mongo::Cluster
     attr_reader :previous_desc
     attr_reader :updated_desc
     attr_reader :original_desc
+
+    def awaited?
+      @awaited
+    end
 
     def_delegators :topology, :replica_set_name
 
@@ -453,6 +458,7 @@ class Mongo::Cluster
           topology,
           previous_desc,
           updated_desc,
+          awaited: awaited?,
         )
       )
       @previous_desc = updated_desc

@@ -77,7 +77,9 @@ module Mongo
         @monitoring = monitoring
         @options = options.freeze
         @mutex = Mutex.new
+        @sdam_mutex = Mutex.new
         @next_earliest_scan = @next_wanted_scan = Time.now
+        @update_mutex = Mutex.new
       end
 
       # @return [ Server ] server The server that this monitor is monitoring.
@@ -109,6 +111,14 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
+      # @return [ Server::PushMonitor | nil ] The push monitor, if one is being
+      #   used.
+      def push_monitor
+        @update_mutex.synchronize do
+          @push_monitor
+        end
+      end
+
       # Runs the server monitor. Refreshing happens on a separate thread per
       # server.
       #
@@ -120,9 +130,19 @@ module Mongo
       # @since 2.0.0
       def do_work
         scan!
-        delta = @next_wanted_scan - Time.now
-        if delta > 0
-          server.scan_semaphore.wait(delta)
+        # @next_wanted_scan may be updated by the push monitor.
+        # However we need to check for termination flag so that the monitor
+        # thread exits when requested.
+        loop do
+          delta = @next_wanted_scan - Time.now
+          if delta > 0
+            signaled = server.scan_semaphore.wait(delta)
+            if signaled || @stop_requested
+              break
+            end
+          else
+            break
+          end
         end
       end
 
@@ -133,11 +153,22 @@ module Mongo
       #
       # @api public for backwards compatibility only
       def stop!
+        stop_push_monitor!
+
         # Forward super's return value
         super.tap do
           # Important: disconnect should happen after the background thread
           # terminates.
           connection&.disconnect!
+        end
+      end
+
+      def stop_push_monitor!
+        @update_mutex.synchronize do
+          if @push_monitor
+            @push_monitor.stop!
+            @push_monitor = nil
+          end
         end
       end
 
@@ -168,12 +199,18 @@ module Mongo
 
           result = do_scan
 
+          run_sdam_flow(result)
+        end
+      end
+
+      def run_sdam_flow(result, awaited: false)
+        @sdam_mutex.synchronize do
           old_description = server.description
 
           new_description = Description.new(server.address, result,
             server.round_trip_time_averager.average_round_trip_time)
 
-          server.cluster.run_sdam_flow(server.description, new_description)
+          server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited)
 
           server.description.tap do |new_description|
             if new_description.unknown? && !old_description.unknown?
@@ -209,7 +246,7 @@ module Mongo
       end
 
       def do_scan
-        if monitoring.monitoring?
+        if monitoring.monitoring? && push_monitor.nil?
           monitoring.started(
             Monitoring::SERVER_HEARTBEAT,
             Monitoring::Event::ServerHeartbeatStarted.new(server.address)
@@ -236,7 +273,7 @@ module Mongo
             log_prefix: options[:log_prefix],
             bg_error_backtrace: options[:bg_error_backtrace],
           )
-          if monitoring.monitoring?
+          if monitoring.monitoring? && push_monitor.nil?
             monitoring.failed(
               Monitoring::SERVER_HEARTBEAT,
               Monitoring::Event::ServerHeartbeatFailed.new(server.address, Time.now-start_time, exc)
@@ -244,7 +281,7 @@ module Mongo
           end
           result = {}
         else
-          if monitoring.monitoring?
+          if monitoring.monitoring? && push_monitor.nil?
             monitoring.succeeded(
               Monitoring::SERVER_HEARTBEAT,
               Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, Time.now-start_time)
@@ -279,6 +316,23 @@ module Mongo
             connection.handshake!
           end
           @connection = connection
+          if result['topologyVersion']
+            # Successful response, server 4.4+
+            @update_mutex.synchronize do
+              @push_monitor ||= PushMonitor.new(
+                self,
+                TopologyVersion.new(result['topologyVersion']),
+                **Utils.shallow_symbolize_keys(options.merge(
+                  socket_timeout: heartbeat_interval + connection.socket_timeout,
+                )),
+              )
+            end
+            push_monitor.run!
+          else
+            # Failed response or pre-4.4 server
+            stop_push_monitor!
+          end
+          result
         end
         result
       end

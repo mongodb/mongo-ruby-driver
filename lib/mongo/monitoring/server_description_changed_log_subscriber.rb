@@ -25,8 +25,16 @@ module Mongo
       def log_event(event)
         log_debug(
           "Server description for #{event.address} changed from " +
-          "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
+          "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'#{awaited_indicator(event)}."
         )
+      end
+
+      def awaited_indicator(event)
+        if event.awaited?
+          ' [awaited]'
+        else
+          ''
+        end
       end
     end
   end

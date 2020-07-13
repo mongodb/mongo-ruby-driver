@@ -164,6 +164,9 @@ describe 'SDAM error handling' do
     end
 
     context 'network error' do
+      # With 4.4 servers we set up two monitoring connections, hence global
+      # socket expectations get hit twice.
+      max_server_version '4.2'
 
       let(:operation) do
         expect_any_instance_of(Mongo::Socket).to receive(:read).and_raise(exception)
@@ -281,16 +284,22 @@ describe 'SDAM error handling' do
       end
     end
 
-    context 'network timeout' do
-      let(:exception) { Mongo::Error::SocketTimeoutError }
+    context 'via stubs' do
+      # With 4.4 servers we set up two monitoring connections, hence global
+      # socket expectations get hit twice.
+      max_server_version '4.2'
 
-      it_behaves_like 'marks server unknown and clears connection pool'
-    end
+      context 'network timeout' do
+        let(:exception) { Mongo::Error::SocketTimeoutError }
 
-    context 'non-timeout network error' do
-      let(:exception) { Mongo::Error::SocketError }
+        it_behaves_like 'marks server unknown and clears connection pool'
+      end
 
-      it_behaves_like 'marks server unknown and clears connection pool'
+      context 'non-timeout network error' do
+        let(:exception) { Mongo::Error::SocketError }
+
+        it_behaves_like 'marks server unknown and clears connection pool'
+      end
     end
 
     context 'non-timeout network error via fail point' do

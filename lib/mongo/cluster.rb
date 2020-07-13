@@ -599,11 +599,14 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
+    # @option aptions [ true | false ] :awaited Whether the updated description
+    #   was a result of processing an awaited ismaster.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
       @sdam_flow_lock.synchronize do
-        flow = SdamFlow.new(self, previous_desc, updated_desc)
+        flow = SdamFlow.new(self, previous_desc, updated_desc,
+          awaited: options[:awaited])
         flow.server_description_changed
 
         # SDAM flow may alter the updated description - grab the final

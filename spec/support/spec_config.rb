@@ -423,6 +423,10 @@ EOT
       connect_timeout: 2.91,
       socket_timeout: 5.09,
       max_idle_time: 100.02,
+
+      # Uncomment to have exceptions in background threads log complete
+      # backtraces.
+      #bg_error_backtrace: true,
    }
   end
 
