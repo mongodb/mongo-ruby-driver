@@ -20,6 +20,10 @@ describe 'Cleanup stress test' do
 
     it 'cleans up' do
       client
+      client.cluster.servers_list.map(&:scan!)
+
+      sleep 1
+      GC.start
 
       start_resources = resources
 
@@ -27,6 +31,9 @@ describe 'Cleanup stress test' do
         client.close
         client.reconnect
       end
+
+      sleep 1
+      GC.start
 
       end_resources = resources
 
