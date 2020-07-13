@@ -325,7 +325,9 @@ Ruby Options
 
    * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
-       before raising an exception.
+       before raising an exception. The value of ``0`` means no timeout.
+       Client creation will fail with an error if an invalid timeout value
+       is passed (such as a negative value or a non-numeric value).
      - ``Float``
      - 10 seconds
 
@@ -481,7 +483,9 @@ Ruby Options
 
    * - ``:socket_timeout``
      - The number of seconds to wait for an operation to execute on a
-       socket before raising an exception.
+       socket before raising an exception. The value of ``0`` means no timeout.
+       Client creation will fail with an error if an invalid timeout value
+       is passed (such as a negative value or a non-numeric value).
      - ``Float``
      - 5 seconds
 
@@ -701,6 +705,10 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - connectTimeoutMS=Integer
      - ``:connect_timeout => Float``
 
+       Unlike the corresponding Ruby option which fails client creation on
+       invalid values (e.g. negative and non-numeric values), invalid values
+       provided via this URI option are ignored with a warning.
+
    * - directConnection=Boolean
      - ``:direct_connection => Boolean``
 
@@ -761,6 +769,10 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - socketTimeoutMS=Integer
      - ``:socket_timeout => Float``
+
+       Unlike the corresponding Ruby option which fails client creation on
+       invalid values (e.g. negative and non-numeric values), invalid values
+       provided via this URI option are ignored with a warning.
 
    * - ssl=Boolean
      - ``:ssl => true|false``
@@ -824,6 +836,13 @@ Timeout Options
 When executing an operation, the number of seconds to wait for the driver
 to find an appropriate server to send an operation to. Defaults to 30.
 
+A value of 0 means no timeout.
+
+When an invalid value (e.g. a negative value or a non-numeric value) is passed
+via the URI option, the invalid input is ignored with a warning. When an
+invalid value is passed directly to Client via a Ruby option, Client
+construction fails with an error.
+
 In replica set deployments, this timeout should be set to exceed the typical
 :manual:`replica set election times </core/replica-set-elections/>`
 in order for the driver to transparently handle primary changes. This timeout
@@ -842,6 +861,13 @@ provide quicker failure when the server is not running.
 
 The number of seconds to wait for a socket read or write to complete on
 regular (non-monitoring) connections. Default is no timeout.
+
+A value of 0 means no timeout.
+
+When an invalid value (e.g. a negative value or a non-numeric value) is passed
+via the URI option, the invalid input is ignored with a warning. When an
+invalid value is passed directly to Client via a Ruby option, Client
+construction fails with an error.
 
 This timeout should take into account both network latency and operation
 duration. For example, setting this timeout to 5 seconds will abort queries
