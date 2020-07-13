@@ -249,8 +249,13 @@ module Mongo
         return ''.force_encoding('BINARY')
       end
 
-      if _timeout = self.timeout
-        deadline = Time.now + _timeout
+      _timeout = self.timeout
+      if _timeout
+        if _timeout > 0
+          deadline = Time.now + _timeout
+        elsif _timeout < 0
+          raise Errno::ETIMEDOUT, "Negative timeout #{_timeout} given to socket"
+        end
       end
 
       # We want to have a fixed and reasonably small size buffer for reads
