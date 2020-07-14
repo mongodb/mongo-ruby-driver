@@ -17,12 +17,16 @@ class SpecOrganizer
     [%r,^mongo,, :unit],
     [%r,^kerberos,, :unit],
     [%r,^integration/sdam_error_handling,, :sdam_integration],
+    [%r,^integration/cursor_reaping,, :cursor_reaping],
     [%r,^(atlas|integration),, :integration],
     [%r,^spec_tests,, :spec],
     [%r,^spec_tests/sdam_integration,, :spec_sdam_integration],
   ]
 
-  RUN_PRIORITY = %i(unit integration sdam_integration spec spec_sdam_integration)
+  RUN_PRIORITY = %i(unit
+    integration sdam_integration cursor_reaping
+    spec spec_sdam_integration
+  )
 
   SPEC_ROOT = File.expand_path(File.join(File.dirname(__FILE__), '..'))
   ROOT = File.expand_path(File.join(SPEC_ROOT, '..'))
