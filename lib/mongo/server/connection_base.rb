@@ -184,9 +184,11 @@ module Mongo
           result
         end
       end
+      require 'byebug'
 
       def serialize(message, client, buffer = BSON::ByteBuffer.new)
         start_size = 0
+        # byebug if compressor && message.compression_allowed?(message.command.keys.first)
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
 
         # Driver specifications only mandate the fixed 16MiB limit for

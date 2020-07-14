@@ -76,7 +76,7 @@ module Mongo
           if field[:multi]
             Message.deserialize_array(message, buf, field)
           else
-            Message.deserialize_field(message, buf, field)
+            Message.deserialize_field(message, buf, field, {})
           end
         end
         if message.is_a?(Msg)

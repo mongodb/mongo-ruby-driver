@@ -446,7 +446,8 @@ module Mongo
         #
         # @since 2.5.0
         def self.deserialize(buffer, num_bytes = nil)
-          buffer.get_bytes(num_bytes || buffer.length)
+          n = num_bytes.is_a?(Integer) ? num_bytes : nil
+          buffer.get_bytes(n || buffer.length)
         end
       end
     end
