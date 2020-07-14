@@ -369,8 +369,14 @@ describe Mongo::Client do
         end
 
         context "when :connect_timeout is very small" do
+          # The driver reads first and checks the deadline second.
+          # This means the read (in a monitor) can technically take more than
+          # the connect timeout. Restrict to TLS configurations to make
+          # the network I/O take longer.
+          require_tls
+
           let(:options) do
-            { connect_timeout: 1e-9, server_selection_timeout: 2 }
+            { connect_timeout: 1e-6, server_selection_timeout: 2 }
           end
 
           it 'allows client creation' do
@@ -387,8 +393,14 @@ describe Mongo::Client do
         end
 
         context "when :socket_timeout is very small" do
+          # The driver reads first and checks the deadline second.
+          # This means the read (in a monitor) can technically take more than
+          # the connect timeout. Restrict to TLS configurations to make
+          # the network I/O take longer.
+          require_tls
+
           let(:options) do
-            { socket_timeout: 1e-9, server_selection_timeout: 2 }
+            { socket_timeout: 1e-6, server_selection_timeout: 2 }
           end
 
           it 'allows client creation' do
