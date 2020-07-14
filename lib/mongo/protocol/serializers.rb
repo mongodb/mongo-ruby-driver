@@ -440,14 +440,16 @@ module Mongo
         # Deserializes bytes from the byte buffer.
         #
         # @param [ BSON::ByteBuffer ] buffer Buffer containing the value to read.
-        # @param [ Integer ] num_bytes Number of bytes to read.
+        # @param [ Hash ] options The method options.
+        #
+        # @option options [ Integer ] num_bytes Number of bytes to read.
         #
         # @return [ String ] The bytes.
         #
         # @since 2.5.0
-        def self.deserialize(buffer, num_bytes = nil)
-          n = num_bytes.is_a?(Integer) ? num_bytes : nil
-          buffer.get_bytes(n || buffer.length)
+        def self.deserialize(buffer, options = {})
+          num_bytes = options[:num_bytes]
+          buffer.get_bytes(num_bytes || buffer.length)
         end
       end
     end
