@@ -304,6 +304,44 @@ module Mongo
       subscribers_for(topic).each{ |subscriber| subscriber.failed(event) }
     end
 
+    # @api private
+    def publish_heartbeat(server, awaited: false)
+      if monitoring?
+        event = Event::ServerHeartbeatStarted.new(
+          server.address, awaited: awaited)
+        started(SERVER_HEARTBEAT, event)
+      end
+
+      # The duration we publish in heartbeat succeeded/failed events is
+      # the time spent on the entire heartbeat. This could include time
+      # to connect the socket (including TLS handshake), not just time
+      # spent on ismaster call itself.
+      # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
+      # requires that the duration exposed here start from "sending the
+      # message" (ismaster). This requirement does not make sense if,
+      # for example, we were never able to connect to the server at all
+      # and thus ismaster was never sent.
+      start_time = Time.now
+
+      begin
+        result = yield
+      rescue => exc
+        if monitoring?
+          event = Event::ServerHeartbeatFailed.new(
+            server.address, Time.now-start_time, exc, awaited: awaited)
+          failed(SERVER_HEARTBEAT, event)
+        end
+        raise
+      else
+        if monitoring?
+          event = Event::ServerHeartbeatSucceeded.new(
+            server.address, Time.now-start_time, awaited: awaited)
+          succeeded(SERVER_HEARTBEAT, event)
+        end
+        result
+      end
+    end
+
     private
 
     def initialize_copy(original)
