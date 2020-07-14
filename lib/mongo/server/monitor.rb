@@ -213,11 +213,13 @@ module Mongo
           server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited)
 
           server.description.tap do |new_description|
-            if new_description.unknown? && !old_description.unknown?
-              @next_earliest_scan = @next_wanted_scan = Time.now
-            else
-              @next_earliest_scan = Time.now + MIN_SCAN_INTERVAL
-              @next_wanted_scan = Time.now + heartbeat_interval
+            unless awaited
+              if new_description.unknown? && !old_description.unknown?
+                @next_earliest_scan = @next_wanted_scan = Time.now
+              else
+                @next_earliest_scan = Time.now + MIN_SCAN_INTERVAL
+                @next_wanted_scan = Time.now + heartbeat_interval
+              end
             end
           end
         end
