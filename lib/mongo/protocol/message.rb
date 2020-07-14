@@ -374,7 +374,7 @@ module Mongo
       #   each of the elements in this array using BSON types wherever possible.
       #
       # @return [Message] Message with deserialized array.
-      def self.deserialize_array(message, io, field, options)
+      def self.deserialize_array(message, io, field, options = {})
         elements = []
         count = message.instance_variable_get(field[:multi])
         count.times { elements << field[:type].deserialize(io, options) }
