@@ -273,7 +273,7 @@ module Mongo
         num_inserts > 1  || num_updates > 1 || num_deletes > 1
       end
 
-      # private
+      private
 
       def command
         @command ||= if @main_document
