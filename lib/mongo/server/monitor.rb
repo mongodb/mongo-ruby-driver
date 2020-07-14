@@ -246,26 +246,10 @@ module Mongo
       end
 
       def do_scan
-        if monitoring.monitoring? && push_monitor.nil?
-          monitoring.started(
-            Monitoring::SERVER_HEARTBEAT,
-            Monitoring::Event::ServerHeartbeatStarted.new(server.address)
-          )
-        end
-
-        # The duration we publish in heartbeat succeeded/failed events is
-        # the time spent on the entire heartbeat. This could include time
-        # to connect the socket (including TLS handshake), not just time
-        # spent on ismaster call itself.
-        # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
-        # requires that the duration exposed here start from "sending the
-        # message" (ismaster). This requirement does not make sense if,
-        # for example, we were never able to connect to the server at all
-        # and thus ismaster was never sent.
-        start_time = Time.now
-
         begin
-          result = ismaster
+          monitoring.publish_heartbeat(server) do
+            ismaster
+          end
         rescue => exc
           msg = "Error running ismaster on #{server.address}"
           Utils.warn_monitor_exception(msg, exc,
@@ -273,22 +257,8 @@ module Mongo
             log_prefix: options[:log_prefix],
             bg_error_backtrace: options[:bg_error_backtrace],
           )
-          if monitoring.monitoring? && push_monitor.nil?
-            monitoring.failed(
-              Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatFailed.new(server.address, Time.now-start_time, exc)
-            )
-          end
-          result = {}
-        else
-          if monitoring.monitoring? && push_monitor.nil?
-            monitoring.succeeded(
-              Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, Time.now-start_time)
-            )
-          end
+          {}
         end
-        result
       end
 
       def ismaster
@@ -322,6 +292,7 @@ module Mongo
               @push_monitor ||= PushMonitor.new(
                 self,
                 TopologyVersion.new(result['topologyVersion']),
+                monitoring,
                 **Utils.shallow_symbolize_keys(options.merge(
                   socket_timeout: heartbeat_interval + connection.socket_timeout,
                 )),
