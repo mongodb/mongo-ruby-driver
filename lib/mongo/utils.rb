@@ -36,7 +36,7 @@ module Mongo
     #   logging.
     module_function def warn_monitor_exception(msg, exc, **opts)
       bt_excerpt = excerpt_backtrace(exc, **opts)
-      logger = LocalLogger.new(opts)
+      logger = LocalLogger.new(**opts)
       logger.log_warn("#{msg}: #{exc.class}: #{exc}#{bt_excerpt}")
     end
 
