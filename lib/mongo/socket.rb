@@ -21,6 +21,7 @@ module Mongo
   # Provides additional data around sockets for the driver's use.
   #
   # @since 2.0.0
+  # @api private
   class Socket
     include ::Socket::Constants
 
@@ -178,20 +179,21 @@ module Mongo
     #   socket.read(4096)
     #
     # @param [ Integer ] length The number of bytes to read.
+    # @param [ Numeric ] timeout The timeout to use for each chunk read.
     #
     # @raise [ Mongo::SocketError ] If not all data is returned.
     #
     # @return [ Object ] The data from the socket.
     #
     # @since 2.0.0
-    def read(length)
+    def read(length, timeout: nil)
       map_exceptions do
-        data = read_from_socket(length)
+        data = read_from_socket(length, timeout: timeout)
         unless (data.length > 0 || length == 0)
           raise IOError, "Expected to read > 0 bytes but read 0 bytes"
         end
         while data.length < length
-          chunk = read_from_socket(length - data.length)
+          chunk = read_from_socket(length - data.length, timeout: timeout)
           unless (chunk.length > 0 || length == 0)
             raise IOError, "Expected to read > 0 bytes but read 0 bytes"
           end
@@ -248,13 +250,13 @@ module Mongo
 
     private
 
-    def read_from_socket(length)
+    def read_from_socket(length, timeout: nil)
       # Just in case
       if length == 0
         return ''.force_encoding('BINARY')
       end
 
-      _timeout = self.timeout
+      _timeout = timeout || self.timeout
       if _timeout
         if _timeout > 0
           deadline = Time.now + _timeout

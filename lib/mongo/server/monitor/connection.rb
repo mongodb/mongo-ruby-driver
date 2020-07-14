@@ -133,10 +133,15 @@ module Mongo
         #
         # @param [ String ] The serialized message to send.
         #
+        # @option opts [ Numeric ] :read_socket_timeout The timeout to use for
+        #   each read operation.
+        #
         # @return [ Protocol::Message ] The result.
-        def dispatch_bytes(bytes)
+        def dispatch_bytes(bytes, **opts)
           write_bytes(bytes)
-          read_response
+          read_response(
+            socket_timeout: opts[:read_socket_timeout],
+          )
         end
 
         def write_bytes(bytes)
@@ -151,14 +156,19 @@ module Mongo
           end
         end
 
-        def read_response
+        # @option opts [ Numeric ] :socket_timeout The timeout to use for
+        #   each read operation.
+        def read_response(**opts)
           unless connected?
             raise ArgumentError, "Trying to read on an unconnected connection #{self}"
           end
 
           add_server_connection_id do
             add_server_diagnostics do
-              Protocol::Message.deserialize(socket)
+              Protocol::Message.deserialize(socket,
+                Protocol::Message::MAX_MESSAGE_SIZE,
+                nil,
+                **opts)
             end
           end
         end

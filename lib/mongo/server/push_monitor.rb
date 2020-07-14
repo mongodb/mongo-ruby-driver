@@ -147,7 +147,18 @@ module Mongo
       end
 
       def read_response
-        @lock.synchronize { @connection }.read_response
+        if timeout = options[:connect_timeout]
+          if timeout < 0
+            raise Mongo::SocketTimeoutError, "Requested to read with a negative timeout: #{}"
+          elsif timeout > 0
+            timeout += options[:heartbeat_frequency] || Monitor::DEFAULT_HEARTBEAT_INTERVAL
+          end
+        end
+        # We set the timeout twice: once passed into read_socket which applies
+        # to each individual read operation, and again around the entire read.
+        Timeout.timeout(timeout, Error::SocketTimeoutError, "Failed to read an awaited ismaster response in #{timeout} seconds") do
+          @lock.synchronize { @connection }.read_response(socket_timeout: timeout)
+        end
       end
     end
   end
