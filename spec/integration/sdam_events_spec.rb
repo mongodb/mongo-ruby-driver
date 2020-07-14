@@ -47,8 +47,6 @@ describe 'SDAM events' do
     context 'pre-4.4 servers' do
       max_server_version '4.2'
 
-      let(:subscriber) { EventSubscriber.new }
-
       let(:client) do
         new_local_client(SpecConfig.instance.addresses,
           # Heartbeat interval is bound by 500 ms
@@ -77,8 +75,6 @@ describe 'SDAM events' do
 
     context '4.4+ servers' do
       min_server_fcv '4.4'
-
-      let(:subscriber) { EventSubscriber.new }
 
       let(:client) do
         new_local_client(SpecConfig.instance.addresses,
