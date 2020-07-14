@@ -29,12 +29,13 @@ module Mongo
       extend Forwardable
       include BackgroundThread
 
-      def initialize(monitor, topology_version, **options)
+      def initialize(monitor, topology_version, monitoring, **options)
         if topology_version.nil?
           raise ArgumentError, 'Topology version must be provided but it was nil'
         end
         @monitor = monitor
         @topology_version = topology_version
+        @monitoring = monitoring
         @options = options
         @lock = Mutex.new
       end
@@ -44,6 +45,9 @@ module Mongo
 
       # @return [ TopologyVersion ] Most recently received topology version.
       attr_reader :topology_version
+
+      # @return [ Monitoring ] monitoring The monitoring.
+      attr_reader :monitoring
 
       # @return [ Hash ] Push monitor options.
       attr_reader :options
@@ -81,7 +85,9 @@ module Mongo
           return if @stop_requested
         end
 
-        result = ismaster
+        result = monitoring.publish_heartbeat(server, awaited: true) do
+          ismaster
+        end
         new_description = monitor.run_sdam_flow(result, awaited: true)
         # When ismaster fails due to a fail point, the response does not
         # include topology version. In this case we need to keep our existing
@@ -94,7 +100,7 @@ module Mongo
           @topology_version = new_description.topology_version
         end
       rescue Mongo::Error => exc
-        msg = "Error running ismaster (with server push) on #{server.address}"
+        msg = "Error running awaited ismaster on #{server.address}"
         Utils.warn_monitor_exception(msg, exc,
           logger: options[:logger],
           log_prefix: options[:log_prefix],
