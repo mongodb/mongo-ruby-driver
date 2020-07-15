@@ -325,11 +325,11 @@ Ruby Options
 
    * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
-       before raising an exception. The value of ``0`` means no timeout.
+       before raising an exception. ``nil`` and ``0`` mean no timeout.
        Client creation will fail with an error if an invalid timeout value
        is passed (such as a negative value or a non-numeric value).
      - ``Float``
-     - 10 seconds
+     - 10
 
    * - ``:database``
      - The name of the database to connect to.
@@ -483,11 +483,11 @@ Ruby Options
 
    * - ``:socket_timeout``
      - The number of seconds to wait for an operation to execute on a
-       socket before raising an exception. The value of ``0`` means no timeout.
+       socket before raising an exception. ``nil`` and ``0`` mean no timeout.
        Client creation will fail with an error if an invalid timeout value
        is passed (such as a negative value or a non-numeric value).
      - ``Float``
-     - 5 seconds
+     - none
 
    * - ``:ssl``
      - Tell the client to connect to the servers via SSL.
@@ -611,7 +611,7 @@ Ruby Options
      - The number of seconds to wait for a connection in the connection
        pool to become available.
      - ``Float``
-     - 1
+     - 10
 
    * - ``:write``
      - Deprecated. Equivalent to ``:write_concern`` option. If both ``:write``
