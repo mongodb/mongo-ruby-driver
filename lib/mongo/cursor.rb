@@ -156,6 +156,31 @@ module Mongo
       # the documents array each time a new iteration is started.
       @documents = nil
 
+      # GC - ADDED
+      if @cached_documents
+        @cached_documents.each do |doc|
+          yield doc
+        end
+      else
+        if block_given?
+          # StopIteration raised by try_next ends this loop.
+          loop do
+            document = try_next
+            yield document if document
+          end
+          self
+        else
+          documents = []
+          # StopIteration raised by try_next ends this loop.
+          loop do
+            document = try_next
+            documents << document if document
+          end
+          documents
+        end
+      end
+
+=begin OLD CODE
       if block_given?
         # StopIteration raised by try_next ends this loop.
         loop do
@@ -172,6 +197,7 @@ module Mongo
         end
         documents
       end
+=end
     end
 
     # Return one document from the query, if one is available.
@@ -386,6 +412,15 @@ module Mongo
       # the @cursor_id may be zero (all results fit in the first batch).
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
+
+      #GC - ADDED
+      documents = result.documents
+      if @cursor_id.zero? && !@after_first_batch
+        @cached_documents ||= []
+        @cached_documents.concat(documents)
+      end
+      @after_first_batch = true
+
       unregister if !closed? && result.cursor_id == 0
       @cursor_id = result.cursor_id
 

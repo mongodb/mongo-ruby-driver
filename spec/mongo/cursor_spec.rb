@@ -125,10 +125,12 @@ describe Mongo::Cursor do
         end
 
         it 'returns the correct amount' do
+          puts "reached here"
           expect(cursor.to_a.count).to eq(10)
         end
 
         it 'iterates the documents' do
+          puts "reached here 2"
           cursor.each do |doc|
             expect(doc).to have_key('field')
           end
