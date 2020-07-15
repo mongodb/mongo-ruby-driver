@@ -151,6 +151,7 @@ module Mongo
           # @return [ String ] The assembled data.
           #
           # @since 2.0.0
+          # @api private
           def assemble(chunks)
             chunks.reduce(''){ |data, chunk| data << chunk.data.data }
           end
@@ -167,6 +168,7 @@ module Mongo
           # @return [ Array<Chunk> ] The chunks of the data.
           #
           # @since 2.0.0
+          # @api private
           def split(io, file_info, offset = 0)
             io = StringIO.new(io) if io.is_a?(String)
             parts = Enumerator.new { |y| y << io.read(file_info.chunk_size) until io.eof? }

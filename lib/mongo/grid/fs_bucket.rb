@@ -177,7 +177,7 @@ module Mongo
       #
       # @since 2.0.0
       def prefix
-        @options[:fs_name] || @options[:bucket_name]|| DEFAULT_ROOT
+        @options[:fs_name] || @options[:bucket_name] || DEFAULT_ROOT
       end
 
       # Remove a single file from the GridFS.
@@ -230,7 +230,8 @@ module Mongo
       #
       # @since 2.1.0
       def open_download_stream(id, options = nil)
-        read_stream(id, options).tap do |stream|
+        options = Hash[(options || {}).map { |k, v| [k.to_sym, v] }]
+        read_stream(id, **options).tap do |stream|
           if block_given?
             begin
               yield stream
@@ -348,15 +349,15 @@ module Mongo
         download_to_stream(open_download_stream_by_name(filename, opts).file_id, io)
       end
 
-      # Opens an upload stream to GridFS to which the contents of a user file came be written.
+      # Opens an upload stream to GridFS to which the contents of a file or
+      # blob can be written.
       #
-      # @example Open a stream to which the contents of a file came be written.
-      #   fs.open_upload_stream('a-file.txt')
-      #
-      # @param [ String ] filename The filename of the file to upload.
+      # @param [ String ] filename The name of the file in GridFS.
       # @param [ Hash ] opts The options for the write stream.
       #
-      # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
+      # @option opts [ Object ] :file_id An optional unique file id.
+      #   A BSON::ObjectId is automatically generated if a file id is not
+      #   provided.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
       #   collection document.
@@ -375,7 +376,8 @@ module Mongo
       #
       # @since 2.1.0
       def open_upload_stream(filename, opts = {})
-        write_stream(filename, opts).tap do |stream|
+        opts = Hash[opts.map { |k, v| [k.to_sym, v] }]
+        write_stream(filename, **opts).tap do |stream|
           if block_given?
             begin
               yield stream
@@ -462,12 +464,12 @@ module Mongo
       #
       # @option opts [ BSON::Document ] :file_info_doc For internal
       #   driver use only. A BSON document to use as file information.
-      def read_stream(id, opts = nil)
-        Stream.get(self, Stream::READ_MODE, { file_id: id }.update(options).update(opts || {}))
+      def read_stream(id, **opts)
+        Stream.get(self, Stream::READ_MODE, { file_id: id }.update(options).update(opts))
       end
 
-      def write_stream(filename, opts)
-        Stream.get(self, Stream::WRITE_MODE, { filename: filename }.merge!(options).merge!(opts))
+      def write_stream(filename, **opts)
+        Stream.get(self, Stream::WRITE_MODE, { filename: filename }.update(options).update(opts))
       end
 
       def chunks_name
