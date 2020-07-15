@@ -66,7 +66,7 @@ describe Mongo::Auth::SCRAM do
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
             expect {
-              authenticator.login(connection)
+              authenticator.login
             }.to raise_error(Mongo::Auth::Unauthorized)
           end
         end
