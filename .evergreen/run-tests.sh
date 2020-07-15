@@ -37,7 +37,7 @@ mongo_version=`echo $MONGODB_VERSION |tr -d .`
 if test $mongo_version = latest; then
   mongo_version=44
 fi
-  
+
 args="--setParameter enableTestCommands=1"
 # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
 # and mlaunch does not support specifying mongod-only parameters:
@@ -87,7 +87,7 @@ if test "$SSL" = ssl; then
   else
     client_pem=client-second-level-bundle.pem
   fi
-  
+
   uri_options="$uri_options&"\
 "tlsCAFile=spec/support/certificates/ca.crt&"\
 "tlsCertificateKeyFile=spec/support/certificates/$client_pem"
@@ -97,6 +97,11 @@ fi
 # Hence we must bind to all interfaces here.
 if test -n "$BIND_ALL"; then
   args="$args --bind_ip_all"
+fi
+
+# MongoDB servers pre-4.2 do not enable zlib compression by default
+if test "$COMPRESSOR" = zlib; then
+  args="$args --networkMessageCompressors zlib"
 fi
 
 python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
@@ -144,13 +149,13 @@ EOT
     --eval "$create_user_cmd"
 elif test "$AUTH" = aws-regular; then
   clear_instance_profile
-  
+
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 
   hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
 elif test "$AUTH" = aws-assume-role; then
   clear_instance_profile
-  
+
   ./.evergreen/aws -a "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID" \
     -s "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY" \
     -r us-east-1 \
@@ -171,7 +176,7 @@ elif test "$AUTH" = aws-assume-role; then
 "authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
 elif test "$AUTH" = aws-ec2; then
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
-  
+
   # We need to assign an instance profile to the current instance, otherwise
   # since we don't place credentials into the environment the test suite
   # cannot connect to the MongoDB server while bootstrapping.
@@ -183,7 +188,7 @@ elif test "$AUTH" = aws-ecs; then
     # drivers-evergreen-tools performs this operation in its ECS E2E tester.
     eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
   fi
-  
+
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1

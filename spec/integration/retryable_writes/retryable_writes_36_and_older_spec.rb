@@ -55,14 +55,7 @@ describe 'Retryable writes integration tests' do
       context 'when the error is retryable' do
 
         before do
-          allow(Mongo::Logger.logger).to receive(:warn)
-        end
-
-        after do
-          # This expectation is set using a spy because logger may receive :warn
-          # more than once (for example, if compression is set on the client but
-          # the server does not support compression.
-          expect(Mongo::Logger.logger).to have_received(:warn).with(/Write retry .+ attempt 1/)
+          expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
         end
 
         context 'when the error is a socket error' do
