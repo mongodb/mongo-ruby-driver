@@ -104,6 +104,11 @@ module Mongo
       #   chunk objects and assemble the data. If we have an IO object, then
       #   it's the original file data and we must split it into chunks and set
       #   the original data itself.
+      #
+      # @param [ IO, String, Array<BSON::Document> ] value The file object,
+      #   file contents or chunk documents.
+      #
+      # @return [ Array<Grid::File::Chunk> ] Array of chunks.
       def initialize_chunks!(value)
         if value.is_a?(Array)
           @chunks = value.map{ |doc| Chunk.new(doc) }
