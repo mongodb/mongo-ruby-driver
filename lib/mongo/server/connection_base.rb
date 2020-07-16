@@ -187,7 +187,6 @@ module Mongo
 
       def serialize(message, client, buffer = BSON::ByteBuffer.new)
         start_size = 0
-        final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
 
         # Driver specifications only mandate the fixed 16MiB limit for
         # serialized BSON documents. However, the server returns its
@@ -213,12 +212,20 @@ module Mongo
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
-        final_message.serialize(buffer, max_bson_size)
+        temp_buffer = buffer.dup
+        message.serialize(temp_buffer, max_bson_size)
+
+        # Validate the message size before compressing the document to ensure
+        # correct splitting of bulk writes.
         if max_message_size &&
-          (buffer.length - start_size) > max_message_size
+          (temp_buffer.length - start_size) > max_message_size
         then
           raise Error::MaxMessageSize.new(max_message_size)
         end
+
+        final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
+        final_message.serialize(buffer, max_bson_size)
+
         buffer
       end
     end
