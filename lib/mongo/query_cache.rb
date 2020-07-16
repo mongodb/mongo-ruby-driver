@@ -16,30 +16,6 @@ module Mongo
   module QueryCache
     class << self
 
-      # Get the cached queries.
-      #
-      # @example Get the cached queries from the current thread.
-      #   QueryCache.cache_table
-      #
-      # @return [ Hash ] The hash of cached queries.
-      #
-      # @since 4.0.0
-      def cache_table
-        Thread.current["[mongo]:query_cache"] ||= {}
-      end
-
-      # Clear the query cache.
-      #
-      # @example Clear the cache.
-      #   QueryCache.clear_cache
-      #
-      # @return [ nil ] Always nil.
-      #
-      # @since 4.0.0
-      def clear_cache
-        Thread.current["[mongo]:query_cache"] = nil
-      end
-
       # Set whether the cache is enabled.
       #
       # @example Set if the cache is enabled.
@@ -93,6 +69,30 @@ module Mongo
       ensure
         QueryCache.enabled = enabled
       end
+
+      # Get the cached queries.
+      #
+      # @example Get the cached queries from the current thread.
+      #   QueryCache.cache_table
+      #
+      # @return [ Hash ] The hash of cached queries.
+      #
+      # @since 4.0.0
+      def cache_table
+        Thread.current["[mongo]:query_cache"] ||= {}
+      end
+
+      # Clear the query cache.
+      #
+      # @example Clear the cache.
+      #   QueryCache.clear_cache
+      #
+      # @return [ nil ] Always nil.
+      #
+      # @since 4.0.0
+      def clear_cache
+        Thread.current["[mongo]:query_cache"] = nil
+      end
     end
 
     # The middleware to be added to a rack application in order to activate the
@@ -106,7 +106,7 @@ module Mongo
       # @example Create the new middleware.
       #   Middleware.new(app)
       #
-      # @param [ Object ] app The rack applciation stack.
+      # @param [ Object ] app The rack application stack.
       #
       # @since 4.0.0
       def initialize(app)
@@ -129,5 +129,6 @@ module Mongo
         QueryCache.clear_cache
       end
     end
+
   end
 end

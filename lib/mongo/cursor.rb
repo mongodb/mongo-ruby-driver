@@ -156,7 +156,6 @@ module Mongo
       # the documents array each time a new iteration is started.
       @documents = nil
 
-      # GC - ADDED
       if @cached_documents
         @cached_documents.each do |doc|
           yield doc
@@ -179,25 +178,11 @@ module Mongo
           documents
         end
       end
+    end
 
-=begin OLD CODE
-      if block_given?
-        # StopIteration raised by try_next ends this loop.
-        loop do
-          document = try_next
-          yield document if document
-        end
-        self
-      else
-        documents = []
-        # StopIteration raised by try_next ends this loop.
-        loop do
-          document = try_next
-          documents << document if document
-        end
-        documents
-      end
-=end
+    # Testing purposes only
+    def cached_docs
+      @cached_documents
     end
 
     # Return one document from the query, if one is available.
@@ -413,9 +398,8 @@ module Mongo
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
 
-      #GC - ADDED
       documents = result.documents
-      if @cursor_id.zero? && !@after_first_batch
+      if @cursor_id.zero? && !@after_first_batch && QueryCache.enabled?
         @cached_documents ||= []
         @cached_documents.concat(documents)
       end
