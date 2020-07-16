@@ -536,6 +536,7 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
+      Mongo::QueryCache.clear_cache
       client.send(:with_session, opts) do |session|
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])
@@ -572,6 +573,7 @@ module Mongo
     #
     # @since 2.0.0
     def insert_many(documents, options = {})
+      Mongo::QueryCache.clear_cache
       inserts = documents.map{ |doc| { :insert_one => doc }}
       bulk_write(inserts, options)
     end
