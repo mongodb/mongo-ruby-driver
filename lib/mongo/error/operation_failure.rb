@@ -131,6 +131,7 @@ module Mongo
       CHANGE_STREAM_RESUME_ERRORS = [
         {code_name: 'HostUnreachable', code: 6},
         {code_name: 'HostNotFound', code: 7},
+        {code_name: 'CursorNotFound', code: 43},
         {code_name: 'NetworkTimeout', code: 89},
         {code_name: 'ShutdownInProgress', code: 91},
         {code_name: 'PrimarySteppedDown', code: 189},
@@ -168,7 +169,10 @@ module Mongo
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
           # Connection description is not populated for unacknowledged writes.
           if connection_description.max_wire_version >= 9
-            label?('ResumableChangeStreamError')
+            # CursorNotFound exceptions are always resumable because the server
+            # is not aware of the cursor id, and thus cannot determine if
+            # the cursor is a change stream.
+            label?('ResumableChangeStreamError') || code == 43
           else
             change_stream_resumable_code?
           end

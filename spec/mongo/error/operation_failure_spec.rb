@@ -227,6 +227,46 @@ describe Mongo::Error::OperationFailure do
         end
       end
 
+      context 'when the error code is 43 (CursorNotFound)' do
+        let(:error) { Mongo::Error::OperationFailure.new(nil, result, code: 43, code_name: 'CursorNotFound') }
+        let(:result) do
+          Mongo::Operation::GetMore::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
+        context 'wire protocol < 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 8,
+            )
+          end
+
+          it 'returns true' do
+            # CursorNotFound exceptions are resumable even if they don't have
+            # a ResumableChangeStreamError label because the server is not aware
+            # of the cursor id, and thus cannot determine if it is a change stream.
+            expect(error.change_stream_resumable?).to be true
+          end
+        end
+
+        context 'wire protocol >= 9' do
+          let(:description) do
+            Mongo::Server::Description.new('',
+              'minWireVersion' => 0,
+              'maxWireVersion' => 9,
+            )
+          end
+
+          it 'returns true' do
+            # CursorNotFound exceptions are resumable even if they don't have
+            # a ResumableChangeStreamError label because the server is not aware
+            # of the cursor id, and thus cannot determine if it is a change stream.
+            expect(error.change_stream_resumable?).to be true
+          end
+        end
+      end
+
       context 'not a getMore response' do
         let(:result) do
           Mongo::Operation::Result.new(
