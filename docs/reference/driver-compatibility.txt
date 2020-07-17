@@ -25,6 +25,7 @@ MongoDB Compatibility
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - MongoDB 4.4
      - MongoDB 4.2
      - MongoDB 4.0
      - MongoDB 3.6
@@ -34,7 +35,19 @@ MongoDB Compatibility
      - MongoDB 2.6
      - MongoDB 2.4
 
+   * - 2.13
+     - |checkmark| [#ocsp]_
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
    * - 2.12
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -45,6 +58,7 @@ MongoDB Compatibility
      -
 
    * - 2.11
+     -
      - |checkmark| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -55,6 +69,7 @@ MongoDB Compatibility
      -
 
    * - 2.10
+     -
      - |checkmark| [#srv-polling]_ [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -66,6 +81,7 @@ MongoDB Compatibility
 
    * - 2.9
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -75,6 +91,7 @@ MongoDB Compatibility
      -
 
    * - 2.8
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -86,6 +103,7 @@ MongoDB Compatibility
 
    * - 2.7
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -95,6 +113,7 @@ MongoDB Compatibility
      -
 
    * - 2.6
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -107,6 +126,7 @@ MongoDB Compatibility
    * - 2.5
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -115,6 +135,7 @@ MongoDB Compatibility
      -
 
    * - 2.4
+     -
      -
      -
      -
@@ -129,12 +150,14 @@ MongoDB Compatibility
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
 
    * - 2.2
+     -
      -
      -
      -
@@ -150,9 +173,12 @@ MongoDB Compatibility
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
+
+.. [#ocsp] OCSP verification is not yet implemented.
 
 .. [#srv-polling] Polling of SRV records in sharded topologies is
    implemented as of driver version 2.11.
@@ -192,6 +218,20 @@ for that Ruby version is deprecated.
      - JRuby 9.2
      - JRuby 9.1
      - JRuby
+
+   * - 2.13
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
 
    * - 2.12
      - |checkmark|
@@ -419,7 +459,7 @@ the driver.
    * - Ruby Driver
      - mongo_kerberos |nbsp| 2.1
 
-   * - 2.7 - 2.12
+   * - 2.7 - 2.13
      - |checkmark|
 
 
