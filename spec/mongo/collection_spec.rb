@@ -941,8 +941,10 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collation has a strength' do 
-      let(:band_collection) do 
+    context 'when collation has a strength' do
+      min_server_fcv '3.4'
+
+      let(:band_collection) do
         described_class.new(database, :bands)
       end
 
@@ -951,14 +953,14 @@ describe Mongo::Collection do
         band_collection.insert_many([{ name: "Depeche Mode" }, { name: "New Order" }])
       end
 
-      let(:options) do 
+      let(:options) do
         { collation: { locale: 'en_US', strength: 2 } }
       end
-      let(:band_result) do 
+      let(:band_result) do
         band_collection.find({ name: 'DEPECHE MODE' }, options)
       end
 
-      it 'finds Capitalize from UPPER CASE' do 
+      it 'finds Capitalize from UPPER CASE' do
         expect(band_result.count_documents).to eq(1)
       end
     end
