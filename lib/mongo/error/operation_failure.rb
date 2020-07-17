@@ -166,6 +166,12 @@ module Mongo
       # @since 2.6.0
       def change_stream_resumable?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
+          # CursorNotFound exceptions are always resumable because the server
+          # is not aware of the cursor id, and thus cannot determine if
+          # the cursor is a change stream and cannot add the
+          # ResumableChangeStreamError label.
+          return true if code == 43
+
           # Connection description is not populated for unacknowledged writes.
           if connection_description.max_wire_version >= 9
             label?('ResumableChangeStreamError')
