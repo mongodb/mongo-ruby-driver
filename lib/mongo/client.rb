@@ -104,6 +104,7 @@ module Mongo
       :truncate_logs,
       :user,
       :wait_queue_timeout,
+      :wrapping_libraries,
       :write,
       :write_concern,
       :zlib_compression_level,
@@ -375,6 +376,10 @@ module Mongo
     # @option options [ String ] :user The user name.
     # @option options [ Float ] :wait_queue_timeout The time to wait, in
     #   seconds, in the connection pool for a connection to be checked in.
+    # @option options [ Array<Hash> ] :wrapping_libraries Information about
+    #   libraries such as ODMs that are wrapping the driver, to be added to
+    #    metadata sent to the server. Specify the lower level libraries first.
+    #    Allowed hash keys: :name, :version, :platform.
     # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
@@ -1158,6 +1163,36 @@ module Mongo
           # OK
         else
           raise ArgumentError, ":bg_error_backtrace option value must be true, false, nil or a positive integer: #{value}"
+        end
+      end
+
+      if libraries = options[:wrapping_libraries]
+        unless Array === libraries
+          raise ArgumentError, ":wrapping_libraries must be an array of hashes: #{libraries}"
+        end
+
+        libraries = libraries.map do |library|
+          Utils.shallow_symbolize_keys(library)
+        end
+
+        libraries.each do |library|
+          unless Hash === library
+            raise ArgumentError, ":wrapping_libraries element is not a hash: #{library}"
+          end
+
+          if library.empty?
+            raise ArgumentError, ":wrapping_libraries element is empty"
+          end
+
+          unless (library.keys - %i(name platform version)).empty?
+            raise ArgumentError, ":wrapping_libraries element has invalid keys (allowed keys: :name, :platform, :version): #{library}"
+          end
+
+          library.each do |key, value|
+            if value.include?('|')
+              raise ArgumentError, ":wrapping_libraries element value cannot include '|': #{value}"
+            end
+          end
         end
       end
     end

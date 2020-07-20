@@ -65,18 +65,27 @@ module Mongo
       #   the metadata printed to the mongod logs upon establishing a connection
       #   in server versions >= 3.4.
       # @option options [ String ] :user The user name.
+      # @option options [ Array<Hash> ] :wrapping_libraries Information about
+      #   libraries such as ODMs that are wrapping the driver. Specify the
+      #   lower level libraries first. Allowed hash keys: :name, :version,
+      #   :platform.
       #
       # @since 2.4.0
       def initialize(options)
         @app_name = options[:app_name].to_s if options[:app_name]
         @platform = options[:platform]
         @compressors = options[:compressors] || []
+        @wrapping_libraries = options[:wrapping_libraries]
 
         if options[:user] && !options[:auth_mech]
           auth_db = options[:auth_source] || 'admin'
           @request_auth_mech = "#{auth_db}.#{options[:user]}"
         end
       end
+
+      # @return [ Array<Hash> | nil ] Information about libraries wrapping
+      #   the driver.
+      attr_reader :wrapping_libraries
 
       # Get the bytes of the ismaster message including this metadata.
       #
@@ -140,9 +149,17 @@ module Mongo
       end
 
       def driver_doc
+        names = [DRIVER_NAME]
+        versions = [Mongo::VERSION]
+        if wrapping_libraries
+          wrapping_libraries.each do |library|
+            names << library[:name] || ''
+            versions << library[:version] || ''
+          end
+        end
         {
-          name: DRIVER_NAME,
-          version: Mongo::VERSION
+          name: names.join('|'),
+          version: versions.join('|'),
         }
       end
 
@@ -175,12 +192,19 @@ module Mongo
           ruby_versions = ["Ruby #{RUBY_VERSION}"]
           platforms = [RUBY_PLATFORM]
         end
-        [
+        platform = [
           @platform,
           *ruby_versions,
           *platforms,
           RbConfig::CONFIG['build'],
         ].compact.join(', ')
+        platforms = [platform]
+        if wrapping_libraries
+          wrapping_libraries.each do |library|
+            platforms << library[:platform] || ''
+          end
+        end
+        platforms.join('|')
       end
     end
   end

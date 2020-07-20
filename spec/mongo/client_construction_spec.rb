@@ -1382,6 +1382,118 @@ describe Mongo::Client do
         end
       end
 =end
+
+      context ':wrapping_libraries option' do
+        let(:options) do
+          {wrapping_libraries: wrapping_libraries}
+        end
+
+        context 'valid input' do
+          context 'symbol keys' do
+            let(:wrapping_libraries) do
+              [name: 'Mongoid', version: '7.1.2'].freeze
+            end
+
+            it 'works' do
+              client.options[:wrapping_libraries].should == ['name' => 'Mongoid', 'version' => '7.1.2']
+            end
+          end
+
+          context 'string keys' do
+            let(:wrapping_libraries) do
+              ['name' => 'Mongoid', 'version' => '7.1.2'].freeze
+            end
+
+            it 'works' do
+              client.options[:wrapping_libraries].should == ['name' => 'Mongoid', 'version' => '7.1.2']
+            end
+          end
+
+          context 'Redacted keys' do
+            let(:wrapping_libraries) do
+              [Mongo::Options::Redacted.new(name: 'Mongoid', version: '7.1.2')].freeze
+            end
+
+            it 'works' do
+              client.options[:wrapping_libraries].should == ['name' => 'Mongoid', 'version' => '7.1.2']
+            end
+          end
+
+          context 'two libraries' do
+            let(:wrapping_libraries) do
+              [
+                {name: 'Mongoid', version: '7.1.2'},
+                {name: 'Rails', version: '4.0', platform: 'Foobar'},
+              ].freeze
+            end
+
+            it 'works' do
+              client.options[:wrapping_libraries].should == [
+                {'name' => 'Mongoid', 'version' => '7.1.2'},
+                {'name' => 'Rails', 'version' => '4.0', 'platform' => 'Foobar'},
+              ]
+            end
+          end
+
+          context 'empty array' do
+            let(:wrapping_libraries) do
+              []
+            end
+
+            it 'works' do
+              client.options[:wrapping_libraries].should == []
+            end
+          end
+
+          context 'empty array' do
+            let(:wrapping_libraries) do
+              nil
+            end
+
+            it 'works' do
+              client.options[:wrapping_libraries].should be nil
+            end
+          end
+        end
+
+        context 'valid input' do
+          context 'hash given instead of an array' do
+            let(:wrapping_libraries) do
+              {name: 'Mongoid', version: '7.1.2'}.freeze
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /:wrapping_libraries must be an array of hashes/)
+            end
+          end
+
+          context 'invalid keys' do
+            let(:wrapping_libraries) do
+              [name: 'Mongoid', invalid: '7.1.2'].freeze
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /:wrapping_libraries element has invalid keys/)
+            end
+          end
+
+          context 'value includes |' do
+            let(:wrapping_libraries) do
+              [name: 'Mongoid|on|Rails', version: '7.1.2'].freeze
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /:wrapping_libraries element value cannot include '|'/)
+            end
+          end
+        end
+      end
     end
 
     context 'when making a block client' do

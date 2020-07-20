@@ -613,6 +613,13 @@ Ruby Options
      - ``Float``
      - 10
 
+   * - ``:wrapping_libraries``
+     - Information about libraries such as ODMs that are wrapping the driver.
+       Specify the lower level libraries first. Allowed hash keys: :name,
+       :version, :platform. Example: ``[name: 'Mongoid', version: '7.1.2']``
+     - ``Array<Hash>``
+     - none
+
    * - ``:write``
      - Deprecated. Equivalent to ``:write_concern`` option. If both ``:write``
        and ``:write_concern`` are specified, their values must be identical.
