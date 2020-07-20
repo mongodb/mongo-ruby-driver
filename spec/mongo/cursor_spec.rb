@@ -108,51 +108,6 @@ describe Mongo::Cursor do
       described_class.new(view, reply, server)
     end
 
-    context 'when query cache enabled or disabled' do
-
-      let(:view) do
-        Mongo::Collection::View.new(authorized_collection)
-      end
-
-      let(:documents) do
-        (1..3).map{ |i| { field: "test#{i}" }}
-      end
-
-      before do
-        authorized_collection.insert_many(documents)
-      end
-
-      context 'when query cache enabled' do
-
-        before do
-          Mongo::QueryCache.enabled = true
-        end
-
-        it 'docs are cached when query cache enabled and query is repeated' do
-          expect(cursor.cached_docs).to be_nil
-          expect(cursor.to_a.count).to eq(3)
-          expect(cursor.cached_docs.count).to eq(3)
-
-          expect(cursor.to_a.count).to eq(3)
-          expect(cursor.cached_docs.count).to eq(3)
-        end
-      end
-
-      context 'when query cache disabled' do
-        before do
-          Mongo::QueryCache.enabled = false
-        end
-
-        it 'docs are not cached when query cache disabled and query is repeated' do
-          expect(cursor.cached_docs).to be_nil
-          expect(cursor.to_a.count).to eq(3)
-
-          expect(cursor.to_a.count).to eq(3)
-          expect(cursor.cached_docs).to be_nil
-        end
-      end
-    end
-
     context 'when no options are provided to the view' do
 
       let(:view) do

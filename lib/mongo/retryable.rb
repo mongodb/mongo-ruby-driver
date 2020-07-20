@@ -59,7 +59,14 @@ module Mongo
     def read_with_retry_cursor(session, server_selector, view, &block)
       read_with_retry(session, server_selector) do |server|
         result = yield server
-        Cursor.new(view, result, server, session: session)
+
+        if QueryCache.enabled?
+          # return cached cursor 
+          CachedCursor.new(view, result, server, session: session)
+        else
+          # original cursor
+          Cursor.new(view, result, server, session: session)
+        end
       end
     end
 

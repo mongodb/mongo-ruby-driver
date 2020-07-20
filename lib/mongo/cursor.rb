@@ -138,6 +138,7 @@ module Mongo
     #
     # @since 2.0.0
     def each
+
       # If we already iterated past the first batch (i.e., called get_more
       # at least once), the cursor on the server side has advanced past
       # the first batch and restarting iteration from the beginning by
@@ -156,33 +157,22 @@ module Mongo
       # the documents array each time a new iteration is started.
       @documents = nil
 
-      if @cached_documents
-        @cached_documents.each do |doc|
-          yield doc
+      if block_given?
+        # StopIteration raised by try_next ends this loop.
+        loop do
+          document = try_next
+          yield document if document
         end
+        self
       else
-        if block_given?
-          # StopIteration raised by try_next ends this loop.
-          loop do
-            document = try_next
-            yield document if document
-          end
-          self
-        else
-          documents = []
-          # StopIteration raised by try_next ends this loop.
-          loop do
-            document = try_next
-            documents << document if document
-          end
-          documents
+        documents = []
+        # StopIteration raised by try_next ends this loop.
+        loop do
+          document = try_next
+          documents << document if document
         end
+        documents
       end
-    end
-
-    # Testing purposes only
-    def cached_docs
-      @cached_documents
     end
 
     # Return one document from the query, if one is available.
@@ -397,14 +387,6 @@ module Mongo
       # the @cursor_id may be zero (all results fit in the first batch).
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
-
-      documents = result.documents
-      if @cursor_id.zero? && !@after_first_batch && QueryCache.enabled?
-        @cached_documents ||= []
-        @cached_documents.concat(documents)
-      end
-      @after_first_batch = true
-
       unregister if !closed? && result.cursor_id == 0
       @cursor_id = result.cursor_id
 
