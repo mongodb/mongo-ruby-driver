@@ -88,6 +88,7 @@ functions:
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
               export SINGLE_MONGOS="${SINGLE_MONGOS}"
               export MMAPV1="${MMAPV1}"
+              export COMPRESSORS="${COMPRESSORS}"
 
               export STRESS_SPEC=true
            EOT
@@ -574,7 +575,7 @@ axes:
         display_name: "2.6"
         variables:
            VERSION: "2.6"
-  
+
   - id: fcv
     display_name: FCV
     values:
@@ -598,7 +599,7 @@ axes:
         display_name: Sharded
         variables:
            TOPOLOGY: "sharded_cluster"
-  
+
   - id: "auth-and-ssl"
     display_name: Authentication and SSL
     values:
@@ -622,7 +623,7 @@ axes:
         variables:
            AUTH: "noauth"
            SSL: "nossl"
-  
+
   - id: "ruby"
     display_name: Ruby Version
     # Local TLS tests run on all Ruby versions, thus no versions should be
@@ -656,7 +657,7 @@ axes:
         display_name: jruby-9.2
         variables:
            RVM_RUBY: "jruby-9.2"
-  
+
   - id: "os"
     display_name: OS
     values:
@@ -669,15 +670,15 @@ axes:
       - id: rhel70
         display_name: "RHEL 7.0"
         run_on: rhel70-small
-  
+
   - id: "compressor"
     display_name: Compressor
     values:
       - id: "zlib"
         display_name: Zlib
         variables:
-           COMPRESSOR: "zlib"
-  
+           COMPRESSORS: "zlib"
+
   - id: retry-reads
     display_name: Retry Reads
     values:
@@ -685,7 +686,7 @@ axes:
         display_name: No Retry Reads
         variables:
           RETRY_READS: 'false'
-  
+
   - id: retry-writes
     display_name: Retry Writes
     values:
@@ -693,7 +694,7 @@ axes:
         display_name: No Retry Writes
         variables:
           RETRY_WRITES: 'false'
-  
+
   - id: lint
     display_name: Lint
     values:
@@ -701,7 +702,7 @@ axes:
         display_name: On
         variables:
           LINT: '1'
-  
+
   - id: "as"
     display_name: ActiveSupport
     values:
@@ -709,7 +710,7 @@ axes:
         display_name: AS
         variables:
           WITH_ACTIVE_SUPPORT: true
-  
+
   - id: bson
     display_name: BSON
     values:
@@ -721,7 +722,7 @@ axes:
         display_name: master
         variables:
           BSON: master
-  
+
   - id: "single-mongos"
     display_name: Single Mongos
     values:
@@ -729,7 +730,7 @@ axes:
         display_name: Single Mongos
         variables:
           SINGLE_MONGOS: 'true'
-  
+
   - id: storage-engine
     display_name: Storage Engine
     values:
