@@ -133,8 +133,8 @@ class SpecConfig
 
   # What compressor to use, if any.
   def compressors
-    if ENV['COMPRESSORS']
-      ENV['COMPRESSORS'].split(',')
+    if ENV['COMPRESSOR']
+      [ENV['COMPRESSOR']]
     else
       nil
     end

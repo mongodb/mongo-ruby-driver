@@ -88,7 +88,7 @@ functions:
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
               export SINGLE_MONGOS="${SINGLE_MONGOS}"
               export MMAPV1="${MMAPV1}"
-              export COMPRESSORS="${COMPRESSORS}"
+              export COMPRESSOR="${COMPRESSOR}"
 
               export STRESS_SPEC=true
            EOT
@@ -677,7 +677,7 @@ axes:
       - id: "zlib"
         display_name: Zlib
         variables:
-           COMPRESSORS: "zlib"
+           COMPRESSOR: "zlib"
 
   - id: retry-reads
     display_name: Retry Reads
