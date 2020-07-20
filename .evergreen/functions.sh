@@ -74,7 +74,6 @@ set_env_vars() {
   fi
 
   export MONGODB_URI
-  export COMPRESSOR
 
   export CI=evergreen
 
