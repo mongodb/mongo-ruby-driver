@@ -132,7 +132,7 @@ describe Mongo::QueryCache do
     context 'when first query has a limit' do
 
       before do
-        authorized_collection.find(limit:2).to_a
+        authorized_collection.find(limit: 2).to_a
       end
 
       let(:events) do
@@ -156,6 +156,84 @@ describe Mongo::QueryCache do
       end
     end
 
+    context 'when querying only the first' do
+
+      before do
+        5.times do |i|
+          authorized_collection.insert_one(test: 11)
+        end
+      end
+
+      before do
+        authorized_collection.find({test: 11}).to_a
+      end
+
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
+
+      it 'does not query again' do
+        expect(authorized_collection.find({test: 11}).count).to eq(5)
+        authorized_collection.find({test: 11}).first
+        expect(events.length).to eq(1)
+      end
+
+      context 'when limiting the result' do
+
+        it 'does not query again' do
+          authorized_collection.find({test: 11}, limit: 2).to_a
+          expect(events.length).to eq(1)
+        end
+      end
+    end
+
+    context 'when specifying a different skip value' do
+
+      before do
+        authorized_collection.find({test: 11}, {limit: 2, skip: 1}).to_a
+      end
+
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
+
+      it 'queries again' do
+        authorized_collection.find({test: 11}, {limit: 2, skip: 3}).to_a
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when sorting documents' do
+
+      before do
+        authorized_collection.find({}, desc).to_a
+      end
+
+      let(:desc) do
+        { sort: {test: -1} }
+      end
+
+      let(:asc) do
+        { sort: {test: 1} }
+      end
+
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
+
+      context 'with different selector' do
+
+        it 'queries again' do
+          authorized_collection.find({}, asc).to_a
+          expect(events.length).to eq(2)
+        end
+      end
+
+      it 'does not query again' do
+        authorized_collection.find({}, desc).to_a
+        expect(events.length).to eq(1)
+      end
+    end
   end
 
   context 'when query has collation' do

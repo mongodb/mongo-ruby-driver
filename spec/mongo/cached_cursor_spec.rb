@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe Mongo::CachedCursor do
 
+  around do |spec|
+    Mongo::QueryCache.clear_cache
+    Mongo::QueryCache.cache { spec.run }
+  end
+
   let(:authorized_collection) do
     authorized_client['cached_cursor']
   end
@@ -37,10 +42,6 @@ describe Mongo::CachedCursor do
     end
 
     context 'when query cache enabled' do
-
-      before do
-        Mongo::QueryCache.enabled = true
-      end
 
       it 'docs are cached when query cache enabled and query is repeated' do
         expect(cursor.get_cached_docs).to be_nil
