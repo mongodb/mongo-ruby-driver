@@ -29,42 +29,49 @@ describe Mongo::QueryCache do
         Mongo::QueryCache.enabled = false
       end
 
-      it 'query cache is disabled' do
+      it 'disables the query cache' do
         expect(Mongo::QueryCache.enabled?).to be(false)
+      end
+    end
+
+    context 'when query cache is enabled' do
+
+      before do
+        Mongo::QueryCache.enabled = true
+      end
+
+      it 'enables the query cache' do
+        expect(Mongo::QueryCache.enabled?).to be(true)
       end
     end
   end
 
   describe '#cache' do
 
-    context 'when a block is uncached' do
+    before do
+      authorized_collection.insert_one({ name: 'testing' })
+      Mongo::QueryCache.enabled = false
+    end
 
-      before do
-        authorized_collection.insert_one({ name: 'testing' })
+    it 'executes the block with the query cache enabled' do
+      Mongo::QueryCache.cache do
+        authorized_collection.find(name: 'testing')
+        expect(Mongo::QueryCache.enabled?).to be(true)
       end
-
-      it 'block is executed with disabled query cache' do
-        Mongo::QueryCache.cache {
-          authorized_collection.find(name: 'testing')
-          expect(Mongo::QueryCache.enabled?).to be(true)
-        }
-      end
+      expect(Mongo::QueryCache.enabled?).to be(false)
     end
   end
 
   describe '#uncached' do
 
-    context 'when a block is uncached' do
+    before do
+      authorized_collection.insert_one({ name: 'testing' })
+    end
 
-      before do
-        authorized_collection.insert_one({ name: 'testing' })
-      end
-
-      it 'block is executed with disabled query cache' do
-        Mongo::QueryCache.uncached {
-          authorized_collection.find(name: 'testing')
-          expect(Mongo::QueryCache.enabled?).to be(false)
-        }
+    it 'executes the block with the query cache disabled' do
+      Mongo::QueryCache.uncached do
+        authorized_collection.find(name: 'testing')
+        expect(Mongo::QueryCache.enabled?).to be(false)
       end
     end
   end
@@ -77,15 +84,15 @@ describe Mongo::QueryCache do
       end
     end
 
+    let(:events) do
+      subscriber.command_started_events('find')
+    end
+
     context 'when query cache is disabled' do
 
       before do
         Mongo::QueryCache.enabled = false
         authorized_collection.find(test: 1).to_a
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       it 'queries again' do
@@ -98,10 +105,6 @@ describe Mongo::QueryCache do
 
       before do
         authorized_collection.find(test: 1).to_a
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       it 'does not query again' do
@@ -125,18 +128,20 @@ describe Mongo::QueryCache do
         authorized_collection.find({ test: 3 }, options1).to_a
       end
 
-      let(:events) do
-        subscriber.command_started_events('find')
+      context 'when query has the same collation' do
+
+        it 'uses the cache' do
+          authorized_collection.find({ test: 3 }, options1).to_a
+          expect(events.length).to eq(1)
+        end
       end
 
-      it 'uses the cache for query with same collation' do
-        authorized_collection.find({ test: 3 }, options1).to_a
-        expect(events.length).to eq(1)
-      end
+      context 'when query has a different collation' do
 
-      it 'does not use the cache for query with different collation' do
-        authorized_collection.find({ test: 3 }, options2).to_a
-        expect(events.length).to eq(2)
+        it 'queries again' do
+          authorized_collection.find({ test: 3 }, options2).to_a
+          expect(events.length).to eq(2)
+        end
       end
     end
 
@@ -144,10 +149,6 @@ describe Mongo::QueryCache do
 
       before do
         authorized_collection.find.to_a.count
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       context 'when next query has a limit' do
@@ -163,10 +164,6 @@ describe Mongo::QueryCache do
 
       before do
         authorized_collection.find(limit: 2).to_a
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       context 'when next query has a different limit' do
@@ -198,10 +195,6 @@ describe Mongo::QueryCache do
         authorized_collection.find({test: 11}).to_a
       end
 
-      let(:events) do
-        subscriber.command_started_events('find')
-      end
-
       it 'does not query again' do
         expect(authorized_collection.find({test: 11}).count).to eq(5)
         authorized_collection.find({test: 11}).first
@@ -223,10 +216,6 @@ describe Mongo::QueryCache do
         authorized_collection.find({test: 11}, {limit: 2, skip: 1}).to_a
       end
 
-      let(:events) do
-        subscriber.command_started_events('find')
-      end
-
       it 'queries again' do
         authorized_collection.find({test: 11}, {limit: 2, skip: 3}).to_a
         expect(events.length).to eq(2)
@@ -245,10 +234,6 @@ describe Mongo::QueryCache do
 
       let(:asc) do
         { sort: {test: 1} }
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       context 'with different selector' do
@@ -272,10 +257,6 @@ describe Mongo::QueryCache do
         authorized_collection.insert_one({ name: "bob" })
       end
 
-      let(:events) do
-        subscriber.command_started_events('find')
-      end
-
       it 'queries again' do
         authorized_collection.find.to_a
         expect(events.length).to eq(2)
@@ -286,10 +267,6 @@ describe Mongo::QueryCache do
 
       before do
         authorized_collection.find.to_a
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       it 'queries again' do
@@ -306,10 +283,6 @@ describe Mongo::QueryCache do
 
       let(:selector) do
         { test: 5 }
-      end
-
-      let(:events) do
-        subscriber.command_started_events('find')
       end
 
       it 'queries again' do
@@ -334,10 +307,6 @@ describe Mongo::QueryCache do
 
     let(:events) do
       subscriber.command_started_events('find')
-    end
-
-    it 'one query' do
-      expect(events.length).to eq(1)
     end
 
     it 'queries again' do

@@ -27,7 +27,7 @@ describe Mongo::CachedCursor do
     described_class.new(view, reply, server)
   end
 
-  context 'when query cache enabled documents are cached' do
+  context 'when query cache is enabled' do
 
     let(:view) do
       Mongo::Collection::View.new(authorized_collection)
@@ -41,20 +41,17 @@ describe Mongo::CachedCursor do
       authorized_collection.insert_many(documents)
     end
 
-    context 'when query cache enabled' do
+    it 'caches the result documents' do
+      expect(cursor.cached_docs).to be_nil
+      expect(cursor.to_a.count).to eq(3)
+      expect(cursor.cached_docs.count).to eq(3)
 
-      it 'docs are cached when query cache enabled and query is repeated' do
-        expect(cursor.get_cached_docs).to be_nil
-        expect(cursor.to_a.count).to eq(3)
-        expect(cursor.get_cached_docs.count).to eq(3)
-
-        expect(cursor.to_a.count).to eq(3)
-        expect(cursor.get_cached_docs.count).to eq(3)
-      end
+      expect(cursor.to_a.count).to eq(3)
+      expect(cursor.cached_docs.count).to eq(3)
     end
   end
 
-  context 'when query has results' do
+  context 'when iterating first time' do
 
     before do
       3.times do |i|
@@ -67,15 +64,13 @@ describe Mongo::CachedCursor do
         sort: {test: 1}, projection: {_id: 0}, batch_size: 2)
     end
 
-    context 'when iterating first time' do
-      it 'supports try_next' do
-        expect(cursor.try_next).to eq('test' => 0)
-        expect(cursor.try_next).to eq('test' => 1)
-      end
+    it 'supports try_next' do
+      expect(cursor.try_next).to eq('test' => 0)
+      expect(cursor.try_next).to eq('test' => 1)
+    end
 
-      it 'supports each' do
-        expect(cursor.each.to_a.length).to eq(3)
-      end
+    it 'supports each' do
+      expect(cursor.each.to_a.length).to eq(3)
     end
   end
 end
