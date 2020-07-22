@@ -267,4 +267,47 @@ describe Mongo::QueryCache do
     end
   end
 
+  context 'when querying in a different collection' do
+
+    let(:database) { client.database }
+
+    let(:new_collection) do
+      Mongo::Collection.new(database, 'foo')
+    end
+
+    before do
+      authorized_collection.find.to_a
+    end
+
+    let(:events) do
+      subscriber.command_started_events('find')
+    end
+
+    it 'one query' do
+      expect(events.length).to eq(1)
+    end
+
+    it 'queries again' do
+      new_collection.find.to_a
+      expect(events.length).to eq(2)
+    end
+  end
+
+  context 'when inserting new documents' do
+
+    before do
+      authorized_collection.find.to_a
+      authorized_collection.insert_one({ name: "test1" })
+    end
+
+    let(:events) do
+      subscriber.command_started_events('find')
+    end
+
+    it 'queries again because of a write operation' do
+      authorized_collection.find.to_a
+      expect(events.length).to eq(2)
+    end
+  end
+
 end
