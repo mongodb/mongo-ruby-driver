@@ -34,28 +34,8 @@ module Mongo
         # @since 2.0.0
         #
         # @yieldparam [ Hash ] Each matching document.
-
         def each
-          if system_collection? || !QueryCache.enabled?
-            @cursor = nil
-            session = client.send(:get_session, @options)
-            @cursor = if respond_to?(:write?, true) && write?
-              server = server_selector.select_server(cluster, nil, session)
-              result = send_initial_query(server, session)
-              Cursor.new(view, result, server, session: session)
-            else
-              read_with_retry_cursor(session, server_selector, view) do |server|
-                send_initial_query(server, session)
-              end
-            end
-            if block_given?
-              @cursor.each do |doc|
-                yield doc
-              end
-            else
-              @cursor.to_enum
-            end
-          else
+          if QueryCache.enabled?
             unless @cursor = cached_cursor
               @cursor = nil
               session = client.send(:get_session, @options)
@@ -70,13 +50,25 @@ module Mongo
               end
               QueryCache.cache_table[cache_key] = @cursor
             end
-            if block_given?
-              @cursor.each do |doc|
-                yield doc
-              end
+          else
+            @cursor = nil
+            session = client.send(:get_session, @options)
+            @cursor = if respond_to?(:write?, true) && write?
+              server = server_selector.select_server(cluster, nil, session)
+              result = send_initial_query(server, session)
+              Cursor.new(view, result, server, session: session)
             else
-              @cursor.to_enum
+              read_with_retry_cursor(session, server_selector, view) do |server|
+                send_initial_query(server, session)
+              end
             end
+          end
+          if block_given?
+            @cursor.each do |doc|
+              yield doc
+            end
+          else
+            @cursor.to_enum
           end
         end
 
@@ -115,10 +107,6 @@ module Mongo
 
         def cache_key
           [ collection.namespace, selector, limit, skip, sort, projection, collation ]
-        end
-
-        def system_collection?
-          collection.namespace =~ /\Asystem./
         end
 
         def initial_query_op(server, session)

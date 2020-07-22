@@ -22,8 +22,6 @@ module Mongo
       #   QueryCache.enabled = true
       #
       # @param [ true, false ] value The enabled value.
-      #
-      # @since 4.0.0
       def enabled=(value)
         Thread.current["[mongo]:query_cache:enabled"] = value
       end
@@ -34,8 +32,6 @@ module Mongo
       #   QueryCache.enabled?
       #
       # @return [ true, false ] If the cache is enabled.
-      #
-      # @since 4.0.0
       def enabled?
         !!Thread.current["[mongo]:query_cache:enabled"]
       end
@@ -46,8 +42,6 @@ module Mongo
       #   QueryCache.cache { collection.find }
       #
       # @return [ Object ] The result of the block.
-      #
-      # @since 4.0.0
       def cache
         enabled = QueryCache.enabled?
         QueryCache.enabled = true
@@ -76,8 +70,6 @@ module Mongo
       #   QueryCache.cache_table
       #
       # @return [ Hash ] The hash of cached queries.
-      #
-      # @since 4.0.0
       def cache_table
         Thread.current["[mongo]:query_cache"] ||= {}
       end
@@ -88,8 +80,6 @@ module Mongo
       #   QueryCache.clear_cache
       #
       # @return [ nil ] Always nil.
-      #
-      # @since 4.0.0
       def clear_cache
         Thread.current["[mongo]:query_cache"] = nil
       end

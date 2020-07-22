@@ -1,7 +1,5 @@
 # A Cursor that attempts to load documents from memory first before hitting
 # the database if the same query has already been executed.
-#
-# @since 5.0.0
 
 module Mongo
   class CachedCursor < Cursor
@@ -14,7 +12,7 @@ module Mongo
     #     # ...
     #   end
     #
-    # @since 5.0.0
+    # @return [ Enumerator ] The enumerator.
     def each
       if @cached_docs
         @cached_docs.each do |doc|
@@ -36,10 +34,8 @@ module Mongo
     #   cursor.inspect
     #
     # @return [ String ] A string representation of a +Cursor+ instance.
-    #
-    # @since 2.0.0
     def inspect
-      "#<Mongo::QueryCache::CachedCursor:0x#{object_id} @view=#{@view.inspect}>"
+      "#<Mongo::CachedCursor:0x#{object_id} @view=#{@view.inspect}>"
     end
 
     private

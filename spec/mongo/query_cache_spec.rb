@@ -110,6 +110,36 @@ describe Mongo::QueryCache do
       end
     end
 
+    context 'when query has collation' do
+      min_server_fcv '3.4'
+
+      let(:options1) do
+        { :collation => { locale: 'fr' } }
+      end
+
+      let(:options2) do
+        { collation: { locale: 'en_US' } }
+      end
+
+      before do
+        authorized_collection.find({ test: 3 }, options1).to_a
+      end
+
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
+
+      it 'uses the cache for query with same collation' do
+        authorized_collection.find({ test: 3 }, options1).to_a
+        expect(events.length).to eq(1)
+      end
+
+      it 'does not use the cache for query with different collation' do
+        authorized_collection.find({ test: 3 }, options2).to_a
+        expect(events.length).to eq(2)
+      end
+    end
+
     context 'when first query has no limit' do
 
       before do
@@ -234,36 +264,59 @@ describe Mongo::QueryCache do
         expect(events.length).to eq(1)
       end
     end
-  end
 
-  context 'when query has collation' do
-    min_server_fcv '3.4'
+    context 'when inserting new documents' do
 
-    let(:options1) do
-      { :collation => { locale: 'fr' } }
+      before do
+        authorized_collection.find.to_a
+        authorized_collection.insert_one({ name: "bob" })
+      end
+
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
+
+      it 'queries again' do
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
     end
 
-    let(:options2) do
-      { collation: { locale: 'en_US' } }
+    context 'when deleting documents' do
+
+      before do
+        authorized_collection.find.to_a
+      end
+
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
+
+      it 'queries again' do
+        authorized_collection.delete_many
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
     end
 
-    before do
-      authorized_collection.insert_many([{ name: "test1" }, { name: "test2" }])
-      authorized_collection.find({ name: 'test1' }, options1).to_a
-    end
+    context 'when replacing documents' do
+      before do
+        authorized_collection.find.to_a
+      end
 
-    let(:events) do
-      subscriber.command_started_events('find')
-    end
+      let(:selector) do
+        { test: 5 }
+      end
 
-    it 'uses the cache for query with same collation' do
-      authorized_collection.find({ name: 'test1' }, options1).to_a
-      expect(events.length).to eq(1)
-    end
+      let(:events) do
+        subscriber.command_started_events('find')
+      end
 
-    it 'does not use the cache for query with different collation' do
-      authorized_collection.find({ name: 'test1' }, options2).to_a
-      expect(events.length).to eq(2)
+      it 'queries again' do
+        authorized_collection.replace_one(selector, { test: 100 } )
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
     end
   end
 
@@ -292,22 +345,4 @@ describe Mongo::QueryCache do
       expect(events.length).to eq(2)
     end
   end
-
-  context 'when inserting new documents' do
-
-    before do
-      authorized_collection.find.to_a
-      authorized_collection.insert_one({ name: "test1" })
-    end
-
-    let(:events) do
-      subscriber.command_started_events('find')
-    end
-
-    it 'queries again because of a write operation' do
-      authorized_collection.find.to_a
-      expect(events.length).to eq(2)
-    end
-  end
-
 end
