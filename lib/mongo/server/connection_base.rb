@@ -212,7 +212,8 @@ module Mongo
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
-        temp_buffer = buffer.dup
+        temp_buffer = BSON::ByteBuffer.new
+        temp_buffer.put_string(buffer.to_s)
         message.serialize(temp_buffer, max_bson_size)
 
         # Validate the message size before compressing the document to ensure
