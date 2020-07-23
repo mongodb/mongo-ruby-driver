@@ -186,8 +186,6 @@ module Mongo
       end
 
       def serialize(message, client, buffer = BSON::ByteBuffer.new)
-        start_size = 0
-
         # Driver specifications only mandate the fixed 16MiB limit for
         # serialized BSON documents. However, the server returns its
         # active serialized BSON document size limit in the ismaster response,
@@ -212,18 +210,39 @@ module Mongo
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
+        # RUBY-2234: It is necessary to check that the message size does not 
+        # exceed the maximum bson object size before compressing and serializing 
+        # the final message.
+        #
+        # This is to avoid the case where the user performs a bulk write
+        # larger than 16MiB which, when compressed, becomes smaller than 16MiB.
+        # If the driver does not split the bulk writes prior to compression,
+        # the entire operation will be sent to the server, which will raise an
+        # error because the uncompressed operation exceeds the maximum bson size.
+        #
+        # To address this problem, we serialize the message prior to compression
+        # and raise an exception if the serialized message exceeds the maximum
+        # bson size.
+
+        # Create a separate buffer that contains the un-compressed message
+        # for the purpose of checking its size. Write any pre-existing contents
+        # from the original buffer into the temporary one.
         temp_buffer = BSON::ByteBuffer.new
-        temp_buffer.put_string(buffer.to_s)
+        temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
+
+        # Make sure to rewind the original buffer so it can be read again.
+        buffer.rewind!
+
         message.serialize(temp_buffer, max_bson_size)
 
-        # Validate the message size before compressing the document to ensure
-        # correct splitting of bulk writes.
-        if max_message_size &&
-          (temp_buffer.length - start_size) > max_message_size
-        then
+        if max_message_size && temp_buffer.length > max_message_size
           raise Error::MaxMessageSize.new(max_message_size)
         end
 
+        # RUBY-2335: When the un-compressed message is smaller than the maximum
+        # bson size limit, the message will be serialized twice. The operations
+        # layer should be refactored to allow compression on an already-
+        # serialized message.
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
         final_message.serialize(buffer, max_bson_size)
 
