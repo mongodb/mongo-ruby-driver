@@ -18,7 +18,7 @@ module Mongo
   # the database if the same query has already been executed.
   #
   # @api semiprivate
-  class CachedCursor < Cursor
+  class CachingCursor < Cursor
 
     # @return [ Array <BSON::Document> ] The cursor's cached documents.
     # @api private
@@ -48,7 +48,7 @@ module Mongo
     #
     # @return [ String ] A string representation of a +Cursor+ instance.
     def inspect
-      "#<Mongo::CachedCursor:0x#{object_id} @view=#{@view.inspect}>"
+      "#<Mongo::CachingCursor:0x#{object_id} @view=#{@view.inspect}>"
     end
 
     private

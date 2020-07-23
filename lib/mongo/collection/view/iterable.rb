@@ -39,29 +39,13 @@ module Mongo
             unless @cursor = cached_cursor
               @cursor = nil
               session = client.send(:get_session, @options)
-              @cursor = if respond_to?(:write?, true) && write?
-                server = server_selector.select_server(cluster, nil, session)
-                result = send_initial_query(server, session)
-                CachedCursor.new(view, result, server, session: session)
-              else
-                read_with_retry_cursor(session, server_selector, view) do |server|
-                  send_initial_query(server, session)
-                end
-              end
+              @cursor = select_cursor(session)
               QueryCache.cache_table[cache_key] = @cursor
             end
           else
             @cursor = nil
             session = client.send(:get_session, @options)
-            @cursor = if respond_to?(:write?, true) && write?
-              server = server_selector.select_server(cluster, nil, session)
-              result = send_initial_query(server, session)
-              Cursor.new(view, result, server, session: session)
-            else
-              read_with_retry_cursor(session, server_selector, view) do |server|
-                send_initial_query(server, session)
-              end
-            end
+            @cursor = select_cursor(session)
           end
           if block_given?
             @cursor.each do |doc|
@@ -93,6 +77,22 @@ module Mongo
         alias :kill_cursors :close_query
 
         private
+
+        def select_cursor(session)
+          if respond_to?(:write?, true) && write?
+            server = server_selector.select_server(cluster, nil, session)
+            result = send_initial_query(server, session)
+            if QueryCache.enabled?
+              CachingCursor.new(view, result, server, session: session)
+            else
+              Cursor.new(view, result, server, session: session)
+            end
+          else
+            read_with_retry_cursor(session, server_selector, view) do |server|
+              send_initial_query(server, session)
+            end
+          end
+        end
 
         def cached_cursor
           if limit

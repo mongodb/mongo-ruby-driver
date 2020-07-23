@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::CachedCursor do
+describe Mongo::CachingCursor do
 
   around do |spec|
     Mongo::QueryCache.clear_cache
@@ -8,7 +8,7 @@ describe Mongo::CachedCursor do
   end
 
   let(:authorized_collection) do
-    authorized_client['cached_cursor']
+    authorized_client['caching_cursor']
   end
 
   before do

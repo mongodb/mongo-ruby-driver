@@ -61,7 +61,7 @@ module Mongo
         result = yield server
 
         if QueryCache.enabled?
-          CachedCursor.new(view, result, server, session: session)
+          CachingCursor.new(view, result, server, session: session)
         else
           Cursor.new(view, result, server, session: session)
         end
