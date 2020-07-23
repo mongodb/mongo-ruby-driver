@@ -53,12 +53,20 @@ describe Mongo::QueryCache do
       Mongo::QueryCache.enabled = false
     end
 
+    let(:events) do
+      subscriber.command_started_events('find')
+    end
+
     it 'executes the block with the query cache enabled' do
       Mongo::QueryCache.cache do
-        authorized_collection.find(name: 'testing')
+        authorized_collection.find(name: 'testing').to_a
         expect(Mongo::QueryCache.enabled?).to be(true)
+        expect(Mongo::QueryCache.cache_table.length).to eq(1)
       end
       expect(Mongo::QueryCache.enabled?).to be(false)
+      authorized_collection.find(name: 'testing').to_a
+      expect(events.length).to eq(2)
+      expect(Mongo::QueryCache.cache_table.length).to eq(1)
     end
   end
 
@@ -70,9 +78,10 @@ describe Mongo::QueryCache do
 
     it 'executes the block with the query cache disabled' do
       Mongo::QueryCache.uncached do
-        authorized_collection.find(name: 'testing')
+        authorized_collection.find(name: 'testing').to_a
         expect(Mongo::QueryCache.enabled?).to be(false)
       end
+      expect(Mongo::QueryCache.cache_table.length).to eq(0)
     end
   end
 
@@ -98,6 +107,7 @@ describe Mongo::QueryCache do
       it 'queries again' do
         authorized_collection.find(test: 1).to_a
         expect(events.length).to eq(2)
+        expect(Mongo::QueryCache.cache_table.length).to eq(0)
       end
     end
 
@@ -110,6 +120,7 @@ describe Mongo::QueryCache do
       it 'does not query again' do
         authorized_collection.find(test: 1).to_a
         expect(events.length).to eq(1)
+        expect(Mongo::QueryCache.cache_table.length).to eq(1)
       end
     end
 
@@ -141,6 +152,7 @@ describe Mongo::QueryCache do
         it 'queries again' do
           authorized_collection.find({ test: 3 }, options2).to_a
           expect(events.length).to eq(2)
+          expect(Mongo::QueryCache.cache_table.length).to eq(2)
         end
       end
     end
