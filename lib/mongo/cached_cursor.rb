@@ -21,6 +21,7 @@ module Mongo
   class CachedCursor < Cursor
 
     # @return [ Array <BSON::Document> ] The cursor's cached documents.
+    # @api private
     attr_reader :cached_docs
 
     # We iterate over the cached documents if they exist already in the
