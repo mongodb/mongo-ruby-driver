@@ -35,16 +35,14 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
+          @cursor = nil
+          session = client.send(:get_session, @options)
           if QueryCache.enabled?
             unless @cursor = cached_cursor
-              @cursor = nil
-              session = client.send(:get_session, @options)
               @cursor = select_cursor(session)
               QueryCache.cache_table[cache_key] = @cursor
             end
           else
-            @cursor = nil
-            session = client.send(:get_session, @options)
             @cursor = select_cursor(session)
           end
           if block_given?
