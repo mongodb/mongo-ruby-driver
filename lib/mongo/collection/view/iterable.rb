@@ -42,6 +42,11 @@ module Mongo
               @cursor = select_cursor(session)
               QueryCache.cache_table[cache_key] = @cursor
             end
+            if limit
+              @cursor.limit_docs = limit
+            else
+              @cursor.limit_docs = nil
+            end
           else
             @cursor = select_cursor(session)
           end
@@ -96,9 +101,6 @@ module Mongo
           if limit
             key = [ collection.namespace, selector, nil, skip, sort, projection, collation  ]
             cursor = QueryCache.cache_table[key]
-            if cursor
-              cursor.to_a[0...limit.abs]
-            end
           end
           cursor || QueryCache.cache_table[cache_key]
         end

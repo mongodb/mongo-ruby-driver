@@ -24,6 +24,9 @@ module Mongo
     # @api private
     attr_reader :cached_docs
 
+    # @return [ Integer ] The max number of docs to return from the query.
+    attr_accessor :limit_docs
+
     # We iterate over the cached documents if they exist already in the
     # cursor otherwise proceed as normal.
     #
@@ -33,8 +36,14 @@ module Mongo
     #   end
     def each
       if @cached_docs
-        @cached_docs.each do |doc|
-          yield doc
+        if limit_docs
+          @cached_docs.to_a[0...limit_docs.abs].each do |doc|
+            yield doc
+          end
+        else
+          @cached_docs.each do |doc|
+            yield doc
+          end
         end
       else
         super
