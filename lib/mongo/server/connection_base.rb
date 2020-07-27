@@ -210,8 +210,8 @@ module Mongo
           max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
-        # RUBY-2234: It is necessary to check that the message size does not 
-        # exceed the maximum bson object size before compressing and serializing 
+        # RUBY-2234: It is necessary to check that the message size does not
+        # exceed the maximum bson object size before compressing and serializing
         # the final message.
         #
         # This is to avoid the case where the user performs a bulk write
@@ -228,10 +228,10 @@ module Mongo
         # for the purpose of checking its size. Write any pre-existing contents
         # from the original buffer into the temporary one.
         temp_buffer = BSON::ByteBuffer.new
-        temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
-
-        # Make sure to rewind the original buffer so it can be read again.
-        buffer.rewind!
+        if buffer.length > 0
+          bytes = buffer.get_bytes(buffer.length)
+          temp_buffer.put_bytes(bytes)
+        end
 
         message.serialize(temp_buffer, max_bson_size)
 
