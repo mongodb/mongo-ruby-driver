@@ -42,17 +42,21 @@ module Mongo
               @cursor = select_cursor(session)
               QueryCache.cache_table[cache_key] = @cursor
             end
+            if limit
+              range = limit
+            end
           else
             @cursor = select_cursor(session)
           end
-          if limit
-            range = limit
-          else
-            range = @cursor.to_a.count
-          end
           if block_given?
-            @cursor.to_a[0...range].each do |doc|
-              yield doc
+            if !range
+              @cursor.each do |doc|
+                yield doc
+              end
+            else
+              @cursor.to_a[0...range].each do |doc|
+                yield doc
+              end
             end
           else
             @cursor.to_enum
