@@ -228,8 +228,7 @@ module Mongo
         # for the purpose of checking its size. Write any pre-existing contents
         # from the original buffer into the temporary one.
         temp_buffer = BSON::ByteBuffer.new
-        bytes = buffer.get_bytes(buffer.length)
-        temp_buffer.put_bytes(bytes)
+        temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
 
         message.serialize(temp_buffer, max_bson_size)
 
