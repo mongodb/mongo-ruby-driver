@@ -24,9 +24,6 @@ module Mongo
     # @api private
     attr_reader :cached_docs
 
-    # @return [ Integer ] The max number of docs to return from the query.
-    attr_accessor :limit_docs
-
     # We iterate over the cached documents if they exist already in the
     # cursor otherwise proceed as normal.
     #
@@ -36,14 +33,8 @@ module Mongo
     #   end
     def each
       if @cached_docs
-        if limit_docs
-          @cached_docs.to_a[0...limit_docs.abs].each do |doc|
-            yield doc
-          end
-        else
-          @cached_docs.each do |doc|
-            yield doc
-          end
+        @cached_docs.each do |doc|
+          yield doc
         end
       else
         super
@@ -62,6 +53,14 @@ module Mongo
 
     private
 
+    # Populates the cursor's cached documents if all of the results of the
+    # query fit in the first batch (cursor_id is zero) and the first batch
+    # of results have not been iterated yet. If the result set exceeds the
+    # batch size and a CachingCursor is iterated more than once, an error
+    # is returned.
+    #
+    # @return [ Array <BSON::Document> ] The documents returned by the
+    # get_more_operation.
     def process(result)
       documents = super
       if @cursor_id.zero? && !@after_first_batch
