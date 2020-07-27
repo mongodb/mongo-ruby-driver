@@ -42,9 +42,7 @@ module Mongo
               @cursor = select_cursor(session)
               QueryCache.cache_table[cache_key] = @cursor
             end
-            if limit
-              range = limit
-            end
+            range = limit || nil
           else
             @cursor = select_cursor(session)
           end
