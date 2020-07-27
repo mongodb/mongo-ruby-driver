@@ -15,6 +15,13 @@ to support text search queries on string content. Text indexes
 can include any field whose value is a string or an array of
 string elements.
 
+.. note::
+
+  MongoDB Atlas also provides
+  `Atlas Search <https://docs.atlas.mongodb.com/atlas-search/>`_
+  which is a more powerful and flexible text search solution.
+  The rest of this page discusses text indexes and not Atlas Search.
+
 To perform a text search with the Ruby driver, first create a text
 index with ``indexes.create_one()``. The following command creates a
 text index on the ``name`` field of the ``restaurants`` collection in
