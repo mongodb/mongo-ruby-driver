@@ -37,18 +37,24 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          @cursor = if respond_to?(:write?, true) && write?
-            server = server_selector.select_server(cluster, nil, session)
-            result = send_initial_query(server, session)
-            Cursor.new(view, result, server, session: session)
-          else
-            read_with_retry_cursor(session, server_selector, view) do |server|
-              send_initial_query(server, session)
+          if QueryCache.enabled?
+            unless @cursor = cached_cursor
+              @cursor = select_cursor(session)
+              QueryCache.cache_table[cache_key] = @cursor
             end
+            range = limit || nil
+          else
+            @cursor = select_cursor(session)
           end
           if block_given?
-            @cursor.each do |doc|
-              yield doc
+            if !range
+              @cursor.each do |doc|
+                yield doc
+              end
+            else
+              @cursor.to_a[0...range].each do |doc|
+                yield doc
+              end
             end
           else
             @cursor.to_enum
@@ -76,6 +82,34 @@ module Mongo
         alias :kill_cursors :close_query
 
         private
+
+        def select_cursor(session)
+          if respond_to?(:write?, true) && write?
+            server = server_selector.select_server(cluster, nil, session)
+            result = send_initial_query(server, session)
+            if QueryCache.enabled?
+              CachingCursor.new(view, result, server, session: session)
+            else
+              Cursor.new(view, result, server, session: session)
+            end
+          else
+            read_with_retry_cursor(session, server_selector, view) do |server|
+              send_initial_query(server, session)
+            end
+          end
+        end
+
+        def cached_cursor
+          if limit
+            key = [ collection.namespace, selector, nil, skip, sort, projection, collation  ]
+            cursor = QueryCache.cache_table[key]
+          end
+          cursor || QueryCache.cache_table[cache_key]
+        end
+
+        def cache_key
+          [ collection.namespace, selector, limit, skip, sort, projection, collation ]
+        end
 
         def initial_query_op(server, session)
           if server.with_connection { |connection| connection.features }.find_command_enabled?

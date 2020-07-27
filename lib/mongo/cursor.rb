@@ -138,6 +138,7 @@ module Mongo
     #
     # @since 2.0.0
     def each
+
       # If we already iterated past the first batch (i.e., called get_more
       # at least once), the cursor on the server side has advanced past
       # the first batch and restarting iteration from the beginning by
