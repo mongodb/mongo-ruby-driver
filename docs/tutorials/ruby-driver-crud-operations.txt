@@ -133,15 +133,15 @@ object, or with ``Decimal128.from_string()``.
 Query Cache
 ===========
 
-If the Ruby driver's Query Cache is enabled, it will cache find queries on
+If the Ruby driver's QueryCache is enabled, it will cache find queries on
 the currently executed thread and avoids sending requests to the database for
-identical queries. The Query Cache stores CachingCursor objects which attempt
+identical queries. The QueryCache stores CachingCursor objects which attempt
 to load documents from memory before retrieving them from the database. Note that
 if the number of results is too large to be returned in a single batch,
 the QueryCache will not be used, even if Mongo::QueryCache.enabled is true, and
 an error will be returned.
 
-Similar to Mongoid's Query Cache, the driver's implementation of Query Cache
+Similar to Mongoid's QueryCache, the driver's implementation of QueryCache
 does not support using CachingCursors for queries with different limit sizes if
 the original query has a specified limit. For example, if a query with a limit of
 100 were executed, followed by a query with a limit of 10, the second query
@@ -151,13 +151,13 @@ initially, then any query that is run after it with a specified limit will use
 the original CachingCursor rather than going back to the database, and will return
 the correct number of documents accordingly.
 
-To enable the Query Cache on a global scope:
+To enable the QueryCache on a global scope:
 
 .. code-block:: ruby
 
   Mongo::QueryCache.enabled = true
 
-The following code shows how to enable the Query Cache within the context of a
+The following code shows how to enable the QueryCache within the context of a
 specific block:
 
 .. code-block:: ruby
