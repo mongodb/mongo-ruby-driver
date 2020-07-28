@@ -131,7 +131,7 @@ object, or with ``Decimal128.from_string()``.
    # => BSON::Decimal128('428.79')
 
 Query Cache
-=======
+===========
 
 If the Ruby driver's Query Cache is enabled, it will cache find queries on
 the currently executed thread and avoids sending requests to the database for
