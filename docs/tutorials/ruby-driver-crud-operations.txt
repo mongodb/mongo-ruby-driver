@@ -151,13 +151,13 @@ initially, then any query that is run after it with a specified limit will use
 the original CachingCursor rather than going back to the database, and will return
 the correct number of documents accordingly.
 
-To enable the QueryCache on a global scope:
+To enable the Query Cache on a global scope:
 
 .. code-block:: ruby
 
   Mongo::QueryCache.enabled = true
 
-The following code shows how to enable the QueryCache within the context of a
+The following code shows how to enable the Query Cache within the context of a
 specific block:
 
 .. code-block:: ruby
