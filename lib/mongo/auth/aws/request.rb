@@ -61,8 +61,12 @@ module Mongo
           %i(access_key_id secret_access_key host server_nonce).each do |arg|
             value = instance_variable_get("@#{arg}")
             if value.nil? || value.empty?
-              raise ArgumentError, "Value for #{arg} is required"
+              raise Error::InvalidServerAuthResponse, "Value for '#{arg}' is required"
             end
+          end
+
+          if host && host.length > 255
+              raise Error::InvalidServerAuthHost, "Value for 'host' is too long: #{@host}"
           end
         end
 
@@ -98,8 +102,28 @@ module Mongo
 
         # @return [ String ] region The region of the host, derived from the host.
         def region
-          # TODO implement region derivation when SPEC-1646 is done.
-          'us-east-1'
+          # Common case
+          if host == 'sts.amazonaws.com'
+            return 'us-east-1'
+          end
+
+          if host.start_with?('.')
+            raise Error::InvalidServerAuthHost, "Host begins with a period: #{host}"
+          end
+          if host.end_with?('.')
+            raise Error::InvalidServerAuthHost, "Host ends with a period: #{host}"
+          end
+
+          parts = host.split('.')
+          if parts.any? { |part| part.empty? }
+            raise Error::InvalidServerAuthHost, "Host has an empty component: #{host}"
+          end
+
+          if parts.length == 1
+            'us-east-1'
+          else
+            parts[1]
+          end
         end
 
         # Returns the scope of the request, per the AWS signature V4 specification.
