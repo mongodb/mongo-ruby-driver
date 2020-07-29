@@ -223,19 +223,19 @@ module Mongo
         # To address this problem, we serialize the message prior to compression
         # and raise an exception if the serialized message exceeds the maximum
         # bson size.
+        if max_message_size
+          # Create a separate buffer that contains the un-compressed message
+          # for the purpose of checking its size. Write any pre-existing contents
+          # from the original buffer into the temporary one.
+          temp_buffer = BSON::ByteBuffer.new
 
-        # Create a separate buffer that contains the un-compressed message
-        # for the purpose of checking its size. Write any pre-existing contents
-        # from the original buffer into the temporary one.
-        temp_buffer = BSON::ByteBuffer.new
+          # TODO: address the fact that this line mutates the buffer.
+          temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
 
-        # TODO: address the fact that this line mutates the buffer.
-        temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
-
-        message.serialize(temp_buffer, max_bson_size)
-
-        if max_message_size && temp_buffer.length > max_message_size
-          raise Error::MaxMessageSize.new(max_message_size)
+          message.serialize(temp_buffer, max_bson_size)
+          if temp_buffer.length > max_message_size
+            raise Error::MaxMessageSize.new(max_message_size)
+          end
         end
 
         # RUBY-2335: When the un-compressed message is smaller than the maximum
