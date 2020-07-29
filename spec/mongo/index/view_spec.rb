@@ -328,6 +328,37 @@ describe Mongo::Index::View do
         context 'when hidden is specified' do
           let(:index) { view.get('with_hidden_1') }
 
+          context 'on server versions <= 3.2' do
+            # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+            # checking on index creation. The server will allow the user to create
+            # the index with the hidden option, but the server does not support this
+            # option and will not use it.
+            max_server_fcv '3.2'
+
+            let!(:result) do
+              view.create_many({ key: { with_hidden: 1 }, hidden: true })
+            end
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'creates an index' do
+              expect(index).to_not be_nil
+            end
+          end
+
+          context 'on server versions between 3.4 and 4.2' do
+            max_server_fcv '4.2'
+            min_server_fcv '3.4'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+            end
+          end
+
           context 'on server versions >= 4.4' do
             min_server_fcv '4.4'
 
@@ -365,16 +396,6 @@ describe Mongo::Index::View do
               it 'does not apply the hidden option to the index' do
                 expect(index['hidden']).to be_nil
               end
-            end
-          end
-
-          context 'on server versions < 4.4' do
-            max_server_fcv '4.2'
-
-            it 'raises an exception' do
-              expect do
-                view.create_many({ key: { with_hidden: 1 }, hidden: true })
-              end.to raise_error(/The field 'hidden' is not valid for an index specification/)
             end
           end
         end
@@ -827,11 +848,32 @@ describe Mongo::Index::View do
       end
     end
 
-    context 'when providing hint option' do
+    context 'when providing hidden option' do
       let(:index) { view.get('with_hidden_1') }
 
-      context 'on server versions < 4.4' do
+      context 'on server versions <= 3.2' do
+        # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+        # checking on index creation. The server will allow the user to create
+        # the index with the hidden option, but the server does not support this
+        # option and will not use it.
+        max_server_fcv '3.2'
+
+        let!(:result) do
+          view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+
+        it 'creates an index' do
+          expect(index).to_not be_nil
+        end
+      end
+
+      context 'on server versions between 3.4 and 4.2' do
         max_server_fcv '4.2'
+        min_server_fcv '3.4'
 
         it 'raises an exception' do
           expect do
