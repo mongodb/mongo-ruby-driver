@@ -22,7 +22,7 @@ describe 'BSON & command size limits' do
 
     lambda do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size prior to serialization/)
   end
 
   # This test checks our bulk write splitting when documents are not close
@@ -48,7 +48,7 @@ describe 'BSON & command size limits' do
 
     lambda do
       authorized_collection.insert_many(documents)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size prior to serialization/)
     authorized_collection.count_documents.should == 0
   end
 
@@ -68,7 +68,7 @@ describe 'BSON & command size limits' do
 
     lambda do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::OperationFailure, /object to insert too large/)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size prior to serialization/)
   end
 
   it 'fails in the driver when a document larger than 16MiB+16KiB is inserted' do
@@ -77,7 +77,7 @@ describe 'BSON & command size limits' do
 
     lambda do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size prior to serialization/)
   end
 
   it 'allows bulk writes of multiple documents of exactly 16 MiB each' do
