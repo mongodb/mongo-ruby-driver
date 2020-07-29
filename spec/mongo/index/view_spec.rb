@@ -325,6 +325,81 @@ describe Mongo::Index::View do
           end
         end
 
+        context 'when hidden is specified' do
+          let(:index) { view.get('with_hidden_1') }
+
+          context 'on server versions <= 3.2' do
+            # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+            # checking on index creation. The server will allow the user to create
+            # the index with the hidden option, but the server does not support this
+            # option and will not use it.
+            max_server_fcv '3.2'
+
+            let!(:result) do
+              view.create_many({ key: { with_hidden: 1 }, hidden: true })
+            end
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'creates an index' do
+              expect(index).to_not be_nil
+            end
+          end
+
+          context 'on server versions between 3.4 and 4.2' do
+            max_server_fcv '4.2'
+            min_server_fcv '3.4'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+            end
+          end
+
+          context 'on server versions >= 4.4' do
+            min_server_fcv '4.4'
+
+            context 'when hidden is true' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'applies the hidden option to the index' do
+                expect(index['hidden']).to be true
+              end
+            end
+
+            context 'when hidden is false' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: false })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'does not apply the hidden option to the index' do
+                expect(index['hidden']).to be_nil
+              end
+            end
+          end
+        end
+
         context 'when collation is specified' do
           min_server_fcv '3.4'
 
@@ -770,6 +845,77 @@ describe Mongo::Index::View do
 
       it 'passes partialFilterExpression correctly' do
         expect(indexes[:partialFilterExpression]).to eq(expression)
+      end
+    end
+
+    context 'when providing hidden option' do
+      let(:index) { view.get('with_hidden_1') }
+
+      context 'on server versions <= 3.2' do
+        # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+        # checking on index creation. The server will allow the user to create
+        # the index with the hidden option, but the server does not support this
+        # option and will not use it.
+        max_server_fcv '3.2'
+
+        let!(:result) do
+          view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+
+        it 'creates an index' do
+          expect(index).to_not be_nil
+        end
+      end
+
+      context 'on server versions between 3.4 and 4.2' do
+        max_server_fcv '4.2'
+        min_server_fcv '3.4'
+
+        it 'raises an exception' do
+          expect do
+            view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+          end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+        end
+      end
+
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.4'
+
+        context 'when hidden is true' do
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: true }) }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(index).to_not be_nil
+          end
+
+          it 'applies the hidden option to the index' do
+            expect(index['hidden']).to be true
+          end
+        end
+
+        context 'when hidden is false' do
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: false }) }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(index).to_not be_nil
+          end
+
+          it 'does not apply the hidden option to the index' do
+            expect(index['hidden']).to be_nil
+          end
+        end
       end
     end
 

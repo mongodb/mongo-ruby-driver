@@ -95,6 +95,9 @@ when creating indexes. These options mirror the options supported by the
      - The number of units within which to group the location values in a geo haystack index.
    * - ``:partial_filter_expression``
      - A filter for a partial index.
+   * - ``:hidden``
+     - A Boolean specifying whether the index should be hidden; a hidden index 
+       is one that exists on the collection but will not be used by the query planner.
 
 The :commit_quorum option
 -------------------------

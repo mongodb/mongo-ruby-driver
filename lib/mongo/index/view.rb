@@ -120,6 +120,9 @@ module Mongo
       #   a geo index.
       # @option options [ Hash ] :partial_filter_expression  Specify a filter for a partial
       #   index.
+      # @option options [ Boolean ] :hidden When :hidden is true, this index will
+      #   exist on the collection but not be used by the query planner when
+      #   executing operations.
       # @option options [ String | Integer ] :commit_quorum Specify how many
       #   data-bearing members of a replica set, including the primary, must
       #   complete the index builds successfully before the primary marks
