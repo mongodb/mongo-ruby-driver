@@ -88,7 +88,7 @@ On MongoDB 2.4, an exception is only raised if the insert fails and the
 .. _specify-decimal128:
 
 Specify a ``Decimal128`` number
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 
 .. versionadded:: 3.4
 
@@ -166,7 +166,7 @@ notation.
 .. _ruby-driver-query-options:
 
 Query Options
-~~~~~~~~~~~~~
+-------------
 
 To add options to a query, chain the appropriate methods after the
 ``find`` method. Note that the underlying object, the ``Mongo::Collection::View``,
@@ -238,7 +238,7 @@ when querying and their corresponding methods as examples.
          client[:artists].find.sort(:name => -1)
 
 Additional Query Operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 ``count``
   Get the total number of documents an operation returns.
@@ -260,7 +260,7 @@ Additional Query Operations
   client[:artists].find.distinct(:name )
 
 Tailable Cursors
-~~~~~~~~~~~~~~~~
+----------------
 
 For capped collections you may use a :manual:`tailable cursor
 </core/tailable-cursors/>` that remains open
@@ -289,11 +289,11 @@ following code example shows how a tailable cursor might be used:
 .. _ruby-driver-read-preference:
 
 Read Preference
-~~~~~~~~~~~~~~~
+---------------
 
 Read preference determines the candidate :manual:`replica set</replication/>`
 members to which a query or command can be sent. They consist of a **mode**
-specified as a symbol, an array of hashes known as **tag_sets**, 
+specified as a symbol, an array of hashes known as **tag_sets**,
 the ``hedge`` option, which is a Hash specifying hedged read behavior, and two
 timing options: **local_threshold** and **server_selection_timeout**.
 
@@ -342,7 +342,7 @@ using the ``with`` method:
   artists.with(:read => { :mode => :primary_preferred }).find.to_a
 
 Mode
-~~~~
+----
 
 There are five possible read preference modes: ``:primary``, ``:secondary``,
 ``:primary_preferred``, ``:secondary_preferred`` and``:nearest``.
@@ -360,7 +360,7 @@ Please see the :manual:`read preference documentation in the MongoDB Manual
   unchanged.
 
 Tag sets
-~~~~~~~~
+--------
 
 The ``tag_sets`` parameter is an ordered list of tag sets used to
 restrict the eligibility of servers for selection, such as for data
@@ -380,7 +380,7 @@ the empty tag set is a subset of any tag set. This means the default
 ``tag_sets`` parameter ``[{}]`` matches all servers.
 
 Hedge
-~~~~~
+-----
 
 The ``hedge`` parameter is a Hash that specifies whether the server should use
 hedged reads. With hedged reads, sharded clusters can route read operations to
@@ -485,7 +485,7 @@ the modification occurs.
   doc # Return the document before the update.
 
 Update Options
-~~~~~~~~~~~~~~
+--------------
 
 To add options to an update command, specify them as key-value pairs in the options
 Hash argument.
@@ -583,7 +583,7 @@ Deleting
   result.deleted_count # Returns the number deleted.
 
 Delete Options
-~~~~~~~~~~~~~~
+--------------
 
 To add options to a delete command, specify them as key-value pairs in the
 options Hash argument.
