@@ -81,10 +81,6 @@ describe 'BSON & command size limits' do
   end
 
   it 'allows bulk writes of multiple documents of exactly 16 MiB each' do
-    if SpecConfig.instance.compressors
-      pending "RUBY-2234"
-    end
-
     documents = []
     1.upto(3) do |index|
       document = { key: 'a' * (max_document_size - 28), _id: "in#{index}" }
