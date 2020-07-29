@@ -147,6 +147,20 @@ module Mongo
       #
       # @since 2.5.0
       def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+        max_bson_size ||= Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
+
+        too_big = @sections.any? do |section|
+           next if section[:type] == 0
+
+          section[:payload][:sequence].any? do |document|
+            document.to_bson.to_s.bytesize > max_bson_size
+          end
+        end
+
+        if too_big
+          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size prior to serialization')
+        end
+
         super
         add_check_sum(buffer)
         buffer

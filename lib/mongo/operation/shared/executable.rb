@@ -58,14 +58,6 @@ module Mongo
 
       # Returns a Protocol::Message or nil as reply.
       def dispatch_message(connection, client, options = {})
-        max_size = connection.server.description.max_bson_object_size
-
-        if command_documents && command_documents.any? do |document|
-          document.to_bson.to_s.bytesize > max_size
-        end
-          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size prior to serialization')
-        end
-
         message = build_message(connection)
         message = message.maybe_encrypt(connection, client)
         reply = connection.dispatch([ message ], operation_id, client, options)
