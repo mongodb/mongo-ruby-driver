@@ -225,10 +225,6 @@ module Mongo
         spec[DOCUMENTS]
       end
 
-      def command_documents
-        documents || deletes || updates
-      end
-
       # The name of the collection to which the operation should be sent.
       #
       # @example Get the collection name.
