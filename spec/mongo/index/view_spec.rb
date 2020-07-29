@@ -325,6 +325,60 @@ describe Mongo::Index::View do
           end
         end
 
+        context 'when hidden is specified' do
+          let(:index) { view.get('with_hidden_1') }
+
+          context 'on server versions >= 4.4' do
+            min_server_fcv '4.4'
+
+            context 'when hidden is true' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'applies the hidden option to the index' do
+                expect(index['hidden']).to be true
+              end
+            end
+
+            context 'when hidden is false' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: false })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'does not apply the hidden option to the index' do
+                expect(index['hidden']).to be_nil
+              end
+            end
+          end
+
+          context 'on server versions < 4.4' do
+            max_server_fcv '4.2'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+            end
+          end
+        end
+
         context 'when collation is specified' do
           min_server_fcv '3.4'
 
@@ -774,30 +828,14 @@ describe Mongo::Index::View do
     end
 
     context 'when providing hint option' do
-      let(:subscriber) { EventSubscriber.new }
-
-      let(:client) do
-        authorized_client.tap do |client|
-          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
-      end
-
-      let(:authorized_collection) { client['view-subscribed'] }
-
-      let(:indexes) do
-        authorized_collection.indexes.get('x_1')
-      end
-
-      let(:events) do
-        subscriber.command_started_events('createIndexes')
-      end
+      let(:index) { view.get('with_hidden_1') }
 
       context 'on server versions < 4.4' do
         max_server_fcv '4.2'
 
         it 'raises an exception' do
           expect do
-            view.create_one({ 'x' => 1 }, { hidden: true })
+            view.create_one({ 'with_hidden' => 1 }, { hidden: true })
           end.to raise_error(/The field 'hidden' is not valid for an index specification/)
         end
       end
@@ -806,38 +844,34 @@ describe Mongo::Index::View do
         min_server_fcv '4.4'
 
         context 'when hidden is true' do
-          let!(:result) { view.create_one({ 'x' => 1 }, { hidden: true }) }
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: true }) }
 
           it 'returns ok' do
             expect(result).to be_successful
           end
 
           it 'creates an index' do
-            expect(indexes).to_not be_nil
+            expect(index).to_not be_nil
           end
 
-          it 'passes the hint option to the server' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['indexes'].first['hidden']).to be true
+          it 'applies the hidden option to the index' do
+            expect(index['hidden']).to be true
           end
         end
 
         context 'when hidden is false' do
-          let!(:result) { view.create_one({ 'x' => 1 }, { hidden: false }) }
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: false }) }
 
           it 'returns ok' do
             expect(result).to be_successful
           end
 
           it 'creates an index' do
-            expect(indexes).to_not be_nil
+            expect(index).to_not be_nil
           end
 
-          it 'passes the hint option to the server' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['indexes'].first['hidden']).to be false
+          it 'does not apply the hidden option to the index' do
+            expect(index['hidden']).to be_nil
           end
         end
       end
