@@ -190,6 +190,8 @@ require 'mongo/error/invalid_application_name'
 require 'mongo/error/invalid_nonce'
 require 'mongo/error/invalid_replacement_document'
 require 'mongo/error/invalid_server_auth_response'
+# Subclass of InvalidServerAuthResponse
+require 'mongo/error/invalid_server_auth_host'
 require 'mongo/error/invalid_server_preference'
 require 'mongo/error/invalid_session'
 require 'mongo/error/invalid_signature'
