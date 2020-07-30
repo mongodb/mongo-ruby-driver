@@ -113,7 +113,7 @@ describe 'Bulk writes with auto-encryption enabled' do
         it 'raises an exception' do
           expect do
             bulk_write.execute
-          end.to raise_error(Mongo::Error::MaxBSONSize, /maximum allowed size: 16777216 bytes/)
+          end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
         end
       end
     end
@@ -255,7 +255,7 @@ describe 'Bulk writes with auto-encryption enabled' do
         it 'raises an exception' do
           expect do
             bulk_write.execute
-          end.to raise_error(Mongo::Error::MaxBSONSize, /maximum allowed size: 16777216 bytes/)
+          end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
         end
       end
     end
@@ -346,7 +346,7 @@ describe 'Bulk writes with auto-encryption enabled' do
       it 'raises an exception' do
         expect do
           perform_bulk_write
-        end.to raise_error(Mongo::Error::MaxBSONSize, /maximum allowed size: 16777216 bytes/)
+        end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
       end
     end
   end
