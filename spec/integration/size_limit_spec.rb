@@ -62,13 +62,30 @@ describe 'BSON & command size limits' do
     authorized_collection.insert_one(document)
   end
 
-  it 'fails on the server when a document larger than 16MiB is inserted' do
-    document = { key: 'a' * (max_document_size - 27), _id: 'foo' }
-    expect(document.to_bson.length).to eq(max_document_size+1)
+  context 'on server versions >= 3.6' do
+    min_server_fcv '3.6'
 
-    lambda do
-      authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::OperationFailure, /object to insert too large/)
+    it 'fails on the driver when a document larger than 16MiB is inserted' do
+      document = { key: 'a' * (max_document_size - 27), _id: 'foo' }
+      expect(document.to_bson.length).to eq(max_document_size+1)
+
+      lambda do
+        authorized_collection.insert_one(document)
+      end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end
+  end
+
+  context 'on server versions <= 3.4' do
+    max_server_fcv '3.4'
+
+    it 'fails on the server when a document larger than 16MiB is inserted' do
+      document = { key: 'a' * (max_document_size - 27), _id: 'foo' }
+      expect(document.to_bson.length).to eq(max_document_size+1)
+
+      lambda do
+        authorized_collection.insert_one(document)
+      end.should raise_error(Mongo::Error::OperationFailure, /object to insert too large/)
+    end
   end
 
   it 'fails in the driver when a document larger than 16MiB+16KiB is inserted' do
