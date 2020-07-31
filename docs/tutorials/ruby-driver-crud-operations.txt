@@ -840,3 +840,14 @@ overrides this behavior to serialize Ruby symbols as BSON symbols. This is
 necessary to be able to specify queries for documents which contain BSON
 symbols as fields. Despite this, new documents with symbol type fields should
 *not* be stored in the database; instead, use string fields.
+
+To override default behavior and configure the driver to encode symbol values
+as strings, include the following code snippet in your project:
+
+.. code-block:: ruby
+
+  class Symbol
+    def bson_type
+      BSON::String::BSON_TYPE
+    end
+  end
