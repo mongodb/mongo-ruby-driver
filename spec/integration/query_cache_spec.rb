@@ -308,7 +308,7 @@ describe 'QueryCache' do
     end
 
     before do
-      client.use('admin').command(
+      new_client.use('admin').command(
         configureFailPoint: 'failCommand',
         mode: { times: 1 },
         data: {
@@ -318,6 +318,16 @@ describe 'QueryCache' do
       )
     end
 
+    let(:new_subscriber) { EventSubscriber.new }
+
+    let(:new_client) do
+      authorized_client.tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, new_subscriber)
+      end
+    end
+
+    let(:authorized_collection) { new_client['collection_spec'] }
+
     let(:command_name) { 'find' }
 
     it 'uses modern retryable reads when using query cache' do
@@ -326,11 +336,11 @@ describe 'QueryCache' do
       expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
       authorized_collection.find(test: 1).to_a
       expect(Mongo::QueryCache.cache_table.length).to eq(1)
-      expect(subscriber.command_started_events('find').length).to eq(2)
+      expect(new_subscriber.command_started_events('find').length).to eq(2)
 
       authorized_collection.find(test: 1).to_a
       expect(Mongo::QueryCache.cache_table.length).to eq(1)
-      expect(subscriber.command_started_events('find').length).to eq(2)
+      expect(new_subscriber.command_started_events('find').length).to eq(2)
     end
   end
 
