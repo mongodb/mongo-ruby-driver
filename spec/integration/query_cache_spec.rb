@@ -300,6 +300,7 @@ describe 'QueryCache' do
 
   context 'when find command fails and retries' do
     require_fail_command
+    require_no_multi_shard
 
     before do
       5.times do |i|
