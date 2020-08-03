@@ -83,36 +83,6 @@ describe 'QueryCache' do
       subscriber.command_started_events('find')
     end
 
-    context 'when find command fails and retries' do
-      require_fail_command
-
-      before do
-        client.use('admin').command(
-          configureFailPoint: 'failCommand',
-          mode: { times: 1 },
-          data: {
-            failCommands: ['find'],
-            closeConnection: true,
-          }
-        )
-      end
-
-      let(:command_name) { 'find' }
-
-      it 'uses modern retryable reads when using query cache' do
-        expect(Mongo::QueryCache.enabled?).to be(true)
-
-        expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-        authorized_collection.find(test: 1).to_a
-        expect(Mongo::QueryCache.cache_table.length).to eq(1)
-        expect(subscriber.command_started_events('find').length).to eq(2)
-
-        authorized_collection.find(test: 1).to_a
-        expect(Mongo::QueryCache.cache_table.length).to eq(1)
-        expect(subscriber.command_started_events('find').length).to eq(2)
-      end
-    end
-
     context 'when query cache is disabled' do
 
       before do
@@ -325,6 +295,42 @@ describe 'QueryCache' do
         authorized_collection.find.to_a
         expect(events.length).to eq(2)
       end
+    end
+  end
+
+  context 'when find command fails and retries' do
+    require_fail_command
+
+    before do
+      5.times do |i|
+        authorized_collection.insert_one(test: i)
+      end
+    end
+
+    before do
+      client.use('admin').command(
+        configureFailPoint: 'failCommand',
+        mode: { times: 1 },
+        data: {
+          failCommands: ['find'],
+          closeConnection: true,
+        }
+      )
+    end
+
+    let(:command_name) { 'find' }
+
+    it 'uses modern retryable reads when using query cache' do
+      expect(Mongo::QueryCache.enabled?).to be(true)
+
+      expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+      authorized_collection.find(test: 1).to_a
+      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(subscriber.command_started_events('find').length).to eq(2)
+
+      authorized_collection.find(test: 1).to_a
+      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(subscriber.command_started_events('find').length).to eq(2)
     end
   end
 
