@@ -308,25 +308,16 @@ describe 'QueryCache' do
     end
 
     before do
-      new_client.use('admin').command(
+      client.use('admin').command(
         configureFailPoint: 'failCommand',
         mode: { times: 1 },
         data: {
           failCommands: ['find'],
           closeConnection: true,
+          failInternalCommands: true
         }
       )
     end
-
-    let(:new_subscriber) { EventSubscriber.new }
-
-    let(:new_client) do
-      authorized_client.tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, new_subscriber)
-      end
-    end
-
-    let(:authorized_collection) { new_client['collection_spec'] }
 
     let(:command_name) { 'find' }
 
@@ -336,11 +327,11 @@ describe 'QueryCache' do
       expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
       authorized_collection.find(test: 1).to_a
       expect(Mongo::QueryCache.cache_table.length).to eq(1)
-      expect(new_subscriber.command_started_events('find').length).to eq(2)
+      expect(subscriber.command_started_events('find').length).to eq(2)
 
       authorized_collection.find(test: 1).to_a
       expect(Mongo::QueryCache.cache_table.length).to eq(1)
-      expect(new_subscriber.command_started_events('find').length).to eq(2)
+      expect(subscriber.command_started_events('find').length).to eq(2)
     end
   end
 
