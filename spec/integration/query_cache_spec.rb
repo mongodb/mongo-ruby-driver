@@ -314,8 +314,7 @@ describe 'QueryCache' do
         mode: { times: 1 },
         data: {
           failCommands: ['find'],
-          closeConnection: true,
-          failInternalCommands: true
+          closeConnection: true
         }
       )
     end
