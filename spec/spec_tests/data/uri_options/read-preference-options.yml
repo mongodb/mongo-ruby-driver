@@ -16,6 +16,18 @@ tests:
                     dc: "ny"
             maxStalenessSeconds: 120
     -
+        description: "Case is preserved in read preference tag names and values"
+        uri: "mongodb://example.com/?readPreference=secondary&readPreferenceTags=DataCenter:NewYork"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
+            readPreference: "secondary"
+            readPreferenceTags:
+                - 
+                    DataCenter: NewYork
+    -
         description: "Invalid readPreferenceTags causes a warning"
         uri: "mongodb://example.com/?readPreferenceTags=invalid"
         valid: true

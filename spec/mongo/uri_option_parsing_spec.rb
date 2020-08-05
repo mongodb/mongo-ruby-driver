@@ -199,37 +199,37 @@ describe Mongo::URI do
 
   context 'authMechanismProperties' do
 
-    let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TRUE' }
+    let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:TRUE' }
 
     it_behaves_like 'parses successfully'
 
     it 'parses correctly' do
       expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-        service_realm: 'foo',
-        canonicalize_host_name: true,
+        SERVICE_realm: 'foo',
+        CANONICALIZE_HOST_name: true,
       ))
     end
 
     context 'canonicalize host name is false' do
 
-      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:false' }
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:false' }
 
       it 'parses correctly' do
         expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-          service_realm: 'foo',
-          canonicalize_host_name: false,
+          SERVICE_realm: 'foo',
+          CANONICALIZE_HOST_name: false,
         ))
       end
     end
 
     context 'canonicalize host name is true in mixed case' do
 
-      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TrUe' }
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:TrUe' }
 
       it 'parses correctly' do
         expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-          service_realm: 'foo',
-          canonicalize_host_name: true,
+          SERVICE_realm: 'foo',
+          CANONICALIZE_HOST_name: true,
         ))
       end
     end

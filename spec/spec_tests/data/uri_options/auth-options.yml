@@ -13,6 +13,18 @@ tests:
                 CANONICALIZE_HOST_NAME: true
             authSource: "$external"
     -
+        description: "Mixed case in auth mechanism properties is preserved"
+        uri: "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties=PropertyName:PropertyValue&authSource=$external"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
+            authMechanism: "GSSAPI"
+            authMechanismProperties:
+                PropertyName: PropertyValue
+            authSource: "$external"
+    -
         description: "Valid auth options are parsed correctly (SCRAM-SHA-1)"
         uri: "mongodb://foo:bar@example.com/?authMechanism=SCRAM-SHA-1&authSource=authSourceDB"
         valid: true

@@ -644,9 +644,12 @@ module Mongo
     # @return [ Hash ] The auth mechanism properties hash.
     def auth_mech_props(value)
       properties = hash_extractor('authMechanismProperties', value)
-      if properties && properties[:canonicalize_host_name]
-        properties.merge!(canonicalize_host_name:
-          properties[:canonicalize_host_name].downcase == 'true')
+      if properties
+        properties.each do |k, v|
+          if k.to_s.downcase == 'canonicalize_host_name' && v
+            properties[k] = (v.downcase == 'true')
+          end
+        end
       end
       properties
     end
@@ -826,7 +829,7 @@ module Mongo
           log_warn("Invalid hash value for #{name}: key `#{k}` does not have a value: #{value}")
         end
 
-        h[k.downcase.to_sym] = v
+        h[k.to_sym] = v
       end
       h
     end
