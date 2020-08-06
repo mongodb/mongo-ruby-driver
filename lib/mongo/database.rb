@@ -270,6 +270,12 @@ module Mongo
     def drop(options = {})
       operation = { :dropDatabase => 1 }
       client.send(:with_session, options) do |session|
+        temp = write_concern
+        write_concern = if options[:write_concern]
+          WriteConcern.get(options[:write_concern])
+        else
+          temp
+        end
         Operation::DropDatabase.new({
           selector: operation,
           db_name: name,

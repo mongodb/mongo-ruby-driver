@@ -821,6 +821,42 @@ describe Mongo::Collection do
           end
         end
 
+        context 'when write concern passed in as an option' do
+          min_server_fcv '3.4'
+          require_topology :replica_set
+
+          before do
+            database['collection_spec'].drop
+          end
+
+          let(:session) do
+            authorized_client.start_session
+          end
+
+          let(:events) do
+            subscriber.command_started_events('create')
+          end
+
+          let(:options) do
+            { write_concern: {w: 1} }
+          end
+
+          let!(:collection) do
+            authorized_collection.with(options)
+          end
+
+          let!(:command) do
+            Utils.get_command_event(authorized_client, 'create') do |client|
+              collection.create({ write_concern: {w: 3}, session: session })
+            end.command
+          end
+
+          it 'applies the write concern passed in as an option' do
+            expect(events.length).to eq(1)
+            expect(command[:writeConcern][:w]).to eq(3)
+          end
+        end
+
         context 'when the server does not support write concern on the create command' do
           max_server_version '3.2'
 
@@ -1056,6 +1092,38 @@ describe Mongo::Collection do
             expect{
               collection_with_write_options.drop
             }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when write concern passed in as an option' do
+          min_server_fcv '3.4'
+          require_set_write_concern
+
+          let(:session) do
+            authorized_client.start_session
+          end
+
+          let(:events) do
+            subscriber.command_started_events('drop')
+          end
+
+          let(:options) do
+            { write_concern: {w: 1} }
+          end
+
+          let!(:collection) do
+            authorized_collection.with(options)
+          end
+
+          let!(:command) do
+            Utils.get_command_event(authorized_client, 'drop') do |client|
+              collection.drop({ write_concern: {w: 0}, session: session })
+            end.command
+          end
+
+          it 'applies the write concern passed in as an option' do
+            expect(events.length).to eq(1)
+            expect(command[:writeConcern][:w]).to eq(0)
           end
         end
 
