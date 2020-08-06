@@ -2113,6 +2113,10 @@ describe Mongo::Client do
       end
 
       it 'does not notify subscribers set up by sdam_proc' do
+        # On 4.4, the push monitor also is receiving heartbeats.
+        # Give those some time to be processed.
+        sleep 2
+
         expect(subscriber.started_events.length).to be > 0
         subscriber.started_events.clear
 
