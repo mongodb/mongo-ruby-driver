@@ -2092,6 +2092,7 @@ describe Mongo::Client do
             sdam_proc: sdam_proc,
             connect_timeout: 3.08, socket_timeout: 3.09,
             server_selection_timeout: 2.92,
+            heartbeat_frequency: 100,
             database: SpecConfig.instance.test_db))
       end
 
@@ -2112,6 +2113,10 @@ describe Mongo::Client do
       end
 
       it 'does not notify subscribers set up by sdam_proc' do
+        # On 4.4, the push monitor also is receiving heartbeats.
+        # Give those some time to be processed.
+        sleep 2
+
         expect(subscriber.started_events.length).to be > 0
         subscriber.started_events.clear
 
@@ -2119,6 +2124,12 @@ describe Mongo::Client do
         # subscriber may receive events from the original client.
 
         new_client.cluster.next_primary
+
+        # Diagnostics
+        unless subscriber.started_events.empty?
+          p subscriber.started_events
+        end
+
         expect(subscriber.started_events.length).to eq 0
         new_client.cluster.topology.class.should_not be Mongo::Cluster::Topology::Unknown
       end
