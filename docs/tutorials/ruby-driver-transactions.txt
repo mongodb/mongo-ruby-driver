@@ -16,6 +16,8 @@ Version 4.0 of the MongoDB server introduces
 (Updates to multiple fields within a single document are atomic in all
 versions of MongoDB.) Ruby driver version 2.6.0 adds support for transactions.
 
+.. _using-transactions:
+
 Using Transactions
 ==================
 
