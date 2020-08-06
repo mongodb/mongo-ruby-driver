@@ -239,10 +239,11 @@ module Mongo
       operation.delete(:write)
       operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
+        temp = write_concern
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])
         else
-          write_concern_with_session(session)
+          temp
         end
         server = next_primary(nil, session)
         if (options[:collation] || options[Operation::COLLATION]) && !server.with_connection { |connection| connection.features }.collation_enabled?
@@ -275,10 +276,11 @@ module Mongo
     # @since 2.0.0
     def drop(opts = {})
       client.send(:with_session, opts) do |session|
+        temp_write_concern = write_concern
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])
         else
-          write_concern_with_session(session)
+          temp_write_concern
         end
         Operation::Drop.new({
                               selector: { :drop => name },
