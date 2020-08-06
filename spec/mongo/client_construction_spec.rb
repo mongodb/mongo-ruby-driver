@@ -2092,6 +2092,7 @@ describe Mongo::Client do
             sdam_proc: sdam_proc,
             connect_timeout: 3.08, socket_timeout: 3.09,
             server_selection_timeout: 2.92,
+            heartbeat_frequency: 100,
             database: SpecConfig.instance.test_db))
       end
 
