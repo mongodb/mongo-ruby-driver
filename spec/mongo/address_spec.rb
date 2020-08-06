@@ -234,7 +234,7 @@ describe Mongo::Address do
       end
 
       let(:address) do
-        Mongo::Address.new(custom_hostname)
+        Mongo::Address.new("#{custom_hostname}:#{SpecConfig.instance.any_port}")
       end
 
       before do
