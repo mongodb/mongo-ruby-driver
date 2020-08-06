@@ -89,6 +89,23 @@ if no database is specified, the ``$external`` database is used as the
 auth source. For the ``AWS``, ``GSSAPI`` and ``MONGODB_X509`` mechanisms, the
 auth source is always ``$external``.
 
+When a client is constructed using an SRV URI, the driver will look for URI
+options in a TXT DNS record that corresponds to the SRV record. Thus, for
+example, MongoDB Atlas generally uses the ``admin`` database as its auth
+source, but this is not specified in SRV URIs because the database is given
+as a URI option on the TXT records.
+
+Note that when using SRV URIs, the SRV query and the TXT query are performed
+separately. On systems where DNS resolution is not 100% reliable, the
+failure to look up TXT records can cause authentication errors, as the driver
+may end up using an incorrect auth source. If reliable DNS resolution cannot
+be guaranteed, the auth source can be specified explicitly in SRV URIs as
+a URI option:
+
+.. code-block:: ruby
+
+  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority&authSource=admin")
+
 .. note::
 
   When changing the database using the ``with`` method, the auth source is
