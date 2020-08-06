@@ -267,8 +267,13 @@ Ruby Options
 
    * - ``:auth_mech_properties``
      - Provides additional authentication mechanism properties.
+     
+       The keys in properties are interpreted case-insensitively.
+       When the client is created, keys are lowercased.
+
      - ``Hash``
-     - none
+     - When using the GSSAPI authentication mechanism, the default properties
+       are ``{service_name: "mongodb"}``. Otherwise the default is nil.
 
    * - ``:auth_source``
      - Specifies the authentication source.

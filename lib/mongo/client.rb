@@ -462,6 +462,13 @@ module Mongo
         @srv_records = nil
       end
 
+      options = Options::Redacted.new(Hash[options.map do |k, v|
+        if k == 'auth_mech_properties'
+          v = Hash[v.map { |pk, pv| [pk.downcase, pv] }]
+        end
+        [k, v]
+      end])
+
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)

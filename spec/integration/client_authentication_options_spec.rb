@@ -131,7 +131,7 @@ describe 'Client authentication options' do
     end
   end
 
-  shared_examples_for 'an auth mechanism that doesn\'t support auth_mech_properties' do
+  shared_examples_for 'an auth mechanism that does not support auth_mech_properties' do
     context 'with URI options' do
       let(:credentials) { "#{user}:#{pwd}@" }
       let(:options) { "?authMechanism=#{auth_mech_string}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
@@ -163,7 +163,7 @@ describe 'Client authentication options' do
     end
   end
 
-  shared_examples_for 'an auth mechanism that doesn\'t support invalid auth sources' do
+  shared_examples_for 'an auth mechanism that does not support invalid auth sources' do
     context 'with URI options' do
       let(:credentials) { "#{user}:#{pwd}@" }
       let(:options) { "?authMechanism=#{auth_mech_string}&authSource=foo" }
@@ -199,7 +199,7 @@ describe 'Client authentication options' do
 
     it_behaves_like 'a supported auth mechanism'
     it_behaves_like 'auth mechanism that uses database or default auth source', 'admin'
-    it_behaves_like 'an auth mechanism that doesn\'t support auth_mech_properties'
+    it_behaves_like 'an auth mechanism that does not support auth_mech_properties'
   end
 
   context 'with SCRAM-SHA-1 auth mechanism' do
@@ -208,7 +208,7 @@ describe 'Client authentication options' do
 
     it_behaves_like 'a supported auth mechanism'
     it_behaves_like 'auth mechanism that uses database or default auth source', 'admin'
-    it_behaves_like 'an auth mechanism that doesn\'t support auth_mech_properties'
+    it_behaves_like 'an auth mechanism that does not support auth_mech_properties'
   end
 
   context 'with SCRAM-SHA-256 auth mechanism' do
@@ -217,7 +217,7 @@ describe 'Client authentication options' do
 
     it_behaves_like 'a supported auth mechanism'
     it_behaves_like 'auth mechanism that uses database or default auth source', 'admin'
-    it_behaves_like 'an auth mechanism that doesn\'t support auth_mech_properties'
+    it_behaves_like 'an auth mechanism that does not support auth_mech_properties'
   end
 
   context 'with GSSAPI auth mechanism' do
@@ -227,7 +227,7 @@ describe 'Client authentication options' do
     let(:auth_mech_sym) { :gssapi }
 
     it_behaves_like 'a supported auth mechanism'
-    it_behaves_like 'an auth mechanism that doesn\'t support invalid auth sources'
+    it_behaves_like 'an auth mechanism that does not support invalid auth sources'
 
     let(:auth_mech_properties) { { canonicalize_host_name: true, service_name: 'other'} }
 
@@ -265,7 +265,7 @@ describe 'Client authentication options' do
     it_behaves_like 'a supported auth mechanism'
     it_behaves_like 'auth mechanism that uses database or default auth source', '$external'
     it_behaves_like 'an auth mechanism with ssl'
-    it_behaves_like 'an auth mechanism that doesn\'t support auth_mech_properties'
+    it_behaves_like 'an auth mechanism that does not support auth_mech_properties'
   end
 
   context 'with MONGODB-X509 auth mechanism' do
@@ -276,8 +276,8 @@ describe 'Client authentication options' do
 
     it_behaves_like 'a supported auth mechanism'
     it_behaves_like 'an auth mechanism with ssl'
-    it_behaves_like 'an auth mechanism that doesn\'t support auth_mech_properties'
-    it_behaves_like 'an auth mechanism that doesn\'t support invalid auth sources'
+    it_behaves_like 'an auth mechanism that does not support auth_mech_properties'
+    it_behaves_like 'an auth mechanism that does not support invalid auth sources'
 
     context 'with URI options' do
       let(:credentials) { "#{user}@" }
@@ -402,35 +402,45 @@ describe 'Client authentication options' do
       {
         service_name: service_name,
         canonicalize_host_name: canonicalize_host_name,
-        service_realm: service_realm
-      }
+        service_realm: service_realm,
+      }.freeze
+    end
+
+    shared_examples 'correctly sets auth mechanism properties on the client' do
+      it 'correctly sets auth mechanism properties on the client' do
+        expect(client.options[:auth_mech_properties]).to eq(
+          'service_name' => service_name,
+          'canonicalize_host_name' => canonicalize_host_name,
+          'service_realm' => service_realm,
+        )
+      end
     end
 
     context 'with URI options' do
       let(:options) do
-        "?authMechanismProperties=SERVICE_NAME:#{service_name}," +
-          "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
-          "SERVICE_REALM:#{service_realm}"
+        "?authMechanismProperties=SERVICE_name:#{service_name}," +
+          "CANONICALIZE_HOST_name:#{canonicalize_host_name}," +
+          "SERVICE_realm:#{service_realm}"
       end
 
-      it 'correctly sets auth mechanism properties on the client' do
-        expect(client.options[:auth_mech_properties]).to eq({
-          'service_name' => service_name,
-          'canonicalize_host_name' => canonicalize_host_name,
-          'service_realm' => service_realm
-        })
-      end
+      include_examples 'correctly sets auth mechanism properties on the client'
     end
 
     context 'with client options' do
       let(:client_opts) { { auth_mech_properties: auth_mechanism_properties } }
 
-      it 'correctly sets auth mechanism properties on the client' do
-        expect(client.options[:auth_mech_properties]).to eq({
-          'service_name' => service_name,
-          'canonicalize_host_name' => canonicalize_host_name,
-          'service_realm' => service_realm
-        })
+      include_examples 'correctly sets auth mechanism properties on the client'
+
+      context 'when options are given in mixed case' do
+        let(:auth_mechanism_properties) do
+          {
+            service_NAME: service_name,
+            canonicalize_host_NAME: canonicalize_host_name,
+            service_REALM: service_realm,
+          }.freeze
+        end
+
+        include_examples 'correctly sets auth mechanism properties on the client'
       end
     end
   end
