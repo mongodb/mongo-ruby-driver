@@ -2119,6 +2119,12 @@ describe Mongo::Client do
         # subscriber may receive events from the original client.
 
         new_client.cluster.next_primary
+
+        # Diagnostics
+        unless subscriber.started_events.empty?
+          p subscriber.started_events
+        end
+
         expect(subscriber.started_events.length).to eq 0
         new_client.cluster.topology.class.should_not be Mongo::Cluster::Topology::Unknown
       end
