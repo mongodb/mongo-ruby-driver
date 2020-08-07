@@ -1112,8 +1112,6 @@ module Mongo
     # but does not check for interactions between combinations of options.
     def validate_new_options!(opts = Options::Redacted.new)
       return Options::Redacted.new unless opts
-      Lint.validate_underscore_read_preference(opts[:read])
-      Lint.validate_read_concern_option(opts[:read_concern])
       if opts[:read_concern]
         given_keys = opts[:read_concern].keys
         allowed_keys = ['level']
@@ -1126,6 +1124,8 @@ module Mongo
           log_warn("Read concern has invalid key.")
         end
       end
+      Lint.validate_underscore_read_preference(opts[:read])
+      Lint.validate_read_concern_option(opts[:read_concern])
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
