@@ -263,6 +263,7 @@ module Mongo
     # @param [ Hash ] options The options for the operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
     #
     # @return [ Result ] The result of the command.
     #
@@ -270,6 +271,11 @@ module Mongo
     def drop(options = {})
       operation = { :dropDatabase => 1 }
       client.send(:with_session, options) do |session|
+        write_concern = if options[:write_concern]
+          WriteConcern.get(options[:write_concern])
+        else
+          self.write_concern
+        end
         Operation::DropDatabase.new({
           selector: operation,
           db_name: name,

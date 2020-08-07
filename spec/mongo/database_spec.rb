@@ -825,6 +825,50 @@ describe Mongo::Database do
         end
       end
 
+      context 'when write concern is passed in as an option' do
+        min_server_fcv '3.4'
+        require_topology :single
+
+        let(:client_options) do
+          {
+            write_concern: {w: 0},
+            database: :test
+          }
+        end
+
+        let(:session) do
+          client.start_session
+        end
+
+        let(:subscriber) { EventSubscriber.new }
+
+        let(:client) do
+          root_authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end.with(client_options)
+        end
+
+        let(:events) do
+          subscriber.command_started_events('dropDatabase')
+        end
+
+        let(:database_test_wc) do
+          client.database
+        end
+
+        let!(:command) do
+          Utils.get_command_event(client, 'dropDatabase') do |client|
+            database_test_wc.drop({ write_concern: {w: 'majority'} })
+          end.command
+        end
+
+        it 'applies the write concern passed in as an option' do
+          expect(events.length).to eq(1)
+          expect(command).to_not be_nil
+          expect(command[:writeConcern][:w]).to eq('majority')
+        end
+      end
+
       context 'when the server does not support write concern on the dropDatabase command' do
         max_server_version '3.2'
 
