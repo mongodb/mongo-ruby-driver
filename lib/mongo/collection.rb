@@ -223,6 +223,7 @@ module Mongo
     # @param [ Hash ] opts The options for the create operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
     #
     # @return [ Result ] The result of the command.
     #
@@ -239,11 +240,10 @@ module Mongo
       operation.delete(:write)
       operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
-        temp = write_concern
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])
         else
-          temp
+          self.write_concern
         end
         server = next_primary(nil, session)
         if (options[:collation] || options[Operation::COLLATION]) && !server.with_connection { |connection| connection.features }.collation_enabled?
@@ -270,6 +270,7 @@ module Mongo
     # @param [ Hash ] opts The options for the drop operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
     #
     # @return [ Result ] The result of the command.
     #

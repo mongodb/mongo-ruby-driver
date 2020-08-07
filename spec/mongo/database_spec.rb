@@ -858,7 +858,7 @@ describe Mongo::Database do
 
         let!(:command) do
           Utils.get_command_event(client, 'dropDatabase') do |client|
-            database_test_wc.drop({ write_concern: {w: 'majority'}, session: session})
+            database_test_wc.drop({ write_concern: {w: 'majority'} })
           end.command
         end
 
