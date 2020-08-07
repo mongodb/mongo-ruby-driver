@@ -352,6 +352,40 @@ following code example shows how a tailable cursor might be used:
     sleep(1)
   end
 
+
+Read Concern
+------------
+
+Read concern can be :ref:`set on the client <ruby-driver-client-options>`
+or on the collection:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost:14420'], database: 'music',
+    read_concern: {level: :local})
+  
+  client['collection'].find.to_a
+
+  collection = client['collection', read_concern: {level: :majority}]
+  
+  collection.find.to_a
+
+The driver does not currently support setting read concern on an individual
+query.
+
+Read concern can be specified when :ref:`starting a transaction
+<using-transactions>`. When a transaction is active, :manual:`any read concern
+specified on the client or on the collection is ignored
+</core/transactions/#transactions-and-read-concern>`.
+
+When using the generic command helper, the read concern can be specified as
+part of the command:
+
+.. code-block:: ruby
+
+  client.database.command(collstats: 'test', readConcern: {level: :majority})
+  
+
 .. _ruby-driver-read-preference:
 
 Read Preference
