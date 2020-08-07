@@ -1343,6 +1343,47 @@ describe Mongo::Client do
         end
       end
 
+      context 'when an invalid read concern is provided as an option' do
+        min_server_fcv '3.2'
+
+        let(:valid_options) do
+          { read_concern: { level: :local } }
+        end
+
+        let(:invalid_value_options) do
+          { read_concern: { level: 3 } }
+        end
+
+        let(:invalid_key_options) do
+          { read_concern: { 'hello': :local } }
+        end
+
+        let(:non_user_settable_options) do
+          { read_concern: { after_cluster_time: 100 } }
+        end
+
+        it 'does not warn when read concern has valid key' do
+          expect(Mongo::Logger.logger).to_not receive(:warn)
+          new_local_client_nmio(SpecConfig.instance.addresses, valid_options)
+        end
+
+        it 'warns that read concern has invalid key' do
+          expect(Mongo::Logger.logger).to receive(:warn)
+          new_local_client_nmio(SpecConfig.instance.addresses, invalid_key_options)
+        end
+
+        it 'warns that read concern has invalid value' do
+          expect(Mongo::Logger.logger).to receive(:warn)
+          new_local_client_nmio(SpecConfig.instance.addresses, invalid_value_options)
+        end
+
+        it 'raises an error when non user-settable options are passed in' do
+          expect do
+            new_local_client_nmio(SpecConfig.instance.addresses, non_user_settable_options)
+          end.to raise_error(Mongo::Error::OperationFailure, 'after_cluster_time is not a user-settable option')
+        end
+      end
+
       context 'when an invalid option is provided' do
 
         let(:options) do
