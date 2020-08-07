@@ -1350,10 +1350,6 @@ describe Mongo::Client do
           { read_concern: { level: :local } }
         end
 
-        let(:invalid_value_options) do
-          { read_concern: { level: 3 } }
-        end
-
         let(:invalid_key_options) do
           { read_concern: { 'hello': :local } }
         end
@@ -1370,11 +1366,6 @@ describe Mongo::Client do
         it 'warns that read concern has invalid key' do
           expect(Mongo::Logger.logger).to receive(:warn)
           new_local_client_nmio(SpecConfig.instance.addresses, invalid_key_options)
-        end
-
-        it 'warns that read concern has invalid value' do
-          expect(Mongo::Logger.logger).to receive(:warn)
-          new_local_client_nmio(SpecConfig.instance.addresses, invalid_value_options)
         end
 
         it 'raises an error when non user-settable options are passed in' do

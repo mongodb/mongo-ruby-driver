@@ -1117,7 +1117,6 @@ module Mongo
       if opts[:read_concern]
         given_keys = opts[:read_concern].keys
         allowed_keys = ['level']
-        level = opts[:read_concern][:level]
         # raise an error for non user-settable options
         if opts[:read_concern][:after_cluster_time]
           raise Mongo::Error::OperationFailure.new('after_cluster_time is not a user-settable option')
@@ -1125,10 +1124,6 @@ module Mongo
         # warn that options are invalid but keep it and forward to the server
         if given_keys != allowed_keys
           log_warn("Read concern has invalid key.")
-        else
-          if ![:local, :available, :majority, :linearizable, :snapshot].include?(level)
-            log_warn("Read concern has invalid values.")
-          end
         end
       end
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
