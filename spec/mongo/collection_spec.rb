@@ -847,13 +847,13 @@ describe Mongo::Collection do
 
           let!(:command) do
             Utils.get_command_event(authorized_client, 'create') do |client|
-              collection.create({ write_concern: {w: 3}, session: session })
+              collection.create({ write_concern: {w: 2}, session: session })
             end.command
           end
 
           it 'applies the write concern passed in as an option' do
             expect(events.length).to eq(1)
-            expect(command[:writeConcern][:w]).to eq(3)
+            expect(command[:writeConcern][:w]).to eq(2)
           end
         end
 
@@ -1117,13 +1117,13 @@ describe Mongo::Collection do
 
           let!(:command) do
             Utils.get_command_event(authorized_client, 'drop') do |client|
-              collection.drop({ write_concern: {w: 0}, session: session })
+              collection.drop({ write_concern: {w: 2}, session: session })
             end.command
           end
 
           it 'applies the write concern passed in as an option' do
             expect(events.length).to eq(1)
-            expect(command[:writeConcern][:w]).to eq(0)
+            expect(command[:writeConcern][:w]).to eq(2)
           end
         end
 
