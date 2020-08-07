@@ -829,10 +829,6 @@ describe Mongo::Collection do
             database['collection_spec'].drop
           end
 
-          let(:session) do
-            authorized_client.start_session
-          end
-
           let(:events) do
             subscriber.command_started_events('create')
           end
@@ -847,7 +843,7 @@ describe Mongo::Collection do
 
           let!(:command) do
             Utils.get_command_event(authorized_client, 'create') do |client|
-              collection.create({ write_concern: {w: 2}, session: session })
+              collection.create({ write_concern: {w: 2} })
             end.command
           end
 
@@ -1099,10 +1095,6 @@ describe Mongo::Collection do
           min_server_fcv '3.4'
           require_set_write_concern
 
-          let(:session) do
-            authorized_client.start_session
-          end
-
           let(:events) do
             subscriber.command_started_events('drop')
           end
@@ -1117,13 +1109,13 @@ describe Mongo::Collection do
 
           let!(:command) do
             Utils.get_command_event(authorized_client, 'drop') do |client|
-              collection.drop({ write_concern: {w: 2}, session: session })
+              collection.drop({ write_concern: {w: 0} })
             end.command
           end
 
           it 'applies the write concern passed in as an option' do
             expect(events.length).to eq(1)
-            expect(command[:writeConcern][:w]).to eq(2)
+            expect(command[:writeConcern][:w]).to eq(0)
           end
         end
 
