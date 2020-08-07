@@ -115,6 +115,21 @@ module Mongo
         compress_if_possible(selector.keys.first, compressor, zlib_compression_level)
       end
 
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+        max_bson_size ||= Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
+
+        # byebug if @selector[:documents]
+        contains_too_large_document = @selector[:documents] && @selector[:documents].any? do |doc|
+          doc.to_bson.length > max_bson_size
+        end
+
+        if contains_too_large_document
+          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
+        end
+
+        super
+      end
+
       protected
 
       attr_reader :upconverter
