@@ -400,7 +400,7 @@ module Mongo
       View::ChangeStream.new(View.new(self, {}, options), pipeline, nil, options)
     end
 
-    # Gets the number of matching documents in the collection.
+    # Gets an estimated number of matching documents in the collection.
     #
     # @example Get the count.
     #   collection.count(name: 1)
@@ -429,11 +429,13 @@ module Mongo
       View.new(self, filter || {}, options).count(options)
     end
 
-    # Gets the number of matching documents in the collection. Unlike the deprecated #count
-    # method, this will return the exact number of documents matching the filter rather than the estimate.
+    # Gets the number of documents matching the query. Unlike the deprecated
+    # #count method, this will return the exact number of documents matching
+    # the filter (or exact number of documents in the collection, if no filter
+    # is provided) rather than an estimate.
     #
-    # @example Get the number of documents in the collection.
-    #   collection_view.count_documents
+    # Use #estimated_document_count to retrieve an estimate of the number
+    # of documents in the collection using the collection metadata.
     #
     # @param [ Hash ] filter A filter for matching documents.
     # @param [ Hash ] options Options for the operation.
@@ -454,15 +456,16 @@ module Mongo
       View.new(self, filter, options).count_documents(options)
     end
 
-    # Gets an estimate of the count of documents in a collection using collection metadata.
+    # Gets an estimate of the number of documents in the collection using the
+    # collection metadata.
     #
-    # @example Get the number of documents in the collection.
-    #   collection_view.estimated_document_count
+    # Use #count_documents to retrieve the exact number of documents in the
+    # collection, or to count documents matching a filter.
     #
     # @param [ Hash ] options Options for the operation.
     #
-    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the command to
-    #   run.
+    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow
+    #   the command to run for on the server.
     # @option opts [ Hash ] :read The read preference options.
     #
     # @return [ Integer ] The document count.
