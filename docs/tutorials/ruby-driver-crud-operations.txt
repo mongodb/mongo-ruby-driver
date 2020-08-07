@@ -278,8 +278,36 @@ when querying and their corresponding methods as examples.
 Additional Query Operations
 ---------------------------
 
+``count_documents``
+  Get the total number of documents matching a filter, or the total number
+  of documents in a collection.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:artists].find(:name => 'Flying Lotus').count_documents
+
+``estimated_document_count``
+  Get an approximate number of documents in the collection.
+  
+  Note that unlike ``count_documents``, ``estimated_document_count`` does not
+  accept a filter.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:artists].estimated_document_count
+
 ``count``
-  Get the total number of documents an operation returns.
+  Get an approximate number of documents matching a filter, or an approximate
+  number of documents in the collection.
+  
+  *Deprecated:* The ``count`` method is deprecated and does not work in
+  transactions. Please use ``count_documents`` to obtain an exact count of
+  documents potentially matching a filter or ``estimated_document_count``
+  to obtain an approximate number of documents in the collection.
 
 .. code-block:: ruby
 
