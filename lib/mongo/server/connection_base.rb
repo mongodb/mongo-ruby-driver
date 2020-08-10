@@ -228,7 +228,6 @@ module Mongo
           # for the purpose of checking its size. Write any pre-existing contents
           # from the original buffer into the temporary one.
           temp_buffer = BSON::ByteBuffer.new
-          byebug
 
           # TODO: address the fact that this line mutates the buffer.
           temp_buffer.put_bytes(buffer.get_bytes(buffer.length))

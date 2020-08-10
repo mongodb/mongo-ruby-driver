@@ -285,7 +285,7 @@ module Mongo
         contains_too_large_document = @sections.any? do |section|
           section[:type] == 1 &&
             section[:payload][:sequence].any? do |document|
-              document.to_bson.length > max_bson_size
+              document.to_bson.length > Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
             end
         end
 
