@@ -1129,12 +1129,16 @@ Note that when creating a client using the `block syntax <#block-syntax>`_ descr
 Usage with Forking Servers
 ==========================
 
-*Note:* Applications using Mongoid should follow `Mongoid's forking guidance
-<https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
-The sample code below is provided for applications using the Ruby driver directly.
+.. note::
+  
+  Applications using Mongoid should follow `Mongoid's forking guidance
+  <https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
+  The guidance and sample code below is provided for applications using the
+  Ruby driver directly.
 
-When using the Mongo Ruby driver with a forking web server such as Unicorn,
-worker processes should generally each have their own Mongo::Client instances.
+When using the Mongo Ruby driver in a Web application with a forking web server
+such as Unicorn, Puma or Passenger, or when the application otherwise forks,
+each process should generally each have their own ``Mongo::Client`` instances.
 This is because:
 
 1. The background threads remain in the parent process and are not transfered
@@ -1142,42 +1146,87 @@ This is because:
 2. File descriptors like network sockets are shared between parent and
    child processes.
 
-It is recommended to not create any Mongo::Client instances prior to the fork.
-If the parent process needs to perform operations on the MongoDB database,
-reset the client in an ``after_fork`` handler which is defined in
-``unicorn.rb``:
+The driver attempts to detect client use from forked processes and 
+reestablish network connections when such use is detected, alleviating
+the issue of file descriptor sharing.
+
+If both parent and child processes need to perform MongoDB operations,
+it is recommended for each of the processes to create their own
+``Mongo::Client`` instances. Specifically, the child process should create
+its own client instance and not use any of the instances that were created
+in the parent.
+
+If the parent continues to perform MongoDB operations using an already
+established client instance after forking children, this client instance will
+continue to operate normally as long as no child uses it in any way.
+The child processes will not inherit any of the monitoring threads, and
+will not perform background operations on the client instance.
+
+If the parent does not need to perform MongoDB operation after forking
+children (which is what typically happens in web applications), the parent
+should close all of the client instances it created to free up connections
+and cease background monitoring:
 
 .. code-block:: ruby
 
-    after_fork do |server, worker|
-      $client.close
-      $client.reconnect
-    end
+  client.reconnect
 
-The above code assumes your Mongo::Client instance is stored in the $client
-global variable. It also keeps the MongoDB connection in the parent process
-around, and this connection will continue to consume resources such as
-a connection slot. If the parent process performs one time operation(s) on
-MongoDB and does not need its MongoDB connection once workers are forked,
-the following code will close the connection in the parent:
+.. note::
+
+  If the parent process performs operations on the Mongo client and does not
+  close it, the parent process will continue consuming a connection slot
+  in the cluster and will continue monitoring the cluster for as long as the
+  parent remains alive.
+
+Reconnecting Client Instances
+`````````````````````````````
+
+When the Ruby driver is used in a web application, it is recommended to not
+create any ``Mongo::Client`` instances in the management processes (prior to
+the workers being forked), and instead only create client instances in the
+workers.
+
+It is possible, although not recommended, to use the same ``Mongo::Client``
+instances in parent and child processes. In order to do so, the instance
+must be closed and reconnected in the child process so that the background
+threads can be recreated:
 
 .. code-block:: ruby
 
-    before_fork do |server, worker|
-      $client.close
-    end
+  client.close
+  client.reconnect
 
-    after_fork do |server, worker|
-      $client.reconnect
-    end
+.. note::
 
-*Note:* This pattern should be used with Ruby driver version 2.6.2 or higher.
-Previous driver versions did not recreate monitoring threads when reconnecting.
+  This pattern should be used with Ruby driver version 2.6.2 or higher.
+  Previous driver versions did not recreate monitoring threads when
+  reconnecting.
 
-*Note:* If the parent process performs operations on the Mongo client and
-does not close it, the parent process will continue consuming a connection slot
-in the cluster and will continue monitoring the cluster for as long as the
-parent remains alive.
+.. note::
+
+  When closing and reconnecting the client instance in the child,
+  due to file descriptor sharing, the parent process may experience network
+  and monitoring errors.
+
+Web servers generally provide hooks that can be used by applications to
+perform actions when the worker processes are forked. The recommended hooks
+to use are:
+
+- For `Puma <https://puma.io/puma/>`_, ``before_fork`` to close clients in the
+  parent process and ``on_worker_boot`` to reconnect in the child processes.
+- For `Unicorn <https://yhbt.net/unicorn/Unicorn/Configurator.html>`_,
+  ``before_fork`` to close clients in the parent process and
+  ``after_fork`` to reconnect clients in the child processes.
+- For `Passenger <https://www.phusionpassenger.com/library/indepth/ruby/spawn_methods/#unintentional-file-descriptor-sharing>`_,
+  ``starting_worker_process`` to reconnect clients in the child processes
+  (Passenger does not appear to have a pre-fork hook).
+
+This documentation does not provide example code for using the aforementioned
+hooks, because there is no standard for client instance management when
+using the Ruby driver directly. `Mongoid documentation
+<https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_
+however provides examples for closing clients in the parent process and
+reconnecting clients in the child processes.
 
 
 Details on Retryable Reads
