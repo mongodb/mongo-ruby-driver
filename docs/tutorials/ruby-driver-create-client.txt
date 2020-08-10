@@ -1212,12 +1212,14 @@ Web servers generally provide hooks that can be used by applications to
 perform actions when the worker processes are forked. The recommended hooks
 to use are:
 
-- For Puma, ``before_fork`` to close clients in the parent process and
-  ``on_worker_boot`` to reconnect in the child processes.
-- For Unicorn, ``before_fork`` to close clients in the parent process and
+- For `Puma <https://puma.io/puma/>`_, ``before_fork`` to close clients in the
+  parent process and ``on_worker_boot`` to reconnect in the child processes.
+- For `Unicorn <https://yhbt.net/unicorn/Unicorn/Configurator.html>`_,
+  ``before_fork`` to close clients in the parent process and
   ``after_fork`` to reconnect clients in the child processes.
-- For Passenger, ``starting_worker_process`` to reconnect clients in the
-  child processes (Passenger does not appear to have a pre-fork hook).
+- For `Passenger <https://www.phusionpassenger.com/library/indepth/ruby/spawn_methods/#unintentional-file-descriptor-sharing>`_,
+  ``starting_worker_process`` to reconnect clients in the child processes
+  (Passenger does not appear to have a pre-fork hook).
 
 This documentation does not provide example code for using the aforementioned
 hooks, because there is no standard for client instance management when
