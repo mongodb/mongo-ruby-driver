@@ -1138,7 +1138,7 @@ Usage with Forking Servers
 
 When using the Mongo Ruby driver in a Web application with a forking web server
 such as Unicorn, Puma or Passenger, or when the application otherwise forks,
-each process should generally each have their own Mongo::Client instances.
+each process should generally each have their own ``Mongo::Client`` instances.
 This is because:
 
 1. The background threads remain in the parent process and are not transfered
@@ -1150,7 +1150,7 @@ The driver attempts to detect client use from forked processes and
 reestablish network connections when such use is detected, alleviating
 the issue of file descriptor sharing.
 
-If both parent and child processes both need to perform MongoDB operations,
+If both parent and child processes need to perform MongoDB operations,
 it is recommended for each of the processes to create their own
 ``Mongo::Client`` instances. Specifically, the child process should create
 its own client instance and not use any of the instances that were created
