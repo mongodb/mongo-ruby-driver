@@ -116,7 +116,17 @@ module Mongo
       end
 
       def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
-        contains_too_large_document = @selector[:documents] && @selector[:documents].any? do |doc|
+        documents = if @selector.key?(:documents)
+                      @selector[:documents]
+                    elsif @selector.key?(:deletes)
+                      @selector[:deletes]
+                    elsif @selector.key?(:updates)
+                      @selector[:updates]
+                    else
+                      []
+                    end
+
+        contains_too_large_document = documents.any? do |doc|
           doc.to_bson.length > Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
         end
 
