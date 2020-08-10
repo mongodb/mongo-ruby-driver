@@ -12,17 +12,23 @@ Bulk Operations
 
 .. _ruby-driver-bulk-ops:
 
-The bulk write API sends a list of write operations to the server in
-one method call. Execution order of the operations is guaranteed if
-you pass in the ``ordered`` option.
+The bulk write API sends several write operations to the server in a single
+command. Use the bulk write API to reduce the number of network round-trips
+when performing several writes at a time.
+
+If the ``ordered`` option is set to ``true`` (which is the default),
+the operations are applied in order and if any operation fails, subsequent
+operations are not attempted. If the ``ordered`` option is set to ``false``,
+all specified operations are attempted.
 
 The ``bulk_write`` method takes three arguments:
 
-- A list of operations.
-- The ``ordered`` option with a boolean. Defaults to ``true``.
-- A write concern option. Defaults to the collection's write concern.
+- A list of operations to execute.
+- The ``ordered`` option taking a boolean value. Defaults to ``true``.
+- The write concern option. Defaults to the collection's write concern.
 
 Valid bulk write operations are the following:
+
 
 insert_one
 ==========
@@ -31,36 +37,11 @@ insert_one
 
     { :insert_one => { :x => 1 } }
 
-insert_many
-===========
+.. note::
 
-.. code-block:: ruby
+  There is no ``insert_many`` operation. To insert multiple documents,
+  specify multiple ``insert_one`` operations.
 
-    { :insert_many => [ { :x => 1 }, { :x => 2 } ] }
-
-delete_one
-==========
-
-.. code-block:: ruby
-
-    { :delete_one => { :filter => { :x => 1 } } }
-
-delete_many
-===========
-
-.. code-block:: ruby
-
-    { :delete_many => { :filter => { :x => 1 } } }
-
-replace_one
-===========
-
-.. code-block:: ruby
-
-    { :replace_one => { :filter => { :x => 1 },
-                        :replacement => { :x => 2 },
-                        :upsert => true } # upsert is optional and defaults to false
-     }
 
 update_one
 ==========
@@ -71,6 +52,7 @@ update_one
                        :update => { '$set' =>  { :x => 2 } },
                        :upsert => true } # upsert is optional and defaults to false
      }
+
 
 update_many
 ===========
@@ -100,3 +82,30 @@ to the ``bulk_write`` method.
                       }
                     ],
                     :ordered => true)
+
+
+replace_one
+===========
+
+.. code-block:: ruby
+
+    { :replace_one => { :filter => { :x => 1 },
+                        :replacement => { :x => 2 },
+                        :upsert => true } # upsert is optional and defaults to false
+     }
+
+
+delete_one
+==========
+
+.. code-block:: ruby
+
+    { :delete_one => { :filter => { :x => 1 } } }
+
+
+delete_many
+===========
+
+.. code-block:: ruby
+
+    { :delete_many => { :filter => { :x => 1 } } }
