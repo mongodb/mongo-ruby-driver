@@ -78,7 +78,7 @@ FROM <%= base_image %>
   <% if distro !~ /ubuntu1404/ %>
     RUN apt-get install -y openjdk-8-jre
   <% end %>
-  
+
   # ubuntu1404, ubuntu1604: libcurl3
   # ubuntu1804: libcurl4
   <% if distro =~ /ubuntu1804/ %>
@@ -106,24 +106,24 @@ FROM <%= base_image %>
   # Note: lacking cyrus-sasl-gssapi produces a cryptic message
   # "SASL(-4): no mechanism available: No worthy mechs found"
   # https://github.com/farorm/python-ad/issues/10
-  
+
   RUN yum install -y redhat-lsb-core which git gcc libyaml krb5-server \
     krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
     net-snmp
-    
+
   <% if distro =~ /rhel6/ %>
-    
+
     # RHEL 6 ships with Python 2.6.
-    
+
     RUN yum install -y centos-release-scl && \
       yum install -y python27-python python27-python-devel
     ENV PATH=/opt/rh/python27/root/usr/bin:$PATH \
       LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64
-  
+
   <% else %>
-    
+
     RUN yum install -y python-devel
-  
+
   <% end %>
 
 <% end %>
@@ -135,18 +135,18 @@ FROM <%= base_image %>
   RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf - && \
     mv mongo*/ /opt/mongodb
   ENV USE_OPT_MONGODB=1
-  
+
   <% unless ruby_head? %>
-    
+
     RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -Jf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
       USE_OPT_TOOLCHAIN=1
     #ENV PATH=/opt/rubies/python/3/bin:$PATH
-  
+
   <% end %>
-  
+
   <% if distro =~ /rhel|ubuntu1604/ %>
-  
+
     # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
     #
     # Ubuntu 16.04 apparently also ships a pip that does not work:
@@ -160,7 +160,7 @@ FROM <%= base_image %>
     #
     # https://pip.pypa.io/en/stable/installing/
     RUN curl --retry 3 -fL https://bootstrap.pypa.io/get-pip.py | python
-  
+
   <% end %>
 
   RUN pip --version && \
@@ -180,6 +180,18 @@ WORKDIR /app
   COPY .evergreen/patch-debuggers .evergreen/patch-debuggers
   RUN .evergreen/patch-debuggers /opt/rubies
 
+<% end %>
+
+<% if fle? %>
+  RUN curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+  RUN tar xf libmongocrypt-all.tar.gz
+
+  <% if libmongocrypt_path %>
+    ENV LIBMONGOCRYPT_PATH <%= libmongocrypt_path %>
+  <% else %>
+    RUN echo This script does not support running FLE on <%=distro %>. && \
+      echo Use ubuntu1604, ubuntu1804, or debian92 instead. && exit 1
+  <% end %>
 <% end %>
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
