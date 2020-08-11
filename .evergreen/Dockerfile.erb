@@ -186,11 +186,10 @@ WORKDIR /app
   RUN curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   RUN tar xf libmongocrypt-all.tar.gz
 
-  <% if libmongocrypt_path %>
-    ENV LIBMONGOCRYPT_PATH <%= libmongocrypt_path %>
-  <% else %>
-    RUN echo This script does not support running FLE on <%=distro %>. && \
-      echo Use ubuntu1604, ubuntu1804, or debian92 instead. && exit 1
+  <% begin %>
+    <%= "ENV LIBMONGOCRYPT_PATH #{libmongocrypt_path}" %>
+  <% rescue => error %>
+    RUN echo <%= error.message %> && exit 1
   <% end %>
 <% end %>
 

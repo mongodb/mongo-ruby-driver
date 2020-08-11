@@ -86,7 +86,6 @@ The following is a list of required environment variables:
 - MONGO_RUBY_DRIVER_AWS_SECRET
 - MONGO_RUBY_DRIVER_AWS_REGION
 - MONGO_RUBY_DRIVER_AWS_ARN
-- MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT
 
 Here's an example of how to run FLE tests in Docker:
 

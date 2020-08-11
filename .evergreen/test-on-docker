@@ -192,7 +192,7 @@ class Runner
     when /debian92/
       "./debian92/nocrypto/lib64/libmongocrypt.so"
     else
-      nil
+      raise "This script does not support running FLE tests on #{distro}. Use ubuntu1604, ubuntu1804 or debian92 instead"
     end
   end
 
@@ -201,7 +201,7 @@ class Runner
   end
 
   def fle?
-    @env['FLE'] == 'true'
+    %w(1 true yes).include?(@env['FLE']&.downcase)
   end
 
   def num_exposed_ports
