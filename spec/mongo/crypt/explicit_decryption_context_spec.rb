@@ -57,7 +57,7 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
       end
 
       let(:logger) do
-        ::Logger.new($stdout).tap do |logger|
+        ::Logger.new(STDOUT).tap do |logger|
           logger.level = ::Logger::DEBUG
         end
       end

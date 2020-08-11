@@ -153,7 +153,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
 
       let(:key_alt_name) { nil }
       let(:logger) do
-        ::Logger.new($stdout).tap do |logger|
+        ::Logger.new(STDOUT).tap do |logger|
           logger.level = ::Logger::DEBUG
         end
       end

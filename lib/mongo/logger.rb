@@ -75,7 +75,7 @@ module Mongo
       private
 
       def default_logger
-        logger = ::Logger.new($stdout)
+        logger = ::Logger.new(STDOUT)
         logger.level = ::Logger::INFO
         logger
       end

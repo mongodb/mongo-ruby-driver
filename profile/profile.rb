@@ -35,10 +35,10 @@ deletes = RubyProf.profile do
 end
 
 p 'Inserts:'
-RubyProf::FlatPrinter.new(inserts).print($stdout, min_percent: 2)
+RubyProf::FlatPrinter.new(inserts).print(STDOUT, min_percent: 2)
 p 'Iteration:'
-RubyProf::FlatPrinter.new(iteration).print($stdout, min_percent: 2)
+RubyProf::FlatPrinter.new(iteration).print(STDOUT, min_percent: 2)
 p 'Updates:'
-RubyProf::FlatPrinter.new(updates).print($stdout, min_percent: 2)
+RubyProf::FlatPrinter.new(updates).print(STDOUT, min_percent: 2)
 p 'Deletes:'
-RubyProf::FlatPrinter.new(deletes).print($stdout, min_percent: 2)
+RubyProf::FlatPrinter.new(deletes).print(STDOUT, min_percent: 2)
