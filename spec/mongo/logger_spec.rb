@@ -6,6 +6,16 @@ describe Mongo::Logger do
     described_class.logger
   end
 
+  around do |example|
+    saved_logger = Mongo::Logger.logger
+
+    begin
+      example.run
+    ensure
+      Mongo::Logger.logger = saved_logger
+    end
+  end
+
   describe '.logger' do
 
     context 'when no logger has been set' do
@@ -18,12 +28,8 @@ describe Mongo::Logger do
         Mongo::Logger.logger = nil
       end
 
-      after do
-        Mongo::Logger.logger = test_logger
-      end
-
       it 'returns the default logger' do
-        expect(logger.level).to eq(Logger::DEBUG)
+        expect(logger.level).to eq(Logger::INFO)
       end
     end
 
@@ -43,10 +49,6 @@ describe Mongo::Logger do
 
       before do
         described_class.logger = debug
-      end
-
-      after do
-        described_class.logger = info
       end
 
       it 'returns the provided logger' do

@@ -21,7 +21,7 @@ module Mongo
 
     class << self
 
-      # Get the wrapped logger. If none was set will return a default debug
+      # Get the wrapped logger. If none was set will return a default info
       # level logger.
       #
       # @example Get the wrapped logger.
@@ -76,7 +76,7 @@ module Mongo
 
       def default_logger
         logger = ::Logger.new($stdout)
-        logger.level = ::Logger::DEBUG
+        logger.level = ::Logger::INFO
         logger
       end
     end
