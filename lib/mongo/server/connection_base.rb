@@ -204,10 +204,8 @@ module Mongo
           if message.bulk_write?
             # Make the new maximum size equal to the specified reduced size
             # limit plus the 16KiB overhead allowance.
-            max_bson_size = REDUCED_MAX_BSON_SIZE + MAX_BSON_COMMAND_OVERHEAD
+            max_bson_size = REDUCED_MAX_BSON_SIZE
           end
-        else
-          max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
         # RUBY-2234: It is necessary to check that the message size does not
@@ -232,7 +230,7 @@ module Mongo
           # TODO: address the fact that this line mutates the buffer.
           temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
 
-          message.serialize(temp_buffer, max_bson_size)
+          message.serialize(temp_buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
           if temp_buffer.length > max_message_size
             raise Error::MaxMessageSize.new(max_message_size)
           end
@@ -243,7 +241,7 @@ module Mongo
         # layer should be refactored to allow compression on an already-
         # serialized message.
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
-        final_message.serialize(buffer, max_bson_size)
+        final_message.serialize(buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
 
         buffer
       end

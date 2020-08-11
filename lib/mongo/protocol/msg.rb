@@ -146,7 +146,7 @@ module Mongo
       # @return [ BSON::ByteBuffer ] buffer containing the serialized message.
       #
       # @since 2.5.0
-      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
         validate_document_size!(max_bson_size)
 
         super
@@ -285,7 +285,7 @@ module Mongo
         contains_too_large_document = @sections.any? do |section|
           section[:type] == 1 &&
             section[:payload][:sequence].any? do |document|
-              document.to_bson.length > Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
+              document.to_bson.length > max_bson_size
             end
         end
 
