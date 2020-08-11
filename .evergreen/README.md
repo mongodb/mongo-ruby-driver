@@ -72,25 +72,6 @@ specified in the `docker run` invocation and are not part of the image
 created by `docker build`. Because of this, they override any environment
 variables provided as positional arguments.
 
-### Field-Level Encryption FLE
-
-The Docker testing script supports running tests with field-level encryption (FLE).
-To enable FLE, set the FLE environment variable to true.
-
-Some FLE tests require other environment variables to be set as well. You may
-specify these environment variables in a private .env file as explained in the
-[Private Environment Variables](#private-environment-variables) section.
-
-The following is a list of required environment variables:
-- MONGO_RUBY_DRIVER_AWS_KEY
-- MONGO_RUBY_DRIVER_AWS_SECRET
-- MONGO_RUBY_DRIVER_AWS_REGION
-- MONGO_RUBY_DRIVER_AWS_ARN
-
-Here's an example of how to run FLE tests in Docker:
-
-  ./.evergreen/test-on-docker FLE=true -pa .env.private
-
 ### rhel62
 
 To run rhel62 distro in docker, host system must be configured to [emulate
@@ -177,7 +158,7 @@ Debian instances is `admin` and the username for Ubuntu instances is `ubuntu`:
 
     # Configure a Debian instance to run the test suite via Docker
     ./.evergreen/provision-remote admin@12.34.56.78 docker
-
+    
     # Configure an Ubuntu instance to run the test suite without Docker
     ./.evergreen/provision-remote ubuntu@12.34.56.78 local
 
