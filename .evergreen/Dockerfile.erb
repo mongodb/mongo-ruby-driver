@@ -186,11 +186,7 @@ WORKDIR /app
   RUN curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   RUN tar xf libmongocrypt-all.tar.gz
 
-  <% begin %>
-    <%= "ENV LIBMONGOCRYPT_PATH #{libmongocrypt_path}" %>
-  <% rescue => error %>
-    RUN echo <%= error.message %> && exit 1
-  <% end %>
+  <%= "ENV LIBMONGOCRYPT_PATH #{libmongocrypt_path}" %>
 <% end %>
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
