@@ -139,7 +139,7 @@ module Mongo
       # @return [ BSON::ByteBuffer ] buffer containing the serialized message.
       #
       # @since 2.5.0
-      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
         validate_document_size!(max_bson_size)
 
         super

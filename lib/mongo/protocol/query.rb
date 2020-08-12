@@ -115,11 +115,47 @@ module Mongo
         compress_if_possible(selector.keys.first, compressor, zlib_compression_level)
       end
 
+      # Serializes message into bytes that can be sent on the wire.
+      #
+      # @param [ BSON::ByteBuffer ] buffer where the message should be inserted.
+      # @param [ Integer ] max_bson_size The maximum bson object size.
+      #
+      # @return [ BSON::ByteBuffer ] buffer containing the serialized message.
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
+        validate_document_size!(max_bson_size)
+
+        super
+      end
+
       protected
 
       attr_reader :upconverter
 
       private
+
+      # Validate that the documents in this message are all smaller than the
+      # maxBsonObjectSize. If not, raise an exception.
+      def validate_document_size!(max_bson_size)
+        max_bson_size ||= Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
+
+        documents = if @selector.key?(:documents)
+                      @selector[:documents]
+                    elsif @selector.key?(:deletes)
+                      @selector[:deletes]
+                    elsif @selector.key?(:updates)
+                      @selector[:updates]
+                    else
+                      []
+                    end
+
+        contains_too_large_document = documents.any? do |doc|
+          doc.to_bson.length > max_bson_size
+        end
+
+        if contains_too_large_document
+          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
+        end
+      end
 
       # The operation code required to specify a Query message.
       # @return [Fixnum] the operation code.
