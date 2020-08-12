@@ -177,10 +177,19 @@ module Mongo
       #
       # @param buffer [String] buffer where the message should be inserted
       # @return [String] buffer containing the serialized message
-      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
+        max_size =
+          if max_bson_size && bson_overhead
+            max_bson_size + bson_overhead
+          elsif max_bson_size
+            max_bson_size
+          else
+            nil
+          end
+
         start = buffer.length
         serialize_header(buffer)
-        serialize_fields(buffer, max_bson_size)
+        serialize_fields(buffer, max_size)
         buffer.replace_int32(start, buffer.length - start)
       end
 
