@@ -183,8 +183,25 @@ class Runner
     @server_download_url ||= ServerVersionRegistry.new(server_version, distro).download_url
   end
 
+  def libmongocrypt_path
+    case distro
+    when /ubuntu1604/
+      "./ubuntu1604/nocrypto/lib64/libmongocrypt.so"
+    when /ubuntu1804/
+      "./ubuntu1804-64/nocrypto/lib64/libmongocrypt.so"
+    when /debian92/
+      "./debian92/nocrypto/lib64/libmongocrypt.so"
+    else
+      raise "This script does not support running FLE tests on #{distro}. Use ubuntu1604, ubuntu1804 or debian92 instead"
+    end
+  end
+
   def expose?
     !!@options[:mongo_only]
+  end
+
+  def fle?
+    %w(1 true yes).include?(@env['FLE']&.downcase)
   end
 
   def num_exposed_ports
