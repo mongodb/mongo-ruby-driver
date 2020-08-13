@@ -480,10 +480,21 @@ module Mongo
         unless uri_options[:ssl_verify_hostname].nil?
           raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
         end
+
+        unless uri_options[:ssl_verify_ocsp_endpoint].nil?
+          raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsDisableOCSPEndpointCheck' cannot both be specified")
+        end
       end
 
-      # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
-      # value set for :ssl_cert must also be set for :ssl_key.
+      unless uri_options[:ssl_verify_certificate].nil?
+        unless uri_options[:ssl_verify_ocsp_endpoint].nil?
+          raise_invalid_error_no_fmt!("tlsAllowInvalidCertificates' and 'tlsDisableOCSPEndpointCheck' cannot both be specified")
+        end
+      end
+
+      # Since we know that the only URI option that sets :ssl_cert is
+      # "tlsCertificateKeyFile", any value set for :ssl_cert must also be set
+      # for :ssl_key.
       if uri_options[:ssl_cert]
         uri_options[:ssl_key] = uri_options[:ssl_cert]
       end
