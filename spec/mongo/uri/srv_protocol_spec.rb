@@ -567,8 +567,8 @@ describe Mongo::URI::SRVProtocol do
               'readPreference=secondary&maxStalenessSeconds=89'
             end
 
-            it 'does not raise an exception until the read preference is used' do
-              expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
+            it 'does not raise an exception and is omitted' do
+              expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary))
             end
           end
         end

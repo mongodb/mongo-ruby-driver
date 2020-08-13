@@ -350,8 +350,8 @@ describe Mongo::URI do
 
       it_behaves_like 'parses successfully'
 
-      it 'is converted to nil' do
-        expect(uri.uri_options[:read]).to eq(BSON::Document.new(max_staleness: nil))
+      it 'is omitted' do
+        uri.uri_options.should_not have_key(:read)
       end
     end
   end
