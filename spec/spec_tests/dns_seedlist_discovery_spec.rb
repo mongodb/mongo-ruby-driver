@@ -60,7 +60,15 @@ describe 'DNS Seedlist Discovery' do
         end
 
         it 'creates a client with the correct options' do
-          expect(test.client).to match_options(test)
+          mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
+          # Connection string spec tests do not use canonical URI option names
+          actual = Utils.downcase_keys(mapped)
+          expected = Utils.downcase_keys(test.options)
+          # SRV tests use ssl URI option instead of tls one
+          if expected.key?('ssl') && !expected.key?('tls')
+            expected['tls'] = expected.delete('ssl')
+          end
+          actual.should == expected
         end
       end
     end

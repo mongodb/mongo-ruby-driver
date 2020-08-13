@@ -159,7 +159,7 @@ module Mongo
       end
 
       def options
-        @options ||= Options.new(@spec['options']) if @spec['options']
+        @spec['options']
       end
 
       def client
@@ -238,119 +238,6 @@ module Mongo
         "username: #{username}, password: #{password}, database: #{database}"
       end
     end
-
-    class Options
-
-      MAPPINGS = {
-        # Connection and Replica Set Options
-        'replicaset' => :replica_set,
-        'directconnection' => :direct_connection,
-
-        # Timeout Options
-        'connecttimeoutms' => :connect_timeout,
-        'sockettimeoutms' => :socket_timeout,
-        'serverselectiontimeoutms' => :server_selection_timeout,
-        'localthresholdms' => :local_threshold,
-        'heartbeatfrequencyms' => :heartbeat_frequency,
-        'maxidletimems' => :max_idle_time,
-
-         # Write  Options
-        'journal' => [:write_concern, 'j'],
-        'w' => [:write_concern, 'w'],
-        'wtimeoutms' => [:write_concern, 'wtimeout'],
-
-        # Read Options
-        'readpreference' => ['read', 'mode'],
-        'readpreferencetags' => ['read', 'tag_sets'],
-        'maxstalenessseconds' => ['read', 'max_staleness'],
-
-        # Pool Options
-        'minpoolsize' => :min_pool_size,
-        'maxpoolsize' => :max_pool_size,
-
-        # Security Options
-        'tls' => :ssl,
-        'tlsallowinvalidcertificates' => :ssl_verify_certificate,
-        'tlsallowinvalidhostnames' => :ssl_verify_hostname,
-        'tlscafile' => :ssl_ca_cert,
-        'tlscertificatekeyfile' => :ssl_cert,
-        'tlscertificatekeyfilepassword' => :ssl_key_pass_phrase,
-        'tlsinsecure' => :ssl_verify,
-
-        # Auth Options
-        'authsource' => :auth_source,
-        'authmechanism' => :auth_mech,
-        'authmechanismproperties' => :auth_mech_properties,
-
-        # Client Options
-        'appname' => :app_name,
-        'readconcernlevel' => [:read_concern, 'level'],
-        'retrywrites' => :retry_writes,
-        'zlibcompressionlevel' => :zlib_compression_level,
-      }
-
-      attr_reader :options
-
-      def initialize(options)
-        @options = options
-      end
-
-      def match?(opts)
-        @options.all? do |k, v|
-          k = k.downcase
-
-          expected =
-            case k
-            when 'authmechanism'
-              Mongo::URI::AUTH_MECH_MAP[v].downcase.to_s
-            when 'authmechanismproperties'
-              v.reduce({}) do |new_v, prop|
-                prop_key = prop.first.downcase
-                prop_val = prop.last == 'true' ? true : prop.last
-                new_v[prop_key] = prop_val
-
-                new_v
-              end
-            when 'compressors'
-              v.dup.tap do |compressors|
-                # The Ruby driver doesn't support snappy
-                compressors.delete('snappy')
-              end
-            when 'readpreference'
-              Mongo::URI::READ_MODE_MAP[v.downcase].to_s
-            when 'tlsallowinvalidcertificates', 'tlsallowinvalidhostnames', 'tlsinsecure'
-              !v
-            else
-              if k.end_with?('ms') && k != 'wtimeoutms'
-                v / 1000.0
-              elsif v.is_a?(String)
-                v.downcase
-              else
-                v
-              end
-            end
-
-          actual =
-            case MAPPINGS[k]
-            when nil
-              opts[k]
-            when Array
-              opts[MAPPINGS[k].first][MAPPINGS[k].last]
-            else
-              opts[MAPPINGS[k]]
-            end
-
-          if actual.is_a?(Symbol)
-            actual = actual.to_s
-          end
-          if actual.is_a?(String)
-            actual = actual.downcase
-          end
-
-          expected == actual
-        end
-      end
-    end
   end
 end
 
@@ -406,8 +293,15 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
               expect(test.client).to match_auth(test)
             end
 
-            it 'creates a client with the correct options' do
-              expect(test.client).to match_options(test)
+            if test.options
+              it 'creates a client with the correct options' do
+                mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
+                # Connection string spec tests do not use canonical URI option names
+                actual = Utils.downcase_keys(mapped)
+                actual.delete('authsource')
+                expected = Utils.downcase_keys(test.options)
+                actual.should == expected
+              end
             end
 
             if test.read_concern_expectation

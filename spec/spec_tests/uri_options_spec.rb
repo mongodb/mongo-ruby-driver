@@ -49,8 +49,34 @@ describe 'URI options' do
               expect(test.client).to match_auth(test)
             end
 
-            it 'creates a client with the correct options' do
-              expect(test.client).to match_options(test)
+            if test.options
+              it 'creates a client with the correct options' do
+                mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
+                expected = test.options.dup
+                expected.each do |k, v|
+                  # Ruby driver downcases auth mechanism properties when
+                  # constructing the client.
+                  if k == 'authMechanismProperties'
+                    expected[k] = Utils.downcase_keys(v)
+                  end
+                  # Ruby driver does not support snappy.
+                  if k == 'compressors'
+                    expected[k] = v.reject { |sub_v| sub_v == 'snappy' }
+                  end
+                end
+                # We omit retryReads/retryWrites=true because some tests do not
+                # provide those.
+                %w(retryReads retryWrites).each do |k, v|
+                  if expected[k] == true
+                    expected.delete(k)
+                  end
+                end
+                # Fix appName caes.
+                if expected.key?('appname') && !expected.key?('appName')
+                  expected['appName'] = expected.delete('appname')
+                end
+                mapped.should == expected
+              end
             end
 
           else

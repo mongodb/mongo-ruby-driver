@@ -727,9 +727,9 @@ describe Mongo::URI do
             'readPreference=secondary&maxStalenessSeconds=89'
           end
 
-          it 'does not raise an exception until the read preference is used' do
+          it 'does not raise an exception and drops the option' do
             client = new_local_client_nmio(string)
-            expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
+            expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary))
           end
         end
       end

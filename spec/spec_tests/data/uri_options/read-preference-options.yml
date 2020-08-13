@@ -35,6 +35,18 @@ tests:
         hosts: ~
         auth: ~
         options: {}
+    # https://jira.mongodb.org/browse/DRIVERS-1369
+    -
+        description: "Valid and invalid readPreferenceTags mix"
+        uri: "mongodb://example.com/?readPreferenceTags=a:b,invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options:
+            readPreferenceTags:
+                -
+                    a: b
     -
         description: "Non-numeric maxStalenessSeconds causes a warning"
         uri: "mongodb://example.com/?maxStalenessSeconds=invalid"

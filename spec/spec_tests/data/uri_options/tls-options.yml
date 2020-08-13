@@ -149,7 +149,8 @@ tests:
         warning: false
         hosts: ~
         auth: ~
-        options: {}
+        # https://jira.mongodb.org/browse/DRIVERS-1368
+        options: ~
     -
         description: "tls=false and ssl=false doesn't warn"
         uri: "mongodb://example.com/?tls=false&ssl=false"
@@ -157,7 +158,8 @@ tests:
         warning: false
         hosts: ~
         auth: ~
-        options: {}
+        # https://jira.mongodb.org/browse/DRIVERS-1368
+        options: ~
     -
         description: "ssl=true and tls=true doesn't warn"
         uri: "mongodb://example.com/?ssl=true&tls=true"
@@ -165,7 +167,8 @@ tests:
         warning: false
         hosts: ~
         auth: ~
-        options: {}
+        # https://jira.mongodb.org/browse/DRIVERS-1368
+        options: ~
     -
         description: "ssl=false and tls=false doesn't warn"
         uri: "mongodb://example.com/?ssl=false&tls=false"
@@ -173,7 +176,8 @@ tests:
         warning: false
         hosts: ~
         auth: ~
-        options: {}
+        # https://jira.mongodb.org/browse/DRIVERS-1368
+        options: ~
     -
         description: "tls=false and ssl=true raises error"
         uri: "mongodb://example.com/?tls=false&ssl=true"
