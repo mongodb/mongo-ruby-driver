@@ -1,5 +1,5 @@
-description: "Monitoring a forced standalone connection with repeated ismaster response"
-uri: "mongodb://a:27017/?connect=direct"
+description: "Monitoring a direct connection with repeated ismaster response"
+uri: "mongodb://a:27017/?directConnection=true"
 phases:
   # phase 1
   - responses: []
