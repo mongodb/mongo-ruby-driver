@@ -12,7 +12,6 @@ tests:
     changeStreamPipeline: []
     changeStreamOptions: {}
     operations: []
-    # https://jira.mongodb.org/browse/SPEC-1462
     expectations: ~
     result:
       error:
