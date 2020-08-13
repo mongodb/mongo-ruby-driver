@@ -674,7 +674,7 @@ describe Mongo::Client do
       context 'when providing a custom logger' do
 
         let(:logger) do
-          Logger.new($stdout).tap do |l|
+          Logger.new(STDOUT).tap do |l|
             l.level = Logger::FATAL
           end
         end

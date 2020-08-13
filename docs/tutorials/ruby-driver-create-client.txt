@@ -1387,7 +1387,7 @@ For more control, a logger can be passed to a client for per-client control over
 
 .. code-block:: ruby
 
-  my_logger = Logger.new($stdout)
+  my_logger = Logger.new(STDOUT)
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :logger => my_logger )
 
 Truncation

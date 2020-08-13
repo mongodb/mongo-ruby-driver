@@ -36,13 +36,13 @@ describe Mongo::Logger do
     context 'when a logger has been set' do
 
       let(:info) do
-        Logger.new($stdout).tap do |log|
+        Logger.new(STDOUT).tap do |log|
           log.level = Logger::INFO
         end
       end
 
       let(:debug) do
-        Logger.new($stdout).tap do |log|
+        Logger.new(STDOUT).tap do |log|
           log.level = Logger::DEBUG
         end
       end

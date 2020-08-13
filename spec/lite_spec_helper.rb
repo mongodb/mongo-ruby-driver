@@ -60,7 +60,7 @@ end
 require 'support/utils'
 require 'support/spec_config'
 
-Mongo::Logger.logger = Logger.new($stdout)
+Mongo::Logger.logger = Logger.new(STDOUT)
 unless SpecConfig.instance.client_debug?
   Mongo::Logger.logger.level = Logger::INFO
 end
