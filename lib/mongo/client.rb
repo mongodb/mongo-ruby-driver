@@ -473,7 +473,18 @@ module Mongo
       # construction
       sdam_proc = options.delete(:sdam_proc)
 
-      options = default_options(options).merge(options)
+      # For gssapi service_name, the default option is given in a hash
+      # (one level down from the top level).
+      merged_options = default_options(options)
+      options.each do |k, v|
+        default_v = merged_options[k]
+        if Hash === default_v
+          v = default_v.merge(v)
+        end
+        merged_options[k] = v
+      end
+      options = merged_options
+
       @options = validate_new_options!(options)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)

@@ -23,6 +23,7 @@ tests:
             authMechanism: "GSSAPI"
             authMechanismProperties:
                 PropertyName: PropertyValue
+                service_name: mongodb
             authSource: "$external"
     -
         description: "Auth mechanism properties are all invalid"
