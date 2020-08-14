@@ -894,4 +894,44 @@ describe Mongo::Client do
       end
     end
   end
+
+  describe '#summary' do
+
+    context 'monitoring omitted' do
+      let(:client) do
+        new_local_client_nmio(
+          ['127.0.0.1:27017'],
+          :read => { :mode => :primary },
+          :database => SpecConfig.instance.test_db
+        )
+      end
+
+      it 'indicates lack of monitoring' do
+        client.summary.should =~ /servers=.*UNKNOWN.*NO-MONITORING/
+      end
+    end
+
+    context 'monitoring present' do
+      let(:client) do
+        authorized_client
+      end
+
+      it 'does not indicate lack of monitoring' do
+        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS)/
+        client.summary.should_not =~ /servers=.*(STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+      end
+    end
+
+    context 'background threads killed' do
+      let(:client) do
+        authorized_client.tap do |client|
+          client.cluster.servers.map(&:disconnect!)
+        end
+      end
+
+      it 'does not indicate lack of monitoring' do
+        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+      end
+    end
+  end
 end

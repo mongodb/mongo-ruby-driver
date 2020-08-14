@@ -612,15 +612,12 @@ module Mongo
 
     # Get a summary of the client state.
     #
-    # @note This method is experimental and subject to change.
+    # @note The exact format and layout of the returned summary string is
+    #   not part of the driver's public API and may be changed at any time.
     #
-    # @example Inspect the client.
-    #   client.summary
-    #
-    # @return [ String ] Summary string.
+    # @return [ String ] The summary string.
     #
     # @since 2.7.0
-    # @api experimental
     def summary
       "#<Client cluster=#{cluster.summary}>"
     end

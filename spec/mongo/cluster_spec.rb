@@ -178,6 +178,9 @@ describe Mongo::Cluster do
     before do
       expect(server).to receive(:monitor).at_least(:once).and_return(monitor)
       expect(monitor).to receive(:scan!)
+
+      # scan! complains that there isn't a monitor on the server, calls summary
+      allow(monitor).to receive(:running?)
     end
 
     it 'returns true' do

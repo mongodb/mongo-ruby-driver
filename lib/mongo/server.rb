@@ -352,6 +352,10 @@ module Mongo
         status += " replica_set=#{replica_set_name}"
       end
 
+      unless monitor&.running?
+        status += " NO-MONITORING"
+      end
+
       if @pool
         status += " pool=#{@pool.summary}"
       end
