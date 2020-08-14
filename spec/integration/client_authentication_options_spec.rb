@@ -256,6 +256,43 @@ describe 'Client authentication options' do
         expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
       end
     end
+
+    context 'when properties are given but not service name' do
+      context 'with URI options' do
+        let(:credentials) { "#{user}:#{pwd}@" }
+
+        context 'with default auth mech properties' do
+          let(:options) { '?authMechanism=GSSAPI&authMechanismProperties=service_realm:foo' }
+
+          it 'sets service name to mongodb' do
+            expect(client.options[:auth_mech_properties]).to eq(
+              'service_name' => 'mongodb',
+              'service_realm' => 'foo',
+            )
+          end
+        end
+      end
+
+      context 'with client options' do
+        let(:client_opts) do
+          {
+            auth_mech: :gssapi,
+            user: user,
+            password: pwd,
+            auth_mech_properties: {
+              service_realm: 'foo',
+            }.freeze,
+          }.freeze
+        end
+
+        it 'sets default auth mech properties' do
+          expect(client.options[:auth_mech_properties]).to eq(
+            'service_name' => 'mongodb',
+            'service_realm' => 'foo',
+          )
+        end
+      end
+    end
   end
 
   context 'with PLAIN auth mechanism' do
