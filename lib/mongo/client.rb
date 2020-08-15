@@ -1025,11 +1025,40 @@ module Mongo
       yield session
     ensure
       if session && session.implicit?
-        session.end_session
+        clear_implicit_session
       end
     end
 
     private
+
+    # Starts a new implicit session, persists it on the thread, and returns it.
+    # Raises an error if there is already an implicit session in use on the current thread.
+    def start_implicit_session(options = {})
+      if get_implicit_session
+        raise Mongo::Error::InvalidSession.new(:invalid_session_nesting)
+      end
+
+      session = Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
+      set_implicit_session(session)
+      session
+    end
+
+    # Gets the implicit session for the current thread
+    def get_implicit_session
+      Thread.current["[mongo]:session"]
+    end
+
+    # Sets the implicit session for the current thread
+    def set_implicit_session(session)
+      Thread.current["[mongo]:session"] = session
+    end
+
+    # Clears the implicit session for the current thread
+    def clear_implicit_session
+      session = get_implicit_session
+      session.end_session
+      set_implicit_session(nil)
+    end
 
     # Create a new encrypter object using the client's auto encryption options
     def build_encrypter
@@ -1088,7 +1117,7 @@ module Mongo
 
       cluster.validate_session_support!
 
-      Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
+      start_implicit_session(options)
     end
 
     def initialize_copy(original)
