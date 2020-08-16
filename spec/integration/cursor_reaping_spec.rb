@@ -37,10 +37,7 @@ describe 'Cursor reaping' do
       expect(events).to be_empty
     end
 
-    # this let block is a kludge to avoid copy pasting all of this code
-    let(:cursor_id_and_kill_event) do
-      expect(Mongo::Operation::KillCursors).to receive(:new).at_least(:once).and_call_original
-
+    def abandon_cursor
       cursor_id = nil
 
       # scopes are weird, having this result in a let block
@@ -54,20 +51,39 @@ describe 'Cursor reaping' do
         cursor_id ||= scope.instance_variable_get('@cursor').id
       end
 
+      cursor_id
+    end
+
+    # this let block is a kludge to avoid copy pasting all of this code
+    let(:cursor_id_and_kill_event) do
+      expect(Mongo::Operation::KillCursors).to receive(:new).at_least(:once).and_call_original
+
+      cursor_id = abandon_cursor
+
       expect(cursor_id).to be_a(Integer)
       expect(cursor_id > 0).to be true
 
       GC.start
+      sleep 1
 
       # force periodic executor to run because its frequency is not configurable
       client.cluster.instance_variable_get('@periodic_executor').execute
+
+      started_event = subscriber.started_events.detect do |event|
+        event.command['killCursors']
+      end
+      started_event.should_not be nil
 
       started_event = subscriber.started_events.detect do |event|
         event.command['killCursors'] &&
         event.command['cursors'].map { |c| Utils.int64_value(c) }.include?(cursor_id)
       end
 
-      expect(started_event).not_to be_nil
+      if started_event.nil?
+        p subscriber.started_events
+      end
+
+      started_event.should_not be nil
 
       succeeded_event = subscriber.succeeded_events.detect do |event|
         event.command_name == 'killCursors' && event.request_id == started_event.request_id
