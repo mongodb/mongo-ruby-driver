@@ -42,7 +42,7 @@ describe 'Cursor reaping' do
 
       # scopes are weird, having this result in a let block
       # makes it not garbage collected
-      2.times do
+      20.times do
         scope = collection.find.batch_size(2).no_cursor_timeout
 
         # there is no API for retrieving the cursor
