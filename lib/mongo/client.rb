@@ -101,6 +101,7 @@ module Mongo
       :ssl_verify,
       :ssl_verify_certificate,
       :ssl_verify_hostname,
+      :ssl_verify_ocsp_endpoint,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -315,7 +316,7 @@ module Mongo
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
-    # @option options [ true, false ] :ssl Whether to use SSL.
+    # @option options [ true, false ] :ssl Whether to use TLS.
     # @option options [ String ] :ssl_ca_cert The file containing concatenated
     #   certificate authority certificates used to validate certs passed from the
     #   other end of the connection. Intermediate certificates should NOT be

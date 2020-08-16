@@ -221,6 +221,8 @@ module Mongo
       uri_option 'tlsCertificateKeyFile', :ssl_cert
       uri_option 'tlsCertificateKeyFilePassword', :ssl_key_pass_phrase
       uri_option 'tlsInsecure', :ssl_verify, type: :inverse_bool
+      uri_option 'tlsDisableOCSPEndpointCheck', :ssl_verify_ocsp_endpoint,
+        type: :inverse_bool
 
       # Topology options
       uri_option 'directConnection', :direct_connection, type: :bool

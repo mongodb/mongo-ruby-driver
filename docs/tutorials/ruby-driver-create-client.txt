@@ -583,10 +583,12 @@ Ruby Options
      - none
 
    * - ``:ssl_verify``
-     - Whether to perform peer certificate validation and hostname verification. Note that
-       the decision of whether to validate certificates will be overridden if
-       :ssl_verify_certificate is set, and the decision of whether to validate hostnames will be
-       overridden if :ssl_verify_hostname is set.
+     - Whether to perform peer certificate, hostname and OCSP endpoint
+       validation. Note that the decision of whether to validate certificates
+       will be overridden if ``:ssl_verify_certificate`` is set, the decision
+       of whether to validate hostnames will be overridden if
+       ``:ssl_verify_hostname`` is set and the decision of whether to validate
+       OCSP endpoint will be overridden if ``:ssl_verify_ocsp_endpoint`` is set.
      - ``Boolean``
      - true
 
@@ -597,8 +599,16 @@ Ruby Options
      - true
 
    * - ``:ssl_verify_hostname``
-     - Whether to perform peer hostname validation. This setting overrides :ssl_verify with
-       respect to whether hostname validation is performed.
+     - Whether to perform peer hostname validation. This setting overrides
+      :ssl_verify with respect to whether hostname validation is performed.
+     - ``Boolean``
+     - true
+
+   * - ``:ssl_verify_ocsp_endpoint``
+     - Whether to validate server-supplied certificate against the OCSP
+       endpoint specified in the certificate, if the OCSP endpoint is specified
+       in the certificate. This setting overrides :ssl_verify with respect to
+       whether OCSP endpoint validation is performed.
      - ``Boolean``
      - true
 
@@ -648,6 +658,11 @@ Ruby Options
      - The Zlib compression level to use, if using compression. See Ruby's Zlib module for valid levels.
      - ``Integer``
      - none
+
+.. note::
+
+  The Ruby driver does not implement certificate revocation list (CRL)
+  checking.
 
 
 URI Options
@@ -820,6 +835,14 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - tlsCertificateKeyFilePassword=String
      - ``:ssl_key_pass_phrase => String``
 
+   * - tlsDisableOCSPEndpointCheck=Boolean
+     - ``:ssl_verify_ocsp_endpoint => boolean``
+
+       Because ``tlsDisableOCSPEndpointCheck`` uses ``true`` to signify that
+       verification should be disabled and ``ssl_verify_ocsp_endpoint`` uses
+       ``false`` to signify that verification should be disabled, the boolean
+       is inverted before being used to set ``ssl_verify_ocsp_endpoint``.
+
    * - tlsInsecure=Boolean
      - ``:ssl_verify => boolean``
 
@@ -838,6 +861,15 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - zlibCompressionLevel=Integer
      - ``:zlib_compression_level => Integer``
+
+.. note::
+
+  The Ruby driver only fails connections when it receives a definitive signed
+  response indicating that the server's certificate has been revoked.
+  Because of this, the driver does not recognize the
+  ``tlsDisableCertificateRevocationCheck`` URI option. If this option is
+  provided in a URI, it will be ignored.
+
 
 Timeout Options
 ===============
