@@ -35,6 +35,17 @@ MongoDB Compatibility
      - MongoDB 2.6
      - MongoDB 2.4
 
+   * - 2.14
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
    * - 2.13
      - |checkmark| [#ocsp]_
      - |checkmark|
@@ -178,7 +189,7 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
 
-.. [#ocsp] OCSP verification is not yet implemented.
+.. [#ocsp] OCSP verification is implemented as of driver version 2.14.
 
 .. [#srv-polling] Polling of SRV records in sharded topologies is
    implemented as of driver version 2.11.
@@ -193,9 +204,8 @@ The driver does not support older versions of MongoDB.
 Ruby Compatibility
 ==================
 
-The following compatibility table specifies the recommended
-version(s) of the MongoDB Ruby driver for use with a specific version of
-Ruby.
+The following compatibility table specifies the versions of Ruby supported
+by the various versions of the MongoDB Ruby driver.
 
 The first column lists the driver versions. "D" in a column means support
 for that Ruby version is deprecated.
@@ -218,6 +228,20 @@ for that Ruby version is deprecated.
      - JRuby 9.2
      - JRuby 9.1
      - JRuby
+
+   * - 2.14
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     - D
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
 
    * - 2.13
      - |checkmark|
@@ -459,7 +483,7 @@ the driver.
    * - Ruby Driver
      - mongo_kerberos |nbsp| 2.1
 
-   * - 2.7 - 2.13
+   * - 2.7 - 2.14
      - |checkmark|
 
 
