@@ -291,8 +291,12 @@ module Mongo
                               }).execute(next_primary(nil, session), client: client)
       end
     rescue Error::OperationFailure => ex
-      raise ex unless ex.message =~ /ns not found/
-      false
+      # NamespaceNotFound
+      if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
+        false
+      else
+        raise
+      end
     end
 
     # Find documents in the collection.
