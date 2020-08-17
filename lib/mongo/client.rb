@@ -643,7 +643,7 @@ module Mongo
     #
     # @return [ BSON::Document ] The user-defined read preference.
     #   The document may have the following fields:
-    #   - *:read* -- read preference specified as a symbol; valid values are
+    #   - *:mode* -- read preference specified as a symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
