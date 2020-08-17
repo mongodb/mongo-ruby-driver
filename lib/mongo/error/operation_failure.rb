@@ -89,7 +89,8 @@ module Mongo
       # @since 2.1.1
       # @deprecated
       def retryable?
-        write_retryable? || RETRY_MESSAGES.any?{ |m| message.include?(m) }
+        write_retryable? ||
+        code.nil? && RETRY_MESSAGES.any?{ |m| message.include?(m) }
       end
 
       # Whether the error is a retryable error according to the modern retryable
@@ -102,11 +103,11 @@ module Mongo
       #
       # @since 2.4.2
       def write_retryable?
-        WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) } ||
-        write_retryable_code?
+        write_retryable_code? ||
+        code.nil? && WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
       end
 
-      def write_retryable_code?
+      private def write_retryable_code?
         if code
           WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }
         else
@@ -114,7 +115,6 @@ module Mongo
           false
         end
       end
-      private :write_retryable_code?
 
       # Error codes and code names that should result in a failing getMore
       # command on a change stream NOT being resumed.
