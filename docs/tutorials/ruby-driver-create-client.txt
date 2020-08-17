@@ -1260,6 +1260,39 @@ using the Ruby driver directly. `Mongoid documentation
 however provides examples for closing clients in the parent process and
 reconnecting clients in the child processes.
 
+Troubleshooting
+```````````````
+
+The client's ``summary`` method returns the current state of the client,
+including servers that the client is monitoring and their state. If any of
+the servers are not being monitored, this is indicated by the ``NO-MONITORING``
+flag.
+
+A normally operating client will produce a summary similar to the following:
+
+.. code-block:: ruby
+
+  client.summary
+  => "#<Client cluster=#<Cluster
+    topology=ReplicaSetWithPrimary[localhost:14420,localhost:14421,localhost:14422,localhost:14423,name=ruby-driver-rs,v=1,e=7fffffff000000000000001f]
+    servers=[#<Server address=localhost:14420 PRIMARY replica_set=ruby-driver-rs pool=#<ConnectionPool size=0 (0-5) used=0 avail=0 pending=0>>,
+      #<Server address=localhost:14421 SECONDARY replica_set=ruby-driver-rs pool=#<ConnectionPool size=0 (0-5) used=0 avail=0 pending=0>>,
+      #<Server address=localhost:14422 SECONDARY replica_set=ruby-driver-rs pool=#<ConnectionPool size=0 (0-5) used=0 avail=0 pending=0>>,
+      #<Server address=localhost:14423 ARBITER replica_set=ruby-driver-rs>]>>"
+
+A client that is missing background threads will produce a summary similar to
+the following:
+
+.. code-block:: ruby
+
+  client.summary
+  => "#<Client cluster=#<Cluster
+    topology=ReplicaSetWithPrimary[localhost:14420,localhost:14421,localhost:14422,localhost:14423,name=ruby-driver-rs,v=1,e=7fffffff000000000000001f]
+    servers=[#<Server address=localhost:14420 PRIMARY replica_set=ruby-driver-rs NO-MONITORING pool=#<ConnectionPool size=0 (0-5) used=0 avail=0 pending=0>>,
+      #<Server address=localhost:14421 SECONDARY replica_set=ruby-driver-rs NO-MONITORING pool=#<ConnectionPool size=0 (0-5) used=0 avail=0 pending=0>>,
+      #<Server address=localhost:14422 SECONDARY replica_set=ruby-driver-rs NO-MONITORING pool=#<ConnectionPool size=0 (0-5) used=0 avail=0 pending=0>>,
+      #<Server address=localhost:14423 ARBITER replica_set=ruby-driver-rs>]>>"
+
 
 Details on Retryable Reads
 ==========================
