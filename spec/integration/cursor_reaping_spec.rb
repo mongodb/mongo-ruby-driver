@@ -5,6 +5,16 @@ describe 'Cursor reaping' do
   # in MRI, I don't currently know how to force GC to run in JRuby
   only_mri
 
+  before(:all) do
+    @saved_level = Mongo::Logger.logger.level
+    Mongo::Logger.logger.level = Logger::DEBUG
+  end
+
+  after(:all) do
+    @saved_level.should_not be nil
+    Mongo::Logger.logger.level = @saved_level
+  end
+
   let(:subscriber) { EventSubscriber.new }
 
   let(:client) do
