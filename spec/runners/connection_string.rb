@@ -84,20 +84,6 @@ RSpec::Matchers.define :match_auth do |test|
   end
 end
 
-RSpec::Matchers.define :match_options do |test|
-
-  match do |client|
-    options = test.options
-    return true unless options
-    options.match?(client.options)
-  end
-
-  failure_message do |client|
-    "With URI: #{test.uri_string}\n" +
-      "Expected that client options: #{client.options} would match test options: #{test.options.options}"
-  end
-end
-
 module Mongo
   module ConnectionString
 
