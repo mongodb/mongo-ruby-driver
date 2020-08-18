@@ -51,7 +51,7 @@ describe 'Cursor reaping' do
       [].tap do |cursor_ids|
         # scopes are weird, having this result in a let block
         # makes it not garbage collected
-        20.times do
+        10.times do
           scope = collection.find.batch_size(2).no_cursor_timeout
 
           # there is no API for retrieving the cursor
