@@ -224,6 +224,35 @@ module Mongo
         "username: #{username}, password: #{password}, database: #{database}"
       end
     end
+
+    module_function def adjust_expected_mongo_client_options(options)
+      expected = options.dup.tap do |expected|
+        expected.each do |k, v|
+          # Ruby driver downcases auth mechanism properties when
+          # constructing the client.
+          #
+          # Some tests give options in all lower case.
+          if k.downcase == 'authmechanismproperties'
+            expected[k] = ::Utils.downcase_keys(v)
+          end
+          # Ruby driver does not support snappy.
+          if k == 'compressors'
+            expected[k] = v.reject { |sub_v| sub_v == 'snappy' }
+          end
+        end
+        # We omit retryReads/retryWrites=true because some tests do not
+        # provide those.
+        %w(retryReads retryWrites).each do |k, v|
+          if expected[k] == true
+            expected.delete(k)
+          end
+        end
+        # Fix appName case.
+        if expected.key?('appname') && !expected.key?('appName')
+          expected['appName'] = expected.delete('appname')
+        end
+      end
+    end
   end
 end
 
@@ -285,7 +314,9 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
                 # Connection string spec tests do not use canonical URI option names
                 actual = Utils.downcase_keys(mapped)
                 actual.delete('authsource')
-                expected = Utils.downcase_keys(test.options)
+                expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
+                  test.options,
+                )
                 actual.should == expected
               end
             end
