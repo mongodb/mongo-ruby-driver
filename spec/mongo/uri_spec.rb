@@ -854,16 +854,16 @@ describe Mongo::URI do
           context 'when a mapping value is missing' do
             let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:,CANONICALIZE_HOST_NAME:" }
 
-            it 'sets the options on a client created with the uri' do
-              expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => nil, 'service_name' => nil })
+            it 'sets the options to defaults' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
             end
           end
 
           context 'when a mapping value is missing but another is present' do
             let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:foo,CANONICALIZE_HOST_NAME:" }
 
-            it 'sets the options on a client created with the uri' do
-              expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => nil, 'service_name' => 'foo' })
+            it 'only sets the present value' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'foo' })
             end
           end
         end
