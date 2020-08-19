@@ -58,7 +58,6 @@ tests:
         arguments:
           document:
             x: 1
-    # https://jira.mongodb.org/browse/SPEC-1462
     expectations: ~
     result:
       success:
