@@ -188,6 +188,7 @@ require 'mongo/error/invalid_min_pool_size'
 require 'mongo/error/invalid_read_option'
 require 'mongo/error/invalid_application_name'
 require 'mongo/error/invalid_nonce'
+require 'mongo/error/invalid_read_concern'
 require 'mongo/error/invalid_replacement_document'
 require 'mongo/error/invalid_server_auth_response'
 # Subclass of InvalidServerAuthResponse

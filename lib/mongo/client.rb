@@ -1113,17 +1113,22 @@ module Mongo
     def validate_new_options!(opts = Options::Redacted.new)
       return Options::Redacted.new unless opts
       if opts[:read_concern]
-        given_keys = opts[:read_concern].keys
-        allowed_keys = ['level']
-        # raise an error for non user-settable options
+        # Raise an error for non user-settable options
         if opts[:read_concern][:after_cluster_time]
-          raise Mongo::Error::OperationFailure.new('after_cluster_time is not a user-settable option')
+          raise Mongo::Error::InvalidReadConcern.new(
+            'The after_cluster_time read_concern option cannot be specified by the user'
+          )
         end
-        # warn that options are invalid but keep it and forward to the server
-        if given_keys != allowed_keys
+
+        given_keys = opts[:read_concern].keys.map(&:to_s)
+        allowed_keys = ['level']
+        invalid_keys = given_keys - allowed_keys
+        # Warn that options are invalid but keep it and forward to the server
+        unless invalid_keys.empty?
           log_warn("Read concern has invalid key.")
         end
       end
+
       Lint.validate_underscore_read_preference(opts[:read])
       Lint.validate_read_concern_option(opts[:read_concern])
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|

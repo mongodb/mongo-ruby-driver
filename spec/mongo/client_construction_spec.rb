@@ -1343,35 +1343,43 @@ describe Mongo::Client do
         end
       end
 
-      context 'when an invalid read concern is provided as an option' do
+      context 'when setting read concern options' do
         min_server_fcv '3.2'
 
-        let(:valid_options) do
-          { read_concern: { level: :local } }
+        context 'when read concern is valid' do
+          let(:options) do
+            { read_concern: { level: :local } }
+          end
+
+          it 'does not warn' do
+            expect(Mongo::Logger.logger).to_not receive(:warn)
+            new_local_client_nmio(SpecConfig.instance.addresses, options)
+          end
         end
 
-        let(:invalid_key_options) do
-          { read_concern: { 'hello': :local } }
+        context 'when read concern has an invalid key' do
+          skip_if_linting
+
+          let(:options) do
+            { read_concern: { hello: :local } }
+          end
+
+          it 'logs a warning' do
+            expect(Mongo::Logger.logger).to receive(:warn).with(/Read concern has invalid keys: hello/)
+            new_local_client_nmio(SpecConfig.instance.addresses, options)
+          end
         end
 
-        let(:non_user_settable_options) do
-          { read_concern: { after_cluster_time: 100 } }
-        end
+        context 'when read concern has a non-user-settable key' do
+          let(:options) do
+            { read_concern: { after_cluster_time: 100 } }
+          end
 
-        it 'does not warn when read concern has valid key' do
-          expect(Mongo::Logger.logger).to_not receive(:warn)
-          new_local_client_nmio(SpecConfig.instance.addresses, valid_options)
-        end
-
-        it 'warns that read concern has invalid key' do
-          expect(Mongo::Logger.logger).to receive(:warn)
-          new_local_client_nmio(SpecConfig.instance.addresses, invalid_key_options)
-        end
-
-        it 'raises an error when non user-settable options are passed in' do
-          expect do
-            new_local_client_nmio(SpecConfig.instance.addresses, non_user_settable_options)
-          end.to raise_error(Mongo::Error::OperationFailure, 'after_cluster_time is not a user-settable option')
+          it 'raises an exception' do
+            expect do
+              new_local_client_nmio(SpecConfig.instance.addresses, options)
+            end.to raise_error(Mongo::Error::InvalidReadConcern, 'The after_cluster_time read_concern option cannot be specified by the user')
+          end
         end
       end
 
