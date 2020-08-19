@@ -1125,7 +1125,7 @@ module Mongo
         invalid_keys = given_keys - allowed_keys
         # Warn that options are invalid but keep it and forward to the server
         unless invalid_keys.empty?
-          log_warn("Read concern has invalid key.")
+          log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.")
         end
       end
 
