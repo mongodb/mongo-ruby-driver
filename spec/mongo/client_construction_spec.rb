@@ -1343,6 +1343,46 @@ describe Mongo::Client do
         end
       end
 
+      context 'when setting read concern options' do
+        min_server_fcv '3.2'
+
+        context 'when read concern is valid' do
+          let(:options) do
+            { read_concern: { level: :local } }
+          end
+
+          it 'does not warn' do
+            expect(Mongo::Logger.logger).to_not receive(:warn)
+            new_local_client_nmio(SpecConfig.instance.addresses, options)
+          end
+        end
+
+        context 'when read concern has an invalid key' do
+          skip_if_linting
+
+          let(:options) do
+            { read_concern: { hello: :local } }
+          end
+
+          it 'logs a warning' do
+            expect(Mongo::Logger.logger).to receive(:warn).with(/Read concern has invalid keys: hello/)
+            new_local_client_nmio(SpecConfig.instance.addresses, options)
+          end
+        end
+
+        context 'when read concern has a non-user-settable key' do
+          let(:options) do
+            { read_concern: { after_cluster_time: 100 } }
+          end
+
+          it 'raises an exception' do
+            expect do
+              new_local_client_nmio(SpecConfig.instance.addresses, options)
+            end.to raise_error(Mongo::Error::InvalidReadConcern, 'The after_cluster_time read_concern option cannot be specified by the user')
+          end
+        end
+      end
+
       context 'when an invalid option is provided' do
 
         let(:options) do

@@ -1112,6 +1112,23 @@ module Mongo
     # but does not check for interactions between combinations of options.
     def validate_new_options!(opts = Options::Redacted.new)
       return Options::Redacted.new unless opts
+      if opts[:read_concern]
+        # Raise an error for non user-settable options
+        if opts[:read_concern][:after_cluster_time]
+          raise Mongo::Error::InvalidReadConcern.new(
+            'The after_cluster_time read_concern option cannot be specified by the user'
+          )
+        end
+
+        given_keys = opts[:read_concern].keys.map(&:to_s)
+        allowed_keys = ['level']
+        invalid_keys = given_keys - allowed_keys
+        # Warn that options are invalid but keep it and forward to the server
+        unless invalid_keys.empty?
+          log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.")
+        end
+      end
+
       Lint.validate_underscore_read_preference(opts[:read])
       Lint.validate_read_concern_option(opts[:read_concern])
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
