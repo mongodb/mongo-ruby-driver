@@ -111,7 +111,7 @@ module Mongo
           # rules, validation will fail but credentials may be perfectly OK
           # and the server may be able to authenticate using them just fine
           # (provided the server is allowed to communicate with STS).
-          #request.validate!
+          request.validate!
 
           payload = {
             a: request.authorization,
