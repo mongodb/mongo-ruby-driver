@@ -271,6 +271,10 @@ fi
 
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
+if echo "$AUTH" |grep -q ^aws-assume-role; then
+  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({ismaster: 1})'
+fi
+
 set_fcv
 
 if test "$TOPOLOGY" = replica-set && ! echo "$MONGODB_VERSION" |fgrep -q 2.6; then
