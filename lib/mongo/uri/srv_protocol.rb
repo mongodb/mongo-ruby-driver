@@ -97,7 +97,7 @@ module Mongo
 
       # @return [ String ] NO_SRV_RECORDS Error message format string indicating that no SRV records
       #   were found.
-      NO_SRV_RECORDS = "The DNS query returned no SRV records at hostname (%s)".freeze
+      NO_SRV_RECORDS = "The DNS query returned no SRV records for '%s'".freeze
 
       # @return [ String ] INVALID_TXT_RECORD_OPTION Error message format string indicating that an
       #   unexpected TXT record option was found.
@@ -130,6 +130,7 @@ module Mongo
         @resolver ||= Srv::Resolver.new(
           raise_on_invalid: true,
           resolv_options: options[:resolv_options],
+          timeout: options[:connect_timeout],
         )
       end
 

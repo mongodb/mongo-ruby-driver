@@ -28,20 +28,24 @@ module Mongo
 
       # Creates a new Resolver.
       #
-      # @param [ Hash ] options The options for the resolver.
-      #
-      # @option options [ Boolean ] :raise_on_invalid Whether or not to raise
+      # @option opts [ Float ] :timeout The timeout, in seconds, to use for
+      #   each DNS record resolution.
+      # @option opts [ Boolean ] :raise_on_invalid Whether or not to raise
       #   an exception if either a record with a mismatched domain is found
       #   or if no records are found. Defaults to true.
-      # @option options [ Hash ] :resolv_options For internal driver use only.
+      # @option opts [ Hash ] :resolv_options For internal driver use only.
       #   Options to pass through to Resolv::DNS constructor for SRV lookups.
-      def initialize(options = nil)
-        @options = if options
-          options.dup
-        else
-          {}
-        end.freeze
+      def initialize(**opts)
+        @options = opts.freeze
         @resolver = Resolv::DNS.new(@options[:resolv_options])
+        @resolver.timeouts = timeout
+      end
+
+      # @return [ Hash ] Resolver options.
+      attr_reader :options
+
+      def timeout
+        options[:timeout] || Monitor::DEFAULT_TIMEOUT
       end
 
       # Obtains all of the SRV records for a given hostname.

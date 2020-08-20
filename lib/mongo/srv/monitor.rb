@@ -34,24 +34,18 @@ module Mongo
       # Creates the SRV monitor.
       #
       # @param [ Cluster ] cluster The cluster.
-      # @param [ Hash ] options The cluster options.
       #
-      # @option options [ Float ] :timeout The timeout to use for DNS lookups.
-      # @option options [ URI::SRVProtocol ] :srv_uri The SRV URI to monitor.
-      # @option options [ Hash ] :resolv_options For internal driver use only.
+      # @option opts [ Float ] :timeout The timeout to use for DNS lookups.
+      # @option opts [ URI::SRVProtocol ] :srv_uri The SRV URI to monitor.
+      # @option opts [ Hash ] :resolv_options For internal driver use only.
       #   Options to pass through to Resolv::DNS constructor for SRV lookups.
-      def initialize(cluster, options = nil)
-        options = if options
-          options.dup
-        else
-          {}
-        end
+      def initialize(cluster, **opts)
         @cluster = cluster
-        @resolver = Srv::Resolver.new(options)
-        unless @srv_uri = options.delete(:srv_uri)
+        unless @srv_uri = opts.delete(:srv_uri)
           raise ArgumentError, 'SRV URI is required'
         end
-        @options = options.freeze
+        @options = opts.freeze
+        @resolver = Srv::Resolver.new(**opts)
         @last_result = @srv_uri.srv_result
         @stop_semaphore = Semaphore.new
       end
