@@ -122,6 +122,11 @@ class SpecConfig
     %w(1 true yes).include?(ENV['FORK']&.downcase)
   end
 
+  # OCSP tests require python and various dependencies.
+  def ocsp?
+    %w(1 true yes).include?(ENV['OCSP']&.downcase)
+  end
+
   # Test suite configuration
 
   def client_debug?
@@ -219,6 +224,10 @@ EOT
 
   def ssl_certs_dir
     Pathname.new("#{spec_root}/support/certificates")
+  end
+
+  def ocsp_files_dir
+    Pathname.new("#{spec_root}/../.deps/drivers-evergreen-tools/.evergreen/ocsp")
   end
 
   # TLS certificates & keys

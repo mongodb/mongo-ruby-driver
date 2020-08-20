@@ -511,6 +511,16 @@ following environment variable:
 
     FORK=1
 
+OCSP tests require Python 3 with asn1crypto, oscrypto and flask packages
+installed, and they require the drivers-evergreen-tools submodule to be
+checked out. To run these tests, set the following environment variable:
+
+    OCSP=1
+
+To check out the submodule, run:
+
+    git submodule update --init --recursive
+
 ## Debug Logging
 
 The test suite is run with the driver log level set to `WARN` by default.

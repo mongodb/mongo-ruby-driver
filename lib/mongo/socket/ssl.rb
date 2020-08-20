@@ -149,6 +149,7 @@ module Mongo
               @socket.connect
             end
             verify_certificate!(@socket)
+            verify_ocsp_endpoint!(@socket)
           rescue
             @socket.close
             @socket = nil
@@ -177,29 +178,36 @@ module Mongo
       private
 
       def verify_certificate?
-        @verify_certificate ||=
-          # If ssl_verify_certificate is not present, disable only if ssl_verify is
-          # explicitly set to false.
-          if options[:ssl_verify_certificate].nil?
-            options[:ssl_verify] != false
-          # If ssl_verify_certificate is present, enable or disable based on its value.
-          else
-            !!options[:ssl_verify_certificate]
-          end
+        # If ssl_verify_certificate is not present, disable only if
+        # ssl_verify is explicitly set to false.
+        if options[:ssl_verify_certificate].nil?
+          options[:ssl_verify] != false
+        # If ssl_verify_certificate is present, enable or disable based on its value.
+        else
+          !!options[:ssl_verify_certificate]
+        end
       end
 
       def verify_hostname?
-        @verify_hostname ||=
-          # If ssl_verify_hostname is not present, disable only if ssl_verify is
-          # explicitly set to false.
-          if options[:ssl_verify_hostname].nil?
-            options[:ssl_verify] != false
-          # If ssl_verify_hostname is present, enable or disable based on its value.
-          else
-            !!options[:ssl_verify_hostname]
-          end
+        # If ssl_verify_hostname is not present, disable only if ssl_verify is
+        # explicitly set to false.
+        if options[:ssl_verify_hostname].nil?
+          options[:ssl_verify] != false
+        # If ssl_verify_hostname is present, enable or disable based on its value.
+        else
+          !!options[:ssl_verify_hostname]
+        end
       end
 
+      def verify_ocsp_endpoint?
+        if !options[:ssl_verify_ocsp_endpoint].nil?
+          options[:ssl_verify_ocsp_endpoint] != false
+        elsif !options[:ssl_verify_certificate].nil?
+          options[:ssl_verify_certificate] != false
+        else
+          options[:ssl_verify] != false
+        end
+      end
 
       def create_context(options)
         OpenSSL::SSL::SSLContext.new.tap do |context|
@@ -347,6 +355,19 @@ module Mongo
             raise Error::SocketError, 'SSL handshake failed due to a hostname mismatch.'
           end
         end
+      end
+
+      def verify_ocsp_endpoint!(socket)
+        unless verify_ocsp_endpoint?
+          return
+        end
+
+        cert = socket.peer_cert
+        ca_cert = socket.peer_cert_chain.last
+
+        verifier = OcspVerifier.new(@host_name, cert, ca_cert,
+          logger: options[:logger])
+        verifier.verify
       end
 
       def read_buffer_size

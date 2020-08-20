@@ -138,4 +138,12 @@ module LiteConstraints
       end
     end
   end
+
+  def require_ocsp
+    before(:all) do
+      if !SpecConfig.instance.ocsp?
+        skip 'Set OCSP=1 in environment to run OCSP tests'
+      end
+    end
+  end
 end
