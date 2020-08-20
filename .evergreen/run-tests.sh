@@ -4,7 +4,7 @@ set -e
 
 if echo "$AUTH" |grep -q ^aws; then
   # Do not set -x as this will expose passwords in Evergreen logs
-  set +x
+  set -x
 else
   set -x
 fi
