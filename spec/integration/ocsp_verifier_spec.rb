@@ -27,63 +27,72 @@ describe Mongo::Socket::OcspVerifier do
     end
   end
 
-  context 'good response' do
-    with_ocsp_mock(
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.pem'),
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.crt'),
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.key'),
-    )
+  %w(ca delegate).each do |responder_cert|
+    responder_cert_file_name = {
+      'ca' => 'ca',
+      'delegate' => 'ocsp-responder',
+    }.fetch(responder_cert)
 
-    it 'verifies' do
-      verifier.verify.should be true
-    end
+    context "when responder uses #{responder_cert} cert" do
+      context 'good response' do
+        with_ocsp_mock(
+          SpecConfig.instance.ocsp_files_dir.join('rsa/ca.pem'),
+          SpecConfig.instance.ocsp_files_dir.join("rsa/#{responder_cert_file_name}.crt"),
+          SpecConfig.instance.ocsp_files_dir.join("rsa/#{responder_cert_file_name}.key"),
+        )
 
-    it 'does not wait for the timeout' do
-      lambda do
-        verifier.verify
-      end.should take_shorter_than 3
-    end
-  end
+        it 'verifies' do
+          verifier.verify.should be true
+        end
 
-  context 'revoked response' do
-    with_ocsp_mock(
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.pem'),
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.crt'),
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.key'),
-      'revoked'
-    )
+        it 'does not wait for the timeout' do
+          lambda do
+            verifier.verify
+          end.should take_shorter_than 3
+        end
+      end
 
-    it 'raises an exception' do
-      lambda do
-        verifier.verify
-      end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:8100/status',)
-    end
+      context 'revoked response' do
+        with_ocsp_mock(
+          SpecConfig.instance.ocsp_files_dir.join('rsa/ca.pem'),
+          SpecConfig.instance.ocsp_files_dir.join("rsa/#{responder_cert_file_name}.crt"),
+          SpecConfig.instance.ocsp_files_dir.join("rsa/#{responder_cert_file_name}.key"),
+          'revoked'
+        )
 
-    it 'does not wait for the timeout' do
-      lambda do
-        lambda do
-          verifier.verify
-        end.should raise_error(Mongo::Error::ServerCertificateRevoked)
-      end.should take_shorter_than 3
-    end
-  end
+        it 'raises an exception' do
+          lambda do
+            verifier.verify
+          end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:8100/status',)
+        end
 
-  context 'unknown response' do
-    with_ocsp_mock(
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.pem'),
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.crt'),
-      SpecConfig.instance.ocsp_files_dir.join('rsa/ca.key'),
-      'unknown',
-    )
+        it 'does not wait for the timeout' do
+          lambda do
+            lambda do
+              verifier.verify
+            end.should raise_error(Mongo::Error::ServerCertificateRevoked)
+          end.should take_shorter_than 3
+        end
+      end
 
-    it 'does not verify and does not raise an exception' do
-      verifier.verify.should be false
-    end
+      context 'unknown response' do
+        with_ocsp_mock(
+          SpecConfig.instance.ocsp_files_dir.join('rsa/ca.pem'),
+          SpecConfig.instance.ocsp_files_dir.join("rsa/#{responder_cert_file_name}.crt"),
+          SpecConfig.instance.ocsp_files_dir.join("rsa/#{responder_cert_file_name}.key"),
+          'unknown',
+        )
 
-    it 'does not wait for the timeout' do
-      lambda do
-        verifier.verify
-      end.should take_shorter_than 3
+        it 'does not verify and does not raise an exception' do
+          verifier.verify.should be false
+        end
+
+        it 'does not wait for the timeout' do
+          lambda do
+            verifier.verify
+          end.should take_shorter_than 3
+        end
+      end
     end
   end
 end
