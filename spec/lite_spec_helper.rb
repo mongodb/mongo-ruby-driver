@@ -49,6 +49,7 @@ end
 autoload :Benchmark, 'benchmark'
 autoload :IceNine, 'ice_nine'
 autoload :Timecop, 'timecop'
+autoload :ChildProcess, 'childprocess'
 
 if BSON::Environment.jruby?
   require 'concurrent-ruby'

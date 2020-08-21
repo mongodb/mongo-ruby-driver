@@ -15,6 +15,7 @@
 require 'mongo/socket/ssl'
 require 'mongo/socket/tcp'
 require 'mongo/socket/unix'
+require 'mongo/socket/ocsp_verifier'
 
 module Mongo
 

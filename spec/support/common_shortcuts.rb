@@ -96,6 +96,43 @@ module CommonShortcuts
         end
       end
     end
+
+    def with_ocsp_mock(ca_file_path, responder_cert_path, responder_key_path,
+      fault = nil
+    )
+      around do |example|
+        args = [
+          SpecConfig.instance.ocsp_files_dir.join('ocsp_mock.py').to_s,
+          '--ca_file', ca_file_path.to_s,
+          '--ocsp_responder_cert', responder_cert_path.to_s,
+          '--ocsp_responder_key', responder_key_path.to_s,
+          '-p', '8100',
+        ]
+        if SpecConfig.instance.client_debug?
+          # Use when debugging - tests run faster without -v.
+          args << '-v'
+        end
+        if fault
+          args += ['--fault', fault]
+        end
+        process = ChildProcess.new(*args)
+
+        process.io.inherit!
+        process.start
+
+        begin
+          sleep 0.4
+          example.run
+        ensure
+          if process.exited?
+            raise "Spawned process exited before we stopped it"
+          end
+
+          process.stop
+          process.wait
+        end
+      end
+    end
   end
 
   module InstanceMethods

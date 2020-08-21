@@ -54,3 +54,19 @@ RSpec::Matchers.define :be_uuid do
     object.is_a?(BSON::Binary) && object.type == :uuid
   end
 end
+
+RSpec::Matchers.define :take_longer_than do |min_expected_time|
+  match do |proc|
+    start_time = Time.now
+    proc.call
+    (Time.now - start_time).should > min_expected_time
+  end
+end
+
+RSpec::Matchers.define :take_shorter_than do |min_expected_time|
+  match do |proc|
+    start_time = Time.now
+    proc.call
+    (Time.now - start_time).should < min_expected_time
+  end
+end

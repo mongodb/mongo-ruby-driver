@@ -1,0 +1,3 @@
+[submodule ".deps/drivers-evergreen-tools"]
+	path = .deps/drivers-evergreen-tools
+	url = https://github.com/mongodb-labs/drivers-evergreen-tools
