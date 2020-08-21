@@ -168,6 +168,8 @@ problem. Below are some of the puzzling responses I encountered:
   produced when temporary credentials are used and the credentials have
   expired.
 
+See also [AWS documentation for STS error messages](https://docs.aws.amazon.com/STS/latest/APIReference/CommonErrors.html).
+
 ### Resources
 
 Generally I found Amazon's own documentation to be the best for implementing
