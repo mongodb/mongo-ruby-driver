@@ -330,7 +330,8 @@ Ruby Options
 
    * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
-       before raising an exception. ``nil`` and ``0`` mean no timeout.
+       before raising an exception. This timeout is also used for SRV DNS
+       record resolution. ``nil`` and ``0`` mean no timeout.
        Client creation will fail with an error if an invalid timeout value
        is passed (such as a negative value or a non-numeric value).
      - ``Float``
@@ -934,8 +935,14 @@ This option does not apply to monitoring connections.
 ```````````````````
 
 The number of seconds to wait for a socket connection to be established to
-a server. Defaults to 10. This timeout is also used as both connect timeout
-and socket timeout for monitoring connections.
+a server. Defaults to 10.
+
+This timeout is also used as both connect timeout and socket timeout for
+monitoring connections.
+
+When using a ``mongodb+srv://` URI, this timeout is also used for SRV and TXT
+DNS lookups. Note that the timeout applies per lookup; due to DNS suffix search
+lists, multiple lookups may be performed as part of a single name resolution.
 
 ``wait_queue_timeout``
 ``````````````````````

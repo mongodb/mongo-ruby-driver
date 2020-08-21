@@ -76,6 +76,37 @@ describe 'SRV Monitoring' do
       require 'support/dns'
     end
 
+    around do |example|
+      # Speed up the tests by listening on the fake ports we are using.
+      done = false
+
+      servers = []
+      threads = [27998, 27999].map do |port|
+        Thread.new do
+          server = TCPServer.open(port)
+          servers << server
+          begin
+            loop do
+              break if done
+              server.accept.close rescue nil
+            end
+          ensure
+            server.close
+          end
+        end
+      end
+
+      begin
+        example.run
+      ensure
+        done = true
+        servers.map(&:close)
+
+        threads.map(&:kill)
+        threads.map(&:join)
+      end
+    end
+
     let(:uri) do
       "mongodb+srv://test-fake.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}&tlsInsecure=true"
     end
@@ -88,11 +119,15 @@ describe 'SRV Monitoring' do
       new_local_client(uri,
         SpecConfig.instance.ssl_options.merge(
           server_selection_timeout: 3.16,
-          timeout: 8.11,
+          socket_timeout: 8.11,
           connect_timeout: 8.12,
           resolv_options: {
-            nameserver: 'localhost',
-            nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
+            # Using localhost instead of 127.0.0.1 here causes Ruby's resolv
+            # client to drop responses.
+            nameserver: '127.0.0.1',
+            # TODO figure out why the address & port here need to be given
+            # twice - if given once, DNS resolution fails.
+            nameserver_port: [['127.0.0.1', 5300], ['127.0.0.1', 5300]],
           },
           logger: logger,
         ),

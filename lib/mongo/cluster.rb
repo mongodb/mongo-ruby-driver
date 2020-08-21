@@ -950,9 +950,9 @@ module Mongo
         # Start SRV monitor
         @srv_monitor_lock.synchronize do
           unless @srv_monitor
-            monitor_options = options.merge(
-              timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
-            @srv_monitor = _srv_monitor = Srv::Monitor.new(self, monitor_options)
+            monitor_options = Utils.shallow_symbolize_keys(options.merge(
+              timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT))
+            @srv_monitor = _srv_monitor = Srv::Monitor.new(self, **monitor_options)
             finalizer = lambda do
               _srv_monitor.stop!
             end
