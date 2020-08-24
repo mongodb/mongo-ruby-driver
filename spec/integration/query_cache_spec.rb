@@ -255,8 +255,8 @@ describe 'QueryCache' do
       end
 
       it 'queries again' do
-        authorized_collection.find({}, {limit: 2, skip: 5}).to_a
-        expect(authorized_collection.find({}, {limit: 2, skip: 5}).to_a.count).to eq(2)
+        results = authorized_collection.find({}, {limit: 2, skip: 5}).to_a
+        expect(results.count).to eq(2)
         expect(events.length).to eq(2)
       end
     end
