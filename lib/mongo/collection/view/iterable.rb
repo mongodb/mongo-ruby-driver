@@ -40,11 +40,12 @@ module Mongo
 
           if QueryCache.enabled? && @cursor.is_a?(Mongo::CachingCursor)
             QueryCache.cache_table[cache_key] = @cursor
+            range = limit || nil
           end
 
           if block_given?
-            if limit
-              @cursor.to_a[0...limit].each do |doc|
+            if range
+              @cursor.to_a[0...range].each do |doc|
                 yield doc
               end
             else
