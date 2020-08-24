@@ -60,7 +60,9 @@ module Mongo
       read_with_retry(session, server_selector) do |server|
         result = yield server
 
-        if QueryCache.enabled?
+        # RUBY-2367: This will be updated to allow the query cache to
+        # cache cursors with multi-batch results.
+        if QueryCache.enabled? && (result.cursor_id == 0 || result.cursor_id.nil?)
           CachingCursor.new(view, result, server, session: session)
         else
           Cursor.new(view, result, server, session: session)

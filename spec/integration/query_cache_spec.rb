@@ -71,6 +71,43 @@ describe 'QueryCache' do
     end
   end
 
+  describe 'iterating cursors multiple times' do
+    before do
+      authorized_collection.drop
+      Mongo::QueryCache.enabled = true
+    end
+
+    after do
+      Mongo::QueryCache.enabled = false
+    end
+
+    context 'when query returns single batch' do
+      before do
+        authorized_collection.insert_many([{ test: 1 }] * 100)
+      end
+
+      it 'does not raise an exception' do
+        expect do
+          authorized_collection.find(test: 1).to_a
+          authorized_collection.find(test: 1).to_a
+        end.not_to raise_error
+      end
+    end
+
+    context 'when query returns single batch' do
+      before do
+        authorized_collection.insert_many([{ test: 1 }] * 2000)
+      end
+
+      it 'does not raise an exception' do
+        expect do
+          authorized_collection.find(test: 1).to_a
+          authorized_collection.find(test: 1).to_a
+        end.not_to raise_error
+      end
+    end
+  end
+
   context 'when querying in the same collection' do
 
     before do
