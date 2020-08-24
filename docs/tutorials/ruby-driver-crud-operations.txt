@@ -130,6 +130,9 @@ object, or with ``Decimal128.from_string()``.
    price = BSON::Decimal128.from_string("428.79")
    # => BSON::Decimal128('428.79')
 
+
+.. _query-cache:
+
 Query Cache
 ===========
 
