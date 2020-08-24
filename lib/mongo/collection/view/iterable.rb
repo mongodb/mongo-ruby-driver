@@ -35,24 +35,21 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
-          @cursor = nil
           session = client.send(:get_session, @options)
-          if QueryCache.enabled?
-            unless @cursor = cached_cursor
-              @cursor = select_cursor(session)
-              QueryCache.cache_table[cache_key] = @cursor
-            end
+          @cursor = select_cursor(session)
+
+          if QueryCache.enabled? && @cursor.is_a?(Mongo::CachingCursor)
+            QueryCache.cache_table[cache_key] = @cursor
             range = limit || nil
-          else
-            @cursor = select_cursor(session)
           end
+
           if block_given?
-            if !range
-              @cursor.each do |doc|
+            if range
+              @cursor.to_a[0...range].each do |doc|
                 yield doc
               end
             else
-              @cursor.to_a[0...range].each do |doc|
+              @cursor.each do |doc|
                 yield doc
               end
             end
@@ -84,10 +81,17 @@ module Mongo
         private
 
         def select_cursor(session)
+          if QueryCache.enabled?
+            return cached_cursor if cached_cursor
+          end
+
           if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session)
             result = send_initial_query(server, session)
-            if QueryCache.enabled?
+
+            # RUBY-2367: This will be updated to allow the query cache to
+            # cache cursors with multi-batch results.
+            if QueryCache.enabled? && (result.cursor_id == 0 || result.cursor_id.nil?)
               CachingCursor.new(view, result, server, session: session)
             else
               Cursor.new(view, result, server, session: session)
