@@ -110,7 +110,7 @@ describe 'QueryCache' do
 
   describe 'queries with read concern' do
     require_wired_tiger
-    min_server_fcv '3.2'
+    min_server_fcv '3.6'
 
     before do
       subscriber.clear_events!
