@@ -105,14 +105,24 @@ module Mongo
 
         def cached_cursor
           if limit
-            key = [ collection.namespace, selector, nil, skip, sort, projection, collation  ]
+            key = cache_key(omit_limit: true)
             cursor = QueryCache.cache_table[key]
           end
           cursor || QueryCache.cache_table[cache_key]
         end
 
-        def cache_key
-          [ collection.namespace, selector, limit, skip, sort, projection, collation ]
+        def cache_key(omit_limit: false)
+          [
+            collection.namespace,
+            selector,
+            skip,
+            sort,
+            omit_limit ? nil : limit,
+            projection,
+            collation,
+            read_concern,
+            read_preference
+          ]
         end
 
         def initial_query_op(server, session)

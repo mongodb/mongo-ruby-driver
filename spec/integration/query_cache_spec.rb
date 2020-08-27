@@ -108,6 +108,75 @@ describe 'QueryCache' do
     end
   end
 
+  describe 'queries with read concern' do
+    require_wired_tiger
+    min_server_fcv '3.6'
+
+    before do
+      subscriber.clear_events!
+      authorized_client['test'].drop
+    end
+
+    let(:events) do
+      subscriber.command_started_events('find')
+    end
+
+    context 'when two queries have same read concern' do
+      before do
+        authorized_client['test', read_concern: { level: :majority }].find.to_a
+        authorized_client['test', read_concern: { level: :majority }].find.to_a
+      end
+
+      it 'executes one query' do
+        expect(events.length).to eq(1)
+      end
+    end
+
+    context 'when two queries have different read concerns' do
+      before do
+        authorized_client['test', read_concern: { level: :majority }].find.to_a
+        authorized_client['test', read_concern: { level: :local }].find.to_a
+      end
+
+      it 'executes two queries' do
+        expect(events.length).to eq(2)
+      end
+    end
+  end
+
+  describe 'queries with read preference' do
+    before do
+      subscriber.clear_events!
+      authorized_client['test'].drop
+    end
+
+    let(:events) do
+      subscriber.command_started_events('find')
+    end
+
+    context 'when two queries have different read preferences' do
+      before do
+        authorized_client['test', read: { mode: :primary }].find.to_a
+        authorized_client['test', read: { mode: :primary_preferred }].find.to_a
+      end
+
+      it 'executes two queries' do
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when two queries have same read preference' do
+      before do
+        authorized_client['test', read: { mode: :primary }].find.to_a
+        authorized_client['test', read: { mode: :primary }].find.to_a
+      end
+
+      it 'executes one query' do
+        expect(events.length).to eq(1)
+      end
+    end
+  end
+
   context 'when querying in the same collection' do
 
     before do
