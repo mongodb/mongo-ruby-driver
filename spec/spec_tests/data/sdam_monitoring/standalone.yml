@@ -1,5 +1,5 @@
-description: "Monitoring a forced standalone connection"
-uri: "mongodb://a:27017/?connect=direct"
+description: "Monitoring a direct connection"
+uri: "mongodb://a:27017/?directConnection=true"
 phases:
   -
     responses:
