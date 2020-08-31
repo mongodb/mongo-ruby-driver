@@ -99,7 +99,7 @@ Note that this defeats one of the patches for the Spectre set of processor
 vulnerabilities.
 
 
-## Running Deployment In Docker
+## Running MongoDB Server In Docker
 
 It is possible to use the Docker infrastructure provided by the test suite
 to provision a MongoDB server deployment in Docker and expose it to the host.
