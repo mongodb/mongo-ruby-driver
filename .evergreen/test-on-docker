@@ -67,7 +67,7 @@ class Runner
       raise "RVM_RUBY option is not in expected format: #{ruby}"
     end
 
-    @env['MONGODB_VERSION'] ||= '4.2'
+    @env['MONGODB_VERSION'] ||= '4.4'
   end
 
   def create_dockerfile
