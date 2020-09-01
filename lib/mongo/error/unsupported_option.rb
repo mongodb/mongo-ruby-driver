@@ -57,8 +57,6 @@ module Mongo
 
       # Raise an error about an unsupported hint option.
       #
-      # @param [ Hash ] options
-      #
       # @option options [ Boolean ] unacknowledged_write Whether this error
       #   pertains to a hint option passed to an unacknowledged write. Defaults
       #   to false.
@@ -80,8 +78,6 @@ module Mongo
       end
 
       # Raise an error about an unsupported allow_disk_use option.
-      #
-      # @param [ Hash ] options
       #
       # @return [ Mongo::Error::UnsupportedOption ] An error with a default
       #   error message.
