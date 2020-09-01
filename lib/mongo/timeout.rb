@@ -13,6 +13,8 @@
 # limitations under the License.
 
 module Mongo
+
+  # @api private
   module Timeout
 
     # A wrapper around Ruby core's Timeout::timeout method that provides
