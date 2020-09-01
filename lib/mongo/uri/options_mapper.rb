@@ -167,7 +167,7 @@ module Mongo
       # Hash for storing map of URI option parameters to conversion strategies
       URI_OPTION_MAP = {}
 
-      # @return Hash<String, String> Map from lowercased to canonical URI
+      # @return [ Hash<String, String> ] Map from lowercased to canonical URI
       #   option names.
       URI_OPTION_CANONICAL_NAMES = {}
 
