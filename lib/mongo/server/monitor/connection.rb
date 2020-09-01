@@ -122,7 +122,7 @@ module Mongo
 
         # Sends a message and returns the result.
         #
-        # @param [ Protocol::Message ] The message to send.
+        # @param [ Protocol::Message ] message The message to send.
         #
         # @return [ Protocol::Message ] The result.
         def dispatch(message)
@@ -131,7 +131,7 @@ module Mongo
 
         # Sends a preserialized message and returns the result.
         #
-        # @param [ String ] The serialized message to send.
+        # @param [ String ] bytes The serialized message to send.
         #
         # @option opts [ Numeric ] :read_socket_timeout The timeout to use for
         #   each read operation.
