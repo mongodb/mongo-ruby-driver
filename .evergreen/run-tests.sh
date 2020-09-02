@@ -71,26 +71,51 @@ elif echo "$AUTH" |grep -q ^aws; then
   args="$args --setParameter authenticationMechanisms=MONGODB-AWS,SCRAM-SHA-1,SCRAM-SHA-256"
   uri_options="$uri_options&authMechanism=MONGODB-AWS&authSource=\$external"
 fi
-if test "$SSL" = ssl; then
-  args="$args --sslMode requireSSL"\
-" --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
-" --sslCAFile spec/support/certificates/ca.crt"\
-" --sslClientCertificate spec/support/certificates/client.pem"
 
-  if test "$AUTH" = x509; then
-    client_pem=client-x509.pem
+if test -n "$OCSP"; then
+  if test -z "$OCSP_ALGORITHM"; then
+    echo "OCSP_ALGORITHM must be set if OCSP is set" 1>&2
+    exit 1
+  fi
+fi
+
+if test "$SSL" = ssl || test -n "$OCSP_ALGORITHM"; then
+  if test -n "$OCSP_ALGORITHM"; then
+    if test "$OCSP_MUST_STAPLE" = 1; then
+      server_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server-mustStaple.pem
+    else
+      server_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
+    fi
+    server_ca_path=spec/support/ocsp/$OCSP_ALGORITHM/ca.crt
+    server_client_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
+  else
+    server_cert_path=spec/support/certificates/server-second-level-bundle.pem
+    server_ca_path=spec/support/certificates/ca.crt
+    server_client_cert_path=spec/support/certificates/client.pem
+  fi
+
+  if test -n "$OCSP_ALGORITHM"; then
+    client_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
+  elif test "$AUTH" = x509; then
+    client_cert_path=spec/support/certificates/client-x509.pem
+    
     uri_options="$uri_options&authMechanism=MONGODB-X509"
   elif echo $RVM_RUBY |grep -q jruby; then
     # JRuby does not grok chained certificate bundles -
     # https://github.com/jruby/jruby-openssl/issues/181
-    client_pem=client.pem
+    client_cert_path=spec/support/certificates/client.pem
   else
-    client_pem=client-second-level-bundle.pem
+    client_cert_path=spec/support/certificates/client-second-level-bundle.pem
   fi
 
   uri_options="$uri_options&"\
-"tlsCAFile=spec/support/certificates/ca.crt&"\
-"tlsCertificateKeyFile=spec/support/certificates/$client_pem"
+"tlsCAFile=$server_ca_path&"\
+"tlsCertificateKeyFile=$client_cert_path"
+
+  args="$args --sslMode requireSSL"\
+" --sslPEMKeyFile $server_cert_path"\
+" --sslCAFile $server_ca_path"\
+" --sslClientCertificate $server_client_cert_path"
 fi
 
 # Docker forwards ports to the external interface, not to the loopback.
@@ -102,6 +127,35 @@ fi
 # MongoDB servers pre-4.2 do not enable zlib compression by default
 if test "$COMPRESSOR" = zlib; then
   args="$args --networkMessageCompressors zlib"
+fi
+
+if test -n "$OCSP_ALGORITHM" || test -n "$OCSP_VERIFIER"; then
+  python3 -m pip install asn1crypto oscrypto flask
+fi
+
+if test -n "$OCSP_ALGORITHM"; then
+  if test -z "$server_ca_path"; then
+    echo "server_ca_path must have been set" 1>&2
+    exit 1
+  fi
+  ocsp_args="--ca_file $server_ca_path"
+  if test "$OCSP_DELEGATE" = 1; then
+    ocsp_args="$ocsp_args \
+--ocsp_responder_cert spec/support/ocsp/$OCSP_ALGORITHM/ocsp-responder.crt \
+--ocsp_responder_key spec/support/ocsp/$OCSP_ALGORITHM/ocsp-responder.key \
+"
+  else
+    ocsp_args="$ocsp_args \
+--ocsp_responder_cert spec/support/ocsp/$OCSP_ALGORITHM/ca.crt \
+--ocsp_responder_key spec/support/ocsp/$OCSP_ALGORITHM/ca.key \
+"
+  fi
+  if test -n "$OCSP_STATUS"; then
+    ocsp_args="$ocsp_args --fault $OCSP_STATUS"
+  fi
+  
+  # Bind to 0.0.0.0 for Docker
+  python3 spec/support/ocsp/ocsp_mock.py $ocsp_args -b 0.0.0.0 -p 8100 &
 fi
 
 python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
@@ -206,8 +260,10 @@ export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options
 
 set_fcv
 
-echo Preparing the test suite
-bundle exec rake spec:prepare
+if ! test "$OCSP_VERIFIER" = 1 && ! test "$OCSP_CONNECTIVITY" = 1; then
+  echo Preparing the test suite
+  bundle exec rake spec:prepare
+fi
 
 if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
@@ -230,6 +286,10 @@ elif test "$FORK" = 1; then
   bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
 elif test "$STRESS" = 1; then
   bundle exec rspec spec/integration/fork*spec.rb spec/stress
+elif test "$OCSP_VERIFIER" = 1; then
+  bundle exec rspec spec/integration/ocsp_verifier_spec.rb
+elif test "$OCSP_CONNECTIVITY" = 1; then
+  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
 else
   bundle exec rake spec:ci
 fi

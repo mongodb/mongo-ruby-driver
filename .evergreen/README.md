@@ -123,6 +123,10 @@ on ports 30000 through 30002:
 
     ./.evergreen/test-on-docker -pm 30000 -d debian92 TOPOLOGY=replica-set AUTH=auth
 
+When OCSP is enabled, the test OCSP responder will be launched on port 8100
+and this port will be exposed to the host OS. There must not be another service
+using this port on the host OS.
+
 
 ## Testing in AWS
 

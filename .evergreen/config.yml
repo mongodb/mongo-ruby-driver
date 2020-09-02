@@ -112,6 +112,12 @@ functions:
             export FORK="${FORK}"
 
             export STRESS="${STRESS}"
+            export OCSP_ALGORITHM="${OCSP_ALGORITHM}"
+            export OCSP_STATUS="${OCSP_STATUS}"
+            export OCSP_DELEGATE="${OCSP_DELEGATE}"
+            export OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}"
+            export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
+            export OCSP_VERIFIER="${OCSP_VERIFIER}"
           EOT
 
           # See what we've done
@@ -655,6 +661,64 @@ axes:
         variables:
           FLE: true
 
+  - id: ocsp-algorithm
+    display_name: OCSP Algorithm
+    values:
+      - id: rsa
+        display_name: RSA
+        variables:
+          OCSP_ALGORITHM: rsa
+      - id: ecdsa
+        display_name: ECDSA
+        variables:
+          OCSP_ALGORITHM: ecdsa
+
+  - id: ocsp-status
+    display_name: OCSP Status
+    values:
+      - id: valid
+        display_name: Valid
+      - id: revoked
+        display_name: Revoked
+        variables:
+          OCSP_STATUS: revoked
+      - id: unknown
+        display_name: Unknown
+        variables:
+          OCSP_STATUS: unknown
+
+  - id: ocsp-delegate
+    display_name: OCSP Delegate
+    values:
+      - id: on
+        display_name: on
+        variables:
+          OCSP_DELEGATE: 1
+
+  - id: ocsp-must-staple
+    display_name: OCSP Must Staple
+    values:
+      - id: on
+        display_name: on
+        variables:
+          OCSP_MUST_STAPLE: 1
+
+  - id: ocsp-verifier
+    display_name: OCSP Verifier
+    values:
+      - id: on
+        display_name: on
+        variables:
+          OCSP_VERIFIER: 1
+
+  - id: ocsp-connectivity
+    display_name: OCSP Connectivity
+    values:
+      - id: on
+        display_name: on
+        variables:
+          OCSP_CONNECTIVITY: 1
+
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
@@ -1047,3 +1111,55 @@ buildvariants:
     display_name: "AWS auth temporary: ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
+
+  - matrix_name: ocsp-verifier
+    matrix_spec:
+      ocsp-verifier: on
+      ruby: '*'
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+
+  - matrix_name: ocsp-must-staple
+    matrix_spec:
+      ocsp-algorithm: ecdsa
+      ocsp-must-staple: on
+      ocsp-delegate: on
+      ruby: ruby-2.7
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+      auth-and-ssl: noauth-and-ssl
+    display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+
+  - matrix_name: ocsp-unknown
+    matrix_spec:
+      ocsp-algorithm: rsa
+      ocsp-status: unknown
+      ruby: ruby-2.7
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+      auth-and-ssl: noauth-and-ssl
+    display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: '*'
+      ocsp-delegate: '*'
+      ocsp-connectivity: on
+      ruby: [ruby-2.7, jruby-9.2]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch

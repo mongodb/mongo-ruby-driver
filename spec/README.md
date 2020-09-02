@@ -185,6 +185,49 @@ verification, run:
 Note that there are tests in the test suite that cover TLS verification, and
 they may fail if the test suite is run in this way.
 
+## OCSP
+
+There are several types of OCSP tests implemented in the test suite.
+
+OCSP unit tests are in `spec/integration/ocsp_verifier_spec.rb`. To run
+these, set `OCSP_VERIFIER=1` in the environment. There must NOT be a process
+running on the host port 8100 as that port will be used by the OCSP responder
+launched by the tests.
+
+For the remaining OCSP tests, the following environment variables must be set
+to the possible values indicated below:
+
+    OCSP_ALGORITHM=rsa|ecdsa
+    OCSP_STATUS=valid|revoked|unknown
+    OCSP_DELEGATE=0|1
+    OCSP_MUST_STAPLE=0|1
+
+These tests also require the mock OCSP responder running on the host machine
+on port 8100 with the configuration that matches the environment variables
+just described. Please refer to the Docker and Evergreen scripts in the
+driver repository for further details.
+
+Additionally, the server must be configured to use the appropriate server
+certificate and CA certificate from the respective subdirectory of
+`spec/support/ocsp`. This is easiest to achieve by using the Docker tooling
+described in `.evergreen/README.md`.
+
+OCSP connectivity tests are in `spec/integration/ocsp_connectivity.rb`.
+These test the combinations described
+[here](https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.rst#integration-tests-permutations-to-be-tested).
+To run these tests, set `OCSP_CONNECTIVITY=1` environment variable.
+Note that some of these configurations require OCSP responder to return
+the failure response; in such configurations, ONLY the OCSP connectivity tests
+may pass (since the driver may reject connections to servers when OCSP
+responder returns the failure response, or OCSP verification otherwise
+definitively fails).
+
+When not running either OCSP verifier tests or OCSP connectivity tests but
+when OCSP algorithm is configured, the test suite will execute normally
+using the provided `MONGO_URI`. This configuration may be used to exercise
+OCSP while running the full test suite. In this case, setting `OCSP_STATUS`
+to `revoked` will generally cause the test suite to fail.
+
 ## Authentication
 
 mlaunch can configure authentication on the server:

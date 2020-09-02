@@ -123,8 +123,21 @@ class SpecConfig
   end
 
   # OCSP tests require python and various dependencies.
+  # Assumes an OCSP responder is running on port 8100 (configured externally
+  # to the test suite).
   def ocsp?
     %w(1 true yes).include?(ENV['OCSP']&.downcase)
+  end
+
+  # OCSP tests require python and various dependencies.
+  # When testing OCSP verifier, there cannot be a responder running on
+  # port 8100 or the tests will fail.
+  def ocsp_verifier?
+    %w(1 true yes).include?(ENV['OCSP_VERIFIER']&.downcase)
+  end
+
+  def ocsp_connectivity?
+    %w(1 true yes).include?(ENV['OCSP_CONNECTIVITY']&.downcase)
   end
 
   # Test suite configuration
@@ -227,7 +240,7 @@ EOT
   end
 
   def ocsp_files_dir
-    Pathname.new("#{spec_root}/../.deps/drivers-evergreen-tools/.evergreen/ocsp")
+    Pathname.new("#{spec_root}/../.mod/drivers-evergreen-tools/.evergreen/ocsp")
   end
 
   # TLS certificates & keys

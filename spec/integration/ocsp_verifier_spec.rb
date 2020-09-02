@@ -1,7 +1,7 @@
 require 'lite_spec_helper'
 
 describe Mongo::Socket::OcspVerifier do
-  require_ocsp
+  require_ocsp_verifier
 
   %w(rsa ecdsa).each do |algorithm|
     context "when using #{algorithm} cert" do
