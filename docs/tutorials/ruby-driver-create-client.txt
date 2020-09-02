@@ -38,7 +38,7 @@ to connect to; if no database name is specified, the client will use the
   The hostname ``localhost`` is treated specially by the driver and will
   be resolved to IPv4 addresses only.
 
-To `connect to MongoDB Atlas <https://docs.atlas.mongodb.com/driver-connection/>`,
+To `connect to MongoDB Atlas <https://docs.atlas.mongodb.com/driver-connection/>`_,
 specify the Atlas deployment URI:
 
 .. code-block:: ruby
