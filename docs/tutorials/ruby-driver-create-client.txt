@@ -977,33 +977,83 @@ on the client or passed to individual operations under ``:write_concern``.
 TLS Connections
 ===============
 
-To connect to the MongoDB cluster using TLS, pass the ``ssl`` Ruby option or
-the ``tls`` URI option to the ``Mongo::Client`` constructor. TLS must be
-explicitly requested on the client side when the deployment requires TLS
-connections - there is currently no automatic detection of whether the
-deployment requires TLS.
+To connect to the MongoDB deployment using TLS:
 
-The driver will attempt to verify the server's TLS certificate by default, and
-will abort the connection if this verification fails. In order for this
-verification to succeed, you may need to specify the certificate authority
-that the server certificate is signed with via ``tlsCAFile`` URI option or
-``ssl_ca_cert`` Ruby option. If these options are not given, the driver will
-use the default system root certificate store as the trust anchor; if these
-options are given, the default system root certificate store will not be used.
-To omit TLS certificate verification by the client, which is not
-recommended, specify ``tlsInsecure=true`` URI option or ``ssl_verify: false``
-Ruby option.
+- Enable TLS connections in ``Mongo::Client``.
+- Specify the client TLS certificate.
+- Specify the CA certificate to verify the server's TLS certificate.
 
-By default, MongoDB server will verify the connecting clients' TLS certificates,
-which requires the client to specify a client certificate when connecting.
-This can be accomplished through ``tlsCertificateKeyFile`` URI option which
-takes as the argument the path to a single file containing both the certificate
-and the corresponding private key, or through ``:ssl_cert`` and ``:ssl_key``
-Ruby options. The Ruby options allow passing separace certificate and key files
-to the driver, but also can be pointed at the single PEM file containing both
-the certificate and the corresponding private key. Further information on
-configuring MongoDB server for TLS is available in the `MongoDB manual
-<https://docs.mongodb.com/manual/tutorial/configure-ssl/>`_.
+Enable TLS Connections
+----------------------
+
+TLS must be explicitly requested on the client side when the deployment
+requires TLS connections - there is currently no automatic detection of
+whether the deployment requires TLS.
+
+To request TLS connections, specify the following client options when
+constructing a ``Mongo::Client``:
+
+- The ``:ssl`` Ruby option.
+- The ``tls`` URI option.
+- The ``ssl`` URI option (deprecated).
+
+Specify Client TLS Certificate
+------------------------------
+
+By default, MongoDB server will attempt to verify the connecting clients'
+TLS certificates, which requires the clients to specify their TLS certificates
+when connecting. This can be accomplished via:
+
+- The ``:ssl_cert``/``:ssl_cert_object``/``:ssl_cert_string` and
+  ``:ssl_key``/``:ssl_key_object``/``:ssl_key_string``/``:ssl_key_pass_phrase``
+  Ruby options.
+- The``tlsCertificateKeyFile`` URI option.
+
+When using the Ruby options, the client TLS certificate and the corresponding
+private key may be provided separately. For example, if the certificate is
+stored in ``client.crt`` and the private key is stored in ``client.key``,
+a ``Mongo::Client`` may be constructed as follows:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(["localhost:27017"],
+      ssl: true,
+      ssl_cert: 'path/to/client.crt',
+      ssl_key: 'path/to/client.key',
+      ssl_ca_cert: 'path/to/ca.crt',
+    )
+
+``ssl_cert``, ``ssl_cert_string``, ``ssl_key`` and ``ssl_key_string`` Ruby
+options also permit the certificate and the key to be provided in the same
+file or string, respectively. The files containing both certificate and
+private key frequently have the ``.pem`` extension. When both certificate
+and the private key are provided in the same file or string, both the
+certifcate and the key options must be utilized, as follows:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(["localhost:27017"],
+      ssl: true,
+      ssl_cert: 'path/to/client.pem',
+      ssl_key: 'path/to/client.pem',
+      ssl_ca_cert: 'path/to/ca.crt',
+    )
+
+When using the URI option, the certificate and the key must be stored in a
+file and both must be stored in the same file. Example usage:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(
+      "mongodb://localhost:27017/?tls=true&tlsCertificateKeyFile=path%2fto%2fclient.pem&tlsCertificateKeyFile=path%2fto%2fca.crt")
+
+.. note::
+
+  URI option values must be properly URI escaped. This applies, for example, to
+  slashes in the paths.
+
+Further information on configuring MongoDB server for TLS is available in the
+:manual:`MongoDB manual </tutorial/configure-ssl/>`.
 
 Using Intermediate Certificates
 ```````````````````````````````
@@ -1034,22 +1084,48 @@ so, the intermediate certificates are elevated to trusted status and are
 themselves not verified against the actual CA root. More information on this
 issue is available `here <https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`_.
 
+Specify CA Certificate
+----------------------
+
+The driver will attempt to verify the server's TLS certificate by default, and
+will abort the connection if this verification fails. By default, the driver
+will use the default system root certificate store as the trust anchor.
+To specify the CA certificate that the server's certificate is signed with,
+use:
+
+- The ``:ssl_ca_cert``/``:ssl_ca_cert_string``/``:ssl_ca_cert_object``
+  Ruby options
+- The ``tlsCAFile`` URI option.
+
+If any of these options are given, the server's certificate will be verified
+only against the specified CA certificate and the default system root
+certificate store will not be used.
+
+To not perform server TLS certificate verification, which is not
+recommended, specify the ``ssl_verify: false`` Ruby option or the
+``tlsInsecure=true`` URI option.
+
 Specifying Multiple CA Certificates
 ```````````````````````````````````
 
-``:ssl_ca_cert`` Ruby option and ``tlsCAFile`` URI option can be used with
+The ``:ssl_ca_cert`` Ruby option and ``tlsCAFile`` URI option can be used with
 a file containing multiple certificates. All certificates thus referenced
 will become trust anchors.
 
-``:ssl_ca_cert_object`` option takes an array of certificates, and thus
+The ``:ssl_ca_cert_object`` option takes an array of certificates, and thus
 can also be used to add multiple certificates as certificate authorities.
 
-``:ssl_ca_cert_string`` option supports passing only one CA certificate to the
-driver.
+The ``:ssl_ca_cert_string`` option supports specifying only one CA certificate.
 
-Intermediate certificates should not be specified in files given to any
-of these options, because they would then not be verified against actual
-trusted CA certificates.
+.. warning::
+
+  Intermediate certificates must not be provided in files specified by the
+  CA certificate options. Doing so would elevate the intermediate certificates
+  to the status of root certificates, rather than verifying intermediate
+  certificates against the root certificates.
+  
+  If intermediate certificates need to be used, specify them as part of the
+  client or server TLS certificate files.
 
 
 IPv4/IPv6 Connections
