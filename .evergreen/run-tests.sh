@@ -133,6 +133,7 @@ if test -n "$OCSP_ALGORITHM" || test -n "$OCSP_VERIFIER"; then
   python3 -m pip install asn1crypto oscrypto flask
 fi
 
+ocsp_mock_pid=
 if test -n "$OCSP_ALGORITHM"; then
   if test -z "$server_ca_path"; then
     echo "server_ca_path must have been set" 1>&2
@@ -156,6 +157,7 @@ if test -n "$OCSP_ALGORITHM"; then
   
   # Bind to 0.0.0.0 for Docker
   python3 spec/support/ocsp/ocsp_mock.py $ocsp_args -b 0.0.0.0 -p 8100 &
+  ocsp_mock_pid=$!
 fi
 
 python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
@@ -302,6 +304,10 @@ if test -f tmp/rspec-all.json; then
 fi
 
 kill_jruby
+
+if test -n "$ocsp_mock_pid"; then
+  kill "$ocsp_mock_pid"
+fi
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
