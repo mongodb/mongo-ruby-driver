@@ -8,6 +8,7 @@ describe 'Retryable Writes' do
   require_fail_command
   require_wired_tiger
   require_no_multi_shard
+  require_warning_clean
 
   let(:client) do
     authorized_client.with(
