@@ -134,9 +134,15 @@ You can close a change stream by calling its ``#close`` method:
 Resuming a Change Stream
 ========================
 
-The driver will automatically retry getMore operations on a change stream
-once. Initial aggregation is never retried. In practical terms this means
-that, for example:
+A change stream consists of two types of operations: the initial aggregation
+and ``getMore`` requests to receive the next batch of changes.
+
+The driver will automatically retry each ``getMore`` operation once on
+network errors and when the server returns an error indicating it changed
+state (for example, it is no longer the primary). The driver does not retry
+the initial aggregation.
+
+In practical terms this means that, for example:
 
 - Calling ``collection.watch`` will fail if the cluster does not have
   enough available nodes to satisfy the ``"majority"`` read preference.
@@ -145,26 +151,19 @@ that, for example:
   change stream reads via ``next`` or ``each`` methods will continue
   transparently to the application.
 
-If the cluster loses enough nodes to not be able to satisfy the ``"majority"``
-read preference and does not heal quickly enough, ``next`` and ``each``
-will raise an error. In these cases the application must track, via the
-resume token, which documents from the change stream it has processed and
-create a new change stream object via the ``watch`` call, passing an
-appropriate ``:resume_after`` argument. The ``_id`` key in each change 
-document can be used as a resume token. However, to get the most up-to-date 
-resume token, use the ``resume_token`` method.
-
-.. code-block:: ruby
-
-  token = doc['_id']
-  stream = collection.watch([], resume_after: token)
-
-To watch a collection indefinitely, retrying on all MongoDB errors, using ``next``:
+To indefinitely and reliably watch for changes without losing any changes or
+processing a change more than once, the application must track the resume
+token for the change stream and restart the change stream when it experiences
+extended error conditions that cause the driver's automatic resume to also
+fail. The following code snippet shows an example of iterating a change stream
+indefinitely, retrieving the resume token using the ``resume_token`` change
+stream method and restarting the change stream using the ``:resume_after``
+option on all MongoDB or network errors:
 
 .. code-block:: ruby
 
   token = nil
-  while true
+  loop do
     begin
       stream = collection.watch([], resume_after: token)
       enum = stream.to_enum
@@ -176,3 +175,39 @@ To watch a collection indefinitely, retrying on all MongoDB errors, using ``next
       sleep 1
     end
   end
+
+The above iteration is blocking at the ``enum.next`` call, and does not
+permit resuming processing in the event the Ruby process running this code
+is terminated. The driver also provides the ``try_next`` method which returns
+``nil`` (after a small waiting period) instead of blocking indefinitely when
+there are no changes in the change stream. Using the ``try_next`` method,
+the resume token may be persisted after each ``getMore`` request, even when
+a particular request does not return any changes, such that the resume token
+remains at the top of the oplog and the application has an opportunity to
+persist it should the process handling changes terminates:
+
+.. code-block:: ruby
+
+  token = nil
+  loop do
+    begin
+      stream = collection.watch([], resume_after: token)
+      enum = stream.to_enum
+      doc = enum.try_next
+      if doc
+        process(doc)
+      end
+      token = stream.resume_token
+      # Persist +token+ to support resuming processing upon process restart
+    rescue Mongo::Error
+      sleep 1
+    end
+  end
+
+Note that the resume token should be retrieved from the change stream after
+every ``try_next`` call, even if the call returned no document.
+
+The resume token is also provided in the ``_id`` field of each change stream
+document. Reading the ``_id`` field is not recommended because it may be
+projected out by the application, and because using only the ``_id`` field
+would not advance the resume token when a ``getMore`` returns no documents.
