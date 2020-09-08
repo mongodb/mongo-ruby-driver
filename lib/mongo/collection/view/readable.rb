@@ -90,7 +90,7 @@ module Mongo
         # @param [ Integer ] batch_size The size of each batch of results.
         #
         # @return [ Integer, View ] Either the batch_size value or a
-        # new +View+.
+        #   new +View+.
         #
         # @since 2.0.0
         def batch_size(batch_size = nil)
