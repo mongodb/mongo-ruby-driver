@@ -133,7 +133,7 @@ module Mongo
 
         def validate_options(options, cluster)
           if cluster.servers_list.length > 1
-            raise ArgumentError, 'Cannot instantiate a single topology with more than one server in the cluster'
+            raise ArgumentError, "Cannot instantiate a single topology with more than one server in the cluster: #{cluster.servers_list.map(&:address).map(&:seed).join(', ')}"
           end
 
           super(options, cluster)

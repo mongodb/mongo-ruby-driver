@@ -158,6 +158,8 @@ describe Mongo::Server::Connection do
       end
 
       shared_examples_for 'logs a warning' do
+        require_warning_clean
+
         it 'logs a warning' do
           messages = []
           expect(Mongo::Logger.logger).to receive(:warn) do |msg|
@@ -172,6 +174,8 @@ describe Mongo::Server::Connection do
       end
 
       shared_examples_for 'adds server diagnostics' do
+        require_warning_clean
+
         it 'adds server diagnostics' do
           messages = []
           expect(Mongo::Logger.logger).to receive(:warn) do |msg|

@@ -89,7 +89,7 @@ FROM <%= base_image %>
 
   RUN apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit \
-    bzip2 libgmp-dev python-pip python2.7-dev
+    bzip2 libgmp-dev python-pip python2.7-dev python3-pip
 
 <% else %>
 
@@ -165,6 +165,10 @@ FROM <%= base_image %>
 
   RUN pip --version && \
     pip install mtools-legacy[mlaunch]
+  
+  <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
+    RUN python3 -mpip install asn1crypto oscrypto flask
+  <% end %>
 
 <% end %>
 
@@ -197,8 +201,16 @@ COPY . .
 
 <% if expose? %>
 
+  <% ports = [] %>
+
   <% 0.upto(num_exposed_ports-1) do |i| %>
-    EXPOSE <%= 27017 + i %>
+    <% ports << 27017 + i %>
   <% end %>
+  
+  <% if @env['OCSP_ALGORITHM'] %>
+    <% ports << 8100 %>
+  <% end %>
+  
+  EXPOSE <%= ports.map(&:to_s).join(' ') %>
 
 <% end %>

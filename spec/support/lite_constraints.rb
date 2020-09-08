@@ -146,4 +146,20 @@ module LiteConstraints
       end
     end
   end
+
+  def require_ocsp_verifier
+    before(:all) do
+      if !SpecConfig.instance.ocsp_verifier?
+        skip 'Set OCSP_VERIFIER=1 in environment to run OCSP verifier tests'
+      end
+    end
+  end
+
+  def require_ocsp_connectivity
+    before(:all) do
+      if !SpecConfig.instance.ocsp_connectivity?
+        skip 'Set OCSP_CONNECTIVITY=1 in environment to run OCSP connectivity tests'
+      end
+    end
+  end
 end

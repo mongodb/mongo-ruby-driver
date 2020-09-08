@@ -91,7 +91,7 @@ class Runner
 
   def run_deployment
     run_command(BASE_TEST_COMMAND + tty_arg + extra_env + [
-      '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |grep mongo"`,
+      '-e', %q`TEST_CMD=watch -x bash -c "ps awwxu |egrep 'mongo|ocsp'"`,
       '-e', 'BIND_ALL=true',
     ] + port_forwards + %w(test-driver) + script.split(/\s+/))
   end
@@ -119,11 +119,17 @@ class Runner
   end
 
   def port_forwards
-    (0...num_exposed_ports).map do |i|
+    args = (0...num_exposed_ports).map do |i|
       host_port = @options[:mongo_only] + i
       container_port = 27017 + i
       ['-p', "#{host_port}:#{container_port}"]
     end.flatten
+
+    if @env['OCSP_ALGORITHM'] && !@env['OCSP_VERIFIER']
+      args += %w(-p 8100:8100)
+    end
+
+    args
   end
 
   def run_command(cmd)

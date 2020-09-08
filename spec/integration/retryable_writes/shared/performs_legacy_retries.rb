@@ -2,6 +2,8 @@ require_relative './adds_diagnostics'
 
 module PerformsLegacyRetries
   shared_examples 'it performs legacy retries' do
+    require_warning_clean
+
     context 'for connection error' do
       before do
         client.use('admin').command(

@@ -45,6 +45,24 @@ show_local_instructions() {
   if test -n "$FORK"; then
     params="$params FORK=$FORK"
   fi
+  if test -n "$OCSP_ALGORITHM"; then
+    params="$params OCSP_ALGORITHM=$OCSP_ALGORITHM"
+  fi
+  if test -n "$OCSP_STATUS"; then
+    params="$params OCSP_STATUS=$OCSP_STATUS"
+  fi
+  if test -n "$OCSP_DELEGATE"; then
+    params="$params OCSP_DELEGATE=$OCSP_DELEGATE"
+  fi
+  if test -n "$OCSP_MUST_STAPLE"; then
+    params="$params OCSP_MUST_STAPLE=$OCSP_MUST_STAPLE"
+  fi
+  if test -n "$OCSP_CONNECTIVITY"; then
+    params="$params OCSP_CONNECTIVITY=$OCSP_CONNECTIVITY"
+  fi
+  if test -n "$OCSP_VERIFIER"; then
+    params="$params OCSP_VERIFIER=$OCSP_VERIFIER"
+  fi
   # $0 has the current script being executed which is also the script that
   # was initially invoked EXCEPT for the AWS configurations which use the
   # wrapper script.

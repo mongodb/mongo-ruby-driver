@@ -101,8 +101,18 @@ module Constraints
     end
   end
 
+  # Some tests hardcode the TLS certificates shipped with the driver's
+  # test suite, and will fail when using TLS connections that use other
+  # certificates.
   def require_local_tls
     require_tls
+
+    before(:all) do
+      # TODO This isn't actually the foolproof check
+      if ENV['OCSP_ALGORITHM']
+        skip 'Driver TLS certificate required, OCSP certificates are not acceptable'
+      end
+    end
   end
 
   def require_no_retry_writes
@@ -257,6 +267,19 @@ module Constraints
       end
       unless have_default_port
         skip 'This test requires the test suite to be configured for localhost:27017'
+      end
+    end
+  end
+
+  # Some tests perform assertions on what the driver is logging.
+  # Some test configurations, for example OCSP with unknown response,
+  # produce warnings due to optional checks failing.
+  # This constraint skips tests that issue logging assertions on configurations
+  # that may produce non-test-originated log entries.
+  def require_warning_clean
+    before(:all) do
+      if ENV['OCSP_STATUS'] == 'unknown'
+        skip 'Unknown OCSP status is not global warning-clean'
       end
     end
   end

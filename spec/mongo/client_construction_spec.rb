@@ -496,6 +496,7 @@ describe Mongo::Client do
         end
 
         context 'when the compressor is not supported by the driver' do
+          require_warning_clean
 
           let(:options) do
             { compressors: ['snoopy'] }
