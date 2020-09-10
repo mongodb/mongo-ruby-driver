@@ -101,4 +101,150 @@ describe Mongo::QueryCache do
       expect(Mongo::QueryCache.cache_table.length).to eq(0)
     end
   end
+
+  describe '#set' do
+    let(:caching_cursor) { double("Mongo::CachingCursor") }
+    let(:namespace) { 'db.coll' }
+    let(:selector) { { field: 'value' } }
+    let(:skip) { 5 }
+    let(:sort) { { field: 'asc' } }
+    let(:limit) { 5 }
+    let(:projection) { { field: 1 } }
+    let(:collation) { { locale: 'fr_CA' } }
+    let(:read_concern) { { level: :majority } }
+    let(:read_preference) { { mode: :secondary } }
+
+    let(:options) do
+      {
+        namespace: namespace,
+        selector: selector,
+        skip: skip,
+        sort: sort,
+        limit: limit,
+        projection: projection,
+        collation: collation,
+        read_concern: read_concern,
+        read_preference: read_preference,
+      }
+    end
+
+    it 'stores the cursor at the correct key' do
+      Mongo::QueryCache.set(caching_cursor, options)
+      expect(Mongo::QueryCache.cache_table[[namespace, selector, skip, sort, limit, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+    end
+  end
+
+  describe '#get' do
+    let(:view) { double("Mongo::Collection::View") }
+    let(:result) { double("Mongo::Operation::Result") }
+    let(:server) { double("Mongo::Server") }
+    let(:caching_cursor) { Mongo::CachingCursor.new(view, result, server) }
+
+    let(:options) do
+      {
+        namespace: 'db.coll',
+        selector: { field: 'value' },
+      }
+    end
+
+    before do
+      allow(result).to receive(:cursor_id) { 0 }
+      allow(view).to receive(:limit) { limit }
+    end
+
+    context 'when there is no entry in the cache' do
+      it 'returns nil' do
+        expect(Mongo::QueryCache.get(options)).to be_nil
+      end
+    end
+
+    context 'when there is an entry in the cache' do
+      before do
+        Mongo::QueryCache.set(caching_cursor, caching_cursor_options)
+      end
+
+      context 'when that entry has no limit' do
+        let(:caching_cursor_options) do
+          {
+            namespace: 'db.coll',
+            selector: { field: 'value' },
+          }
+        end
+
+        let(:query_options) do
+          caching_cursor_options.merge(limit: limit)
+        end
+
+        context 'when the query has a limit' do
+          let(:limit) { 5 }
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+          end
+        end
+
+        context 'when the query has no limit' do
+          let(:limit) { nil }
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+          end
+        end
+      end
+
+      context 'when that entry has a limit' do
+        let(:caching_cursor_options) do
+          {
+            namespace: 'db.coll',
+            selector: { field: 'value' },
+            limit: 5,
+          }
+        end
+
+        let(:query_options) do
+          caching_cursor_options.merge(limit: limit)
+        end
+
+        context 'and the new query has a smaller limit' do
+          let(:limit) { 4 }
+
+          before do
+            pending("RUBY-2340")
+          end
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+          end
+        end
+
+        context 'and the new query has a larger limit' do
+          let(:limit) { 6 }
+
+          it 'returns nil' do
+            expect(Mongo::QueryCache.get(query_options)).to be_nil
+          end
+        end
+
+        context 'and the new query has the same limit' do
+          let(:limit) { 5 }
+
+          before do
+            pending("RUBY-2340")
+          end
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+          end
+        end
+
+        context 'and the new query has no limit' do
+          let(:limit) { nil }
+
+          it 'returns nil' do
+            expect(Mongo::QueryCache.get(query_options)).to be_nil
+          end
+        end
+      end
+    end
+  end
 end

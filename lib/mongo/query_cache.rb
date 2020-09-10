@@ -83,6 +83,64 @@ module Mongo
       def clear_cache
         Thread.current["[mongo]:query_cache"] = nil
       end
+
+      # Store a CachingCursor instance in the query cache.
+      #
+      # @param [ Mongo::CachingCursor ] cursor The CachingCursor instance to store.
+      # @param [ Hash ] options The query options that will be used to create
+      #   the cache key. Valid keys are: :namespace, :selector, :skip, :sort,
+      #   :limit, :projection, :collation, :read_concern, and :read_preference.
+      #
+      # @return [ true ] Always true.
+      #
+      # @api private
+      def set(cursor, options = {})
+        key = cache_key(options)
+        QueryCache.cache_table[key] = cursor
+
+        true
+      end
+
+      # For the given query options, determine whether the cache has stored a
+      # CachingCursor that can be used to acquire the correct query results.
+      #
+      # @param [ Hash ] options The query options that will be used to create
+      #   the cache key. Valid keys are: :namespace, :selector, :skip, :sort,
+      #   :limit, :projection, :collation, :read_concern, and :read_preference.
+      #
+      # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
+      #   exists in the query cache, otherwise returns nil.
+      # 
+      # @api private
+      def get(options = {})
+        key = if options[:limit]
+                cache_key(options, omit_limit: true)
+              else
+                cache_key(options)
+              end
+
+        QueryCache.cache_table[key]
+      end
+
+      private
+
+      def cache_key(options, omit_limit: false)
+        unless options[:namespace] && options[:selector]
+          raise ArgumentError.new("Cannot generate cache key without namespace or selector")
+        end
+
+        [
+          options[:namespace],
+          options[:selector],
+          options[:skip],
+          options[:sort],
+          omit_limit ? nil : options[:limit],
+          options[:projection],
+          options[:collation],
+          options[:read_concern],
+          options[:read_preference]
+        ]
+      end
     end
   end
 end
