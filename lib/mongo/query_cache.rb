@@ -119,19 +119,22 @@ module Mongo
         caching_cursor = QueryCache.cache_table[key]
         return nil unless caching_cursor
 
-        # If the new query has a limit
-        if limit
-          if caching_cursor.view.limit.nil? || caching_cursor.view.limit >= limit
-            caching_cursor
-          else
-            nil
-          end
+        caching_cursor_limit = caching_cursor.view.limit
+
+        # There are two scenarios in which a caching cursor could fulfill the
+        # query:
+        # 1. The query has a limit, and the stored cursor has no limit or
+        #    a larger limit.
+        # 2. The query has no limit and the stored cursor has no limit.
+        #
+        # Otherwise, return nil because the stored cursor will not satisfy
+        # the query.
+        if limit && (caching_cursor_limit.nil? || caching_cursor_limit >= limit)
+          caching_cursor
+        elsif limit.nil? && caching_cursor_limit.nil?
+          caching_cursor
         else
-          if caching_cursor.view.limit.nil?
-            caching_cursor
-          else
-            nil
-          end
+          nil
         end
       end
 
