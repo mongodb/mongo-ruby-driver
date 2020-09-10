@@ -249,13 +249,11 @@ describe 'QueryCache' do
       end
     end
 
-    context 'when first query has no limit' do
-
-      before do
-        authorized_collection.find.to_a.count
-      end
-
-      context 'when next query has a limit' do
+    describe 'queries with limits' do
+      context 'when the first query has no limit and the second does' do
+        before do
+          authorized_collection.find.to_a.count
+        end
 
         it 'uses the cache' do
           expect(authorized_collection.find.limit(5).to_a.count).to eq(5)
@@ -264,27 +262,31 @@ describe 'QueryCache' do
           expect(events.length).to eq(1)
         end
       end
-    end
 
-    context 'when first query has a limit' do
-
-      before do
-        authorized_collection.find.limit(2).to_a
-      end
-
-      context 'when next query has a different limit' do
-
-        it 'queries again' do
-          expect(authorized_collection.find.limit(3).to_a.count).to eq(3)
-          expect(events.length).to eq(2)
+      context 'when the first query has a limit' do
+        before do
+          authorized_collection.find.limit(2).to_a
         end
-      end
 
-      context 'when next query does not have a limit' do
+        context 'and the second query has a larger limit' do
+          it 'queries again' do
+            expect(authorized_collection.find.limit(3).to_a.count).to eq(3)
+            expect(events.length).to eq(2)
+          end
+        end
 
-        it 'queries again' do
-          expect(authorized_collection.find.to_a.count).to eq(10)
-          expect(events.length).to eq(2)
+        context 'and the second query has a smaller limit' do
+          it 'uses the cached query' do
+            expect(authorized_collection.find.limit(1).to_a.count).to eq(1)
+            expect(events.length).to eq(1)
+          end
+        end
+
+        context 'and the second query has no limit' do
+          it 'queries again' do
+            expect(authorized_collection.find.to_a.count).to eq(10)
+            expect(events.length).to eq(2)
+          end
         end
       end
     end
