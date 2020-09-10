@@ -39,7 +39,7 @@ module Mongo
           @cursor = select_cursor(session)
 
           if QueryCache.enabled? && @cursor.is_a?(Mongo::CachingCursor)
-            QueryCache.cache_table[cache_key] = @cursor
+            QueryCache.write(@cursor, cache_options)
             range = limit || nil
           end
 
@@ -104,25 +104,22 @@ module Mongo
         end
 
         def cached_cursor
-          if limit
-            key = cache_key(omit_limit: true)
-            cursor = QueryCache.cache_table[key]
-          end
-          cursor || QueryCache.cache_table[cache_key]
+          QueryCache.read(cache_options)
         end
 
-        def cache_key(omit_limit: false)
-          [
-            collection.namespace,
-            selector,
-            skip,
-            sort,
-            omit_limit ? nil : limit,
-            projection,
-            collation,
-            read_concern,
-            read_preference
-          ]
+        def cache_options
+          {
+            namespace: collection.namespace,
+            selector: selector,
+            skip: skip,
+            sort: sort,
+            limit: limit,
+            projection: projection,
+            collation: collation,
+            read_concern: read_concern,
+            read_preference: read_preference
+
+          }
         end
 
         def initial_query_op(server, session)

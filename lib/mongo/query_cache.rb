@@ -83,6 +83,41 @@ module Mongo
       def clear_cache
         Thread.current["[mongo]:query_cache"] = nil
       end
+
+      def write(cursor, options = {})
+        key = cache_key(options)
+        QueryCache.cache_table[key] = cursor
+      end
+
+      def read(options = {})
+        key = if options[:limit]
+                cache_key(options, omit_limit: true)
+              else
+                cache_key(options)
+              end
+
+        QueryCache.cache_table[key]
+      end
+
+      private
+
+      def cache_key(options, omit_limit: false)
+        unless options[:namespace] && options[:selector]
+          raise ArgumentError.new("Cannot generate cache key without namespace or selector")
+        end
+
+        [
+          options[:namespace],
+          options[:selector],
+          options[:skip],
+          options[:sort],
+          omit_limit ? nil : options[:limit],
+          options[:projection],
+          options[:collation],
+          options[:read_concern],
+          options[:read_preference]
+        ]
+      end
     end
   end
 end
