@@ -102,7 +102,7 @@ describe Mongo::QueryCache do
     end
   end
 
-  describe '#write' do
+  describe '#set' do
     let(:caching_cursor) { double("Mongo::CachingCursor") }
     let(:namespace) { 'db.coll' }
     let(:selector) { { field: 'value' } }
@@ -129,12 +129,12 @@ describe Mongo::QueryCache do
     end
 
     it 'stores the cursor at the correct key' do
-      Mongo::QueryCache.write(caching_cursor, options)
+      Mongo::QueryCache.set(caching_cursor, options)
       expect(Mongo::QueryCache.cache_table[[namespace, selector, skip, sort, limit, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
     end
   end
 
-  describe '#read' do
+  describe '#get' do
     let(:view) { double("Mongo::Collection::View") }
     let(:result) { double("Mongo::Operation::Result") }
     let(:server) { double("Mongo::Server") }
@@ -154,13 +154,13 @@ describe Mongo::QueryCache do
 
     context 'when there is no entry in the cache' do
       it 'returns nil' do
-        expect(Mongo::QueryCache.read(options)).to be_nil
+        expect(Mongo::QueryCache.get(options)).to be_nil
       end
     end
 
     context 'when there is an entry in the cache' do
       before do
-        Mongo::QueryCache.write(caching_cursor, caching_cursor_options)
+        Mongo::QueryCache.set(caching_cursor, caching_cursor_options)
       end
 
       context 'when that entry has no limit' do
@@ -179,7 +179,7 @@ describe Mongo::QueryCache do
           let(:limit) { 5 }
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.read(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
           end
         end
 
@@ -187,7 +187,7 @@ describe Mongo::QueryCache do
           let(:limit) { nil }
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.read(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
           end
         end
       end
@@ -213,7 +213,7 @@ describe Mongo::QueryCache do
           end
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.read(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
           end
         end
 
@@ -221,7 +221,7 @@ describe Mongo::QueryCache do
           let(:limit) { 6 }
 
           it 'returns nil' do
-            expect(Mongo::QueryCache.read(query_options)).to be_nil
+            expect(Mongo::QueryCache.get(query_options)).to be_nil
           end
         end
 
@@ -233,7 +233,7 @@ describe Mongo::QueryCache do
           end
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.read(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
           end
         end
 
@@ -241,7 +241,7 @@ describe Mongo::QueryCache do
           let(:limit) { nil }
 
           it 'returns nil' do
-            expect(Mongo::QueryCache.read(query_options)).to be_nil
+            expect(Mongo::QueryCache.get(query_options)).to be_nil
           end
         end
       end

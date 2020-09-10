@@ -39,7 +39,7 @@ module Mongo
           @cursor = select_cursor(session)
 
           if QueryCache.enabled? && @cursor.is_a?(Mongo::CachingCursor)
-            QueryCache.write(@cursor, cache_options)
+            QueryCache.set(@cursor, cache_options)
             range = limit || nil
           end
 
@@ -104,7 +104,7 @@ module Mongo
         end
 
         def cached_cursor
-          QueryCache.read(cache_options)
+          QueryCache.get(cache_options)
         end
 
         def cache_options
