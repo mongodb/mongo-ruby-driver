@@ -92,6 +92,8 @@ module Mongo
       #   :limit, :projection, :collation, :read_concern, and :read_preference.
       #
       # @return [ true ] Always true.
+      #
+      # @api private
       def set(cursor, options = {})
         key = cache_key(options)
         QueryCache.cache_table[key] = cursor
@@ -108,6 +110,8 @@ module Mongo
       #
       # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
       #   exists in the query cache, otherwise returns nil.
+      # 
+      # @api private
       def get(options = {})
         key = if options[:limit]
                 cache_key(options, omit_limit: true)
