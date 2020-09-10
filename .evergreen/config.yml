@@ -1128,7 +1128,7 @@ buildvariants:
       ocsp-algorithm: ecdsa
       ocsp-must-staple: on
       ocsp-delegate: on
-      ruby: ruby-2.7
+      ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
@@ -1141,7 +1141,7 @@ buildvariants:
     matrix_spec:
       ocsp-algorithm: rsa
       ocsp-status: unknown
-      ruby: ruby-2.7
+      ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
@@ -1156,7 +1156,7 @@ buildvariants:
       ocsp-status: '*'
       ocsp-delegate: '*'
       ocsp-connectivity: on
-      ruby: ruby-2.7
+      ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
