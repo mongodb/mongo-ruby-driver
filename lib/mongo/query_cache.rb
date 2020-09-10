@@ -84,11 +84,30 @@ module Mongo
         Thread.current["[mongo]:query_cache"] = nil
       end
 
+      # Store a CachingCursor instance in the query cache.
+      #
+      # @param [ Mongo::CachingCursor ] cursor The CachingCursor instance to store.
+      # @param [ Hash ] options The query options that will be used to create
+      #   the cache key. Valid keys are: :namespace, :selector, :skip, :sort,
+      #   :limit, :projection, :collation, :read_concern, and :read_preference.
+      #
+      # @return [ true ] Always true.
       def write(cursor, options = {})
         key = cache_key(options)
         QueryCache.cache_table[key] = cursor
+
+        true
       end
 
+      # For the given query options, determine whether the cache has stored a
+      # CachingCursor that can be used to acquire the correct query results.
+      #
+      # @param [ Hash ] options The query options that will be used to create
+      #   the cache key. Valid keys are: :namespace, :selector, :skip, :sort,
+      #   :limit, :projection, :collation, :read_concern, and :read_preference.
+      #
+      # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
+      #   exists in the query cache, otherwise returns nil.
       def read(options = {})
         key = if options[:limit]
                 cache_key(options, omit_limit: true)
