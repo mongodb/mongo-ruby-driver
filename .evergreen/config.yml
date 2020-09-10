@@ -1166,7 +1166,9 @@ buildvariants:
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:
-      ocsp-algorithm: '*'
+      # ECDSA does not work on JRuby.
+      # https://github.com/jruby/jruby-openssl/issues/213
+      ocsp-algorithm: rsa
       # We do not perform OCSP verification on JRuby, therefore the revoked
       # configuration fails (connection succeeds due to lack of verification
       # when it is expected to fail).

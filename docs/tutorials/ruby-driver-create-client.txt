@@ -983,6 +983,10 @@ To connect to the MongoDB deployment using TLS:
 - Specify the client TLS certificate.
 - Specify the CA certificate to verify the server's TLS certificate.
 
+.. note::
+
+  When using JRuby, ECDSA certificates are not currently supported.
+
 Enable TLS Connections
 ----------------------
 
