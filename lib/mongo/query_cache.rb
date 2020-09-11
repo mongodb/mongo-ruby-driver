@@ -110,21 +110,37 @@ module Mongo
       #
       # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
       #   exists in the query cache, otherwise returns nil.
-      # 
+      #
       # @api private
       def get(options = {})
-        key = if options[:limit]
-                cache_key(options, omit_limit: true)
-              else
-                cache_key(options)
-              end
+        limit = options[:limit]
+        key = cache_key(options)
 
-        QueryCache.cache_table[key]
+        caching_cursor = QueryCache.cache_table[key]
+        return nil unless caching_cursor
+
+        caching_cursor_limit = caching_cursor.view.limit
+
+        # There are two scenarios in which a caching cursor could fulfill the
+        # query:
+        # 1. The query has a limit, and the stored cursor has no limit or
+        #    a larger limit.
+        # 2. The query has no limit and the stored cursor has no limit.
+        #
+        # Otherwise, return nil because the stored cursor will not satisfy
+        # the query.
+        if limit && (caching_cursor_limit.nil? || caching_cursor_limit >= limit)
+          caching_cursor
+        elsif limit.nil? && caching_cursor_limit.nil?
+          caching_cursor
+        else
+          nil
+        end
       end
 
       private
 
-      def cache_key(options, omit_limit: false)
+      def cache_key(options)
         unless options[:namespace] && options[:selector]
           raise ArgumentError.new("Cannot generate cache key without namespace or selector")
         end
@@ -134,7 +150,6 @@ module Mongo
           options[:selector],
           options[:skip],
           options[:sort],
-          omit_limit ? nil : options[:limit],
           options[:projection],
           options[:collation],
           options[:read_concern],

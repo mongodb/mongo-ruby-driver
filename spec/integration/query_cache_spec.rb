@@ -249,42 +249,91 @@ describe 'QueryCache' do
       end
     end
 
-    context 'when first query has no limit' do
-
-      before do
-        authorized_collection.find.to_a.count
-      end
-
-      context 'when next query has a limit' do
+    describe 'queries with limits' do
+      context 'when the first query has no limit and the second does' do
+        before do
+          authorized_collection.find.to_a.count
+        end
 
         it 'uses the cache' do
-          expect(authorized_collection.find.limit(5).to_a.count).to eq(5)
-          expect(authorized_collection.find.limit(3).to_a.count).to eq(3)
-          expect(authorized_collection.find.to_a.count).to eq(10)
+          results_limit_5 = authorized_collection.find.limit(5).to_a
+          results_limit_3 = authorized_collection.find.limit(3).to_a
+          results_no_limit = authorized_collection.find.to_a
+
+          expect(results_limit_5.length).to eq(5)
+          expect(results_limit_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
+
+          expect(results_limit_3.length).to eq(3)
+          expect(results_limit_3.map { |r| r["test"] }).to eq([0, 1, 2])
+
+          expect(results_no_limit.length).to eq(10)
+          expect(results_no_limit.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
           expect(events.length).to eq(1)
         end
       end
-    end
 
-    context 'when first query has a limit' do
-
-      before do
-        authorized_collection.find.limit(2).to_a
-      end
-
-      context 'when next query has a different limit' do
-
-        it 'queries again' do
-          expect(authorized_collection.find.limit(3).to_a.count).to eq(3)
-          expect(events.length).to eq(2)
+      context 'when the first query has a limit' do
+        before do
+          authorized_collection.find.limit(2).to_a
         end
-      end
 
-      context 'when next query does not have a limit' do
+        context 'and the second query has a larger limit' do
+          let(:results) { authorized_collection.find.limit(3).to_a }
 
-        it 'queries again' do
-          expect(authorized_collection.find.to_a.count).to eq(10)
-          expect(events.length).to eq(2)
+          it 'queries again' do
+            expect(results.length).to eq(3)
+            expect(results.map { |result| result["test"] }).to eq([0, 1, 2])
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'and two queries are performed with a larger limit' do
+          before do
+            if ClusterConfig.instance.fcv_ish <= '3.0'
+              pending 'RUBY-2367 Server versions 3.0 and older execute three' \
+                'queries in this case. This should be resolved when the query' \
+                'cache is modified to cache multi-batch queries.'
+            end
+          end
+
+          it 'uses the query cache for the third query' do
+            results1 = authorized_collection.find.limit(3).to_a
+            results2 = authorized_collection.find.limit(3).to_a
+
+            expect(results1.length).to eq(3)
+            expect(results1.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(results2.length).to eq(3)
+            expect(results2.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'and the second query has a smaller limit' do
+          before do
+            if ClusterConfig.instance.fcv_ish <= '3.0'
+              pending 'RUBY-2367 Server versions 3.0 and older execute two' \
+                'queries in this case. This should be resolved when the query' \
+                'cache is modified to cache multi-batch queries.'
+            end
+          end
+
+          let(:results) { authorized_collection.find.limit(1).to_a }
+
+          it 'uses the cached query' do
+            expect(results.count).to eq(1)
+            expect(results.first["test"]).to eq(0)
+            expect(events.length).to eq(1)
+          end
+        end
+
+        context 'and the second query has no limit' do
+          it 'queries again' do
+            expect(authorized_collection.find.to_a.count).to eq(10)
+            expect(events.length).to eq(2)
+          end
         end
       end
     end

@@ -130,7 +130,7 @@ describe Mongo::QueryCache do
 
     it 'stores the cursor at the correct key' do
       Mongo::QueryCache.set(caching_cursor, options)
-      expect(Mongo::QueryCache.cache_table[[namespace, selector, skip, sort, limit, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+      expect(Mongo::QueryCache.cache_table[[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
     end
   end
 
@@ -149,7 +149,7 @@ describe Mongo::QueryCache do
 
     before do
       allow(result).to receive(:cursor_id) { 0 }
-      allow(view).to receive(:limit) { limit }
+      allow(view).to receive(:limit) { nil }
     end
 
     context 'when there is no entry in the cache' do
@@ -205,12 +205,12 @@ describe Mongo::QueryCache do
           caching_cursor_options.merge(limit: limit)
         end
 
+        before do
+          allow(view).to receive(:limit) { 5 }
+        end
+
         context 'and the new query has a smaller limit' do
           let(:limit) { 4 }
-
-          before do
-            pending("RUBY-2340")
-          end
 
           it 'returns the caching cursor' do
             expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
@@ -227,10 +227,6 @@ describe Mongo::QueryCache do
 
         context 'and the new query has the same limit' do
           let(:limit) { 5 }
-
-          before do
-            pending("RUBY-2340")
-          end
 
           it 'returns the caching cursor' do
             expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)

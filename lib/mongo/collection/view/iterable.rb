@@ -39,7 +39,9 @@ module Mongo
           @cursor = select_cursor(session)
 
           if QueryCache.enabled? && @cursor.is_a?(Mongo::CachingCursor)
-            QueryCache.set(@cursor, cache_options)
+            # No need to store the cursor in the query cache if there is
+            # already a cached cursor stored at this key.
+            QueryCache.set(@cursor, cache_options) unless cached_cursor
             range = limit || nil
           end
 
