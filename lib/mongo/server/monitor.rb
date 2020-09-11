@@ -254,7 +254,7 @@ module Mongo
           end
         rescue => exc
           msg = "Error running ismaster on #{server.address}"
-          Utils.warn_monitor_exception(msg, exc,
+          Utils.warn_bg_exception(msg, exc,
             logger: options[:logger],
             log_prefix: options[:log_prefix],
             bg_error_backtrace: options[:bg_error_backtrace],

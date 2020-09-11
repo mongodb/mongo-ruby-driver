@@ -366,7 +366,7 @@ module Mongo
         ca_cert = socket.peer_cert_chain.last
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert,
-          logger: options[:logger])
+          **Utils.shallow_symbolize_keys(options))
         verifier.verify
       end
 

@@ -34,7 +34,7 @@ module Mongo
     # @option opts [ Logger ] :logger A custom logger to use.
     # @option opts [ String ] :log_prefix A custom log prefix to use when
     #   logging.
-    module_function def warn_monitor_exception(msg, exc, **opts)
+    module_function def warn_bg_exception(msg, exc, **opts)
       bt_excerpt = excerpt_backtrace(exc, **opts)
       logger = LocalLogger.new(**opts)
       logger.log_warn("#{msg}: #{exc.class}: #{exc}#{bt_excerpt}")
