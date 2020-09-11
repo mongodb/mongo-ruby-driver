@@ -265,7 +265,7 @@ describe 'QueryCache' do
 
       context 'when the first query has a limit' do
         before do
-          authorized_collection.find.limit(2).to_a
+          authorized_collection.find({}, limit: 2).to_a
         end
 
         context 'and the second query has a larger limit' do
@@ -276,8 +276,16 @@ describe 'QueryCache' do
         end
 
         context 'and the second query has a smaller limit' do
+          before do
+            if ClusterConfig.instance.fcv_ish <= '3.0'
+              pending 'RUBY-2367 Server versions 3.0 and older execute two' \
+                'queries in this case. This should be resolved when the query' \
+                'cache is modified to cache multi-batch queries.'
+            end
+          end
+
           it 'uses the cached query' do
-            expect(authorized_collection.find.limit(1).to_a.count).to eq(1)
+            expect(authorized_collection.find({}, limit: 1).to_a.count).to eq(1)
             expect(events.length).to eq(1)
           end
         end
