@@ -289,6 +289,14 @@ describe 'QueryCache' do
         end
 
         context 'and two queries are performed with a larger limit' do
+          before do
+            if ClusterConfig.instance.fcv_ish <= '3.0'
+              pending 'RUBY-2367 Server versions 3.0 and older execute three' \
+                'queries in this case. This should be resolved when the query' \
+                'cache is modified to cache multi-batch queries.'
+            end
+          end
+
           it 'uses the query cache for the third query' do
             results1 = authorized_collection.find.limit(3).to_a
             results2 = authorized_collection.find.limit(3).to_a
