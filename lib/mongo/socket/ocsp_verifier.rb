@@ -120,7 +120,42 @@ module Mongo
                 return false
               end
 
-              resp = resp.find_response(cert_id)
+              if req.check_nonce(resp) <= 0
+                errors << "OCSP response from #{uri} included invalid nonce"
+                return false
+              end
+
+              if resp.respond_to?(:find_response)
+                # Ruby 2.4+
+                resp = resp.find_response(cert_id)
+              else
+                # Ruby 2.3
+                found = nil
+                resp.status.each do |_cert_id, cert_status, revocation_reason, revocation_time, this_update, next_update, extensions|
+                  if _cert_id.cmp(cert_id)
+                    found = OpenStruct.new(
+                      cert_status: cert_status,
+                      certid: _cert_id,
+                      next_update: next_update,
+                      this_update: this_update,
+                      revocation_reason: revocation_reason,
+                      revocation_time: revocation_time,
+                      extensions: extensions,
+                    )
+                    class << found
+                      # Unlike the stdlib method, this one doesn't accept
+                      # any arguments.
+                      def check_validity
+                        now = Time.now
+                        this_update <= now && next_update >= now
+                      end
+                    end
+                    break
+                  end
+                end
+                resp = found
+              end
+
               unless resp
                 errors << "OCSP response from #{uri} did not include information about the requested certificate"
                 return false
