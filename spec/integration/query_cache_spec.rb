@@ -288,6 +288,21 @@ describe 'QueryCache' do
           end
         end
 
+        context 'and two queries are performed with a larger limit' do
+          it 'uses the query cache for the third query' do
+            results1 = authorized_collection.find.limit(3).to_a
+            results2 = authorized_collection.find.limit(3).to_a
+
+            expect(results1.length).to eq(3)
+            expect(results1.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(results2.length).to eq(3)
+            expect(results2.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(events.length).to eq(2)
+          end
+        end
+
         context 'and the second query has a smaller limit' do
           before do
             if ClusterConfig.instance.fcv_ish <= '3.0'
