@@ -516,6 +516,7 @@ describe 'QueryCache' do
 
   describe 'in transactions' do
     min_server_fcv '4.0'
+    require_topology :replica_set
 
     let(:collection) { authorized_client['test'] }
 
