@@ -256,21 +256,34 @@ describe 'QueryCache' do
         end
 
         it 'uses the cache' do
-          expect(authorized_collection.find.limit(5).to_a.count).to eq(5)
-          expect(authorized_collection.find.limit(3).to_a.count).to eq(3)
-          expect(authorized_collection.find.to_a.count).to eq(10)
+          results_limit_5 = authorized_collection.find.limit(5).to_a
+          results_limit_3 = authorized_collection.find.limit(3).to_a
+          results_no_limit = authorized_collection.find.to_a
+
+          expect(results_limit_5.length).to eq(5)
+          expect(results_limit_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
+
+          expect(results_limit_3.length).to eq(3)
+          expect(results_limit_3.map { |r| r["test"] }).to eq([0, 1, 2])
+
+          expect(results_no_limit.length).to eq(10)
+          expect(results_no_limit.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
           expect(events.length).to eq(1)
         end
       end
 
       context 'when the first query has a limit' do
         before do
-          authorized_collection.find({}, limit: 2).to_a
+          authorized_collection.find.limit(2).to_a
         end
 
         context 'and the second query has a larger limit' do
+          let(:results) { authorized_collection.find.limit(3).to_a }
+
           it 'queries again' do
-            expect(authorized_collection.find.limit(3).to_a.count).to eq(3)
+            expect(results.length).to eq(3)
+            expect(results.map { |result| result["test"] }).to eq([0, 1, 2])
             expect(events.length).to eq(2)
           end
         end
@@ -284,8 +297,11 @@ describe 'QueryCache' do
             end
           end
 
+          let(:results) { authorized_collection.find.limit(1).to_a }
+
           it 'uses the cached query' do
-            expect(authorized_collection.find({}, limit: 1).to_a.count).to eq(1)
+            expect(results.count).to eq(1)
+            expect(results.first["test"]).to eq(0)
             expect(events.length).to eq(1)
           end
         end
