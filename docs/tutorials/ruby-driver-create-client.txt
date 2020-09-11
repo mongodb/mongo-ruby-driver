@@ -983,6 +983,10 @@ To connect to the MongoDB deployment using TLS:
 - Specify the client TLS certificate.
 - Specify the CA certificate to verify the server's TLS certificate.
 
+.. note::
+
+  When using JRuby, ECDSA certificates are not currently supported.
+
 Enable TLS Connections
 ----------------------
 
@@ -1126,6 +1130,22 @@ The ``:ssl_ca_cert_string`` option supports specifying only one CA certificate.
   
   If intermediate certificates need to be used, specify them as part of the
   client or server TLS certificate files.
+
+OCSP Verification
+-----------------
+
+If the certificate provided by the server contains an OCSP endpoint URI,
+the driver will issue an OCSP request to the specified endpoint to verify the
+validity of the certificate.
+
+The OCSP endpoint check may be disabled by setting the
+``:ssl_verify_ocsp_endpoint`` Ruby option to ``false`` or by setting the
+``tlsDisableOCSPEndpointCheck`` URI option to ``true`` when creating a client.
+
+.. note::
+
+  OCSP endpoint checking is not currently performed when running on JRuby,
+  since JRuby does not correctly expose the OCSP endpoint URI.
 
 
 IPv4/IPv6 Connections

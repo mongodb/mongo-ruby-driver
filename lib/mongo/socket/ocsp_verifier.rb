@@ -51,7 +51,7 @@ module Mongo
         ext = cert.extensions.detect do |ext|
           ext.oid == 'authorityInfoAccess'
         end
-        return unless ext
+        return false unless ext
 
         # Our test certificates have multiple OCSP URIs.
         uris = ext.value.split("\n").select do |line|
@@ -59,7 +59,7 @@ module Mongo
         end.map do |line|
           line.split(':', 2).last
         end
-        return if uris.empty?
+        return false if uris.empty?
 
         # This synchronized array contains definitive pass/fail responses
         # obtained from the responders. We'll take the first one but due to
@@ -100,12 +100,12 @@ module Mongo
                 end
               rescue IOError, SystemCallError => e
                 errors << "OCSP request to #{uri} failed: #{e.class}: #{e}"
-                return
+                return false
               end
 
               if http_response.code != '200'
                 errors << "OCSP request to #{uri} failed with HTTP status code #{http_response.code}: #{http_response.body}"
-                return
+                return false
               end
 
               resp = OpenSSL::OCSP::Response.new(http_response.body).basic
@@ -117,18 +117,18 @@ module Mongo
                 # Ruby's OpenSSL binding discards error information - see
                 # https://github.com/ruby/openssl/issues/395
                 errors << "OCSP response from #{uri} failed signature verification; set `OpenSSL.debug = true` to see why"
-                return
+                return false
               end
 
               resp = resp.find_response(cert_id)
               unless resp
                 errors << "OCSP response from #{uri} did not include information about the requested certificate"
-                return
+                return false
               end
 
               unless resp.check_validity
                 errors << "OCSP response from #{uri} was invalid: this_update was in the future or next_update time has passed"
-                return
+                return false
               end
 
               unless [
@@ -136,7 +136,7 @@ module Mongo
                 OpenSSL::OCSP::V_CERTSTATUS_REVOKED,
               ].include?(resp.cert_status)
                 errors << "OCSP response from #{uri} had a non-definitive status: #{resp.cert_status}"
-                return
+                return false
               end
 
               queue << [uri, resp]

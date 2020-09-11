@@ -1156,7 +1156,27 @@ buildvariants:
       ocsp-status: '*'
       ocsp-delegate: '*'
       ocsp-connectivity: on
-      ruby: [ruby-2.7, jruby-9.2]
+      ruby: ruby-2.7
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+
+  - matrix_name: ocsp-connectivity-jruby
+    matrix_spec:
+      # ECDSA does not work on JRuby.
+      # https://github.com/jruby/jruby-openssl/issues/213
+      ocsp-algorithm: rsa
+      # We do not perform OCSP verification on JRuby, therefore the revoked
+      # configuration fails (connection succeeds due to lack of verification
+      # when it is expected to fail).
+      # https://github.com/jruby/jruby-openssl/issues/210
+      ocsp-status: [valid, unknown]
+      ocsp-delegate: '*'
+      ocsp-connectivity: on
+      ruby: jruby-9.2
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
