@@ -98,7 +98,7 @@ module CommonShortcuts
     end
 
     def with_ocsp_mock(ca_file_path, responder_cert_path, responder_key_path,
-      fault = nil
+      fault: nil, port: 8100
     )
       around do |example|
         args = [
@@ -106,7 +106,7 @@ module CommonShortcuts
           '--ca_file', ca_file_path.to_s,
           '--ocsp_responder_cert', responder_cert_path.to_s,
           '--ocsp_responder_key', responder_key_path.to_s,
-          '-p', '8100',
+          '-p', port.to_s,
         ]
         if SpecConfig.instance.client_debug?
           # Use when debugging - tests run faster without -v.

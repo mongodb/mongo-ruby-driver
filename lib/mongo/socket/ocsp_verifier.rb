@@ -90,22 +90,41 @@ module Mongo
         threads = uris.map do |uri|
           # Explicit lambda so that we can return early in the worker thread,
           # to keep the nesting level down.
+          original_uri = uri
           Thread.new &-> do
             begin
-              http_response = begin
-                uri = URI(uri)
-                Net::HTTP.start(uri.hostname, uri.port) do |http|
-                  http.post(uri.path, serialized_req,
-                    'content-type' => 'application/ocsp-request')
+              redirect_count = 0
+              http_response = nil
+              loop do
+                http_response = begin
+                  uri = URI(uri)
+                  Net::HTTP.start(uri.hostname, uri.port) do |http|
+                    http.post(uri.path, serialized_req,
+                      'content-type' => 'application/ocsp-request')
+                  end
+                rescue IOError, SystemCallError => e
+                  errors << "OCSP request to #{report_uri(original_uri, uri)} failed: #{e.class}: #{e}"
+                  return false
                 end
-              rescue IOError, SystemCallError => e
-                errors << "OCSP request to #{uri} failed: #{e.class}: #{e}"
-                return false
-              end
 
-              if http_response.code != '200'
-                errors << "OCSP request to #{uri} failed with HTTP status code #{http_response.code}: #{http_response.body}"
-                return false
+                code = http_response.code.to_i
+                if (300..399).include?(code)
+                  redirected_uri = http_response.header['location']
+                  uri = ::URI.join(uri, redirected_uri)
+                  redirect_count += 1
+                  if redirect_count > 5
+                    errors << "OCSP request to #{report_uri(original_uri, uri)} failed: too many redirects (6)"
+                    return false
+                  end
+                  next
+                end
+
+                if http_response.code != '200'
+                  errors << "OCSP request to #{report_uri(original_uri, uri)} failed with HTTP status code #{http_response.code}: #{http_response.body}"
+                  return false
+                end
+
+                break
               end
 
               resp = OpenSSL::OCSP::Response.new(http_response.body).basic
@@ -116,12 +135,12 @@ module Mongo
               unless resp.verify([ca_cert], store)
                 # Ruby's OpenSSL binding discards error information - see
                 # https://github.com/ruby/openssl/issues/395
-                errors << "OCSP response from #{uri} failed signature verification; set `OpenSSL.debug = true` to see why"
+                errors << "OCSP response from #{report_uri(original_uri, uri)} failed signature verification; set `OpenSSL.debug = true` to see why"
                 return false
               end
 
               if req.check_nonce(resp) <= 0
-                errors << "OCSP response from #{uri} included invalid nonce"
+                errors << "OCSP response from #{report_uri(original_uri, uri)} included invalid nonce"
                 return false
               end
 
@@ -157,12 +176,12 @@ module Mongo
               end
 
               unless resp
-                errors << "OCSP response from #{uri} did not include information about the requested certificate"
+                errors << "OCSP response from #{report_uri(original_uri, uri)} did not include information about the requested certificate"
                 return false
               end
 
               unless resp.check_validity
-                errors << "OCSP response from #{uri} was invalid: this_update was in the future or next_update time has passed"
+                errors << "OCSP response from #{report_uri(original_uri, uri)} was invalid: this_update was in the future or next_update time has passed"
                 return false
               end
 
@@ -170,11 +189,12 @@ module Mongo
                 OpenSSL::OCSP::V_CERTSTATUS_GOOD,
                 OpenSSL::OCSP::V_CERTSTATUS_REVOKED,
               ].include?(resp.cert_status)
-                errors << "OCSP response from #{uri} had a non-definitive status: #{resp.cert_status}"
+                errors << "OCSP response from #{report_uri(original_uri, uri)} had a non-definitive status: #{resp.cert_status}"
                 return false
               end
 
-              queue << [uri, resp]
+              # Note this returns the redirected URI
+              queue << [uri, original_uri, resp]
             ensure
               outstanding_requests_lock.synchronize do
                 outstanding_requests -= 1
@@ -198,9 +218,14 @@ module Mongo
         threads.map(&:join)
 
         if resp
-          uri, status = resp
+          uri, original_uri, status = resp
           if status.cert_status == OpenSSL::OCSP::V_CERTSTATUS_REVOKED
-            raise Error::ServerCertificateRevoked, "TLS certificate of '#{host_name}' has been revoked according to '#{uri}' for reason '#{status.revocation_reason}' at '#{status.revocation_time}'"
+            if uri == original_uri
+              redirect = ''
+            else
+              redirect = " (redirected from #{original_uri})"
+            end
+            raise Error::ServerCertificateRevoked, "TLS certificate of '#{host_name}' has been revoked according to '#{uri}'#{redirect} for reason '#{status.revocation_reason}' at '#{status.revocation_time}'"
           end
           true
         else
@@ -215,6 +240,14 @@ module Mongo
           end
           log_warn("TLS certificate of '#{host_name}' could not be definitively verified via OCSP: #{msg}")
           false
+        end
+      end
+
+      def report_uri(original_uri, uri)
+        if URI(uri) == URI(original_uri)
+          uri
+        else
+          "#{original_uri} (redirected to #{uri})"
         end
       end
     end

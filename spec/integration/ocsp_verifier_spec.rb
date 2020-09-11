@@ -1,4 +1,5 @@
 require 'lite_spec_helper'
+require 'webrick'
 
 describe Mongo::Socket::OcspVerifier do
   require_ocsp_verifier
@@ -31,7 +32,9 @@ describe Mongo::Socket::OcspVerifier do
       it 'raises an exception' do
         lambda do
           verifier.verify
-        end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:8100/status',)
+        # Redirect tests receive responses from port 8101,
+        # tests without redirects receive responses from port 8100.
+        end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
       end
 
       it 'does not wait for the timeout' do
@@ -61,17 +64,23 @@ describe Mongo::Socket::OcspVerifier do
     end
   end
 
+  shared_context 'verifier' do |opts|
+    algorithm = opts[:algorithm]
+
+    let(:cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/server.pem") }
+    let(:ca_cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem") }
+
+    let(:cert) { OpenSSL::X509::Certificate.new(File.read(cert_path)) }
+    let(:ca_cert) { OpenSSL::X509::Certificate.new(File.read(ca_cert_path)) }
+
+    let(:verifier) do
+      described_class.new('foo', cert, ca_cert, timeout: 3)
+    end
+  end
+
   %w(rsa ecdsa).each do |algorithm|
     context "when using #{algorithm} cert" do
-      let(:cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/server.pem") }
-      let(:ca_cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem") }
-
-      let(:cert) { OpenSSL::X509::Certificate.new(File.read(cert_path)) }
-      let(:ca_cert) { OpenSSL::X509::Certificate.new(File.read(ca_cert_path)) }
-
-      let(:verifier) do
-        described_class.new('foo', cert, ca_cert, timeout: 3)
-      end
+      include_context 'verifier', algorithm: algorithm
 
       context 'responder not responding' do
         include_examples 'does not verify'
@@ -113,7 +122,7 @@ describe Mongo::Socket::OcspVerifier do
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
-              'revoked'
+              fault: 'revoked'
             )
 
             include_examples 'fails verification'
@@ -124,7 +133,7 @@ describe Mongo::Socket::OcspVerifier do
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
-              'unknown',
+              fault: 'unknown',
             )
 
             include_examples 'does not verify'
@@ -137,6 +146,107 @@ describe Mongo::Socket::OcspVerifier do
           end
         end
       end
+    end
+  end
+
+  context 'when OCSP responder redirects' do
+    algorithm = 'rsa'
+    responder_cert_file_name = 'ca'
+    let(:algorithm) { 'rsa' }
+    let(:responder_cert_file_name) { 'ca' }
+
+    context 'one time' do
+
+      around do |example|
+        server = WEBrick::HTTPServer.new(Port: 8100)
+        server.mount_proc '/' do |req, res|
+          res.status = 303
+          res['locAtion'] = "http://localhost:8101#{req.path}"
+          res.body = "See http://localhost:8101#{req.path}"
+        end
+        Thread.new { server.start }
+        begin
+          example.run
+        ensure
+          server.shutdown
+        end
+      end
+
+      include_context 'verifier', algorithm: algorithm
+
+      context 'good response' do
+        with_ocsp_mock(
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
+          port: 8101,
+        )
+
+        include_examples 'verifies'
+
+        it 'does not wait for the timeout' do
+          lambda do
+            verifier.verify
+          end.should take_shorter_than 3
+        end
+      end
+
+      context 'revoked response' do
+        with_ocsp_mock(
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
+          fault: 'revoked',
+          port: 8101,
+        )
+
+        include_examples 'fails verification'
+      end
+
+      context 'unknown response' do
+        with_ocsp_mock(
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
+          fault: 'unknown',
+          port: 8101,
+        )
+
+        include_examples 'does not verify'
+
+        it 'does not wait for the timeout' do
+          lambda do
+            verifier.verify
+          end.should take_shorter_than 3
+        end
+      end
+    end
+
+    context 'infinitely' do
+      with_ocsp_mock(
+        SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
+        SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
+        SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
+        port: 8101,
+      )
+
+      around do |example|
+        server = WEBrick::HTTPServer.new(Port: 8100)
+        server.mount_proc '/' do |req, res|
+          res.status = 303
+          res['locAtion'] = req.path
+          res.body = "See #{req.path} indefinitely"
+        end
+        Thread.new { server.start }
+        begin
+          example.run
+        ensure
+          server.shutdown
+        end
+      end
+
+      include_context 'verifier', algorithm: algorithm
+      include_examples 'does not verify'
     end
   end
 end
