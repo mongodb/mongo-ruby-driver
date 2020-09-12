@@ -15,15 +15,15 @@
 module Mongo
   class Socket
 
-    # Wrapper for SSL sockets.
+    # Wrapper for TLS sockets.
     #
     # @since 2.0.0
     class SSL < Socket
       include OpenSSL
 
-      # Initializes a new SSL socket.
+      # Initializes a new TLS socket.
       #
-      # @example Create the SSL socket.
+      # @example Create the TLS socket.
       #   SSL.new('::1', 27017, 30)
       #
       # @param [ String ] host The hostname or IP address.
@@ -113,7 +113,7 @@ module Mongo
         end
       end
 
-      # @return [ SSLContext ] context The ssl context.
+      # @return [ SSLContext ] context The TLS context.
       attr_reader :context
 
       # @return [ String ] host The host to connect to.
@@ -352,7 +352,7 @@ module Mongo
       def verify_certificate!(socket)
         if verify_hostname?
           unless OpenSSL::SSL.verify_certificate_identity(socket.peer_cert, host_name)
-            raise Error::SocketError, 'SSL handshake failed due to a hostname mismatch.'
+            raise Error::SocketError, 'TLS handshake failed due to a hostname mismatch.'
           end
         end
       end
@@ -371,7 +371,7 @@ module Mongo
       end
 
       def read_buffer_size
-        # Buffer size for SSL reads.
+        # Buffer size for TLS reads.
         # Capped at 16k due to https://linux.die.net/man/3/ssl_read
         16384
       end

@@ -26,10 +26,10 @@ module Mongo
   class Socket
     include ::Socket::Constants
 
-    # Error message for SSL related exceptions.
+    # Error message for TLS related exceptions.
     #
     # @since 2.0.0
-    SSL_ERROR = 'MongoDB may not be configured with SSL support'.freeze
+    SSL_ERROR = 'MongoDB may not be configured with TLS support'.freeze
 
     # Error message for timeouts on socket calls.
     #
@@ -130,7 +130,7 @@ module Mongo
       sock_arr = [ @socket ]
       if Kernel::select(sock_arr, nil, sock_arr, 0)
         # The eof? call is supposed to return immediately since select
-        # indicated the socket is readable. However, if @socket is an SSL
+        # indicated the socket is readable. However, if @socket is a TLS
         # socket, eof? can block anyway - see RUBY-2140.
         begin
           Timeout.timeout(0.1) do
@@ -343,7 +343,7 @@ module Mongo
     end
 
     def read_buffer_size
-      # Buffer size for non-SSL reads
+      # Buffer size for non-TLS reads
       # 64kb
       65536
     end
