@@ -73,8 +73,14 @@ describe Mongo::Socket::OcspVerifier do
     let(:cert) { OpenSSL::X509::Certificate.new(File.read(cert_path)) }
     let(:ca_cert) { OpenSSL::X509::Certificate.new(File.read(ca_cert_path)) }
 
+    let(:cert_store) do
+      OpenSSL::X509::Store.new.tap do |store|
+        store.add_cert(ca_cert)
+      end
+    end
+
     let(:verifier) do
-      described_class.new('foo', cert, ca_cert, timeout: 3)
+      described_class.new('foo', cert, ca_cert, cert_store, timeout: 3)
     end
   end
 
