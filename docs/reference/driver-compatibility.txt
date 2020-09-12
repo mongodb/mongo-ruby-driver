@@ -462,7 +462,8 @@ Atlas Compatibility
 
 `Driver version 2.6.1 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.1>`_
 or higher is recommended when using MongoDB Atlas, as this version has
-significant SSL performance improvements.
+significant performance improvements when TLS connections are used, and all
+Atlas connections use TLS.
 
 When running on JRuby and connecting to Atlas Free Tier,
 `driver version 2.6.4 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.4>`_
@@ -487,8 +488,8 @@ the driver.
      - |checkmark|
 
 
-JRuby Kerberos
-==============
+JRuby and Kerberos Authentication
+=================================
 
 If the ``mongo_kerberos`` gem is used for Kerberos authentication with JRuby, the the JVM system
 property "sun.security.jgss.native" to will be set to "true" in order to facilitate the use of
@@ -498,3 +499,12 @@ obtaining Kerberos credentials as well.
 
 .. include:: /includes/unicode-checkmark.rst
 .. include:: /includes/unicode-nbsp.rst
+
+
+JRuby and TLS Connections
+=========================
+
+Due to JRuby limitations:
+
+- ECDSA server certificates are not supported.
+- OCSP endpoint checking is not performed.

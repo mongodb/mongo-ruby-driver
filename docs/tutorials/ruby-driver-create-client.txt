@@ -496,27 +496,30 @@ Ruby Options
      - none
 
    * - ``:ssl``
-     - Tell the client to connect to the servers via SSL.
+     - Tell the client to connect to the servers via TLS.
      - ``Boolean``
      - false
 
    * - ``:ssl_ca_cert``
-     - The file path containing concatenated certificate authority certificates used to validate certs
-       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
+     - The file path containing concatenated certificate authority certificates
+       used to validate certs passed from the other end of the connection.
+       One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
        (in order of priority) is required for :ssl_verify.
      - ``String``
      - none
 
    * - ``:ssl_ca_cert_object``
-     - An array of OpenSSL::X509::Certificate representing the certificate authority certificates used to
-       validate certs passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
+     - An array of OpenSSL::X509::Certificate representing the certificate
+       authority certificates used to validate certs passed from the other end
+       of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
        :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
      - ``Array< OpenSSL::X509::Certificate >``
      - none
 
    * - ``:ssl_ca_cert_string``
-     - A string containing concatenated certificate authority certificates used to validate certs
-       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
+     - A string containing concatenated certificate authority certificates
+       used to validate certs passed from the other end of the connection.
+       One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
        (in order of priority) is required for :ssl_verify.
      - ``String``
      - none
@@ -578,8 +581,9 @@ Ruby Options
      - none
 
    * - ``:ssl_key_string``
-     - A string containing the PEM-encoded private key used to identify the connection against MongoDB.
-       This parameter, if present, takes precedence over the value of option :ssl_key_object.
+     - A string containing the PEM-encoded private key used to identify the
+       connection against MongoDB. This parameter, if present, takes precedence
+       over the value of option :ssl_key_object.
      - ``String``
      - none
 
@@ -594,14 +598,16 @@ Ruby Options
      - true
 
    * - ``:ssl_verify_certificate``
-     - Whether to perform peer certificate validation. This setting overrides :ssl_verify with
-       respect to whether certificate validation is performed.
+     - Whether to perform peer certificate validation. This setting overrides
+       the ``:ssl_verify`` setting with respect to whether certificate
+       validation is performed.
      - ``Boolean``
      - true
 
    * - ``:ssl_verify_hostname``
      - Whether to perform peer hostname validation. This setting overrides
-      :ssl_verify with respect to whether hostname validation is performed.
+       the ``:ssl_verify`` setting with respect to whether hostname validation
+       is performed.
      - ``Boolean``
      - true
 
@@ -811,18 +817,18 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - tlsAllowInvalidCertificates=Boolean
      - ``:ssl_verify_certificate => boolean``
 
-       Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
-       should be disabled and ``ssl_verify_certificate`` uses ``false`` to signify that
-       verification should be disabled, the boolean is inverted before being used to set
-       ``ssl_verify_certificate``.
+       Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that
+       verification should be disabled and ``ssl_verify_certificate`` uses
+       ``false`` to signify that verification should be disabled, the boolean
+       is inverted before being used to set ``ssl_verify_certificate``.
 
    * - tlsAllowInvalidHostnames=Boolean
      - ``:ssl_verify_hostname => boolean``
 
-       Because ``tlsAllowInvalidHostnames`` uses ``true`` to signify that verification
-       should be disabled and ``ssl_verify_hostname`` uses ``false`` to signify that
-       verification should be disabled, the boolean is inverted before being used to set
-       ``ssl_verify_hostname``.
+       Because ``tlsAllowInvalidHostnames`` uses ``true`` to signify that
+       verification should be disabled and ``ssl_verify_hostname`` uses
+       ``false`` to signify that verification should be disabled, the boolean
+       is inverted before being used to set ``ssl_verify_hostname``.
 
    * - tlsCAFile=String
      - ``:ssl_ca_cert => String``
@@ -847,9 +853,10 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - tlsInsecure=Boolean
      - ``:ssl_verify => boolean``
 
-       Because tlsInsecure uses ``true`` to signify that verification should be disabled and
-       ``ssl_verify`` uses ``false`` to signify that verification should be disabled, the boolean
-       is inverted before being used to set ``ssl_verify``.
+       Because tlsInsecure uses ``true`` to signify that verification should
+       be disabled and ``ssl_verify`` uses ``false`` to signify that
+       verification should be disabled, the boolean is inverted before being
+       used to set ``ssl_verify``.
 
    * - w=Integer|String
      - ``{ :write_concern => { :w => Integer|String }}``
@@ -986,6 +993,20 @@ To connect to the MongoDB deployment using TLS:
 .. note::
 
   When using JRuby, ECDSA certificates are not currently supported.
+
+TLS vs SSL Option Names
+-----------------------
+
+All MongoDB server versions supported by the Ruby driver (2.6 and higher)
+only implement TLS. 2.6 and higher servers do not use SSL.
+
+For historical reasons, the Ruby option names pertaining to TLS configuration
+use the ``ssl`` rather than the ``tls`` prefix. The next major version of
+the Ruby driver (3.0) will use the ``tls`` prefix for Ruby option names.
+
+The URI option names use the ``tls`` prefix, with one exception: there is
+a ``ssl`` URI option that is deprecated and equivalent to the ``tls`` URI
+option.
 
 Enable TLS Connections
 ----------------------
