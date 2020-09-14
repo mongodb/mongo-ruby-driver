@@ -524,7 +524,7 @@ describe 'QueryCache' do
     end
 
     before do
-      collection.delete_many
+      Utils.create_collection(authorized_client, 'test')
     end
 
     context 'with convenient API' do
