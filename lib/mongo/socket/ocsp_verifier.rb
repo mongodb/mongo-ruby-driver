@@ -19,22 +19,44 @@ end
 module Mongo
   class Socket
 
-    # https://ruby-doc.org/stdlib/libdoc/openssl/rdoc/OpenSSL/OCSP.html
+    # OCSP endpoint verifier.
+    #
+    # After a TLS connection is established, this verifier inspects the
+    # certificate presented by the server, and if the certificate contains
+    # an OCSP URI, performs the OCSP status request to the specified URI
+    # (following up to 5 redirects) to verify the certificate status.
+    #
+    # @see https://ruby-doc.org/stdlib/libdoc/openssl/rdoc/OpenSSL/OCSP.html
     #
     # @api private
     class OcspVerifier
       include Loggable
 
-      def initialize(host_name, cert, ca_cert, **opts)
+      # @param [ String ] host_name The host name being verified, for
+      #   diagnostic output.
+      # @param [ OpenSSL::X509::Certificate ] cert The certificate presented by
+      #   the server at host_name.
+      # @param [ OpenSSL::X509::Certificate ] ca_cert The CA certificate
+      #   presented by the server or resolved locally from the server
+      #   certificate.
+      # @param [ OpenSSL::X509::Store ] cert_store The certificate store to
+      #   use for verifying OCSP response. This should be the same store as
+      #   used in SSLContext used with the SSLSocket that we are verifying the
+      #   certificate for. This must NOT be the CA certificate provided by
+      #   the server (i.e. anything taken out of peer_cert) - otherwise the
+      #   server would dictate which CA authorities the client trusts.
+      def initialize(host_name, cert, ca_cert, cert_store, **opts)
         @host_name = host_name
         @cert = cert
         @ca_cert = ca_cert
+        @cert_store = cert_store
         @options = opts
       end
 
       attr_reader :host_name
       attr_reader :cert
       attr_reader :ca_cert
+      attr_reader :cert_store
       attr_reader :options
 
       def timeout
@@ -132,18 +154,14 @@ module Mongo
               end
 
               resp = OpenSSL::OCSP::Response.new(http_response.body).basic
-              store = OpenSSL::X509::Store.new
-              # The CA certificate needs to be both in the store and given
-              # to the verify call.
-              store.add_cert(ca_cert)
-              unless resp.verify([ca_cert], store)
+              unless resp.verify([ca_cert], cert_store)
                 # Ruby's OpenSSL binding discards error information - see
                 # https://github.com/ruby/openssl/issues/395
                 errors << "OCSP response from #{report_uri(original_uri, uri)} failed signature verification; set `OpenSSL.debug = true` to see why"
                 return false
               end
 
-              if req.check_nonce(resp) <= 0
+              if req.check_nonce(resp) == 0
                 errors << "OCSP response from #{report_uri(original_uri, uri)} included invalid nonce"
                 return false
               end
