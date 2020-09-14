@@ -21,7 +21,7 @@ module Mongo
     # @api private
     class EncryptionIO
 
-      # Timeout used for SSL socket connection, reading, and writing.
+      # Timeout used for TLS socket connection, reading, and writing.
       # There is no specific timeout written in the spec. See SPEC-1394
       # for a discussion and updates on what this timeout should be.
       SOCKET_TIMEOUT = 10
@@ -236,10 +236,10 @@ module Mongo
         end
       end
 
-      # Provide an SSL socket to be used for KMS calls in a block API
+      # Provide a TLS socket to be used for KMS calls in a block API
       #
-      # @param [ String ] endpoint The URI at which to connect the SSL socket.
-      # @yieldparam [ OpenSSL::SSL::SSLSocket ] ssl_socket Yields an SSL socket
+      # @param [ String ] endpoint The URI at which to connect the TLS socket.
+      # @yieldparam [ OpenSSL::SSL::SSLSocket ] ssl_socket Yields a TLS socket
       #   connected to the specified endpoint.
       #
       # @raise [ Mongo::Error::KmsError ] If the socket times out or raises
@@ -277,7 +277,7 @@ module Mongo
               Timeout.timeout(
                 SOCKET_TIMEOUT,
                 Error::SocketTimeoutError,
-                'KMS SSL socket close timed out'
+                'KMS TLS socket close timed out'
               ) do
                 ssl_socket.sysclose
               end
@@ -285,7 +285,7 @@ module Mongo
             end
           end
         ensure
-          # Still close tcp socket manually in case ssl socket creation
+          # Still close tcp socket manually in case TLS socket creation
           # fails.
           begin
             Timeout.timeout(

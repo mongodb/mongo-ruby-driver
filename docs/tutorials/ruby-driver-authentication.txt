@@ -191,14 +191,14 @@ value for the ``authMechanism`` URI option, as follows:
 Client Certificate (X.509)
 ``````````````````````````
 
-The driver presents an X.509 certificate during SSL negotiation.
+The driver presents an X.509 certificate during TLS negotiation.
 The MONGODB-X509 authentication mechanism authenticates a username
 derived from the distinguished subject name of this certificate.
 
-This authentication method requires the use of SSL connections with
+This authentication method requires the use of TLS connections with
 certificate validation.
 
-To authenticate the client, you will need a valid SSL certificate
+To authenticate the client, you will need a valid TLS certificate
 and private encryption key. These can be stored in separate files,
 or together in one file (in the PEM format). Even if the certificate
 and private key are stored in the same file, you must specify the path to
@@ -393,7 +393,7 @@ Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server.
 .. warning::
 
   When using LDAP, passwords are sent to the server in plain text. For this
-  reason, we strongly recommend enabling SSL when using LDAP as your
+  reason, we strongly recommend enabling TLS when using LDAP as your
   authentication mechanism.
 
 For more information about configuring LDAP authentication in

@@ -81,7 +81,7 @@ module Mongo
       # @param [ Hash ] options The options.
       #
       # @option options [ Float ] :connect_timeout Connect timeout.
-      # @option options [ true | false ] :ssl Whether to use SSL.
+      # @option options [ true | false ] :ssl Whether to use TLS.
       # @option options [ String ] :ssl_ca_cert
       #   Same as the corresponding Client/Socket::SSL option.
       # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object

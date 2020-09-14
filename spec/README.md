@@ -107,7 +107,7 @@ other tests require a sharded cluster with more than one shard. Tests requiring
 a single shard can be run against a deployment with multiple shards by
 specifying only one mongos address in MONGODB_URI.
 
-## Note Regarding SSL/TLS Arguments
+## Note Regarding TLS/SSL Arguments
 
 MongoDB 4.2 (server and shell) added new command line options for setting TLS
 parameters. These options follow the naming of URI options used by both the

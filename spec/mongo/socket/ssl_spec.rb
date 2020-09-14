@@ -246,7 +246,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         it 'raises an error' do
           lambda do
             socket
-          end.should raise_error(Mongo::Error::SocketError, /SSL handshake failed due to a hostname mismatch/)
+          end.should raise_error(Mongo::Error::SocketError, /TLS handshake failed due to a hostname mismatch/)
         end
       end
 

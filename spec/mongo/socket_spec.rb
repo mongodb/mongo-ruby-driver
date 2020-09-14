@@ -48,7 +48,7 @@ describe Mongo::Socket do
         socket.send(:map_exceptions) do
           raise OpenSSL::SSL::SSLError.new('Test error')
         end
-      end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address) (MongoDB may not be configured with SSL support)')
+      end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address) (MongoDB may not be configured with TLS support)')
     end
   end
 

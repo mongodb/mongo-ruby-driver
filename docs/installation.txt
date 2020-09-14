@@ -33,12 +33,14 @@ of improvements and changes in each version of the driver.
 TLS/SSL and the Ruby Driver
 ===========================
 
-Industry best practices, and some regulations, require the use of TLS 1.1 or newer. Though no application changes are
-required for the Ruby driver to make use of the newest protocols, some operating systems or versions may not provide
-an OpenSSL version new enough to support them.
+Industry best practices, and some regulations, require the use of TLS 1.1
+or newer. Though no application changes are required for the Ruby driver to
+make use of the newest protocols, some operating systems or versions may
+not provide an OpenSSL version new enough to support them.
 
-Users of macOS older than 10.13 (High Sierra) will need to install Ruby from `rvm`_, `homebrew`_, `macports`_, or
-another similar source. See `installation information on ruby-lang.org`_ for more options.
+Users of macOS older than 10.13 (High Sierra) will need to install Ruby from
+`rvm`_, `homebrew`_, `macports`_, or another similar source. See
+`installation information on ruby-lang.org`_ for more options.
 
 Users of Linux or other non-macOS Unix can check their OpenSSL version like this:
 
@@ -46,8 +48,9 @@ Users of Linux or other non-macOS Unix can check their OpenSSL version like this
 
   $ openssl version
 
-If the version number is less than 1.0.1 support for TLS 1.1 or newer is not available. Contact your operating system
-vendor for a solution or upgrade to a newer distribution.
+If the version number is less than 1.0.1 support for TLS 1.1 or newer is
+not available. Contact your operating system vendor for a solution or upgrade
+to a newer distribution.
 
 You can check your Ruby interpreter by executing the following command:
 
