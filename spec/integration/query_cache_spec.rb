@@ -524,7 +524,7 @@ describe 'QueryCache' do
     end
 
     before do
-      collection.drop
+      collection.delete_many
     end
 
     context 'with convenient API' do
