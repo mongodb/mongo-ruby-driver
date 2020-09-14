@@ -515,8 +515,7 @@ describe 'QueryCache' do
   end
 
   describe 'in transactions' do
-    min_server_fcv '4.0'
-    require_topology :replica_set
+    require_transaction_support
 
     let(:collection) { authorized_client['test'] }
 
@@ -529,6 +528,49 @@ describe 'QueryCache' do
     end
 
     context 'with convenient API' do
+      context 'when same query is performed inside and outside of transaction' do
+        it 'performs one query' do
+          collection.find.to_a
+
+          session = authorized_client.start_session
+          session.with_transaction do
+            collection.find({}, session: session).to_a
+          end
+
+          expect(subscriber.command_started_events('find').length).to eq(1)
+        end
+      end
+
+      context 'when transaction has a different read concern' do
+        it 'performs two queries' do
+          collection.find.to_a
+
+          session = authorized_client.start_session
+          session.with_transaction(
+           read_concern: { level: :snapshot }
+          ) do
+            collection.find({}, session: session).to_a
+          end
+
+          expect(subscriber.command_started_events('find').length).to eq(2)
+        end
+      end
+
+      context 'when transaction has a different read preference' do
+        it 'performs two queries' do
+          collection.find.to_a
+
+          session = authorized_client.start_session
+          session.with_transaction(
+           read: { mode: :primary }
+          ) do
+            collection.find({}, session: session).to_a
+          end
+
+          expect(subscriber.command_started_events('find').length).to eq(2)
+        end
+      end
+
       context 'when transaction is committed' do
         it 'clears the cache' do
           session = authorized_client.start_session
@@ -563,7 +605,7 @@ describe 'QueryCache' do
 
             # The driver caches the queries within the transaction
             expect(subscriber.command_started_events('find').length).to eq(1)
-            session.commit_transaction
+            session.abort_transaction
           end
 
           expect(collection.find.to_a.length).to eq(0)
