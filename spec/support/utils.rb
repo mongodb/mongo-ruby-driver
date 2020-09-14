@@ -502,4 +502,14 @@ module Utils
 
     subscriber.single_command_started_event(command_name, include_auth: include_auth)
   end
+
+  # Drops and creates a collection for the purpose of starting the test from
+  # a clean slate.
+  #
+  # @param [ Mongo::Client ] client
+  # @param [ String ] collection_name
+  module_function def create_collection(client, collection_name)
+    client[collection_name].drop
+    client[collection_name].create
+  end
 end
