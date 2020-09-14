@@ -516,6 +516,7 @@ describe 'QueryCache' do
 
   describe 'in transactions' do
     require_transaction_support
+    require_wired_tiger
 
     let(:collection) { authorized_client['test'] }
 
