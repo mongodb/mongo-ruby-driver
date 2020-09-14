@@ -99,7 +99,11 @@ module Mongo
                 http_response = begin
                   uri = URI(uri)
                   Net::HTTP.start(uri.hostname, uri.port) do |http|
-                    http.post(uri.path, serialized_req,
+                    path = uri.path
+                    if path.empty?
+                      path = '/'
+                    end
+                    http.post(path, serialized_req,
                       'content-type' => 'application/ocsp-request')
                   end
                 rescue IOError, SystemCallError => e
@@ -195,6 +199,13 @@ module Mongo
 
               # Note this returns the redirected URI
               queue << [uri, original_uri, resp]
+            rescue => exc
+              Utils.warn_bg_exception("Error performing OCSP verification for '#{host_name}' via '#{uri}'", exc,
+                logger: options[:logger],
+                log_prefix: options[:log_prefix],
+                bg_error_backtrace: options[:bg_error_backtrace],
+              )
+              false
             ensure
               outstanding_requests_lock.synchronize do
                 outstanding_requests -= 1
@@ -241,6 +252,15 @@ module Mongo
           log_warn("TLS certificate of '#{host_name}' could not be definitively verified via OCSP: #{msg}")
           false
         end
+      rescue Error::ServerCertificateRevoked
+        raise
+      rescue => exc
+        Utils.warn_bg_exception("Error performing OCSP verification for '#{host_name}'", exc,
+          logger: options[:logger],
+          log_prefix: options[:log_prefix],
+          bg_error_backtrace: options[:bg_error_backtrace],
+        )
+        false
       end
 
       def report_uri(original_uri, uri)
