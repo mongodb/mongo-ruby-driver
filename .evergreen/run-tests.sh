@@ -258,6 +258,10 @@ if test -n "$FLE"; then
   test -f "$LIBMONGOCRYPT_PATH"
 fi
 
+if test -n "$EXTRA_URI_OPTIONS"; then
+  uri_options="$uri_options&$EXTRA_URI_OPTIONS"
+fi
+
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 set_fcv
@@ -295,6 +299,7 @@ elif test -n "$OCSP_CONNECTIVITY"; then
 else
   bundle exec rake spec:ci
 fi
+
 test_status=$?
 echo "TEST STATUS: ${test_status}"
 set -e

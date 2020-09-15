@@ -116,6 +116,7 @@ functions:
             export MMAPV1="${MMAPV1}"
             export FLE="${FLE}"
             export FORK="${FORK}"
+            export EXTRA_URI_OPTIONS="${EXTRA_URI_OPTIONS}"
 
             export STRESS="${STRESS}"
             export OCSP_ALGORITHM="${OCSP_ALGORITHM}"
@@ -743,6 +744,21 @@ axes:
         variables:
           OCSP_CONNECTIVITY: fail
       
+
+  - id: extra-uri-options
+    display_name: extra URI options
+    values:
+      - id: none
+        display_name: None
+      
+      - id: "tlsInsecure=true"
+        variables:
+          EXTRA_URI_OPTIONS: "tlsInsecure=true"
+      
+      - id: "tlsAllowInvalidCertificates=true"
+        variables:
+          EXTRA_URI_OPTIONS: "tlsAllowInvalidCertificates=true"
+      
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
@@ -1181,11 +1197,12 @@ buildvariants:
       ocsp-status: valid
       ocsp-delegate: '*'
       ocsp-connectivity: pass
+      extra-uri-options: "none"
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
-    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
   
@@ -1195,11 +1212,12 @@ buildvariants:
       ocsp-status: unknown
       ocsp-delegate: '*'
       ocsp-connectivity: pass
+      extra-uri-options: "none"
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
-    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
   
@@ -1209,11 +1227,102 @@ buildvariants:
       ocsp-status: revoked
       ocsp-delegate: '*'
       ocsp-connectivity: fail
+      extra-uri-options: "none"
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
-    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: valid
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      extra-uri-options: "tlsInsecure=true"
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: unknown
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      extra-uri-options: "tlsInsecure=true"
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: revoked
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      extra-uri-options: "tlsInsecure=true"
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: valid
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      extra-uri-options: "tlsAllowInvalidCertificates=true"
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: unknown
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      extra-uri-options: "tlsAllowInvalidCertificates=true"
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: revoked
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      extra-uri-options: "tlsAllowInvalidCertificates=true"
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
   

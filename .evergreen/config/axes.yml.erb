@@ -321,3 +321,14 @@ axes:
         variables:
           OCSP_CONNECTIVITY: <%= value %>
       <% end %>
+
+  - id: extra-uri-options
+    display_name: extra URI options
+    values:
+      - id: none
+        display_name: None
+      <% %w(tlsInsecure=true tlsAllowInvalidCertificates=true).each do |value| %>
+      - id: "<%= value %>"
+        variables:
+          EXTRA_URI_OPTIONS: "<%= value %>"
+      <% end %>
