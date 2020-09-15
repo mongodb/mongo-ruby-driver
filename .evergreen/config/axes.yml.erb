@@ -315,7 +315,9 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-      - id: on
-        display_name: on
+      <% %w(pass fail).each do |value| %>
+      - id: <%= value %>
+        display_name: <%= value %>
         variables:
-          OCSP_CONNECTIVITY: 1
+          OCSP_CONNECTIVITY: <%= value %>
+      <% end %>

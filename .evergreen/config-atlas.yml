@@ -694,10 +694,17 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-      - id: on
-        display_name: on
+      
+      - id: pass
+        display_name: pass
         variables:
-          OCSP_CONNECTIVITY: 1
+          OCSP_CONNECTIVITY: pass
+      
+      - id: fail
+        display_name: fail
+        variables:
+          OCSP_CONNECTIVITY: fail
+      
 buildvariants:
   - matrix_name: "all"
     matrix_spec: { ruby: '*' }

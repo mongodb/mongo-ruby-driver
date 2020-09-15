@@ -17,7 +17,7 @@ describe 'OCSP connectivity' do
     )
   end
 
-  if ENV['OCSP_STATUS'] == 'revoked'
+  if ENV['OCSP_CONNECTIVITY'] == 'fail'
     it 'fails to connect' do
       lambda do
         client.command(ping: 1)

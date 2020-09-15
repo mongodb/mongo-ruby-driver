@@ -158,7 +158,7 @@ module LiteConstraints
   def require_ocsp_connectivity
     before(:all) do
       if !SpecConfig.instance.ocsp_connectivity?
-        skip 'Set OCSP_CONNECTIVITY=1 in environment to run OCSP connectivity tests'
+        skip 'Set OCSP_CONNECTIVITY=pass or OCSP_CONNECTIVITY=fail in environment to run OCSP connectivity tests'
       end
     end
   end

@@ -429,12 +429,18 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
+  <% [
+    %w(valid pass),
+    %w(unknown pass),
+    %w(revoked fail),
+  ].each do |status, outcome|
+  %>
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
-      ocsp-status: '*'
+      ocsp-status: <%= status %>
       ocsp-delegate: '*'
-      ocsp-connectivity: on
+      ocsp-connectivity: <%= outcome %>
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
@@ -442,6 +448,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
+  <% end %>
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:
@@ -454,7 +461,7 @@ buildvariants:
       # https://github.com/jruby/jruby-openssl/issues/210
       ocsp-status: [valid, unknown]
       ocsp-delegate: '*'
-      ocsp-connectivity: on
+      ocsp-connectivity: pass
       ruby: jruby-9.2
       topology: standalone
       mongodb-version: '4.4'

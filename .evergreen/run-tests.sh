@@ -262,7 +262,7 @@ export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options
 
 set_fcv
 
-if ! test "$OCSP_VERIFIER" = 1 && ! test "$OCSP_CONNECTIVITY" = 1; then
+if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
   echo Preparing the test suite
   bundle exec rake spec:prepare
 fi
@@ -290,7 +290,7 @@ elif test "$STRESS" = 1; then
   bundle exec rspec spec/integration/fork*spec.rb spec/stress
 elif test "$OCSP_VERIFIER" = 1; then
   bundle exec rspec spec/integration/ocsp_verifier_spec.rb
-elif test "$OCSP_CONNECTIVITY" = 1; then
+elif test -n "$OCSP_CONNECTIVITY"; then
   bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
 else
   bundle exec rake spec:ci

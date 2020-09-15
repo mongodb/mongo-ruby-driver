@@ -732,10 +732,17 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-      - id: on
-        display_name: on
+      
+      - id: pass
+        display_name: pass
         variables:
-          OCSP_CONNECTIVITY: 1
+          OCSP_CONNECTIVITY: pass
+      
+      - id: fail
+        display_name: fail
+        variables:
+          OCSP_CONNECTIVITY: fail
+      
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
@@ -1167,12 +1174,13 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
-      ocsp-status: '*'
+      ocsp-status: valid
       ocsp-delegate: '*'
-      ocsp-connectivity: on
+      ocsp-connectivity: pass
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
@@ -1180,6 +1188,35 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: unknown
+      ocsp-delegate: '*'
+      ocsp-connectivity: pass
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
+  - matrix_name: ocsp-connectivity
+    matrix_spec:
+      ocsp-algorithm: '*'
+      ocsp-status: revoked
+      ocsp-delegate: '*'
+      ocsp-connectivity: fail
+      ruby: [ruby-2.7, ruby-2.3]
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1804
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    tasks:
+      - name: test-mlaunch
+  
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:
@@ -1192,7 +1229,7 @@ buildvariants:
       # https://github.com/jruby/jruby-openssl/issues/210
       ocsp-status: [valid, unknown]
       ocsp-delegate: '*'
-      ocsp-connectivity: on
+      ocsp-connectivity: pass
       ruby: jruby-9.2
       topology: standalone
       mongodb-version: '4.4'

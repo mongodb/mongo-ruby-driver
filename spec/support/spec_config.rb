@@ -137,7 +137,7 @@ class SpecConfig
   end
 
   def ocsp_connectivity?
-    %w(1 true yes).include?(ENV['OCSP_CONNECTIVITY']&.downcase)
+    ENV.key?('OCSP_CONNECTIVITY') && ENV['OCSP_CONNECTIVITY'] != ''
   end
 
   # Test suite configuration
