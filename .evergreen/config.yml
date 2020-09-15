@@ -1,3 +1,6 @@
+# GENERATED FILE - DO NOT EDIT.
+# Run ./.evergreen/update-evergreen-configs to regenerate this file.
+
 # When a task that used to pass starts to fail, go through all versions that
 # may have been skipped to detect when the task started failing.
 stepback: true
@@ -11,8 +14,10 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
+
 # 45 minutes is the longest we'll ever run
 exec_timeout_secs: 2700
+
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -49,6 +54,7 @@ functions:
           curl -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
 
+  
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -122,6 +128,7 @@ functions:
 
           # See what we've done
           cat expansion.yml
+  
 
     # Load the expansion file to make an evergreen variable with the current
     # unique version
@@ -360,6 +367,16 @@ functions:
           ${PREPARE_SHELL}
           ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-kerberos-integration.sh
 
+  "run Atlas tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
+
 pre:
   - func: "fetch source"
   - func: "fetch egos"
@@ -375,28 +392,29 @@ post:
 
 tasks:
 
-    - name: "test-docker"
-      commands:
-        - func: "build and test docker image"
-    - name: "test-mlaunch"
-      commands:
-        - func: "run tests"
-    - name: "test-kerberos-integration"
-      commands:
-        - func: "export Kerberos credentials"
-        - func: "run Kerberos integration tests"
-    - name: "test-kerberos"
-      commands:
-        - func: "run Kerberos unit tests"
-    - name: "test-fle"
-      commands:
-        - func: "export FLE AWS credentials"
-        - func: "run tests"
-    - name: "test-aws-auth"
-      commands:
-        - func: "export AWS auth credentials"
-        - func: "run AWS auth tests"
-
+  
+  - name: "test-docker"
+    commands:
+      - func: "build and test docker image"
+  - name: "test-mlaunch"
+    commands:
+      - func: "run tests"
+  - name: "test-kerberos-integration"
+    commands:
+      - func: "export Kerberos credentials"
+      - func: "run Kerberos integration tests"
+  - name: "test-kerberos"
+    commands:
+      - func: "run Kerberos unit tests"
+  - name: "test-fle"
+    commands:
+      - func: "export FLE AWS credentials"
+      - func: "run tests"
+  - name: "test-aws-auth"
+    commands:
+      - func: "export AWS auth credentials"
+      - func: "run AWS auth tests"
+  
 axes:
 
   - id: preload
@@ -718,7 +736,6 @@ axes:
         display_name: on
         variables:
           OCSP_CONNECTIVITY: 1
-
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
