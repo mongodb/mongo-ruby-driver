@@ -367,7 +367,7 @@ module Mongo
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert, context.cert_store,
           **Utils.shallow_symbolize_keys(options))
-        verifier.verify
+        verifier.verify_with_cache
       end
 
       def read_buffer_size

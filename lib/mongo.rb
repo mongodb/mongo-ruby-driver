@@ -72,3 +72,10 @@ require 'mongo/uri'
 require 'mongo/version'
 require 'mongo/write_concern'
 require 'mongo/utils'
+
+module Mongo
+  # Clears the driver's OCSP response cache.
+  module_function def clear_ocsp_cache
+    Socket::OcspCache.clear
+  end
+end
