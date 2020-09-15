@@ -4,13 +4,15 @@ require 'lite_spec_helper'
 # https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.rst#integration-tests-permutations-to-be-tested
 describe 'OCSP connectivity' do
   require_ocsp_connectivity
+  clear_ocsp_cache
 
   let(:client) do
-    new_local_client(['localhost'],
+    algorithm = ENV.fetch('OCSP_ALGORITHM')
+    new_local_client(SpecConfig.instance.addresses,
       ssl: true,
-      ssl_ca_cert: "spec/support/ocsp/#{ENV['OCSP_ALGORITHM']}/ca.crt",
-      ssl_cert: "spec/support/ocsp/#{ENV['OCSP_ALGORITHM']}/server.pem",
-      ssl_key: "spec/support/ocsp/#{ENV['OCSP_ALGORITHM']}/server.pem",
+      ssl_ca_cert: "spec/support/ocsp/#{algorithm}/ca.crt",
+      ssl_cert: "spec/support/ocsp/#{algorithm}/server.pem",
+      ssl_key: "spec/support/ocsp/#{algorithm}/server.pem",
       server_selection_timeout: 5,
     )
   end

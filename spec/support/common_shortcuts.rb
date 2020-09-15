@@ -97,9 +97,17 @@ module CommonShortcuts
       end
     end
 
+    def clear_ocsp_cache
+      before do
+        Mongo.clear_ocsp_cache
+      end
+    end
+
     def with_ocsp_mock(ca_file_path, responder_cert_path, responder_key_path,
       fault: nil, port: 8100
     )
+      clear_ocsp_cache
+
       around do |example|
         args = [
           SpecConfig.instance.ocsp_files_dir.join('ocsp_mock.py').to_s,
