@@ -91,7 +91,11 @@ describe 'QueryCache' do
 
         # Verify that the driver performs the query once
         expect(subscriber.command_started_events('find').length).to eq(1)
-        expect(subscriber.command_started_events('getMore').length).to eq(0)
+        #
+        # getMore was only introduced in server version 3.2
+        if ClusterConfig.instance.fcv_ish >= "3.2"
+          expect(subscriber.command_started_events('getMore').length).to eq(0)
+        end
       end
     end
 
@@ -113,7 +117,11 @@ describe 'QueryCache' do
 
         # Verify that the driver performs the query once
         expect(subscriber.command_started_events('find').length).to eq(1)
-        expect(subscriber.command_started_events('getMore').length).to eq(1)
+
+        # getMore was only introduced in server version 3.2
+        if ClusterConfig.instance.fcv_ish >= "3.2"
+          expect(subscriber.command_started_events('getMore').length).to eq(1)
+        end
       end
     end
   end
@@ -298,14 +306,6 @@ describe 'QueryCache' do
         end
 
         context 'and two queries are performed with a larger limit' do
-          before do
-            if ClusterConfig.instance.fcv_ish <= '3.0'
-              pending 'RUBY-2367 Server versions 3.0 and older execute three' \
-                'queries in this case. This should be resolved when the query' \
-                'cache is modified to cache multi-batch queries.'
-            end
-          end
-
           it 'uses the query cache for the third query' do
             results1 = authorized_collection.find.limit(3).to_a
             results2 = authorized_collection.find.limit(3).to_a
@@ -321,14 +321,6 @@ describe 'QueryCache' do
         end
 
         context 'and the second query has a smaller limit' do
-          before do
-            if ClusterConfig.instance.fcv_ish <= '3.0'
-              pending 'RUBY-2367 Server versions 3.0 and older execute two' \
-                'queries in this case. This should be resolved when the query' \
-                'cache is modified to cache multi-batch queries.'
-            end
-          end
-
           let(:results) { authorized_collection.find.limit(1).to_a }
 
           it 'uses the cached query' do
