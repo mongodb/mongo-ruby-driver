@@ -258,6 +258,11 @@ if test -n "$FLE"; then
   test -f "$LIBMONGOCRYPT_PATH"
 fi
 
+if test -n "$OCSP_CONNECTIVITY"; then
+  # TODO Maybe OCSP_CONNECTIVITY=* should set SSL=ssl instead.
+  uri_options="$uri_options&tls=true"
+fi
+
 if test -n "$EXTRA_URI_OPTIONS"; then
   uri_options="$uri_options&$EXTRA_URI_OPTIONS"
 fi
