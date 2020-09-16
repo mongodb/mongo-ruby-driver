@@ -72,56 +72,52 @@ describe 'QueryCache' do
     end
   end
 
-  describe 'iterating cursors multiple times' do
-    context 'when query returns single batch' do
-      before do
-        100.times { |i| authorized_collection.insert_one(_id: i) }
-      end
+  describe 'query with multiple batches' do
+    min_server_fcv '3.2'
 
-      let(:expected_results) { [*0..99].map { |id| { "_id" => id } } }
-
-      it 'does not raise an exception' do
-        result1 = authorized_collection.find.to_a
-        expect(result1.length).to eq(100)
-        expect(result1).to eq(expected_results)
-
-        result2 = authorized_collection.find.to_a
-        expect(result2.length).to eq(100)
-        expect(result2).to eq(expected_results)
-
-        # Verify that the driver performs the query once
-        expect(subscriber.command_started_events('find').length).to eq(1)
-        #
-        # getMore was only introduced in server version 3.2
-        if ClusterConfig.instance.fcv_ish >= "3.2"
-          expect(subscriber.command_started_events('getMore').length).to eq(0)
-        end
-      end
+    before do
+      101.times { |i| authorized_collection.insert_one(_id: i) }
     end
 
-    context 'when query returns multiple batches' do
-      before do
-        101.times { |i| authorized_collection.insert_one(_id: i) }
-      end
+    let(:expected_results) { [*0..100].map { |id| { "_id" => id } } }
 
-      let(:expected_results) { [*0..100].map { |id| { "_id" => id } } }
+    it 'returns the correct result' do
+      result = authorized_collection.find.to_a
+      expect(result.length).to eq(101)
+      expect(result).to eq(expected_results)
+    end
 
-      it 'performs the query once and returns the correct results' do
-        result1 = authorized_collection.find.to_a
+    it 'returns the correct result multiple times' do
+      result1 = authorized_collection.find.to_a
+      result2 = authorized_collection.find.to_a
+      expect(result1).to eq(expected_results)
+      expect(result2).to eq(expected_results)
+    end
+
+    it 'caches the query' do
+      authorized_collection.find.to_a
+      authorized_collection.find.to_a
+      expect(subscriber.command_started_events('find').length).to eq(1)
+      expect(subscriber.command_started_events('getMore').length).to eq(1)
+    end
+
+    context 'when the cursor isn\'t fully iterated the first time' do
+      it 'continues iterating' do
+        result1 = authorized_collection.find.first(5)
+
+        expect(result1.length).to eq(5)
+        expect(result1).to eq(expected_results.first(5))
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(0)
+
+        result2 = authorized_collection.find.to_a
+
         expect(result1.length).to eq(101)
         expect(result1).to eq(expected_results)
 
-        result2 = authorized_collection.find.to_a
-        expect(result2.length).to eq(101)
-        expect(result2).to eq(expected_results)
-
-        # Verify that the driver performs the query once
         expect(subscriber.command_started_events('find').length).to eq(1)
-
-        # getMore was only introduced in server version 3.2
-        if ClusterConfig.instance.fcv_ish >= "3.2"
-          expect(subscriber.command_started_events('getMore').length).to eq(1)
-        end
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
       end
     end
   end
