@@ -63,11 +63,8 @@ module Mongo
     # get_more_operation.
     def process(result)
       documents = super
-      if @cursor_id.zero? && !@after_first_batch
-        @cached_docs ||= []
-        @cached_docs.concat(documents)
-      end
-      @after_first_batch = true
+      @cached_docs ||= []
+      @cached_docs.concat(documents)
       documents
     end
   end

@@ -38,7 +38,7 @@ module Mongo
           session = client.send(:get_session, @options)
           @cursor = select_cursor(session)
 
-          if QueryCache.enabled? && @cursor.is_a?(Mongo::CachingCursor)
+          if QueryCache.enabled?
             # No need to store the cursor in the query cache if there is
             # already a cached cursor stored at this key.
             QueryCache.set(@cursor, cache_options) unless cached_cursor
@@ -93,7 +93,7 @@ module Mongo
 
             # RUBY-2367: This will be updated to allow the query cache to
             # cache cursors with multi-batch results.
-            if QueryCache.enabled? && (result.cursor_id == 0 || result.cursor_id.nil?)
+            if QueryCache.enabled?
               CachingCursor.new(view, result, server, session: session)
             else
               Cursor.new(view, result, server, session: session)

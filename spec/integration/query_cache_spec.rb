@@ -8,6 +8,7 @@ describe 'QueryCache' do
 
   before do
     authorized_collection.delete_many
+    subscriber.clear_events!
   end
 
   let(:subscriber) { EventSubscriber.new }
@@ -72,38 +73,47 @@ describe 'QueryCache' do
   end
 
   describe 'iterating cursors multiple times' do
-    before do
-      authorized_collection.drop
-      Mongo::QueryCache.enabled = true
-    end
-
-    after do
-      Mongo::QueryCache.enabled = false
-    end
-
     context 'when query returns single batch' do
       before do
-        authorized_collection.insert_many([{ test: 1 }] * 100)
+        100.times { |i| authorized_collection.insert_one(_id: i) }
       end
 
+      let(:expected_results) { [*0..99].map { |id| { "_id" => id } } }
+
       it 'does not raise an exception' do
-        expect do
-          authorized_collection.find(test: 1).to_a
-          authorized_collection.find(test: 1).to_a
-        end.not_to raise_error
+        result1 = authorized_collection.find.to_a
+        expect(result1.length).to eq(100)
+        expect(result1).to eq(expected_results)
+
+        result2 = authorized_collection.find.to_a
+        expect(result2.length).to eq(100)
+        expect(result2).to eq(expected_results)
+
+        # Verify that the driver performs the query once
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(0)
       end
     end
 
-    context 'when query returns single batch' do
+    context 'when query returns multiple batches' do
       before do
-        authorized_collection.insert_many([{ test: 1 }] * 2000)
+        101.times { |i| authorized_collection.insert_one(_id: i) }
       end
 
-      it 'does not raise an exception' do
-        expect do
-          authorized_collection.find(test: 1).to_a
-          authorized_collection.find(test: 1).to_a
-        end.not_to raise_error
+      let(:expected_results) { [*0..100].map { |id| { "_id" => id } } }
+
+      it 'performs the query once and returns the correct results' do
+        result1 = authorized_collection.find.to_a
+        expect(result1.length).to eq(101)
+        expect(result1).to eq(expected_results)
+
+        result2 = authorized_collection.find.to_a
+        expect(result2.length).to eq(101)
+        expect(result2).to eq(expected_results)
+
+        # Verify that the driver performs the query once
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
       end
     end
   end
@@ -113,7 +123,6 @@ describe 'QueryCache' do
     min_server_fcv '3.6'
 
     before do
-      subscriber.clear_events!
       authorized_client['test'].drop
     end
 
