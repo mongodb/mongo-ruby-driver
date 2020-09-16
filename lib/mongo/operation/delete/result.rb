@@ -19,6 +19,7 @@ module Mongo
       # Defines custom behavior of results for a delete.
       #
       # @since 2.0.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # Get the number of documents deleted.
@@ -29,10 +30,12 @@ module Mongo
         # @return [ Integer ] The deleted count.
         #
         # @since 2.0.0
+        # @api public
         def deleted_count
           n
         end
 
+        # @api public
         def bulk_result
           BulkResult.new(@replies, connection_description)
         end

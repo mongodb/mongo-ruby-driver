@@ -18,6 +18,7 @@ module Mongo
     # Shared behavior of operations that require its documents to each have an id.
     #
     # @since 2.5.2
+    # @api private
     module Idable
 
       def documents

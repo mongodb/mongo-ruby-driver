@@ -20,6 +20,7 @@ module Mongo
         # Defines custom behavior of results for a query.
         #
         # @since 2.1.0
+        # @api semiprivate
         class Result < Operation::Result
           include Operation::Result::UseLegacyErrorParser
 
@@ -31,6 +32,7 @@ module Mongo
           # @return [ true, false ] If the query was successful.
           #
           # @since 2.0.0
+          # @api public
           def successful?
             !query_failure?
           end

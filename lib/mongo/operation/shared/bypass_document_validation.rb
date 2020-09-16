@@ -18,6 +18,7 @@ module Mongo
     # Custom behavior for operations that support the bypassdocumentvalidation option.
     #
     # @since 2.5.2
+    # @api private
     module BypassDocumentValidation
 
       private

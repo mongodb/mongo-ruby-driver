@@ -19,6 +19,7 @@ module Mongo
       # Defines custom behavior of results in find command with explain.
       #
       # @since 2.5.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # Get the cursor id.
@@ -29,6 +30,7 @@ module Mongo
         # @return [ 0 ] Always 0 because explain doesn't return a cursor.
         #
         # @since 2.5.0
+        # @api private
         def cursor_id
           0
         end
@@ -41,6 +43,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.5.0
+        # @api public
         def documents
           reply.documents
         end

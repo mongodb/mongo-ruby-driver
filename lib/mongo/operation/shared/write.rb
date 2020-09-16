@@ -18,6 +18,7 @@ module Mongo
     # Shared behavior of operations that write (update, insert, delete).
     #
     # @since 2.5.2
+    # @api private
     module Write
 
       include ResponseHandling

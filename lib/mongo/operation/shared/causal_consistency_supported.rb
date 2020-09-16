@@ -18,6 +18,7 @@ module Mongo
     # Custom behavior for operations that support causal consistency.
     #
     # @since 2.5.2
+    # @api private
     module CausalConsistencySupported
 
       private

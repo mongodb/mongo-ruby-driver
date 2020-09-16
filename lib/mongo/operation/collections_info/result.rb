@@ -20,6 +20,7 @@ module Mongo
       # collection.
       #
       # @since 2.1.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # Get the namespace for the cursor.
@@ -30,6 +31,7 @@ module Mongo
         # @return [ String ] The namespace.
         #
         # @since 2.1.0
+        # @api private
         def namespace
           Database::NAMESPACES
         end

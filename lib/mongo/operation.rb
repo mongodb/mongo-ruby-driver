@@ -50,6 +50,8 @@ require 'mongo/operation/create_index'
 require 'mongo/operation/drop_index'
 
 module Mongo
+
+  # @api private
   module Operation
 
     # The q field constant.

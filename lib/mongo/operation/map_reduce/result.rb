@@ -19,21 +19,25 @@ module Mongo
       # Defines custom behavior of results for a map reduce operation.
       #
       # @since 2.0.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # The counts field for the map/reduce.
         #
         # @since 2.0.0
+        # @api private
         COUNTS = 'counts'.freeze
 
         # The field name for a result without a cursor.
         #
         # @since 2.0.0
+        # @api private
         RESULTS = 'results'.freeze
 
         # The time the operation took constant.
         #
         # @since 2.0.0
+        # @api private
         TIME = 'timeMillis'.freeze
 
         # Gets the map/reduce counts from the reply.
@@ -44,6 +48,7 @@ module Mongo
         # @return [ Hash ] A hash of the result counts.
         #
         # @since 2.0.0
+        # @api public
         def counts
           reply.documents[0][COUNTS]
         end
@@ -56,6 +61,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.0.0
+        # @api public
         def documents
           reply.documents[0][RESULTS] || reply.documents[0][RESULT]
         end
@@ -72,6 +78,7 @@ module Mongo
         # @return [ true, false ] If the command was successful.
         #
         # @since 2.0.0
+        # @api public
         def successful?
           !documents.nil?
         end
@@ -84,6 +91,7 @@ module Mongo
         # @return [ Integer ] The executing time in milliseconds.
         #
         # @since 2.0.0
+        # @api public
         def time
           reply.documents[0][TIME]
         end
@@ -102,6 +110,7 @@ module Mongo
         # @return [ Result ] The result if verification passed.
         #
         # @since 2.0.0
+        # @api private
         def validate!
           documents.nil? ? raise_operation_failure : self
         end
@@ -114,6 +123,7 @@ module Mongo
         # @return [ Integer ] Always 0 because map reduce doesn't return a cursor.
         #
         # @since 2.5.0
+        # @api private
         def cursor_id
           0
         end

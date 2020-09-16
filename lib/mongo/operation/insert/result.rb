@@ -22,11 +22,13 @@ module Mongo
       # is optional. It can be added to this class later, if needed.
       #
       # @since 2.0.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # Get the ids of the inserted documents.
         #
         # @since 2.0.0
+        # @api public
         attr_reader :inserted_ids
 
         # Initialize a new result.
@@ -41,6 +43,7 @@ module Mongo
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0
+        # @api private
         def initialize(replies, connection_description, ids)
           super(replies, connection_description)
           @inserted_ids = ids
@@ -54,10 +57,12 @@ module Mongo
         # @return [ Object ] The id of the document inserted.
         #
         # @since 2.0.0
+        # @api public
         def inserted_id
           inserted_ids.first
         end
 
+        # @api public
         def bulk_result
           BulkResult.new(@replies, connection_description, @inserted_ids)
         end

@@ -19,6 +19,7 @@ module Mongo
       # Defines custom behavior of bulk write results
       #
       # @since 2.0.0
+      # @api private
       module Aggregatable
 
         # Aggregate the write errors returned from this result.
