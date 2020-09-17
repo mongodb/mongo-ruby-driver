@@ -19,6 +19,7 @@ module Mongo
       # Defines custom behavior of results for a delete when part of a bulk write.
       #
       # @since 2.0.0
+      # @api semiprivate
       class BulkResult < Operation::Result
         include Aggregatable
 
@@ -30,6 +31,7 @@ module Mongo
         # @return [ Integer ] The number of documents deleted.
         #
         # @since 2.0.0
+        # @api public
         def n_removed
           return 0 unless acknowledged?
           @replies.reduce(0) do |n, reply|

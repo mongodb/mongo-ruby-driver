@@ -14,25 +14,24 @@
 
 module Mongo
   module Operation
-
-    # Aggregate result wrapper.
-    #
-    # @since 2.0.0
     class Aggregate
 
       # Defines custom behavior of results in an aggregation context.
       #
       # @since 2.0.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # The field name for the aggregation explain information.
         #
         # @since 2.0.5
+        # @api private
         EXPLAIN = 'stages'.freeze
 
         # The legacy field name for the aggregation explain information.
         #
         # @since 2.0.5
+        # @api private
         EXPLAIN_LEGACY = 'serverPipeline'.freeze
 
         # Get the cursor id for the result.
@@ -48,6 +47,7 @@ module Mongo
         # @return [ Integer ] The cursor id.
         #
         # @since 2.0.0
+        # @api private
         def cursor_id
           cursor_document ? cursor_document[CURSOR_ID] : 0
         end
@@ -62,8 +62,8 @@ module Mongo
         end
 
         # Get the documents for the aggregation result. This is either the
-        # first document's 'result' field, or if a cursor option was selected, 
-        # it is the 'firstBatch' field in the 'cursor' field of the first 
+        # first document's 'result' field, or if a cursor option was selected,
+        # it is the 'firstBatch' field in the 'cursor' field of the first
         # document returned. Otherwise, it is an explain document.
         #
         # @example Get the documents.
@@ -72,10 +72,11 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.0.0
+        # @api public
         def documents
-          docs = reply.documents[0][RESULT] 
+          docs = reply.documents[0][RESULT]
           docs ||= cursor_document[FIRST_BATCH] if cursor_document
-          docs ||= explain_document 
+          docs ||= explain_document
           docs
         end
 

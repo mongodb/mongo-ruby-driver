@@ -18,6 +18,7 @@ module Mongo
     # Shared behavior of operations that support a session.
     #
     # @since 2.5.2
+    # @api private
     module SessionsSupported
 
       private

@@ -14,6 +14,8 @@
 
 module Mongo
   module Operation
+
+    # @api private
     module CollectionsInfoOrListCollections
       include PolymorphicLookup
 

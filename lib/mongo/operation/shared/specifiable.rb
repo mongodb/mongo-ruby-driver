@@ -19,6 +19,7 @@ module Mongo
     # various values from the spec.
     #
     # @since 2.0.0
+    # @api private
     module Specifiable
 
       # The field for database name.

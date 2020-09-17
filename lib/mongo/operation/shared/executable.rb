@@ -18,6 +18,7 @@ module Mongo
     # Shared executable behavior of operations.
     #
     # @since 2.5.2
+    # @api private
     module Executable
 
       include ResponseHandling

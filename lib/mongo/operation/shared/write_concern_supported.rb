@@ -18,6 +18,7 @@ module Mongo
     # Custom behavior for operations that support write concern.
     #
     # @since 2.5.2
+    # @api private
     module WriteConcernSupported
 
       private

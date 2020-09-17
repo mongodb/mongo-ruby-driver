@@ -19,6 +19,7 @@ module Mongo
       # Defines custom behavior of results for the get more command.
       #
       # @since 2.2.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # Get the cursor id.
@@ -29,6 +30,7 @@ module Mongo
         # @return [ Integer ] The cursor id.
         #
         # @since 2.2.0
+        # @api private
         def cursor_id
           cursor_document ? cursor_document[CURSOR_ID] : super
         end
@@ -50,6 +52,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.2.0
+        # @api public
         def documents
           cursor_document[NEXT_BATCH]
         end
