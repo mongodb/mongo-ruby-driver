@@ -45,7 +45,9 @@ module Mongo
           end
 
           if block_given?
-            if limit
+            # Mongo::View::Aggregation instances do not have a limit method
+            # because aggregations take $limit as a pipeline rather than an option.
+            if respond_to?(:limit) && limit
               @cursor.to_a[0...limit].each do |doc|
                 yield doc
               end

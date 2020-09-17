@@ -137,15 +137,16 @@ module Mongo
           end
         end
 
+        # Skip, sort, limit, projection are specified as pipeline stages
+        # rather than as options.
         def cache_options
           {
             namespace: collection.namespace,
             selector: pipeline,
+            read_concern: view.read_concern,
+            read_preference: view.read_preference,
+            collation: options[:collation]
           }
-        end
-
-        def limit
-          nil
         end
       end
     end

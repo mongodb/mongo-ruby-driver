@@ -549,7 +549,7 @@ describe 'QueryCache' do
           { '$merge' => {
               into: {
                 db: SpecConfig.instance.test_db,
-                coll: 'collection_spec',
+                coll: 'new_coll',
               },
               on: "_id",
               whenMatched: "replace",
@@ -583,6 +583,52 @@ describe 'QueryCache' do
       expect(aggregation.to_a.length).to eq(3)
       expect(aggregation.to_a.length).to eq(3)
       expect(events.length).to eq(1)
+    end
+
+    context 'with read concern' do
+      require_wired_tiger
+      min_server_fcv '3.6'
+
+      let(:aggregation_read_concern) do
+        authorized_client['collection_spec', { read_concern: { level: :local } }]
+          .aggregate([ { '$match' => { test: 1 } } ])
+      end
+
+      it 'queries twice' do
+        expect(aggregation.to_a.length).to eq(3)
+        expect(aggregation_read_concern.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'with read preference' do
+      let(:aggregation_read_preference) do
+        authorized_client['collection_spec', { read: { mode: :primary } }]
+          .aggregate([ { '$match' => { test: 1 } } ])
+      end
+
+      it 'queries twice' do
+        expect(aggregation.to_a.length).to eq(3)
+        expect(aggregation_read_preference.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when collation is specified' do
+      min_server_fcv '3.4'
+
+      let(:aggregation_collation) do
+        authorized_collection.aggregate(
+          [ { '$match' => { test: 1 } } ],
+          { collation: { locale: 'fr' } }
+        )
+      end
+
+      it 'queries twice' do
+        expect(aggregation.to_a.length).to eq(3)
+        expect(aggregation_collation.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
     end
   end
 
