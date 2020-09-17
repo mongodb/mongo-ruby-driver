@@ -136,6 +136,17 @@ module Mongo
             raise Error::UnsupportedCollation.new
           end
         end
+
+        def cache_options
+          {
+            namespace: collection.namespace,
+            selector: pipeline,
+          }
+        end
+
+        def limit
+          nil
+        end
       end
     end
   end

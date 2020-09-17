@@ -45,6 +45,14 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate(pipeline, options = {})
+          # Because the $merge and $out pipeline stages write documents to the
+          # collection, it is necessary to clear the cache when they are performed.
+          write = pipeline.any? do |op| 
+            op.key?('$out') || op.key?(:$out) ||
+              op.key?('$merge') || op.key?(:$merge)
+          end
+
+          Mongo::QueryCache.clear_cache if write
           Aggregation.new(self, pipeline, options)
         end
 

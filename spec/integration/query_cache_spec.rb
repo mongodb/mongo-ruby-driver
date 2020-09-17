@@ -522,6 +522,68 @@ describe 'QueryCache' do
         expect(events.length).to eq(2)
       end
     end
+
+    context 'when aggregating with $out' do
+      before do
+        authorized_collection.find.to_a
+        authorized_collection.aggregate([
+          { '$match' => { test: 1 } },
+          { '$out' => { coll: 'new_coll' } }
+        ])
+      end
+
+      it 'queries again' do
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when aggregating with $merge' do
+      min_server_fcv '4.2'
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.find.to_a
+        authorized_collection.aggregate([
+          { '$match' => { 'test' => 1 } },
+          { '$merge' => {
+              into: {
+                db: SpecConfig.instance.test_db,
+                coll: 'collection_spec',
+              },
+              on: "_id",
+              whenMatched: "replace",
+              whenNotMatched: "insert",
+            }
+          }
+        ])
+      end
+
+      it 'queries again' do
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
+    end
+  end
+
+  context 'when aggregating' do
+    before do
+      3.times { authorized_collection.insert_one(test: 1) }
+    end
+
+    let(:events) do
+      subscriber.command_started_events('aggregate')
+    end
+
+    let(:aggregation) do
+      authorized_collection.aggregate([ { '$match' => { test: 1 } } ])
+    end
+
+    it 'caches the aggregation' do
+      expect(aggregation.to_a.length).to eq(3)
+      expect(aggregation.to_a.length).to eq(3)
+      expect(events.length).to eq(1)
+    end
   end
 
   context 'when find command fails and retries' do
