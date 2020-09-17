@@ -32,7 +32,7 @@ module Mongo
     #     # ...
     #   end
     def each
-      if @cached_docs
+      if @cached_docs && closed?
         @cached_docs.each do |doc|
           yield doc
         end

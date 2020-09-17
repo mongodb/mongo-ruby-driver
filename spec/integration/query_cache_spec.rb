@@ -76,14 +76,14 @@ describe 'QueryCache' do
     min_server_fcv '3.2'
 
     before do
-      101.times { |i| authorized_collection.insert_one(_id: i) }
+      102.times { |i| authorized_collection.insert_one(_id: i) }
     end
 
-    let(:expected_results) { [*0..100].map { |id| { "_id" => id } } }
+    let(:expected_results) { [*0..101].map { |id| { "_id" => id } } }
 
     it 'returns the correct result' do
       result = authorized_collection.find.to_a
-      expect(result.length).to eq(101)
+      expect(result.length).to eq(102)
       expect(result).to eq(expected_results)
     end
 
@@ -113,8 +113,8 @@ describe 'QueryCache' do
 
         result2 = authorized_collection.find.to_a
 
-        expect(result1.length).to eq(101)
-        expect(result1).to eq(expected_results)
+        expect(result2.length).to eq(102)
+        expect(result2).to eq(expected_results)
 
         expect(subscriber.command_started_events('find').length).to eq(1)
         expect(subscriber.command_started_events('getMore').length).to eq(1)
