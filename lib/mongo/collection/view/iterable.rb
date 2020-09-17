@@ -42,13 +42,18 @@ module Mongo
             # No need to store the cursor in the query cache if there is
             # already a cached cursor stored at this key.
             QueryCache.set(@cursor, cache_options) unless cached_cursor
+
+            # If a query with a limit is performed, the query cache will
+            # re-use results from an earlier query with the same or larger
+            # limit, and then impose the lower limit during iteration.
+            limit_for_cached_query = respond_to?(:limit) ? limit : nil
           end
 
           if block_given?
-            # Mongo::View::Aggregation instances do not have a limit method
-            # because aggregations take $limit as a pipeline rather than an option.
-            if respond_to?(:limit) && limit
-              @cursor.to_a[0...limit].each do |doc|
+            # Ruby versions 2.5 and older do not support arr[0..nil] syntax, so
+            # this must be a separate conditional.
+            if limit_for_cached_query
+              @cursor.to_a[0...limit_for_cached_query].each do |doc|
                 yield doc
               end
             else
