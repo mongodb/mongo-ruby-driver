@@ -101,6 +101,31 @@ describe 'QueryCache' do
       expect(subscriber.command_started_events('getMore').length).to eq(1)
     end
 
+    it 'uses cached cursor when limited' do
+      authorized_collection.find.to_a
+      result = authorized_collection.find({}, limit: 5).to_a
+
+      expect(result.length).to eq(5)
+      expect(result).to eq(expected_results.first(5))
+
+      expect(subscriber.command_started_events('find').length).to eq(1)
+      expect(subscriber.command_started_events('getMore').length).to eq(1)
+    end
+
+    it 'can be used with a block API' do
+      authorized_collection.find.to_a
+
+      result = []
+      authorized_collection.find.each do |doc|
+        result << doc
+      end
+
+      expect(result).to eq(expected_results)
+
+      expect(subscriber.command_started_events('find').length).to eq(1)
+      expect(subscriber.command_started_events('getMore').length).to eq(1)
+    end
+
     context 'when the cursor isn\'t fully iterated the first time' do
       it 'continues iterating' do
         result1 = authorized_collection.find.first(5)
@@ -115,6 +140,34 @@ describe 'QueryCache' do
 
         expect(result2.length).to eq(102)
         expect(result2).to eq(expected_results)
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
+      end
+
+      it 'can be iterated multiple times' do
+        authorized_collection.find.first(5)
+        authorized_collection.find.to_a
+
+        result = authorized_collection.find.to_a
+
+        expect(result.length).to eq(102)
+        expect(result).to eq(expected_results)
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
+      end
+
+      it 'can be used with a block API' do
+        authorized_collection.find.first(5)
+
+        result = []
+        authorized_collection.find.each do |doc|
+          result << doc
+        end
+
+        expect(result.length).to eq(102)
+        expect(result).to eq(expected_results)
 
         expect(subscriber.command_started_events('find').length).to eq(1)
         expect(subscriber.command_started_events('getMore').length).to eq(1)
