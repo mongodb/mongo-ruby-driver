@@ -63,6 +63,9 @@ show_local_instructions() {
   if test -n "$OCSP_VERIFIER"; then
     params="$params OCSP_VERIFIER=$OCSP_VERIFIER"
   fi
+  if test -n "$EXTRA_URI_OPTIONS"; then
+    params="$params EXTRA_URI_OPTIONS=$EXTRA_URI_OPTIONS"
+  fi
   # $0 has the current script being executed which is also the script that
   # was initially invoked EXCEPT for the AWS configurations which use the
   # wrapper script.

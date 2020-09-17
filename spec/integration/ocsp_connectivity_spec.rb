@@ -7,17 +7,12 @@ describe 'OCSP connectivity' do
   clear_ocsp_cache
 
   let(:client) do
-    algorithm = ENV.fetch('OCSP_ALGORITHM')
-    new_local_client(SpecConfig.instance.addresses,
-      ssl: true,
-      ssl_ca_cert: "spec/support/ocsp/#{algorithm}/ca.crt",
-      ssl_cert: "spec/support/ocsp/#{algorithm}/server.pem",
-      ssl_key: "spec/support/ocsp/#{algorithm}/server.pem",
+    new_local_client(ENV.fetch('MONGODB_URI'),
       server_selection_timeout: 5,
     )
   end
 
-  if ENV['OCSP_STATUS'] == 'revoked'
+  if ENV['OCSP_CONNECTIVITY'] == 'fail'
     it 'fails to connect' do
       lambda do
         client.command(ping: 1)

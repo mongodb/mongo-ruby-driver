@@ -694,10 +694,32 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-      - id: on
-        display_name: on
+      
+      - id: pass
+        display_name: pass
         variables:
-          OCSP_CONNECTIVITY: 1
+          OCSP_CONNECTIVITY: pass
+      
+      - id: fail
+        display_name: fail
+        variables:
+          OCSP_CONNECTIVITY: fail
+      
+
+  - id: extra-uri-options
+    display_name: extra URI options
+    values:
+      - id: none
+        display_name: None
+      
+      - id: "tlsInsecure=true"
+        variables:
+          EXTRA_URI_OPTIONS: "tlsInsecure=true"
+      
+      - id: "tlsAllowInvalidCertificates=true"
+        variables:
+          EXTRA_URI_OPTIONS: "tlsAllowInvalidCertificates=true"
+      
 buildvariants:
   - matrix_name: "all"
     matrix_spec: { ruby: '*' }

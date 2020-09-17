@@ -429,19 +429,35 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
+  <% [
+    %w(valid none pass),
+    %w(unknown none pass),
+    %w(revoked none fail),
+    
+    %w(valid tlsInsecure=true pass),
+    %w(unknown tlsInsecure=true pass),
+    %w(revoked tlsInsecure=true pass),
+    
+    %w(valid tlsAllowInvalidCertificates=true pass),
+    %w(unknown tlsAllowInvalidCertificates=true pass),
+    %w(revoked tlsAllowInvalidCertificates=true pass),
+  ].each do |status, extra_uri_options, outcome|
+  %>
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
-      ocsp-status: '*'
+      ocsp-status: <%= status %>
       ocsp-delegate: '*'
-      ocsp-connectivity: on
+      ocsp-connectivity: <%= outcome %>
+      extra-uri-options: "<%= extra_uri_options %>"
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
-    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
+  <% end %>
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:
@@ -454,7 +470,7 @@ buildvariants:
       # https://github.com/jruby/jruby-openssl/issues/210
       ocsp-status: [valid, unknown]
       ocsp-delegate: '*'
-      ocsp-connectivity: on
+      ocsp-connectivity: pass
       ruby: jruby-9.2
       topology: standalone
       mongodb-version: '4.4'
