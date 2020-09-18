@@ -117,9 +117,13 @@ module Mongo
       # @api private
       def get(options = {})
         limit = options[:limit]
+        namespace = options[:namespace]
         key = cache_key(options)
 
-        caching_cursor = QueryCache.cache_table[key]
+        namespace_hash = QueryCache.cache_table[namespace]
+        return nil unless namespace_hash
+
+        caching_cursor = namespace_hash[key]
         return nil unless caching_cursor
 
         caching_cursor_limit = caching_cursor.view.limit
