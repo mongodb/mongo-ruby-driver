@@ -84,6 +84,19 @@ module Mongo
         Thread.current["[mongo]:query_cache"] = nil
       end
 
+      # Clear the section of the query cache storing cursors with results
+      # from this namespace.
+      #
+      # @param [ String ] namespace The namespace to be cleared, in the format
+      #   "database.collection".
+      #
+      # @return [ nil ] Always nil.
+      #
+      # @api private
+      def clear_namespace(namespace)
+        cache_table[namespace] = nil
+      end
+
       # Store a CachingCursor instance in the query cache.
       #
       # @param [ Mongo::CachingCursor ] cursor The CachingCursor instance to store.
