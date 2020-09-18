@@ -96,7 +96,10 @@ module Mongo
       # @api private
       def set(cursor, options = {})
         key = cache_key(options)
-        QueryCache.cache_table[key] = cursor
+        namespace = options[:namespace]
+
+        QueryCache.cache_table[namespace] ||= {}
+        QueryCache.cache_table[namespace][key] = cursor
 
         true
       end
@@ -146,7 +149,6 @@ module Mongo
         end
 
         [
-          options[:namespace],
           options[:selector],
           options[:skip],
           options[:sort],

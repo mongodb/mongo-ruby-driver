@@ -130,7 +130,7 @@ describe Mongo::QueryCache do
 
     it 'stores the cursor at the correct key' do
       Mongo::QueryCache.set(caching_cursor, options)
-      expect(Mongo::QueryCache.cache_table[[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+      expect(Mongo::QueryCache.cache_table[namespace][[selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
     end
   end
 
