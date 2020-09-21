@@ -89,6 +89,16 @@ module Mongo
           self.class.new(view, pipeline, options.merge(explain: true)).first
         end
 
+        # Whether this aggregation will write its result to a database collection.
+        #
+        # @return [ Boolean ] Whether the aggregation will write its result
+        #   to a collection.
+        #
+        # @api private
+        def write?
+          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
+        end
+
         private
 
         def server_selector
@@ -114,10 +124,6 @@ module Mongo
           description.standalone? || description.mongos? || description.primary? || secondary_ok?
         end
 
-        def write?
-          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
-        end
-
         def secondary_ok?
           !write?
         end
@@ -135,6 +141,18 @@ module Mongo
           if options[:collation] && !server.with_connection { |connection| connection.features }.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
+        end
+
+        # Skip, sort, limit, projection are specified as pipeline stages
+        # rather than as options.
+        def cache_options
+          {
+            namespace: collection.namespace,
+            selector: pipeline,
+            read_concern: view.read_concern,
+            read_preference: view.read_preference,
+            collation: options[:collation]
+          }
         end
       end
     end

@@ -42,18 +42,24 @@ module Mongo
             # No need to store the cursor in the query cache if there is
             # already a cached cursor stored at this key.
             QueryCache.set(@cursor, cache_options) unless cached_cursor
-            range = limit || nil
+
+            # If a query with a limit is performed, the query cache will
+            # re-use results from an earlier query with the same or larger
+            # limit, and then impose the lower limit during iteration.
+            limit_for_cached_query = respond_to?(:limit) ? limit : nil
           end
 
           if block_given?
-            if range
-              @cursor.to_a[0...range].each do |doc|
-                yield doc
-              end
+            # Ruby versions 2.5 and older do not support arr[0..nil] syntax, so
+            # this must be a separate conditional.
+            cursor_to_iterate = if limit_for_cached_query
+              @cursor.to_a[0...limit_for_cached_query]
             else
-              @cursor.each do |doc|
-                yield doc
-              end
+              @cursor
+            end
+
+            cursor_to_iterate.each do |doc|
+              yield doc
             end
           else
             @cursor.to_enum

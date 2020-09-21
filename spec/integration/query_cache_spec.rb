@@ -522,6 +522,114 @@ describe 'QueryCache' do
         expect(events.length).to eq(2)
       end
     end
+
+    context 'when aggregating with $out' do
+      before do
+        authorized_collection.find.to_a
+        authorized_collection.aggregate([
+          { '$match' => { test: 1 } },
+          { '$out' => { coll: 'new_coll' } }
+        ])
+      end
+
+      it 'queries again' do
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when aggregating with $merge' do
+      min_server_fcv '4.2'
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.find.to_a
+        authorized_collection.aggregate([
+          { '$match' => { 'test' => 1 } },
+          { '$merge' => {
+              into: {
+                db: SpecConfig.instance.test_db,
+                coll: 'new_coll',
+              },
+              on: "_id",
+              whenMatched: "replace",
+              whenNotMatched: "insert",
+            }
+          }
+        ])
+      end
+
+      it 'queries again' do
+        authorized_collection.find.to_a
+        expect(events.length).to eq(2)
+      end
+    end
+  end
+
+  context 'when aggregating' do
+    before do
+      3.times { authorized_collection.insert_one(test: 1) }
+    end
+
+    let(:events) do
+      subscriber.command_started_events('aggregate')
+    end
+
+    let(:aggregation) do
+      authorized_collection.aggregate([ { '$match' => { test: 1 } } ])
+    end
+
+    it 'caches the aggregation' do
+      expect(aggregation.to_a.length).to eq(3)
+      expect(aggregation.to_a.length).to eq(3)
+      expect(events.length).to eq(1)
+    end
+
+    context 'with read concern' do
+      require_wired_tiger
+      min_server_fcv '3.6'
+
+      let(:aggregation_read_concern) do
+        authorized_client['collection_spec', { read_concern: { level: :local } }]
+          .aggregate([ { '$match' => { test: 1 } } ])
+      end
+
+      it 'queries twice' do
+        expect(aggregation.to_a.length).to eq(3)
+        expect(aggregation_read_concern.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'with read preference' do
+      let(:aggregation_read_preference) do
+        authorized_client['collection_spec', { read: { mode: :primary } }]
+          .aggregate([ { '$match' => { test: 1 } } ])
+      end
+
+      it 'queries twice' do
+        expect(aggregation.to_a.length).to eq(3)
+        expect(aggregation_read_preference.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when collation is specified' do
+      min_server_fcv '3.4'
+
+      let(:aggregation_collation) do
+        authorized_collection.aggregate(
+          [ { '$match' => { test: 1 } } ],
+          { collation: { locale: 'fr' } }
+        )
+      end
+
+      it 'queries twice' do
+        expect(aggregation.to_a.length).to eq(3)
+        expect(aggregation_collation.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
+    end
   end
 
   context 'when find command fails and retries' do
