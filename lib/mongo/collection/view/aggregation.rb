@@ -89,6 +89,16 @@ module Mongo
           self.class.new(view, pipeline, options.merge(explain: true)).first
         end
 
+        # Whether this aggregation will write its result to a database collection.
+        #
+        # @return [ Boolean ] Whether the aggregation will write its result
+        #   to a collection.
+        #
+        # @api private
+        def write?
+          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
+        end
+
         private
 
         def server_selector
@@ -112,10 +122,6 @@ module Mongo
             connection.description
           end
           description.standalone? || description.mongos? || description.primary? || secondary_ok?
-        end
-
-        def write?
-          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
         end
 
         def secondary_ok?

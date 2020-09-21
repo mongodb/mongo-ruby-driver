@@ -45,15 +45,13 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate(pipeline, options = {})
+          aggregation = Aggregation.new(self, pipeline, options)
+
           # Because the $merge and $out pipeline stages write documents to the
           # collection, it is necessary to clear the cache when they are performed.
-          write = pipeline.any? do |op| 
-            op.key?('$out') || op.key?(:$out) ||
-              op.key?('$merge') || op.key?(:$merge)
-          end
+          Mongo::QueryCache.clear_cache if aggregation.write?
 
-          Mongo::QueryCache.clear_cache if write
-          Aggregation.new(self, pipeline, options)
+          aggregation
         end
 
         # Allows the server to write temporary data to disk while executing
