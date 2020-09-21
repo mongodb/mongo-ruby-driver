@@ -262,25 +262,48 @@ describe Mongo::Socket::OcspVerifier do
   end
 
   context 'responder returns unexpected status code' do
-    around do |example|
-      server = WEBrick::HTTPServer.new(Port: 8100)
-      server.mount_proc '/' do |req, res|
-        res.status = code
-        res.body = "HTTP #{code}"
-      end
-      Thread.new { server.start }
-      begin
-        example.run
-      ensure
-        server.shutdown
-      end
-    end
 
     include_context 'verifier', algorithm: 'rsa'
 
-    [400, 404, 500, 503].each do |_code|
-      context "code #{_code}" do
-        let(:code) { _code }
+    context '40x / 50x' do
+      around do |example|
+        server = WEBrick::HTTPServer.new(Port: 8100)
+        server.mount_proc '/' do |req, res|
+          res.status = code
+          res.body = "HTTP #{code}"
+        end
+        Thread.new { server.start }
+        begin
+          example.run
+        ensure
+          server.shutdown
+        end
+      end
+
+      [400, 404, 500, 503].each do |_code|
+        context "code #{_code}" do
+          let(:code) { _code }
+          include_examples 'does not verify'
+        end
+      end
+    end
+
+    context '204' do
+      around do |example|
+        server = WEBrick::HTTPServer.new(Port: 8100)
+        server.mount_proc '/' do |req, res|
+          res.status = 204
+        end
+        Thread.new { server.start }
+        begin
+          example.run
+        ensure
+          server.shutdown
+        end
+      end
+
+      context "code 204" do
+        let(:code) { 204 }
         include_examples 'does not verify'
       end
     end

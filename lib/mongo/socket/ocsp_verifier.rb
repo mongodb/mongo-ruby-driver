@@ -201,8 +201,15 @@ module Mongo
             next
           end
 
-          if http_response.code != '200'
-            @resp_errors << "OCSP request to #{report_uri(original_uri, uri)} failed with HTTP status code #{http_response.code}: #{http_response.body}"
+          if code >= 400
+            @resp_errors << "OCSP request to #{report_uri(original_uri, uri)} failed with HTTP status code #{http_response.code}" + report_response_body(http_response.body)
+            return false
+          end
+
+          if code != 200
+            # There must be a body provided with the response, if one isn't
+            # provided the response cannot be verified.
+            @resp_errors << "OCSP request to #{report_uri(original_uri, uri)} failed with unexpected HTTP status code #{http_response.code}" + report_response_body(http_response.body)
             return false
           end
 
@@ -346,6 +353,14 @@ module Mongo
           uri
         else
           "#{original_uri} (redirected to #{uri})"
+        end
+      end
+
+      def report_response_body(body)
+        if body
+          ": #{body}"
+        else
+          ''
         end
       end
     end
