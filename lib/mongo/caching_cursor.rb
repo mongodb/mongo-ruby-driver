@@ -66,7 +66,7 @@ module Mongo
     def try_next
       @cached_docs ||= []
       document = super
-      @cached_docs << document
+      @cached_docs << document if document
 
       document
     end

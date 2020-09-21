@@ -243,6 +243,27 @@ describe 'QueryCache' do
     end
   end
 
+  describe 'query fills up entire batch' do
+    before do
+      subscriber.clear_events!
+      authorized_client['test'].drop
+
+      2.times { |i| authorized_client['test'].insert_one(_id: i) }
+    end
+
+    let(:expected_result) do
+      [{ "_id" => 0 }, { "_id" => 1 }]
+    end
+
+    # When the last batch runs out, try_next will return nil instead of a
+    # document. This test checks that nil is not added to the list of cached
+    # documents or returned as a result.
+    it 'returns the correct response' do
+      expect(authorized_client['test'].find({}, batch_size: 2).to_a).to eq(expected_result)
+      expect(authorized_client['test'].find({}, batch_size: 2).to_a).to eq(expected_result)
+    end
+  end
+
   context 'when querying in the same collection' do
 
     before do
