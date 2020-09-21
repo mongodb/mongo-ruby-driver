@@ -62,7 +62,7 @@ module Mongo
 
         # RUBY-2367: This will be updated to allow the query cache to
         # cache cursors with multi-batch results.
-        if QueryCache.enabled? && (result.cursor_id == 0 || result.cursor_id.nil?)
+        if QueryCache.enabled?
           CachingCursor.new(view, result, server, session: session)
         else
           Cursor.new(view, result, server, session: session)

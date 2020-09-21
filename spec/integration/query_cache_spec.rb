@@ -8,6 +8,7 @@ describe 'QueryCache' do
 
   before do
     authorized_collection.delete_many
+    subscriber.clear_events!
   end
 
   let(:subscriber) { EventSubscriber.new }
@@ -71,39 +72,105 @@ describe 'QueryCache' do
     end
   end
 
-  describe 'iterating cursors multiple times' do
+  describe 'query with multiple batches' do
+    min_server_fcv '3.2'
+
     before do
-      authorized_collection.drop
-      Mongo::QueryCache.enabled = true
+      102.times { |i| authorized_collection.insert_one(_id: i) }
     end
 
-    after do
-      Mongo::QueryCache.enabled = false
+    let(:expected_results) { [*0..101].map { |id| { "_id" => id } } }
+
+    it 'returns the correct result' do
+      result = authorized_collection.find.to_a
+      expect(result.length).to eq(102)
+      expect(result).to eq(expected_results)
     end
 
-    context 'when query returns single batch' do
-      before do
-        authorized_collection.insert_many([{ test: 1 }] * 100)
-      end
-
-      it 'does not raise an exception' do
-        expect do
-          authorized_collection.find(test: 1).to_a
-          authorized_collection.find(test: 1).to_a
-        end.not_to raise_error
-      end
+    it 'returns the correct result multiple times' do
+      result1 = authorized_collection.find.to_a
+      result2 = authorized_collection.find.to_a
+      expect(result1).to eq(expected_results)
+      expect(result2).to eq(expected_results)
     end
 
-    context 'when query returns single batch' do
-      before do
-        authorized_collection.insert_many([{ test: 1 }] * 2000)
+    it 'caches the query' do
+      authorized_collection.find.to_a
+      authorized_collection.find.to_a
+      expect(subscriber.command_started_events('find').length).to eq(1)
+      expect(subscriber.command_started_events('getMore').length).to eq(1)
+    end
+
+    it 'uses cached cursor when limited' do
+      authorized_collection.find.to_a
+      result = authorized_collection.find({}, limit: 5).to_a
+
+      expect(result.length).to eq(5)
+      expect(result).to eq(expected_results.first(5))
+
+      expect(subscriber.command_started_events('find').length).to eq(1)
+      expect(subscriber.command_started_events('getMore').length).to eq(1)
+    end
+
+    it 'can be used with a block API' do
+      authorized_collection.find.to_a
+
+      result = []
+      authorized_collection.find.each do |doc|
+        result << doc
       end
 
-      it 'does not raise an exception' do
-        expect do
-          authorized_collection.find(test: 1).to_a
-          authorized_collection.find(test: 1).to_a
-        end.not_to raise_error
+      expect(result).to eq(expected_results)
+
+      expect(subscriber.command_started_events('find').length).to eq(1)
+      expect(subscriber.command_started_events('getMore').length).to eq(1)
+    end
+
+    context 'when the cursor isn\'t fully iterated the first time' do
+      it 'continues iterating' do
+        result1 = authorized_collection.find.first(5)
+
+        expect(result1.length).to eq(5)
+        expect(result1).to eq(expected_results.first(5))
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(0)
+
+        result2 = authorized_collection.find.to_a
+
+        expect(result2.length).to eq(102)
+        expect(result2).to eq(expected_results)
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
+      end
+
+      it 'can be iterated multiple times' do
+        authorized_collection.find.first(5)
+        authorized_collection.find.to_a
+
+        result = authorized_collection.find.to_a
+
+        expect(result.length).to eq(102)
+        expect(result).to eq(expected_results)
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
+      end
+
+      it 'can be used with a block API' do
+        authorized_collection.find.first(5)
+
+        result = []
+        authorized_collection.find.each do |doc|
+          result << doc
+        end
+
+        expect(result.length).to eq(102)
+        expect(result).to eq(expected_results)
+
+        expect(subscriber.command_started_events('find').length).to eq(1)
+        expect(subscriber.command_started_events('getMore').length).to eq(1)
       end
     end
   end
@@ -113,7 +180,6 @@ describe 'QueryCache' do
     min_server_fcv '3.6'
 
     before do
-      subscriber.clear_events!
       authorized_client['test'].drop
     end
 
@@ -174,6 +240,27 @@ describe 'QueryCache' do
       it 'executes one query' do
         expect(events.length).to eq(1)
       end
+    end
+  end
+
+  describe 'query fills up entire batch' do
+    before do
+      subscriber.clear_events!
+      authorized_client['test'].drop
+
+      2.times { |i| authorized_client['test'].insert_one(_id: i) }
+    end
+
+    let(:expected_result) do
+      [{ "_id" => 0 }, { "_id" => 1 }]
+    end
+
+    # When the last batch runs out, try_next will return nil instead of a
+    # document. This test checks that nil is not added to the list of cached
+    # documents or returned as a result.
+    it 'returns the correct response' do
+      expect(authorized_client['test'].find({}, batch_size: 2).to_a).to eq(expected_result)
+      expect(authorized_client['test'].find({}, batch_size: 2).to_a).to eq(expected_result)
     end
   end
 
@@ -289,14 +376,6 @@ describe 'QueryCache' do
         end
 
         context 'and two queries are performed with a larger limit' do
-          before do
-            if ClusterConfig.instance.fcv_ish <= '3.0'
-              pending 'RUBY-2367 Server versions 3.0 and older execute three' \
-                'queries in this case. This should be resolved when the query' \
-                'cache is modified to cache multi-batch queries.'
-            end
-          end
-
           it 'uses the query cache for the third query' do
             results1 = authorized_collection.find.limit(3).to_a
             results2 = authorized_collection.find.limit(3).to_a
@@ -312,14 +391,6 @@ describe 'QueryCache' do
         end
 
         context 'and the second query has a smaller limit' do
-          before do
-            if ClusterConfig.instance.fcv_ish <= '3.0'
-              pending 'RUBY-2367 Server versions 3.0 and older execute two' \
-                'queries in this case. This should be resolved when the query' \
-                'cache is modified to cache multi-batch queries.'
-            end
-          end
-
           let(:results) { authorized_collection.find.limit(1).to_a }
 
           it 'uses the cached query' do

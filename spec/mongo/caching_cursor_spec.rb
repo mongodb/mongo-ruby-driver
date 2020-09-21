@@ -27,50 +27,44 @@ describe Mongo::CachingCursor do
     described_class.new(view, reply, server)
   end
 
-  context 'when query cache is enabled' do
-
-    let(:view) do
-      Mongo::Collection::View.new(authorized_collection)
-    end
-
-    let(:documents) do
-      (1..3).map{ |i| { field: "test#{i}" }}
-    end
-
-    before do
-      authorized_collection.insert_many(documents)
-    end
-
-    it 'caches the result documents' do
-      expect(cursor.cached_docs).to be_nil
-      expect(cursor.to_a.count).to eq(3)
-      expect(cursor.cached_docs.count).to eq(3)
-
-      expect(cursor.to_a.count).to eq(3)
-      expect(cursor.cached_docs.count).to eq(3)
-    end
+  let(:view) do
+    Mongo::Collection::View.new(authorized_collection)
   end
 
-  context 'when iterating first time' do
+  before do
+    authorized_collection.delete_many
+    3.times { |i| authorized_collection.insert_one(_id: i) }
+  end
 
-    before do
-      3.times do |i|
-        authorized_collection.insert_one(test: i)
+  describe '#cached_docs' do
+    context 'when no query has been performed' do
+      it 'returns nil' do
+        expect(cursor.cached_docs).to be_nil
       end
     end
 
-    let(:view) do
-      Mongo::Collection::View.new(authorized_collection, {},
-        sort: {test: 1}, projection: {_id: 0}, batch_size: 2)
+    context 'when a query has been performed' do
+      it 'returns the number of documents' do
+        cursor.to_a
+        expect(cursor.cached_docs.length).to eq(3)
+        expect(cursor.cached_docs).to eq([{ '_id' => 0 }, { '_id' => 1 }, { '_id' => 2 }])
+      end
     end
+  end
 
-    it 'supports try_next' do
-      expect(cursor.try_next).to eq('test' => 0)
-      expect(cursor.try_next).to eq('test' => 1)
+  describe '#try_next' do
+    it 'fetches the next document' do
+      expect(cursor.try_next).to eq('_id' => 0)
+      expect(cursor.try_next).to eq('_id' => 1)
+      expect(cursor.try_next).to eq('_id' => 2)
     end
+  end
 
-    it 'supports each' do
-      expect(cursor.each.to_a.length).to eq(3)
+  describe '#each' do
+    it 'iterates the cursor' do
+      result = cursor.each.to_a
+      expect(result.length).to eq(3)
+      expect(result).to eq([{ '_id' => 0 }, { '_id' => 1 }, { '_id' => 2 }])
     end
   end
 end

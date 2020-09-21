@@ -36,6 +36,14 @@ module Mongo
         @cached_docs.each do |doc|
           yield doc
         end
+
+        unless closed?
+          # StopIteration raised by try_next ends this loop.
+          loop do
+            document = try_next
+            yield document if document
+          end
+        end
       else
         super
       end
@@ -51,24 +59,16 @@ module Mongo
       "#<Mongo::CachingCursor:0x#{object_id} @view=#{@view.inspect}>"
     end
 
-    private
-
-    # Populates the cursor's cached documents if all of the results of the
-    # query fit in the first batch (cursor_id is zero) and the first batch
-    # of results have not been iterated yet. If the result set exceeds the
-    # batch size and a CachingCursor is iterated more than once, an error
-    # is returned.
+    # Acquires the next document for cursor iteration and then
+    # inserts that document in the @cached_docs array.
     #
-    # @return [ Array <BSON::Document> ] The documents returned by the
-    # get_more_operation.
-    def process(result)
-      documents = super
-      if @cursor_id.zero? && !@after_first_batch
-        @cached_docs ||= []
-        @cached_docs.concat(documents)
-      end
-      @after_first_batch = true
-      documents
+    # @api private
+    def try_next
+      @cached_docs ||= []
+      document = super
+      @cached_docs << document if document
+
+      document
     end
   end
 end
