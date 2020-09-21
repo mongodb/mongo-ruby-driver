@@ -64,11 +64,7 @@ describe Mongo::Socket::OcspVerifier do
     end
   end
 
-  shared_context 'verifier' do |opts|
-    algorithm = opts[:algorithm]
-
-    let(:cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/server.pem") }
-    let(:ca_cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem") }
+  shared_context 'basic verifier' do
 
     let(:cert) { OpenSSL::X509::Certificate.new(File.read(cert_path)) }
     let(:ca_cert) { OpenSSL::X509::Certificate.new(File.read(ca_cert_path)) }
@@ -82,6 +78,15 @@ describe Mongo::Socket::OcspVerifier do
     let(:verifier) do
       described_class.new('foo', cert, ca_cert, cert_store, timeout: 3)
     end
+  end
+
+  shared_context 'verifier' do |opts|
+    algorithm = opts[:algorithm]
+
+    let(:cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/server.pem") }
+    let(:ca_cert_path) { SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem") }
+
+    include_context 'basic verifier'
   end
 
   %w(rsa ecdsa).each do |algorithm|
@@ -253,6 +258,77 @@ describe Mongo::Socket::OcspVerifier do
 
       include_context 'verifier', algorithm: algorithm
       include_examples 'does not verify'
+    end
+  end
+
+  context 'responder returns unexpected status code' do
+
+    include_context 'verifier', algorithm: 'rsa'
+
+    context '40x / 50x' do
+      around do |example|
+        server = WEBrick::HTTPServer.new(Port: 8100)
+        server.mount_proc '/' do |req, res|
+          res.status = code
+          res.body = "HTTP #{code}"
+        end
+        Thread.new { server.start }
+        begin
+          example.run
+        ensure
+          server.shutdown
+        end
+      end
+
+      [400, 404, 500, 503].each do |_code|
+        context "code #{_code}" do
+          let(:code) { _code }
+          include_examples 'does not verify'
+        end
+      end
+    end
+
+    context '204' do
+      around do |example|
+        server = WEBrick::HTTPServer.new(Port: 8100)
+        server.mount_proc '/' do |req, res|
+          res.status = 204
+        end
+        Thread.new { server.start }
+        begin
+          example.run
+        ensure
+          server.shutdown
+        end
+      end
+
+      context "code 204" do
+        let(:code) { 204 }
+        include_examples 'does not verify'
+      end
+    end
+  end
+
+  context 'responder URI has no path' do
+    require_external_connectivity
+
+    include_context 'basic verifier'
+
+    let(:cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp.crt') }
+    let(:ca_cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp-ca.crt') }
+    let(:cert_store) do
+      OpenSSL::X509::Store.new.tap do |store|
+        store.set_default_paths
+      end
+    end
+
+    before do
+      URI.parse(verifier.ocsp_uris.first).path.should == ''
+    end
+
+    it 'verifies' do
+      # TODO This test might fail if the certificate expires?
+      verifier.verify.should be true
     end
   end
 end
