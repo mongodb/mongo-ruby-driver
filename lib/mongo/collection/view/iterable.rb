@@ -52,14 +52,14 @@ module Mongo
           if block_given?
             # Ruby versions 2.5 and older do not support arr[0..nil] syntax, so
             # this must be a separate conditional.
-            if limit_for_cached_query
-              @cursor.to_a[0...limit_for_cached_query].each do |doc|
-                yield doc
-              end
+            cursor_to_iterate = if limit_for_cached_query
+              @cursor.to_a[0...limit_for_cached_query]
             else
-              @cursor.each do |doc|
-                yield doc
-              end
+              @cursor
+            end
+
+            cursor_to_iterate.each do |doc|
+              yield doc
             end
           else
             @cursor.to_enum
