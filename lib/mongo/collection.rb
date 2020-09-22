@@ -556,7 +556,8 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
-      Mongo::QueryCache.clear_cache
+      Mongo::QueryCache.clear_namespace("#{database.name}.#{name}")
+
       client.send(:with_session, opts) do |session|
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])

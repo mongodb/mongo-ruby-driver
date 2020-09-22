@@ -479,30 +479,38 @@ describe 'QueryCache' do
     end
 
     context 'when inserting new documents' do
-
       before do
         authorized_collection.find.to_a
+        # Perform a query in another namespace to test that this method only
+        # clears the cache for its own namespace.
+        authorized_client['other_collection'].find.to_a
         authorized_collection.insert_one({ name: "bob" })
       end
 
-      it 'queries again' do
-        expect(Mongo::QueryCache.cache_table.length).to eq(0)
+      it 'queries again and clears part of the query cache' do
+        expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
+        expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+
         authorized_collection.find.to_a
-        expect(events.length).to eq(2)
+        expect(events.length).to eq(3)
       end
     end
 
     context 'when deleting documents' do
-
       before do
         authorized_collection.find.to_a
+        # Perform a query in another namespace to test that this method only
+        # clears the cache for its own namespace.
+        authorized_client['other_collection'].find.to_a
         authorized_collection.delete_many
       end
 
-      it 'queries again' do
-        expect(Mongo::QueryCache.cache_table.length).to eq(0)
+      it 'queries again and clears part of the query cache' do
+        expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
+        expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+
         authorized_collection.find.to_a
-        expect(events.length).to eq(2)
+        expect(events.length).to eq(3)
       end
     end
 

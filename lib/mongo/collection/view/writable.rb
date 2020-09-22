@@ -177,7 +177,10 @@ module Mongo
         #
         # @since 2.0.0
         def delete_many(opts = {})
-          Mongo::QueryCache.clear_cache
+          Mongo::QueryCache.clear_namespace(
+            "#{collection.database.name}.#{collection.name}"
+          )
+
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
