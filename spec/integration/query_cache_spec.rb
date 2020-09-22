@@ -479,39 +479,55 @@ describe 'QueryCache' do
     end
 
     context 'when inserting new documents' do
-      before do
-        authorized_collection.find.to_a
-        # Perform a query in another namespace to test that this method only
-        # clears the cache for its own namespace.
-        authorized_client['other_collection'].find.to_a
-        authorized_collection.insert_one({ name: "bob" })
+      context 'when inserting and querying from same collection' do
+        before do
+          authorized_collection.find.to_a
+          authorized_collection.insert_one({ name: "bob" })
+        end
+
+        it 'queries again' do
+          authorized_collection.find.to_a
+          expect(events.length).to eq(2)
+        end
       end
 
-      it 'queries again and clears part of the query cache' do
-        expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
-        expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+      context 'when inserting and querying from different collections' do
+        before do
+          authorized_collection.find.to_a
+          authorized_client['different_collection'].insert_one({ name: "bob" })
+        end
 
-        authorized_collection.find.to_a
-        expect(events.length).to eq(3)
+        it 'queries again' do
+          authorized_collection.find.to_a
+          expect(events.length).to eq(1)
+        end
       end
     end
 
     [:delete_many, :delete_one].each do |method|
       context "when deleting with #{method}" do
-        before do
-          authorized_collection.find.to_a
-          # Perform a query in another namespace to test that this method only
-          # clears the cache for its own namespace.
-          authorized_client['other_collection'].find.to_a
-          authorized_collection.send(method)
+        context 'when deleting and querying from same collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_collection.send(method)
+          end
+
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(2)
+          end
         end
 
-        it 'queries again and clears part of the query cache' do
-          expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
-          expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+        context 'when deleting and querying from different collections' do
+          before do
+            authorized_collection.find.to_a
+            authorized_client['different_collection'].send(method)
+          end
 
-          authorized_collection.find.to_a
-          expect(events.length).to eq(3)
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(1)
+          end
         end
       end
     end
@@ -519,39 +535,55 @@ describe 'QueryCache' do
     [:find_one_and_delete, :find_one_and_replace, :find_one_and_update,
       :update_one, :replace_one].each do |method|
       context "when updating with #{method}" do
-        before do
-          authorized_collection.find.to_a
-          # Perform a query in another namespace to test that this method only
-          # clears the cache for its own namespace.
-          authorized_client['other_collection'].find.to_a
-          authorized_collection.send(method, { field: 'value' }, { field: 'new value' })
+        context 'when updating and querying from same collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_collection.send(method, { field: 'value' }, { field: 'new value' })
+          end
+
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(2)
+          end
         end
 
-        it 'queries again and clears part of the query cache' do
-          expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
-          expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+        context 'when updating and querying from different collections' do
+          before do
+            authorized_collection.find.to_a
+            authorized_client['different_collection'].send(method, { field: 'value' }, { field: 'new value' })
+          end
 
-          authorized_collection.find.to_a
-          expect(events.length).to eq(3)
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(1)
+          end
         end
       end
     end
 
     context 'when updating with #update_many' do
-      before do
-        authorized_collection.find.to_a
-        # Perform a query in another namespace to test that this method only
-        # clears the cache for its own namespace.
-        authorized_client['other_collection'].find.to_a
-        authorized_collection.update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
+      context 'when inserting and querying from same collection' do
+        before do
+          authorized_collection.find.to_a
+          authorized_collection.update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
+        end
+
+        it 'queries again' do
+          authorized_collection.find.to_a
+          expect(events.length).to eq(2)
+        end
       end
 
-      it 'queries again and clears part of the query cache' do
-        expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
-        expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+      context 'when inserting and querying from different collections' do
+        before do
+          authorized_collection.find.to_a
+          authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
+        end
 
-        authorized_collection.find.to_a
-        expect(events.length).to eq(3)
+        it 'queries again' do
+          authorized_collection.find.to_a
+          expect(events.length).to eq(1)
+        end
       end
     end
 

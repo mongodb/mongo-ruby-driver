@@ -470,6 +470,7 @@ module Mongo
           Mongo::QueryCache.clear_namespace(
             "#{collection.database.name}.#{collection.name}"
           )
+          Mongo::QueryCache.clear_namespace(nil)
         end
       end
     end
