@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'QueryCache' do
   around do |spec|
-    Mongo::QueryCache.clear_cache
+    Mongo::QueryCache.clear
     Mongo::QueryCache.cache { spec.run }
   end
 

@@ -53,7 +53,7 @@ module Mongo
           # Opt to clear the entire cache rather than one namespace because
           # the $out and $merge stages do not have to write to the same namespace
           # on which the aggregation is performed.
-          Mongo::QueryCache.clear_cache if aggregation.write?
+          Mongo::QueryCache.clear if aggregation.write?
 
           aggregation
         end

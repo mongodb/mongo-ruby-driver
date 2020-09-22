@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::CachingCursor do
 
   around do |spec|
-    Mongo::QueryCache.clear_cache
+    Mongo::QueryCache.clear
     Mongo::QueryCache.cache { spec.run }
   end
 
