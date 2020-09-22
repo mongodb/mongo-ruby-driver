@@ -94,7 +94,7 @@ module Mongo
       #
       # @api private
       def clear_namespace(namespace)
-        cache_table[namespace] = nil
+        cache_table[namespace] = nil if cache_table[namespace]
       end
 
       # Store a CachingCursor instance in the query cache.

@@ -331,7 +331,7 @@ describe 'QueryCache' do
         it 'queries again' do
           authorized_collection.find({ test: 3 }, options2).to_a
           expect(events.length).to eq(2)
-          expect(Mongo::QueryCache.cache_table.length).to eq(2)
+          expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec'].length).to eq(2)
         end
       end
     end
@@ -496,13 +496,54 @@ describe 'QueryCache' do
       end
     end
 
-    context 'when deleting documents' do
+    [:delete_many, :delete_one].each do |method|
+      context "when deleting with #{method}" do
+        before do
+          authorized_collection.find.to_a
+          # Perform a query in another namespace to test that this method only
+          # clears the cache for its own namespace.
+          authorized_client['other_collection'].find.to_a
+          authorized_collection.send(method)
+        end
+
+        it 'queries again and clears part of the query cache' do
+          expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
+          expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+
+          authorized_collection.find.to_a
+          expect(events.length).to eq(3)
+        end
+      end
+    end
+
+    [:find_one_and_delete, :find_one_and_replace, :find_one_and_update,
+      :update_one, :replace_one].each do |method|
+      context "when updating with #{method}" do
+        before do
+          authorized_collection.find.to_a
+          # Perform a query in another namespace to test that this method only
+          # clears the cache for its own namespace.
+          authorized_client['other_collection'].find.to_a
+          authorized_collection.send(method, { field: 'value' }, { field: 'new value' })
+        end
+
+        it 'queries again and clears part of the query cache' do
+          expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec']).to be_nil
+          expect(Mongo::QueryCache.cache_table['ruby-driver.other_collection']).not_to be_empty
+
+          authorized_collection.find.to_a
+          expect(events.length).to eq(3)
+        end
+      end
+    end
+
+    context 'when updating with #update_many' do
       before do
         authorized_collection.find.to_a
         # Perform a query in another namespace to test that this method only
         # clears the cache for its own namespace.
         authorized_client['other_collection'].find.to_a
-        authorized_collection.delete_many
+        authorized_collection.update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
       end
 
       it 'queries again and clears part of the query cache' do
@@ -511,23 +552,6 @@ describe 'QueryCache' do
 
         authorized_collection.find.to_a
         expect(events.length).to eq(3)
-      end
-    end
-
-    context 'when replacing documents' do
-      before do
-        authorized_collection.find.to_a
-        authorized_collection.replace_one(selector, { test: 100 } )
-      end
-
-      let(:selector) do
-        { test: 5 }
-      end
-
-      it 'queries again' do
-        expect(Mongo::QueryCache.cache_table.length).to eq(0)
-        authorized_collection.find.to_a
-        expect(events.length).to eq(2)
       end
     end
 
@@ -543,6 +567,10 @@ describe 'QueryCache' do
       it 'queries again' do
         authorized_collection.find.to_a
         expect(events.length).to eq(2)
+      end
+
+      it 'clears the cache' do
+        expect(Mongo::QueryCache.cache_table).to be_empty
       end
     end
 
@@ -570,6 +598,10 @@ describe 'QueryCache' do
       it 'queries again' do
         authorized_collection.find.to_a
         expect(events.length).to eq(2)
+      end
+
+      it 'clears the cache' do
+        expect(Mongo::QueryCache.cache_table).to be_empty
       end
     end
   end
