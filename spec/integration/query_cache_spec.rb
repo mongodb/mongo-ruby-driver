@@ -562,7 +562,7 @@ describe 'QueryCache' do
     end
 
     context 'when updating with #update_many' do
-      context 'when inserting and querying from same collection' do
+      context 'when updating and querying from same collection' do
         before do
           authorized_collection.find.to_a
           authorized_collection.update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
@@ -574,7 +574,7 @@ describe 'QueryCache' do
         end
       end
 
-      context 'when inserting and querying from different collections' do
+      context 'when updating and querying from different collections' do
         before do
           authorized_collection.find.to_a
           authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
@@ -699,6 +699,71 @@ describe 'QueryCache' do
       it 'queries twice' do
         expect(aggregation.to_a.length).to eq(3)
         expect(aggregation_collation.to_a.length).to eq(3)
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when insert_one is performed on another collection' do
+      before do
+        aggregation.to_a
+        authorized_client['different_collection'].insert_one(name: 'bob')
+        aggregation.to_a
+      end
+
+      it 'queries again' do
+        expect(events.length).to eq(2)
+      end
+    end
+
+    context 'when insert_many is performed on another collection' do
+      before do
+        aggregation.to_a
+        authorized_client['different_collection'].insert_many([name: 'bob'])
+        aggregation.to_a
+      end
+
+      it 'queries again' do
+        expect(events.length).to eq(2)
+      end
+    end
+
+    [:delete_many, :delete_one].each do |method|
+      context "when #{method} is performed on another collection" do
+        before do
+          aggregation.to_a
+          authorized_client['different_collection'].send(method)
+          aggregation.to_a
+        end
+
+        it 'queries again' do
+          expect(events.length).to eq(2)
+        end
+      end
+    end
+
+    [:find_one_and_delete, :find_one_and_replace, :find_one_and_update,
+      :update_one, :replace_one].each do |method|
+      context "when #{method} is performed on another collection" do
+        before do
+          aggregation.to_a
+          authorized_client['different_collection'].send(method, { field: 'value' }, { field: 'new value' })
+          aggregation.to_a
+        end
+
+        it 'queries again' do
+          expect(events.length).to eq(2)
+        end
+      end
+    end
+
+    context 'when update_many is performed on another collection' do
+      before do
+        aggregation.to_a
+        authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
+        aggregation.to_a
+      end
+
+      it 'queries again' do
         expect(events.length).to eq(2)
       end
     end
