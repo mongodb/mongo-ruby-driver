@@ -49,6 +49,10 @@ module Mongo
 
           # Because the $merge and $out pipeline stages write documents to the
           # collection, it is necessary to clear the cache when they are performed.
+          #
+          # Opt to clear the entire cache rather than one namespace because
+          # the $out and $merge stages do not have to write to the same namespace
+          # on which the aggregation is performed.
           Mongo::QueryCache.clear_cache if aggregation.write?
 
           aggregation

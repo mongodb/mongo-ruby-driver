@@ -147,7 +147,10 @@ module Mongo
         # rather than as options.
         def cache_options
           {
-            namespace: collection.namespace,
+            # Aggregations can read documents from more than one collection,
+            # so they will be cached without a namespace and cleared on
+            # every write operation.
+            namespace: nil,
             selector: pipeline,
             read_concern: view.read_concern,
             read_preference: view.read_preference,

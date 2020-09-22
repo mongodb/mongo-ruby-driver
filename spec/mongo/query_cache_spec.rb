@@ -130,7 +130,7 @@ describe Mongo::QueryCache do
 
     it 'stores the cursor at the correct key' do
       Mongo::QueryCache.set(caching_cursor, options)
-      expect(Mongo::QueryCache.cache_table[[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+      expect(Mongo::QueryCache.cache_table[namespace][[selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
     end
   end
 
@@ -241,6 +241,38 @@ describe Mongo::QueryCache do
           end
         end
       end
+    end
+  end
+
+  describe '#clear_namespace' do
+    let(:caching_cursor) { double("Mongo::CachingCursor") }
+    let(:namespace1) { 'db.coll' }
+    let(:namespace2) { 'db.coll2' }
+    let(:selector) { { field: 'value' } }
+
+    before do
+      Mongo::QueryCache.set(caching_cursor, { namespace: namespace1, selector: selector })
+      Mongo::QueryCache.set(caching_cursor, { namespace: namespace2, selector: selector })
+      Mongo::QueryCache.set(caching_cursor, { namespace: nil, selector: selector })
+    end
+
+    it 'returns nil' do
+      expect(Mongo::QueryCache.clear_namespace(namespace1)).to be_nil
+    end
+
+    it 'clears the specified namespace in the query cache' do
+      Mongo::QueryCache.clear_namespace(namespace1)
+      expect(Mongo::QueryCache.cache_table[namespace1]).to be_nil
+    end
+
+    it 'does not clear other namespaces in the query cache' do
+      Mongo::QueryCache.clear_namespace(namespace1)
+      expect(Mongo::QueryCache.cache_table[namespace2]).not_to be_nil
+    end
+
+    it 'clears the nil namespace' do
+      Mongo::QueryCache.clear_namespace(namespace1)
+      expect(Mongo::QueryCache.cache_table[nil]).to be_nil
     end
   end
 end
