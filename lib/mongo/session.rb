@@ -534,7 +534,7 @@ module Mongo
     #
     # @since 2.6.0
     def commit_transaction(options=nil)
-      QueryCache.clear_cache
+      QueryCache.clear
       check_if_ended!
       check_if_no_transaction!
 
@@ -603,7 +603,7 @@ module Mongo
     #
     # @since 2.6.0
     def abort_transaction
-      QueryCache.clear_cache
+      QueryCache.clear
 
       check_if_ended!
       check_if_no_transaction!

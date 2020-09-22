@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::QueryCache do
 
   around do |spec|
-    Mongo::QueryCache.clear_cache
+    Mongo::QueryCache.clear
     Mongo::QueryCache.cache { spec.run }
   end
 
@@ -88,7 +88,7 @@ describe Mongo::QueryCache do
     end
   end
 
-  describe '#clear_cache' do
+  describe '#clear' do
 
     before do
       authorized_collection.insert_one({ name: 'testing' })
@@ -97,7 +97,7 @@ describe Mongo::QueryCache do
 
     it 'clears the cache' do
       expect(Mongo::QueryCache.cache_table.length).to eq(1)
-      Mongo::QueryCache.clear_cache
+      Mongo::QueryCache.clear
       expect(Mongo::QueryCache.cache_table.length).to eq(0)
     end
   end

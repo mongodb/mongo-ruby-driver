@@ -77,10 +77,10 @@ module Mongo
       # Clear the query cache.
       #
       # @example Clear the cache.
-      #   QueryCache.clear_cache
+      #   QueryCache.clear
       #
       # @return [ nil ] Always nil.
-      def clear_cache
+      def clear
         Thread.current["[mongo]:query_cache"] = nil
       end
 
