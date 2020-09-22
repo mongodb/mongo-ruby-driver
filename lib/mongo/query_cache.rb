@@ -94,20 +94,37 @@ module Mongo
       #
       # @api private
       def clear_namespace(namespace)
-        cache_table[namespace] = nil if cache_table[namespace]
-
+        cache_table.delete(namespace)
         # The nil key is where cursors are stored that could potentially read from
         # multiple collections. This key should be cleared on every write operation
         # to prevent returning stale data.
-        cache_table[nil] = nil if cache_table[nil]
+        cache_table.delete(nil)
+        nil
       end
 
       # Store a CachingCursor instance in the query cache.
       #
       # @param [ Mongo::CachingCursor ] cursor The CachingCursor instance to store.
       # @param [ Hash ] options The query options that will be used to create
-      #   the cache key. Valid keys are: :namespace, :selector, :skip, :sort,
-      #   :limit, :projection, :collation, :read_concern, and :read_preference.
+      #   the cache key.
+      #
+      # @option options [ String | nil ] namespace The namespace of the query,
+      #   in the format "database_name.collection_name".
+      # @option options [ Array, Hash ] selector The selector passed to the query.
+      #   For most queries, this will be a Hash, but for aggregations, this
+      #   will be an Array representing the aggregation pipeline. May not be nil.
+      # @option options [ Integer | nil ] skip The skip value of the query.
+      # @option options [ Hash | nil ] sort The order of the query results
+      #   (e.g. { name: -1 }).
+      # @option options [ Integer | nil ] limit The limit value of the query.
+      # @option options [ Hash | nil ] projection The projection of the query
+      #   results (e.g. { name: 1 }).
+      # @option options [ Hash | nil ] collation The collation of the query
+      #   (e.g. { "locale" => "fr_CA" }).
+      # @option options [ Hash | nil ] read_concern The read concern of the query
+      #   (e.g. { level: :majority }).
+      # @option options [ Hash | nil ] read_preference The read preference of
+      #   the query (e.g. { mode: :secondary }).
       #
       # @return [ true ] Always true.
       #
@@ -126,8 +143,25 @@ module Mongo
       # CachingCursor that can be used to acquire the correct query results.
       #
       # @param [ Hash ] options The query options that will be used to create
-      #   the cache key. Valid keys are: :namespace, :selector, :skip, :sort,
-      #   :limit, :projection, :collation, :read_concern, and :read_preference.
+      #   the cache key.
+      #
+      # @option options [ String | nil ] namespace The namespace of the query,
+      #   in the format "database_name.collection_name".
+      # @option options [ Array, Hash ] selector The selector passed to the query.
+      #   For most queries, this will be a Hash, but for aggregations, this
+      #   will be an Array representing the aggregation pipeline. May not be nil.
+      # @option options [ Integer | nil ] skip The skip value of the query.
+      # @option options [ Hash | nil ] sort The order of the query results
+      #   (e.g. { name: -1 }).
+      # @option options [ Integer | nil ] limit The limit value of the query.
+      # @option options [ Hash | nil ] projection The projection of the query
+      #   results (e.g. { name: 1 }).
+      # @option options [ Hash | nil ] collation The collation of the query
+      #   (e.g. { "locale" => "fr_CA" }).
+      # @option options [ Hash | nil ] read_concern The read concern of the query
+      #   (e.g. { level: :majority }).
+      # @option options [ Hash | nil ] read_preference The read preference of
+      #   the query (e.g. { mode: :secondary }).
       #
       # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
       #   exists in the query cache, otherwise returns nil.
