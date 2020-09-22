@@ -95,6 +95,11 @@ module Mongo
       # @api private
       def clear_namespace(namespace)
         cache_table[namespace] = nil if cache_table[namespace]
+
+        # The nil key is where cursors are stored that could potentially read from
+        # multiple collections. This key should be cleared on every write operation
+        # to prevent returning stale data.
+        cache_table[nil] = nil if cache_table[nil]
       end
 
       # Store a CachingCursor instance in the query cache.

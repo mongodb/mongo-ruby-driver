@@ -253,6 +253,7 @@ describe Mongo::QueryCache do
     before do
       Mongo::QueryCache.set(caching_cursor, { namespace: namespace1, selector: selector })
       Mongo::QueryCache.set(caching_cursor, { namespace: namespace2, selector: selector })
+      Mongo::QueryCache.set(caching_cursor, { namespace: nil, selector: selector })
     end
 
     it 'returns nil' do
@@ -267,6 +268,11 @@ describe Mongo::QueryCache do
     it 'does not clear other namespaces in the query cache' do
       Mongo::QueryCache.clear_namespace(namespace1)
       expect(Mongo::QueryCache.cache_table[namespace2]).not_to be_nil
+    end
+
+    it 'clears the nil namespace' do
+      Mongo::QueryCache.clear_namespace(namespace1)
+      expect(Mongo::QueryCache.cache_table[nil]).to be_nil
     end
   end
 end

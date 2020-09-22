@@ -556,8 +556,7 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
-      Mongo::QueryCache.clear_namespace("#{database.name}.#{name}")
-      Mongo::QueryCache.clear_namespace(nil)
+      Mongo::QueryCache.clear_namespace(namespace)
 
       client.send(:with_session, opts) do |session|
         write_concern = if opts[:write_concern]
@@ -595,8 +594,7 @@ module Mongo
     #
     # @since 2.0.0
     def insert_many(documents, options = {})
-      Mongo::QueryCache.clear_namespace("#{database.name}.#{name}")
-      Mongo::QueryCache.clear_namespace(nil)
+      Mongo::QueryCache.clear_namespace(namespace)
 
       inserts = documents.map{ |doc| { :insert_one => doc }}
       bulk_write(inserts, options)

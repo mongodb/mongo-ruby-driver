@@ -48,7 +48,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_delete(opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           cmd = { :findAndModify => collection.name, :query => filter, :remove => true }
           cmd[:fields] = projection if projection
@@ -129,7 +129,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           cmd = { :findAndModify => collection.name, :query => filter }
           cmd[:update] = document
@@ -179,7 +179,7 @@ module Mongo
         #
         # @since 2.0.0
         def delete_many(opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
@@ -222,7 +222,7 @@ module Mongo
         #
         # @since 2.0.0
         def delete_one(opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
           with_session(opts) do |session|
@@ -271,7 +271,7 @@ module Mongo
         #
         # @since 2.0.0
         def replace_one(replacement, opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           update_doc = { Operation::Q => filter,
                          Operation::U => replacement,
@@ -329,7 +329,7 @@ module Mongo
         #
         # @since 2.0.0
         def update_many(spec, opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           update_doc = { Operation::Q => filter,
                          Operation::U => spec,
@@ -386,7 +386,7 @@ module Mongo
         #
         # @since 2.0.0
         def update_one(spec, opts = {})
-          clear_query_cache_namespace
+          QueryCache.clear_namespace(collection.namespace)
 
           update_doc = { Operation::Q => filter,
                          Operation::U => spec,
@@ -464,13 +464,6 @@ module Mongo
           else
             write_concern_with_session(session)
           end
-        end
-
-        def clear_query_cache_namespace
-          Mongo::QueryCache.clear_namespace(
-            "#{collection.database.name}.#{collection.name}"
-          )
-          Mongo::QueryCache.clear_namespace(nil)
         end
       end
     end
