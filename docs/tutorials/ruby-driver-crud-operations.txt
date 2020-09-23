@@ -130,17 +130,14 @@ object, or with ``Decimal128.from_string()``.
    price = BSON::Decimal128.from_string("428.79")
    # => BSON::Decimal128('428.79')
 
-
-.. _query-cache:
-
 Query Cache
 ===========
 
-The Ruby driver provides a query cache. When enabled, the query cache will 
+The Ruby driver provides a query cache. When enabled, the query cache will
 save the results of find and aggregation queries and return those saved results
 when the same queries are performed again.
 
-To read more about the query cache, visit the 
+To read more about the query cache, visit the
 :ref:`query cache tutorial <query-cache>`.
 
 Reading
@@ -265,7 +262,7 @@ Additional Query Operations
 
 ``estimated_document_count``
   Get an approximate number of documents in the collection.
-  
+
   Note that unlike ``count_documents``, ``estimated_document_count`` does not
   accept a filter.
 
@@ -278,7 +275,7 @@ Additional Query Operations
 ``count``
   Get an approximate number of documents matching a filter, or an approximate
   number of documents in the collection.
-  
+
   *Deprecated:* The ``count`` method is deprecated and does not work in
   transactions. Please use ``count_documents`` to obtain an exact count of
   documents potentially matching a filter or ``estimated_document_count``
@@ -338,11 +335,11 @@ or on the collection:
 
   client = Mongo::Client.new(['localhost:14420'], database: 'music',
     read_concern: {level: :local})
-  
+
   client['collection'].find.to_a
 
   collection = client['collection', read_concern: {level: :majority}]
-  
+
   collection.find.to_a
 
 The driver does not currently support setting read concern on an individual
@@ -359,7 +356,7 @@ part of the command:
 .. code-block:: ruby
 
   client.database.command(collstats: 'test', readConcern: {level: :majority})
-  
+
 
 .. _ruby-driver-read-preference:
 
