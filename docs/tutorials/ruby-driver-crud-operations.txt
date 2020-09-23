@@ -130,46 +130,15 @@ object, or with ``Decimal128.from_string()``.
    price = BSON::Decimal128.from_string("428.79")
    # => BSON::Decimal128('428.79')
 
-
-.. _query-cache:
-
 Query Cache
 ===========
 
-If the Ruby driver's query cache is enabled, it will cache find queries on
-the currently executed thread and avoid sending requests to the database for
-identical queries. The QueryCache class stores CachingCursor objects which attempt
-to load documents from memory before retrieving them from the database. Performing
-any write operations such as insert, update, or delete clears the query cache. Note that
-if the number of results is too large to be returned in a single batch,
-the query cache will not be used, even if ``Mongo::QueryCache.enabled`` is true, and
-an error will be returned.
+The Ruby driver provides a query cache. When enabled, the query cache will
+save the results of find and aggregation queries and return those saved results
+when the same queries are performed again.
 
-Similar to Mongoid's query cache, the driver's query cache implementation
-does not support using CachingCursors for queries with different limit sizes if
-the original query has a specified limit. For example, if a query with a limit of
-100 were executed, followed by a query with a limit of 10, the second query
-would still run against the database and a new CachingCursor object would be stored,
-rather than using the existing one. However, if a query does not specify a limit
-initially, then any query that is run after it with a specified limit will use
-the original CachingCursor rather than going back to the database, and will return
-the correct number of documents accordingly.
-
-To enable the query cache on a global scope:
-
-.. code-block:: ruby
-
-  Mongo::QueryCache.enabled = true
-
-The following code shows how to enable the query cache within the context of a
-specific block:
-
-.. code-block:: ruby
-
-  Mongo::QueryCache.cache do
-      # all queries within this block are cached
-  end
-
+To read more about the query cache, visit the
+:ref:`query cache tutorial <query-cache>`.
 
 Reading
 =======
@@ -293,7 +262,7 @@ Additional Query Operations
 
 ``estimated_document_count``
   Get an approximate number of documents in the collection.
-  
+
   Note that unlike ``count_documents``, ``estimated_document_count`` does not
   accept a filter.
 
@@ -306,7 +275,7 @@ Additional Query Operations
 ``count``
   Get an approximate number of documents matching a filter, or an approximate
   number of documents in the collection.
-  
+
   *Deprecated:* The ``count`` method is deprecated and does not work in
   transactions. Please use ``count_documents`` to obtain an exact count of
   documents potentially matching a filter or ``estimated_document_count``
@@ -366,11 +335,11 @@ or on the collection:
 
   client = Mongo::Client.new(['localhost:14420'], database: 'music',
     read_concern: {level: :local})
-  
+
   client['collection'].find.to_a
 
   collection = client['collection', read_concern: {level: :majority}]
-  
+
   collection.find.to_a
 
 The driver does not currently support setting read concern on an individual
@@ -387,7 +356,7 @@ part of the command:
 .. code-block:: ruby
 
   client.database.command(collstats: 'test', readConcern: {level: :majority})
-  
+
 
 .. _ruby-driver-read-preference:
 

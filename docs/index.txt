@@ -78,6 +78,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       /tutorials/ruby-driver-geospatial-search
       /tutorials/ruby-driver-gridfs
       /tutorials/client-side-encryption
+      /tutorials/query-cache
       bson-tutorials
       API <http://api.mongodb.com/ruby/current/>
       /reference/driver-compatibility

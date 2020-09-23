@@ -1,0 +1,213 @@
+***********
+Query Cache
+***********
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 2
+   :class: singlecol
+
+.. _query-cache:
+
+The MongoDB Ruby driver provides a built-in query cache. When enabled, the
+query cache saves the results of previously-executed find and aggregation
+queries. When those same queries are performed again, the driver returns
+the cached reuslts to prevent unnecessary roundtrips to the database.
+
+Usage
+=====
+
+The query cache is disabled by default. It cache can be enabled on the global
+scope as well as within the context of a specific block.
+
+To enable the query cache globally:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.enabled = true
+
+Similarly, to disable it globally:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.enabled = false
+
+To enable the query cache within the context of a block:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.cache do
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Queries the database and caches the result
+
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Returns the previously cached result
+    end
+  end
+
+And to disable the query cache in the context of a block:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.uncached do
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Sends the query to the database; does NOT cache the result
+
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Queries the database again
+    end
+  end
+
+You may check whether the query cache is enabled at any time by calling
+``Mongo::QueryCache.enabled?``, which will return ``true`` or ``false``.
+
+.. _query-cache-matching:
+
+Query Matching
+==============
+
+A query is eligible to use cached results if it matches the original query
+that produced the cached results. Two queries are considered matching if they
+are identical in the following values:
+
+* Namespace (the database and collection on which the query was performed)
+* Selector (for aggregations, the aggregation pipeline stages)
+* Skip
+* Sort
+* Projection
+* Collation
+* Read Concern
+* Read Preference
+
+For example, if you perform one query, and then perform a mostly identical query
+with a different sort order, those queries will not be considered matching,
+and the second query will not use the cached results of the first.
+
+Limits
+======
+
+When performing a query with a limit, the query cache will reuse an existing
+cached query with a larger limit if one exists. For example:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.cache do
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].find(genre: 'Rock', limit: 10)
+      #=> Queries the database and caches the result
+
+      client['artists'].find(genre: 'Rock', limit: 5)
+      #=> Returns the first 5 results from the cached query
+
+      client['artists'].find(genre: 'Rock', limit: 20)
+      #=> Queries the database again and replaces the previously cached query results
+    end
+  end
+
+Cache Invalidation
+==================
+
+The query cache is cleared in part or in full on every write operation. Most
+write operations will clear the results of any queries were performed on the same
+collection that is being written to. Some operations will clear the entire
+query cache.
+
+The following operations will clear cached query results on the same database and
+collection (including during bulk writes):
+
+* ``insert_one``
+* ``update_one``
+* ``replace_one``
+* ``update_many``
+* ``delete_one``
+* ``delete_many``
+* ``find_one_and_delete``
+* ``find_one_and_update``
+* ``find_one_and_replace``
+
+The following operations will clear the entire query cache:
+
+* aggregation with ``$merge`` or ``$out`` pipeline stages
+* ``commit_transaction``
+* ``abort_transaction``
+
+Manual Cache Invalidation
+=========================
+
+You may clear the query cache at any time with the following method:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.clear
+
+This will remove all cached query results.
+
+Transactions
+============
+
+Queries are cached within the context of a transaction, but the entire
+cache will be cleared when the transaction is committed or aborted.
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.cache do
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      session = client.start_session
+
+      session.with_transaction do
+        client['artists'].insert_one({ name: 'Fleet Foxes' }, session: session)
+
+        client['artists'].find({}, session: session).first
+        #=> { name: 'Fleet Foxes' }
+        #=> Queries the database and caches the result
+
+        client['artists'].find({}, session: session).first
+        #=> { name: 'Fleet Foxes' }
+        #=> Returns the previously cached result
+
+        session.abort_transaction
+      end
+
+      client['artists'].find.first
+      #=> nil
+      # The query cache was cleared on abort_transaction
+    end
+  end
+
+.. note::
+
+  Transactions are often performed with a "snapshot" read concern level. Keep
+  in mind that a query with a "snapshot" read concern cannot return cached
+  results from a query without the "snapshot" read concern, so it is possible
+  that a transaction may not use previously cached queries.
+
+  To understand when a query will use a cached result, see the
+  :ref:`Query Matching <query-cache-matching>` section.
+
+Aggregations
+============
+
+The query cache also caches the results of aggregation pipelines. For example:
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.cache do
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].aggregate([ { '$match' => { name: 'Fleet Foxes' } } ]).first
+      #=> Queries the database and caches the result
+
+      client['artists'].aggregate([ { '$match' => { name: 'Fleet Foxes' } } ]).first
+      #=> Returns the previously cached result
+    end
+  end
+
+.. note::
+
+  Aggregation results are cleared from the cache during every write operation,
+  with no exceptions.
+
