@@ -737,6 +737,24 @@ describe 'QueryCache' do
           end
         end
       end
+
+      context 'when query occurs between bulk write creation and execution' do
+        before do
+          authorized_collection.delete_many
+        end
+
+        it 'queries again' do
+          bulk_write = Mongo::BulkWrite.new(
+            authorized_collection,
+            [{ insert_one: { test: 1 } }]
+          )
+
+          expect(authorized_collection.find(test: 1).to_a.length).to eq(0)
+          bulk_write.execute
+          expect(authorized_collection.find(test: 1).to_a.length).to eq(1)
+          expect(events.length).to eq(2)
+        end
+      end
     end
 
     context 'when aggregating with $out' do
