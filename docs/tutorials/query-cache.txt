@@ -66,6 +66,27 @@ And to disable the query cache in the context of a block:
 You may check whether the query cache is enabled at any time by calling
 ``Mongo::QueryCache.enabled?``, which will return ``true`` or ``false``.
 
+Query Matching
+==============
+
+A query is eligible to use cached results if it matches a query that was
+previously run and whose results have been cached. Two queries are considered
+matching if they are identical in the following values (with some exceptions):
+
+* Namespace (the database and collection on which the query was performed)
+* Selector (for aggregations, the aggregation pipeline stages)
+* Skip
+* Sort
+* Limit (in certain cases; read more in the :ref:`limit section <limits>`)
+* Projection
+* Collation
+* Read Concern
+* Read Preference
+
+For example, if you perform one query, and then perform a mostly identical query
+with a different sort order, those queries will not be considered matching,
+and the second query will not use the cached results of the first.
+
 Limits
 ======
 
@@ -156,6 +177,16 @@ cache will be cleared when the transaction is committed or aborted.
       # The query cache was cleared on abort_transaction
     end
   end
+
+.. note::
+
+  Transactions are often performed with a "snapshot" read concern level. Keep
+  in mind that a query with a "snapshot" read concern cannot return cached
+  results from a query without the "snapshot" read concern, so it is possible
+  that a transaction may not use previously cached queries.
+
+  To understand when a query will use a cached result, see the
+  :ref:`Query Matching <query_matching>` section.
 
 Aggregations
 ============
