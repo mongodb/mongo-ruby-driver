@@ -71,15 +71,14 @@ You may check whether the query cache is enabled at any time by calling
 Query Matching
 ==============
 
-A query is eligible to use cached results if it matches a query that was
-previously run and whose results have been cached. Two queries are considered
-matching if they are identical in the following values (with some exceptions):
+A query is eligible to use cached results if it matches the original query
+that produced the cached results. Two queries are considered matching if they
+are identical in the following values:
 
 * Namespace (the database and collection on which the query was performed)
 * Selector (for aggregations, the aggregation pipeline stages)
 * Skip
 * Sort
-* Limit (in certain cases; read more in the :ref:`Limits section <query-cache-limits>`)
 * Projection
 * Collation
 * Read Concern
@@ -88,8 +87,6 @@ matching if they are identical in the following values (with some exceptions):
 For example, if you perform one query, and then perform a mostly identical query
 with a different sort order, those queries will not be considered matching,
 and the second query will not use the cached results of the first.
-
-.. _query-cache-limits:
 
 Limits
 ======
