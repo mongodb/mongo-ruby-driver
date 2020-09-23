@@ -497,7 +497,7 @@ describe 'QueryCache' do
           authorized_client['different_collection'].insert_one({ name: "bob" })
         end
 
-        it 'queries again' do
+        it 'uses the cached query' do
           authorized_collection.find.to_a
           expect(events.length).to eq(1)
         end
@@ -524,7 +524,7 @@ describe 'QueryCache' do
             authorized_client['different_collection'].send(method)
           end
 
-          it 'queries again' do
+          it 'uses the cached query' do
             authorized_collection.find.to_a
             expect(events.length).to eq(1)
           end
@@ -553,7 +553,7 @@ describe 'QueryCache' do
             authorized_client['different_collection'].send(method, { field: 'value' }, { field: 'new value' })
           end
 
-          it 'queries again' do
+          it 'uses the cached query' do
             authorized_collection.find.to_a
             expect(events.length).to eq(1)
           end
@@ -580,9 +580,179 @@ describe 'QueryCache' do
           authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
         end
 
-        it 'queries again' do
+        it 'uses the cached query' do
           authorized_collection.find.to_a
           expect(events.length).to eq(1)
+        end
+      end
+    end
+
+    context 'when performing bulk write' do
+      context 'with insert_one' do
+        context 'when inserting and querying from same collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_collection.bulk_write([ { insert_one: { name: 'bob' } } ])
+          end
+
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'when inserting and querying from different collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_client['different_collection'].bulk_write(
+              [ { insert_one: { name: 'bob' } } ]
+            )
+          end
+
+          it 'uses the cached query' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(1)
+          end
+        end
+      end
+
+      [:update_one, :update_many].each do |method|
+        context "with #{method}" do
+          context 'when updating and querying from same collection' do
+            before do
+              authorized_collection.find.to_a
+              authorized_collection.bulk_write([
+                {
+                  method => {
+                    filter: { field: 'value' },
+                    update: { '$set' => { field: 'new value' } }
+                  }
+                }
+              ])
+            end
+
+            it 'queries again' do
+              authorized_collection.find.to_a
+              expect(events.length).to eq(2)
+            end
+          end
+
+          context 'when updating and querying from different collection' do
+            before do
+              authorized_collection.find.to_a
+              authorized_client['different_collection'].bulk_write([
+                {
+                  method => {
+                    filter: { field: 'value' },
+                    update: { '$set' => { field: 'new value' } }
+                  }
+                }
+              ])
+            end
+
+            it 'uses the cached query' do
+              authorized_collection.find.to_a
+              expect(events.length).to eq(1)
+            end
+          end
+        end
+      end
+
+      [:delete_one, :delete_many].each do |method|
+        context "with #{method}" do
+          context 'when delete and querying from same collection' do
+            before do
+              authorized_collection.find.to_a
+              authorized_collection.bulk_write([
+                {
+                  method => {
+                    filter: { field: 'value' },
+                  }
+                }
+              ])
+            end
+
+            it 'queries again' do
+              authorized_collection.find.to_a
+              expect(events.length).to eq(2)
+            end
+          end
+
+          context 'when delete and querying from different collection' do
+            before do
+              authorized_collection.find.to_a
+              authorized_client['different_collection'].bulk_write([
+                {
+                  method => {
+                    filter: { field: 'value' },
+                  }
+                }
+              ])
+            end
+
+            it 'uses the cached query' do
+              authorized_collection.find.to_a
+              expect(events.length).to eq(1)
+            end
+          end
+        end
+      end
+
+      context 'with replace_one' do
+        context 'when replacing and querying from same collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_collection.bulk_write([
+              {
+                replace_one: {
+                  filter: { field: 'value' },
+                  replacement: { field: 'new value' }
+                }
+              }
+            ])
+          end
+
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'when replacing and querying from different collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_client['different_collection'].bulk_write([
+              {
+                replace_one: {
+                  filter: { field: 'value' },
+                  replacement: { field: 'new value' }
+                }
+              }
+            ])
+          end
+
+          it 'uses the cached query' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(1)
+          end
+        end
+      end
+
+      context 'when query occurs between bulk write creation and execution' do
+        before do
+          authorized_collection.delete_many
+        end
+
+        it 'queries again' do
+          bulk_write = Mongo::BulkWrite.new(
+            authorized_collection,
+            [{ insert_one: { test: 1 } }]
+          )
+
+          expect(authorized_collection.find(test: 1).to_a.length).to eq(0)
+          bulk_write.execute
+          expect(authorized_collection.find(test: 1).to_a.length).to eq(1)
+          expect(events.length).to eq(2)
         end
       end
     end
