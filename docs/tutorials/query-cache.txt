@@ -7,7 +7,7 @@ Query Cache
 .. contents:: On this page
    :local:
    :backlinks: none
-   :depth: 1
+   :depth: 2
    :class: singlecol
 
 .. _query-cache:
@@ -15,12 +15,12 @@ Query Cache
 The MongoDB Ruby driver provides a built-in query cache. When enabled, the
 query cache saves the results of previously-executed find and aggregation
 queries. When those same queries are performed again, the driver returns
-the cached reuslts to prevent unnecessary round trips to the database.
+the cached reuslts to prevent unnecessary roundtrips to the database.
 
 Usage
 =====
 
-The query cache is disabled by default. It cache can be enabled on a gobal
+The query cache is disabled by default. It cache can be enabled on the global
 scope as well as within the context of a specific block.
 
 To enable the query cache globally:
@@ -40,13 +40,13 @@ To enable the query cache within the context of a block:
 .. code-block:: ruby
 
   Mongo::QueryCache.cache do
-    client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Queries the database and caches the result
 
-    client['artists'].find(name: 'Flying Lotus').first
-    #=> Queries the database and caches the result
-
-    client['artists'].find(name: 'Flying Lotus').first
-    #=> Returns the previously cached result
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Returns the previously cached result
+    end
   end
 
 And to disable the query cache in the context of a block:
@@ -54,13 +54,13 @@ And to disable the query cache in the context of a block:
 .. code-block:: ruby
 
   Mongo::QueryCache.uncached do
-    client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Sends the query to the database; does NOT cache the result
 
-    client['artists'].find(name: 'Flying Lotus').first
-    #=> Sends the query to the database; does NOT cache the result
-
-    client['artists'].find(name: 'Flying Lotus').first
-    #=> Queries the database again
+      client['artists'].find(name: 'Flying Lotus').first
+      #=> Queries the database again
+    end
   end
 
 You may check whether the query cache is enabled at any time by calling
@@ -75,27 +75,27 @@ cached query with a larger limit if one exists. For example:
 .. code-block:: ruby
 
   Mongo::QueryCache.cache do
-    client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].find(genre: 'Rock', limit: 10)
+      #=> Queries the database and caches the result
 
-    client['artists'].find(genre: 'Rock', limit: 10)
-    #=> Queries the database and caches the result
+      client['artists'].find(genre: 'Rock', limit: 5)
+      #=> Returns the first 5 results from the cached query
 
-    client['artists'].find(genre: 'Rock', limit: 5)
-    #=> Returns the first 5 results from the cached query
-
-    client['artists'].find(genre: 'Rock', limit: 20)
-    #=> Queries the database again and replaces the previously cached query results
+      client['artists'].find(genre: 'Rock', limit: 20)
+      #=> Queries the database again and replaces the previously cached query results
+    end
   end
 
 Cache Invalidation
 ==================
 
 The query cache is cleared in part or in full on every write operation. Most
-write operations will clear any queries were performed on the same
+write operations will clear the results of any queries were performed on the same
 collection that is being written to. Some operations will clear the entire
 query cache.
 
-The following operations will clear cached queries on the same database and
+The following operations will clear cached query results on the same database and
 collection (including during bulk writes):
 
 * ``insert_one``
@@ -134,26 +134,27 @@ cache will be cleared when the transaction is committed or aborted.
 .. code-block:: ruby
 
   Mongo::QueryCache.cache do
-    client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
-    session = client.start_session
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      session = client.start_session
 
-    session.with_transaction do
-      client['artists'].insert_one({ name: 'Fleet Foxes' }, session: session)
+      session.with_transaction do
+        client['artists'].insert_one({ name: 'Fleet Foxes' }, session: session)
 
-      client['artists'].find({}, session: session).first
-      #=> { name: 'Fleet Foxes' }
-      #=> Queries the database and caches the result
+        client['artists'].find({}, session: session).first
+        #=> { name: 'Fleet Foxes' }
+        #=> Queries the database and caches the result
 
-      client['artists'].find({}, session: session).first
-      #=> { name: 'Fleet Foxes' }
-      #=> Returns the previously cached result
+        client['artists'].find({}, session: session).first
+        #=> { name: 'Fleet Foxes' }
+        #=> Returns the previously cached result
 
-      session.abort_transaction
+        session.abort_transaction
+      end
+
+      client['artists'].find.first
+      #=> nil
+      # The query cache was cleared on abort_transaction
     end
-
-    client['artists'].find.first
-    #=> nil
-    # The query cache was cleared on abort_transaction
   end
 
 Aggregations
@@ -164,13 +165,13 @@ The query cache also caches the results of aggregation pipelines. For example:
 .. code-block:: ruby
 
   Mongo::QueryCache.cache do
-    client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music') do |client|
+      client['artists'].aggregate([ { '$match' => { name: 'Fleet Foxes' } } ]).first
+      #=> Queries the database and caches the result
 
-    client['artists'].aggregate([ { '$match' => { name: 'Fleet Foxes' } } ]).first
-    #=> Queries the database and caches the result
-
-    client['artists'].aggregate([ { '$match' => { name: 'Fleet Foxes' } } ]).first
-    #=> Returns the previously cached result
+      client['artists'].aggregate([ { '$match' => { name: 'Fleet Foxes' } } ]).first
+      #=> Returns the previously cached result
+    end
   end
 
 .. note::
