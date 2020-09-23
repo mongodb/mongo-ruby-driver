@@ -11,7 +11,7 @@ Tutorials
 The tutorials in this section provide examples of some frequently used
 operations. This section is not meant to be an exhaustive list of all
 operations available in the Ruby driver.
-    
+
 .. toctree::
    :titlesonly:
 
@@ -32,3 +32,4 @@ operations available in the Ruby driver.
    /tutorials/ruby-driver-text-search
    /tutorials/ruby-driver-geospatial-search
    /tutorials/ruby-driver-gridfs
+   /tutorials/query-cache
