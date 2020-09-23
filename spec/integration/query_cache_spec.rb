@@ -497,7 +497,7 @@ describe 'QueryCache' do
           authorized_client['different_collection'].insert_one({ name: "bob" })
         end
 
-        it 'queries again' do
+        it 'uses the cached query' do
           authorized_collection.find.to_a
           expect(events.length).to eq(1)
         end
@@ -524,7 +524,7 @@ describe 'QueryCache' do
             authorized_client['different_collection'].send(method)
           end
 
-          it 'queries again' do
+          it 'uses the cached query' do
             authorized_collection.find.to_a
             expect(events.length).to eq(1)
           end
@@ -553,7 +553,7 @@ describe 'QueryCache' do
             authorized_client['different_collection'].send(method, { field: 'value' }, { field: 'new value' })
           end
 
-          it 'queries again' do
+          it 'uses the cached query' do
             authorized_collection.find.to_a
             expect(events.length).to eq(1)
           end
@@ -580,7 +580,7 @@ describe 'QueryCache' do
           authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
         end
 
-        it 'queries again' do
+        it 'uses the cached query' do
           authorized_collection.find.to_a
           expect(events.length).to eq(1)
         end
