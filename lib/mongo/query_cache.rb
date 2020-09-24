@@ -127,7 +127,7 @@ module Mongo
       #   the query (e.g. { mode: :secondary }).
       # @option options [ Boolean | nil ] multi_collection Whether the query
       #   results could potentially come from multiple collections. When true,
-      #   these results will bes tored under the nil namespace key and cleared
+      #   these results will be stored under the nil namespace key and cleared
       #   on every write command.
       #
       # @return [ true ] Always true.
@@ -168,7 +168,7 @@ module Mongo
       #   the query (e.g. { mode: :secondary }).
       # @option options [ Boolean | nil ] multi_collection Whether the query
       #   results could potentially come from multiple collections. When true,
-      #   these results will bes tored under the nil namespace key and cleared
+      #   these results will be stored under the nil namespace key and cleared
       #   on every write command.
       #
       # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
@@ -209,7 +209,7 @@ module Mongo
 
       def cache_key(options)
         unless options[:namespace] && options[:selector]
-          raise ArgumentError.new("Cannot generate cache key without namesapce or selector")
+          raise ArgumentError.new("Cannot generate cache key without namespace or selector")
         end
 
         [
