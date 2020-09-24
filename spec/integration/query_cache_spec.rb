@@ -937,6 +937,33 @@ describe 'QueryCache' do
         expect(events.length).to eq(2)
       end
     end
+
+    context '#count_documents' do
+      context 'on same collection' do
+        it 'caches the query' do
+          expect(authorized_collection.count_documents(test: 1)).to eq(3)
+          expect(authorized_collection.count_documents(test: 1)).to eq(3)
+
+          expect(events.length).to eq(1)
+        end
+      end
+
+      context 'on different collections' do
+        let(:other_collection) { authorized_client['other_collection'] }
+
+        before do
+          other_collection.drop
+          6.times { other_collection.insert_one(test: 1) }
+        end
+
+        it 'caches the query' do
+          expect(authorized_collection.count_documents(test: 1)).to eq(3)
+          expect(other_collection.count_documents(test: 1)).to eq(6)
+
+          expect(events.length).to eq(2)
+        end
+      end
+    end
   end
 
   context 'when find command fails and retries' do

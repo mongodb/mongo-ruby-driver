@@ -125,13 +125,17 @@ module Mongo
       #   (e.g. { level: :majority }).
       # @option options [ Hash | nil ] read_preference The read preference of
       #   the query (e.g. { mode: :secondary }).
+      # @option options [ Boolean | nil ] multi_collection Whether the query
+      #   results could potentially come from multiple collections. When true,
+      #   these results will be stored under the nil namespace key and cleared
+      #   on every write command.
       #
       # @return [ true ] Always true.
       #
       # @api private
       def set(cursor, options = {})
         key = cache_key(options)
-        namespace = options[:namespace]
+        namespace = namespace_key(options)
 
         QueryCache.cache_table[namespace] ||= {}
         QueryCache.cache_table[namespace][key] = cursor
@@ -162,6 +166,10 @@ module Mongo
       #   (e.g. { level: :majority }).
       # @option options [ Hash | nil ] read_preference The read preference of
       #   the query (e.g. { mode: :secondary }).
+      # @option options [ Boolean | nil ] multi_collection Whether the query
+      #   results could potentially come from multiple collections. When true,
+      #   these results will be stored under the nil namespace key and cleared
+      #   on every write command.
       #
       # @return [ Mongo::CachingCursor | nil ] Returns a CachingCursor if one
       #   exists in the query cache, otherwise returns nil.
@@ -169,7 +177,7 @@ module Mongo
       # @api private
       def get(options = {})
         limit = options[:limit]
-        namespace = options[:namespace]
+        namespace = namespace_key(options)
         key = cache_key(options)
 
         namespace_hash = QueryCache.cache_table[namespace]
@@ -200,11 +208,12 @@ module Mongo
       private
 
       def cache_key(options)
-        unless options[:selector]
-          raise ArgumentError.new("Cannot generate cache key without selector")
+        unless options[:namespace] && options[:selector]
+          raise ArgumentError.new("Cannot generate cache key without namespace or selector")
         end
 
         [
+          options[:namespace],
           options[:selector],
           options[:skip],
           options[:sort],
@@ -213,6 +222,17 @@ module Mongo
           options[:read_concern],
           options[:read_preference]
         ]
+      end
+
+      # If the cached results can come from multiple collections, store this
+      # cursor under the nil namespace to be cleared on every write operation.
+      # Otherwise, store it under the specified namespace.
+      def namespace_key(options)
+        if options[:multi_collection]
+          nil
+        else
+          options[:namespace]
+        end
       end
     end
   end
