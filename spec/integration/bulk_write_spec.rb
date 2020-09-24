@@ -31,12 +31,12 @@ describe 'Bulk writes' do
     end
 
     let(:operations) do
-      [{ insert_one: { text: 'a' * (max_bson_size/2) } }] * 3
+      [{ insert_one: { text: 'a' * (max_bson_size/2) } }] * 6
     end
 
     before do
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-      authorized_collection.bulk_write(operations) 
+      authorized_collection.bulk_write(operations)
     end
 
     it 'splits the operations' do
