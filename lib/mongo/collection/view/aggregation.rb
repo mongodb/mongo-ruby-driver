@@ -147,14 +147,14 @@ module Mongo
         # rather than as options.
         def cache_options
           {
-            # Aggregations can read documents from more than one collection,
-            # so they will be cached without a namespace and cleared on
-            # every write operation.
-            namespace: nil,
+            namespace: collection.namespace,
             selector: pipeline,
             read_concern: view.read_concern,
             read_preference: view.read_preference,
-            collation: options[:collation]
+            collation: options[:collation],
+            # Aggregations can read documents from more than one collection,
+            # so they will be cleared on every write operation.
+            multi_collection: true,
           }
         end
       end

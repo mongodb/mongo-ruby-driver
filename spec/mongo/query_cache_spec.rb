@@ -130,7 +130,7 @@ describe Mongo::QueryCache do
 
     it 'stores the cursor at the correct key' do
       Mongo::QueryCache.set(caching_cursor, options)
-      expect(Mongo::QueryCache.cache_table[namespace][[selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+      expect(Mongo::QueryCache.cache_table[namespace][[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
     end
   end
 
@@ -248,12 +248,13 @@ describe Mongo::QueryCache do
     let(:caching_cursor) { double("Mongo::CachingCursor") }
     let(:namespace1) { 'db.coll' }
     let(:namespace2) { 'db.coll2' }
+    let(:namespace3) { 'db.coll3' }
     let(:selector) { { field: 'value' } }
 
     before do
       Mongo::QueryCache.set(caching_cursor, { namespace: namespace1, selector: selector })
       Mongo::QueryCache.set(caching_cursor, { namespace: namespace2, selector: selector })
-      Mongo::QueryCache.set(caching_cursor, { namespace: nil, selector: selector })
+      Mongo::QueryCache.set(caching_cursor, { namespace: namespace3, selector: selector, multi_collection: true })
     end
 
     it 'returns nil' do
