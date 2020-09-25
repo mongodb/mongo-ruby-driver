@@ -106,30 +106,29 @@ module Mongo
         nil
       end
 
-      # Store a CachingCursor instance in the query cache.
+      # Store a CachingCursor instance in the query cache associated with the
+      # specified query options.
       #
       # @param [ Mongo::CachingCursor ] cursor The CachingCursor instance to store.
-      # @param [ Hash ] options The query options that will be used to create
-      #   the cache key.
       #
-      # @option options [ String | nil ] namespace The namespace of the query,
+      # @option opts [ String | nil ] namespace The namespace of the query,
       #   in the format "database_name.collection_name".
-      # @option options [ Array, Hash ] selector The selector passed to the query.
+      # @option opts [ Array, Hash ] selector The selector passed to the query.
       #   For most queries, this will be a Hash, but for aggregations, this
       #   will be an Array representing the aggregation pipeline. May not be nil.
-      # @option options [ Integer | nil ] skip The skip value of the query.
-      # @option options [ Hash | nil ] sort The order of the query results
+      # @option opts [ Integer | nil ] skip The skip value of the query.
+      # @option opts [ Hash | nil ] sort The order of the query results
       #   (e.g. { name: -1 }).
-      # @option options [ Integer | nil ] limit The limit value of the query.
-      # @option options [ Hash | nil ] projection The projection of the query
+      # @option opts [ Integer | nil ] limit The limit value of the query.
+      # @option opts [ Hash | nil ] projection The projection of the query
       #   results (e.g. { name: 1 }).
-      # @option options [ Hash | nil ] collation The collation of the query
+      # @option opts [ Hash | nil ] collation The collation of the query
       #   (e.g. { "locale" => "fr_CA" }).
-      # @option options [ Hash | nil ] read_concern The read concern of the query
+      # @option opts [ Hash | nil ] read_concern The read concern of the query
       #   (e.g. { level: :majority }).
-      # @option options [ Hash | nil ] read_preference The read preference of
+      # @option opts [ Hash | nil ] read_preference The read preference of
       #   the query (e.g. { mode: :secondary }).
-      # @option options [ Boolean | nil ] multi_collection Whether the query
+      # @option opts [ Boolean | nil ] multi_collection Whether the query
       #   results could potentially come from multiple collections. When true,
       #   these results will be stored under the nil namespace key and cleared
       #   on every write command.
@@ -137,40 +136,37 @@ module Mongo
       # @return [ true ] Always true.
       #
       # @api private
-      def set(cursor, options = {})
-        key = cache_key(options)
-        namespace = namespace_key(options)
+      def set(cursor, **opts)
+        _cache_key = cache_key(**opts)
+        _namespace_key = namespace_key(**opts)
 
-        cache_table[namespace] ||= {}
-        cache_table[namespace][key] = cursor
+        cache_table[_namespace_key] ||= {}
+        cache_table[_namespace_key][_cache_key] = cursor
 
         true
       end
 
-      # For the given query options, determine whether the cache has stored a
-      # CachingCursor that can be used to acquire the correct query results.
+      # For the given query options, retrieve a cached cursor that can be used
+      # to obtain the correct query results, if one exists in the cache.
       #
-      # @param [ Hash ] options The query options that will be used to create
-      #   the cache key.
-      #
-      # @option options [ String | nil ] namespace The namespace of the query,
+      # @option opts [ String | nil ] namespace The namespace of the query,
       #   in the format "database_name.collection_name".
-      # @option options [ Array, Hash ] selector The selector passed to the query.
+      # @option opts [ Array, Hash ] selector The selector passed to the query.
       #   For most queries, this will be a Hash, but for aggregations, this
       #   will be an Array representing the aggregation pipeline. May not be nil.
-      # @option options [ Integer | nil ] skip The skip value of the query.
-      # @option options [ Hash | nil ] sort The order of the query results
+      # @option opts [ Integer | nil ] skip The skip value of the query.
+      # @option opts [ Hash | nil ] sort The order of the query results
       #   (e.g. { name: -1 }).
-      # @option options [ Integer | nil ] limit The limit value of the query.
-      # @option options [ Hash | nil ] projection The projection of the query
+      # @option opts [ Integer | nil ] limit The limit value of the query.
+      # @option opts [ Hash | nil ] projection The projection of the query
       #   results (e.g. { name: 1 }).
-      # @option options [ Hash | nil ] collation The collation of the query
+      # @option opts [ Hash | nil ] collation The collation of the query
       #   (e.g. { "locale" => "fr_CA" }).
-      # @option options [ Hash | nil ] read_concern The read concern of the query
+      # @option opts [ Hash | nil ] read_concern The read concern of the query
       #   (e.g. { level: :majority }).
-      # @option options [ Hash | nil ] read_preference The read preference of
+      # @option opts [ Hash | nil ] read_preference The read preference of
       #   the query (e.g. { mode: :secondary }).
-      # @option options [ Boolean | nil ] multi_collection Whether the query
+      # @option opts [ Boolean | nil ] multi_collection Whether the query
       #   results could potentially come from multiple collections. When true,
       #   these results will be stored under the nil namespace key and cleared
       #   on every write command.
@@ -179,15 +175,15 @@ module Mongo
       #   exists in the query cache, otherwise returns nil.
       #
       # @api private
-      def get(options = {})
-        limit = options[:limit]
-        namespace = namespace_key(options)
-        key = cache_key(options)
+      def get(**opts)
+        limit = opts[:limit]
+        _namespace_key = namespace_key(**opts)
+        _cache_key = cache_key(**opts)
 
-        namespace_hash = cache_table[namespace]
+        namespace_hash = cache_table[_namespace_key]
         return nil unless namespace_hash
 
-        caching_cursor = namespace_hash[key]
+        caching_cursor = namespace_hash[_cache_key]
         return nil unless caching_cursor
 
         caching_cursor_limit = caching_cursor.view.limit
@@ -211,31 +207,31 @@ module Mongo
 
       private
 
-      def cache_key(options)
-        unless options[:namespace] && options[:selector]
+      def cache_key(**opts)
+        unless opts[:namespace] && opts[:selector]
           raise ArgumentError.new("Cannot generate cache key without namespace or selector")
         end
 
         [
-          options[:namespace],
-          options[:selector],
-          options[:skip],
-          options[:sort],
-          options[:projection],
-          options[:collation],
-          options[:read_concern],
-          options[:read_preference]
+          opts[:namespace],
+          opts[:selector],
+          opts[:skip],
+          opts[:sort],
+          opts[:projection],
+          opts[:collation],
+          opts[:read_concern],
+          opts[:read_preference]
         ]
       end
 
       # If the cached results can come from multiple collections, store this
       # cursor under the nil namespace to be cleared on every write operation.
       # Otherwise, store it under the specified namespace.
-      def namespace_key(options)
-        if options[:multi_collection]
+      def namespace_key(**opts)
+        if opts[:multi_collection]
           nil
         else
-          options[:namespace]
+          opts[:namespace]
         end
       end
     end
