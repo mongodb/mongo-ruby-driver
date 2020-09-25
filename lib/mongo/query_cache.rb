@@ -208,8 +208,11 @@ module Mongo
       private
 
       def cache_key(**opts)
-        unless opts[:namespace] && opts[:selector]
-          raise ArgumentError.new("Cannot generate cache key without namespace or selector")
+        unless opts[:namespace]
+          raise ArgumentError.new("Cannot generate cache key without namespace")
+        end
+        unless opts[:selector]
+          raise ArgumentError.new("Cannot generate cache key without selector")
         end
 
         [
