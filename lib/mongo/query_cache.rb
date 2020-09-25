@@ -43,11 +43,13 @@ module Mongo
       #
       # @return [ Object ] The result of the block.
       def cache
-        enabled = QueryCache.enabled?
-        QueryCache.enabled = true
-        yield
-      ensure
-        QueryCache.enabled = enabled
+        enabled = enabled?
+        self.enabled = true
+        begin
+          yield
+        ensure
+          self.enabled = enabled
+        end
       end
 
       # Execute the block with the query cache disabled.
@@ -57,11 +59,13 @@ module Mongo
       #
       # @return [ Object ] The result of the block.
       def uncached
-        enabled = QueryCache.enabled?
-        QueryCache.enabled = false
-        yield
-      ensure
-        QueryCache.enabled = enabled
+        enabled = enabled?
+        self.enabled = false
+        begin
+          yield
+        ensure
+          self.enabled = enabled
+        end
       end
 
       # Get the cached queries.
@@ -137,8 +141,8 @@ module Mongo
         key = cache_key(options)
         namespace = namespace_key(options)
 
-        QueryCache.cache_table[namespace] ||= {}
-        QueryCache.cache_table[namespace][key] = cursor
+        cache_table[namespace] ||= {}
+        cache_table[namespace][key] = cursor
 
         true
       end
@@ -180,7 +184,7 @@ module Mongo
         namespace = namespace_key(options)
         key = cache_key(options)
 
-        namespace_hash = QueryCache.cache_table[namespace]
+        namespace_hash = cache_table[namespace]
         return nil unless namespace_hash
 
         caching_cursor = namespace_hash[key]
