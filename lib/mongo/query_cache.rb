@@ -74,7 +74,7 @@ module Mongo
       #   QueryCache.cache_table
       #
       # @return [ Hash ] The hash of cached queries.
-      def cache_table
+      private def cache_table
         Thread.current["[mongo]:query_cache"] ||= {}
       end
 

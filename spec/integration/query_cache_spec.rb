@@ -37,12 +37,12 @@ describe 'QueryCache' do
       Mongo::QueryCache.cache do
         authorized_collection.find(name: 'testing').to_a
         expect(Mongo::QueryCache.enabled?).to be(true)
-        expect(Mongo::QueryCache.cache_table.length).to eq(1)
+        expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
         expect(events.length).to eq(2)
       end
       authorized_collection.find(name: 'testing').to_a
       expect(Mongo::QueryCache.enabled?).to be(false)
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       expect(events.length).to eq(2)
     end
   end
@@ -59,7 +59,7 @@ describe 'QueryCache' do
     end
 
     it 'disables the query cache inside the block' do
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       Mongo::QueryCache.uncached do
         authorized_collection.find(name: 'testing').to_a
         expect(Mongo::QueryCache.enabled?).to be(false)
@@ -67,7 +67,7 @@ describe 'QueryCache' do
       end
       authorized_collection.find(name: 'testing').to_a
       expect(Mongo::QueryCache.enabled?).to be(true)
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       expect(events.length).to eq(2)
     end
   end
@@ -286,7 +286,7 @@ describe 'QueryCache' do
       it 'queries again' do
         authorized_collection.find(test: 1).to_a
         expect(events.length).to eq(2)
-        expect(Mongo::QueryCache.cache_table.length).to eq(0)
+        expect(Mongo::QueryCache.send(:cache_table).length).to eq(0)
       end
     end
 
@@ -299,7 +299,7 @@ describe 'QueryCache' do
       it 'does not query again' do
         authorized_collection.find(test: 1).to_a
         expect(events.length).to eq(1)
-        expect(Mongo::QueryCache.cache_table.length).to eq(1)
+        expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       end
     end
 
@@ -331,7 +331,7 @@ describe 'QueryCache' do
         it 'queries again' do
           authorized_collection.find({ test: 3 }, options2).to_a
           expect(events.length).to eq(2)
-          expect(Mongo::QueryCache.cache_table['ruby-driver.collection_spec'].length).to eq(2)
+          expect(Mongo::QueryCache.send(:cache_table)['ruby-driver.collection_spec'].length).to eq(2)
         end
       end
     end
@@ -772,7 +772,7 @@ describe 'QueryCache' do
       end
 
       it 'clears the cache' do
-        expect(Mongo::QueryCache.cache_table).to be_empty
+        expect(Mongo::QueryCache.send(:cache_table)).to be_empty
       end
     end
 
@@ -803,7 +803,7 @@ describe 'QueryCache' do
       end
 
       it 'clears the cache' do
-        expect(Mongo::QueryCache.cache_table).to be_empty
+        expect(Mongo::QueryCache.send(:cache_table)).to be_empty
       end
     end
   end
@@ -995,11 +995,11 @@ describe 'QueryCache' do
 
       expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
       authorized_collection.find(test: 1).to_a
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       expect(subscriber.command_started_events('find').length).to eq(2)
 
       authorized_collection.find(test: 1).to_a
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       expect(subscriber.command_started_events('find').length).to eq(2)
     end
   end
@@ -1022,7 +1022,7 @@ describe 'QueryCache' do
 
     it 'queries again' do
       new_collection.find.to_a
-      expect(Mongo::QueryCache.cache_table.length).to eq(2)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(2)
       expect(events.length).to eq(2)
     end
   end
