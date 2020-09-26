@@ -80,7 +80,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       /tutorials/client-side-encryption
       /tutorials/query-cache
       bson-tutorials
-      API <http://api.mongodb.com/ruby/current/>
+      API <https://docs.mongodb.com/ruby-driver/master/api/>
       /reference/driver-compatibility
       /reference/additional-resources
       contribute
