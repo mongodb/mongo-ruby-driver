@@ -41,7 +41,7 @@ module Mongo
           if QueryCache.enabled?
             # No need to store the cursor in the query cache if there is
             # already a cached cursor stored at this key.
-            QueryCache.set(@cursor, cache_options) unless cached_cursor
+            QueryCache.set(@cursor, **cache_options) unless cached_cursor
 
             # If a query with a limit is performed, the query cache will
             # re-use results from an earlier query with the same or larger
@@ -112,10 +112,12 @@ module Mongo
         end
 
         def cached_cursor
-          QueryCache.get(cache_options)
+          QueryCache.get(**cache_options)
         end
 
         def cache_options
+          # NB: this hash is passed as keyword argument and must have symbol
+          # keys.
           {
             namespace: collection.namespace,
             selector: selector,

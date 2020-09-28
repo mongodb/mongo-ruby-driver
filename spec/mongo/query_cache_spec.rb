@@ -82,7 +82,7 @@ describe Mongo::QueryCache do
     end
 
     it 'gets the cached query' do
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       authorized_collection.find(name: 'testing').to_a
       expect(events.length).to eq(1)
     end
@@ -96,9 +96,9 @@ describe Mongo::QueryCache do
     end
 
     it 'clears the cache' do
-      expect(Mongo::QueryCache.cache_table.length).to eq(1)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(1)
       Mongo::QueryCache.clear
-      expect(Mongo::QueryCache.cache_table.length).to eq(0)
+      expect(Mongo::QueryCache.send(:cache_table).length).to eq(0)
     end
   end
 
@@ -129,8 +129,8 @@ describe Mongo::QueryCache do
     end
 
     it 'stores the cursor at the correct key' do
-      Mongo::QueryCache.set(caching_cursor, options)
-      expect(Mongo::QueryCache.cache_table[namespace][[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+      Mongo::QueryCache.set(caching_cursor, **options)
+      expect(Mongo::QueryCache.send(:cache_table)[namespace][[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
     end
   end
 
@@ -154,13 +154,13 @@ describe Mongo::QueryCache do
 
     context 'when there is no entry in the cache' do
       it 'returns nil' do
-        expect(Mongo::QueryCache.get(options)).to be_nil
+        expect(Mongo::QueryCache.get(**options)).to be_nil
       end
     end
 
     context 'when there is an entry in the cache' do
       before do
-        Mongo::QueryCache.set(caching_cursor, caching_cursor_options)
+        Mongo::QueryCache.set(caching_cursor, **caching_cursor_options)
       end
 
       context 'when that entry has no limit' do
@@ -179,7 +179,7 @@ describe Mongo::QueryCache do
           let(:limit) { 5 }
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
           end
         end
 
@@ -187,7 +187,7 @@ describe Mongo::QueryCache do
           let(:limit) { nil }
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
           end
         end
       end
@@ -213,7 +213,7 @@ describe Mongo::QueryCache do
           let(:limit) { 4 }
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
           end
         end
 
@@ -221,7 +221,7 @@ describe Mongo::QueryCache do
           let(:limit) { 6 }
 
           it 'returns nil' do
-            expect(Mongo::QueryCache.get(query_options)).to be_nil
+            expect(Mongo::QueryCache.get(**query_options)).to be_nil
           end
         end
 
@@ -229,7 +229,7 @@ describe Mongo::QueryCache do
           let(:limit) { 5 }
 
           it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(query_options)).to eq(caching_cursor)
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
           end
         end
 
@@ -237,7 +237,7 @@ describe Mongo::QueryCache do
           let(:limit) { nil }
 
           it 'returns nil' do
-            expect(Mongo::QueryCache.get(query_options)).to be_nil
+            expect(Mongo::QueryCache.get(**query_options)).to be_nil
           end
         end
       end
@@ -252,9 +252,9 @@ describe Mongo::QueryCache do
     let(:selector) { { field: 'value' } }
 
     before do
-      Mongo::QueryCache.set(caching_cursor, { namespace: namespace1, selector: selector })
-      Mongo::QueryCache.set(caching_cursor, { namespace: namespace2, selector: selector })
-      Mongo::QueryCache.set(caching_cursor, { namespace: namespace3, selector: selector, multi_collection: true })
+      Mongo::QueryCache.set(caching_cursor, namespace: namespace1, selector: selector)
+      Mongo::QueryCache.set(caching_cursor, namespace: namespace2, selector: selector)
+      Mongo::QueryCache.set(caching_cursor, namespace: namespace3, selector: selector, multi_collection: true)
     end
 
     it 'returns nil' do
@@ -263,17 +263,17 @@ describe Mongo::QueryCache do
 
     it 'clears the specified namespace in the query cache' do
       Mongo::QueryCache.clear_namespace(namespace1)
-      expect(Mongo::QueryCache.cache_table[namespace1]).to be_nil
+      expect(Mongo::QueryCache.send(:cache_table)[namespace1]).to be_nil
     end
 
     it 'does not clear other namespaces in the query cache' do
       Mongo::QueryCache.clear_namespace(namespace1)
-      expect(Mongo::QueryCache.cache_table[namespace2]).not_to be_nil
+      expect(Mongo::QueryCache.send(:cache_table)[namespace2]).not_to be_nil
     end
 
     it 'clears the nil namespace' do
       Mongo::QueryCache.clear_namespace(namespace1)
-      expect(Mongo::QueryCache.cache_table[nil]).to be_nil
+      expect(Mongo::QueryCache.send(:cache_table)[nil]).to be_nil
     end
   end
 end
