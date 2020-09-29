@@ -34,10 +34,12 @@ class SessionRegistry
   end
 
   def unregister(session)
-    @registry.delete(session.session_id)
+    @registry.delete(session.session_id) unless session.ended?
   end
 
   def verify_sessions_ended!
+    @registry.delete_if { |_, session| session.ended? }
+
     unless @registry.empty?
       sessions = @registry.map { |_, session| session }
       raise "Session registry contains live sessions: #{sessions.join(', ')}"
