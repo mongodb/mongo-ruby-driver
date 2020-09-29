@@ -11,6 +11,20 @@ describe 'QueryCache' do
     subscriber.clear_events!
   end
 
+  before(:all) do
+    # It is likely that there are other session leaks in the driver that are
+    # unrelated to the query cache. Clear the SessionRegistry at the start of
+    # these tests in order to detect leaks that occur only within the scope of
+    # these tests.
+    #
+    # Other session leaks will be detected and addressed as part of RUBY-2391.
+    SessionRegistry.instance.clear_registry
+  end
+
+  after do
+    SessionRegistry.instance.verify_sessions_ended!
+  end
+
   let(:subscriber) { EventSubscriber.new }
 
   let(:client) do

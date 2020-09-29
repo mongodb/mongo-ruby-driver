@@ -77,6 +77,7 @@ require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
+require 'support/session_registry'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
