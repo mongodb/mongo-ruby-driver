@@ -35,8 +35,12 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
-          session = client.send(:get_session, @options)
-          @cursor = select_cursor(session)
+          @cursor = if QueryCache.enabled? && cached_cursor
+            cached_cursor
+          else
+            session = client.send(:get_session, @options)
+            select_cursor(session)
+          end
 
           if QueryCache.enabled?
             # No need to store the cursor in the query cache if there is
@@ -89,10 +93,6 @@ module Mongo
         private
 
         def select_cursor(session)
-          if QueryCache.enabled?
-            return cached_cursor if cached_cursor
-          end
-
           if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session)
             result = send_initial_query(server, session)
