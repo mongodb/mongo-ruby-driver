@@ -35,16 +35,16 @@ describe 'QueryCache' do
 
   let(:authorized_collection) { client['collection_spec'] }
 
+  let(:events) do
+    subscriber.command_started_events('find')
+  end
+
   describe '#cache' do
 
     before do
       Mongo::QueryCache.enabled = false
       authorized_collection.insert_one({ name: 'testing' })
       authorized_collection.find(name: 'testing').to_a
-    end
-
-    let(:events) do
-      subscriber.command_started_events('find')
     end
 
     it 'enables the query cache inside the block' do
@@ -66,10 +66,6 @@ describe 'QueryCache' do
     before do
       authorized_collection.insert_one({ name: 'testing' })
       authorized_collection.find(name: 'testing').to_a
-    end
-
-    let(:events) do
-      subscriber.command_started_events('find')
     end
 
     it 'disables the query cache inside the block' do
@@ -197,10 +193,6 @@ describe 'QueryCache' do
       authorized_client['test'].drop
     end
 
-    let(:events) do
-      subscriber.command_started_events('find')
-    end
-
     context 'when two queries have same read concern' do
       before do
         authorized_client['test', read_concern: { level: :majority }].find.to_a
@@ -228,10 +220,6 @@ describe 'QueryCache' do
     before do
       subscriber.clear_events!
       authorized_client['test'].drop
-    end
-
-    let(:events) do
-      subscriber.command_started_events('find')
     end
 
     context 'when two queries have different read preferences' do
@@ -284,10 +272,6 @@ describe 'QueryCache' do
       10.times do |i|
         authorized_collection.insert_one(test: i)
       end
-    end
-
-    let(:events) do
-      subscriber.command_started_events('find')
     end
 
     context 'when query cache is disabled' do
@@ -1030,10 +1014,6 @@ describe 'QueryCache' do
       authorized_collection.find.to_a
     end
 
-    let(:events) do
-      subscriber.command_started_events('find')
-    end
-
     it 'queries again' do
       new_collection.find.to_a
       expect(Mongo::QueryCache.send(:cache_table).length).to eq(2)
@@ -1041,4 +1021,40 @@ describe 'QueryCache' do
     end
   end
 
+  context 'with system collection' do
+    let(:client) do
+      ClientRegistry.instance.global_client('root_authorized').tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+    end
+
+    before do
+      begin
+        client.database.users.remove('alanturing')
+      rescue Mongo::Error::OperationFailure
+        # can be user not found, ignore
+      end
+    end
+
+    it 'uses the query cache' do
+      client['system.users'].find.to_a
+      client['system.users'].find.to_a
+      expect(events.length).to eq(1)
+    end
+
+    it 'is NOT invalidated on write' do
+      result1 = client['system.users'].find.to_a
+
+      client.database.users.create(
+        'alanturing',
+        password: 'enigma',
+        roles: [ Mongo::Auth::Roles::READ_WRITE ]
+      )
+
+      result2 = client['system.users'].find.to_a
+
+      expect(events.length).to eq(1)
+      expect(result2).to eq(result1)
+    end
+  end
 end

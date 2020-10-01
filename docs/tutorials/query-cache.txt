@@ -211,3 +211,24 @@ The query cache also caches the results of aggregation pipelines. For example:
   Aggregation results are cleared from the cache during every write operation,
   with no exceptions.
 
+System Collections
+==================
+
+MongoDB stores system information in collections that use the ``database.system.*``
+namespace pattern.
+
+When the query cache is enabled, it will cache all system collection results.
+However, system collections are not subject to the same cache invalidation rules
+as normal collections; if your app relies on up-to-date information from
+system collections, please ensure that you are performing queries against the
+system collections with the query cache disabled, as demonstrated below.
+
+.. code-block:: ruby
+
+  Mongo::QueryCache.uncached do
+    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin') do |client|
+      users = client['system.users'].find.to_a
+      #=> Does not return cached results
+    end
+  end
+
