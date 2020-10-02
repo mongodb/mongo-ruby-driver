@@ -1036,25 +1036,10 @@ describe 'QueryCache' do
       end
     end
 
-    it 'uses the query cache' do
+    it 'does not use the query cache' do
       client['system.users'].find.to_a
       client['system.users'].find.to_a
-      expect(events.length).to eq(1)
-    end
-
-    it 'is NOT invalidated on write' do
-      result1 = client['system.users'].find.to_a
-
-      client.database.users.create(
-        'alanturing',
-        password: 'enigma',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ]
-      )
-
-      result2 = client['system.users'].find.to_a
-
-      expect(events.length).to eq(1)
-      expect(result2).to eq(result1)
+      expect(events.length).to eq(2)
     end
   end
 end

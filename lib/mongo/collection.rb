@@ -878,5 +878,14 @@ module Mongo
     def namespace
       "#{database.name}.#{name}"
     end
+
+    # Whether the collection is a system collection.
+    #
+    # @return [ Boolean ] Whether the system is a system collection.
+    #
+    # @api private
+    def system_collection?
+      name.start_with?('system.')
+    end
   end
 end

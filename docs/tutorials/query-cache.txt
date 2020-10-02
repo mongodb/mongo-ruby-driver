@@ -215,20 +215,19 @@ System Collections
 ==================
 
 MongoDB stores system information in collections that use the ``database.system.*``
-namespace pattern.
+namespace pattern. These are called system collections.
 
-When the query cache is enabled, it will cache all system collection results.
-However, system collections are not subject to the same cache invalidation rules
-as normal collections; if your app relies on up-to-date information from
-system collections, please ensure that you are performing queries against the
-system collections with the query cache disabled, as demonstrated below.
+Data in system collections can change due to activity not triggered by the
+application (such as internal server processes) and as a result of a variety of
+database commands issued by the application. Because of the difficulty of
+determining when the cached results for system collections should be expired,
+queries on system collections bypass the query cache.
 
-.. code-block:: ruby
+You may read more about system collections in the
+:manual:`MongoDB documentation </reference/system-collections/>`.
 
-  Mongo::QueryCache.uncached do
-    Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin') do |client|
-      users = client['system.users'].find.to_a
-      #=> Does not return cached results
-    end
-  end
+.. note ::
+
+  Even when the query cache is enabled, query results from system collections
+  will not be cached.
 
