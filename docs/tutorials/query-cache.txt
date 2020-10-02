@@ -217,9 +217,17 @@ System Collections
 MongoDB stores system information in collections that use the ``database.system.*``
 namespace pattern. These are called system collections.
 
-Query caching has been completely disabled on system collections in order to
-prevent the cache from returning stale data.
+Data in system collections can change due to activity not triggered by the
+application (such as internal server processes) and as a result of a variety of
+database commands issued by the application. Because of the difficulty of
+determining when the cached results for system collections should be expired,
+queries on system collections bypass the query cache.
 
 You may read more about system collections in the
 :manual:`MongoDB documentation </reference/system-collections/>`.
+
+.. note ::
+
+  Even when the query cache is enabled, query results from system collections
+  will not be cached.
 
