@@ -885,7 +885,7 @@ module Mongo
     #
     # @api private
     def system_collection?
-      !!(namespace =~ /\.system\./)
+      name.start_with?('system.')
     end
   end
 end
