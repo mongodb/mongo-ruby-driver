@@ -49,7 +49,7 @@ The driver will discover all nodes in the cluster and connect to them as
 needed.
 
 Block Syntax
-````````````
+------------
 
 Another way to create a Mongo::Client object is to use the block syntax:
 
@@ -61,8 +61,8 @@ Another way to create a Mongo::Client object is to use the block syntax:
 
 Note that when creating a client using this syntax, the client is automatically closed after the block finishes executing.
 
-Database
-````````
+Database Selection
+==================
 
 By default, the client will connect to the ``admin`` database.
 
@@ -108,8 +108,11 @@ their stated purposes:
   mechanisms.
 
 
+Connection Types
+================
+
 Direct Connection
-`````````````````
+-----------------
 
 If the deployment is a replica set, the driver will by default discover all
 members of the replica set given the address of any one member, and will
@@ -130,7 +133,7 @@ To force all operations to be performed on the designated server, specify the
 .. _ruby-driver-connect-replica-set:
 
 Replica Set Connection
-``````````````````````
+----------------------
 
 To connect to a :manual:`replica set</replication/>` deployment managed by a
 service providing SRV URIs (such as MongoDB Atlas), connect to the URI:
@@ -158,7 +161,7 @@ connect to the replica set.
 .. _ruby-driver-connect-sharded-cluster:
 
 Sharded Cluster Connection
-``````````````````````````
+--------------------------
 
 To connect to a :manual:`sharded cluster</sharding/>` deployment managed by a
 service providing SRV URIs (such as MongoDB Atlas), connect to the URI:
@@ -188,7 +191,7 @@ spread the operation load accordingly.
 
 
 SRV URIs
-````````
+========
 
 When the driver connects to a
 :manual:`mongodb+srv protocol <reference/connection-string/#dns-seedlist-connection-format>`
@@ -225,7 +228,7 @@ the analogous URI option are provided, the Ruby option takes precedence.
 
 
 Ruby Options
-````````````
+------------
 
 .. note::
 
@@ -673,7 +676,7 @@ Ruby Options
 
 
 URI Options
-```````````
+-----------
 
 Since the URI options are required to be in camel case, which is not the Ruby
 standard, the following table shows URI options and their corresponding Ruby
@@ -883,7 +886,7 @@ Timeout Options
 ===============
 
 ``server_selection_timeout``
-````````````````````````````
+----------------------------
 
 When executing an operation, the number of seconds to wait for the driver
 to find an appropriate server to send an operation to. Defaults to 30.
@@ -909,7 +912,7 @@ timeout in the routing layer). In development this value can be lowered to
 provide quicker failure when the server is not running.
 
 ``socket_timeout``
-``````````````````
+------------------
 
 The number of seconds to wait for a socket read or write to complete on
 regular (non-monitoring) connections. Default is no timeout.
@@ -939,7 +942,7 @@ operations, as this will abort their execution on the server.
 This option does not apply to monitoring connections.
 
 ``connect_timeout``
-```````````````````
+-------------------
 
 The number of seconds to wait for a socket connection to be established to
 a server. Defaults to 10.
@@ -963,7 +966,7 @@ connections prior to returning them, which may require several network
 round trips.
 
 ``max_time_ms``
-```````````````
+---------------
 
 Specified as an option on a particular operation, the number of milliseconds
 to allow the operation to execute for on the server. Not set by default.
@@ -973,7 +976,7 @@ long running operations to be interrupted on the server when they take too
 long.
 
 ``wtimeout``
-````````````
+------------
 
 The number of milliseconds to wait for a write to be acknowledged by the
 number of servers specified in the write concern. Not set by default, which
@@ -1201,8 +1204,8 @@ Please see the `MongoDB Diagnostics FAQ keepalive section <https://github.com/mo
 for instructions on setting these values at the system level.
 
 
-Details on Connection Pooling
-=============================
+Connection Pooling
+==================
 
 ``Mongo::Client`` instances have a connection pool per server that the client
 is connected to. The pool creates connections on demand to support concurrent
@@ -1418,8 +1421,8 @@ the following:
       #<Server address=localhost:14423 ARBITER replica_set=ruby-driver-rs>]>>"
 
 
-Details on Retryable Reads
-==========================
+Retryable Reads
+===============
 
 The driver implements two mechanisms for retrying reads: modern and legacy.
 As of driver version 2.9.0, the modern mechanism is used by default, and the
@@ -1490,8 +1493,8 @@ To disable all read retries, set the following client options:
 ``retry_reads: false, max_read_retries: 0``.
 
 
-Details on Retryable Writes
-===========================
+Retryable Writes
+================
 
 The driver implements two mechanisms for retrying writes: modern and legacy.
 As of driver version 2.9.0, the modern mechanism is used by default on servers
