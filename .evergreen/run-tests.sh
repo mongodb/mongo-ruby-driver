@@ -108,7 +108,7 @@ if test "$SSL" = ssl || test -n "$OCSP_ALGORITHM"; then
     client_cert_path=spec/support/certificates/client-second-level-bundle.pem
   fi
 
-  uri_options="$uri_options&"\
+  uri_options="$uri_options&tls=true&"\
 "tlsCAFile=$server_ca_path&"\
 "tlsCertificateKeyFile=$client_cert_path"
 
@@ -270,6 +270,11 @@ fi
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 set_fcv
+
+if test "$TOPOLOGY" = replica-set; then
+echo $MONGODB_URI
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_tags
+fi
 
 if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
   echo Preparing the test suite
