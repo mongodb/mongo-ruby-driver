@@ -430,12 +430,22 @@ Ruby Options
 
        .. code-block:: ruby
 
-         { :read =>
-           { :mode => :secondary,
-             :tag_sets => [ "berlin" ],
-             :max_staleness => 5,
+         { read:
+           { mode: :secondary,
+             tag_sets: [ "data_center" => "berlin" ],
+             max_staleness: 5,
            }
          }
+         
+       If tag sets are provided, they must be an array of hashes. A server
+       satisfies the read preference if its tags match any one hash in the
+       provided tag sets.
+       
+       Each tag set must be a hash, and will be converted internally to
+       a ``BSON::Document`` instance prior to being used for server selection.
+       Hash keys can be strings or symbols. The keys are case sensitive.
+       Hash values must be strings, and are matched exactly against the values
+       in the replica set configuration.
 
      - ``Hash``
      -  ``{ :mode => :primary }``

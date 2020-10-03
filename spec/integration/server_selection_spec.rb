@@ -19,9 +19,9 @@ describe 'Server selection' do
 
       let(:client) do
         new_local_client(SpecConfig.instance.addresses,
-          SpecConfig.instance.test_options.merge(
+          SpecConfig.instance.authorized_test_options.merge(
             server_selection_timeout: 4,
-            read: {mode: :secondary, tag_sets: ['nodeIndex' => desired_index]},
+            read: {mode: :secondary, tag_sets: [nodeIndex: desired_index.to_s]},
           ))
       end
 
