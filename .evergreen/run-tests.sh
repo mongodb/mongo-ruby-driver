@@ -273,7 +273,7 @@ set_fcv
 
 if test "$TOPOLOGY" = replica-set; then
 echo $MONGODB_URI
-  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_tags
+  bundle exec ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_tags
 fi
 
 if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
