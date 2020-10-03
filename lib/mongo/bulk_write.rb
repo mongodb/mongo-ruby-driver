@@ -195,6 +195,13 @@ module Mongo
           end
         end
       end
+    # With OP_MSG (3.6+ servers), the size of each section in the message
+    # is independently capped at 16m and each bulk operation becomes
+    # its own section. The size of the entire bulk write is limited to 48m.
+    # With OP_QUERY (pre-3.6 servers), the entire bulk write is sent as a
+    # single document and is thus subject to the 16m document size limit.
+    # This means the splits differ between pre-3.6 and 3.6+ servers, with
+    # 3.6+ servers being able to split less.
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
       unpin_maybe(session) do
