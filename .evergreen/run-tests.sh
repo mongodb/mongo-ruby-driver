@@ -271,7 +271,7 @@ export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options
 
 set_fcv
 
-if test "$TOPOLOGY" = replica-set; then
+if test "$TOPOLOGY" = replica-set && ! echo "$MONGODB_VERSION" |fgrep -q 2.6; then
 echo $MONGODB_URI
   bundle exec ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_tags
 fi
