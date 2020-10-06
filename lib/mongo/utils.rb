@@ -55,8 +55,19 @@ module Mongo
       end
     end
 
+    # Symbolizes the keys in the provided hash.
     module_function def shallow_symbolize_keys(hash)
       Hash[hash.map { |k, v| [k.to_sym, v] }]
+    end
+
+    # Stringifies the keys in the provided hash and converts underscore
+    # style keys to camel case style keys.
+    module_function def shallow_camelize_keys(hash)
+      Hash[hash.map { |k, v| [camelize(k), v] }]
+    end
+
+    module_function def camelize(sym)
+      sym.to_s.gsub(/_(\w)/) { $1.upcase }
     end
   end
 end

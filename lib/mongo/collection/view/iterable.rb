@@ -147,10 +147,11 @@ module Mongo
         end
 
         def initial_command_op(session)
+          builder = Builder::FindCommand.new(self, session)
           if explained?
-            Operation::Explain.new(Builder::FindCommand.new(self, session).explain_specification)
+            Operation::Explain.new(builder.explain_specification)
           else
-            Operation::Find.new(Builder::FindCommand.new(self, session).specification)
+            Operation::Find.new(builder.specification)
           end
         end
 

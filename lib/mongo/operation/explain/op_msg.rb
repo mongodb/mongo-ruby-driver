@@ -25,6 +25,12 @@ module Mongo
         include CausalConsistencySupported
         include ExecutableTransactionLabel
         include PolymorphicResult
+
+        private
+
+        def selector(connection)
+          super.merge(spec[:explain])
+        end
       end
     end
   end

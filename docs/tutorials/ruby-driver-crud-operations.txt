@@ -209,6 +209,39 @@ when querying and their corresponding methods as examples.
        each ``GETMORE`` operation.
    * - ``comment(String)``
      - Adds a comment to the query.
+   
+   * - ``explain(**opts)``
+     - Returns the query plan for the query. Pass the :manual:`explain options
+       </reference/command/explain/>` via the keyword arguments using symbol
+       keys.
+     
+       .. code-block:: ruby
+
+         # All server versions - default explain behavior
+         client[:artists].find.explain
+
+         # MongoDB 3.0 and newer
+         client[:artists].find.explain(verbosity: :query_planner)
+         client[:artists].find.explain(verbosity: :execution_stats)
+         client[:artists].find.explain(verbosity: :all_plans_execution)
+         
+         # Alternative syntax using camel case
+         client[:artists].find.explain(verbosity: "queryPlanner")
+         client[:artists].find.explain(verbosity: "executionStats")
+         client[:artists].find.explain(verbosity: "allPlansExecution")
+
+         # MongoDB 2.6
+         client[:artists].find.explain(verbose: true)
+         
+       .. note::
+       
+         The information returned by the server for the ``explain`` command
+         varies with server version and deployment topology. The driver's
+         ``explain`` method returns whatever the server provided.
+         
+         **The return value of ``explain`` method is not part of the driver's
+         public API and depends on the server version and deployment topology.**
+         
    * - ``hint(Hash)``
      - Provides the query with an
        :manual:`index hint</reference/method/cursor.hint/>` to use.
