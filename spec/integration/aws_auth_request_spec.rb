@@ -29,8 +29,10 @@ describe Mongo::Auth::Aws::Request do
       Net::HTTP::Post.new("https://sts.amazonaws.com").tap do |req|
         request.headers.each do |k, v|
           req[k] = v
+          p [k,v]
         end
         req['authorization'] = request.authorization
+        p request.authorization
         req['accept'] = 'application/json'
         req.body = described_class::STS_REQUEST_BODY
       end
