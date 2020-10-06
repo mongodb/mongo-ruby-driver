@@ -272,7 +272,7 @@ fi
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 if echo "$AUTH" |grep -q ^aws-assume-role; then
-  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})'
+  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' |wc
 fi
 
 set_fcv
