@@ -464,20 +464,37 @@ describe 'Client authentication options' do
     end
 
     context 'with client options' do
-      let(:client_opts) { { auth_mech_properties: auth_mechanism_properties } }
+      [:auth_mech_properties, 'auth_mech_properties'].each do |key|
 
-      include_examples 'correctly sets auth mechanism properties on the client'
+        context "using #{key.class} keys" do
+          let(:client_opts) { { key => auth_mechanism_properties } }
 
-      context 'when options are given in mixed case' do
-        let(:auth_mechanism_properties) do
-          {
-            service_NAME: service_name,
-            canonicalize_host_NAME: canonicalize_host_name,
-            service_REALM: service_realm,
-          }.freeze
+          include_examples 'correctly sets auth mechanism properties on the client'
+
+          context 'when options are given in mixed case' do
+            let(:auth_mechanism_properties) do
+              {
+                service_NAME: service_name,
+                canonicalize_host_NAME: canonicalize_host_name,
+                service_REALM: service_realm,
+              }.freeze
+            end
+
+            context 'using URI and options' do
+
+              let(:client) { new_local_client_nmio(uri, client_opts) }
+
+              include_examples 'correctly sets auth mechanism properties on the client'
+            end
+
+            context 'using host and options' do
+
+              let(:client) { new_local_client_nmio(['localhost'], client_opts) }
+
+              include_examples 'correctly sets auth mechanism properties on the client'
+            end
+          end
         end
-
-        include_examples 'correctly sets auth mechanism properties on the client'
       end
     end
   end
