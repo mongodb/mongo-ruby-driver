@@ -11,6 +11,20 @@ class ServerSetup
     puts 'Setup done'
   end
 
+  def setup_tags
+    cfg = client.command(replSetGetConfig: 1).documents.first.fetch('config')
+    members = cfg['members'].sort_by { |info| info['host'] }
+    members.each_with_index do |member, index|
+      # For case-sensitive tag set testing, add a mixed case tag.
+      unless member['arbiterOnly']
+        member['tags']['nodeIndex'] = index.to_s
+      end
+    end
+    cfg['members'] = members
+    cfg['version'] = cfg['version'] + 1
+    client.command(replSetReconfig: cfg)
+  end
+
   private
 
   def create_aws_user(arn)
@@ -43,6 +57,10 @@ class ServerSetup
 
   def env_true?(key)
     %w(1 true yes).include?(ENV[key]&.downcase)
+  end
+
+  def client
+    @client ||= Mongo::Client.new(ENV.fetch('MONGODB_URI'))
   end
 
   def bootstrap_client

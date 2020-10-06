@@ -265,7 +265,11 @@ module Mongo
           end
         end
 
-        msg = "No #{name} server is available in cluster: #{cluster.summary} " +
+        msg = "No #{name} server"
+        if is_a?(ServerSelector::Secondary) && !tag_sets.empty?
+          msg += " with tag sets: #{tag_sets}"
+        end
+        msg += " is available in cluster: #{cluster.summary} " +
                 "with timeout=#{server_selection_timeout}, " +
                 "LT=#{local_threshold_with_cluster(cluster)}"
         msg += server_selection_diagnostic_message(cluster)
