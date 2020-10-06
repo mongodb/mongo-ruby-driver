@@ -145,13 +145,16 @@ problem. Below are some of the puzzling responses I encountered:
   line) but the value is otherwise completely valid. This error has no relation
   to the "session token" or "security token" as used with temporary AWS
   credentials.
-- *The security token included in the request is invalid*: this error is
-  produced when the AWS access key id, as specified in the scope part of the
-  `Authorization` header, is not a valid access key id. In the case of
-  non-temporary credentials being used for authentication, the error refers to
-  a "security token" but the authentication process does not actually use a
-  security token as this term is used in the AWS documentation describing
-  temporary credentials.
+- *The security token included in the request is invalid*: this error can be
+  produced in several circumstances:
+  - When the AWS access key id, as specified in the scope part of the
+    `Authorization` header, is not a valid access key id. In the case of
+    non-temporary credentials being used for authentication, the error refers to
+    a "security token" but the authentication process does not actually use a
+    security token as this term is used in the AWS documentation describing
+    temporary credentials.
+  - When using temporary credentials and the security token is not provided
+    in the STS request at all (x-amz-security-token header).
 - *Signature expired: 20200317T000000Z is now earlier than 20200317T222541Z
   (20200317T224041Z - 15 min.)*: This error happens when `x-amz-date` header
   value is the formatted date (`YYYYMMDD`) rather than the ISO8601 formatted
