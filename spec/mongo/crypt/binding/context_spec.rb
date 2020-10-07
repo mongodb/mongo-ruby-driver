@@ -1,10 +1,5 @@
-require 'mongo'
-require 'support/lite_constraints'
-require 'mongo/crypt/helpers/mongo_crypt_spec_helper'
-
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
+require_relative '../helpers/mongo_crypt_spec_helper'
 
 shared_context 'initialized for data key creation' do
   let(:master_key) { "ru\xfe\x00" * 24 }
