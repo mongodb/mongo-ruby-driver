@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Cursor reaping' do
   # JRuby does reap cursors but GC.start does not force GC to run like it does
   # in MRI, I don't currently know how to force GC to run in JRuby
-  only_mri
+  require_mri
 
   around(:all) do |example|
     saved_level = Mongo::Logger.logger.level

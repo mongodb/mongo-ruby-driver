@@ -338,7 +338,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'mri' do
-        only_mri
+        require_mri
 
         context 'when a bad certificate is provided' do
 
@@ -625,7 +625,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'bundled with intermediate cert' do
 
           # https://github.com/jruby/jruby-openssl/issues/181
-          only_mri
+          require_mri
 
           let(:ssl_options) do
             SpecConfig.instance.test_options.merge(
@@ -670,7 +670,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'bundled with intermediate cert' do
 
           # https://github.com/jruby/jruby-openssl/issues/181
-          only_mri
+          require_mri
 
           let(:ssl_options) do
             SpecConfig.instance.test_options.merge(

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Change stream integration', retry: 4 do
-  only_mri
+  require_mri
   max_example_run_time 7
   min_server_fcv '3.6'
   require_topology :replica_set

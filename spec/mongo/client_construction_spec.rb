@@ -845,7 +845,7 @@ describe Mongo::Client do
         end
 
         context 'mri' do
-          only_mri
+          require_mri
 
           let(:platform_string) do
             [
