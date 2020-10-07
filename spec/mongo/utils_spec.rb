@@ -18,7 +18,7 @@ describe Mongo::Utils do
   end
 
   describe '#shallow_camelize_keys' do
-    it 'symbolizes' do
+    it 'camelizes' do
       described_class.shallow_camelize_keys(
         'foo' => 'bar',
         'aKey' => 'aValue',
