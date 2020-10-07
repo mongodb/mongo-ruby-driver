@@ -200,6 +200,10 @@ describe 'SDAM error handling' do
   describe 'when there is an error during connection establishment' do
     require_topology :single
 
+    # The push monitor creates sockets unpredictably and interferes with this
+    # test.
+    max_server_version '4.2'
+
     # When TLS is used there are two socket classes and we can't simply
     # mock the base Socket class.
     require_no_tls
@@ -257,7 +261,7 @@ describe 'SDAM error handling' do
 
     after do
       # Since we stopped monitoring on the client, close it.
-      client.close
+      ClientRegistry.instance.close_all_clients
     end
   end
 
