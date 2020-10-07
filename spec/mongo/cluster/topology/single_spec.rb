@@ -175,7 +175,7 @@ describe Mongo::Cluster::Topology::Single do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     let(:desc) do
       Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))

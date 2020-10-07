@@ -1312,7 +1312,7 @@ describe Mongo::Client do
         end
 
         context 'when not linting' do
-          skip_if_linting
+          require_no_linting
 
           it 'rejects bogus read preference as symbol' do
             expect do
@@ -1359,7 +1359,7 @@ describe Mongo::Client do
         end
 
         context 'when read concern has an invalid key' do
-          skip_if_linting
+          require_no_linting
 
           let(:options) do
             { read_concern: { hello: :local } }

@@ -774,7 +774,7 @@ describe Mongo::Server::Connection do
       context 'when the message is a command' do
         # Server description is frozen when linting is enabled, which is
         # incompatible with expectations set on it in this test
-        skip_if_linting
+        require_no_linting
 
         let(:selector) do
           # The driver allows up to 16KiB for command overhead on top of

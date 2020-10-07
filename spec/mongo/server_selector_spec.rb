@@ -196,7 +196,7 @@ describe Mongo::ServerSelector do
   end
 
   describe "#select_server" do
-    skip_if_linting
+    require_no_linting
 
     context 'when #select_in_replica_set returns a list of nils' do
 
@@ -498,7 +498,7 @@ describe Mongo::ServerSelector do
   end
 
   describe '#filter_stale_servers' do
-    skip_if_linting
+    require_no_linting
 
     include_context 'server selector'
     let(:name) do

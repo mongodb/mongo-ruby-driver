@@ -24,7 +24,7 @@ describe Mongo::Monitoring::Event::TopologyClosed do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     it 'renders correctly' do
       expect(topology).to receive(:server_descriptions).and_return({
