@@ -5,9 +5,13 @@ describe Mongo::Server::ConnectionPool do
   let(:options) { {} }
 
   let(:server_options) do
-    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
-      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
-      .merge(options)
+    Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+      SpecConfig.instance.all_test_options,
+    )).tap do |opts|
+      opts.delete(:min_pool_size)
+      opts.delete(:max_pool_size)
+      opts.delete(:wait_queue_timeout)
+    end.update(options)
   end
 
   let(:address) do
