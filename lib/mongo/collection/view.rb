@@ -120,27 +120,31 @@ module Mongo
       #   server can write temporary data to disk while executing the find
       #   operation. This option is only available on MongoDB server versions
       #   4.4 and newer.
-      # @option options :comment [ String ] Associate a comment with the query.
-      # @option options :batch_size [ Integer ] The number of docs to return in
-      #   each response from MongoDB.
-      # @option options :projection [ Hash ] The fields to include or exclude in
-      #   returned docs.
-      # @option options :hint [ Hash ] Override default index selection and force
-      #   MongoDB to use a specific index for the query.
-      # @option options :limit [ Integer ] Max number of docs to return.
-      # @option options :max_scan [ Integer ] Constrain the query to only scan the
-      #   specified number of docs. Use to prevent queries from running too long.
-      #   Deprecated as of MongoDB server version 4.0.
-      # @option options :read [ Symbol ] The read preference to use for the query.
-      #   If none is provided, the collection's default read preference is used.
-      # @option options :show_disk_loc [ true, false ] Return disk location info as
-      #   a field in each doc.
-      # @option options :skip [ Integer ] The number of documents to skip.
-      # @option options :snapshot [ true, false ] Prevents returning a doc more than
-      #   once. Deprecated as of MongoDB server version 4.0.
-      # @option options :sort [ Hash ] The key and direction pairs used to sort the
-      #   results.
+      # @option options [ Integer ] :batch_size The number of documents to
+      #   return in each response from MongoDB.
       # @option options [ Hash ] :collation The collation to use.
+      # @option options [ String ] :comment Associate a comment with the query.
+      # @option options [ Hash ] :explain Execute an explain with the provided
+      #   explain options (known options are :verbose and :verbosity) rather
+      #   than a find.
+      # @option options [ Hash ] :hint Override the default index selection and
+      #   force MongoDB to use a specific index for the query.
+      # @option options [ Integer ] :limit Max number of documents to return.
+      # @option options [ Integer ] :max_scan Constrain the query to only scan
+      #   the specified number of documents. Use to prevent queries from
+      #   running for too long. Deprecated as of MongoDB server version 4.0.
+      # @option options [ Hash ] :projection The fields to include or exclude
+      #   in the returned documents.
+      # @option options [ Hash ] :read The read preference to use for the
+      #   query. If none is provided, the collection's default read preference
+      #   is used.
+      # @option options [ true | false ] :show_disk_loc Return disk location
+      #   info as a field in each doc.
+      # @option options [ Integer ] :skip The number of documents to skip.
+      # @option options [ true | false ] :snapshot Prevents returning a
+      #   document more than once. Deprecated as of MongoDB server version 4.0.
+      # @option options [ Hash ] :sort The key and direction pairs used to sort
+      #   the results.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})

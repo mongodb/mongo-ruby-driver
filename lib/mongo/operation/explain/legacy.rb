@@ -29,6 +29,10 @@ module Mongo
 
         private
 
+        def selector(connection)
+          super.merge(spec[:explain])
+        end
+
         def message(connection)
           Protocol::Query.new(db_name, coll_name, command(connection), options(connection))
         end
