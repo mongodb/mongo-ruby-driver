@@ -516,24 +516,24 @@ Ruby Options
    * - ``:ssl_ca_cert``
      - The file path containing concatenated certificate authority certificates
        used to validate certs passed from the other end of the connection.
-       One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
-       (in order of priority) is required for :ssl_verify.
+       One of ``:ssl_ca_cert``, ``:ssl_ca_cert_string`` or ``:ssl_ca_cert_object``
+       (in order of priority) is required for ``:ssl_verify``.
      - ``String``
      - none
 
    * - ``:ssl_ca_cert_object``
      - An array of OpenSSL::X509::Certificate representing the certificate
        authority certificates used to validate certs passed from the other end
-       of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
-       :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+       of the connection. One of ``:ssl_ca_cert``, ``:ssl_ca_cert_string`` or
+       ``:ssl_ca_cert_object`` (in order of priority) is required for ``:ssl_verify``.
      - ``Array< OpenSSL::X509::Certificate >``
      - none
 
    * - ``:ssl_ca_cert_string``
      - A string containing concatenated certificate authority certificates
        used to validate certs passed from the other end of the connection.
-       One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
-       (in order of priority) is required for :ssl_verify.
+       One of ``:ssl_ca_cert``, ``:ssl_ca_cert_string`` or ``:ssl_ca_cert_object``
+       (in order of priority) is required for ``:ssl_verify``.
      - ``String``
      - none
 
