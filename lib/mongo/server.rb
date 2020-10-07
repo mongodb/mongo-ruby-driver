@@ -311,7 +311,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
+      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port} #{status}>"
     end
 
     # @return [ String ] String representing server status (e.g. PRIMARY).

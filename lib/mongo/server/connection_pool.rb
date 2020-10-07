@@ -766,6 +766,9 @@ module Mongo
           connection.disconnect!(reason: :error)
           raise
         end
+      rescue Error::SocketError, Error::SocketTimeoutError => exc
+        @server.unknown!(generation: exc.generation, stop_push_monitor: true)
+        raise
       end
 
       def check_invariants

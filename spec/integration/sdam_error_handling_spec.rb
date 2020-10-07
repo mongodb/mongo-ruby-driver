@@ -197,6 +197,70 @@ describe 'SDAM error handling' do
     end
   end
 
+  describe 'when there is an error during connection establishment' do
+    require_topology :single
+
+    # When TLS is used there are two socket classes and we can't simply
+    # mock the base Socket class.
+    require_no_tls
+
+    {
+      SystemCallError => Mongo::Error::SocketError,
+      Errno::ETIMEDOUT => Mongo::Error::SocketTimeoutError,
+    }.each do |raw_error_cls, mapped_error_cls|
+      context raw_error_cls.name do
+        let(:socket) do
+          double('mock socket').tap do |socket|
+            allow(socket).to receive(:set_encoding)
+            allow(socket).to receive(:setsockopt)
+            allow(socket).to receive(:getsockopt)
+            allow(socket).to receive(:connect)
+            allow(socket).to receive(:close)
+            socket.should receive(:write).and_raise(raw_error_cls, 'mocked failure')
+          end
+        end
+
+        it 'marks server unknown' do
+          server = client.cluster.next_primary
+          client.cluster.servers.map(&:disconnect!)
+
+          RSpec::Mocks.with_temporary_scope do
+
+            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
+
+            lambda do
+              client.command(ping: 1)
+            end.should raise_error(mapped_error_cls, /mocked failure/)
+
+            server.should be_unknown
+          end
+        end
+
+        it 'recovers' do
+          server = client.cluster.next_primary
+          # If we do not kill the monitor, the client will recover automatically.
+
+          RSpec::Mocks.with_temporary_scope do
+
+            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
+            Socket.should receive(:new).with(any_args).ordered.once.and_call_original
+
+            lambda do
+              client.command(ping: 1)
+            end.should raise_error(mapped_error_cls, /mocked failure/)
+
+            client.command(ping: 1)
+          end
+        end
+      end
+    end
+
+    after do
+      # Since we stopped monitoring on the client, close it.
+      client.close
+    end
+  end
+
   describe 'when there is an error on monitoring connection' do
     clean_slate_for_all
 
