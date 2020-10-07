@@ -1045,7 +1045,7 @@ when connecting. This can be accomplished via:
 - The ``:ssl_cert``/``:ssl_cert_object``/``:ssl_cert_string`` and
   ``:ssl_key``/``:ssl_key_object``/``:ssl_key_string``/``:ssl_key_pass_phrase``
   Ruby options.
-- The``tlsCertificateKeyFile`` URI option.
+- The ``tlsCertificateKeyFile`` URI option.
 
 When using the Ruby options, the client TLS certificate and the corresponding
 private key may be provided separately. For example, if the certificate is
