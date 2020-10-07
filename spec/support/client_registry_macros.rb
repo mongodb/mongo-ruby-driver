@@ -14,8 +14,13 @@ module ClientRegistryMacros
     else
       {monitoring_io: false}
     end
+    cls = if options.keys.any? { |key| String === key }
+      Mongo::Options::Redacted
+    else
+      options.class
+    end
     if options
-      options = options.class.new(base_options).update(options)
+      options = cls.new(base_options).update(options)
     else
       options = base_options
     end
