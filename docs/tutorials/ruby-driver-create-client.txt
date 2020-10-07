@@ -960,7 +960,7 @@ a server. Defaults to 10.
 This timeout is also used as both connect timeout and socket timeout for
 monitoring connections.
 
-When using a ``mongodb+srv://` URI, this timeout is also used for SRV and TXT
+When using a ``mongodb+srv://`` URI, this timeout is also used for SRV and TXT
 DNS lookups. Note that the timeout applies per lookup; due to DNS suffix search
 lists, multiple lookups may be performed as part of a single name resolution.
 
@@ -1113,14 +1113,15 @@ that both of the following fields are set in the intermediate certificate(s):
 - X509v3 Basic Constraints: CA: TRUE -- Can sign certificates
 - X509v3 Key Usage: Key Cert Sign -- Can sign certificates
 
-More information about these flags can be found `here
+More information about these flags can be found `in this Stack Overflow question
 <https://stackoverflow.com/questions/5795256/what-is-the-difference-between-the-x-509-v3-extensions-basic-constraints-and-key>`_.
 
 It is a common pitfall to concatenate intermediate certificates to the root
 CA certificates passed in ``tlsCAFile`` / ``ssl_ca_cert`` options. By doing
 so, the intermediate certificates are elevated to trusted status and are
 themselves not verified against the actual CA root. More information on this
-issue is available `here <https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`_.
+issue is available `in this mailing list post
+<https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`_.
 
 Specify CA Certificate
 ----------------------
@@ -1348,7 +1349,7 @@ and cease background monitoring:
   parent remains alive.
 
 Reconnecting Client Instances
-`````````````````````````````
+-----------------------------
 
 When the Ruby driver is used in a web application, it is recommended to not
 create any ``Mongo::Client`` instances in the management processes (prior to
@@ -1398,7 +1399,7 @@ however provides examples for closing clients in the parent process and
 reconnecting clients in the child processes.
 
 Troubleshooting
-```````````````
+---------------
 
 The client's ``summary`` method returns the current state of the client,
 including servers that the client is monitoring and their state. If any of
@@ -1439,7 +1440,7 @@ As of driver version 2.9.0, the modern mechanism is used by default, and the
 legacy mechanism is deprecated.
 
 Modern Retryable Reads
-``````````````````````
+----------------------
 
 When the modern mechanism is used, read operations are retried once in the
 event of a network error, a "not master" error, or a "node is recovering" error.
@@ -1478,7 +1479,7 @@ must explicitly request legacy retryable reads by setting the
 ``retry_reads: false`` client option or using ``retryReads=false`` URI option.
 
 Legacy Retryable Reads
-``````````````````````
+----------------------
 
 The legacy read retry behavior of the Ruby driver is available by setting the
 ``retry_reads: false`` client option or passing the ``retryReads=false`` URI
@@ -1497,7 +1498,7 @@ versions read retries would be sent to the same server which the initial read
 was sent to.
 
 Disabling Retryable Reads
-`````````````````````````
+-------------------------
 
 To disable all read retries, set the following client options:
 ``retry_reads: false, max_read_retries: 0``.
@@ -1524,7 +1525,7 @@ are subject to write retries:
 - ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)
 
 Modern Retryable Writes
-```````````````````````
+-----------------------
 
 The modern mechanism will retry failing writes once when the driver is
 connected to a MongoDB 3.6 or higher replica set or a sharded cluster,
@@ -1543,7 +1544,7 @@ since the server that the original write was sent to is likely no longer
 usable.
 
 Legacy Retryable Writes
-```````````````````````
+-----------------------
 
 If modern retryable writes mechanism is disabled by setting the client
 option ``retry_writes: false`` or by using the ``retryWrites=false``
@@ -1559,7 +1560,7 @@ of errors compared to the modern mechanism, and specifically does not
 retry writes when a network timeout is encountered.
 
 Disabling Retryable Writes
-``````````````````````````
+--------------------------
 
 To disable all write retries, set the following client options:
 ``retry_writes: false, max_write_retries: 0``.
@@ -1577,7 +1578,7 @@ See the `Ruby Logger documentation <http://ruby-doc.org/stdlib-2.2.0/libdoc/logg
 for more information on the default logger API and available levels.
 
 Changing the Logger Level
-`````````````````````````
+-------------------------
 
 To change the logger level:
 
@@ -1593,7 +1594,7 @@ For more control, a logger can be passed to a client for per-client control over
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :logger => my_logger )
 
 Truncation
-``````````
+----------
 
 The default logging truncates logs at 250 characters by default. To turn this off pass an
 option to the client instance.
