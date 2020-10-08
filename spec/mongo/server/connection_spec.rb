@@ -594,12 +594,12 @@ describe Mongo::Server::Connection do
         server,
         SpecConfig.instance.test_options.merge(
           :database => SpecConfig.instance.test_user.database,
-        ).merge(Mongo::Utils.shallow_symbolize_keys(
+        ).merge(Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
           SpecConfig.instance.credentials_or_external_user(
             user: SpecConfig.instance.test_user.name,
             password: SpecConfig.instance.test_user.password,
           ),
-        ))
+        )))
       ).tap do |connection|
         connection.connect!
       end
