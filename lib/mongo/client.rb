@@ -481,6 +481,12 @@ module Mongo
       end
       options = merged_options
 
+      options.keys.each do |k|
+        if options[k].nil?
+          options.delete(k)
+        end
+      end
+
       @options = validate_new_options!(options)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
@@ -1029,7 +1035,9 @@ module Mongo
       def canonicalize_ruby_options(options)
         Options::Redacted.new(Hash[options.map do |k, v|
           if k == :auth_mech_properties || k == 'auth_mech_properties'
-            v = Hash[v.map { |pk, pv| [pk.downcase, pv] }]
+            if v
+              v = Hash[v.map { |pk, pv| [pk.downcase, pv] }]
+            end
           end
           [k, v]
         end])
