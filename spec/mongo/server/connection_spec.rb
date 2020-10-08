@@ -252,9 +252,9 @@ describe Mongo::Server::Connection do
         require_auth
 
         let(:server_options) do
-          Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+          Mongo::Client.canonicalize_ruby_options(
             SpecConfig.instance.all_test_options,
-          )).update(monitoring_io: false)
+          ).update(monitoring_io: false)
         end
 
         let(:exception) do
