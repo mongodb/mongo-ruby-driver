@@ -5,7 +5,7 @@ Mongo::Logger.logger.level = :WARN
 class ServerSetup
   def setup_aws_auth
     arn = env!('MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN')
-    puts "Adding AWS-mapped user #{arn}"
+    puts "Adding AWS-mapped user #{wildcard_arn(arn)} for #{arn}"
     create_aws_user(arn)
 
     puts 'Setup done'
@@ -27,12 +27,21 @@ class ServerSetup
 
   private
 
+  # Creates an appropriate AWS mapped user for the provided ARN.
+  #
+  # The mapped user does not use the specified ARN directly but instead
+  # uses a derived wildcard ARN. Because of this, multiple ARNs can map
+  # to the same user.
   def create_aws_user(arn)
     bootstrap_client.use('$external').database.users.create(
-      arn,
+      wildcard_arn(arn),
       roles: [{role: 'root', db: 'admin'}],
       write_concern: {w: :majority, wtimeout: 5000},
     )
+  end
+
+  def wildcard_arn(arn)
+    arn = arn.sub(%r,/[^/]+\z,, '/*')
   end
 
   def require_env_vars(vars)
@@ -64,8 +73,8 @@ class ServerSetup
   end
 
   def bootstrap_client
-    @bootstrap_client ||= Mongo::Client.new(%w(localhost),
-      user: 'bootstrap', password: 'bootstrap',
+    @bootstrap_client ||= Mongo::Client.new(ENV['MONGODB_URI'] || %w(localhost),
+      user: 'bootstrap', password: 'bootstrap', auth_mech: :scram, auth_mech_properties: nil,
     )
   end
 end
