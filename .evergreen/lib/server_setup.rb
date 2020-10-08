@@ -41,7 +41,11 @@ class ServerSetup
   end
 
   def wildcard_arn(arn)
-    arn = arn.sub(%r,/[^/]+\z,, '/*')
+    if arn.start_with?('arn:aws:sts::')
+      arn.sub(%r,/[^/]+\z,, '/*')
+    else
+      arn
+    end
   end
 
   def require_env_vars(vars)
