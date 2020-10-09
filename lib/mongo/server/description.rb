@@ -184,7 +184,7 @@ module Mongo
 
       # Constant for reading connectionId info from config.
       #
-      # @since 2.13.0
+      # @api private
       CONNECTION_ID = 'connectionId'.freeze
 
       # Fields to exclude when comparing two descriptions.
