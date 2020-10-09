@@ -4,7 +4,9 @@ describe 'Connection pool populator integration' do
   let(:options) { {} }
 
   let(:server_options) do
-    SpecConfig.instance.test_options.merge(options).merge(SpecConfig.instance.auth_options)
+    Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+      SpecConfig.instance.all_test_options,
+    )).update(options)
   end
 
   let(:address) do

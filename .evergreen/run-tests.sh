@@ -225,6 +225,8 @@ elif test "$AUTH" = aws-assume-role; then
   export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
   export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+  
+  aws sts get-caller-identity
 
   hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
 
@@ -268,6 +270,10 @@ if test -n "$EXTRA_URI_OPTIONS"; then
 fi
 
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
+
+if echo "$AUTH" |grep -q ^aws-assume-role; then
+  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' |wc
+fi
 
 set_fcv
 

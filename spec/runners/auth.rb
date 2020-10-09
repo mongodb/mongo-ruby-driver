@@ -83,6 +83,9 @@ module Mongo
 
         if credential['username']
           expected_credential['user'] = credential['username']
+        end
+
+        if credential['password']
           expected_credential['password'] = credential['password']
         end
 

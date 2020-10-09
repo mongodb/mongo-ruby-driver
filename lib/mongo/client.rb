@@ -463,12 +463,7 @@ module Mongo
         @srv_records = nil
       end
 
-      options = Options::Redacted.new(Hash[options.map do |k, v|
-        if k == 'auth_mech_properties'
-          v = Hash[v.map { |pk, pv| [pk.downcase, pv] }]
-        end
-        [k, v]
-      end])
+      options = self.class.canonicalize_ruby_options(options)
 
       # Special handling for sdam_proc as it is only used during client
       # construction
@@ -485,6 +480,12 @@ module Mongo
         merged_options[k] = v
       end
       options = merged_options
+
+      options.keys.each do |k|
+        if options[k].nil?
+          options.delete(k)
+        end
+      end
 
       @options = validate_new_options!(options)
 =begin WriteConcern object support
@@ -774,7 +775,6 @@ module Mongo
       options[:read_concern]
     end
 
-
     # Get the write concern for this client. If no option was provided, then a
     # default single server acknowledgement will be used.
     #
@@ -1024,6 +1024,23 @@ module Mongo
     ensure
       if session && session.implicit?
         session.end_session
+      end
+    end
+
+    class << self
+      # Lowercases auth mechanism properties, if given, in the specified
+      # options, then converts the options to an instance of Options::Redacted.
+      #
+      # @api private
+      def canonicalize_ruby_options(options)
+        Options::Redacted.new(Hash[options.map do |k, v|
+          if k == :auth_mech_properties || k == 'auth_mech_properties'
+            if v
+              v = Hash[v.map { |pk, pv| [pk.downcase, pv] }]
+            end
+          end
+          [k, v]
+        end])
       end
     end
 

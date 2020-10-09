@@ -1535,6 +1535,18 @@ describe Mongo::Client do
           end
         end
       end
+
+      context ':auth_mech_properties option' do
+        context 'is nil' do
+          let(:options) do
+            {auth_mech_properties: nil}
+          end
+
+          it 'creates the client without the option' do
+            client.options.should_not have_key(:auth_mech_properties)
+          end
+        end
+      end
     end
 
     context 'when making a block client' do

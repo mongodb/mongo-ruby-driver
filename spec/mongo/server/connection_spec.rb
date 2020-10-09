@@ -252,8 +252,9 @@ describe Mongo::Server::Connection do
         require_auth
 
         let(:server_options) do
-          SpecConfig.instance.test_options.merge(monitoring_io: false).
-            merge(SpecConfig.instance.auth_options)
+          Mongo::Client.canonicalize_ruby_options(
+            SpecConfig.instance.all_test_options,
+          ).update(monitoring_io: false)
         end
 
         let(:exception) do
@@ -593,10 +594,12 @@ describe Mongo::Server::Connection do
         server,
         SpecConfig.instance.test_options.merge(
           :database => SpecConfig.instance.test_user.database,
-        ).merge(SpecConfig.instance.credentials_or_external_user(
-          user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password,
-        ))
+        ).merge(Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+          SpecConfig.instance.credentials_or_external_user(
+            user: SpecConfig.instance.test_user.name,
+            password: SpecConfig.instance.test_user.password,
+          ),
+        )))
       ).tap do |connection|
         connection.connect!
       end
@@ -1103,7 +1106,7 @@ describe Mongo::Server::Connection do
           :user => SpecConfig.instance.test_user.name,
           :password => SpecConfig.instance.test_user.password,
           :database => SpecConfig.instance.test_db,
-          :auth_mech => :mongodb_cr
+          :auth_mech => :mongodb_cr,
         )
       end
 

@@ -41,6 +41,8 @@ case "$AUTH" in
     # request resolve to. It is hardcoded in
     # https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/auth_aws/aws_e2e_assume_role.js
     # and is not given as an Evergreen variable.
+    # Note: the asterisk at the end is manufactured by the server and not
+    # obtained from STS. See https://jira.mongodb.org/browse/RUBY-2425.
     export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/authtest_user_assume_role/*"
     ;;
     

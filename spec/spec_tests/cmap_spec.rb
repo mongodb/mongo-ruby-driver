@@ -22,9 +22,13 @@ describe 'Cmap' do
   end
 
   let(:options) do
-    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
-      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
-      .merge(monitoring_io: false)
+    Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+      SpecConfig.instance.all_test_options,
+    )).update(monitoring_io: false).tap do |options|
+      # We have a wait queue timeout set in the test suite options, but having
+      # this option set interferes with assertions in the cmap spec tests.
+      options.delete(:wait_queue_timeout)
+    end
   end
 
   CMAP_TESTS.each do |file|
