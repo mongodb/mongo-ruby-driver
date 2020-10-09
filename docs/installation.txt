@@ -19,7 +19,7 @@ To install the mongo gem manually:
 
 .. code-block:: sh
 
-  gem install mongo -v 2.14.0.beta
+  gem install mongo -v 2.14.0.rc1
 
 
 What's New
