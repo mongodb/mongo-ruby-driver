@@ -194,7 +194,8 @@ module Mongo
                                  LAST_WRITE,
                                  OPERATION_TIME,
                                  Operation::CLUSTER_TIME,
-                                 CONNECTION_ID ].freeze
+                                 CONNECTION_ID,
+                               ].freeze
 
       # Instantiate the new server description from the result of the ismaster
       # command.
