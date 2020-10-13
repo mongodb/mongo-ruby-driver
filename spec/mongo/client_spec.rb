@@ -727,6 +727,13 @@ describe Mongo::Client do
       expect(new_id).not_to eql(old_id)
     end
 
+    it 'replaces the session pool' do
+      old_id = client.cluster.session_pool.object_id
+      client.reconnect
+      new_id = client.cluster.session_pool.object_id
+      expect(new_id).not_to eql(old_id)
+    end
+
     it 'returns true' do
       expect(client.reconnect).to be(true)
     end
