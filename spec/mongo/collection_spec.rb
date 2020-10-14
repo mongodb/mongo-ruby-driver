@@ -1849,21 +1849,11 @@ describe Mongo::Collection do
       let(:result) do
         authorized_collection.insert_one(nil)
       end
-      it 'raises an ArgumentError' do
-       expect {
-         result
-       }.to raise_error(ArgumentError, "Inserted document must be a Hash or BSON::Document.")
-     end
-    end
 
-    context 'when the document is not a hash or BSON' do
-      let(:result) do
-        authorized_collection.insert_one("hello")
-      end
       it 'raises an ArgumentError' do
        expect {
          result
-       }.to raise_error(ArgumentError, "Inserted document must be a Hash or BSON::Document.")
+       }.to raise_error(ArgumentError, "Inserted document cannot be nil")
      end
     end
 
