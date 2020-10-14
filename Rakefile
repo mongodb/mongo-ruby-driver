@@ -32,7 +32,7 @@ CLASSIFIERS = [
 ]
 
 RUN_PRIORITY = %i(unit
-  integration sdam_integration cursor_reaping
+  integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
 )
 
