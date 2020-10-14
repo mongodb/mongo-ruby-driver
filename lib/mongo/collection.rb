@@ -564,6 +564,11 @@ module Mongo
         else
           write_concern_with_session(session)
         end
+
+        unless document.is_a?(Hash) || document.is_a?(BSON::Document)
+          raise ArgumentError, "Inserted document must be a Hash or BSON::Document."
+        end
+
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Insert.new(
             :documents => [ document ],
