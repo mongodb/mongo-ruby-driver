@@ -1853,7 +1853,7 @@ describe Mongo::Collection do
       it 'raises an ArgumentError' do
        expect {
          result
-       }.to raise_error(ArgumentError, "Inserted document cannot be nil")
+       }.to raise_error(ArgumentError, "Document to be inserted cannot be nil")
      end
     end
 
