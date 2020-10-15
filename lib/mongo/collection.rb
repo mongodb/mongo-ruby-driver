@@ -564,6 +564,11 @@ module Mongo
         else
           write_concern_with_session(session)
         end
+
+        if document.nil?
+          raise ArgumentError, "Document to be inserted cannot be nil"
+        end
+
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Insert.new(
             :documents => [ document ],

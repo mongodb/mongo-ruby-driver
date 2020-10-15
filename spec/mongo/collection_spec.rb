@@ -1845,6 +1845,18 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when the document is nil' do
+      let(:result) do
+        authorized_collection.insert_one(nil)
+      end
+
+      it 'raises an ArgumentError' do
+       expect {
+         result
+       }.to raise_error(ArgumentError, "Document to be inserted cannot be nil")
+     end
+    end
+
     context 'when the insert fails' do
 
       let(:result) do
