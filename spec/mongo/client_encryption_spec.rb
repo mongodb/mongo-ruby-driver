@@ -268,13 +268,27 @@ describe Mongo::ClientEncryption do
         it_behaves_like 'it creates a data key'
       end
 
-      context 'with invalid endpoint' do
+      context 'with https' do
         let(:options) do
           {
             master_key: {
               key: aws_arn,
               region: aws_region,
               endpoint: "https://#{aws_endpoint_host}:#{aws_endpoint_port}"
+            }
+          }
+        end
+
+        it_behaves_like 'it creates a data key'
+      end
+
+      context 'with invalid endpoint' do
+        let(:options) do
+          {
+            master_key: {
+              key: aws_arn,
+              region: aws_region,
+              endpoint: "invalid-nonsense-endpoint.com"
             }
           }
         end
