@@ -631,6 +631,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when no selector is provided' do
+
       it 'returns the estimated count of matching documents' do
         expect(view.estimated_document_count).to eq(10)
       end
