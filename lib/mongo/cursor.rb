@@ -298,7 +298,7 @@ module Mongo
         # However, sometimes the collection name will contain periods, which
         # is why this method joins all the namespace components after the first.
         ns_components = @namespace.split('.')
-        ns_components[1...].join('.')
+        ns_components[1..ns_components.length].join('.')
       else
         collection.name
       end
