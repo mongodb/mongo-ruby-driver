@@ -305,6 +305,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when incorporating read concern' do
+
       let(:result) do
         new_view.count(options)
       end
@@ -328,6 +329,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when no selector is provided' do
+
       it 'returns the count of matching documents' do
         expect(view.count).to eq(10)
       end
