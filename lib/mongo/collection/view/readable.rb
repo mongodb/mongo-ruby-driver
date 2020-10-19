@@ -226,6 +226,10 @@ module Mongo
         #
         # @since 2.6.0
         def estimated_document_count(opts = {})
+          unless view.filter.empty?
+            raise ArgumentError, "Cannot call estimated_document_count when querying with a filter"
+          end
+
           cmd = { count: collection.name }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           if read_concern

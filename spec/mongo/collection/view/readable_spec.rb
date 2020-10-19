@@ -602,6 +602,42 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe "#estimated_document_count" do
+
+   let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+   end
+
+   before do
+    authorized_collection.delete_many
+    authorized_collection.insert_many(documents)
+   end
+
+    let(:result) do
+      view.estimated_document_count(options)
+    end
+
+    context 'when a selector is provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      it 'raises an error' do
+        expect {
+          result
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with a filter")
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      it 'returns the estimated count of matching documents' do
+        expect(view.estimated_document_count).to eq(10)
+      end
+    end
+  end
+
   describe '#distinct' do
 
     context 'when incorporating read concern' do
