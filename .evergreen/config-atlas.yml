@@ -563,6 +563,10 @@ axes:
         display_name: Zlib
         variables:
           COMPRESSOR: "zlib"
+      - id: "snappy"
+        display_name: Snappy
+        variables:
+          COMPRESSOR: "snappy"
 
   - id: retry-reads
     display_name: Retry Reads

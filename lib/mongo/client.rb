@@ -226,7 +226,7 @@ module Mongo
     # @option options [ Array<String> ] :compressors A list of potential
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the
-    #   driver only supports 'zlib'.
+    #   driver only supports 'snappy' and 'zlib'.
     # @option options [ true | false ] :direct_connection Whether to connect
     #   directly to the specified seed, bypassing topology discovery. Exactly
     #   one seed must be provided.

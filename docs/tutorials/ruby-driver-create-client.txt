@@ -320,7 +320,8 @@ Ruby Options
 
    * - ``:compressors``
      - A list of potential compressors to use, in order of preference. The driver chooses the first
-       compressor that is also supported by the server. Currently the driver only supports 'zlib'.
+       compressor that is also supported by the server. Currently the driver only supports 'snappy'
+       and 'zlib'.
      - ``Array<String>``
      - none
 
@@ -739,7 +740,7 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - compressors=Strings
      - ``:compressors => Array<String>``
 
-       Specified as a comma-separated list. Note that the Ruby driver only supports zlib
+       Specified as a comma-separated list. Note that the Ruby driver only supports zlib and snappy
        compression; however, other drivers may support snappy. For maximum compatibility with
        drivers, specify ``"snappy,zlib"``; if compatibility with other drivers is not a concern,
        specify ``"zlib".`` Compression is not enabled by default and when using MongoDB 4.0 and

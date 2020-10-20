@@ -83,7 +83,7 @@ module Mongo
         # @option options [ Array<String> ] :compressors A list of potential
         #   compressors to use, in order of preference. The driver chooses the
         #   first compressor that is also supported by the server. Currently the
-        #   driver only supports 'zlib'.
+        #   driver only supports 'snappy' and 'zlib'.
         # @option options [ Float ] :connect_timeout The timeout, in seconds,
         #   to use for network operations. This timeout is used for all
         #   socket operations rather than connect calls only, contrary to
