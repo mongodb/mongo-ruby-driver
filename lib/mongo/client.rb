@@ -114,7 +114,10 @@ module Mongo
     # The compression algorithms supported by the driver.
     #
     # @since 2.5.0
-    VALID_COMPRESSORS = [ Mongo::Protocol::Compressed::ZLIB ].freeze
+    VALID_COMPRESSORS = [
+      Mongo::Protocol::Compressed::SNAPPY,
+      Mongo::Protocol::Compressed::ZLIB
+    ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
