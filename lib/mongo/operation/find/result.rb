@@ -53,7 +53,7 @@ module Mongo
         # @return [ String ] The namespace, usually in the format
         #   "database.collection".
         #
-        # @api public
+        # @api private
         def namespace
           cursor_document['ns']
         end
