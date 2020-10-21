@@ -268,7 +268,7 @@ describe Mongo::ClientEncryption do
         it_behaves_like 'it creates a data key'
       end
 
-      context 'with invalid endpoint' do
+      context 'with https' do
         let(:options) do
           {
             master_key: {
@@ -279,20 +279,26 @@ describe Mongo::ClientEncryption do
           }
         end
 
-        let(:expected_message) do
-          # RUBY-2129: This error message could be more specific and inform the user
-          # that there is a problem with their KMS endpoint
-          if BSON::Environment.jruby?
-            /getservbyname.* failed/
-          else
-            /SocketError/
-          end
+        it_behaves_like 'it creates a data key'
+      end
+
+      context 'with invalid endpoint' do
+        let(:options) do
+          {
+            master_key: {
+              key: aws_arn,
+              region: aws_region,
+              endpoint: "invalid-nonsense-endpoint.com"
+            }
+          }
         end
 
         it 'raises an exception' do
+          # RUBY-2129: This error message could be more specific and inform the user
+          # that there is a problem with their KMS endpoint
           expect do
             data_key_id
-          end.to raise_error(Mongo::Error::KmsError, expected_message)
+          end.to raise_error(Mongo::Error::KmsError, /SocketError/)
         end
       end
 

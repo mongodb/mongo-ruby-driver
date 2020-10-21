@@ -188,7 +188,7 @@ describe Mongo::Crypt::DataKeyContext do
       end
 
       context 'with valid endpoint' do
-        let(:options) { { master_key: { region: 'us-east-2', key: 'arn', endpoint: 'endpoint/to/kms' } } }
+        let(:options) { { master_key: { region: 'us-east-2', key: 'arn', endpoint: 'kms.us-east-2.amazonaws.com:443' } } }
 
         it 'does not raise an exception' do
           expect do
