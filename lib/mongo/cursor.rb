@@ -69,12 +69,12 @@ module Mongo
       @view = view
       @server = server
       @initial_result = result
+      @namespace = result.namespace
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
-      @coll_name = nil
       @options = options
       @session = @options[:session]
       unless closed?
@@ -288,7 +288,20 @@ module Mongo
     #
     # @since 2.2.0
     def collection_name
-      @coll_name || collection.name
+      # In most cases, this will be equivalent to the name of the collection
+      # object in the driver. However, in some cases (e.g. when connected
+      # to an Atlas Data Lake), the namespace returned by the find command
+      # may be different, which is why we want to use the collection name based
+      # on the namespace in the command result.
+      if @namespace
+        # Often, the namespace will be in the format "database.collection".
+        # However, sometimes the collection name will contain periods, which
+        # is why this method joins all the namespace components after the first.
+        ns_components = @namespace.split('.')
+        ns_components[1...ns_components.length].join('.')
+      else
+        collection.name
+      end
     end
 
     # Get the cursor id.
@@ -382,7 +395,6 @@ module Mongo
 
     def process(result)
       @remaining -= result.returned_count if limited?
-      @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       # #process is called for the first batch of results. In this case
       # the @cursor_id may be zero (all results fit in the first batch).
       # Thus we need to check both @cursor_id and the cursor_id of the result
