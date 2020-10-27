@@ -235,10 +235,6 @@ module Mongo
           if k.downcase == 'authmechanismproperties'
             expected[k] = ::Utils.downcase_keys(v)
           end
-          # Ruby driver does not support snappy.
-          if k == 'compressors'
-            expected[k] = v.reject { |sub_v| sub_v == 'snappy' }
-          end
         end
         # We omit retryReads/retryWrites=true because some tests do not
         # provide those.

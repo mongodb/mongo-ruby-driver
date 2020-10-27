@@ -14,7 +14,7 @@ tests:
         description: "Multiple compressors are parsed correctly"
         uri: "mongodb://example.com/?compressors=snappy,zlib"
         valid: true
-        warning: true
+        warning: false
         hosts: ~
         auth: ~
         options:
