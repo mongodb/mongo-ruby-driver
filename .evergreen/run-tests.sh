@@ -98,7 +98,7 @@ if test "$SSL" = ssl || test -n "$OCSP_ALGORITHM"; then
     client_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
   elif test "$AUTH" = x509; then
     client_cert_path=spec/support/certificates/client-x509.pem
-    
+
     uri_options="$uri_options&authMechanism=MONGODB-X509"
   elif echo $RVM_RUBY |grep -q jruby; then
     # JRuby does not grok chained certificate bundles -
@@ -129,6 +129,10 @@ if test "$COMPRESSOR" = zlib; then
   args="$args --networkMessageCompressors zlib"
 fi
 
+if test "$COMPRESSOR" = snappy; then
+  sudo apt-get install -y pkg-config autotools-dev automake libtool snappy
+fi
+
 if test -n "$OCSP_ALGORITHM" || test -n "$OCSP_VERIFIER"; then
   python3 -m pip install asn1crypto oscrypto flask
 fi
@@ -154,7 +158,7 @@ if test -n "$OCSP_ALGORITHM"; then
   if test -n "$OCSP_STATUS"; then
     ocsp_args="$ocsp_args --fault $OCSP_STATUS"
   fi
-  
+
   # Bind to 0.0.0.0 for Docker
   python3 spec/support/ocsp/ocsp_mock.py $ocsp_args -b 0.0.0.0 -p 8100 &
   ocsp_mock_pid=$!
@@ -225,7 +229,7 @@ elif test "$AUTH" = aws-assume-role; then
   export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
   export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
-  
+
   aws sts get-caller-identity
 
   hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"

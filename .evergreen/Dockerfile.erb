@@ -165,9 +165,13 @@ FROM <%= base_image %>
 
   RUN pip --version && \
     pip install mtools-legacy[mlaunch]
-  
+
   <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
     RUN python3 -mpip install asn1crypto oscrypto flask
+  <% end %>
+
+  <% if @env.fetch('COMPRESSOR') == 'snappy' %>
+    RUN apt-get install -y pkg-config autotools-dev automake libtool snappy
   <% end %>
 
 <% end %>
@@ -206,11 +210,11 @@ COPY . .
   <% 0.upto(num_exposed_ports-1) do |i| %>
     <% ports << 27017 + i %>
   <% end %>
-  
+
   <% if @env['OCSP_ALGORITHM'] %>
     <% ports << 8100 %>
   <% end %>
-  
+
   EXPOSE <%= ports.map(&:to_s).join(' ') %>
 
 <% end %>
