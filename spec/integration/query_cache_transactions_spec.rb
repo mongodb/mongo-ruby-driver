@@ -3,13 +3,8 @@ require 'spec_helper'
 describe 'QueryCache with transactions' do
   # Work around https://jira.mongodb.org/browse/HELP-10518
   before(:all) do
-    client = ClientRegistry.instance.global_client('authorized')
-    client['foo'].drop
-    client['foo'].create
-    client.start_session do |session|
-      session.with_transaction do
-        client['foo'].insert_one(test: 1)
-      end
+    Utils.mongos_each_direct_client do |client|
+      client['foo'].distinct('foo').to_a
     end
   end
 
