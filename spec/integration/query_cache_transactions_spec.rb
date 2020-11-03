@@ -3,6 +3,9 @@ require 'spec_helper'
 describe 'QueryCache with transactions' do
   # Work around https://jira.mongodb.org/browse/HELP-10518
   before(:all) do
+    client = ClientRegistry.instance.global_client('authorized')
+    Utils.create_collection(client, 'test')
+
     Utils.mongos_each_direct_client do |client|
       client['test'].distinct('foo').to_a
     end
@@ -25,6 +28,10 @@ describe 'QueryCache with transactions' do
     end
   end
 
+  before do
+    collection.delete_many
+  end
+
   describe 'in transactions' do
     require_transaction_support
     require_wired_tiger
@@ -33,10 +40,6 @@ describe 'QueryCache with transactions' do
 
     let(:events) do
       subscriber.command_started_events('find')
-    end
-
-    before do
-      Utils.create_collection(client, 'test')
     end
 
     context 'with convenient API' do
