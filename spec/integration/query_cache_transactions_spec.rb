@@ -4,7 +4,7 @@ describe 'QueryCache with transactions' do
   # Work around https://jira.mongodb.org/browse/HELP-10518
   before(:all) do
     Utils.mongos_each_direct_client do |client|
-      client['foo'].distinct('foo').to_a
+      client['test'].distinct('foo').to_a
     end
   end
 
