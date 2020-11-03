@@ -5,7 +5,7 @@ shared_examples 'message with a header' do
     describe 'length' do
       let(:field) { bytes.to_s[0..3] }
       it 'serializes the length' do
-        bytes.rewind!
+        bytes.rewind! if BSON::Environment.jruby?
         expect(field).to be_int32(bytes.to_s.length)
       end
     end
