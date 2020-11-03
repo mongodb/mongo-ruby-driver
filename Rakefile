@@ -26,15 +26,15 @@ CLASSIFIERS = [
   [%r,^integration/sdam_error_handling,, :sdam_integration],
   [%r,^integration/cursor_reaping,, :cursor_reaping],
   [%r,^integration/query_cache,, :query_cache],
+  [%r,^integration/transactions_examples,, :tx_examples],
   [%r,^(atlas|integration),, :integration],
   [%r,^spec_tests/sdam_integration,, :spec_sdam_integration],
-  [%r,^spec/integration/transactions_examples,, :tx_examples],
   [%r,^spec_tests,, :spec],
 ]
 
 RUN_PRIORITY = %i(unit
-  integration sdam_integration cursor_reaping query_cache
   tx_examples
+  integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
 )
 
