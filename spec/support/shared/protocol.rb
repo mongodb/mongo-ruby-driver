@@ -5,7 +5,8 @@ shared_examples 'message with a header' do
     describe 'length' do
       let(:field) { bytes.to_s[0..3] }
       it 'serializes the length' do
-        expect(field).to be_int32(bytes.length)
+        bytes.rewind!
+        expect(field).to be_int32(bytes.to_s.length)
       end
     end
 
