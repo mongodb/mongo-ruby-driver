@@ -28,11 +28,13 @@ CLASSIFIERS = [
   [%r,^integration/query_cache,, :query_cache],
   [%r,^(atlas|integration),, :integration],
   [%r,^spec_tests/sdam_integration,, :spec_sdam_integration],
+  [%r,^spec/integration/transactions_examples,, :tx_examples],
   [%r,^spec_tests,, :spec],
 ]
 
 RUN_PRIORITY = %i(unit
   integration sdam_integration cursor_reaping query_cache
+  tx_examples
   spec spec_sdam_integration
 )
 
