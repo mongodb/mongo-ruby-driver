@@ -30,6 +30,14 @@ describe 'QueryCache with transactions' do
 
   before do
     collection.delete_many
+
+    # Work around https://jira.mongodb.org/browse/HELP-10518
+    client.start_session do |session|
+      session.with_transaction do
+        collection.find({}, session: session).to_a
+      end
+    end
+    subscriber.clear_events!
   end
 
   describe 'in transactions' do
