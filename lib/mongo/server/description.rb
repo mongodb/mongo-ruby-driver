@@ -182,13 +182,20 @@ module Mongo
       # @since 2.5.0
       LOGICAL_SESSION_TIMEOUT_MINUTES = 'logicalSessionTimeoutMinutes'.freeze
 
+      # Constant for reading connectionId info from config.
+      #
+      # @api private
+      CONNECTION_ID = 'connectionId'.freeze
+
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
       EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME,
                                  LAST_WRITE,
                                  OPERATION_TIME,
-                                 Operation::CLUSTER_TIME ].freeze
+                                 Operation::CLUSTER_TIME,
+                                 CONNECTION_ID,
+                               ].freeze
 
       # Instantiate the new server description from the result of the ismaster
       # command.

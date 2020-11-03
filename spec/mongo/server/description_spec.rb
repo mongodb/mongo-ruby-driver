@@ -27,6 +27,7 @@ describe Mongo::Server::Description do
       'logicalSessionTimeoutMinutes' => 7,
       'operationTime' => 1,
       '$clusterTime' => 1,
+      'connectionId' => 11,
       'ok' => 1
     }
   end
@@ -750,6 +751,23 @@ describe Mongo::Server::Description do
 
       let(:other) do
         described_class.new(address, replica)
+      end
+
+      it 'returns true' do
+        expect(description == other).to be(true)
+      end
+    end
+
+    context 'when the configs match, but have different connectionId values' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      let(:other) do
+        described_class.new(address, replica.merge(
+          'connectionId' => 12
+        ))
       end
 
       it 'returns true' do
