@@ -70,7 +70,7 @@ module Mongo
         if ClusterConfig.instance.server_version < '4.4' &&
           global_client.cluster.servers.length > 1
         then
-          mongos_each_direct_client do |client|
+          ::Utils.mongos_each_direct_client do |client|
             client.database.command(flushRouterConfig: 1)
           end
         end

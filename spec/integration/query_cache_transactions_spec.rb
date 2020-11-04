@@ -1,14 +1,19 @@
 require 'spec_helper'
 
 describe 'QueryCache with transactions' do
+  # Work around https://jira.mongodb.org/browse/HELP-10518
+  before(:all) do
+    client = ClientRegistry.instance.global_client('authorized')
+    Utils.create_collection(client, 'test')
+
+    Utils.mongos_each_direct_client do |client|
+      client['test'].distinct('foo').to_a
+    end
+  end
+
   around do |spec|
     Mongo::QueryCache.clear
     Mongo::QueryCache.cache { spec.run }
-  end
-
-  before do
-    authorized_collection.delete_many
-    subscriber.clear_events!
   end
 
   # These tests do not currently use the session registry because transactions
@@ -23,20 +28,26 @@ describe 'QueryCache with transactions' do
     end
   end
 
-  let(:authorized_collection) { client['collection_spec'] }
+  before do
+    collection.delete_many
+
+    # Work around https://jira.mongodb.org/browse/HELP-10518
+    client.start_session do |session|
+      session.with_transaction do
+        collection.find({}, session: session).to_a
+      end
+    end
+    subscriber.clear_events!
+  end
 
   describe 'in transactions' do
     require_transaction_support
     require_wired_tiger
 
-    let(:collection) { authorized_client['test'] }
+    let(:collection) { client['test'] }
 
     let(:events) do
       subscriber.command_started_events('find')
-    end
-
-    before do
-      Utils.create_collection(authorized_client, 'test')
     end
 
     context 'with convenient API' do
@@ -44,7 +55,7 @@ describe 'QueryCache with transactions' do
         it 'performs one query' do
           collection.find.to_a
 
-          session = authorized_client.start_session
+          session = client.start_session
           session.with_transaction do
             collection.find({}, session: session).to_a
           end
@@ -57,7 +68,7 @@ describe 'QueryCache with transactions' do
         it 'performs two queries' do
           collection.find.to_a
 
-          session = authorized_client.start_session
+          session = client.start_session
           session.with_transaction(
            read_concern: { level: :snapshot }
           ) do
@@ -72,7 +83,7 @@ describe 'QueryCache with transactions' do
         it 'performs two queries' do
           collection.find.to_a
 
-          session = authorized_client.start_session
+          session = client.start_session
           session.with_transaction(
            read: { mode: :primary }
           ) do
@@ -85,7 +96,7 @@ describe 'QueryCache with transactions' do
 
       context 'when transaction is committed' do
         it 'clears the cache' do
-          session = authorized_client.start_session
+          session = client.start_session
           session.with_transaction do
             collection.insert_one({ test: 1 }, session: session)
             collection.insert_one({ test: 2 }, session: session)
@@ -107,7 +118,7 @@ describe 'QueryCache with transactions' do
 
       context 'when transaction is aborted' do
         it 'clears the cache' do
-          session = authorized_client.start_session
+          session = client.start_session
           session.with_transaction do
             collection.insert_one({ test: 1 }, session: session)
             collection.insert_one({ test: 2 }, session: session)
@@ -131,7 +142,7 @@ describe 'QueryCache with transactions' do
     context 'with low-level API' do
       context 'when transaction is committed' do
         it 'clears the cache' do
-          session = authorized_client.start_session
+          session = client.start_session
           session.start_transaction
 
           collection.insert_one({ test: 1 }, session: session)
@@ -154,7 +165,7 @@ describe 'QueryCache with transactions' do
 
       context 'when transaction is aborted' do
         it 'clears the cache' do
-          session = authorized_client.start_session
+          session = client.start_session
           session.start_transaction
 
           collection.insert_one({ test: 1 }, session: session)

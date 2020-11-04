@@ -78,7 +78,7 @@ describe Mongo::Operation::Update::OpMsg do
 
   describe 'write concern' do
     # https://jira.mongodb.org/browse/RUBY-2224
-    skip_if_linting
+    require_no_linting
 
     context 'when write concern is not specified' do
 
@@ -105,7 +105,7 @@ describe Mongo::Operation::Update::OpMsg do
 
   describe '#message' do
     # https://jira.mongodb.org/browse/RUBY-2224
-    skip_if_linting
+    require_no_linting
 
     context 'when the server supports OP_MSG' do
       min_server_fcv '3.6'
@@ -159,7 +159,7 @@ describe Mongo::Operation::Update::OpMsg do
 
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
           # Mocks on features are incompatible with linting
-          skip_if_linting
+          require_no_linting
 
           let(:expected_global_args) do
             global_args.dup.tap do |args|

@@ -271,7 +271,7 @@ describe 'Connection pool populator integration' do
   end
 
   describe 'when forking is enabled' do
-    only_mri
+    require_mri
 
     context 'when min size is provided' do
       min_server_version '2.8'

@@ -224,7 +224,7 @@ module Mongo
         end
 
         if ClusterConfig.instance.fcv_ish >= '4.2'
-          mongos_each_direct_client do |direct_client|
+          ::Utils.mongos_each_direct_client do |direct_client|
             direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
           end
         end
@@ -261,7 +261,7 @@ module Mongo
 
         $distinct_ran ||= {}
         $distinct_ran[@spec.database_name] ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
-          mongos_each_direct_client do |direct_client|
+          ::Utils.mongos_each_direct_client do |direct_client|
             direct_client.use(@spec.database_name)['test'].distinct('foo').to_a
           end
         end

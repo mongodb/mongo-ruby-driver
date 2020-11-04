@@ -1,8 +1,9 @@
 require 'lite_spec_helper'
 
+require 'mrss/constraints'
+require 'support/constraints'
 require 'support/authorization'
 require 'support/primary_socket'
-require 'support/constraints'
 require 'support/cluster_config'
 require 'support/cluster_tools'
 require 'rspec/retry'
@@ -11,6 +12,7 @@ require 'support/local_resource_registry'
 
 RSpec.configure do |config|
   config.include(Authorization)
+  config.extend(Mrss::Constraints)
   config.extend(Constraints)
 
   config.before(:all) do

@@ -1,3 +1,5 @@
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "shared", "lib"))
+
 COVERAGE_MIN = 90
 CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
 
@@ -67,8 +69,8 @@ unless SpecConfig.instance.client_debug?
 end
 Encoding.default_external = Encoding::UTF_8
 
+require 'mrss/lite_constraints'
 require 'support/matchers'
-require 'support/lite_constraints'
 require 'support/event_subscriber'
 require 'support/common_shortcuts'
 require 'support/client_registry'
@@ -89,7 +91,7 @@ end
 RSpec.configure do |config|
   config.extend(CommonShortcuts::ClassMethods)
   config.include(CommonShortcuts::InstanceMethods)
-  config.extend(LiteConstraints)
+  config.extend(Mrss::LiteConstraints)
   config.include(ClientRegistryMacros)
 
   if SpecConfig.instance.ci?

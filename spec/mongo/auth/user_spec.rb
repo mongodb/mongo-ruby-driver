@@ -55,7 +55,7 @@ describe Mongo::Auth::User do
       let(:options) { {auth_mech: 'scram'} }
 
       context 'not linting' do
-        skip_if_linting
+        require_no_linting
 
         it 'warns' do
           expect(Mongo::Logger.logger).to receive(:warn)

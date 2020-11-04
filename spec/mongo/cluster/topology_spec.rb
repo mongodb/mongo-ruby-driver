@@ -111,7 +111,7 @@ describe Mongo::Cluster::Topology do
   end
 
   describe '#logical_session_timeout' do
-    skip_if_linting
+    require_no_linting
 
     let(:listeners) do
       Mongo::Event::Listeners.new

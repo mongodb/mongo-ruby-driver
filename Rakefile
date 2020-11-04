@@ -13,7 +13,30 @@ end
 default_groups = [:default, :testing]
 Bundler.require(*default_groups)
 
+ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
+
+$: << File.join(ROOT, 'spec/shared/lib')
+
 require 'rspec/core/rake_task'
+require 'mrss/spec_organizer'
+
+CLASSIFIERS = [
+  [%r,^mongo,, :unit],
+  [%r,^kerberos,, :unit],
+  [%r,^integration/sdam_error_handling,, :sdam_integration],
+  [%r,^integration/cursor_reaping,, :cursor_reaping],
+  [%r,^integration/query_cache,, :query_cache],
+  [%r,^integration/transactions_examples,, :tx_examples],
+  [%r,^(atlas|integration),, :integration],
+  [%r,^spec_tests/sdam_integration,, :spec_sdam_integration],
+  [%r,^spec_tests,, :spec],
+]
+
+RUN_PRIORITY = %i(unit
+  tx_examples
+  integration sdam_integration cursor_reaping query_cache
+  spec spec_sdam_integration
+)
 
 tasks = Rake.application.instance_variable_get('@tasks')
 tasks['release:do'] = tasks.delete('release')
@@ -71,12 +94,23 @@ namespace :spec do
     SpecConfig.instance.print_summary
   end
 
+  def spec_organizer
+    Mrss::SpecOrganizer.new(
+      root: ROOT,
+      classifiers: CLASSIFIERS,
+      priority_order: RUN_PRIORITY,
+    )
+  end
+
   task :ci => ['spec:prepare'] do
-    $: << File.join(File.dirname(__FILE__), 'spec')
+    spec_organizer.run
+  end
 
-    require 'support/spec_organizer'
-
-    SpecOrganizer.new.run
+  desc 'Show test buckets'
+  task :buckets do
+    spec_organizer.ordered_buckets.each do |category, paths|
+      puts "#{category || 'remaining'}: #{paths&.join(' ') || '<none>'}"
+    end
   end
 end
 

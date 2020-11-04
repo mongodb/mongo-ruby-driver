@@ -183,7 +183,7 @@ describe Mongo::Collection::View::ChangeStream do
 
   context 'when a killCursors command is issued for the cursor' do
     context 'using Enumerable' do
-      only_mri
+      require_mri
 
       before do
         change_stream

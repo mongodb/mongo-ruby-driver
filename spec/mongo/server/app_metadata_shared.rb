@@ -19,7 +19,7 @@ shared_examples 'app metadata document' do
   end
 
   context 'mri' do
-    only_mri
+    require_mri
 
     it 'includes Ruby version' do
       document[:client][:platform].should start_with("Ruby #{RUBY_VERSION}")

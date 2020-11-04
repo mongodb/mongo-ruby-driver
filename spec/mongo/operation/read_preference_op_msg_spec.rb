@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Operation::SessionsSupported do
   # https://jira.mongodb.org/browse/RUBY-2224
-  skip_if_linting
+  require_no_linting
 
   let(:selector) do
     BSON::Document.new(name: 'test')
