@@ -383,7 +383,7 @@ module Mongo
       end
 
       def run_tls_context_hooks
-        Mongo::TLSContextHooks.hooks.each do |hook|
+        Mongo.tls_context_hooks.each do |hook|
           hook.call(@context)
         end
       end

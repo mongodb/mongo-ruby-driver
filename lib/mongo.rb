@@ -68,7 +68,6 @@ require 'mongo/session'
 require 'mongo/socket'
 require 'mongo/srv'
 require 'mongo/timeout'
-require 'mongo/tls_context_hooks'
 require 'mongo/uri'
 require 'mongo/version'
 require 'mongo/write_concern'
@@ -78,5 +77,28 @@ module Mongo
   # Clears the driver's OCSP response cache.
   module_function def clear_ocsp_cache
     Socket::OcspCache.clear
+  end
+
+  # This is a user-settable list of hooks that will be invoked when any new
+  # TLS socket is connected. Each hook should be a Proc that takes
+  # an OpenSSL::SSL::SSLContext object as an argument. These hooks can be used
+  # to modify the TLS context (for example to disallow certain ciphers).
+  #
+  # @return [ Array<Proc> ] The list of procs to be invoked when a TLS socket
+  #   is connected (may be an empty Array).
+  module_function def tls_context_hooks
+    @tls_context_hooks ||= []
+  end
+
+  # Set the TLS context hooks.
+  #
+  # @param [ Array<Proc> ] hooks An Array of Procs, each of which should take
+  #   an OpenSSL::SSL::SSLContext object as an argument.
+  module_function def tls_context_hooks=(hooks)
+    unless hooks.is_a?(Array) && hooks.all? { |hook| hook.is_a?(Proc) }
+      raise ArgumentError, "TLS context hooks must be an array of Procs"
+    end
+
+    @tls_context_hooks=hooks
   end
 end
