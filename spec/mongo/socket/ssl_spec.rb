@@ -50,6 +50,19 @@ describe Mongo::Socket::SSL, retry: 3 do
   end
 
   describe '#connect!' do
+    context 'when TLS context hooks are provided' do
+      let(:proc) { Proc.new { |context| context.ciphers = ["AES256-SHA"] } }
+
+      before do
+        Mongo::TLSContextHooks.hooks = [ proc ]
+      end
+
+      it 'runs the TLS context hook before connecting' do
+        expect(proc).to receive(:call).and_call_original
+        socket
+        expect(socket.context.ciphers).to eq([["AES256-SHA", "TLSv1/SSLv3", 256, 256]])
+      end
+    end
 
     context 'when a certificate is provided' do
 
