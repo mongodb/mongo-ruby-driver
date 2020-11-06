@@ -1115,10 +1115,24 @@ For example, in a Rails application this code could be placed in an initializer.
 
   # Only the AES256-SHA cipher will be enabled from this point forward
 
-
 Every ``Proc`` in ``Mongo.tls_context_hooks`` will be passed an
 ``OpenSSL::SSL::SSLContext`` object as its sole argument. These ``Proc``s will
 be executed sequentially during the creation of every ``Mongo::Socket::SSL`` object.
+
+It is possible to assign the entire array of hooks calling ``Mongo.tls_context_hooks=``,
+but doing so will remove any previously assigned hooks. It is recommended to use
+the ``Array#push`` or ``Array#unshift`` methods to add new hooks.
+
+It is also possible to remove hooks from ``Mongo.tls_context_hooks`` by storing
+a reference to the ``Proc``s somewhere else in the application, and then using
+``Array#delete_if`` to remove the desired hooks.
+
+..warning ::
+
+  TLS context hooks are global and will affect every instance of ``Mongo::Client``.
+  Any library that allows applications to enable these hooks should expose methods to
+  modify the hooks (which can be called by the application) rather than
+  automatically enabling the hooks when the library is loaded.
 
 Further information on configuring MongoDB server for TLS is available in the
 :manual:`MongoDB manual </tutorial/configure-ssl/>`.
