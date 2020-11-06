@@ -1158,6 +1158,11 @@ module Mongo
           validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
+
+            if compressors.include?('snappy')
+              validate_snappy_compression!
+            end
+
             _options[key] = compressors unless compressors.empty?
           else
             _options[key] = v
@@ -1314,9 +1319,18 @@ module Mongo
                        "This compressor will not be used.")
           false
         else
+
           true
         end
       end
+    end
+
+    def validate_snappy_compression!
+      require 'snappy'
+    rescue LoadError
+      raise LoadError, "Cannot enable snappy compression because the snappy gem " \
+        "has not been installed. Put \"gem 'snappy'\" in your Gemfile and run " \
+        "\"bundle install\" to install the gem"
     end
 
     def validate_max_min_pool_size!(option, opts)

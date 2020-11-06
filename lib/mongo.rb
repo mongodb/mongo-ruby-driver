@@ -30,7 +30,6 @@ require 'zlib'
 autoload :CGI, 'cgi'
 
 require 'bson'
-require 'snappy'
 
 require 'mongo/id'
 require 'mongo/bson'

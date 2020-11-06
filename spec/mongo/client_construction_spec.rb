@@ -542,6 +542,37 @@ describe Mongo::Client do
             expect(client.cluster.next_primary.monitor.compressor).to be_nil
           end
         end
+
+        context 'when snappy compressor is provided' do
+          min_server_version '3.6'
+
+          let(:options) do
+            { compressors: ['snappy'] }
+          end
+
+          context 'when snappy gem is installed' do
+            require_snappy_compression
+
+            it 'creates the client' do
+              expect(client.options['compressors']).to eq(['snappy'])
+            end
+          end
+
+          context 'when snappy gem is not installed' do
+            before do
+              compressors = SpecConfig.instance.compressors
+              if compressors && compressors.include?('snappy')
+                skip "Snappy compression is enabled"
+              end
+            end
+
+            it 'raises an exception' do
+              expect do
+                client
+              end.to raise_error(LoadError, /Cannot enable snappy compression/)
+            end
+          end
+        end
       end
 
       context 'when compressors are not provided' do

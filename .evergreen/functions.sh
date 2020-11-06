@@ -109,8 +109,10 @@ set_env_vars() {
     export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
   elif test "$BSON" = master; then
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
+  elif test "$COMPRESSOR" = snappy; then
+    export BUNDLE_GEMFILE=gemfiles/snappy_compression.gemfile
   fi
-  
+
   # rhel62 ships with Python 2.6
   if test -d /opt/python/2.7/bin; then
     export PATH=/opt/python/2.7/bin:$PATH
@@ -190,7 +192,7 @@ setup_ruby() {
     # Ensure we're using the right ruby
     ruby_name=`echo $RVM_RUBY |awk -F- '{print $1}'`
     ruby_version=`echo $RVM_RUBY |awk -F- '{print $2}' |cut -c 1-3`
-    
+
     ruby -v |fgrep $ruby_name
     ruby -v |fgrep $ruby_version
 
@@ -212,7 +214,7 @@ setup_ruby() {
 
 bundle_install() {
   args=--quiet
-  
+
   # On JRuby we can test against bson master but not in a conventional way.
   # See https://jira.mongodb.org/browse/RUBY-2156
   if echo $RVM_RUBY |grep -q jruby && test "$BSON" = master; then
@@ -223,7 +225,7 @@ bundle_install() {
       rake compile &&
       gem build *.gemspec &&
       gem install *.gem)
-    
+
     # TODO redirect output of bundle install to file.
     # Then we don't have to see it in evergreen output.
     args=
