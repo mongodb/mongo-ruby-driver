@@ -569,7 +569,7 @@ describe Mongo::Client do
             it 'raises an exception' do
               expect do
                 client
-              end.to raise_error(LoadError, /Cannot enable snappy compression/)
+              end.to raise_error(Mongo::Error::UnmetDependency, /Cannot enable snappy compression/)
             end
           end
         end

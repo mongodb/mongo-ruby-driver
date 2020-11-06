@@ -1326,11 +1326,12 @@ module Mongo
     end
 
     def validate_snappy_compression!
+      return if defined?(Snappy)
       require 'snappy'
-    rescue LoadError
-      raise LoadError, "Cannot enable snappy compression because the snappy gem " \
+    rescue LoadError => e
+      raise Error::UnmetDependency, "Cannot enable snappy compression because the snappy gem " \
         "has not been installed. Put \"gem 'snappy'\" in your Gemfile and run " \
-        "\"bundle install\" to install the gem"
+        "\"bundle install\" to install the gem. Original error: #{e}"
     end
 
     def validate_max_min_pool_size!(option, opts)
