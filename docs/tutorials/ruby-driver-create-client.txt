@@ -29,7 +29,7 @@ to connect to; if no database name is specified, the client will use the
 .. code-block:: ruby
 
   Mongo::Client.new([ '127.0.0.1:27017' ], database: 'mydb')
-  
+
   # Or using the URI syntax:
   Mongo::Client.new("mongodb://127.0.0.1:27017/mydb")
 
@@ -82,7 +82,7 @@ The database can be specified during ``Client`` construction:
 
   # Using Ruby client options:
   client = Mongo::Client.new(['localhost'], database: 'mydb')
-  
+
   # Using a MongoDB URI:
   client = Mongo::Client.new('mongodb://localhost/mydb')
 
@@ -92,9 +92,9 @@ new ``Client`` instance configured with the specified database:
 .. code-block:: ruby
 
   client = Mongo::Client.new(['localhost'], database: 'mydb')
-  
+
   admin_client = client.use('admin')
-  
+
   # Issue an administrative command
   admin_client.database.command(replSetGetConfig: 1).documents.first
 
@@ -125,7 +125,7 @@ To force all operations to be performed on the designated server, specify the
 .. code-block:: ruby
 
   Mongo::Client.new([ '1.2.3.4:27017' ], database: 'mydb', direct_connection: true)
-  
+
   # Or using the URI syntax:
   Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?directConnection=true")
 
@@ -153,7 +153,7 @@ connect to the replica set.
 
   Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ],
     :database => 'mydb', replica_set: 'myapp')
-  
+
   # Or using the URI syntax:
   Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?replicaSet=myapp")
 
@@ -186,7 +186,7 @@ spread the operation load accordingly.
 .. code-block:: ruby
 
   Mongo::Client.new([ '1.2.3.4:27017', '1.2.3.5:27017' ], :database => 'mydb')
-  
+
   Mongo::Client.new("mongodb://1.2.3.4:27017,1.2.3.5:27017/mydb")
 
 
@@ -270,7 +270,7 @@ Ruby Options
 
    * - ``:auth_mech_properties``
      - Provides additional authentication mechanism properties.
-     
+
        The keys in properties are interpreted case-insensitively.
        When the client is created, keys are lowercased.
 
@@ -436,11 +436,11 @@ Ruby Options
              max_staleness: 5,
            }
          }
-         
+
        If tag sets are provided, they must be an array of hashes. A server
        satisfies the read preference if its tags match any one hash in the
        provided tag sets.
-       
+
        Each tag set must be a hash, and will be converted internally to
        a ``BSON::Document`` instance prior to being used for server selection.
        Hash keys can be strings or symbols. The keys are case sensitive.
@@ -480,12 +480,12 @@ Ruby Options
        subscriber not receiving some of the SDAM events. The ``:sdam_proc``
        option permits adding event subscribers on the client being constructed
        before any SDAM events are published.
-       
+
        Pass a ``Proc`` which will be called with the ``Client`` as the argument
        after the client's event subscription mechanism has been initialized
        but before any of the servers are added to the client. Use this
        ``Proc`` to set up SDAM event subscribers on the client.
-       
+
        Note: the client is not fully constructed when the ``Proc`` provided in
        ``:sdam_proc is invoked, in particular the cluster is nil at this time.
        ``:sdam_proc`` procedure should limit itself to calling
@@ -1090,6 +1090,50 @@ file and both must be stored in the same file. Example usage:
   URI option values must be properly URI escaped. This applies, for example, to
   slashes in the paths.
 
+Modifying ``SSLContext``
+------------------------
+It may be desirable to further configure TLS options in the driver, for example
+by enabling or disabling certain ciphers. Currently, the Ruby driver does not
+provide a way to do this when initializing a ``Mongo::Client``.
+
+However, the Ruby driver provides a way to set global "TLS context hooks" --
+these are user-provided ``Proc``s that will be invoked before any TLS socket
+connection and can be used to modify the underlying ``OpenSSL::SSL::SSLContext``
+object used by the socket.
+
+To set the TLS context hooks, add ``Proc``s to the ``Mongo.tls_context_hooks``
+array. This should be done before creating any Mongo::Client instances.
+For example, in a Rails application this code could be placed in an initializer.
+
+.. code-block:: ruby
+
+  Mongo.tls_context_hooks.push(
+    Proc.new { |context|
+      context.ciphers = ["AES256-SHA"]
+    }
+  )
+
+  # Only the AES256-SHA cipher will be enabled from this point forward
+
+Every ``Proc`` in ``Mongo.tls_context_hooks`` will be passed an
+``OpenSSL::SSL::SSLContext`` object as its sole argument. These ``Proc``s will
+be executed sequentially during the creation of every ``Mongo::Socket::SSL`` object.
+
+It is possible to assign the entire array of hooks calling ``Mongo.tls_context_hooks=``,
+but doing so will remove any previously assigned hooks. It is recommended to use
+the ``Array#push`` or ``Array#unshift`` methods to add new hooks.
+
+It is also possible to remove hooks from ``Mongo.tls_context_hooks`` by storing
+a reference to the ``Proc``s somewhere else in the application, and then using
+``Array#delete_if`` to remove the desired hooks.
+
+..warning ::
+
+  TLS context hooks are global and will affect every instance of ``Mongo::Client``.
+  Any library that allows applications to enable these hooks should expose methods to
+  modify the hooks (which can be called by the application) rather than
+  automatically enabling the hooks when the library is loaded.
+
 Further information on configuring MongoDB server for TLS is available in the
 :manual:`MongoDB manual </tutorial/configure-ssl/>`.
 
@@ -1162,7 +1206,7 @@ The ``:ssl_ca_cert_string`` option supports specifying only one CA certificate.
   CA certificate options. Doing so would elevate the intermediate certificates
   to the status of root certificates, rather than verifying intermediate
   certificates against the root certificates.
-  
+
   If intermediate certificates need to be used, specify them as part of the
   client or server TLS certificate files.
 
@@ -1300,7 +1344,7 @@ Usage with Forking Servers
 ==========================
 
 .. note::
-  
+
   Applications using Mongoid should follow `Mongoid's forking guidance
   <https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
   The guidance and sample code below is provided for applications using the
@@ -1316,7 +1360,7 @@ This is because:
 2. File descriptors like network sockets are shared between parent and
    child processes.
 
-The driver attempts to detect client use from forked processes and 
+The driver attempts to detect client use from forked processes and
 reestablish network connections when such use is detected, alleviating
 the issue of file descriptor sharing.
 

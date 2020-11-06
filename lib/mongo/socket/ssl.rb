@@ -106,6 +106,8 @@ module Mongo
         begin
           @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
           set_socket_options(@tcp_socket)
+          run_tls_context_hooks
+
           connect!
         rescue
           @tcp_socket.close
@@ -378,6 +380,12 @@ module Mongo
 
       def human_address
         "#{host}:#{port} (#{host_name}:#{port}, TLS)"
+      end
+
+      def run_tls_context_hooks
+        Mongo.tls_context_hooks.each do |hook|
+          hook.call(@context)
+        end
       end
     end
   end
