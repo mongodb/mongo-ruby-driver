@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::Protocol::Compressed do
 
@@ -19,6 +19,7 @@ describe Mongo::Protocol::Compressed do
   describe '#serialize' do
 
     context "when using the snappy compressor" do
+      require_snappy_compression
       let(:compressor) { 'snappy' }
 
       it "uses snappy" do

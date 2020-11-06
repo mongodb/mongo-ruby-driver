@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Snappy compression' do
-  require_compression
+  require_snappy_compression
 
   before do
     authorized_client['test'].drop
