@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 require 'runners/connection_string'
 
@@ -50,6 +50,10 @@ describe 'URI options' do
             end
 
             if test.options
+              if test.options['compressors'] && test.options['compressors'].include?('snappy')
+                require_snappy_compression
+              end
+
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
