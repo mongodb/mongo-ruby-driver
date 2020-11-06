@@ -25,23 +25,15 @@ module Mongo
     class Compressed < Message
 
       # The noop compressor identifier.
-      #
-      # @since x.x.x
       NOOP = 'noop'.freeze
 
       # The byte signaling that the message has not been compressed (test mode).
-      #
-      # @since x.x.x
       NOOP_BYTE = 0.chr.force_encoding(BSON::BINARY).freeze
 
       # The snappy compressor identifier.
-      #
-      # @since x.x.x
       SNAPPY = 'snappy'.freeze
 
       # The byte signaling that the message has been compressed with snappy.
-      #
-      # @since x.x.x
       SNAPPY_BYTE = 1.chr.force_encoding(BSON::BINARY).freeze
 
       # The byte signaling that the message has been compressed with Zlib.
