@@ -129,10 +129,6 @@ if test "$COMPRESSOR" = zlib; then
   args="$args --networkMessageCompressors zlib"
 fi
 
-if test "$COMPRESSOR" = snappy; then
-  sudo apt-get install -y pkg-config autotools-dev automake libtool snappy
-fi
-
 if test -n "$OCSP_ALGORITHM" || test -n "$OCSP_VERIFIER"; then
   python3 -m pip install asn1crypto oscrypto flask
 fi
@@ -302,6 +298,11 @@ export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
 # Compression is handled via an environment variable, convert to URI option
 if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
   add_uri_option compressors=zlib
+fi
+
+if test "$COMPRESSOR" = snappy; then
+  sudo apt-get install -y pkg-config autotools-dev automake libtool snappy
+  add_uri_option compressors=snappy
 fi
 
 echo "Running tests"
