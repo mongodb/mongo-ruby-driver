@@ -57,6 +57,10 @@ describe Mongo::Socket::SSL, retry: 3 do
         Mongo.tls_context_hooks = [ proc ]
       end
 
+      after do
+        Mongo.tls_context_hooks.clear
+      end
+
       it 'runs the TLS context hook before connecting' do
         expect(proc).to receive(:call).and_call_original
         socket

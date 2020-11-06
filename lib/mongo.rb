@@ -99,6 +99,6 @@ module Mongo
       raise ArgumentError, "TLS context hooks must be an array of Procs"
     end
 
-    @tls_context_hooks=hooks
+    @tls_context_hooks = hooks
   end
 end

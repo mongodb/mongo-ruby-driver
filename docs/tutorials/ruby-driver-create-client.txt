@@ -1097,26 +1097,28 @@ by enabling or disabling certain ciphers. Currently, the Ruby driver does not
 provide a way to do this when initializing a ``Mongo::Client``.
 
 However, the Ruby driver provides a way to set global "TLS context hooks" --
-these are user-provided methods that will be invoked before any SSL socket
+these are user-provided ``Proc``s that will be invoked before any TLS socket
 connection and can be used to modify the underlying ``OpenSSL::SSL::SSLContext``
 object used by the socket.
 
-To set the TLS context hooks, use the ``Mongo.tls_context_hooks`` method, and
-provide an Array of ``Procs`` that will be run prior to connecting any SSL socket:
+To set the TLS context hooks, add ``Proc``s to the ``Mongo.tls_context_hooks``
+array. This should be done before creating any Mongo::Client instances.
+For example, in a Rails application this code could be placed in an initializer.
 
 .. code-block:: ruby
 
-  Mongo.tls_context_hooks = [
+  Mongo.tls_context_hooks.push(
     Proc.new { |context|
       context.ciphers = ["AES256-SHA"]
     }
-  ]
+  )
 
   # Only the AES256-SHA cipher will be enabled from this point forward
 
-Every ``Proc`` in the array passed to ``Mongo.tls_context_hooks`` should take
-an ``OpenSSL::SSL::SSLContext`` object as its sole argument. These ``Procs`` will
-be executed sequentially on the creation of every ``Mongo::Socket::SSL`` object.
+
+Every ``Proc`` in ``Mongo.tls_context_hooks`` will be passed an
+``OpenSSL::SSL::SSLContext`` object as its sole argument. These ``Proc``s will
+be executed sequentially during the creation of every ``Mongo::Socket::SSL`` object.
 
 Further information on configuring MongoDB server for TLS is available in the
 :manual:`MongoDB manual </tutorial/configure-ssl/>`.
