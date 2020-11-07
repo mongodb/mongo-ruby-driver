@@ -1330,8 +1330,8 @@ module Mongo
       require 'snappy'
     rescue LoadError => e
       raise Error::UnmetDependency, "Cannot enable snappy compression because the snappy gem " \
-        "has not been installed. Put \"gem 'snappy'\" in your Gemfile and run " \
-        "\"bundle install\" to install the gem. Original error: #{e}"
+        "has not been installed. Add \"gem 'snappy'\" to your Gemfile and run " \
+        "\"bundle install\" to install the gem. (#{e.class}: #{e})"
     end
 
     def validate_max_min_pool_size!(option, opts)
