@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 require 'runners/connection_string'
 
@@ -51,7 +51,11 @@ describe 'URI options' do
 
             if test.options
               if test.options['compressors'] && test.options['compressors'].include?('snappy')
-                require_snappy_compression
+                before do
+                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /snappy/
+                    skip "This test requires snappy compression"
+                  end
+                end
               end
 
               it 'creates a client with the correct options' do
