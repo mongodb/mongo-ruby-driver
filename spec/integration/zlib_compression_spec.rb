@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Zlib compression' do
-  require_compression
+  require_zlib_compression
 
   before do
     authorized_client['test'].drop
