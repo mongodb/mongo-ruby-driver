@@ -279,6 +279,17 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "snappy-jruby"
+    matrix_spec:
+      ruby: jruby-9.2
+      mongodb-version: "4.4"
+      topology: replica-set
+      compressor: 'snappy'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
   - matrix_name: "ruby-head"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
