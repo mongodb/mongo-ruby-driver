@@ -170,7 +170,7 @@ FROM <%= base_image %>
     RUN python3 -mpip install asn1crypto oscrypto flask
   <% end %>
 
-  <% if @env.fetch('COMPRESSOR') == 'snappy' %>
+  <% if @env['COMPRESSOR'] == 'snappy' %>
     RUN apt-get install -y pkg-config autotools-dev automake libtool snappy
   <% end %>
 
