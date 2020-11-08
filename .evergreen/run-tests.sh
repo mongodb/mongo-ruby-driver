@@ -301,7 +301,7 @@ if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
 fi
 
 if test "$COMPRESSOR" = snappy; then
-  sudo apt-get install -y pkg-config autotools-dev automake libtool snappy
+  #sudo apt-get install -y pkg-config autotools-dev automake libtool snappy
   add_uri_option compressors=snappy
 fi
 
