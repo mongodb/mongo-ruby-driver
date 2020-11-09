@@ -24,6 +24,18 @@ module Mongo
     # @since 2.5.0
     class Compressed < Message
 
+      # The noop compressor identifier.
+      NOOP = 'noop'.freeze
+
+      # The byte signaling that the message has not been compressed (test mode).
+      NOOP_BYTE = 0.chr.force_encoding(BSON::BINARY).freeze
+
+      # The snappy compressor identifier.
+      SNAPPY = 'snappy'.freeze
+
+      # The byte signaling that the message has been compressed with snappy.
+      SNAPPY_BYTE = 1.chr.force_encoding(BSON::BINARY).freeze
+
       # The byte signaling that the message has been compressed with Zlib.
       #
       # @since 2.5.0
@@ -37,7 +49,10 @@ module Mongo
       # The compressor identifier to byte map.
       #
       # @since 2.5.0
-      COMPRESSOR_ID_MAP = { ZLIB => ZLIB_BYTE }.freeze
+      COMPRESSOR_ID_MAP = {
+        SNAPPY => SNAPPY_BYTE,
+        ZLIB => ZLIB_BYTE
+      }.freeze
 
       # Creates a new OP_COMPRESSED message.
       #
@@ -68,9 +83,7 @@ module Mongo
       # @api private
       def maybe_inflate
         message = Registry.get(@original_op_code).allocate
-        uncompressed_message = Zlib::Inflate.inflate(@compressed_message)
-
-        buf = BSON::ByteBuffer.new(uncompressed_message)
+        buf = decompress(@compressed_message)
 
         message.send(:fields).each do |field|
           if field[:multi]
@@ -125,8 +138,28 @@ module Mongo
         buf = BSON::ByteBuffer.new
         @original_message.send(:serialize_fields, buf, max_bson_size)
         @uncompressed_size = buf.length
-        @compressed_message = Zlib::Deflate.deflate(buf.to_s, @zlib_compression_level).force_encoding(BSON::BINARY)
+        @compressed_message = compress(buf)
         super
+      end
+
+      def compress(buffer)
+        if @compressor_id == NOOP_BYTE
+          buffer.to_s.force_encoding(BSON::BINARY)
+        elsif @compressor_id == ZLIB_BYTE
+          Zlib::Deflate.deflate(buffer.to_s, @zlib_compression_level).force_encoding(BSON::BINARY)
+        elsif @compressor_id == SNAPPY_BYTE
+          Snappy.deflate(buffer.to_s).force_encoding(BSON::BINARY)
+        end
+      end
+
+      def decompress(compressed_message)
+        if @compressor_id == NOOP_BYTE
+          BSON::ByteBuffer.new(compressed_message)
+        elsif @compressor_id == ZLIB_BYTE
+          BSON::ByteBuffer.new(Zlib::Inflate.inflate(compressed_message))
+        elsif @compressor_id == SNAPPY_BYTE
+          BSON::ByteBuffer.new(Snappy.inflate(compressed_message))
+        end
       end
 
       Registry.register(OP_CODE, self)

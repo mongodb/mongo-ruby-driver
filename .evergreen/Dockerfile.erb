@@ -28,7 +28,7 @@ FROM <%= base_image %>
   # increment the counter to force apt-get update to run.
   # zsh is not required for any scripts but it is a better interactive shell
   # than bash.
-  RUN echo 3 && \
+  RUN echo 4 && \
     apt-get update && \
     apt-get install -y curl zsh
 
@@ -68,6 +68,7 @@ FROM <%= base_image %>
   # Installing mlaunch from git: git
   # ruby-head archive: bzip2
   # nio4r on JRuby: libgmp-dev
+  # Snappy compression: libsnappy-dev
   #
   # We currently use Python 2-compatible version of mtools, which
   # is installable via pip (which uses Python 2). All of the MongoDB
@@ -89,7 +90,7 @@ FROM <%= base_image %>
 
   RUN apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit \
-    bzip2 libgmp-dev python-pip python2.7-dev python3-pip
+    bzip2 libgmp-dev python-pip python2.7-dev python3-pip libsnappy-dev
 
 <% else %>
 
@@ -165,7 +166,7 @@ FROM <%= base_image %>
 
   RUN pip --version && \
     pip install mtools-legacy[mlaunch]
-  
+
   <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
     RUN python3 -mpip install asn1crypto oscrypto flask
   <% end %>
@@ -206,11 +207,11 @@ COPY . .
   <% 0.upto(num_exposed_ports-1) do |i| %>
     <% ports << 27017 + i %>
   <% end %>
-  
+
   <% if @env['OCSP_ALGORITHM'] %>
     <% ports << 8100 %>
   <% end %>
-  
+
   EXPOSE <%= ports.map(&:to_s).join(' ') %>
 
 <% end %>

@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+gemspec path: '..'
+
+gem 'snappy'
+
+require_relative './standard'
+
+standard_dependencies

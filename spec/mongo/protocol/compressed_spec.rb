@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::Protocol::Compressed do
 
@@ -10,15 +10,25 @@ describe Mongo::Protocol::Compressed do
     described_class.new(original_message, compressor, level)
   end
 
+  let(:original_message_bytes) do
+    buf = BSON::ByteBuffer.new
+    original_message.send(:serialize_fields, buf)
+    buf.to_s
+  end
+
   describe '#serialize' do
 
-    context 'when zlib compression level is not provided' do
+    context "when using the snappy compressor" do
+      require_snappy_compression
+      let(:compressor) { 'snappy' }
 
-      let(:original_message_bytes) do
-        buf = BSON::ByteBuffer.new
-        original_message.send(:serialize_fields, buf)
-        buf.to_s
+      it "uses snappy" do
+        expect(Snappy).to receive(:deflate).with(original_message_bytes).and_call_original
+        message.serialize
       end
+    end
+
+    context 'when zlib compression level is not provided' do
 
       it 'does not set a compression level' do
         expect(Zlib::Deflate).to receive(:deflate).with(original_message_bytes, nil).and_call_original
@@ -29,12 +39,6 @@ describe Mongo::Protocol::Compressed do
     context 'when zlib compression level is provided' do
 
       let(:level) { 1 }
-
-      let(:original_message_bytes) do
-        buf = BSON::ByteBuffer.new
-        original_message.send(:serialize_fields, buf)
-        buf.to_s
-      end
 
       it 'uses the compression level' do
         expect(Zlib::Deflate).to receive(:deflate).with(original_message_bytes, 1).and_call_original

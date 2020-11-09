@@ -114,7 +114,10 @@ module Mongo
     # The compression algorithms supported by the driver.
     #
     # @since 2.5.0
-    VALID_COMPRESSORS = [ Mongo::Protocol::Compressed::ZLIB ].freeze
+    VALID_COMPRESSORS = [
+      Mongo::Protocol::Compressed::SNAPPY,
+      Mongo::Protocol::Compressed::ZLIB
+    ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
@@ -223,7 +226,7 @@ module Mongo
     # @option options [ Array<String> ] :compressors A list of potential
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the
-    #   driver only supports 'zlib'.
+    #   driver only supports 'snappy' and 'zlib'.
     # @option options [ true | false ] :direct_connection Whether to connect
     #   directly to the specified seed, bypassing topology discovery. Exactly
     #   one seed must be provided.
@@ -1155,6 +1158,11 @@ module Mongo
           validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
+
+            if compressors.include?('snappy')
+              validate_snappy_compression!
+            end
+
             _options[key] = compressors unless compressors.empty?
           else
             _options[key] = v
@@ -1311,9 +1319,19 @@ module Mongo
                        "This compressor will not be used.")
           false
         else
+
           true
         end
       end
+    end
+
+    def validate_snappy_compression!
+      return if defined?(Snappy)
+      require 'snappy'
+    rescue LoadError => e
+      raise Error::UnmetDependency, "Cannot enable snappy compression because the snappy gem " \
+        "has not been installed. Add \"gem 'snappy'\" to your Gemfile and run " \
+        "\"bundle install\" to install the gem. (#{e.class}: #{e})"
     end
 
     def validate_max_min_pool_size!(option, opts)

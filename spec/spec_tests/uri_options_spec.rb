@@ -50,6 +50,14 @@ describe 'URI options' do
             end
 
             if test.options
+              if test.options['compressors'] && test.options['compressors'].include?('snappy')
+                before do
+                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /snappy/
+                    skip "This test requires snappy compression"
+                  end
+                end
+              end
+
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(

@@ -320,7 +320,8 @@ Ruby Options
 
    * - ``:compressors``
      - A list of potential compressors to use, in order of preference. The driver chooses the first
-       compressor that is also supported by the server. Currently the driver only supports 'zlib'.
+       compressor that is also supported by the server. Currently the driver only supports 'snappy'
+       and 'zlib'.
      - ``Array<String>``
      - none
 
@@ -739,12 +740,17 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - compressors=Strings
      - ``:compressors => Array<String>``
 
-       Specified as a comma-separated list. Note that the Ruby driver only supports zlib
-       compression; however, other drivers may support snappy. For maximum compatibility with
-       drivers, specify ``"snappy,zlib"``; if compatibility with other drivers is not a concern,
-       specify ``"zlib".`` Compression is not enabled by default and when using MongoDB 4.0 and
-       earlier, so zlib compression must be manually enabled on the server in order for the Ruby
-       driver to compress wire protocol data.
+       Specified as a comma-separated list. The Ruby driver currently supports snappy
+       and zlib compression algorithms; the first algorithm in the list that the server
+       also supports will be used. Compression must be explicitly enabled by
+       specifying the desired compression algorithm; use "snappy,zlib" for maximum server
+       compatibility. Snappy compression requires separate installation of the
+       snappy Ruby library; if the snappy Ruby library is not available,
+       the driver raises an error during ``Mongo::Client`` creation.
+       When using MongoDB 4.0 and earlier, zlib compression is supported by the
+       server but must be manually enabled; if zlib is the only compression algorithm
+       requested (or available due to missing snappy Ruby library), 4.0 and
+       earlier servers must be configured to explicitly enable zlib compression.
 
    * - connect=String
      - ``:connect => Symbol``
