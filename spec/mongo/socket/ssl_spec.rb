@@ -51,6 +51,9 @@ describe Mongo::Socket::SSL, retry: 3 do
 
   describe '#connect!' do
     context 'when TLS context hooks are provided' do
+      # https://github.com/jruby/jruby-openssl/issues/221
+      fails_on_jruby
+
       let(:proc) do
         Proc.new do |context|
           if BSON::Environment.jruby?
