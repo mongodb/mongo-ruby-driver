@@ -53,7 +53,11 @@ describe Mongo::Socket::SSL, retry: 3 do
     context 'when TLS context hooks are provided' do
       let(:proc) do
         Proc.new do |context|
-          context.ciphers = ["AES256-SHA"]
+          if BSON::Environment.jruby?
+            context.ciphers = ["AES256-SHA256"]
+          else
+            context.ciphers = ["AES256-SHA"]
+          end
         end
       end
 
