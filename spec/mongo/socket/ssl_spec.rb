@@ -51,7 +51,11 @@ describe Mongo::Socket::SSL, retry: 3 do
 
   describe '#connect!' do
     context 'when TLS context hooks are provided' do
-      let(:proc) { Proc.new { |context| context.ciphers = ["AES256-SHA"] } }
+      let(:proc) do
+        Proc.new do |context|
+          context.ciphers = ["AES256-SHA"]
+        end
+      end
 
       before do
         Mongo.tls_context_hooks = [ proc ]
@@ -64,7 +68,15 @@ describe Mongo::Socket::SSL, retry: 3 do
       it 'runs the TLS context hook before connecting' do
         expect(proc).to receive(:call).and_call_original
         socket
-        expect(socket.context.ciphers).to eq([["AES256-SHA", "TLSv1/SSLv3", 256, 256]])
+        # Even though we are requesting a single cipher in the hook,
+        # there may be multiple ciphers available in the context.
+        # All of the ciphers should match the requested one (using
+        # OpenSSL's idea of what "match" means).
+        socket.context.ciphers.each do |cipher|
+          unless cipher.first =~ /SHA256/ || cipher.last == 256
+            raise "Unexpected cipher #{cipher} after requesting SHA-256"
+          end
+        end
       end
     end
 
