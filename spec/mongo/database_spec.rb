@@ -2,6 +2,19 @@ require 'spec_helper'
 
 describe Mongo::Database do
 
+  shared_context 'more than 100 collections' do
+    let(:client) do
+      root_authorized_client.use('many-collections')
+    end
+
+    before do
+      120.times do |i|
+        client["coll-#{i}"].drop
+        client["coll-#{i}"].create
+      end
+    end
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -228,6 +241,24 @@ describe Mongo::Database do
         end
       end
     end
+
+    context 'when there are more than 100 collections' do
+      include_context 'more than 100 collections'
+
+      let(:collection_names) do
+        client.database.collection_names.sort
+      end
+
+      it 'lists all collections' do
+        if ClusterConfig.instance.fcv_ish == '2.6'
+          pending 'RUBY-2432'
+        end
+
+        collection_names.length.should == 120
+        collection_names.should include('coll-0')
+        collection_names.should include('coll-119')
+      end
+    end
   end
 
   describe '#list_collections' do
@@ -391,6 +422,29 @@ describe Mongo::Database do
         end
       end
     end
+
+    context 'when there are more than 100 collections' do
+      include_context 'more than 100 collections'
+
+      let(:collections) do
+        client.database.list_collections
+      end
+
+      let(:collection_names) do
+        # 2.6 server prefixes collection names with database name
+        collections.map { |info| info['name'].sub(/^many-collections\./, '') }.sort
+      end
+
+      it 'lists all collections' do
+        if ClusterConfig.instance.fcv_ish == '2.6'
+          pending 'RUBY-2432'
+        end
+
+        collections.length.should == 120
+        collection_names.should include('coll-0')
+        collection_names.should include('coll-119')
+      end
+    end
   end
 
   describe '#collections' do
@@ -539,6 +593,28 @@ describe Mongo::Database do
             expect(command['authorizedCollections']).to be_nil
           end
         end
+      end
+    end
+
+    context 'when there are more than 100 collections' do
+      include_context 'more than 100 collections'
+
+      let(:collections) do
+        client.database.collections
+      end
+
+      let(:collection_names) do
+        collections.map(&:name).sort
+      end
+
+      it 'lists all collections' do
+        if ClusterConfig.instance.fcv_ish == '2.6'
+          pending 'RUBY-2432'
+        end
+
+        collections.length.should == 120
+        collection_names.should include('coll-0')
+        collection_names.should include('coll-119')
       end
     end
   end
