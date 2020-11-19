@@ -1,10 +1,13 @@
 require 'lite_spec_helper'
 
 require 'mrss/constraints'
+require 'mrss/cluster_config'
+
+ClusterConfig = Mrss::ClusterConfig
+
 require 'support/constraints'
 require 'support/authorization'
 require 'support/primary_socket'
-require 'support/cluster_config'
 require 'support/cluster_tools'
 require 'rspec/retry'
 require 'support/monitoring_ext'
