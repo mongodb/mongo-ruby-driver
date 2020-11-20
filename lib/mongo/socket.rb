@@ -30,6 +30,7 @@ module Mongo
     # Error message for TLS related exceptions.
     #
     # @since 2.0.0
+    # @deprecated
     SSL_ERROR = 'MongoDB may not be configured with TLS support'.freeze
 
     # Error message for timeouts on socket calls.
@@ -422,7 +423,7 @@ module Mongo
       rescue IOError, SystemCallError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address}) (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       end
     end
 

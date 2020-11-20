@@ -286,7 +286,7 @@ module Mongo
       rescue IOError, SystemCallError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{self}) (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
       end
     end
   end
