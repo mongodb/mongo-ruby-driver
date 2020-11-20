@@ -126,7 +126,19 @@ module CommonShortcuts
         process = ChildProcess.new(*args)
 
         process.io.inherit!
-        process.start
+
+        retried = false
+        begin
+          process.start
+        rescue
+          if retried
+            raise
+          else
+            sleep 1
+            retried = true
+            retry
+          end
+        end
 
         begin
           sleep 0.4
