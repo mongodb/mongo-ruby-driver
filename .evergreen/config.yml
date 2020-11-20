@@ -1194,7 +1194,8 @@ buildvariants:
   - matrix_name: ocsp-verifier
     matrix_spec:
       ocsp-verifier: on
-      ruby: '*'
+      # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
+      ruby: [ruby-2.3, ruby-2.4, ruby-2.5, ruby-2.6, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
