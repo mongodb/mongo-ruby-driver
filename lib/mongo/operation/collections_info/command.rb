@@ -27,6 +27,11 @@ module Mongo
 
         private
 
+        def get_result(connection, client, options = {})
+          # This is a Mongo::Operation::CollectionsInfo::Result
+          Result.new(*dispatch_message(connection, client), db_name)
+        end
+
         def selector(connection)
           {}
         end
