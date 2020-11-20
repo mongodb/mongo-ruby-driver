@@ -22,6 +22,21 @@ module Mongo
       # @since 2.1.0
       class Result < Operation::Result
 
+        # Initialize a new result.
+        #
+        # @param [ Array<Protocol::Message> | nil ] replies The wire protocol replies, if any.
+        # @param [ Server::Description ] connection_description
+        #   Server description of the server that performed the operation that
+        #   this result is for.
+        # @param [ String ] database_name The name of the database that the
+        #   query was sent to.
+        #
+        # @api private
+        def initialize(replies, connection_description, database_name)
+          super(replies, connection_description)
+          @database_name = database_name
+        end
+
         # Get the namespace for the cursor.
         #
         # @example Get the namespace.
@@ -31,7 +46,7 @@ module Mongo
         #
         # @since 2.1.0
         def namespace
-          Database::NAMESPACES
+          "#{@database_name}.#{Database::NAMESPACES}"
         end
       end
     end
