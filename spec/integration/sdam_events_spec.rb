@@ -105,10 +105,10 @@ describe 'SDAM events' do
         (succeeded_awaited = events.select(&:awaited?)).should_not be_empty
         (succeeded_regular = events.reject(&:awaited?)).should_not be_empty
 
-        # Since we gracefully close the client, we expect each heartbeat
-        # to complete.
         started_awaited.length.should == succeeded_awaited.length
-        started_regular.length.should == succeeded_regular.length
+        # There may be in-flight awaited ismasters that don't complete.
+        started_regular.length.should > 1
+        [succeeded_regular.length, succeeded_regular.length-1].should include(started_regular.length)
       end
     end
   end
