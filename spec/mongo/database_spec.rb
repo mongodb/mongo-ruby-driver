@@ -250,10 +250,6 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        if ClusterConfig.instance.fcv_ish == '2.6'
-          pending 'RUBY-2432'
-        end
-
         collection_names.length.should == 120
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
@@ -436,10 +432,6 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        if ClusterConfig.instance.fcv_ish == '2.6'
-          pending 'RUBY-2432'
-        end
-
         collections.length.should == 120
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
@@ -608,10 +600,6 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        if ClusterConfig.instance.fcv_ish == '2.6'
-          pending 'RUBY-2432'
-        end
-
         collections.length.should == 120
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
