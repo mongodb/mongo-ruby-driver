@@ -18,12 +18,22 @@ describe 'Transactions examples' do
 
   before(:each) do
     hr[:employees].insert_one(employee: 3, status: 'Active')
+
+    # Sanity check since this test likes to fail
+    employee = hr[:employees].find({ employee: 3 }, limit: 1).first
+    expect(employee).to_not be_nil
+
     reporting[:events].insert_one(employee: 3, status: { new: 'Active', old: nil})
   end
 
   after(:each) do
     hr.drop
     reporting.drop
+
+    # Work around https://jira.mongodb.org/browse/SERVER-53015
+    ::Utils.mongos_each_direct_client do |client|
+      client.database.command(flushRouterConfig: 1)
+    end
   end
 
   context 'individual examples' do
