@@ -32,8 +32,9 @@ CLASSIFIERS = [
   [%r,^spec_tests,, :spec],
 ]
 
-RUN_PRIORITY = %i(unit
+RUN_PRIORITY = %i(
   tx_examples
+  unit
   integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
 )
