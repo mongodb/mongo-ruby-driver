@@ -4,12 +4,16 @@ describe 'Transactions examples' do
   require_wired_tiger
   require_transaction_support
 
+  let(:client) do
+    authorized_client.with(read_concern: {level: :majority}, write: {w: :majority})
+  end
+
   let(:hr) do
-    authorized_client.use(:hr).database
+    client.use(:hr).database
   end
 
   let(:reporting) do
-    authorized_client.use(:reporting).database
+    client.use(:reporting).database
   end
 
   before(:each) do
@@ -25,7 +29,7 @@ describe 'Transactions examples' do
   context 'individual examples' do
 
     let(:session) do
-      authorized_client.start_session
+      client.start_session
     end
 
     # Start Transactions Intro Example 1
@@ -141,10 +145,6 @@ describe 'Transactions examples' do
   end
 
   context 'Transactions Retry Example 3 (combined example)' do
-
-    let(:client) do
-      authorized_client
-    end
 
     let(:run_transaction) do
 
