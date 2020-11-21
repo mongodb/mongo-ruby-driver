@@ -105,8 +105,10 @@ describe 'SDAM events' do
         (succeeded_awaited = events.select(&:awaited?)).should_not be_empty
         (succeeded_regular = events.reject(&:awaited?)).should_not be_empty
 
-        started_awaited.length.should == succeeded_awaited.length
-        # There may be in-flight awaited ismasters that don't complete.
+        # There may be in-flight ismasters that don't complete, both
+        # regular and awaited.
+        started_awaited.length.should > 1
+        [succeeded_awaited.length, succeeded_awaited.length-1].should include(started_awaited.length)
         started_regular.length.should > 1
         [succeeded_regular.length, succeeded_regular.length-1].should include(started_regular.length)
       end
