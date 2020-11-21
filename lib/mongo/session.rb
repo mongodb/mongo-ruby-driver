@@ -379,6 +379,7 @@ module Mongo
           rv = yield self
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+            log_warn("Aborting transaction due to #{e.class}: #{e}")
             abort_transaction
             transaction_in_progress = false
           end
@@ -443,7 +444,7 @@ module Mongo
       true
     ensure
       if transaction_in_progress
-        log_warn('with_transaction callback altered with_transaction loop, aborting transaction')
+        log_warn('with_transaction callback broke out of with_transaction loop, aborting transaction')
         begin
           abort_transaction
         rescue Error::OperationFailure, Error::InvalidTransactionOperation
