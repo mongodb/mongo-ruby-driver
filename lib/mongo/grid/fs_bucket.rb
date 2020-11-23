@@ -44,12 +44,12 @@ module Mongo
       # @param [ Database ] database The database the files reside in.
       # @param [ Hash ] options The GridFS options.
       #
-      # @option options [ String ] :fs_name The prefix for the files and chunks
-      #   collections.
       # @option options [ String ] :bucket_name The prefix for the files and chunks
       #   collections.
       # @option options [ Integer ] :chunk_size Override the default chunk
       #   size.
+      # @option options [ String ] :fs_name The prefix for the files and chunks
+      #   collections.
       # @option options [ String ] :read The read preference.
       # @option options [ Session ] :session The session to use.
       # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
