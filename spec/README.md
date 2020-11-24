@@ -2,6 +2,13 @@
 
 ## Quick Start
 
+The test suite requires shared tooling that is stored in a separate repository
+and is referenced as a submodule. After checking out the desired driver
+branch, check out the matching submodules:
+
+    git submodule init
+    git submodule update
+
 To run the test suite against a local MongoDB deployment listening on port
 27017, run:
 
