@@ -125,7 +125,9 @@ if test -n "$BIND_ALL"; then
 fi
 
 # MongoDB servers pre-4.2 do not enable zlib compression by default
-if test "$COMPRESSOR" = zlib; then
+if test "$COMPRESSOR" = snappy; then
+  args="$args --networkMessageCompressors snappy"
+elif test "$COMPRESSOR" = zlib; then
   args="$args --networkMessageCompressors zlib"
 fi
 
