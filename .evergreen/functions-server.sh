@@ -62,7 +62,7 @@ install_mlaunch_virtualenv() {
   # https://github.com/pypa/virtualenv/issues/1630
   python2 -m virtualenv -p python2 $venvpath
   . $venvpath/bin/activate
-  python2 -m pip install pip --upgrade
+  pip install pip --upgrade
   pip install 'mtools-legacy[mlaunch]'
 }
 
