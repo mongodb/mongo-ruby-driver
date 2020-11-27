@@ -25,7 +25,7 @@ describe 'Symbol encoding to BSON' do
   end
 
   it 'round-trips symbol values using the same byte buffer' do
-    if BSON::Environment.jruby? && BSON::VERSION < "4.11.0"
+    if BSON::Environment.jruby? && (BSON::VERSION.split('.').map(&:to_i) <=> [4, 11, 0]) < 0
       skip 'This test is only relevant to bson versions that increment ByteBuffer '\
        'read and write positions separately in JRuby, as implemented in ' \
        'bson version 4.11.0. For more information, see https://jira.mongodb.org/browse/RUBY-2128'
