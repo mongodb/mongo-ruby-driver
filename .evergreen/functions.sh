@@ -146,7 +146,7 @@ setup_ruby() {
     #export PATH=/opt/python/3.7/bin:$PATH
 
     # 12.04, 14.04 and 16.04 are good
-    curl -fLo ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
+    curl --retry 3 -fLo ruby-head.tar.bz2 http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2
     tar xf ruby-head.tar.bz2
     export PATH=`pwd`/ruby-head/bin:`pwd`/ruby-head/lib/ruby/gems/2.6.0/bin:$PATH
     ruby --version
@@ -165,7 +165,7 @@ setup_ruby() {
     #export PATH=`pwd`/rubies/python/3/bin:$PATH
 
     # Attempt to get bundler to report all errors - so far unsuccessful
-    #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
+    #curl --retry 3 -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
     #find . -path \*/lib/bundler/fetcher.rb -exec patch {} bundler-openssl.diff \;
 
     else
