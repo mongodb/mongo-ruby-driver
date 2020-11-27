@@ -59,7 +59,7 @@ install_mlaunch_virtualenv() {
   python2 -V || true
   # zipp is needed to work around
   # https://github.com/pypa/virtualenv/issues/1630
-  python -m pip install virtualenv zipp --user
+  python -m pip install virtualenv zipapp --user
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
   python2 -m virtualenv -p python2 $venvpath
   . $venvpath/bin/activate
