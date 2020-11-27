@@ -56,12 +56,9 @@ prepare_server_from_url() {
 }
 
 install_mlaunch_virtualenv() {
-  #export PATH=/opt/python/3.7/bin:$PATH
-  python -V || true
-  python3 -V || true
-  #pip3 install --user virtualenv
+  python2 -V || true
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-  virtualenv $venvpath
+  virtualenv -p python2 $venvpath
   . $venvpath/bin/activate
   pip install 'mtools-legacy[mlaunch]'
 }
