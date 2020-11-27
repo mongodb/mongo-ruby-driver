@@ -68,7 +68,7 @@ describe 'SDAM events' do
 
         succeeded_events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
         started_events.length.should > 1
-        (succeeded_events.length-1..succeeded_events.length).should include(started_events.length)
+        (succeeded_events.length..succeeded_events.length+1).should include(started_events.length)
       end
     end
 
@@ -107,9 +107,9 @@ describe 'SDAM events' do
         # There may be in-flight ismasters that don't complete, both
         # regular and awaited.
         started_awaited.length.should > 1
-        (succeeded_awaited.length-1..succeeded_awaited.length).should include(started_awaited.length)
+        (succeeded_awaited.length..succeeded_awaited.length+1).should include(started_awaited.length)
         started_regular.length.should > 1
-        (succeeded_regular.length-1..succeeded_regular.length).should include(started_regular.length)
+        (succeeded_regular.length..succeeded_regular.length+1).should include(started_regular.length)
       end
     end
   end
