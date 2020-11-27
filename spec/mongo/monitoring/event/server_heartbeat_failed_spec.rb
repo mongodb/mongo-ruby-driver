@@ -20,7 +20,7 @@ describe Mongo::Monitoring::Event::ServerHeartbeatFailed do
   end
 
   let(:event) do
-    described_class.new(address, 1, Mongo::Error::SocketError.new('foo'))
+    described_class.new(address, 1, Mongo::Error::SocketError.new('foo'), started_event: nil)
   end
 
   describe '#summary' do
