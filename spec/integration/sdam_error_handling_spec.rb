@@ -401,6 +401,7 @@ describe 'SDAM error handling' do
             closeConnection: true,
           },
         )
+        sleep 0.5
       end
 
       let(:operation) do
