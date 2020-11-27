@@ -331,7 +331,9 @@ describe 'SDAM error handling' do
         events.should be_empty
 
         RSpec::Mocks.with_temporary_scope do
+        puts 'start op'
           operation
+        puts 'end op'
 
           events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
           events.should_not be_empty
