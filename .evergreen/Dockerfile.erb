@@ -188,7 +188,7 @@ WORKDIR /app
 <% end %>
 
 <% if fle? %>
-  RUN curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+  RUN curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   RUN tar xf libmongocrypt-all.tar.gz
 
   <%= "ENV LIBMONGOCRYPT_PATH #{libmongocrypt_path}" %>
