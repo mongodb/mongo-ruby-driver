@@ -70,7 +70,7 @@ describe 'SDAM events' do
         # Since we gracefully close the client, we expect each heartbeat
         # to complete.
         started_events.length.should > 1
-        (succeeded_events.length-1..succeeded_events.length).should include?(started_events.length)
+        (succeeded_events.length-1..succeeded_events.length).should include(started_events.length)
       end
     end
 
