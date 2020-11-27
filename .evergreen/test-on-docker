@@ -56,6 +56,10 @@ class Runner
       opts.on('-s', '--script=SCRIPT', 'Test script to invoke') do |v|
         @options[:script] = v
       end
+
+      opts.on('-i', '--interactive', 'Interactive mode - disable per-test timeouts') do |v|
+        @options[:interactive] = v
+      end
     end.parse!
 
     @env = Hash[ARGV.map do |arg|
@@ -183,6 +187,10 @@ class Runner
 
   def preload?
     !!@options[:preload]
+  end
+
+  def interactive?
+    !!@options[:interactive]
   end
 
   def server_download_url
