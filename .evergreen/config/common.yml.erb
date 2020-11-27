@@ -51,7 +51,7 @@ functions:
           #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
           
           # C version:
-          curl -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
+          curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
 
   <% if @atlas %>
