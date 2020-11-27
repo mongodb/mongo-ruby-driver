@@ -307,9 +307,9 @@ module Mongo
     # @api private
     def publish_heartbeat(server, awaited: false)
       if monitoring?
-        event = Event::ServerHeartbeatStarted.new(
+        started_event = Event::ServerHeartbeatStarted.new(
           server.address, awaited: awaited)
-        started(SERVER_HEARTBEAT, event)
+        started(SERVER_HEARTBEAT, started_event)
       end
 
       # The duration we publish in heartbeat succeeded/failed events is
@@ -328,14 +328,20 @@ module Mongo
       rescue => exc
         if monitoring?
           event = Event::ServerHeartbeatFailed.new(
-            server.address, Time.now-start_time, exc, awaited: awaited)
+            server.address, Time.now-start_time, exc,
+            awaited: awaited,
+            started_event: started_event,
+          )
           failed(SERVER_HEARTBEAT, event)
         end
         raise
       else
         if monitoring?
           event = Event::ServerHeartbeatSucceeded.new(
-            server.address, Time.now-start_time, awaited: awaited)
+            server.address, Time.now-start_time,
+            awaited: awaited,
+            started_event: started_event,
+          )
           succeeded(SERVER_HEARTBEAT, event)
         end
         result
