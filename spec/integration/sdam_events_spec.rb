@@ -67,8 +67,6 @@ describe 'SDAM events' do
         started_events.length.should <= 10
 
         succeeded_events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
-        # Since we gracefully close the client, we expect each heartbeat
-        # to complete.
         started_events.length.should > 1
         (succeeded_events.length-1..succeeded_events.length).should include(started_events.length)
       end
