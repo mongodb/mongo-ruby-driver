@@ -28,6 +28,14 @@ describe 'SDAM error handling' do
   let(:server) { client.cluster.next_primary }
 
   shared_examples_for 'marks server unknown' do
+    before do
+      server.monitor.stop!
+    end
+
+    after do
+      client.close
+    end
+
     it 'marks server unknown' do
       expect(server).not_to be_unknown
       RSpec::Mocks.with_temporary_scope do
@@ -38,6 +46,14 @@ describe 'SDAM error handling' do
   end
 
   shared_examples_for 'does not mark server unknown' do
+    before do
+      server.monitor.stop!
+    end
+
+    after do
+      client.close
+    end
+
     it 'does not mark server unknown' do
       expect(server).not_to be_unknown
       RSpec::Mocks.with_temporary_scope do
