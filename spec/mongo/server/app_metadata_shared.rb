@@ -10,7 +10,7 @@ shared_examples 'app metadata document' do
 
   it 'includes operating system information' do
     document[:client][:os][:type].should == 'linux'
-    if BSON::Environment.jruby?
+    if BSON::Environment.jruby? || RUBY_VERSION >= '3.0'
       document[:client][:os][:name].should == 'linux'
     else
       document[:client][:os][:name].should == 'linux-gnu'
