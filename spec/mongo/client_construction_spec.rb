@@ -463,38 +463,6 @@ describe Mongo::Client do
             SpecConfig.instance.all_test_options.merge(options))
         end
 
-        context 'when the compressor is supported' do
-
-          let(:options) do
-            { compressors: ['zlib'] }
-          end
-
-          it 'sets the compressor' do
-            expect(client.options['compressors']).to eq(options[:compressors])
-          end
-
-          it 'sends the compressor in the compression key of the handshake document' do
-            expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(options[:compressors])
-          end
-
-          context 'when server supports compression' do
-            require_compression
-            min_server_fcv '3.6'
-
-            it 'uses compression for messages' do
-              expect(Mongo::Protocol::Compressed).to receive(:new).at_least(:once).and_call_original
-              client[TEST_COLL].find({}, limit: 1).first
-            end
-          end
-
-          it 'does not use compression for authentication messages' do
-            expect(Mongo::Protocol::Compressed).not_to receive(:new)
-            client.cluster.next_primary.send(:with_connection) do |conn|
-              conn.connect!
-            end
-          end
-        end
-
         context 'when the compressor is not supported by the driver' do
           require_warning_clean
 
@@ -543,7 +511,39 @@ describe Mongo::Client do
           end
         end
 
-        context 'when snappy compressor is provided' do
+        context 'when zlib compression is requested' do
+          require_zlib_compression
+
+          let(:options) do
+            { compressors: ['zlib'] }
+          end
+
+          it 'sets the compressor' do
+            expect(client.options['compressors']).to eq(options[:compressors])
+          end
+
+          it 'sends the compressor in the compression key of the handshake document' do
+            expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(options[:compressors])
+          end
+
+          context 'when server supports compression' do
+            min_server_fcv '3.6'
+
+            it 'uses compression for messages' do
+              expect(Mongo::Protocol::Compressed).to receive(:new).at_least(:once).and_call_original
+              client[TEST_COLL].find({}, limit: 1).first
+            end
+          end
+
+          it 'does not use compression for authentication messages' do
+            expect(Mongo::Protocol::Compressed).not_to receive(:new)
+            client.cluster.next_primary.send(:with_connection) do |conn|
+              conn.connect!
+            end
+          end
+        end
+
+        context 'when snappy compression is requested and supported by the server' do
           min_server_version '3.6'
 
           let(:options) do
@@ -559,12 +559,7 @@ describe Mongo::Client do
           end
 
           context 'when snappy gem is not installed' do
-            before do
-              compressors = SpecConfig.instance.compressors
-              if compressors && compressors.include?('snappy')
-                skip "Snappy compression is enabled"
-              end
-            end
+            require_no_snappy_compression
 
             it 'raises an exception' do
               expect do
