@@ -86,7 +86,7 @@ describe Mongo::Socket do
 
           expect do
             socket.read(10)
-          end.to raise_error(Mongo::Error::SocketTimeoutError, /Took more than .* seconds to receive data \(for /)
+          end.to raise_error(Mongo::Error::SocketTimeoutError, /Took more than .* seconds to receive data.*\(for /)
         end
       end
 
