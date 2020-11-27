@@ -19,6 +19,7 @@ describe 'SDAM error handling' do
     new_local_client(SpecConfig.instance.addresses,
       SpecConfig.instance.all_test_options.merge(
         socket_timeout: 3, connect_timeout: 3,
+        heartbeat_frequency: 100,
         # Uncomment to print all events to stdout:
         #sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
         **Utils.disable_retries_client_options)
@@ -28,6 +29,14 @@ describe 'SDAM error handling' do
   let(:server) { client.cluster.next_primary }
 
   shared_examples_for 'marks server unknown' do
+    before do
+      server.monitor.stop!
+    end
+
+    after do
+      client.close
+    end
+
     it 'marks server unknown' do
       expect(server).not_to be_unknown
       RSpec::Mocks.with_temporary_scope do
@@ -38,6 +47,14 @@ describe 'SDAM error handling' do
   end
 
   shared_examples_for 'does not mark server unknown' do
+    before do
+      server.monitor.stop!
+    end
+
+    after do
+      client.close
+    end
+
     it 'does not mark server unknown' do
       expect(server).not_to be_unknown
       RSpec::Mocks.with_temporary_scope do
