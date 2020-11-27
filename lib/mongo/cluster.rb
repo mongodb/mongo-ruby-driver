@@ -244,7 +244,11 @@ module Mongo
           # the servers list above and the wait call below, we should not
           # wait for the full remaining time - wait for up to 1 second, then
           # recheck the state.
-          server_selection_semaphore.wait([time_remaining, 1].min)
+          begin
+            server_selection_semaphore.wait([time_remaining, 1].min)
+          rescue ::Timeout::Error
+            # nothing
+          end
         end
       end
 
