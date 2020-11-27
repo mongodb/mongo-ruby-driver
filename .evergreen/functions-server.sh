@@ -56,12 +56,12 @@ prepare_server_from_url() {
 }
 
 install_mlaunch_virtualenv() {
-  #export PATH=/opt/python/3.7/bin:$PATH
-  python -V || true
-  python3 -V || true
-  #pip3 install --user virtualenv
+  python2 -V || true
+  # Current virtualenv fails with
+  # https://github.com/pypa/virtualenv/issues/1630
+  python -m pip install 'virtualenv<20' --user
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-  virtualenv $venvpath
+  python2 -m virtualenv -p python2 $venvpath
   . $venvpath/bin/activate
   pip install 'mtools-legacy[mlaunch]'
 }
