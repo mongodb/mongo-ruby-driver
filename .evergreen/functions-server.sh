@@ -57,6 +57,8 @@ prepare_server_from_url() {
 
 install_mlaunch_virtualenv() {
   python2 -V || true
+  # zipp is needed to work around
+  # https://github.com/pypa/virtualenv/issues/1630
   python -m pip install virtualenv zipp --user
   venvpath="$MONGO_ORCHESTRATION_HOME"/venv
   . $venvpath/bin/activate
