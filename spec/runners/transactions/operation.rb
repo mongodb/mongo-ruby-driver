@@ -197,7 +197,7 @@ module Mongo
           # events published for the same server transition.
           # Allow actual event count to be at least the expected event count
           # in case there are multiple transitions in a single test.
-          unless events.length < arguments['count']
+          unless events.length >= arguments['count']
             raise "Expected #{arguments['count']} #{arguments['event']} events, but have #{events.length}"
           end
         else
