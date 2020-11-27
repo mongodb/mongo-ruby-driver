@@ -42,7 +42,7 @@ describe Mongo::Socket::OcspVerifier do
           lambda do
             verifier.verify
           end.should raise_error(Mongo::Error::ServerCertificateRevoked)
-        end.should take_shorter_than 3
+        end.should take_shorter_than 7
       end
     end
 
@@ -76,7 +76,7 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     let(:verifier) do
-      described_class.new('foo', cert, ca_cert, cert_store, timeout: 3)
+      described_class.new('foo', cert, ca_cert, cert_store, timeout: 7)
     end
   end
 
@@ -101,7 +101,7 @@ describe Mongo::Socket::OcspVerifier do
           # the operation complete quickly.
           lambda do
             verifier.verify
-          end.should take_shorter_than 3
+          end.should take_shorter_than 7
         end
       end
 
@@ -124,7 +124,7 @@ describe Mongo::Socket::OcspVerifier do
             it 'does not wait for the timeout' do
               lambda do
                 verifier.verify
-              end.should take_shorter_than 3
+              end.should take_shorter_than 7
             end
           end
 
@@ -152,7 +152,7 @@ describe Mongo::Socket::OcspVerifier do
             it 'does not wait for the timeout' do
               lambda do
                 verifier.verify
-              end.should take_shorter_than 3
+              end.should take_shorter_than 7
             end
           end
         end
@@ -198,7 +198,7 @@ describe Mongo::Socket::OcspVerifier do
         it 'does not wait for the timeout' do
           lambda do
             verifier.verify
-          end.should take_shorter_than 3
+          end.should take_shorter_than 7
         end
       end
 
@@ -228,7 +228,7 @@ describe Mongo::Socket::OcspVerifier do
         it 'does not wait for the timeout' do
           lambda do
             verifier.verify
-          end.should take_shorter_than 3
+          end.should take_shorter_than 7
         end
       end
     end
