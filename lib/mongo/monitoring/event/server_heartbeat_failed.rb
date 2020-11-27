@@ -21,6 +21,29 @@ module Mongo
       # @since 2.7.0
       class ServerHeartbeatFailed < Mongo::Event::Base
 
+        # Create the event.
+        #
+        # @example Create the event.
+        #   ServerHeartbeatSucceeded.new(address, duration)
+        #
+        # @param [ Address ] address The server address.
+        # @param [ Float ] round_trip_time Duration of ismaster call in seconds.
+        # @param [ true | false ] awaited Whether the heartbeat was awaited.
+        # @param [ Monitoring::Event::ServerHeartbeatStarted ] started_event
+        #   The corresponding started event.
+        #
+        # @since 2.7.0
+        # @api private
+        def initialize(address, round_trip_time, error, awaited: false,
+          started_event:
+        )
+          @address = address
+          @round_trip_time = round_trip_time
+          @error = error
+          @awaited = !!awaited
+          @started_event = started_event
+        end
+
         # @return [ Address ] address The server address.
         attr_reader :address
 
@@ -41,23 +64,11 @@ module Mongo
           @awaited
         end
 
-        # Create the event.
+        # @return [ Monitoring::Event::ServerHeartbeatStarted ]
+        #   The corresponding started event.
         #
-        # @example Create the event.
-        #   ServerHeartbeatSucceeded.new(address, duration)
-        #
-        # @param [ Address ] address The server address.
-        # @param [ Float ] round_trip_time Duration of ismaster call in seconds.
-        # @param [ true | false ] awaited Whether the heartbeat was awaited.
-        #
-        # @since 2.7.0
-        # @api private
-        def initialize(address, round_trip_time, error, awaited: false)
-          @address = address
-          @round_trip_time = round_trip_time
-          @error = error
-          @awaited = !!awaited
-        end
+        # @api experimental
+        attr_reader :started_event
 
         # Returns a concise yet useful summary of the event.
         #
