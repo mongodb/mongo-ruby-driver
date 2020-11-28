@@ -14,7 +14,7 @@ module Mongo
       puts "--- client #{id}"
       puts bt
       puts '--- client #{id} end'
-      options[:app_name] ||= id
+      #options[:app_name] ||= id
       initialize_without_registry(addresses_or_uri, options)
     end
 
