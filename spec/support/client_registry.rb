@@ -3,7 +3,7 @@ require 'singleton'
 module Mongo
   class Client
     alias :initialize_without_registry :initialize
-    def initialize(addresses_or_uri, options = nil)
+    def initialize(addresses_or_uri, options = nil, &block)
       options = options ? options.dup : {}
       id = "registry:#{SecureRandom.uuid}"
       bt = begin
@@ -15,7 +15,7 @@ module Mongo
       puts bt
       puts '--- client #{id} end'
       #options[:app_name] ||= id
-      initialize_without_registry(addresses_or_uri, options)
+      initialize_without_registry(addresses_or_uri, options, &block)
     end
 
     alias :with_without_registry :with
