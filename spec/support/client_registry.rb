@@ -2,6 +2,22 @@ require 'singleton'
 
 module Mongo
   class Client
+    alias :initialize_without_registry :initialize
+    def initialize(addresses_or_uri, options = nil)
+      options = options ? options.dup : {}
+      id = "registry:#{SecureRandom.uuid}"
+      bt = begin
+        x
+      rescue => e
+        e.backtrace.join("\n")
+      end
+      puts "--- client #{id}"
+      puts bt
+      puts '--- client #{id} end'
+      options[:app_name] ||= id
+      initialize_without_registry(addresses_or_uri, options)
+    end
+
     alias :with_without_registry :with
     def with(*args)
       with_without_registry(*args).tap do |client|
