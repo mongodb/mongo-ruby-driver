@@ -788,6 +788,7 @@ module Mongo
     def add(host, add_options=nil)
       address = Address.new(host, options)
       if !addresses.include?(address)
+        p [self,address,@servers]
         server = Server.new(address, self, @monitoring, event_listeners, options.merge(
           monitor: false))
         @update_lock.synchronize do
