@@ -896,7 +896,8 @@ describe Mongo::Client do
               "like Ruby #{RUBY_VERSION}",
               RUBY_PLATFORM,
               "JVM #{java.lang.System.get_property('java.version')}",
-              RbConfig::CONFIG['build']
+              RbConfig::CONFIG['build'],
+              'A',
             ].join(', ')
           end
 
