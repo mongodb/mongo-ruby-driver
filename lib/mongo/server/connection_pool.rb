@@ -705,8 +705,12 @@ module Mongo
       private
 
       def create_connection
-        connection = Connection.new(@server, options.merge(generation: generation,
-          connection_pool: self))
+        connection = Connection.new(@server, options.merge(
+          generation: generation,
+          connection_pool: self,
+          # Do not pass app metadata - this will be retrieved by the connection
+          # based on the auth needs.
+        ))
       end
 
       # Create a connection, connect it, and add it to the pool.
