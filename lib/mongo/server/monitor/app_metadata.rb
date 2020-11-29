@@ -22,7 +22,7 @@ module Mongo
       #
       # @api private
       class AppMetadata < Server::AppMetadata
-        def initialize(options)
+        def initialize(options = {})
           super
           if instance_variable_defined?(:@request_auth_mech)
             remove_instance_variable(:@request_auth_mech)
