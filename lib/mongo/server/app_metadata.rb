@@ -94,6 +94,12 @@ module Mongo
         end
       end
 
+      # @return [ Symbol ] The purpose of the connection for which this
+      #   app metadata is created.
+      #
+      # @api private
+      attr_reader :purpose
+
       # @return [ Array<Hash> | nil ] Information about libraries wrapping
       #   the driver.
       attr_reader :wrapping_libraries
