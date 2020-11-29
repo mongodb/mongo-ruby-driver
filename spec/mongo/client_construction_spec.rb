@@ -877,7 +877,8 @@ describe Mongo::Client do
             [
               "Ruby #{RUBY_VERSION}",
               RUBY_PLATFORM,
-              RbConfig::CONFIG['build']
+              RbConfig::CONFIG['build'],
+              'A',
             ].join(', ')
           end
 

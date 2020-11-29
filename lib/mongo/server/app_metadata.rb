@@ -77,7 +77,7 @@ module Mongo
       #   :platform.
       #
       # @since 2.4.0
-      def initialize(options)
+      def initialize(options = {})
         @app_name = options[:app_name].to_s if options[:app_name]
         @platform = options[:platform]
         if @purpose = options[:purpose]
