@@ -129,7 +129,9 @@ module Mongo
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
-      @app_metadata = Server::AppMetadata.new(@options)
+      @app_metadata = Server::AppMetadata.new(@options.merge(purpose: :application))
+      @monitor_app_metadata = Server::Monitor::AppMetadata.new(@options.merge(purpose: :monitor))
+      @push_monitor_app_metadata = Server::Monitor::AppMetadata.new(@options.merge(purpose: :push_monitor))
       @cluster_time_lock = Mutex.new
       @cluster_time = nil
       @srv_monitor_lock = Mutex.new
@@ -291,6 +293,12 @@ module Mongo
     #
     # @since 2.4.0
     attr_reader :app_metadata
+
+    # @api private
+    attr_reader :monitor_app_metadata
+
+    # @api private
+    attr_reader :push_monitor_app_metadata
 
     # @return [ Array<String> ] The addresses of seed servers. Contains
     #   addresses that were given to Cluster when it was instantiated, not

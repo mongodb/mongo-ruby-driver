@@ -71,7 +71,8 @@ module Mongo
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
-            app_metadata: Monitor::AppMetadata.new(cluster.options),
+            monitor_app_metadata: cluster.monitor_app_metadata,
+            push_monitor_app_metadata: cluster.push_monitor_app_metadata,
             heartbeat_interval: cluster.heartbeat_interval,
         ))
         unless _monitor == false
@@ -171,6 +172,11 @@ module Mongo
                    :app_metadata,
                    :cluster_time,
                    :update_cluster_time
+
+    # @api private
+    def_delegators :cluster,
+                   :monitor_app_metadata,
+                   :push_monitor_app_metadata
 
     def_delegators :features,
                    :check_driver_support!

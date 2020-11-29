@@ -63,6 +63,10 @@ module Mongo
       # @option options [ Float ] :heartbeat_interval The interval between
       #   regular server checks.
       # @option options [ Logger ] :logger A custom logger to use.
+      # @option options [ Mongo::Server::Monitor::AppMetadata ] :monitor_app_metadata
+      #   The metadata to use for regular monitoring connection.
+      # @option options [ Mongo::Server::Monitor::AppMetadata ] :push_monitor_app_metadata
+      #   The metadata to use for push monitor's connection.
       # @option options [ Float ] :socket_timeout The timeout, in seconds, to
       #   execute operations on the monitoring connection.
       #
@@ -282,7 +286,8 @@ module Mongo
             end
           end
         else
-          connection = Connection.new(server.address, options)
+          connection = Connection.new(server.address, options.merge(
+            app_metadata: server.monitor_app_metadata))
           connection.connect!
           result = server.round_trip_time_averager.measure do
             connection.handshake!

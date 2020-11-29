@@ -105,7 +105,7 @@ module Mongo
           if same
             @server.app_metadata
           else
-            AppMetadata.new(options)
+            AppMetadata.new(options.merge(purpose: @server.app_metadata.purpose))
           end
         end
       end
