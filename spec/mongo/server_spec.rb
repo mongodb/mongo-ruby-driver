@@ -46,6 +46,8 @@ describe Mongo::Server do
     end
 
     before do
+      allow(cluster).to receive(:monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(1000)
     end
   end
@@ -144,8 +146,16 @@ describe Mongo::Server do
       expect(server.options[:monitoring_io]).to be true
     end
 
-    it 'creates monitor with monitoring app metadata' do
-      expect(server.monitor.options[:app_metadata]).to be_a(Mongo::Server::Monitor::AppMetadata)
+    context 'with monitoring app metadata option' do
+      let(:monitor_app_metadata) do
+        Mongo::Server::Monitor::AppMetadata.new
+      end
+
+      it 'creates monitor with monitoring app metadata' do
+        expect(server).to receive(:monitor_app_metadata).and_return(monitor_app_metadata)
+        server.monitor.scan!
+        expect(server.monitor.connection.options[:app_metadata]).to be monitor_app_metadata
+      end
     end
 
     context 'monitoring_io: false' do

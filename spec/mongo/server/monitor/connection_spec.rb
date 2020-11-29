@@ -10,12 +10,14 @@ describe Mongo::Server::Monitor::Connection do
   declare_topology_double
 
   let(:cluster) do
-    double('cluster').tap do |cl|
-      allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new({}))
-      allow(cl).to receive(:options).and_return({})
-      allow(cl).to receive(:heartbeat_interval).and_return(1000)
-      allow(cl).to receive(:run_sdam_flow)
+    double('cluster').tap do |cluster|
+      allow(cluster).to receive(:topology).and_return(topology)
+      allow(cluster).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new({}))
+      allow(cluster).to receive(:options).and_return({})
+      allow(cluster).to receive(:monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata)
+      allow(cluster).to receive(:heartbeat_interval).and_return(1000)
+      allow(cluster).to receive(:run_sdam_flow)
     end
   end
 
