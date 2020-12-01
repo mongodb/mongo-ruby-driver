@@ -364,6 +364,10 @@ EOT
     end
   end
 
+  def auth?
+    x509_auth? || user
+  end
+
   # Option hashes
 
   def auth_options

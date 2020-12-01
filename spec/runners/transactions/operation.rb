@@ -191,8 +191,19 @@ module Mongo
 
       def assert_event_count(client, context)
         events = _select_events(context)
-        unless events.length == arguments['count']
-          raise "Exppected #{arguments['count']} #{arguments['event']} events, but have #{events.length}"
+        if arguments['event'] == 'ServerMarkedUnknownEvent'
+          # We publish SDAM events from both regular and push monitors.
+          # This means sometimes there are two ServerMarkedUnknownEvent
+          # events published for the same server transition.
+          # Allow actual event count to be at least the expected event count
+          # in case there are multiple transitions in a single test.
+          unless events.length >= arguments['count']
+            raise "Expected #{arguments['count']} #{arguments['event']} events, but have #{events.length}"
+          end
+        else
+          unless events.length == arguments['count']
+            raise "Expected #{arguments['count']} #{arguments['event']} events, but have #{events.length}"
+          end
         end
       end
 
