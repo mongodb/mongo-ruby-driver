@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'SDAM error handling' do
-  clean_slate_for_all
+  clean_slate
 
   after do
     # Close all clients after every test to avoid leaking expectations into
