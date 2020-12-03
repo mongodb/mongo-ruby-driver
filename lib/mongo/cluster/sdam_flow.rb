@@ -363,6 +363,13 @@ class Mongo::Cluster
           end
         end
       end
+
+      if cluster.topology.single?
+        if cluster.servers_list.length > 1
+          raise Error::LintError, "Trying to create a single topology with multiple servers: #{cluster.servers_list}"
+        end
+      end
+
       added_servers
     end
 
