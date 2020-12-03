@@ -20,6 +20,8 @@ describe Mongo::Server::Monitor do
   let(:cluster) do
     double('cluster').tap do |cluster|
       allow(cluster).to receive(:run_sdam_flow)
+      allow(cluster).to receive(:monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(1000)
     end
   end

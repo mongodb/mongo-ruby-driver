@@ -43,6 +43,11 @@ module Mongo
       # @api private
       AUTH_OPTION_KEYS = [:user, :auth_source, :auth_mech].freeze
 
+      # Possible connection purposes.
+      #
+      # @api private
+      PURPOSES = %i(application monitor push_monitor).freeze
+
       # Instantiate the new AppMetadata object.
       #
       # @api private
@@ -64,6 +69,7 @@ module Mongo
       # @option options [ String ] :platform Platform information to include in
       #   the metadata printed to the mongod logs upon establishing a connection
       #   in server versions >= 3.4.
+      # @option options [ Symbol ] :purpose The purpose of this connection.
       # @option options [ String ] :user The user name.
       # @option options [ Array<Hash> ] :wrapping_libraries Information about
       #   libraries such as ODMs that are wrapping the driver. Specify the
@@ -71,9 +77,14 @@ module Mongo
       #   :platform.
       #
       # @since 2.4.0
-      def initialize(options)
+      def initialize(options = {})
         @app_name = options[:app_name].to_s if options[:app_name]
         @platform = options[:platform]
+        if @purpose = options[:purpose]
+          unless PURPOSES.include?(@purpose)
+            raise ArgumentError, "Invalid purpose: #{@purpose}"
+          end
+        end
         @compressors = options[:compressors] || []
         @wrapping_libraries = options[:wrapping_libraries]
 
@@ -82,6 +93,12 @@ module Mongo
           @request_auth_mech = "#{auth_db}.#{options[:user]}"
         end
       end
+
+      # @return [ Symbol ] The purpose of the connection for which this
+      #   app metadata is created.
+      #
+      # @api private
+      attr_reader :purpose
 
       # @return [ Array<Hash> | nil ] Information about libraries wrapping
       #   the driver.
@@ -192,12 +209,16 @@ module Mongo
           ruby_versions = ["Ruby #{RUBY_VERSION}"]
           platforms = [RUBY_PLATFORM]
         end
-        platform = [
+        platforms = [
           @platform,
           *ruby_versions,
           *platforms,
           RbConfig::CONFIG['build'],
-        ].compact.join(', ')
+        ]
+        if @purpose
+          platforms << @purpose.to_s[0].upcase
+        end
+        platform = platforms.compact.join(', ')
         platforms = [platform]
         if wrapping_libraries
           wrapping_libraries.each do |library|

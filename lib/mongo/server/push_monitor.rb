@@ -120,7 +120,8 @@ module Mongo
         @lock.synchronize do
           unless @connection
             @server_pushing = false
-            connection = PushMonitor::Connection.new(server.address, options)
+            connection = PushMonitor::Connection.new(server.address, options.merge(
+              app_metadata: server.push_monitor_app_metadata))
             connection.connect!
             @connection = connection
           end
