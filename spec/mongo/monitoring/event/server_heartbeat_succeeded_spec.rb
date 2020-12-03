@@ -20,7 +20,7 @@ describe Mongo::Monitoring::Event::ServerHeartbeatSucceeded do
   end
 
   let(:event) do
-    described_class.new(address, 1)
+    described_class.new(address, 1, started_event: nil)
   end
 
   describe '#summary' do
