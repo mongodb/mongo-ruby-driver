@@ -328,7 +328,9 @@ module Mongo
       rescue => exc
         if monitoring?
           event = Event::ServerHeartbeatFailed.new(
-            server.address, Time.now-start_time, exc,
+            server.address,
+            Time.now-start_time,
+            exc,
             awaited: awaited,
             started_event: started_event,
           )
@@ -338,7 +340,8 @@ module Mongo
       else
         if monitoring?
           event = Event::ServerHeartbeatSucceeded.new(
-            server.address, Time.now-start_time,
+            server.address,
+            Time.now-start_time,
             awaited: awaited,
             started_event: started_event,
           )
