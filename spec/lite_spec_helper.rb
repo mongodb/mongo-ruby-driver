@@ -88,6 +88,8 @@ else
   TimeoutInterrupt = Timeout
 end
 
+class ExampleTimeout < StandardError; end
+
 RSpec.configure do |config|
   config.extend(CommonShortcuts::ClassMethods)
   config.include(CommonShortcuts::InstanceMethods)
@@ -118,7 +120,7 @@ RSpec.configure do |config|
       else
         45
       end
-      TimeoutInterrupt.timeout(timeout) do
+      TimeoutInterrupt.timeout(timeout, ExampleTimeout) do
         example.run
       end
     end

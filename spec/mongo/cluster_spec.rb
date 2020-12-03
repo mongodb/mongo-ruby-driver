@@ -275,6 +275,7 @@ describe Mongo::Cluster do
   describe '#add' do
 
     context 'when topology is Single' do
+      require_topology :single
 
       let(:cluster) { cluster_with_semaphore }
 
@@ -292,9 +293,10 @@ describe Mongo::Cluster do
     end
 
     context 'topology is Sharded' do
+      require_topology :sharded
 
       let(:topology) do
-        Mongo::Cluster::Topology::Single.new({}, cluster)
+        Mongo::Cluster::Topology::Sharded.new({}, cluster)
       end
 
       before do

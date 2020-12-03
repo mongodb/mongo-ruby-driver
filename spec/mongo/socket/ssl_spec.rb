@@ -73,6 +73,10 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       it 'runs the TLS context hook before connecting' do
+        if ENV['OCSP_ALGORITHM']
+          skip "OCSP configurations use different certificates which this test does not handle"
+        end
+
         expect(proc).to receive(:call).and_call_original
         socket
         # Even though we are requesting a single cipher in the hook,

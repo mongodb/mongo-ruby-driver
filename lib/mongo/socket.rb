@@ -327,8 +327,21 @@ module Mongo
         else
           select_args = [nil, [@socket], [@socket], select_timeout]
         end
-        unless Kernel::select(*select_args)
-          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+        rv = Kernel.select(*select_args)
+        if BSON::Environment.jruby?
+          # Ignore the return value of Kernel.select.
+          # On JRuby, select appears to return nil prior to timeout expiration
+          # (apparently due to a EAGAIN) which then causes us to fail the read
+          # even though we could have retried it.
+          # Check the deadline ourselves.
+          if deadline
+            select_timeout = deadline - Time.now
+            if select_timeout <= 0
+              raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+            end
+          end
+        elsif rv.nil?
+          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data (select call timed out)"
         end
         retry
       end
