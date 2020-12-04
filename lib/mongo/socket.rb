@@ -155,7 +155,14 @@ module Mongo
     #
     # @since 2.0.0
     def close
-      @socket.close rescue nil
+      begin
+        # Sometimes it seems the close call can hang for a long time
+        ::Timeout.timeout(5) do
+          @socket.close
+        end
+      rescue
+        # Silence all errors
+      end
       true
     end
 
