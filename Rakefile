@@ -1,23 +1,15 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
-
-begin
-  require 'bundler'
-  require 'bundler/gem_tasks'
-rescue LoadError
-  raise '[FAIL] Bundler not found! Install it with ' +
-        '`gem install bundler; bundle install`.'
-end
-
-default_groups = [:default, :testing]
-Bundler.require(*default_groups)
+require 'bundler'
+require 'bundler/gem_tasks'
+require 'rspec/core/rake_task'
+# TODO move the mongo require into the individual tasks that actually need it
+require 'mongo'
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
 $: << File.join(ROOT, 'spec/shared/lib')
 
-require 'rspec/core/rake_task'
 require 'mrss/spec_organizer'
 
 CLASSIFIERS = [
