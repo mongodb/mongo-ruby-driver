@@ -61,7 +61,9 @@ describe Mongo::Server::Populator do
 
       it 'populates the pool up to min_size' do
         populator.run!
-        sleep 1
+        ::Utils.wait_for_condition(3) do
+          pool.size >= 2
+        end
         expect(pool.size).to eq 2
         expect(populator.running?).to be true
       end
