@@ -36,6 +36,43 @@ module Mongo
       # @since 2.1.0
       FILES_INDEX = { filename: 1, uploadDate: 1 }.freeze
 
+      # Create the GridFS.
+      #
+      # @example Create the GridFS.
+      #   Grid::FSBucket.new(database)
+      #
+      # @param [ Database ] database The database the files reside in.
+      # @param [ Hash ] options The GridFS options.
+      #
+      # @option options [ String ] :bucket_name The prefix for the files and chunks
+      #   collections.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
+      # @option options [ String ] :fs_name The prefix for the files and chunks
+      #   collections.
+      # @option options [ String ] :read The read preference.
+      # @option options [ Session ] :session The session to use.
+      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+      #   option.
+      # @option options [ Hash ] :write_concern The write concern options.
+      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
+      #
+      # @since 2.0.0
+      def initialize(database, options = {})
+        @database = database
+        @options = options.dup
+=begin WriteConcern object support
+        if @options[:write_concern].is_a?(WriteConcern::Base)
+          # Cache the instance so that we do not needlessly reconstruct it.
+          @write_concern = @options[:write_concern]
+          @options[:write_concern] = @write_concern.options
+        end
+=end
+        @options.freeze
+        @chunks_collection = database[chunks_name]
+        @files_collection = database[files_name]
+      end
+
       # @return [ Collection ] chunks_collection The chunks collection.
       #
       # @since 2.0.0
@@ -131,43 +168,6 @@ module Mongo
         chunks_collection.insert_many(file.chunks)
         files_collection.insert_one(file.info)
         file.id
-      end
-
-      # Create the GridFS.
-      #
-      # @example Create the GridFS.
-      #   Grid::FSBucket.new(database)
-      #
-      # @param [ Database ] database The database the files reside in.
-      # @param [ Hash ] options The GridFS options.
-      #
-      # @option options [ String ] :fs_name The prefix for the files and chunks
-      #   collections.
-      # @option options [ String ] :bucket_name The prefix for the files and chunks
-      #   collections.
-      # @option options [ Integer ] :chunk_size Override the default chunk
-      #   size.
-      # @option options [ String ] :read The read preference.
-      # @option options [ Session ] :session The session to use.
-      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
-      #   option.
-      # @option options [ Hash ] :write_concern The write concern options.
-      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
-      #
-      # @since 2.0.0
-      def initialize(database, options = {})
-        @database = database
-        @options = options.dup
-=begin WriteConcern object support
-        if @options[:write_concern].is_a?(WriteConcern::Base)
-          # Cache the instance so that we do not needlessly reconstruct it.
-          @write_concern = @options[:write_concern]
-          @options[:write_concern] = @write_concern.options
-        end
-=end
-        @options.freeze
-        @chunks_collection = database[chunks_name]
-        @files_collection = database[files_name]
       end
 
       # Get the prefix for the GridFS

@@ -321,8 +321,20 @@ module Mongo
 
     # Get the Grid "filesystem" for this database.
     #
-    # @example Get the GridFS.
-    #   database.fs
+    # @param [ Hash ] options The GridFS options.
+    #
+    # @option options [ String ] :bucket_name The prefix for the files and chunks
+    #   collections.
+    # @option options [ Integer ] :chunk_size Override the default chunk
+    #   size.
+    # @option options [ String ] :fs_name The prefix for the files and chunks
+    #   collections.
+    # @option options [ String ] :read The read preference.
+    # @option options [ Session ] :session The session to use.
+    # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
     # @return [ Grid::FSBucket ] The GridFS for the database.
     #
