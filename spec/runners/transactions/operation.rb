@@ -191,7 +191,7 @@ module Mongo
 
       def assert_event_count(client, context)
         events = _select_events(context)
-        if arguments['event'] == 'ServerMarkedUnknownEvent'
+        if %w(ServerMarkedUnknownEvent PoolClearedEvent).include?(arguments['event'])
           # We publish SDAM events from both regular and push monitors.
           # This means sometimes there are two ServerMarkedUnknownEvent
           # events published for the same server transition.
