@@ -42,7 +42,7 @@ describe Mongo::Socket::OcspVerifier do
           lambda do
             verifier.verify
           end.should raise_error(Mongo::Error::ServerCertificateRevoked)
-        end.should take_shorter_than 3
+        end.should take_shorter_than 7
       end
     end
 
@@ -76,7 +76,7 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     let(:verifier) do
-      described_class.new('foo', cert, ca_cert, cert_store, timeout: 3)
+      described_class.new('foo', cert, ca_cert, cert_store, timeout: 7)
     end
   end
 
@@ -101,7 +101,7 @@ describe Mongo::Socket::OcspVerifier do
           # the operation complete quickly.
           lambda do
             verifier.verify
-          end.should take_shorter_than 3
+          end.should take_shorter_than 7
         end
       end
 
@@ -124,7 +124,7 @@ describe Mongo::Socket::OcspVerifier do
             it 'does not wait for the timeout' do
               lambda do
                 verifier.verify
-              end.should take_shorter_than 3
+              end.should take_shorter_than 7
             end
           end
 
@@ -152,7 +152,7 @@ describe Mongo::Socket::OcspVerifier do
             it 'does not wait for the timeout' do
               lambda do
                 verifier.verify
-              end.should take_shorter_than 3
+              end.should take_shorter_than 7
             end
           end
         end
@@ -198,7 +198,7 @@ describe Mongo::Socket::OcspVerifier do
         it 'does not wait for the timeout' do
           lambda do
             verifier.verify
-          end.should take_shorter_than 3
+          end.should take_shorter_than 7
         end
       end
 
@@ -228,7 +228,7 @@ describe Mongo::Socket::OcspVerifier do
         it 'does not wait for the timeout' do
           lambda do
             verifier.verify
-          end.should take_shorter_than 3
+          end.should take_shorter_than 7
         end
       end
     end
@@ -312,6 +312,9 @@ describe Mongo::Socket::OcspVerifier do
   context 'responder URI has no path' do
     require_external_connectivity
 
+    # https://github.com/jruby/jruby-openssl/issues/210
+    fails_on_jruby
+
     include_context 'basic verifier'
 
     let(:cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp.crt') }
@@ -323,6 +326,7 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     before do
+      verifier.ocsp_uris.length.should > 0
       URI.parse(verifier.ocsp_uris.first).path.should == ''
     end
 
