@@ -397,6 +397,23 @@ module Utils
     end
   end
 
+  module_function def ensure_port_free(port)
+    TCPServer.open(port) do
+      # Nothing
+    end
+  end
+
+  module_function def wait_for_port_free(port, timeout)
+    wait_for_condition(timeout) do
+      begin
+        ensure_port_free(port)
+        true
+      rescue Errno::EADDRINUSE
+        false
+      end
+    end
+  end
+
   module_function def get_ec2_metadata_token(ttl: 30, http: nil)
     http ||= Net::HTTP.new('169.254.169.254')
     req = Net::HTTP::Put.new('/latest/api/token',
