@@ -274,27 +274,11 @@ describe Mongo::Cluster do
 
   describe '#add' do
 
-    context 'when topology is Single' do
-
-      let(:cluster) { cluster_with_semaphore }
-
-      let(:topology) do
-        Mongo::Cluster::Topology::Single.new({}, cluster)
-      end
-
-      before do
-        cluster.add('a')
-      end
-
-      it 'does not add discovered servers to the cluster' do
-        expect(cluster.servers[0].address.seed).to_not eq('a')
-      end
-    end
-
     context 'topology is Sharded' do
+      require_topology :sharded
 
       let(:topology) do
-        Mongo::Cluster::Topology::Single.new({}, cluster)
+        Mongo::Cluster::Topology::Sharded.new({}, cluster)
       end
 
       before do
