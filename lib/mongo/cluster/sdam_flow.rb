@@ -605,9 +605,11 @@ class Mongo::Cluster
     end
 
     def verify_invariants
-      if cluster.topology.single?
-        if cluster.servers_list.length > 1
-          raise Mongo::Error::LintError, "Trying to create a single topology with multiple servers: #{cluster.servers_list}"
+      if Mongo::Lint.enabled?
+        if cluster.topology.single?
+          if cluster.servers_list.length > 1
+            raise Mongo::Error::LintError, "Trying to create a single topology with multiple servers: #{cluster.servers_list}"
+          end
         end
       end
     end
