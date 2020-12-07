@@ -278,6 +278,8 @@ describe Mongo::Socket::OcspVerifier do
         ensure
           server.shutdown
         end
+
+        ::Utils.wait_for_port_free(8100, 5)
       end
 
       [400, 404, 500, 503].each do |_code|

@@ -380,6 +380,40 @@ module Utils
   end
   module_function :match_with_type?
 
+  # Takes a timeout and a block. Waits up to the specified timeout until
+  # the value of the block is true. If timeout is reached, this method
+  # returns normally and does not raise an exception. The block is invoked
+  # every second or so.
+  module_function def wait_for_condition(timeout)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    loop do
+      if yield
+        break
+      end
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        break
+      end
+      sleep 1
+    end
+  end
+
+  module_function def ensure_port_free(port)
+    TCPServer.open(port) do
+      # Nothing
+    end
+  end
+
+  module_function def wait_for_port_free(port, timeout)
+    wait_for_condition(timeout) do
+      begin
+        ensure_port_free(port)
+        true
+      rescue Errno::EADDRINUSE
+        false
+      end
+    end
+  end
+
   module_function def get_ec2_metadata_token(ttl: 30, http: nil)
     http ||= Net::HTTP.new('169.254.169.254')
     req = Net::HTTP::Put.new('/latest/api/token',
