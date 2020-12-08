@@ -63,6 +63,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       /tutorials/ruby-driver-authentication
       /tutorials/user-management
       /tutorials/ruby-driver-crud-operations
+      /tutorials/ruby-driver-bulk-operations
       /tutorials/ruby-driver-collection-tasks
       /tutorials/ruby-driver-projections
       /tutorials/ruby-driver-sessions
@@ -73,7 +74,6 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       /tutorials/ruby-driver-indexing
       /tutorials/ruby-driver-collations
       /tutorials/ruby-driver-aggregation
-      /tutorials/ruby-driver-bulk-operations
       /tutorials/ruby-driver-text-search
       /tutorials/ruby-driver-geospatial-search
       /tutorials/ruby-driver-gridfs

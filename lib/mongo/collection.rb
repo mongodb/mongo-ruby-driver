@@ -593,6 +593,8 @@ module Mongo
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
+    # @option options [ true | false ] :ordered Whether the operations
+    #   should be executed in order.
     # @option options [ Session ] :session The session to use for the operation.
     #
     # @return [ Result ] The database response wrapper.
