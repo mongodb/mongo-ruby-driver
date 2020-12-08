@@ -1,6 +1,6 @@
-***************
-Bulk Operations
-***************
+***********
+Bulk Writes
+***********
 
 .. default-domain:: mongodb
 
@@ -14,18 +14,65 @@ Bulk Operations
 
 The bulk write API sends several write operations to the server in a single
 command. Use the bulk write API to reduce the number of network round-trips
-when performing several writes at a time.
+when performing several writes at a time. For example, to efficiently perform
+multiple updates, one might do:
 
-If the ``ordered`` option is set to ``true`` (which is the default),
-the operations are applied in order and if any operation fails, subsequent
-operations are not attempted. If the ``ordered`` option is set to ``false``,
-all specified operations are attempted.
+.. code-block:: ruby
 
-The ``bulk_write`` method takes three arguments:
+  collection = client['colors']
+  collection.bulk_write([
+    {
+      update_one: {
+        filter: {name: 'yellow'},
+        update: {'$set' => {hex: 'ffff00'}},
+      },
+    },
+    {
+      update_one: {
+        filter: {name: 'purple'},
+        update: {'$set' => {hex: '800080'}},
+      },
+    },
+  ], ordered: true, write_concern: {w: :majority})
 
-- A list of operations to execute.
-- The ``ordered`` option taking a boolean value. Defaults to ``true``.
-- The write concern option. Defaults to the collection's write concern.
+The following example shows how to execute different types of operations
+in the same request:
+
+.. code-block:: ruby
+
+  collection.bulk_write([
+    { insert_one: { x: 1 } },
+    { update_one: {
+      filter: { x: 1 },
+      update: {'$set' => { x: 2 } },
+    } },
+    { replace_one: {
+      filter: { x: 2 },
+      replacement: { x: 3 },
+    } },
+  ], :ordered => true)
+
+The first argument to ``bulk_write`` is the list of operations to perform.
+Each operation must be specified as a hash with exactly one key which is
+the operation name and the operation specification as the corresponding
+value. The supported operations are detailed below. The ``bulk_write`` method
+also accepts the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``bypass_document_validation``
+     - ``true`` or ``false``. Whether to bypass document validation.
+   * - ``ordered``
+     - If the ``ordered`` option is set to ``true`` (which is the default),
+       the operations are applied in order and if any operation fails, subsequent
+       operations are not attempted. If the ``ordered`` option is set to ``false``,
+       all specified operations are attempted.
+   * - ``write_concern``
+     - The write concern for the operation, specified as a hash.
 
 Valid bulk write operations are the following:
 
@@ -35,11 +82,11 @@ insert_one
 
 .. code-block:: ruby
 
-    { :insert_one => { :x => 1 } }
+  { insert_one: { x: 1 } }
 
 .. note::
 
-  There is no ``insert_many`` operation. To insert multiple documents,
+  There is no ``insert_many`` bulk operation. To insert multiple documents,
   specify multiple ``insert_one`` operations.
 
 
@@ -48,10 +95,12 @@ update_one
 
 .. code-block:: ruby
 
-    { :update_one => { :filter => { :x => 1 },
-                       :update => { '$set' =>  { :x => 2 } },
-                       :upsert => true } # upsert is optional and defaults to false
-     }
+  { update_one: {
+    filter: { x: 1 },
+    update: { '$set' => { x: 2 } },
+    # upsert is optional and defaults to false
+    upsert: true,
+  } }
 
 
 update_many
@@ -59,29 +108,12 @@ update_many
 
 .. code-block:: ruby
 
-    { :update_many => { :filter => { :x => 1 },
-                        :update => { '$set' =>  { :x => 2 } },
-                        :upsert => true } # upsert is optional and defaults to false
-     }
-
-The following example shows how to pass operations
-to the ``bulk_write`` method.
-
-.. code-block:: ruby
-
-    coll = client['documents']
-    coll.bulk_write([ { :insert_one => { :x => 1 }
-                      },
-                      { :update_one => { :filter => { :x => 1 },
-                                         :update => {'$set' => { :x => 2 } }
-                                       }
-                      },
-                      { :replace_one => { :filter => { :x => 2 },
-                                          :replacement => { :x => 3 }
-                                        }
-                      }
-                    ],
-                    :ordered => true)
+  { update_many: {
+    filter: { x: 1 },
+    update: { '$set' =>  { x: 2 } },
+    # upsert is optional and defaults to false
+    :upsert => true,
+  } }
 
 
 replace_one
@@ -89,10 +121,19 @@ replace_one
 
 .. code-block:: ruby
 
-    { :replace_one => { :filter => { :x => 1 },
-                        :replacement => { :x => 2 },
-                        :upsert => true } # upsert is optional and defaults to false
-     }
+    { replace_one: {
+      filter: { x: 1 },
+      replacement: { x: 2 },
+      # upsert is optional and defaults to false
+      upsert: true,
+    } }
+
+.. note::
+
+  The ``:replace_one`` operation requires that the replacement value is a
+  document. ``:replace_one`` does not recognize MongoDB update operators in
+  the replacement value. In a future release the driver is expected to
+  prohibit using keys beginning with ``$`` in the replacement document.
 
 
 delete_one
@@ -100,7 +141,9 @@ delete_one
 
 .. code-block:: ruby
 
-    { :delete_one => { :filter => { :x => 1 } } }
+  { delete_one: {
+    filter: { x: 1 },
+  } }
 
 
 delete_many
@@ -108,4 +151,19 @@ delete_many
 
 .. code-block:: ruby
 
-    { :delete_many => { :filter => { :x => 1 } } }
+  { delete_many: {
+    filter: { x: 1 },
+  } }
+
+
+Bulk Write Splitting
+====================
+
+The driver allows the application to submit arbitrarily large bulk write
+requests. However, since MongoDB server limits the size of command documents
+(currently this limit is 48 MiB), bulk writes that exceed this limit will be
+split into multiple requests.
+
+When :ref:`client-side encryption <client-side-encryption>` is used, the
+threshold used for bulk write splitting is reduced to allow for overhead in
+the ciphertext.
