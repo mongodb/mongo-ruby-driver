@@ -33,7 +33,6 @@ MongoDB Compatibility
      - MongoDB 3.2
      - MongoDB 3.0
      - MongoDB 2.6
-     - MongoDB 2.4
 
    * - 2.14
      - |checkmark|
@@ -44,7 +43,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.13
      - |checkmark| [#ocsp]_
@@ -55,7 +53,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.12
      -
@@ -66,7 +63,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.11
      -
@@ -77,7 +73,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.10
      -
@@ -88,7 +83,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.9
      -
@@ -99,7 +93,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.8
      -
@@ -110,7 +103,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.7
      -
@@ -121,7 +113,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.6
      -
@@ -132,7 +123,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.5
      -
@@ -143,14 +133,12 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.4
      -
      -
      -
      -
-     - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -165,7 +153,6 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
 
    * - 2.2
      -
@@ -173,7 +160,6 @@ MongoDB Compatibility
      -
      -
      -
-     - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -185,7 +171,6 @@ MongoDB Compatibility
      -
      -
      -
-     - |checkmark|
      - |checkmark|
      - |checkmark|
 
