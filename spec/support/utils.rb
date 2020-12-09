@@ -34,14 +34,41 @@ module Utils
   #
   # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
   # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
-  def snakeize_hash(value)
-    return underscore(value) if value.is_a?(String)
+  module_function def shallow_underscore_hash(value)
     return value unless value.is_a?(Hash)
 
     value.reduce({}) do |hash, (k, v)|
       hash.tap do |h|
-        h[underscore(k)] = snakeize_hash(v)
+        h[underscore(k)] = v
       end
+    end
+  end
+
+  # Creates a copy of a hash where all keys and string values are converted to
+  # snake-case symbols.
+  #
+  # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
+  # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
+  def snakeize_hash(value)
+    return underscore(value) if value.is_a?(String)
+    case value
+    when Array
+      value.map do |sub|
+        case sub
+        when Hash
+          snakeize_hash(sub)
+        else
+          sub
+        end
+      end
+    when Hash
+      value.reduce({}) do |hash, (k, v)|
+        hash.tap do |h|
+          h[underscore(k)] = snakeize_hash(v)
+        end
+      end
+    else
+      value
     end
   end
   module_function :snakeize_hash

@@ -6,9 +6,20 @@ module Mongo
       def initialize(spec)
         @min_server_version = spec['minServerVersion']
         @max_server_version = spec['maxServerVersion']
-        @topologies = if topologies = spec['topology']
+        # topologies is for unified test format.
+        # topology is for legacy tests.
+        @topologies = if topologies = spec['topology'] || spec['topologies']
           topologies.map do |topology|
-            {'replicaset' => :replica_set, 'single' => :single, 'sharded' => :sharded}[topology]
+            {
+              'replicaset' => :replica_set,
+              'single' => :single,
+              'sharded' => :sharded,
+              'sharded-replicaset' => :sharded,
+            }[topology].tap do |v|
+              unless v
+                raise "Unknown topology #{topology}"
+              end
+            end
           end
         else
           nil

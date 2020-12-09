@@ -127,6 +127,7 @@ module Mongo
       #   data-bearing members of a replica set, including the primary, must
       #   complete the index builds successfully before the primary marks
       #   the indexes as ready.
+      # @option options [ Session ] :session The session to use for the operation.
       #
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
@@ -137,7 +138,10 @@ module Mongo
       def create_one(keys, options = {})
         options = options.dup
 
-        create_options = { commit_quorum: options.delete(:commit_quorum) }
+        create_options = {
+          commit_quorum: options.delete(:commit_quorum),
+          session: options.delete(:session),
+        }
         create_many({ key: keys }.merge(options), create_options)
       end
 
@@ -166,19 +170,20 @@ module Mongo
       #   - commit_quorum: Specify how many data-bearing members of a replica set,
       #     including the primary, must complete the index builds successfully
       #     before the primary marks the indexes as ready.
+      #   - session: The session to use.
       #
       # @return [ Result ] The result of the command.
       #
       # @since 2.0.0
       def create_many(*models)
-        client.send(:with_session, @options) do |session|
-          server = next_primary(nil, session)
+        models = models.flatten
+        options = {}
+        if models && !models.last.key?(:key)
+          options = models.pop
+        end
 
-          models = models.flatten
-          options = {}
-          if models && !models.last.key?(:key)
-            options = models.pop
-          end
+        client.send(:with_session, @options.merge(options)) do |session|
+          server = next_primary(nil, session)
 
           # While server versions 3.4 and newer generally perform option
           # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
