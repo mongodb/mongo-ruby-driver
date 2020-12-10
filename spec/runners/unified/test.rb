@@ -147,7 +147,7 @@ module Unified
       @spec['initialData'].each do |entity_spec|
         spec = UsingHash[entity_spec]
         collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
-        collection.delete_many
+        collection.drop
         docs = spec.use!('documents')
         if docs.any?
           collection.insert_many(docs)
