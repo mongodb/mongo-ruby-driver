@@ -255,7 +255,7 @@ module Unified
     end
 
     def cleanup
-      if $kill_transactions
+      if $kill_transactions || true
         ClientRegistry.instance.global_client('authorized').command(
           killAllSessions: [],
         )
