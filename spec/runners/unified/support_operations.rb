@@ -119,6 +119,9 @@ module Unified
           opts = {}
         else
           opts = ::Utils.underscore_hash(args)
+          if value = opts[:read_concern]&.[](:level)
+            opts[:read_concern][:level] = value.to_sym
+          end
           args.clear
         end
 

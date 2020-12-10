@@ -98,6 +98,11 @@ module Mongo
           else
             uri_options
           end
+
+          if key == 'readConcernLevel'
+            value = value.to_sym
+          end
+
           #value = apply_transform(key, value, strategy[:type])
           # Sometimes the value here would be nil, for example if we are processing
           # read preference tags or auth mechanism properties and all of the
