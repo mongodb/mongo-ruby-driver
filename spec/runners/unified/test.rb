@@ -149,7 +149,19 @@ module Unified
         collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         collection.delete_many
         docs = spec.use!('documents')
-        collection.insert_many(docs)
+        if docs.any?
+          collection.insert_many(docs)
+        else
+          begin
+            collection.create
+          rescue Mongo::Error => e
+            if e.code == 48
+              # Already exists
+            else
+              raise
+            end
+          end
+        end
         unless spec.empty?
           raise "Unhandled spec keys: #{spec}"
         end
