@@ -270,9 +270,17 @@ module Unified
 
     def cleanup
       if $kill_transactions || true
-        ClientRegistry.instance.global_client('root_authorized').command(
-          killAllSessions: [],
-        )
+        begin
+          ClientRegistry.instance.global_client('root_authorized').command(
+            killAllSessions: [],
+          )
+        rescue Mongo::Error::OperationFailure => e
+          if e.code == 11601
+            # operation was interrupted, ignore
+          else
+            raise
+          end
+        end
         $kill_transactions = nil
       end
 
