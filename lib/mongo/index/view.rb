@@ -138,10 +138,15 @@ module Mongo
       def create_one(keys, options = {})
         options = options.dup
 
-        create_options = {
-          commit_quorum: options.delete(:commit_quorum),
-          session: options.delete(:session),
-        }
+        create_options = {}
+        if session = @options[:session]
+          create_options[:session] = session
+        end
+        %i(commit_quorum session).each do |key|
+          if value = options.delete(key)
+            create_options[key] = value
+          end
+        end
         create_many({ key: keys }.merge(options), create_options)
       end
 
