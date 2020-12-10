@@ -142,7 +142,7 @@ module Unified
     end
 
     def set_initial_data
-      client = ClientRegistry.instance.global_client('authorized')
+      client = ClientRegistry.instance.global_client('root_authorized')
 
       @spec['initialData'].each do |entity_spec|
         spec = UsingHash[entity_spec]
@@ -270,9 +270,9 @@ module Unified
 
     def cleanup
       if $kill_transactions || true
-        ClientRegistry.instance.global_client('authorized').command(
+        ClientRegistry.instance.global_client('root_authorized').command(
           killAllSessions: [],
-        ) rescue nil
+        )
         $kill_transactions = nil
       end
 
