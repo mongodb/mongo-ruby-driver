@@ -24,6 +24,13 @@ def define_unified_spec_tests(base_path, paths)
           end
 
           before(:all) do
+            if SpecConfig.instance.retry_reads == false
+              skip "Tests are not applicable when legacy read retries are used"
+            end
+            if SpecConfig.instance.retry_writes == false
+              skip "Tests are not applicable when legacy write retries are used"
+            end
+
             if ClusterConfig.instance.topology == :sharded
               if test.require_multiple_mongoses? && SpecConfig.instance.addresses.length == 1
                 skip "Test requires multiple mongoses"
