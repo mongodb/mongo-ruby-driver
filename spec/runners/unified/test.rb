@@ -155,7 +155,9 @@ module Unified
           begin
             collection.create
           rescue Mongo::Error => e
-            if Mongo::Error::OperationFailure === e && e.code == 48
+            if Mongo::Error::OperationFailure === e && (
+              e.code == 48 || e.message =~ /collection already exists/
+            )
               # Already exists
             else
               raise
