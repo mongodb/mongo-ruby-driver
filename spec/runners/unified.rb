@@ -6,8 +6,13 @@ require 'runners/unified/using_hash'
 
 def define_unified_spec_tests(base_path, paths)
   paths.each do |path|
-    context path[base_path.length+1...path.length] do
+    basename = path[base_path.length+1...path.length]
+    context basename do
       group = Unified::TestGroup.new(path)
+
+      if basename =~ /retryable|transaction/
+        require_wired_tiger
+      end
 
       group.tests.each do |test|
         context test.description do
