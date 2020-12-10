@@ -277,6 +277,8 @@ module Unified
         rescue Mongo::Error::OperationFailure => e
           if e.code == 11601
             # operation was interrupted, ignore
+          elsif e.code == 59
+            # no such command (old server), ignore
           else
             raise
           end
