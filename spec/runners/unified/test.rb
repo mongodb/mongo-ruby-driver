@@ -258,7 +258,7 @@ module Unified
       if $kill_transactions || true
         ClientRegistry.instance.global_client('authorized').command(
           killAllSessions: [],
-        )
+        ) rescue nil
         $kill_transactions = nil
       end
 
