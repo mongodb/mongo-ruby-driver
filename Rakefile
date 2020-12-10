@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+# -*- mode: ruby -*-
 
 require 'bundler'
 require 'bundler/gem_tasks'
