@@ -16,6 +16,8 @@ module Unified
           else
             true
           end
+      end.reject do |event|
+        %w(authenticate getnonce saslStart saslContinue).include?(event.command_name)
       end
     end
 
