@@ -289,6 +289,7 @@ module Mongo
             client.command(configureFailPoint: fail_point_command['configureFailPoint'],
               mode: 'off')
           end
+          $disable_fail_points = nil
         end
 
         if @test_client

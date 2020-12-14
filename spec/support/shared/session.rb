@@ -54,9 +54,9 @@ shared_examples 'an operation using a session' do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           operation_result
-        }.to raise_exception(Mongo::Error::InvalidSession)
+        end.to raise_exception(Mongo::Error::InvalidSession)
       end
     end
 

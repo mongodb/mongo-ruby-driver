@@ -82,6 +82,44 @@ module Mongo
         end
       end
 
+      def smc_to_ruby(opts)
+        uri_options = {}
+
+        opts.each do |key, value|
+          strategy = URI_OPTION_MAP[key.downcase]
+          if strategy.nil?
+            log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+            return
+          end
+
+          group = strategy[:group]
+          target = if group
+            uri_options[group] || {}
+          else
+            uri_options
+          end
+
+          if key == 'readConcernLevel'
+            value = value.to_sym
+          end
+
+          #value = apply_transform(key, value, strategy[:type])
+          # Sometimes the value here would be nil, for example if we are processing
+          # read preference tags or auth mechanism properties and all of the
+          # data within is invalid. Ignore such options.
+          unless value.nil?
+            merge_uri_option(target, value, strategy[:name])
+          end
+
+          if group && !target.empty? && !uri_options.key?(group)
+            uri_options[group] = target
+          end
+        end
+
+        #p uri_options
+        uri_options
+      end
+
       # Converts Ruby options provided to "standardized MongoClient options".
       #
       # @param [ Hash ] opts Ruby options to convert.

@@ -527,6 +527,18 @@ EOT
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'admin' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'admin' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'command-monitoring-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'command-monitoring-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'session-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'session-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'gridfs-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'gridfs-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'change-stream-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'change-stream-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'change-stream-tests-2' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'change-stream-tests-2' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'retryable-writes-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-writes-tests' },
       ]
     )
   end
