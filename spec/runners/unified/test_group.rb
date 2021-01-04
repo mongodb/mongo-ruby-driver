@@ -2,7 +2,12 @@ module Unified
 
   class TestGroup
     def initialize(path)
-      @spec = BSON::ExtJSON.parse_obj(YAML.load(File.read(path)))
+      if String === path
+        data = YAML.load(File.read(path))
+      else
+        data = path
+      end
+      @spec = BSON::ExtJSON.parse_obj(data)
     end
 
     def tests

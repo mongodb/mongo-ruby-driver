@@ -36,11 +36,11 @@ module Unified
           if expected_v
             if expected_v.empty?
               if actual_v && !actual_v.empty?
-                raise "Actual not empty"
+                raise Error::ResultMismatch, "Actual not empty"
               end
             else
               if actual_v != expected_v
-                raise "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
               end
             end
           end
@@ -62,14 +62,14 @@ module Unified
         actual_docs = collection.find({}, order: :_id).to_a
         assert_documents_match(actual_docs, expected_docs)
         unless spec.empty?
-          raise "Unhandled keys: #{spec}"
+          raise NotImplementedError, "Unhandled keys: #{spec}"
         end
       end
     end
 
     def assert_documents_match(actual, expected)
       unless actual.length == expected.length
-        raise "Unexpected number of documents: expected #{expected.length}, actual #{actual.length}"
+        raise Error::ResultMismatch, "Unexpected number of documents: expected #{expected.length}, actual #{actual.length}"
       end
 
       actual.each_with_index do |document, index|
@@ -81,7 +81,7 @@ module Unified
       unless actual == expected
     p actual
     p expected
-        raise "#{msg} does not match"
+        raise Error::ResultMismatch, "#{msg} does not match"
       end
     end
 
@@ -95,7 +95,7 @@ module Unified
         expected_events = spec.use!('events')
         actual_events = subscriber.wanted_events
         unless actual_events.length == expected_events.length
-          raise "Event count mismatch: expected #{expected_events.length}, actual #{actual_events.length}\nExpected: #{expected_events}\nActual: #{actual_events}"
+          raise Error::ResultMismatch, "Event count mismatch: expected #{expected_events.length}, actual #{actual_events.length}\nExpected: #{expected_events}\nActual: #{actual_events}"
         end
         expected_events.each_with_index do |event, i|
           assert_event_matches(actual_events[i], event)
@@ -122,22 +122,22 @@ module Unified
 
     def assert_eq(actual, expected, msg)
       unless expected == actual
-        raise "#{msg}: expected #{expected}, actual #{actual}"
+        raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
       end
     end
 
     def assert_matches(actual, expected, msg)
       if actual.nil? && !expected.nil?
-        raise "#{msg}: expected #{expected} but got nil"
+        raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
       end
 
       case expected
       when Array
         unless Array === actual
-          raise "Expected an array, found #{actual}"
+          raise Error::ResultMismatch, "Expected an array, found #{actual}"
         end
         unless actual.length == expected.length
-          raise "Expected array of length #{expected.length}, found array of length #{actual.length}: #{actual}"
+          raise Error::ResultMismatch, "Expected array of length #{expected.length}, found array of length #{actual.length}: #{actual}"
         end
         expected.each_with_index do |v, i|
           assert_matches(actual[i], v, "#{msg}: index #{i}")
@@ -166,7 +166,7 @@ module Unified
           actual = actual.value
         end
         unless actual == expected
-          raise "#{msg}: expected #{expected}, actual #{actual}"
+          raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
         end
       end
     end
@@ -182,10 +182,10 @@ module Unified
       when 'date'
         Time === object
       else
-        raise "Unhandled type #{type}"
+        raise NotImplementedError, "Unhandled type #{type}"
       end
       unless ok
-        raise "Object #{object} is not of type #{type}"
+        raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
       end
     end
 
@@ -198,46 +198,46 @@ module Unified
         when '$$unsetOrMatches'
           if actual
             unless actual == expected_v
-              raise "Mismatch for #{msg}: expected #{expected}, have #{actual}"
+              raise Error::ResultMismatch, "Mismatch for #{msg}: expected #{expected}, have #{actual}"
             end
           end
         when '$$matchesHexBytes'
           expected_data = decode_hex_bytes(expected_v)
           unless actual == expected_data
-            raise "Hex bytes do not match"
+            raise Error::ResultMismatch, "Hex bytes do not match"
           end
         when '$$exists'
           case expected_v
           when true
             if actual.nil?
-              raise "#{msg}: wanted value to exist, but it did not"
+              raise Error::ResultMismatch, "#{msg}: wanted value to exist, but it did not"
             end
           when false
             if actual
-              raise "#{msg}: wanted value to not exist, but it did"
+              raise Error::ResultMismatch, "#{msg}: wanted value to not exist, but it did"
             end
           else
-            raise "Bogus value #{expected_v}"
+            raise NotImplementedError, "Bogus value #{expected_v}"
           end
         when '$$sessionLsid'
           expected_session = entities.get(:session, expected_v)
           # TODO - sessions do not expose server sessions after being ended
           #unless actual_v == {'id' => expected_session.server_session.session_id.to_bson}
-          #  raise "Session does not match: wanted #{expected_session}, have #{actual_v}"
+          #  raise Error::ResultMismatch, "Session does not match: wanted #{expected_session}, have #{actual_v}"
           #end
         when '$$type'
           assert_type(actual, expected_v)
         when '$$matchesEntity'
           result = entities.get(:result, expected_v)
           unless actual == result
-            raise "Actual value #{actual} does not match entity #{expected_v} with value #{result}"
+            raise Error::ResultMismatch, "Actual value #{actual} does not match entity #{expected_v} with value #{result}"
           end
         else
-          raise "Unknown operator #{operator}"
+          raise NotImplementedError, "Unknown operator #{operator}"
         end
       else
         if actual != expected
-          raise "Mismatch for #{msg}: expected #{expected}, have #{actual}"
+          raise Error::ResultMismatch, "Mismatch for #{msg}: expected #{expected}, have #{actual}"
         end
       end
     end

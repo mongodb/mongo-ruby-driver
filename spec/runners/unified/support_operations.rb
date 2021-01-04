@@ -58,18 +58,18 @@ module Unified
         client = entities.get(:client, args.use!('client'))
         subscriber = @subscribers.fetch(client)
         unless subscriber.started_events.length >= 2
-          raise "Must have at least 2 events, have #{subscriber.started_events.length}"
+          raise Error::ResultMismatch, "Must have at least 2 events, have #{subscriber.started_events.length}"
         end
         lsids = subscriber.started_events[-2...-1].map do |cmd|
           cmd.command.fetch('lsid')
         end
         if expected
           unless lsids.first == lsids.last
-            raise "lsids differ but they were expected to be the same"
+            raise Error::ResultMismatch, "lsids differ but they were expected to be the same"
           end
         else
           if lsids.first == lsids.last
-            raise "lsids are the same but they were expected to be different"
+            raise Error::ResultMismatch, "lsids are the same but they were expected to be different"
           end
         end
       end
@@ -92,7 +92,7 @@ module Unified
         session = entities.get(:session, args.use!('session'))
         state = args.use!('state')
         unless session.send("#{state}_transaction?")
-          raise "Expected session to have state #{state}"
+          raise Error::ResultMismatch, "Expected session to have state #{state}"
         end
       end
     end
@@ -138,11 +138,11 @@ module Unified
 
         if state
           unless session.pinned_server
-            raise 'Expected session to be pinned but it is not'
+            raise Error::ResultMismatch, 'Expected session to be pinned but it is not'
           end
         else
           if session.pinned_server
-            raise 'Expected session to be not pinned but it is'
+            raise Error::ResultMismatch, 'Expected session to be not pinned but it is'
           end
         end
       end
@@ -156,14 +156,14 @@ module Unified
 
     def assert_no_arguments(op)
       if op.key?('arguments')
-        raise "Arguments are not allowed"
+        raise NotimplementedError, "Arguments are not allowed"
       end
     end
 
     def consume_test_runner(op)
       v = op.use!('object')
       unless v == 'testRunner'
-        raise 'Expected object to be testRunner'
+        raise NotImplementedError, 'Expected object to be testRunner'
       end
     end
 

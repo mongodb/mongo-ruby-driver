@@ -54,6 +54,13 @@ module Unified
       end
     end
 
+    def update_one(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        collection.update_one(args.use!('filter'), args.use!('update'))
+      end
+    end
+
     def replace_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
@@ -86,7 +93,7 @@ module Unified
 
     def convert_bulk_write_spec(spec)
       unless spec.keys.length == 1
-        raise "Must have exactly one item"
+        raise NotImplementedError, "Must have exactly one item"
       end
       op, spec = spec.first
       spec = UsingHash[spec]
@@ -110,10 +117,10 @@ module Unified
           filter: spec.use('filter'),
         }
       else
-        raise "Unknown operation #{op}"
+        raise NotImplementedError, "Unknown operation #{op}"
       end
       unless spec.empty?
-        raise "Unhandled keys: #{spec}"
+        raise NotImplementedError, "Unhandled keys: #{spec}"
       end
       {Utils.underscore(op) =>out}
     end
@@ -123,7 +130,7 @@ module Unified
       args = op.use!('arguments')
       pipeline = args.use!('pipeline')
       unless args.empty?
-        raise "Unhandled spec keys: #{test_spec}"
+        raise NotImplementedError, "Unhandled spec keys: #{test_spec}"
       end
       obj.aggregate(pipeline).to_a
     end

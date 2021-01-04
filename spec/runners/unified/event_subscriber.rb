@@ -1,3 +1,5 @@
+require 'support/event_subscriber'
+
 module Unified
 
   class EventSubscriber < ::EventSubscriber
