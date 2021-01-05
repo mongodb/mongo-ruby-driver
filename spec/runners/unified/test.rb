@@ -17,7 +17,7 @@ module Unified
     include SupportOperations
     include Assertions
 
-    def initialize(spec)
+    def initialize(spec, **opts)
       @spec = spec
       @entities = EntityMap.new
       @test_spec = UsingHash[@spec.fetch('test')]
@@ -42,6 +42,7 @@ module Unified
       @multiple_mongoses = mongoses.first
       @test_spec.freeze
       @subscribers = {}
+      @options = opts
     end
 
     attr_reader :test_spec
@@ -49,6 +50,7 @@ module Unified
     attr_reader :outcome
     attr_reader :skip_reason
     attr_reader :reqs, :group_reqs
+    attr_reader :options
 
     def skip?
       !!@skip_reason
@@ -301,13 +303,25 @@ module Unified
     end
 
     def create_client(**opts)
-      Mongo::Client.new(
-        SpecConfig.instance.addresses,
-        SpecConfig.instance.all_test_options.update(
-          max_read_retries: 0,
-          max_write_retries: 0,
-        ).update(opts),
-      )
+      args = case v = options[:client_args]
+      when Array
+        unless v.length == 2
+          raise NotImplementedError, 'Client args array must have two elements'
+        end
+        [v.first, v.last.dup]
+      when String
+        [v, {}]
+      else
+        [
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.all_test_options,
+        ]
+      end
+      args.last.update(
+        max_read_retries: 0,
+        max_write_retries: 0,
+      ).update(opts)
+      Mongo::Client.new(*args)
     end
   end
 end
