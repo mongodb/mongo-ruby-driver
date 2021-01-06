@@ -7,17 +7,18 @@ module Unified
     def set(type, id, value)
       @map[type] ||= {}
       if @map[type][id]
-        raise "Cannot set #{type} #{id} because it is already defined"
+        raise Error::EntityMapOverwriteAttempt,
+          "Cannot set #{type} #{id} because it is already defined"
       end
       @map[type][id] = value
     end
 
     def get(type, id)
       unless @map[type]
-        raise "There are no #{type} entities known"
+        raise Error::EntityMissing, "There are no #{type} entities known"
       end
       unless v = @map[type][id]
-        raise "There is no #{type} #{id} known"
+        raise Error::EntityMissing, "There is no #{type} #{id} known"
       end
       v
     end
@@ -28,7 +29,7 @@ module Unified
           return sub[id]
         end
       end
-      raise "There is no #{id} known"
+      raise Error::EntityMissing, "There is no #{id} known"
     end
 
     def [](type)

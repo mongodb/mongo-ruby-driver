@@ -5,6 +5,7 @@ require 'runners/unified/ddl_operations'
 require 'runners/unified/change_stream_operations'
 require 'runners/unified/support_operations'
 require 'runners/unified/assertions'
+require 'support/utils'
 
 module Unified
 
@@ -16,7 +17,7 @@ module Unified
     include SupportOperations
     include Assertions
 
-    def initialize(spec)
+    def initialize(spec, **opts)
       @spec = spec
       @entities = EntityMap.new
       @test_spec = UsingHash[@spec.fetch('test')]
@@ -36,11 +37,12 @@ module Unified
         spec['client']['useMultipleMongoses']
       end.compact.uniq
       if mongoses.length > 1
-        raise "Conflicting useMultipleMongoses values"
+        raise Error::InvalidTest, "Conflicting useMultipleMongoses values"
       end
       @multiple_mongoses = mongoses.first
       @test_spec.freeze
       @subscribers = {}
+      @options = opts
     end
 
     attr_reader :test_spec
@@ -48,6 +50,7 @@ module Unified
     attr_reader :outcome
     attr_reader :skip_reason
     attr_reader :reqs, :group_reqs
+    attr_reader :options
 
     def skip?
       !!@skip_reason
@@ -66,7 +69,7 @@ module Unified
     def create_entities
       @spec['createEntities'].each do |entity_spec|
         unless entity_spec.keys.length == 1
-          raise "Entity must have exactly one key"
+          raise NotImplementedError, "Entity must have exactly one key"
         end
 
         type, spec = entity_spec.first
@@ -84,13 +87,7 @@ module Unified
             opts = {}
           end
 
-          Mongo::Client.new(
-            SpecConfig.instance.addresses,
-            SpecConfig.instance.all_test_options.update(
-              max_read_retries: 0,
-              max_write_retries: 0,
-            ).update(opts),
-          ).tap do |client|
+          create_client(**opts).tap do |client|
             if oe = spec.use('observeEvents')
               oe.each do |event|
                 case event
@@ -105,7 +102,7 @@ module Unified
                     subscriber.ignore_commands(ignore_events)
                   end
                 else
-                  raise "Unknown event #{event}"
+                  raise NotImplementedError, "Unknown event #{event}"
                 end
               end
             end
@@ -132,21 +129,19 @@ module Unified
 
           client.start_session(**opts)
         else
-          raise "Unknown type #{type}"
+          raise NotImplementedError, "Unknown type #{type}"
         end
         unless spec.empty?
-          raise "Unhandled spec keys: #{spec}"
+          raise NotImplementedError, "Unhandled spec keys: #{spec}"
         end
         entities.set(type.to_sym, id, entity)
       end
     end
 
     def set_initial_data
-      client = ClientRegistry.instance.global_client('root_authorized')
-
       @spec['initialData'].each do |entity_spec|
         spec = UsingHash[entity_spec]
-        collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
+        collection = root_authorized_client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         collection.drop
         docs = spec.use!('documents')
         if docs.any?
@@ -165,7 +160,7 @@ module Unified
           end
         end
         unless spec.empty?
-          raise "Unhandled spec keys: #{spec}"
+          raise NotImplementedError, "Unhandled spec keys: #{spec}"
         end
       end
     end
@@ -175,7 +170,7 @@ module Unified
       ops = test_spec.use!('operations')
       execute_operations(ops)
       unless test_spec.empty?
-        raise "Unhandled spec keys: #{test_spec}"
+        raise NotImplementedError, "Unhandled spec keys: #{test_spec}"
       end
     ensure
       disable_fail_points
@@ -196,25 +191,25 @@ module Unified
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
               unless BSON::String::IllegalKey === e
-                raise "Expected client error but got #{e}"
+                raise Error::ErrorMismatch, "Expected client error but got #{e}"
               end
             end
             if code_name = expected_error.use('errorCodeName')
               unless e.code_name == code_name
-                raise "Expected #{code_name} code but had #{e.code_name}"
+                raise Error::ErrorMismatch, "Expected #{code_name} code but had #{e.code_name}"
               end
             end
             if labels = expected_error.use('errorLabelsContain')
               labels.each do |label|
                 unless e.label?(label)
-                  raise "Expected error to contain label #{label} but it did not"
+                  raise Error::ErrorMismatch, "Expected error to contain label #{label} but it did not"
                 end
               end
             end
             if omit_labels = expected_error.use('errorLabelsOmit')
               omit_labels.each do |label|
                 if e.label?(label)
-                  raise "Expected error to not contain label #{label} but it did"
+                  raise Error::ErrorMismatch, "Expected error to not contain label #{label} but it did"
                 end
               end
             end
@@ -226,16 +221,16 @@ module Unified
               # Nothing but we consume the key.
             end
             unless expected_error.empty?
-              raise "Unhandled keys: #{expected_error}"
+              raise NotImplementedError, "Unhandled keys: #{expected_error}"
             end
           else
-            raise "Expected exception but none was raised"
+            raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
         else
           result = send(name, op)
           if expected_result = op.use('expectResult')
             if !expected_result.empty? && result.nil?
-              raise "Actual result nil but expected result #{expected_result}"
+              raise Error::ResultMismatch, "Actual result nil but expected result #{expected_result}"
             elsif Array === expected_result
               assert_documents_match(result, expected_result)
             else
@@ -259,7 +254,7 @@ module Unified
       orig_v = v.dup
       (yield v).tap do
         unless v.empty?
-          raise "Unconsumed items for #{key}: #{v}\nOriginal hash: #{orig_v}"
+          raise NotImplementedError, "Unconsumed items for #{key}: #{v}\nOriginal hash: #{orig_v}"
         end
       end
     end
@@ -271,7 +266,7 @@ module Unified
     def cleanup
       if $kill_transactions || true
         begin
-          ClientRegistry.instance.global_client('root_authorized').command(
+          root_authorized_client.command(
             killAllSessions: [],
           )
         rescue Mongo::Error::OperationFailure => e
@@ -301,6 +296,32 @@ module Unified
         end
         $disable_fail_points = nil
       end
+    end
+
+    def root_authorized_client
+      @root_authorized_client ||= ClientRegistry.instance.global_client('root_authorized')
+    end
+
+    def create_client(**opts)
+      args = case v = options[:client_args]
+      when Array
+        unless v.length == 2
+          raise NotImplementedError, 'Client args array must have two elements'
+        end
+        [v.first, v.last.dup]
+      when String
+        [v, {}]
+      else
+        [
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.all_test_options,
+        ]
+      end
+      args.last.update(
+        max_read_retries: 0,
+        max_write_retries: 0,
+      ).update(opts)
+      Mongo::Client.new(*args)
     end
   end
 end

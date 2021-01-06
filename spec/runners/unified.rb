@@ -1,3 +1,4 @@
+require 'runners/unified/error'
 require 'runners/unified/entity_map'
 require 'runners/unified/event_subscriber'
 require 'runners/unified/test'

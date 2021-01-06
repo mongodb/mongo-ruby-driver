@@ -34,11 +34,11 @@ module Unified
         collection_name = args.use!('collectionName')
         if state
           unless database.collection_names.include?(collection_name)
-            raise "Expected collection #{collection_name} to exist, but it does not"
+            raise Error::ResultMismatch, "Expected collection #{collection_name} to exist, but it does not"
           end
         else
           if database.collection_names.include?(collection_name)
-            raise "Expected collection #{collection_name} to not exist, but it does"
+            raise Error::ResultMismatch, "Expected collection #{collection_name} to not exist, but it does"
           end
         end
       end
@@ -82,7 +82,7 @@ module Unified
         collection = database[args.use!('collectionName')]
         begin
           index = collection.indexes.get(args.use!('indexName'))
-          raise "Index found"
+          raise Error::ResultMismatch, "Index found"
         rescue Mongo::Error::OperationFailure => e
           if e.code == 26
             # OK

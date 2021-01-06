@@ -39,10 +39,10 @@ module Unified
     def transform_contents(contents)
       if Hash === contents
         if contents.length != 1
-          raise "Wanted hash with one element"
+          raise NotImplementedError, "Wanted hash with one element"
         end
         if contents.keys.first != '$$hexBytes'
-          raise "$$hexBytes is the only key supported"
+          raise NotImplementedError, "$$hexBytes is the only key supported"
         end
 
         decode_hex_bytes(contents.values.first)
