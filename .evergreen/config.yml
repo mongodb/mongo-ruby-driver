@@ -1055,16 +1055,16 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "ruby-head"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-head"]
-      mongodb-version: "4.2"
-      topology: "*"
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
+#   - matrix_name: "ruby-head"
+#     matrix_spec:
+#       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+#       ruby: ["ruby-head"]
+#       mongodb-version: "4.2"
+#       topology: "*"
+#       os: ubuntu1604
+#     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+#     tasks:
+#       - name: "test-mlaunch"
 
   - matrix_name: "activesupport"
     matrix_spec:
