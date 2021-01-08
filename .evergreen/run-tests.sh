@@ -9,19 +9,20 @@ else
   set -x
 fi
 
+. `dirname "$0"`/../spec/shared/shlib/distro.sh
+. `dirname "$0"`/../spec/shared/shlib/set_env.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-aws.sh
 . `dirname "$0"`/functions-server.sh
 . `dirname "$0"`/functions-config.sh
 
-arch=`host_arch`
+arch=`host_distro`
 
 show_local_instructions
 
 set_home
 set_env_vars
-
-setup_ruby
+set_env_ruby
 
 prepare_server $arch
 
