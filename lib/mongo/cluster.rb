@@ -965,10 +965,6 @@ module Mongo
             monitor_options = Utils.shallow_symbolize_keys(options.merge(
               timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT))
             @srv_monitor = _srv_monitor = Srv::Monitor.new(self, **monitor_options)
-            finalizer = lambda do
-              _srv_monitor.stop!
-            end
-            ObjectSpace.define_finalizer(self, finalizer)
           end
           @srv_monitor.run!
         end
