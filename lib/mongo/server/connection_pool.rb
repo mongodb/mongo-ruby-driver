@@ -684,8 +684,6 @@ module Mongo
       # @return [ Proc ] The Finalizer.
       def self.finalize(available_connections, pending_connections, populator)
         proc do
-          populator.stop!
-
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
           end
