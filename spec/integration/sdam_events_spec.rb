@@ -106,6 +106,10 @@ describe 'SDAM events' do
 
         # There may be in-flight ismasters that don't complete, both
         # regular and awaited.
+        p started_awaited
+        p succeeded_awaited
+        p started_regular
+        p succeeded_regular
         started_awaited.length.should > 1
         (succeeded_awaited.length..succeeded_awaited.length+1).should include(started_awaited.length)
         started_regular.length.should > 1
