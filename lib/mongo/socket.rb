@@ -419,6 +419,10 @@ module Mongo
       set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
       set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
     rescue
+      # JRuby 9.2.13.0 and lower do not define TCP_KEEPINTVL etc. constants.
+      # JRuby 9.2.14.0 defines the constants but does not allow to get or
+      # set them with this error:
+      # Errno::ENOPROTOOPT: Protocol not available - Protocol not available
     end
 
     def set_option(sock, option, default)
