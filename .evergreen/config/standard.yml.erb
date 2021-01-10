@@ -444,7 +444,7 @@ buildvariants:
       ruby: [ruby-2.3, ruby-2.4, ruby-2.5, ruby-2.6, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1804
+      os: ubuntu1604
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -457,7 +457,7 @@ buildvariants:
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1804
+      os: ubuntu1604
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
@@ -470,7 +470,7 @@ buildvariants:
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1804
+      os: ubuntu1604
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
@@ -500,7 +500,7 @@ buildvariants:
       ruby: [ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1804
+      os: ubuntu1604
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
