@@ -45,6 +45,9 @@ show_local_instructions() {
   if test -n "$FORK"; then
     params="$params FORK=$FORK"
   fi
+  if test -n "$SOLO"; then
+    params="$params SOLO=$SOLO"
+  fi
   if test -n "$OCSP_ALGORITHM"; then
     params="$params OCSP_ALGORITHM=$OCSP_ALGORITHM"
   fi
