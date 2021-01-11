@@ -272,19 +272,6 @@ module Mongo
       @connected
     end
 
-    # When the server is flagged for garbage collection, stop the monitor
-    # thread.
-    #
-    # @example Finalize the object.
-    #   Server.finalize(monitor)
-    #
-    # @param [ Server::Monitor ] monitor The server monitor.
-    #
-    # @since 2.2.0
-    def self.finalize(monitor)
-      proc { monitor.stop! }
-    end
-
     # Start monitoring the server.
     #
     # Used internally by the driver to add a server to a cluster
@@ -297,7 +284,6 @@ module Mongo
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
       if options[:monitoring_io] != false
-        ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
         monitor.run!
       end
     end

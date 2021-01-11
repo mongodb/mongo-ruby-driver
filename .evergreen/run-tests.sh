@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 if echo "$AUTH" |grep -q ^aws; then
   # Do not set -x as this will expose passwords in Evergreen logs
@@ -312,6 +313,19 @@ elif test "$OCSP_VERIFIER" = 1; then
   bundle exec rspec spec/integration/ocsp_verifier_spec.rb
 elif test -n "$OCSP_CONNECTIVITY"; then
   bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
+elif test "$SOLO" = 1; then
+  for attempt in `seq 10`; do
+    echo "Attempt $attempt"
+    bundle exec rspec spec/solo/clean_exit_spec.rb 2>&1 |tee test.log
+    if grep -qi 'segmentation fault' test.log; then
+      echo 'Test failed - Ruby crashed' 1>&2
+      exit 1
+    fi
+    if fgrep -i '[BUG]' test.log; then
+      echo 'Test failed - Ruby complained about a bug' 1>&2
+      exit 1
+    fi
+  done
 else
   bundle exec rake spec:ci
 fi

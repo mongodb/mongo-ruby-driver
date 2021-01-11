@@ -59,11 +59,6 @@ module Mongo
       #   records' TTL values.
       attr_reader :last_result
 
-      def start!
-        super
-        ObjectSpace.define_finalizer(self, self.class.finalize(@thread))
-      end
-
       private
 
       def do_work
@@ -95,12 +90,6 @@ module Mongo
         end
 
         @cluster.set_server_list(last_result.address_strs)
-      end
-
-      def self.finalize(thread)
-        Proc.new do
-          thread.kill
-        end
       end
 
       def scan_interval

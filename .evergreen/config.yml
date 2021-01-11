@@ -116,6 +116,7 @@ functions:
             export MMAPV1="${MMAPV1}"
             export FLE="${FLE}"
             export FORK="${FORK}"
+            export SOLO="${SOLO}"
             export EXTRA_URI_OPTIONS="${EXTRA_URI_OPTIONS}"
 
             export STRESS="${STRESS}"
@@ -643,6 +644,14 @@ axes:
         variables:
           FORK: '1'
 
+  - id: solo
+    display_name: Solo
+    values:
+      - id: on
+        display_name: On
+        variables:
+          SOLO: '1'
+
   - id: "as"
     display_name: ActiveSupport
     values:
@@ -934,6 +943,17 @@ buildvariants:
       topology: '*'
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "solo"
+    matrix_spec:
+      solo: on
+      ruby: [ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4, ruby-2.3, jruby-9.2]
+      mongodb-version: ["4.4"]
+      topology: '*'
+      os: ubuntu1604
+    display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
       - name: "test-mlaunch"
 

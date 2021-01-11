@@ -241,9 +241,11 @@ bundle_install() {
 }
 
 kill_jruby() {
+  set +o pipefail
   jruby_running=`ps -ef | grep 'jruby' | grep -v grep | awk '{print $2}'`
+  set -o pipefail
   if [ -n "$jruby_running" ];then
     echo "terminating remaining jruby processes"
-    for pid in $(ps -ef | grep "jruby" | grep -v grep | awk '{print $2}'); do kill -9 $pid; done
+    for pid in $jruby_running; do kill -9 $pid; done
   fi
 }

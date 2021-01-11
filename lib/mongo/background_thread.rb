@@ -20,6 +20,17 @@ module Mongo
   # compatibility reasons. However using these methods outside of the driver
   # is deprecated.
   #
+  # @note Do not start or stop background threads in finalizers. See
+  #   https://jira.mongodb.org/browse/RUBY-2453 and
+  #   https://bugs.ruby-lang.org/issues/16288. When interpreter exits,
+  #   background threads are stopped first and finalizers are invoked next,
+  #   and MRI's internal data structures are basically corrupt at this point
+  #   if threads are being referenced. Prior to interpreter shutdown this
+  #   means threads cannot be stopped by objects going out of scope, but
+  #   most likely the threads hold references to said objects anyway if
+  #   work is being performed thus the objects wouldn't go out of scope in
+  #   the first place.
+  #
   # @api private
   module BackgroundThread
     include Loggable

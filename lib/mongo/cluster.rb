@@ -199,9 +199,6 @@ module Mongo
           @cursor_reaper, @socket_reaper,
         ], options)
 
-        ObjectSpace.define_finalizer(self, self.class.finalize(
-          {}, @periodic_executor, @session_pool))
-
         @periodic_executor.run!
       end
 
@@ -444,25 +441,6 @@ module Mongo
 
     # @api private
     attr_reader :server_selection_semaphore
-
-    # Finalize the cluster for garbage collection.
-    #
-    # @example Finalize the cluster.
-    #   Cluster.finalize(pools)
-    #
-    # @param [ Hash<Address, Server::ConnectionPool> ] pools Ignored.
-    # @param [ PeriodicExecutor ] periodic_executor The periodic executor.
-    # @param [ SessionPool ] session_pool The session pool.
-    #
-    # @return [ Proc ] The Finalizer.
-    #
-    # @since 2.2.0
-    def self.finalize(pools, periodic_executor, session_pool)
-      proc do
-        session_pool.end_sessions
-        periodic_executor.stop!
-      end
-    end
 
     # Closes the cluster.
     #
@@ -953,10 +931,6 @@ module Mongo
             monitor_options = Utils.shallow_symbolize_keys(options.merge(
               timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT))
             @srv_monitor = _srv_monitor = Srv::Monitor.new(self, **monitor_options)
-            finalizer = lambda do
-              _srv_monitor.stop!
-            end
-            ObjectSpace.define_finalizer(self, finalizer)
           end
           @srv_monitor.run!
         end
