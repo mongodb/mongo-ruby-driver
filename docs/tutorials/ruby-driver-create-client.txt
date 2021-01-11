@@ -1253,16 +1253,27 @@ The driver does not currently implement the Happy Eyeballs algorithm.
 TCP Keepalive Configuration
 ===========================
 
-The driver sets TCP keepalive by default. The following default values are also set if the system
-value can be determined and if the driver default value is less than the system value.
+Where allowed by system configuration and the Ruby language runtime,
+the driver enables TCP keepalive and, for each of the keepalive parameters
+listed below, sets the value of the respective parameter to the specified
+value if the system value can be determined and is higher than the
+listed driver value:
 
 - ``tcp_keepalive_time``: 120 seconds
 - ``tcp_keepalive_intvl``: 10 seconds
 - ``tcp_keepalive_cnt``: 9 probes
 
+.. note::
 
-Please see the `MongoDB Diagnostics FAQ keepalive section <https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#serverselectiontimeoutms>`_
-for instructions on setting these values at the system level.
+  As of JRuby 9.2.14.0, JRuby does not implement the APIs required to
+  set the keepalive parameters. When using JRuby, the driver will not be
+  able to set the keepalive parameters and the system configuration will
+  be in effect.
+
+To use lower values, or to change the parameters in environments like JRuby
+that do not expose the required APIs, please adjust the parameters at the
+system level as described in the `MongoDB Diagnostics FAQ keepalive section
+<https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#serverselectiontimeoutms>`_.
 
 
 Connection Pooling
