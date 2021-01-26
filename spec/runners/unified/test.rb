@@ -176,6 +176,16 @@ module Unified
       disable_fail_points
     end
 
+    def stop!
+      @stop = true
+    end
+
+    def stop?
+      !!@stop
+    end
+
+    private
+
     def execute_operations(ops)
       ops.each do |op|
         execute_operation(op)
@@ -185,9 +195,13 @@ module Unified
     def execute_operation(op)
       use_all(op, 'operation', op) do |op|
         name = Utils.underscore(op.use!('name'))
+        method_name = name
+        if name.to_s == 'loop'
+          method_name = "_#{name}"
+        end
         if expected_error = op.use('expectError')
           begin
-            send(name, op)
+            send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
               unless BSON::String::IllegalKey === e
@@ -227,7 +241,7 @@ module Unified
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
         else
-          result = send(name, op)
+          result = send(method_name, op)
           if expected_result = op.use('expectResult')
             if !expected_result.empty? && result.nil?
               raise Error::ResultMismatch, "Actual result nil but expected result #{expected_result}"

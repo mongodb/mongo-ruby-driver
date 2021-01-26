@@ -21,11 +21,7 @@ module Unified
         self.class[v]
       when Array
         v.map do |subv|
-          if Hash === subv
-            self.class[subv]
-          else
-            subv
-          end
+          wrap(subv)
         end
       else
         v

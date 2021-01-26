@@ -152,6 +152,18 @@ module Unified
       assert_session_pinned(op, false)
     end
 
+    def _loop(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        ops = args.use!('operations')
+
+        loop do
+          break if stop?
+          execute_operations(ops.map(&:dup))
+        end
+      end
+    end
+
     private
 
     def assert_no_arguments(op)
