@@ -58,6 +58,14 @@ describe 'URI options' do
                 end
               end
 
+              if test.options['compressors'] && test.options['compressors'].include?('zstd')
+                before do
+                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /zstd/
+                    skip "This test requires zstd compression"
+                  end
+                end
+              end
+
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(

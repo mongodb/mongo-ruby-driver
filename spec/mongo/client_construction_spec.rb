@@ -568,6 +568,32 @@ describe Mongo::Client do
             end
           end
         end
+
+        context 'when zstd compression is requested and supported by the server' do
+          min_server_version '4.2'
+
+          let(:options) do
+            { compressors: ['zstd'] }
+          end
+
+          context 'when zstd gem is installed' do
+            require_zstd_compression
+
+            it 'creates the client' do
+              expect(client.options['compressors']).to eq(['zstd'])
+            end
+          end
+
+          context 'when zstd gem is not installed' do
+            require_no_zstd_compression
+
+            it 'raises an exception' do
+              expect do
+                client
+              end.to raise_error(Mongo::Error::UnmetDependency, /Cannot enable zstd compression/)
+            end
+          end
+        end
       end
 
       context 'when compressors are not provided' do
