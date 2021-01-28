@@ -87,6 +87,27 @@ module Unified
             opts = {}
           end
 
+          if store_events = spec.use('storeEventsAsEntities')
+            store_event_names = {}
+            store_events.each do |event_name, entity_name|
+              #event_name = event_name.gsub(/Event$/, '').gsub(/[A-Z]/) { |m| "_#{m}" }.upcase
+              #event_name = event_name.gsub(/Event$/, '').sub(/./) { |m| m.upcase }
+              store_event_names[event_name] = entity_name
+            end
+            store_event_names.values.uniq.each do |entity_name|
+              entities.set(:event_list, entity_name, [])
+            end
+            subscriber = StoringEventSubscriber.new do |payload|
+              if entity_name = store_event_names[payload['name']]
+                entities.get(:event_list, entity_name) << payload
+              end
+            end
+            opts[:sdam_proc] = lambda do |client|
+              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+            end
+          end
+
           create_client(**opts).tap do |client|
             if oe = spec.use('observeEvents')
               oe.each do |event|
