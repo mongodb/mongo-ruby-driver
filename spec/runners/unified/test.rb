@@ -205,6 +205,29 @@ module Unified
       !!@stop
     end
 
+    def cleanup
+      if $kill_transactions || true
+        begin
+          root_authorized_client.command(
+            killAllSessions: [],
+          )
+        rescue Mongo::Error::OperationFailure => e
+          if e.code == 11601
+            # operation was interrupted, ignore
+          elsif e.code == 59
+            # no such command (old server), ignore
+          else
+            raise
+          end
+        end
+        $kill_transactions = nil
+      end
+
+      entities[:client]&.each do |id, client|
+        client.close
+      end
+    end
+
     private
 
     def execute_operations(ops)
@@ -296,29 +319,6 @@ module Unified
 
     def use_arguments(op, &block)
       use_sub(op, 'arguments', &block)
-    end
-
-    def cleanup
-      if $kill_transactions || true
-        begin
-          root_authorized_client.command(
-            killAllSessions: [],
-          )
-        rescue Mongo::Error::OperationFailure => e
-          if e.code == 11601
-            # operation was interrupted, ignore
-          elsif e.code == 59
-            # no such command (old server), ignore
-          else
-            raise
-          end
-        end
-        $kill_transactions = nil
-      end
-
-      entities[:client]&.each do |id, client|
-        client.close
-      end
     end
 
     def disable_fail_points
