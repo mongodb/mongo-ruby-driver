@@ -9,7 +9,7 @@ buildvariants:
     display_name: "Docker ${os} ${mongodb-version} ${topology} ${ruby} ${preload}"
     tasks:
       - name: "test-docker"
-  
+
   - matrix_name: "docker"
     matrix_spec:
       ruby: "ruby-2.7"
@@ -301,6 +301,41 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "zstd-auth"
+    matrix_spec:
+      auth-and-ssl: "auth-and-ssl"
+      ruby: "ruby-2.7"
+      mongodb-version: "4.2"
+      topology: "*"
+      compressor: 'zstd'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "zstd-noauth"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: "ruby-2.3"
+      mongodb-version: "3.6"
+      topology: replica-set
+      compressor: 'zstd'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "zstd-jruby"
+    matrix_spec:
+      ruby: jruby-9.2
+      mongodb-version: "4.4"
+      topology: replica-set
+      compressor: 'zstd'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
 #   - matrix_name: "ruby-head"
 #     matrix_spec:
 #       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
@@ -480,11 +515,11 @@ buildvariants:
     %w(valid none pass),
     %w(unknown none pass),
     %w(revoked none fail),
-    
+
     %w(valid tlsInsecure=true pass),
     %w(unknown tlsInsecure=true pass),
     %w(revoked tlsInsecure=true pass),
-    
+
     %w(valid tlsAllowInvalidCertificates=true pass),
     %w(unknown tlsAllowInvalidCertificates=true pass),
     %w(revoked tlsAllowInvalidCertificates=true pass),

@@ -46,6 +46,8 @@ set_env_vars() {
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
   elif test "$COMPRESSOR" = snappy; then
     export BUNDLE_GEMFILE=gemfiles/snappy_compression.gemfile
+  elif test "$COMPRESSOR" = zstd; then
+    export BUNDLE_GEMFILE=gemfiles/zstd_compression.gemfile
   fi
 
   # rhel62 ships with Python 2.6
