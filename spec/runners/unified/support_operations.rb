@@ -152,6 +152,42 @@ module Unified
       assert_session_pinned(op, false)
     end
 
+    def _loop(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        ops = args.use!('operations')
+
+        if store_errors = args.use('storeErrorsAsEntity')
+          entities.set(:error_list, store_errors, [])
+        end
+
+        store_iterations = args.use('storeIterationsAsEntity')
+        iterations = 0
+
+        loop do
+          break if stop?
+          begin
+            execute_operations(ops.map(&:dup))
+          rescue => e
+            if store_errors
+              STDERR.puts "Error: #{e.class}: #{e}"
+              entities.get(:error_list, store_errors) << {
+                error: "#{e.class}: #{e}",
+                time: Time.now.to_f,
+              }
+            else
+              raise
+            end
+          end
+          iterations += 1
+        end
+
+        if store_iterations
+          entities.set(:iteration_count, store_iterations, iterations)
+        end
+      end
+    end
+
     private
 
     def assert_no_arguments(op)

@@ -87,6 +87,27 @@ module Unified
             opts = {}
           end
 
+          if store_events = spec.use('storeEventsAsEntities')
+            store_event_names = {}
+            store_events.each do |event_name, entity_name|
+              #event_name = event_name.gsub(/Event$/, '').gsub(/[A-Z]/) { |m| "_#{m}" }.upcase
+              #event_name = event_name.gsub(/Event$/, '').sub(/./) { |m| m.upcase }
+              store_event_names[event_name] = entity_name
+            end
+            store_event_names.values.uniq.each do |entity_name|
+              entities.set(:event_list, entity_name, [])
+            end
+            subscriber = StoringEventSubscriber.new do |payload|
+              if entity_name = store_event_names[payload['name']]
+                entities.get(:event_list, entity_name) << payload
+              end
+            end
+            opts[:sdam_proc] = lambda do |client|
+              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+            end
+          end
+
           create_client(**opts).tap do |client|
             if oe = spec.use('observeEvents')
               oe.each do |event|
@@ -176,6 +197,39 @@ module Unified
       disable_fail_points
     end
 
+    def stop!
+      @stop = true
+    end
+
+    def stop?
+      !!@stop
+    end
+
+    def cleanup
+      if $kill_transactions || true
+        begin
+          root_authorized_client.command(
+            killAllSessions: [],
+          )
+        rescue Mongo::Error::OperationFailure => e
+          if e.code == 11601
+            # operation was interrupted, ignore
+          elsif e.code == 59
+            # no such command (old server), ignore
+          else
+            raise
+          end
+        end
+        $kill_transactions = nil
+      end
+
+      entities[:client]&.each do |id, client|
+        client.close
+      end
+    end
+
+    private
+
     def execute_operations(ops)
       ops.each do |op|
         execute_operation(op)
@@ -185,9 +239,13 @@ module Unified
     def execute_operation(op)
       use_all(op, 'operation', op) do |op|
         name = Utils.underscore(op.use!('name'))
+        method_name = name
+        if name.to_s == 'loop'
+          method_name = "_#{name}"
+        end
         if expected_error = op.use('expectError')
           begin
-            send(name, op)
+            send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
               unless BSON::String::IllegalKey === e
@@ -227,7 +285,7 @@ module Unified
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
         else
-          result = send(name, op)
+          result = send(method_name, op)
           if expected_result = op.use('expectResult')
             if !expected_result.empty? && result.nil?
               raise Error::ResultMismatch, "Actual result nil but expected result #{expected_result}"
@@ -261,29 +319,6 @@ module Unified
 
     def use_arguments(op, &block)
       use_sub(op, 'arguments', &block)
-    end
-
-    def cleanup
-      if $kill_transactions || true
-        begin
-          root_authorized_client.command(
-            killAllSessions: [],
-          )
-        rescue Mongo::Error::OperationFailure => e
-          if e.code == 11601
-            # operation was interrupted, ignore
-          elsif e.code == 59
-            # no such command (old server), ignore
-          else
-            raise
-          end
-        end
-        $kill_transactions = nil
-      end
-
-      entities[:client]&.each do |id, client|
-        client.close
-      end
     end
 
     def disable_fail_points
