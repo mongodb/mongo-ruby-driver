@@ -115,9 +115,9 @@ module Mongo
     #
     # @since 2.5.0
     VALID_COMPRESSORS = [
+      Mongo::Protocol::Compressed::ZSTD,
       Mongo::Protocol::Compressed::SNAPPY,
-      Mongo::Protocol::Compressed::ZLIB,
-      Mongo::Protocol::Compressed::ZSTD
+      Mongo::Protocol::Compressed::ZLIB
     ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
@@ -227,7 +227,7 @@ module Mongo
     # @option options [ Array<String> ] :compressors A list of potential
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the
-    #   driver only supports 'snappy', 'zstd' and 'zlib'.
+    #   driver only supports 'zstd, 'snappy' and 'zlib'.
     # @option options [ true | false ] :direct_connection Whether to connect
     #   directly to the specified seed, bypassing topology discovery. Exactly
     #   one seed must be provided.
