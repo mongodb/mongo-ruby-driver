@@ -160,7 +160,7 @@ module Unified
     end
 
     def set_initial_data
-      @spec['initialData'].each do |entity_spec|
+      @spec['initialData']&.each do |entity_spec|
         spec = UsingHash[entity_spec]
         collection = root_authorized_client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         collection.drop
