@@ -32,8 +32,8 @@ describe Mongo::Protocol::Compressed do
       require_zstd_compression
       let(:compressor) { 'zstd' }
 
-      it "uses zstd with default compression level of 3" do
-        expect(Zstd).to receive(:compress).with(original_message_bytes, 3).and_call_original
+      it "uses zstd with default compression level" do
+        expect(Zstd).to receive(:compress).with(original_message_bytes).and_call_original
         message.serialize
       end
     end
