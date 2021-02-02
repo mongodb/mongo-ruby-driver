@@ -167,11 +167,16 @@ module Unified
 
         store_iterations = args.use('storeIterationsAsEntity')
         iterations = 0
+        store_successes = args.use('storeSuccessesAsEntity')
+        successes = 0
 
         loop do
           break if stop?
           begin
-            execute_operations(ops.map(&:dup))
+            ops.map(&:dup).each do |op|
+              execute_operation(op)
+              successes += 1
+            end
           rescue Unified::Error::ResultMismatch => e
             if store_failures
               STDERR.puts "Failure: #{e.class}: #{e}"
@@ -204,6 +209,9 @@ module Unified
 
         if store_iterations
           entities.set(:iteration_count, store_iterations, iterations)
+        end
+        if store_successes
+          entities.set(:success_count, store_successes, successes)
         end
       end
     end
