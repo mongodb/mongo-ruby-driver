@@ -187,6 +187,8 @@ module Unified
     end
 
     def run
+      kill_sessions
+
       test_spec = UsingHash[self.test_spec]
       ops = test_spec.use!('operations')
       execute_operations(ops)
@@ -207,19 +209,7 @@ module Unified
 
     def cleanup
       if $kill_transactions || true
-        begin
-          root_authorized_client.command(
-            killAllSessions: [],
-          )
-        rescue Mongo::Error::OperationFailure => e
-          if e.code == 11601
-            # operation was interrupted, ignore
-          elsif e.code == 59
-            # no such command (old server), ignore
-          else
-            raise
-          end
-        end
+        kill_sessions
         $kill_transactions = nil
       end
 
@@ -330,6 +320,24 @@ module Unified
             mode: 'off')
         end
         $disable_fail_points = nil
+      end
+    end
+
+    def kill_sessions
+      if options[:kill_sessions] != false
+        begin
+          root_authorized_client.command(
+            killAllSessions: [],
+          )
+        rescue Mongo::Error::OperationFailure => e
+          if e.code == 11601
+            # operation was interrupted, ignore
+          elsif e.code == 59
+            # no such command (old server), ignore
+          else
+            raise
+          end
+        end
       end
     end
 
