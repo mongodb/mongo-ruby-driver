@@ -158,7 +158,8 @@ module Mongo
         elsif @compressor_id == SNAPPY_BYTE
           Snappy.deflate(buffer.to_s).force_encoding(BSON::BINARY)
         elsif @compressor_id == ZSTD_BYTE
-          # Use compression level of 3 by default as this is what the Java driver does
+          # Use compression level of 3 as this is defined in zstd.h for ZSTD_CLEVEL_DEFAULT
+          # see https://github.com/facebook/zstd/commit/e34c000e44444b9f8bd62e5af0a355ee186eb21f
           # DRIVERS-600 will allow this to be configurable in the future
           Zstd.compress(buffer.to_s, 3).force_encoding(BSON::BINARY)
         end
