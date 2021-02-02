@@ -161,6 +161,10 @@ module Unified
           entities.set(:error_list, store_errors, [])
         end
 
+        if store_failures = args.use('storeFailuresAsEntity')
+          entities.set(:failure_list, store_failures, [])
+        end
+
         store_iterations = args.use('storeIterationsAsEntity')
         iterations = 0
 
@@ -168,6 +172,22 @@ module Unified
           break if stop?
           begin
             execute_operations(ops.map(&:dup))
+          rescue Unified::Error::ResultMismatch => e
+            if store_failures
+              STDERR.puts "Failure: #{e.class}: #{e}"
+              entities.get(:failure_list, store_failures) << {
+                error: "#{e.class}: #{e}",
+                time: Time.now.to_f,
+              }
+            elsif store_errors
+              STDERR.puts "Failure: #{e.class}: #{e} (reporting as error)"
+              entities.get(:error_list, store_errors) << {
+                error: "#{e.class}: #{e}",
+                time: Time.now.to_f,
+              }
+            else
+              raise
+            end
           rescue => e
             if store_errors
               STDERR.puts "Error: #{e.class}: #{e}"
