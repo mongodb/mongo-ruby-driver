@@ -1684,7 +1684,8 @@ standard library extension to be present.
 The server support for various compressors is as follows:
 
 - ``zstd`` requires and is enabled by default in MongoDB 4.2 or higher.
-- ``snappy`` requires and is enabled by default in MongoDB 3.6 or higher.
+- ``snappy`` requires MongoDB 3.4 or higher and is enabled by default in
+  MongoDB 3.6 or higher.
 - ``zlib`` requires MongoDB 3.6 or higher and is enabled by default in
   MongoDB 4.2 and higher.
 
