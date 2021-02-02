@@ -513,9 +513,10 @@ To test compression, set the `compressors` URI option:
     MONGODB_URI="mongodb://localhost:27017/?compressors=zlib" rake
 
 Note that as of this writing, the driver supports
-[zlib](https://docs.mongodb.com/manual/reference/glossary/#term-zlib),
-[ztsd](https://docs.mongodb.com/manual/reference/glossary/#term-zstd) and
-[snappy](https://docs.mongodb.com/manual/reference/glossary/#term-snappy) compression.
+[ztsd](https://docs.mongodb.com/manual/reference/glossary/#term-zstd),
+[snappy](https://docs.mongodb.com/manual/reference/glossary/#term-snappy)
+and [zlib](https://docs.mongodb.com/manual/reference/glossary/#term-zlib)
+compression.
 
 Servers 4.2+ enable zlib by default; to test older servers, explicitly enable
 zlib compression when launching the server:
