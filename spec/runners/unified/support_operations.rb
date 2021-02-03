@@ -198,7 +198,7 @@ module Unified
               STDERR.puts "Error: #{e.class}: #{e}"
               entities.get(:error_list, store_errors) << {
                 error: "#{e.class}: #{e}",
-                time: Time.now.to_f,
+                observedAt: Time.now.to_f,
               }
             else
               raise
