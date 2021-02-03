@@ -89,10 +89,12 @@ module Unified
 
           if store_events = spec.use('storeEventsAsEntities')
             store_event_names = {}
-            store_events.each do |event_name, entity_name|
+            store_events.each do |entity_name, event_names|
               #event_name = event_name.gsub(/Event$/, '').gsub(/[A-Z]/) { |m| "_#{m}" }.upcase
               #event_name = event_name.gsub(/Event$/, '').sub(/./) { |m| m.upcase }
-              store_event_names[event_name] = entity_name
+              event_names.each do |event_name|
+                store_event_names[event_name] = entity_name
+              end
             end
             store_event_names.values.uniq.each do |entity_name|
               entities.set(:event_list, entity_name, [])
