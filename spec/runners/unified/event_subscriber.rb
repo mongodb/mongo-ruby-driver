@@ -74,7 +74,7 @@ module Unified
     def published(event)
       payload = {
         'name' => event.class.name.sub(/.*::/, '') + 'Event',
-        'time' => Time.now.to_f,
+        'observedAt' => Time.now.to_f,
         'address' => event.address.seed,
       }.tap do |entry|
         if event.respond_to?(:connection_id)
