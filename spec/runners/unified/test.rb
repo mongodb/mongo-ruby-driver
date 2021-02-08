@@ -105,7 +105,6 @@ module Unified
               end
             end
             opts[:sdam_proc] = lambda do |client|
-              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
               client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
             end
           end
