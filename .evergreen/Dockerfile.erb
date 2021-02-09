@@ -160,7 +160,7 @@ FROM <%= base_image %>
     # therefore install it the manual way.
     #
     # https://pip.pypa.io/en/stable/installing/
-    RUN curl --retry 3 -fL https://bootstrap.pypa.io/get-pip.py | python
+    RUN curl --retry 3 -fL https://raw.githubusercontent.com/pypa/get-pip/master/2.7/get-pip.py | python
 
   <% end %>
 
