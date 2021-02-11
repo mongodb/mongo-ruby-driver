@@ -31,43 +31,44 @@ module Unified
 
   class StoringEventSubscriber
     def initialize(&block)
-      @operations = {}
       @handler = block
     end
 
     def started(event)
-      started_at = Time.now
-      @operations[event.operation_id] = [event, started_at]
       @handler.call(
         'name' => event.class.name.sub(/.*::/, '') + 'Event',
         'commandName' => event.command_name,
-        'startTime' => started_at.to_f,
+        'databaseName' => event.database_name,
+        'observedAt' => Time.now.to_f,
         'address' => event.address.seed,
+        'requestId' => event.request_id,
+        'operationId' => event.operation_id,
+        'connectionId' => event.connection_id,
       )
     end
 
     def succeeded(event)
-      started_event, started_at = @operations.delete(event.operation_id)
-      raise "Started event for #{event.operation_id} not found" unless started_event
       @handler.call(
         'name' => event.class.name.sub(/.*::/, '') + 'Event',
-        'commandName' => started_event.command_name,
+        'commandName' => event.command_name,
         'duration' => event.duration,
-        'startTime' => started_at.to_f,
-        'address' => started_event.address.seed,
+        'observedAt' => Time.now.to_f,
+        'address' => event.address.seed,
+        'requestId' => event.request_id,
+        'operationId' => event.operation_id,
       )
     end
 
     def failed(event)
-      started_event, started_at = @operations.delete(event.operation_id)
-      raise "Started event for #{event.operation_id} not found" unless started_event
       @handler.call(
         'name' => event.class.name.sub(/.*::/, '') + 'Event',
-        'commandName' => started_event.command_name,
+        'commandName' => event.command_name,
         'duration' => event.duration,
         'failure' => event.failure,
-        'startTime' => started_at.to_f,
-        'address' => started_event.address.seed,
+        'observedAt' => Time.now.to_f,
+        'address' => event.address.seed,
+        'requestId' => event.request_id,
+        'operationId' => event.operation_id,
       )
     end
 
