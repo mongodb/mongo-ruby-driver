@@ -6,6 +6,7 @@ if arch.nil?
   exit 1
 end
 
-load File.join(File.dirname(__FILE__), 'tools.rb')
+$: << File.join(File.dirname(__FILE__), '../spec/shared/lib')
+require 'mrss/server_version_registry'
 
-puts ServerVersionRegistry.new(desired_version, arch).download_url
+puts Mrss::ServerVersionRegistry.new(desired_version, arch).download_url
