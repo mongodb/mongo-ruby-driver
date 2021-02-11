@@ -35,136 +35,11 @@ install_mlaunch_virtualenv
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
-mongo_version=`echo $MONGODB_VERSION |tr -d .`
-if test $mongo_version = latest; then
-  mongo_version=44
-fi
+calculate_server_args
+launch_ocsp_mock
+launch_server "$dbdir"
 
-args="--setParameter enableTestCommands=1"
-# diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
-# and mlaunch does not support specifying mongod-only parameters:
-# https://github.com/rueckstiess/mtools/issues/696
-# Pass it to 3.4 and newer servers where it is accepted by all daemons.
-if test $mongo_version -ge 34; then
-  args="$args --setParameter diagnosticDataCollectionEnabled=false"
-fi
-uri_options=
-if test "$TOPOLOGY" = replica-set; then
-  args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
-  export HAVE_ARBITER=1
-elif test "$TOPOLOGY" = sharded-cluster; then
-  args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
-  if test -z "$SINGLE_MONGOS"; then
-    args="$args --mongos 2"
-  fi
-else
-  args="$args --single"
-fi
-if test -n "$MMAPV1"; then
-  args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
-  uri_options="$uri_options&retryReads=false&retryWrites=false"
-fi
-if test "$AUTH" = auth; then
-  args="$args --auth --username bob --password pwd123"
-elif test "$AUTH" = x509; then
-  args="$args --auth --username bootstrap --password bootstrap"
-elif echo "$AUTH" |grep -q ^aws; then
-  args="$args --auth --username bootstrap --password bootstrap"
-  args="$args --setParameter authenticationMechanisms=MONGODB-AWS,SCRAM-SHA-1,SCRAM-SHA-256"
-  uri_options="$uri_options&authMechanism=MONGODB-AWS&authSource=\$external"
-fi
-
-if test -n "$OCSP"; then
-  if test -z "$OCSP_ALGORITHM"; then
-    echo "OCSP_ALGORITHM must be set if OCSP is set" 1>&2
-    exit 1
-  fi
-fi
-
-if test "$SSL" = ssl || test -n "$OCSP_ALGORITHM"; then
-  if test -n "$OCSP_ALGORITHM"; then
-    if test "$OCSP_MUST_STAPLE" = 1; then
-      server_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server-mustStaple.pem
-    else
-      server_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
-    fi
-    server_ca_path=spec/support/ocsp/$OCSP_ALGORITHM/ca.crt
-    server_client_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
-  else
-    server_cert_path=spec/support/certificates/server-second-level-bundle.pem
-    server_ca_path=spec/support/certificates/ca.crt
-    server_client_cert_path=spec/support/certificates/client.pem
-  fi
-
-  if test -n "$OCSP_ALGORITHM"; then
-    client_cert_path=spec/support/ocsp/$OCSP_ALGORITHM/server.pem
-  elif test "$AUTH" = x509; then
-    client_cert_path=spec/support/certificates/client-x509.pem
-
-    uri_options="$uri_options&authMechanism=MONGODB-X509"
-  elif echo $RVM_RUBY |grep -q jruby; then
-    # JRuby does not grok chained certificate bundles -
-    # https://github.com/jruby/jruby-openssl/issues/181
-    client_cert_path=spec/support/certificates/client.pem
-  else
-    client_cert_path=spec/support/certificates/client-second-level-bundle.pem
-  fi
-
-  uri_options="$uri_options&tls=true&"\
-"tlsCAFile=$server_ca_path&"\
-"tlsCertificateKeyFile=$client_cert_path"
-
-  args="$args --sslMode requireSSL"\
-" --sslPEMKeyFile $server_cert_path"\
-" --sslCAFile $server_ca_path"\
-" --sslClientCertificate $server_client_cert_path"
-fi
-
-# Docker forwards ports to the external interface, not to the loopback.
-# Hence we must bind to all interfaces here.
-if test -n "$BIND_ALL"; then
-  args="$args --bind_ip_all"
-fi
-
-# MongoDB servers pre-4.2 do not enable zlib compression by default
-if test "$COMPRESSOR" = snappy; then
-  args="$args --networkMessageCompressors snappy"
-elif test "$COMPRESSOR" = zlib; then
-  args="$args --networkMessageCompressors zlib"
-fi
-
-if test -n "$OCSP_ALGORITHM" || test -n "$OCSP_VERIFIER"; then
-  python3 -m pip install asn1crypto oscrypto flask
-fi
-
-ocsp_mock_pid=
-if test -n "$OCSP_ALGORITHM"; then
-  if test -z "$server_ca_path"; then
-    echo "server_ca_path must have been set" 1>&2
-    exit 1
-  fi
-  ocsp_args="--ca_file $server_ca_path"
-  if test "$OCSP_DELEGATE" = 1; then
-    ocsp_args="$ocsp_args \
---ocsp_responder_cert spec/support/ocsp/$OCSP_ALGORITHM/ocsp-responder.crt \
---ocsp_responder_key spec/support/ocsp/$OCSP_ALGORITHM/ocsp-responder.key \
-"
-  else
-    ocsp_args="$ocsp_args \
---ocsp_responder_cert spec/support/ocsp/$OCSP_ALGORITHM/ca.crt \
---ocsp_responder_key spec/support/ocsp/$OCSP_ALGORITHM/ca.key \
-"
-  fi
-  if test -n "$OCSP_STATUS"; then
-    ocsp_args="$ocsp_args --fault $OCSP_STATUS"
-  fi
-
-  # Bind to 0.0.0.0 for Docker
-  python3 spec/support/ocsp/ocsp_mock.py $ocsp_args -b 0.0.0.0 -p 8100 &
-  ocsp_mock_pid=$!
-fi
-
-python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+uri_options="$URI_OPTIONS"
 
 bundle_install
 
@@ -347,8 +222,8 @@ fi
 
 kill_jruby
 
-if test -n "$ocsp_mock_pid"; then
-  kill "$ocsp_mock_pid"
+if test -n "$OCSP_MOCK_PID"; then
+  kill "$OCSP_MOCK_PID"
 fi
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
