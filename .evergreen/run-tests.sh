@@ -12,9 +12,9 @@ fi
 
 . `dirname "$0"`/../spec/shared/shlib/distro.sh
 . `dirname "$0"`/../spec/shared/shlib/set_env.sh
+. `dirname "$0"`/../spec/shared/shlib/server.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-aws.sh
-. `dirname "$0"`/functions-server.sh
 . `dirname "$0"`/functions-config.sh
 
 arch=`host_distro`
