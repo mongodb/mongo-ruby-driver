@@ -14,8 +14,6 @@ Documentation
 High level documentation and usage examples are located
 [here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
 
-API documentation can be found [here](https://api.mongodb.org/ruby/).
-
 
 Support
 -------
