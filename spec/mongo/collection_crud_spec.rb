@@ -4353,4 +4353,58 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#insert' do
+    let(:collection) { authorized_collection }
+
+    context 'when argument is a hash' do
+      context 'without options' do
+        it 'delegates to insert_one' do
+          collection.find.first.should be nil
+
+          expect(collection).to receive(:insert_one).with({_id: 42}, {}).and_call_original
+          collection.insert(_id: 42)
+
+          collection.find.first.should == {'_id' => 42}
+        end
+      end
+
+      context 'with options' do
+        it 'delegates to insert_one' do
+          collection.find.first.should be nil
+
+          expect(collection).to receive(:insert_one).with({_id: 42}, {foo: 1}).and_call_original
+          collection.insert({_id: 42}, foo: 1)
+
+          collection.find.first.should == {'_id' => 42}
+        end
+      end
+    end
+
+    context 'when argument is an array' do
+      context 'without options' do
+        it 'delegates to insert_many' do
+          collection.find.first.should be nil
+
+          expect(collection).to receive(:insert_many).with(
+            [{_id: 42}, {_id: 43}], {}).and_call_original
+          collection.insert([{_id: 42}, {_id: 43}])
+
+          collection.find.sort(_id: 1).to_a.should == [{'_id' => 42}, {'_id' => 43}]
+        end
+      end
+
+      context 'with options' do
+        it 'delegates to insert_many' do
+          collection.find.first.should be nil
+
+          expect(collection).to receive(:insert_many).with(
+            [{_id: 42}, {_id: 43}], {ordered: true}).and_call_original
+          collection.insert([{_id: 42}, {_id: 43}], ordered: true)
+
+          collection.find.sort(_id: 1).to_a.should == [{'_id' => 42}, {'_id' => 43}]
+        end
+      end
+    end
+  end
 end

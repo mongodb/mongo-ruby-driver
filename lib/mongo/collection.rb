@@ -542,6 +542,35 @@ module Mongo
       "#<Mongo::Collection:0x#{object_id} namespace=#{namespace}>"
     end
 
+    # Insert one or multiple documents into the collection.
+    #
+    # If the argument is an Array, this method delegates to +insert_many+
+    # and inserts the specified documents. Otherwise this method delegates
+    # to +insert_one+ to insert a single document.
+    #
+    # @example Insert one document into the collection.
+    #   collection.insert({ name: 'John' })
+    #
+    # @example Insert multiple document into the collection.
+    #   collection.insert([ {name: 'John' }, { name: 'Jane' }])
+    #
+    # @param [ Hash | Array<Hash> ] document_or_array The document to insert
+    #   or the array of documents to insert.
+    # @param [ Hash ] opts The insert options.
+    #
+    # @option options [ true | false ] :ordered When inserting multiple
+    #   documents, whether the operations should be executed in order.
+    # @option opts [ Session ] :session The session to use for the operation.
+    #
+    # @return [ Result ] The database response wrapper.
+    def insert(document_or_array, opts = {})
+      if document_or_array.is_a?(Array)
+        insert_many(document_or_array, opts)
+      else
+        insert_one(document_or_array, opts)
+      end
+    end
+
     # Insert a single document into the collection.
     #
     # @example Insert a document into the collection.

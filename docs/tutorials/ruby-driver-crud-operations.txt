@@ -60,30 +60,58 @@ version of Ruby:
 Creating Documents
 ==================
 
-To insert documents into a collection, select a
-collection on the client and call ``insert_one`` or ``insert_many``.
+To insert documents into a collection, select a collection on the client and
+call ``insert`` with either a ``Hash`` instance to insert a single document
+or an ``Array`` of hashes to insert multiple documents:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
+
+  result = client[:artists].insert(name: 'FKA Twigs')
+  result.n # returns 1, because 1 document was inserted.
+
+  result = client[:artists].insert([
+    { name: 'Flying Lotus' },
+    { name: 'Aphex Twin' },
+  ])
+  result.inserted_count # returns 2, because 2 documents were inserted.
+
+The collection object also provides the ``insert_one`` and ``insert_many``
+methods to explicitly insert a single document or multiple documents.
+These may be preferable to ``insert`` when inserting objects that behave
+like Ruby hashes or arrays but are not instances of ``Hash`` nor ``Array``::
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
+
+  result = client[:artists].insert_one(name: 'FKA Twigs')
+  result.n # returns 1, because 1 document was inserted.
+
+  result = client[:artists].insert_many([
+    { name: 'Flying Lotus' },
+    { name: 'Aphex Twin' },
+  ])
+  result.inserted_count # returns 2, because 2 documents were inserted.
+
+All insert methods take options as the last argument. The following
+options are applicable for all inserts:
+
+- ``:session`` The :ref:`Session object <sessions>` specifying the session
+  to use for the operation.
+
+The following options are applicable when inserting multiple documents:
+
+- ``:ordered`` If ``true``, documents are inserted in the specified order
+  until either all are successfully inserted or an error is encountered.
+  If ``false``, any errors (such as duplicate ``_id`` violations) cause the
+  respective documents to be skipped and insertion to continue with the next
+  specified document.
 
 Insert operations return a ``Mongo::Operation::Result`` object which
 gives you information about the insert itself.
 
-On MongoDB 2.6 and later, if the insert fails, an exception is
-raised, because write commands are used.
-
-On MongoDB 2.4, an exception is only raised if the insert fails and the
-:manual:`write concern</reference/write-concern/>` is 1 or higher.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-
-  result = client[:artists].insert_one( { :name => 'FKA Twigs' } )
-  result.n # returns 1, because 1 document was inserted.
-
-  result = client[:artists].insert_many([
-    { :name => 'Flying Lotus' },
-    { :name => 'Aphex Twin' }
-  ])
-  result.inserted_count # returns 2, because 2 documents were inserted.
 
 .. _specify-decimal128:
 
