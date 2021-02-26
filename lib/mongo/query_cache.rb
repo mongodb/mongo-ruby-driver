@@ -238,5 +238,35 @@ module Mongo
         end
       end
     end
+
+    # Rack middleware that activates the query cache for each request.
+    class Middleware
+
+      # Instantiate the middleware.
+      #
+      # @example Create the new middleware.
+      #   Middleware.new(app)
+      #
+      # @param [ Object ] app The rack application stack.
+      def initialize(app)
+        @app = app
+      end
+
+      # Enable query cache and execute the request.
+      #
+      # @example Execute the request.
+      #   middleware.call(env)
+      #
+      # @param [ Object ] env The environment.
+      #
+      # @return [ Object ] The result of the call.
+      def call(env)
+        QueryCache.cache do
+          @app.call(env)
+        end
+      ensure
+        QueryCache.clear
+      end
+    end
   end
 end
