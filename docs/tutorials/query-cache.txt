@@ -20,7 +20,7 @@ the cached reuslts to prevent unnecessary roundtrips to the database.
 Usage
 =====
 
-The query cache is disabled by default. It cache can be enabled on the global
+The query cache is disabled by default. It can be enabled on the global
 scope as well as within the context of a specific block. The driver also
 provides a :ref:`Rack middleware <query-cache-middleware>` to enable the
 query cache automatically for each web request.
