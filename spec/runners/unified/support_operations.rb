@@ -152,6 +152,70 @@ module Unified
       assert_session_pinned(op, false)
     end
 
+    def _loop(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        ops = args.use!('operations')
+
+        if store_errors = args.use('storeErrorsAsEntity')
+          entities.set(:error_list, store_errors, [])
+        end
+
+        if store_failures = args.use('storeFailuresAsEntity')
+          entities.set(:failure_list, store_failures, [])
+        end
+
+        store_iterations = args.use('storeIterationsAsEntity')
+        iterations = 0
+        store_successes = args.use('storeSuccessesAsEntity')
+        successes = 0
+
+        loop do
+          break if stop?
+          begin
+            ops.map(&:dup).each do |op|
+              execute_operation(op)
+              successes += 1
+            end
+          rescue Unified::Error::ResultMismatch => e
+            if store_failures
+              STDERR.puts "Failure: #{e.class}: #{e}"
+              entities.get(:failure_list, store_failures) << {
+                error: "#{e.class}: #{e}",
+                time: Time.now.to_f,
+              }
+            elsif store_errors
+              STDERR.puts "Failure: #{e.class}: #{e} (reporting as error)"
+              entities.get(:error_list, store_errors) << {
+                error: "#{e.class}: #{e}",
+                time: Time.now.to_f,
+              }
+            else
+              raise
+            end
+          rescue => e
+            if store_errors
+              STDERR.puts "Error: #{e.class}: #{e}"
+              entities.get(:error_list, store_errors) << {
+                error: "#{e.class}: #{e}",
+                observedAt: Time.now.to_f,
+              }
+            else
+              raise
+            end
+          end
+          iterations += 1
+        end
+
+        if store_iterations
+          entities.set(:iteration_count, store_iterations, iterations)
+        end
+        if store_successes
+          entities.set(:success_count, store_successes, successes)
+        end
+      end
+    end
+
     private
 
     def assert_no_arguments(op)

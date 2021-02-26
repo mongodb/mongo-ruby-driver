@@ -87,6 +87,29 @@ module Unified
             opts = {}
           end
 
+          if store_events = spec.use('storeEventsAsEntities')
+            store_event_names = {}
+            store_events.each do |entity_name, event_names|
+              #event_name = event_name.gsub(/Event$/, '').gsub(/[A-Z]/) { |m| "_#{m}" }.upcase
+              #event_name = event_name.gsub(/Event$/, '').sub(/./) { |m| m.upcase }
+              event_names.each do |event_name|
+                store_event_names[event_name] = entity_name
+              end
+            end
+            store_event_names.values.uniq.each do |entity_name|
+              entities.set(:event_list, entity_name, [])
+            end
+            subscriber = StoringEventSubscriber.new do |payload|
+              if entity_name = store_event_names[payload['name']]
+                entities.get(:event_list, entity_name) << payload
+              end
+            end
+            opts[:sdam_proc] = lambda do |client|
+              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+            end
+          end
+
           create_client(**opts).tap do |client|
             if oe = spec.use('observeEvents')
               oe.each do |event|
@@ -139,7 +162,7 @@ module Unified
     end
 
     def set_initial_data
-      @spec['initialData'].each do |entity_spec|
+      @spec['initialData']&.each do |entity_spec|
         spec = UsingHash[entity_spec]
         collection = root_authorized_client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         collection.drop
@@ -166,6 +189,8 @@ module Unified
     end
 
     def run
+      kill_sessions
+
       test_spec = UsingHash[self.test_spec]
       ops = test_spec.use!('operations')
       execute_operations(ops)
@@ -176,6 +201,27 @@ module Unified
       disable_fail_points
     end
 
+    def stop!
+      @stop = true
+    end
+
+    def stop?
+      !!@stop
+    end
+
+    def cleanup
+      if $kill_transactions || true
+        kill_sessions
+        $kill_transactions = nil
+      end
+
+      entities[:client]&.each do |id, client|
+        client.close
+      end
+    end
+
+    private
+
     def execute_operations(ops)
       ops.each do |op|
         execute_operation(op)
@@ -185,9 +231,13 @@ module Unified
     def execute_operation(op)
       use_all(op, 'operation', op) do |op|
         name = Utils.underscore(op.use!('name'))
+        method_name = name
+        if name.to_s == 'loop'
+          method_name = "_#{name}"
+        end
         if expected_error = op.use('expectError')
           begin
-            send(name, op)
+            send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
               unless BSON::String::IllegalKey === e
@@ -227,7 +277,7 @@ module Unified
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
         else
-          result = send(name, op)
+          result = send(method_name, op)
           if expected_result = op.use('expectResult')
             if !expected_result.empty? && result.nil?
               raise Error::ResultMismatch, "Actual result nil but expected result #{expected_result}"
@@ -263,8 +313,20 @@ module Unified
       use_sub(op, 'arguments', &block)
     end
 
-    def cleanup
-      if $kill_transactions || true
+    def disable_fail_points
+      if $disable_fail_points
+        $disable_fail_points.each do |(fail_point_command, address)|
+          client = ClusterTools.instance.direct_client(address,
+            database: 'admin')
+          client.command(configureFailPoint: fail_point_command['configureFailPoint'],
+            mode: 'off')
+        end
+        $disable_fail_points = nil
+      end
+    end
+
+    def kill_sessions
+      if options[:kill_sessions] != false
         begin
           root_authorized_client.command(
             killAllSessions: [],
@@ -278,23 +340,6 @@ module Unified
             raise
           end
         end
-        $kill_transactions = nil
-      end
-
-      entities[:client]&.each do |id, client|
-        client.close
-      end
-    end
-
-    def disable_fail_points
-      if $disable_fail_points
-        $disable_fail_points.each do |(fail_point_command, address)|
-          client = ClusterTools.instance.direct_client(address,
-            database: 'admin')
-          client.command(configureFailPoint: fail_point_command['configureFailPoint'],
-            mode: 'off')
-        end
-        $disable_fail_points = nil
       end
     end
 

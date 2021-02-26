@@ -28,4 +28,64 @@ module Unified
       @wanted_events[kind] = true
     end
   end
+
+  class StoringEventSubscriber
+    def initialize(&block)
+      @handler = block
+    end
+
+    def started(event)
+      @handler.call(
+        'name' => event.class.name.sub(/.*::/, '') + 'Event',
+        'commandName' => event.command_name,
+        'databaseName' => event.database_name,
+        'observedAt' => Time.now.to_f,
+        'address' => event.address.seed,
+        'requestId' => event.request_id,
+        'operationId' => event.operation_id,
+        'connectionId' => event.connection_id,
+      )
+    end
+
+    def succeeded(event)
+      @handler.call(
+        'name' => event.class.name.sub(/.*::/, '') + 'Event',
+        'commandName' => event.command_name,
+        'duration' => event.duration,
+        'observedAt' => Time.now.to_f,
+        'address' => event.address.seed,
+        'requestId' => event.request_id,
+        'operationId' => event.operation_id,
+      )
+    end
+
+    def failed(event)
+      @handler.call(
+        'name' => event.class.name.sub(/.*::/, '') + 'Event',
+        'commandName' => event.command_name,
+        'duration' => event.duration,
+        'failure' => event.failure,
+        'observedAt' => Time.now.to_f,
+        'address' => event.address.seed,
+        'requestId' => event.request_id,
+        'operationId' => event.operation_id,
+      )
+    end
+
+    def published(event)
+      payload = {
+        'name' => event.class.name.sub(/.*::/, '') + 'Event',
+        'observedAt' => Time.now.to_f,
+        'address' => event.address.seed,
+      }.tap do |entry|
+        if event.respond_to?(:connection_id)
+          entry['connectionId'] = event.connection_id
+        end
+        if event.respond_to?(:reason)
+          entry['reason'] = event.reason
+        end
+      end
+      @handler.call(payload)
+    end
+  end
 end
