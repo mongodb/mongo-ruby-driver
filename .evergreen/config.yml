@@ -37,7 +37,7 @@ functions:
         working_dir: "src"
         script: |
           set -ex
-
+          
           git submodule update --init --recursive
 
   "fetch egos":
@@ -46,15 +46,15 @@ functions:
         working_dir: "src"
         script: |
           set -e
-
+          
           # Python version:
           #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
-
+          
           # C version:
           curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
 
-
+  
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -130,7 +130,7 @@ functions:
 
           # See what we've done
           cat expansion.yml
-
+  
 
     # Load the expansion file to make an evergreen variable with the current
     # unique version
@@ -394,7 +394,7 @@ post:
 
 tasks:
 
-
+  
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -416,7 +416,7 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
-
+  
 axes:
 
   - id: preload
@@ -750,32 +750,32 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-
+      
       - id: pass
         display_name: pass
         variables:
           OCSP_CONNECTIVITY: pass
-
+      
       - id: fail
         display_name: fail
         variables:
           OCSP_CONNECTIVITY: fail
-
+      
 
   - id: extra-uri-options
     display_name: extra URI options
     values:
       - id: none
         display_name: None
-
+      
       - id: "tlsInsecure=true"
         variables:
           EXTRA_URI_OPTIONS: "tlsInsecure=true"
-
+      
       - id: "tlsAllowInvalidCertificates=true"
         variables:
           EXTRA_URI_OPTIONS: "tlsAllowInvalidCertificates=true"
-
+      
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
@@ -1095,7 +1095,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "ruby-2.3"
-      mongodb-version: "3.6"
+      mongodb-version: "4.2"
       topology: replica-set
       compressor: 'zstd'
       os: ubuntu1604
@@ -1104,15 +1104,15 @@ buildvariants:
       - name: "test-mlaunch"
 
 #  - matrix_name: "zstd-jruby"
-#     matrix_spec:
-#       ruby: jruby-9.2
-#       mongodb-version: "4.4"
+#    matrix_spec:
+#      ruby: jruby-9.2
+#      mongodb-version: "4.4"
 #      topology: replica-set
-#       compressor: 'zstd'
-#       os: ubuntu1604
+#      compressor: 'zstd'
+#      os: ubuntu1604
 #    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-#     tasks:
-#       - name: "test-mlaunch"
+#    tasks:
+#      - name: "test-mlaunch"
 
 #   - matrix_name: "ruby-head"
 #     matrix_spec:
@@ -1289,7 +1289,7 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1304,7 +1304,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1319,7 +1319,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1334,7 +1334,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1349,7 +1349,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1364,7 +1364,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1379,7 +1379,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1394,7 +1394,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1409,7 +1409,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1424,7 +1424,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
+  
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:
