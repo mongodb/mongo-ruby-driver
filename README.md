@@ -14,7 +14,10 @@ Documentation
 High level documentation and usage examples are located
 [here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
 
-API documentation can be found [here](https://api.mongodb.org/ruby/).
+API documentation for the most recent release can be found
+[here](https://docs.mongodb.com/ruby-driver/current/api/).
+To build API documentation for the master branch, check out the
+repository locally and run `rake docs`.
 
 
 Support
