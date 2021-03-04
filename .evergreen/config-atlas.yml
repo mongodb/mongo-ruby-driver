@@ -396,6 +396,10 @@ axes:
         display_name: "latest"
         variables:
           MONGODB_VERSION: "latest"
+      - id: "4.7"
+        display_name: "4.7"
+        variables:
+          MONGODB_VERSION: "4.7"
       - id: "4.4"
         display_name: "4.4"
         variables:
