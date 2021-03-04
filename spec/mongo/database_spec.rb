@@ -319,20 +319,39 @@ describe Mongo::Database do
         described_class.new(root_authorized_client, 'admin')
       end
 
-      it 'does not include system collections' do
-        expect(result.none? { |name| name =~ /(^|\.)system\./ }).to be true
+      shared_examples 'does not include system collections' do
+        it 'does not include system collections' do
+          expect(result.none? { |name| name =~ /(^|\.)system\./ }).to be true
+        end
       end
 
-      context 'server 3.0+' do
-        min_server_fcv '3.0'
+      context 'server 4.7+' do
+        min_server_fcv '4.7'
+        # https://jira.mongodb.org/browse/SERVER-35804
+        require_topology :single, :replica_set
+
+        include_examples 'does not include system collections'
 
         it 'returns results' do
           expect(result).to include('acol')
         end
       end
 
-      context 'server 2.6-' do
+      context 'server 3.0-4.5' do
+        min_server_fcv '3.0'
+        max_server_version '4.5'
+
+        include_examples 'does not include system collections'
+
+        it 'returns results' do
+          expect(result).to include('acol')
+        end
+      end
+
+      context 'server 2.6' do
         max_server_version '2.6'
+
+        include_examples 'does not include system collections'
 
         it 'returns results' do
           expect(result).to include('admin.acol')
