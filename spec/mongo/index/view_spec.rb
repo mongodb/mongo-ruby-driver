@@ -305,7 +305,8 @@ describe Mongo::Index::View do
                     { key: { testing: -1 }, unique: true },
                     { commit_quorum: 'unsupported-value' }
                   )
-                end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration/)
+                # 4.4.4 changed the text of the error message
+                end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
               end
             end
           end
@@ -964,7 +965,8 @@ describe Mongo::Index::View do
           it 'raises an exception' do
             expect do
               view.create_one({ 'x' => 1 }, commit_quorum: 'unsupported-value')
-            end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration/)
+            # 4.4.4 changed the text of the error message
+            end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
           end
         end
       end
