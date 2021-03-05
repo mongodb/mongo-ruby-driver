@@ -650,6 +650,8 @@ describe Mongo::Index::View do
     end
 
     context 'when using bucket option' do
+      # Option is removed in 4.9
+      max_server_version '4.7'
 
       let(:spec) do
         { 'any' => 1 }
@@ -756,6 +758,8 @@ describe Mongo::Index::View do
       end
 
       context 'when using bucket option' do
+        # Option is removed in 4.9
+        max_server_version '4.7'
 
         let(:spec) do
           { 'any' => 1 }
