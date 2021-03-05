@@ -193,6 +193,14 @@ EOT
           return
         end
 
+        if k == 'updateDescription'
+          # Change stream result - verify subset, not exact match
+          expected.fetch(k).each do |sub_k, sub_v|
+            {sub_k => sub_v}.should == {sub_k => actual.fetch(k).fetch(sub_k)}
+          end
+          return
+        end
+
         if expected[k].is_a?(Time)
           expect(k => actual[k].utc.to_s).to eq(k => expected[k].utc.to_s)
         else
