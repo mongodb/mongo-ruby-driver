@@ -275,6 +275,28 @@ module Mongo
         num_inserts > 1  || num_updates > 1 || num_deletes > 1
       end
 
+      def maybe_add_server_api(client)
+        if client.nil?
+          raise ArgumentError, 'Client must be provided'
+        end
+
+        if server_api = client.options[:server_api]
+          main_document = @main_document.dup
+          if version = server_api[:version]
+            main_document['apiVersion'] = version
+          end
+          if server_api[:strict]
+            main_document['apiStrict'] = true
+          end
+          if server_api[:deprecation_errors]
+            main_document['apiDeprecationErrors'] = true
+          end
+          Msg.new(@flags, @options, main_document, *@sequences)
+        else
+          self
+        end
+      end
+
       private
 
       # Validate that the documents in this message are all smaller than the

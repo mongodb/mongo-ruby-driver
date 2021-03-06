@@ -16,6 +16,7 @@ Databases
 The driver provides various helpers on database objects for executing
 commands, getting collection lists, and administrative tasks.
 
+
 List Collections
 ````````````````
 
@@ -24,11 +25,12 @@ To get a list of collections or collection names for a database, use
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
   database = client.database
 
   database.collections      # Returns an array of Collection objects.
   database.collection_names # Returns an array of collection names as strings.
+
 
 Arbitrary Comands
 `````````````````
@@ -37,11 +39,20 @@ To execute any command on the database, use the ``command`` method.
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
   database = client.database
 
   result = database.command(:ismaster => 1)
   result.first # Returns the BSON::Document returned from the server.
+
+.. note::
+
+  Specifying server API version as a client option and also specifying
+  any of the respective command parameters to the ``command`` method
+  (i.e. the ``apiVersion``, ``apiStrict`` and ``apiDeprecationErrors``
+  command parameters) at the same time is not allowed, and the result
+  of attempting to do so is undefined.
+
 
 Drop Database
 `````````````

@@ -59,14 +59,25 @@ module Mongo
 
       # Returns a Protocol::Message or nil as reply.
       def dispatch_message(connection, client, options = {})
-        message = build_message(connection)
+        message = build_message(connection, client)
         message = message.maybe_encrypt(connection, client)
         reply = connection.dispatch([ message ], operation_id, client, options)
         [reply, connection.description]
       end
 
-      def build_message(connection)
-        message(connection)
+      def build_message(connection, client)
+        msg = message(connection)
+        # We do not supply the client to the operations layer from end_sessions
+        # method in session pool.
+        # TODO fix this
+        if client &&
+          Protocol::Msg === msg &&
+          !msg.documents.first[:getMore] &&
+          !(session && session.in_transaction? && !session.starting_transaction?)
+        then
+          msg = msg.maybe_add_server_api(client)
+        end
+        msg
       end
 
       def process_result(result, connection)

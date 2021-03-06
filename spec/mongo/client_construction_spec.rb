@@ -1601,6 +1601,68 @@ describe Mongo::Client do
           end
         end
       end
+
+      context ':server_api version' do
+        context 'is a hash with symbol keys' do
+          context 'using known keys' do
+            let(:options) do
+              {server_api: {
+                version: '1',
+                strict: true,
+                deprecation_errors: false,
+              }}
+            end
+
+            it 'is accepted' do
+              client.options[:server_api].should == {
+                'version' => '1',
+                'strict' => true,
+                'deprecation_errors' => false,
+              }
+            end
+          end
+
+          context 'using an unknown version' do
+            let(:options) do
+              {server_api: {
+                version: '42',
+              }}
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, 'Unknown server API version: 42')
+            end
+          end
+
+          context 'using an unknown option' do
+            let(:options) do
+              {server_api: {
+                vversion: '1',
+              }}
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, 'Unknown keys under :server_api: "vversion"')
+            end
+          end
+
+          context 'using a value which is not a hash' do
+            let(:options) do
+              {server_api: 42}
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, ':server_api value must be a hash: 42')
+            end
+          end
+        end
+      end
     end
 
     context 'when making a block client' do

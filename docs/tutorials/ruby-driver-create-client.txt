@@ -494,6 +494,23 @@ Ruby Options
      - ``Proc``
      - none
 
+   * - ``:server_api``
+     - The server API version requested.
+       This is a hash with the following allowed items:
+       - ``:version`` (String)
+       - ``:strict`` (true or false)
+       - ``:deprecation_errors`` (true or false)
+       
+       Note that the server API version can only be specified as a Ruby option,
+       not as a URI option, and it cannot be overridden for database and
+       collection objects.
+       
+       If server API version is changed on a client (such as via the ``with``
+       call), the entire API version hash is replaced with the new specification
+       (the old and the new individual fields are NOT merged).
+     - ``Hash``
+     - none
+
    * - ``:server_selection_timeout``
      - The number of seconds to wait for an appropriate server to
        be selected for an operation to be executed before raising an exception.
@@ -1121,7 +1138,7 @@ but doing so will remove any previously assigned hooks. It is recommended to use
 the ``Array#push`` or ``Array#unshift`` methods to add new hooks.
 
 It is also possible to remove hooks from ``Mongo.tls_context_hooks`` by storing
-a reference to the ``Proc``s somewhere else in the application, and then using
+a reference to the Procs somewhere else in the application, and then using
 ``Array#delete_if`` to remove the desired hooks.
 
 ..warning ::

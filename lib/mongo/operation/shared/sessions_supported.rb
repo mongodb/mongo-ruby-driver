@@ -222,7 +222,7 @@ module Mongo
         end
       end
 
-      def build_message(connection)
+      def build_message(connection, client)
         super.tap do |message|
           if session
             # Serialize the message to detect client-side problems,
