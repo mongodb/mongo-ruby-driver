@@ -4,7 +4,7 @@ describe Mongo::Auth::LDAP::Conversation do
 
   let(:user) do
     Mongo::Auth::User.new(
-      database: Mongo::Database::ADMIN,
+      database: '$external',
       user: 'user',
       password: 'pencil'
     )

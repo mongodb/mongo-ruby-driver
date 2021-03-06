@@ -34,34 +34,13 @@ module Mongo
         # @param [ Server::Connection ] connection The connection being
         #   authenticated.
         #
-        # @return [ Protocol::Query ] The first X.509 conversation message.
+        # @return [ Protocol::Message ] The first X.509 conversation message.
         #
         # @since 2.0.0
         def start(connection)
-          login = client_first_document
-          if connection && connection.features.op_msg_enabled?
-            selector = login
-            # The only valid database for X.509 authentication is $external.
-            if user.auth_source != '$external'
-              user_name_msg = if user.name
-                " #{user.name}"
-              else
-                ''
-              end
-              raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
-            end
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = '$external'
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              Auth::EXTERNAL,
-              Database::COMMAND,
-              login,
-              limit: -1
-            )
-          end
+          validate_external_auth_source
+          selector = client_first_document
+          build_message(connection, '$external', selector)
         end
 
         # Returns the hash to provide to the server in the handshake
