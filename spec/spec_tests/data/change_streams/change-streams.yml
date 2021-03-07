@@ -371,7 +371,6 @@ tests:
             db: *database_name
             coll: *collection_name
           updateDescription:
-            removedFields: []
             updatedFields:
               x:
                 $numberInt: "2"

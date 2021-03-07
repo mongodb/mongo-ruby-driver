@@ -82,7 +82,7 @@ describe Mongo::Collection::View::Explainable do
         it 'triggers server error' do
           lambda do
             explain
-          end.should raise_error(Mongo::Error::OperationFailure, /verbosity string must be/)
+          end.should raise_error(Mongo::Error::OperationFailure, /verbosity string must be|value .* for field .*verbosity.* is not a valid value/)
         end
       end
 
