@@ -18,6 +18,7 @@ module Mongo
     # MongoDB Wire protocol Compressed message.
     #
     # This is a bi-directional message that compresses another opcode.
+    # See https://github.com/mongodb/specifications/blob/master/source/compression/OP_COMPRESSED.rst
     #
     # @api semipublic
     #
@@ -46,11 +47,18 @@ module Mongo
       # @since 2.5.0
       ZLIB = 'zlib'.freeze
 
+      # The zstd compressor identifier.
+      ZSTD = 'zstd'.freeze
+
+      # The byte signaling that the message has been compressed with zstd.
+      ZSTD_BYTE = 3.chr.force_encoding(BSON::BINARY).freeze
+
       # The compressor identifier to byte map.
       #
       # @since 2.5.0
       COMPRESSOR_ID_MAP = {
         SNAPPY => SNAPPY_BYTE,
+        ZSTD => ZSTD_BYTE,
         ZLIB => ZLIB_BYTE
       }.freeze
 
@@ -149,6 +157,9 @@ module Mongo
           Zlib::Deflate.deflate(buffer.to_s, @zlib_compression_level).force_encoding(BSON::BINARY)
         elsif @compressor_id == SNAPPY_BYTE
           Snappy.deflate(buffer.to_s).force_encoding(BSON::BINARY)
+        elsif @compressor_id == ZSTD_BYTE
+          # DRIVERS-600 will allow this to be configurable in the future
+          Zstd.compress(buffer.to_s).force_encoding(BSON::BINARY)
         end
       end
 
@@ -159,6 +170,8 @@ module Mongo
           BSON::ByteBuffer.new(Zlib::Inflate.inflate(compressed_message))
         elsif @compressor_id == SNAPPY_BYTE
           BSON::ByteBuffer.new(Snappy.inflate(compressed_message))
+        elsif @compressor_id == ZSTD_BYTE
+          BSON::ByteBuffer.new(Zstd.decompress(compressed_message))
         end
       end
 

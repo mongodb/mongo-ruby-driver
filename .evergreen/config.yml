@@ -615,6 +615,10 @@ axes:
         display_name: Snappy
         variables:
           COMPRESSOR: "snappy"
+      - id: "zstd"
+        display_name: Zstd
+        variables:
+          COMPRESSOR: "zstd"
 
   - id: retry-reads
     display_name: Retry Reads
@@ -791,7 +795,7 @@ buildvariants:
     display_name: "Docker ${os} ${mongodb-version} ${topology} ${ruby} ${preload}"
     tasks:
       - name: "test-docker"
-  
+
   - matrix_name: "docker"
     matrix_spec:
       ruby: "ruby-2.7"
@@ -1104,6 +1108,41 @@ buildvariants:
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
+
+  - matrix_name: "zstd-auth"
+    matrix_spec:
+      auth-and-ssl: "auth-and-ssl"
+      ruby: "ruby-2.7"
+      mongodb-version: "4.2"
+      topology: "*"
+      compressor: 'zstd'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "zstd-noauth"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: "ruby-2.3"
+      mongodb-version: "4.2"
+      topology: replica-set
+      compressor: 'zstd'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+#  - matrix_name: "zstd-jruby"
+#    matrix_spec:
+#      ruby: jruby-9.2
+#      mongodb-version: "4.4"
+#      topology: replica-set
+#      compressor: 'zstd'
+#      os: ubuntu1604
+#    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+#    tasks:
+#      - name: "test-mlaunch"
 
 #   - matrix_name: "ruby-head"
 #     matrix_spec:

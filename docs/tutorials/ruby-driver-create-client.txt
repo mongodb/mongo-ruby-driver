@@ -319,9 +319,8 @@ Ruby Options
      - none
 
    * - ``:compressors``
-     - A list of potential compressors to use, in order of preference. The driver chooses the first
-       compressor that is also supported by the server. Currently the driver only supports 'snappy'
-       and 'zlib'.
+     - A list of potential compressors to use, in order of preference.
+       Please see below for details on how the driver implements compression.
      - ``Array<String>``
      - none
 
@@ -740,17 +739,9 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - compressors=Strings
      - ``:compressors => Array<String>``
 
-       Specified as a comma-separated list. The Ruby driver currently supports snappy
-       and zlib compression algorithms; the first algorithm in the list that the server
-       also supports will be used. Compression must be explicitly enabled by
-       specifying the desired compression algorithm; use "snappy,zlib" for maximum server
-       compatibility. Snappy compression requires separate installation of the
-       snappy Ruby library; if the snappy Ruby library is not available,
-       the driver raises an error during ``Mongo::Client`` creation.
-       When using MongoDB 4.0 and earlier, zlib compression is supported by the
-       server but must be manually enabled; if zlib is the only compression algorithm
-       requested (or available due to missing snappy Ruby library), 4.0 and
-       earlier servers must be configured to explicitly enable zlib compression.
+       A comma-separated list of potential compressors to use, in order of
+       preference. Please see below for details on how the driver implements
+       compression.
 
    * - connect=String
      - ``:connect => Symbol``
@@ -1663,6 +1654,40 @@ option to the client instance.
 .. code-block:: ruby
 
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :truncate_logs => false )
+
+
+Compression
+===========
+
+To use wire protocol compression, at least one compressor must be explicitly
+requested using either the ``:compressors`` Ruby option or the ``compressors``
+URI option. If no compressors are explicitly requested, the driver will not
+use compression, even if the required dependencies for one or more compressors
+are present on the system.
+
+The driver chooses the first compressor of the ones requested that is also
+supported by the server. The driver currently supports ``zstd``, ``snappy`` and
+``zlib`` compressors. ``zstd`` compressor is recommended as it produces
+the highest compression at the same CPU consumption compared to the other
+compressors. For maximum server compatibility all three compressors can be
+specified, e.g. as ``compressors: ["zstd", "snappy", "zlib"]``.
+
+``zstd`` compressor requires the 
+`zstd-ruby <https://rubygems.org/gems/zstd-ruby>`_ library to be installed.
+``snappy`` compressor requires the
+`snappy <https://rubygems.org/gems/snappy>`_ library to be installed.
+If ``zstd`` or ``snappy`` compression is requested, and the respective
+library is not loadable, the driver will raise an error during
+``Mongo::Client`` creation. ``zlib`` compression requires the ``zlib``
+standard library extension to be present.
+
+The server support for various compressors is as follows:
+
+- ``zstd`` requires and is enabled by default in MongoDB 4.2 or higher.
+- ``snappy`` requires MongoDB 3.4 or higher and is enabled by default in
+  MongoDB 3.6 or higher.
+- ``zlib`` requires MongoDB 3.6 or higher and is enabled by default in
+  MongoDB 4.2 and higher.
 
 
 Development Configuration

@@ -183,6 +183,11 @@ if test "$COMPRESSOR" = snappy; then
   add_uri_option compressors=snappy
 fi
 
+if test "$COMPRESSOR" = zstd; then
+  add_uri_option compressors=zstd
+fi
+
+
 echo "Running tests"
 set +e
 if test -n "$TEST_CMD"; then
