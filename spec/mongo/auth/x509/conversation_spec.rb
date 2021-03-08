@@ -4,7 +4,7 @@ describe Mongo::Auth::X509::Conversation do
 
   let(:user) do
     Mongo::Auth::User.new(
-      database: Mongo::Database::ADMIN,
+      database: '$external',
       user: 'user',
     )
   end
@@ -35,7 +35,7 @@ describe Mongo::Auth::X509::Conversation do
 
       let(:user) do
         Mongo::Auth::User.new(
-          database: Mongo::Database::ADMIN
+          database: '$external',
         )
       end
 
@@ -52,7 +52,7 @@ describe Mongo::Auth::X509::Conversation do
 
       let(:user) do
         Mongo::Auth::User.new(
-          database: Mongo::Database::ADMIN,
+          database: '$external',
           user: nil
         )
       end

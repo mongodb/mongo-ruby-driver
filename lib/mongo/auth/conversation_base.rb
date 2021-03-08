@@ -47,6 +47,38 @@ module Mongo
       def speculative_auth_document
         nil
       end
+
+      # @return [ Protocol::Message ] The message to send.
+      def build_message(connection, auth_source, selector)
+        if connection && connection.features.op_msg_enabled?
+          selector = selector.dup
+          selector[Protocol::Msg::DATABASE_IDENTIFIER] = auth_source
+          cluster_time = connection.mongos? && connection.cluster_time
+          if cluster_time
+            selector[Operation::CLUSTER_TIME] = cluster_time
+          end
+          Protocol::Msg.new([], {}, selector)
+        else
+          Protocol::Query.new(
+            auth_source,
+            Database::COMMAND,
+            selector,
+            limit: -1,
+          )
+        end
+      end
+
+      def validate_external_auth_source
+        if user.auth_source != '$external'
+          user_name_msg = if user.name
+            " #{user.name}"
+          else
+            ''
+          end
+          mechanism = user.mechanism
+          raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for #{mechanism} is '$external'"
+        end
+      end
     end
   end
 end

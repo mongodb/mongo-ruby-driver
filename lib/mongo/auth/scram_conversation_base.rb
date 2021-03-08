@@ -87,19 +87,7 @@ module Mongo
           payload: client_final_message,
           conversationId: id,
         )
-        if connection && connection.features.op_msg_enabled?
-          selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-          cluster_time = connection.mongos? && connection.cluster_time
-          selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-          Protocol::Msg.new([], {}, selector)
-        else
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            selector,
-            limit: -1,
-          )
-        end
+        build_message(connection, user.auth_source, selector)
       end
 
       # Processes the second response from the server.
@@ -116,28 +104,13 @@ module Mongo
       #
       # @param [ Server::Connection ] connection The connection being authenticated.
       #
-      # @return [ Protocol::Query ] The next message to send.
+      # @return [ Protocol::Message ] The next message to send.
       def finalize(connection)
-        if connection && connection.features.op_msg_enabled?
-          selector = CLIENT_CONTINUE_MESSAGE.merge(
-            payload: client_empty_message,
-            conversationId: id,
-          )
-          selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-          cluster_time = connection.mongos? && connection.cluster_time
-          selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-          Protocol::Msg.new([], {}, selector)
-        else
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            CLIENT_CONTINUE_MESSAGE.merge(
-              payload: client_empty_message,
-              conversationId: id,
-            ),
-            limit: -1,
-          )
-        end
+        selector = CLIENT_CONTINUE_MESSAGE.merge(
+          payload: client_empty_message,
+          conversationId: id,
+        )
+        build_message(connection, user.auth_source, selector)
       end
 
       # Returns the hash to provide to the server in the handshake

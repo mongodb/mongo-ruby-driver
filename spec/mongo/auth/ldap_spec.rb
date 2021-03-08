@@ -11,7 +11,11 @@ describe Mongo::Auth::LDAP do
   end
 
   let(:user) do
-    Mongo::Auth::User.new(database: SpecConfig.instance.test_db, user: 'driver', password: 'password')
+    Mongo::Auth::User.new(
+      database: '$external',
+      user: 'driver',
+      password: 'password',
+    )
   end
 
   describe '#login' do
