@@ -285,8 +285,8 @@ module Mongo
           if version = server_api[:version]
             main_document['apiVersion'] = version
           end
-          if server_api[:strict]
-            main_document['apiStrict'] = true
+          unless server_api[:strict].nil?
+            main_document['apiStrict'] = server_api[:strict]
           end
           if server_api[:deprecation_errors]
             main_document['apiDeprecationErrors'] = true
