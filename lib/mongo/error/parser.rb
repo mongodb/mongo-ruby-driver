@@ -149,12 +149,12 @@ module Mongo
 
       def parse!
         @message = ""
-        parse_single(@message, ERR)
-        parse_single(@message, ERROR)
-        parse_single(@message, ERRMSG)
+        parse_single(@message, '$err')
+        parse_single(@message, 'error')
+        parse_single(@message, 'errmsg')
         parse_multiple(@message, 'writeErrors')
         if write_concern_error_document
-          parse_single(@message, ERRMSG, write_concern_error_document)
+          parse_single(@message, 'errmsg', write_concern_error_document)
         end
         parse_flag(@message)
         parse_code
@@ -171,7 +171,7 @@ module Mongo
       def parse_multiple(message, key)
         if errors = document[key]
           errors.each do |error|
-            parse_single(message, ERRMSG, error)
+            parse_single(message, 'errmsg', error)
           end
         end
       end

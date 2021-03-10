@@ -111,7 +111,7 @@ describe Mongo::Collection do
 
     context 'when documents contain potential error message fields' do
 
-      [ Mongo::Error::ERRMSG, Mongo::Error::ERROR, Mongo::Operation::Result::OK ].each do |field|
+      [ 'errmsg', 'error', Mongo::Operation::Result::OK ].each do |field|
 
         context "when the document contains a '#{field}' field" do
 
