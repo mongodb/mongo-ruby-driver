@@ -288,8 +288,8 @@ module Mongo
           unless server_api[:strict].nil?
             main_document['apiStrict'] = server_api[:strict]
           end
-          if server_api[:deprecation_errors]
-            main_document['apiDeprecationErrors'] = true
+          unless server_api[:deprecation_errors].nil?
+            main_document['apiDeprecationErrors'] = server_api[:deprecation_errors]
           end
           Msg.new(@flags, @options, main_document, *@sequences)
         else
