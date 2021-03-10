@@ -148,6 +148,9 @@ module Mongo
       private
 
       def parse!
+        if doc['writeErrors']
+          fail me
+        end
         @message = ""
         parse_single(@message, '$err')
         parse_single(@message, 'error')
