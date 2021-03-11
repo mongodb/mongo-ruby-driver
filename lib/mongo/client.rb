@@ -85,6 +85,7 @@ module Mongo
       :retry_writes,
       :scan,
       :sdam_proc,
+      :server_api,
       :server_selection_timeout,
       :socket_timeout,
       :ssl,
@@ -119,6 +120,11 @@ module Mongo
       Mongo::Protocol::Compressed::SNAPPY,
       Mongo::Protocol::Compressed::ZLIB
     ].freeze
+
+    # The known server API versions.
+    VALID_SERVER_API_VERSIONS = %w(
+      1
+    ).freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
@@ -316,6 +322,11 @@ module Mongo
     #   in particular the cluster is nil at this time. sdam_proc should
     #   limit itself to calling #subscribe and #unsubscribe methods on the
     #   client only.
+    # @option options [ Hash ] :server_api The requested server API version.
+    #   This hash can have the following items:
+    #   - *:version* -- string
+    #   - *:strict* -- boolean
+    #   - *:deprecation_errors* -- boolean
     # @option options [ Integer ] :server_selection_timeout The timeout in seconds
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
@@ -1147,6 +1158,23 @@ module Mongo
         # Warn that options are invalid but keep it and forward to the server
         unless invalid_keys.empty?
           log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.")
+        end
+      end
+
+      if server_api = opts[:server_api]
+        unless server_api.is_a?(Hash)
+          raise ArgumentError, ":server_api value must be a hash: #{server_api}"
+        end
+
+        extra_keys = server_api.keys - %w(version strict deprecation_errors)
+        unless extra_keys.empty?
+          raise ArgumentError, "Unknown keys under :server_api: #{extra_keys.map(&:inspect).join(', ')}"
+        end
+
+        if version = server_api[:version]
+          unless VALID_SERVER_API_VERSIONS.include?(version)
+            raise ArgumentError, "Unknown server API version: #{version}"
+          end
         end
       end
 

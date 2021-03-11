@@ -19,6 +19,28 @@ module Unified
       end
     end
 
+    def count_documents(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        collection.find(args.use!('filter')).count_documents
+      end
+    end
+
+    def estimated_document_count(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        collection.estimated_document_count
+      end
+    end
+
+    def distinct(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        req = collection.find(args.use!('filter')).distinct(args.use!('fieldName'))
+        result = req.to_a
+      end
+    end
+
     def find_one_and_update(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
@@ -29,6 +51,23 @@ module Unified
           opts[:return_document] = return_document.downcase.to_sym
         end
         collection.find_one_and_update(filter, update, **opts)
+      end
+    end
+
+    def find_one_and_replace(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        filter = args.use!('filter')
+        update = args.use!('replacement')
+        collection.find_one_and_replace(filter, update)
+      end
+    end
+
+    def find_one_and_delete(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        filter = args.use!('filter')
+        collection.find_one_and_delete(filter)
       end
     end
 
@@ -61,10 +100,21 @@ module Unified
       end
     end
 
+    def update_many(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        collection.update_many(args.use!('filter'), args.use!('update'))
+      end
+    end
+
     def replace_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.replace_one(args.use!('filter'), args.use!('replacement'))
+        collection.replace_one(
+          args.use!('filter'),
+          args.use!('replacement'),
+          upsert: args.use('upsert'),
+        )
       end
     end
 
@@ -72,6 +122,13 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         collection.delete_one(args.use!('filter'))
+      end
+    end
+
+    def delete_many(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        collection.delete_many(args.use!('filter'))
       end
     end
 

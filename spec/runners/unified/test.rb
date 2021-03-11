@@ -112,6 +112,11 @@ module Unified
             end
           end
 
+          if server_api = spec.use('serverApi')
+            server_api = ::Utils.underscore_hash(server_api)
+            opts[:server_api] = server_api
+          end
+
           create_client(**opts).tap do |client|
             if oe = spec.use('observeEvents')
               oe.each do |event|
@@ -249,6 +254,11 @@ module Unified
             if code_name = expected_error.use('errorCodeName')
               unless e.code_name == code_name
                 raise Error::ErrorMismatch, "Expected #{code_name} code but had #{e.code_name}"
+              end
+            end
+            if text = expected_error.use('errorContains')
+              unless e.to_s.include?(text)
+                raise Error::ErrorMismatch, "Expected #{text} in the message but had #{e}"
               end
             end
             if labels = expected_error.use('errorLabelsContain')

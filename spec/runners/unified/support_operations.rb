@@ -2,6 +2,18 @@ module Unified
 
   module SupportOperations
 
+    def run_command(op)
+      database = entities.get(:database, op.use!('object'))
+
+      use_arguments(op) do |args|
+        args.use!('commandName')
+
+        cmd = args.use!('command')
+
+        database.command(cmd)
+      end
+    end
+
     def fail_point(op)
       consume_test_runner(op)
       use_arguments(op) do |args|
