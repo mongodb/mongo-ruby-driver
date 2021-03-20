@@ -58,6 +58,7 @@ module Mongo
       operations = op_combiner.combine
 
       client.send(:with_session, @options) do |session|
+        context = Operation::Context.new(client: client, session: session)
         operations.each do |operation|
           if single_statement?(operation)
             write_concern = write_concern(session)
@@ -67,6 +68,7 @@ module Mongo
                   operation.keys.first,
                   operation.values.flatten,
                   connection,
+                  context,
                   operation_id,
                   result_combiner,
                   session,
@@ -80,6 +82,7 @@ module Mongo
                   operation.keys.first,
                   operation.values.flatten,
                   connection,
+                  context,
                   operation_id,
                   result_combiner,
                   session)
@@ -177,19 +180,19 @@ module Mongo
       }
     end
 
-    def execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num = nil)
+    def execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num = nil)
       validate_collation!(connection)
       validate_array_filters!(connection)
       validate_hint!(connection)
 
       unpin_maybe(session) do
         if values.size > connection.description.max_write_batch_size
-          split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
+          split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
         else
-          result = send(name, values, connection, operation_id, session, txn_num)
+          result = send(name, values, connection, context, operation_id, session, txn_num)
 
           add_server_diagnostics(connection) do
-            add_error_labels(client, connection, session) do
+            add_error_labels(connection, context) do
               result_combiner.combine!(result, values.size)
             end
           end
@@ -205,7 +208,7 @@ module Mongo
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
       unpin_maybe(session) do
-        split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
+        split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
       end
     end
 
@@ -213,47 +216,47 @@ module Mongo
       @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
-    def split_execute(name, values, connection, operation_id, result_combiner, session, txn_num)
-      execute_operation(name, values.shift(values.size / 2), connection, operation_id, result_combiner, session, txn_num)
+    def split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values.shift(values.size / 2), connection, context, operation_id, result_combiner, session, txn_num)
 
       txn_num = session.next_txn_num if txn_num
-      execute_operation(name, values, connection, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num)
     end
 
-    def delete_one(documents, connection, operation_id, session, txn_num)
+    def delete_one(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
       spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
-      Operation::Delete.new(spec).bulk_execute(connection, client: client)
+      Operation::Delete.new(spec).bulk_execute(connection, context: context)
     end
 
-    def delete_many(documents, connection, operation_id, session, txn_num)
+    def delete_many(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
       spec = base_spec(operation_id, session).merge(:deletes => documents)
-      Operation::Delete.new(spec).bulk_execute(connection, client: client)
+      Operation::Delete.new(spec).bulk_execute(connection, context: context)
     end
 
-    def insert_one(documents, connection, operation_id, session, txn_num)
+    def insert_one(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
       spec = base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
-      Operation::Insert.new(spec).bulk_execute(connection, client: client)
+      Operation::Insert.new(spec).bulk_execute(connection, context: context)
     end
 
-    def update_one(documents, connection, operation_id, session, txn_num)
+    def update_one(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
       spec = base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
-      Operation::Update.new(spec).bulk_execute(connection, client: client)
+      Operation::Update.new(spec).bulk_execute(connection, context: context)
     end
     alias :replace_one :update_one
 
-    def update_many(documents, connection, operation_id, session, txn_num)
+    def update_many(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
       spec = base_spec(operation_id, session).merge(:updates => documents)
-      Operation::Update.new(spec).bulk_execute(connection, client: client)
+      Operation::Update.new(spec).bulk_execute(connection, context: context)
     end
 
     private

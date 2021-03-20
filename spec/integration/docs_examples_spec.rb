@@ -4,7 +4,14 @@ describe 'aggregation examples in Ruby' do
   before(:all) do
     # In sharded clusters we need to ensure the database exists before running
     # the tests in this file.
-    ClientRegistry.instance.global_client('authorized')['_placeholder'].create
+    begin
+      ClientRegistry.instance.global_client('authorized')['_placeholder'].create
+    rescue Mongo::Error::OperationFailure => e
+      # Collection already exists
+      if e.code != 48
+        raise
+      end
+    end
   end
 
   let(:client) do

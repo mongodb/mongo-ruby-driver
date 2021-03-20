@@ -2105,6 +2105,7 @@ describe Mongo::Collection do
       min_server_fcv '3.2'
 
       around(:each) do |spec|
+        collection_with_validator.drop
         authorized_client[:validating,
                           :validator => { :a => { '$exists' => true } }].tap do |c|
           c.create

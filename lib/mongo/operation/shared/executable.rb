@@ -23,11 +23,11 @@ module Mongo
 
       include ResponseHandling
 
-      def do_execute(connection, client, options = {})
+      def do_execute(connection, context, options = {})
         unpin_maybe(session) do
-          add_error_labels(client, connection, session) do
+          add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
-              get_result(connection, client, options).tap do |result|
+              get_result(connection, context, options).tap do |result|
                 process_result(result, connection)
               end
             end
@@ -35,15 +35,15 @@ module Mongo
         end
       end
 
-      def execute(connection, client:, options: {})
+      def execute(connection, context:, options: {})
         if Lint.enabled?
           unless connection.is_a?(Mongo::Server::Connection)
             raise Error::LintError, "Connection argument is of wrong type: #{connection}"
           end
         end
 
-        do_execute(connection, client, options).tap do |result|
-          validate_result(result, client, connection)
+        do_execute(connection, context, options).tap do |result|
+          validate_result(result, connection, context)
         end
       end
 
@@ -53,29 +53,28 @@ module Mongo
         Result
       end
 
-      def get_result(connection, client, options = {})
-        result_class.new(*dispatch_message(connection, client, options))
+      def get_result(connection, context, options = {})
+        result_class.new(*dispatch_message(connection, context, options))
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(connection, client, options = {})
-        message = build_message(connection, client)
-        message = message.maybe_encrypt(connection, client)
-        reply = connection.dispatch([ message ], operation_id, client, options)
+      def dispatch_message(connection, context, options = {})
+        message = build_message(connection, context)
+        message = message.maybe_encrypt(connection, context)
+        reply = connection.dispatch([ message ], context, options)
         [reply, connection.description]
       end
 
-      def build_message(connection, client)
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      def build_message(connection, context)
         msg = message(connection)
-        # We do not supply the client to the operations layer from end_sessions
-        # method in session pool.
-        # TODO fix this
-        if client &&
-          Protocol::Msg === msg &&
-          !msg.documents.first[:getMore] &&
-          !(session && session.in_transaction? && !session.starting_transaction?)
+        if (server_api = context.server_api) &&
+          # Commands in a transaction do not allow API parameters.
+          !(context.in_transaction? && !context.starting_transaction?)
         then
-          msg = msg.maybe_add_server_api(client)
+          msg = msg.maybe_add_server_api(server_api)
         end
         msg
       end

@@ -17,11 +17,15 @@ describe Mongo::Server::Monitor do
     {}
   end
 
+  let(:monitor_app_metadata) do
+    Mongo::Server::Monitor::AppMetadata.new(
+      server_api: SpecConfig.instance.ruby_options[:server_api],
+    )
+  end
+
   let(:cluster) do
     double('cluster').tap do |cluster|
       allow(cluster).to receive(:run_sdam_flow)
-      allow(cluster).to receive(:monitor_app_metadata)
-      allow(cluster).to receive(:push_monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(1000)
     end
   end
@@ -34,7 +38,9 @@ describe Mongo::Server::Monitor do
   let(:monitor) do
     register_background_thread_object(
       described_class.new(server, listeners, Mongo::Monitoring.new,
-        SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options))
+        SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options).update(
+          app_metadata: monitor_app_metadata,
+          push_monitor_app_metadata: monitor_app_metadata))
     )
   end
 

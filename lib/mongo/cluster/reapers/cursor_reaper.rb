@@ -130,16 +130,20 @@ module Mongo
         end
 
         to_kill_copy.each do |server, op_specs|
+          options = {
+            server_api: server.options[:server_api],
+          }
+          context = Operation::Context.new(options: options)
           op_specs.each do |op_spec|
             if server.features.find_command_enabled?
               Cursor::Builder::KillCursorsCommand.update_cursors(op_spec, active_cursors_copy.to_a)
               if Cursor::Builder::KillCursorsCommand.get_cursors_list(op_spec).size > 0
-                Operation::KillCursors.new(op_spec).execute(server, client: nil)
+                Operation::KillCursors.new(op_spec).execute(server, context: context)
               end
             else
               Cursor::Builder::OpKillCursors.update_cursors(op_spec, active_cursors_copy.to_a)
               if Cursor::Builder::OpKillCursors.get_cursors_list(op_spec).size > 0
-                Operation::KillCursors.new(op_spec).execute(server, client: nil)
+                Operation::KillCursors.new(op_spec).execute(server, context: context)
               end
             end
           end

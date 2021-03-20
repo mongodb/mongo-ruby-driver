@@ -855,6 +855,29 @@ describe Mongo::Database do
         end
       end
     end
+
+    context 'when client server api is not set' do
+      require_no_required_api_version
+      min_server_fcv '4.7'
+
+      it 'passes server api parameters' do
+        lambda do
+          database.command(ping: 1, apiVersion: 'does-not-exist')
+        end.should raise_error(
+          an_instance_of(Mongo::Error::OperationFailure).and having_attributes(code: 322))
+      end
+    end
+
+    context 'when client server api is set' do
+      require_required_api_version
+      min_server_fcv '4.7'
+
+      it 'reports server api conflict' do
+        lambda do
+          database.command(ping: 1, apiVersion: 'does-not-exist')
+        end.should raise_error(Mongo::Error::ServerApiConflict)
+      end
+    end
   end
 
   describe '#drop' do

@@ -69,5 +69,20 @@ module Mongo
     module_function def camelize(sym)
       sym.to_s.gsub(/_(\w)/) { $1.upcase }
     end
+
+    # @note server_api must have symbol keys or be a BSON::Document.
+    module_function def transform_server_api(server_api)
+      {}.tap do |doc|
+        if version = server_api[:version]
+          doc['apiVersion'] = version
+        end
+        unless server_api[:strict].nil?
+          doc['apiStrict'] = server_api[:strict]
+        end
+        unless server_api[:deprecation_errors].nil?
+          doc['apiDeprecationErrors'] = server_api[:deprecation_errors]
+        end
+      end
+    end
   end
 end

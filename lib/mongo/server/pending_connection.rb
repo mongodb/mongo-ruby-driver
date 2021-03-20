@@ -63,6 +63,11 @@ module Mongo
         end
 
         result = handshake!(speculative_auth_doc: speculative_auth_doc)
+
+        if description.unknown?
+          raise Error::InternalDriverError, "Connection description cannot be unknown after successful handshake: #{description.inspect}"
+        end
+
         if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
           unless description.features.scram_sha_1_enabled?
             raise Error::InvalidServerAuthResponse, "Speculative auth succeeded on a pre-3.0 server"
@@ -80,10 +85,14 @@ module Mongo
               speculative_auth_result: speculative_auth_result,
             )
           else
-            raise NotImplementedError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
+            raise Error::InternalDriverError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
           end
         elsif !description.arbiter?
           authenticate!
+        end
+
+        if description.unknown?
+          raise Error::InternalDriverError, "Connection description cannot be unknown after successful authentication: #{description.inspect}"
         end
       end
 
@@ -96,7 +105,7 @@ module Mongo
       #   this particular connection.
       def handshake!(speculative_auth_doc: nil)
         unless socket
-          raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
+          raise Error::InternalDriverError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
         ismaster_doc = app_metadata.validated_document
@@ -104,18 +113,27 @@ module Mongo
           ismaster_doc = ismaster_doc.merge(speculativeAuthenticate: speculative_auth_doc)
         end
 
+        if server_api = options[:server_api]
+          ismaster_doc = ismaster_doc.merge(
+            Utils.transform_server_api(server_api)
+          )
+        end
+
         ismaster_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND,
           ismaster_doc, :limit => -1)
 
-        response = nil
+        doc = nil
         @server.handle_handshake_failure! do
           begin
             response = @server.round_trip_time_averager.measure do
               add_server_diagnostics do
                 socket.write(ismaster_command.serialize.to_s)
-                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents.first
+                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
               end
             end
+            result = Operation::Result.new([response])
+            result.validate!
+            doc = result.documents.first
           rescue => exc
             msg = "Failed to handshake with #{address}"
             Utils.warn_bg_exception(msg, exc,
@@ -127,9 +145,9 @@ module Mongo
           end
         end
 
-        post_handshake(response, @server.round_trip_time_averager.average_round_trip_time)
+        post_handshake(doc, @server.round_trip_time_averager.average_round_trip_time)
 
-        response
+        doc
       end
 
       # @param [ String | nil ] speculative_auth_client_nonce The client

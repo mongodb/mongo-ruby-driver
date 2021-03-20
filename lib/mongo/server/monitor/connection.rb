@@ -44,7 +44,7 @@ module Mongo
         # The constant for the ismaster command.
         #
         # @since 2.2.0
-        ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
+        ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, limit: -1)
 
         # The constant for the ismaster command as an OP_MSG (server versions >= 3.6).
         #
@@ -93,7 +93,9 @@ module Mongo
         def initialize(address, options = {})
           @address = address
           @options = options.dup.freeze
-          @app_metadata = options[:app_metadata]
+          unless @app_metadata = options[:app_metadata]
+            raise ArgumentError, 'App metadata is required'
+          end
           @socket = nil
           @pid = Process.pid
           @compressor = nil
@@ -221,14 +223,11 @@ module Mongo
         end
 
         def handshake!
-          payload = if @app_metadata
-            @app_metadata.ismaster_bytes
-          else
-            log_warn("No app metadata provided for handshake with #{address}")
-            ISMASTER_BYTES
-          end
+          payload = @app_metadata.ismaster_bytes
           message = dispatch_bytes(payload)
-          reply = message.documents.first
+          result = Operation::Result.new(message)
+          result.validate!
+          reply = result.documents.first
           set_compressor!(reply)
           @server_connection_id = reply['connectionId']
           reply

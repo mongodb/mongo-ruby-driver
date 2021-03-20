@@ -117,7 +117,7 @@ describe 'SRV Monitoring' do
 
     let(:client) do
       new_local_client(uri,
-        SpecConfig.instance.ssl_options.merge(
+        SpecConfig.instance.monitoring_options.merge(
           server_selection_timeout: 3.16,
           socket_timeout: 8.11,
           connect_timeout: 8.12,

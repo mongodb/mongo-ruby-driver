@@ -1,9 +1,18 @@
 module Mongo
   module CRUD
     class Requirement
-      YAML_KEYS = %w(minServerVersion maxServerVersion topology).freeze
+      YAML_KEYS = %w(minServerVersion maxServerVersion topology topologies serverParameters).freeze
 
       def initialize(spec)
+        spec = spec.dup
+        # Legacy tests have the requirements mixed with other test fields
+        spec.delete('data')
+        spec.delete('tests')
+
+        unless (unhandled_keys = spec.keys - YAML_KEYS).empty?
+          raise "Unhandled requirement specification keys: #{unhandled_keys}"
+        end
+
         @min_server_version = spec['minServerVersion']
         @max_server_version = spec['maxServerVersion']
         # topologies is for unified test format.
@@ -24,6 +33,7 @@ module Mongo
         else
           nil
         end
+        @server_parameters = spec['serverParameters']
       end
 
       attr_reader :min_server_version
@@ -57,6 +67,22 @@ module Mongo
         end
         if topologies
           ok &&= topologies.include?(cc.topology)
+        end
+        if @server_parameters
+          @server_parameters.each do |k, required_v|
+            actual_v = cc.server_parameters[k]
+            if actual_v.nil? && !required_v.nil?
+              ok = false
+            elsif actual_v != required_v
+              if Numeric === actual_v && Numeric === required_v
+                if actual_v.to_f != required_v.to_f
+                  ok = false
+                end
+              else
+                ok = false
+              end
+            end
+          end
         end
         ok
       end

@@ -480,6 +480,18 @@ module Mongo
 
       options = self.class.canonicalize_ruby_options(options)
 
+      # The server API version is specified to be a string.
+      # However, it is very annoying to always provide the number 1 as a string,
+      # therefore cast to the string type here.
+      if server_api = options[:server_api]
+        if server_api.is_a?(Hash)
+          server_api = Options::Redacted.new(server_api)
+          if (version = server_api[:version]).is_a?(Integer)
+            options[:server_api] = server_api.merge(version: version.to_s)
+          end
+        end
+      end
+
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
@@ -712,9 +724,9 @@ module Mongo
     # @return [ Mongo::Client ] A new client instance.
     #
     # @since 2.0.0
-    def with(new_options = Options::Redacted.new)
+    def with(new_options = nil)
       clone.tap do |client|
-        opts = client.update_options(new_options)
+        opts = client.update_options(new_options || Options::Redacted.new)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
@@ -740,6 +752,8 @@ module Mongo
     # @api private
     def update_options(new_options)
       old_options = @options
+
+      new_options = self.class.canonicalize_ruby_options(new_options)
 
       validate_new_options!(new_options).tap do |opts|
         # Our options are frozen
@@ -1142,7 +1156,7 @@ module Mongo
     # The argument may contain a subset of options that the client will
     # eventually have; this method validates each of the provided options
     # but does not check for interactions between combinations of options.
-    def validate_new_options!(opts = Options::Redacted.new)
+    def validate_new_options!(opts)
       return Options::Redacted.new unless opts
       if opts[:read_concern]
         # Raise an error for non user-settable options

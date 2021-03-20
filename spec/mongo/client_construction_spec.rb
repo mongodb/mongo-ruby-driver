@@ -1602,7 +1602,7 @@ describe Mongo::Client do
         end
       end
 
-      context ':server_api version' do
+      context ':server_api parameter' do
         context 'is a hash with symbol keys' do
           context 'using known keys' do
             let(:options) do
@@ -1660,6 +1660,33 @@ describe Mongo::Client do
                 client
               end.should raise_error(ArgumentError, ':server_api value must be a hash: 42')
             end
+          end
+        end
+
+        context 'when connected to a pre-OP_MSG server' do
+          max_server_version '3.4'
+
+          let(:options) do
+            {server_api: {version: 1}}
+          end
+
+          let(:client) do
+            new_local_client(SpecConfig.instance.addresses,
+              SpecConfig.instance.all_test_options.merge(options))
+          end
+
+          it 'constructs the client' do
+            client.should be_a(Mongo::Client)
+          end
+
+          it 'discovers servers' do
+            client.summary.should_not =~ /UNKNOWN/
+          end
+
+          it 'fails operations' do
+            lambda do
+              client.command(ping: 1)
+            end.should raise_error(Mongo::Error::ServerApiNotSupported)
           end
         end
       end

@@ -329,7 +329,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     let(:client) do
-      new_local_client(uri, SpecConfig.instance.ssl_options.merge(max_pool_size: 1))
+      new_local_client(uri, SpecConfig.instance.monitoring_options.merge(max_pool_size: 1))
     end
 
     context 'when the user exists' do

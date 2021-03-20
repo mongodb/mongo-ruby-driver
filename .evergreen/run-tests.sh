@@ -157,8 +157,12 @@ fi
 set_fcv
 
 if test "$TOPOLOGY" = replica-set && ! echo "$MONGODB_VERSION" |fgrep -q 2.6; then
-echo $MONGODB_URI
-  bundle exec ruby -e '$:.unshift("lib"); $:.unshift(".evergreen/lib"); require "server_setup"; ServerSetup.new.setup_tags'
+  bundle exec ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_tags
+fi
+
+if test "$API_VERSION_REQUIRED" = 1; then
+  bundle exec ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.require_api_version
+  export SERVER_API='version: "1"'
 fi
 
 if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then

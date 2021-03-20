@@ -13,6 +13,7 @@ $: << File.join(ROOT, 'spec/shared/lib')
 require 'mrss/spec_organizer'
 
 CLASSIFIERS = [
+  [%r,^mongo/server,, :unit_server],
   [%r,^mongo,, :unit],
   [%r,^kerberos,, :unit],
   [%r,^integration/sdam_error_handling,, :sdam_integration],
@@ -26,7 +27,7 @@ CLASSIFIERS = [
 
 RUN_PRIORITY = %i(
   tx_examples
-  unit
+  unit unit_server
   integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
 )

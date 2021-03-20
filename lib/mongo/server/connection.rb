@@ -85,6 +85,11 @@ module Mongo
       #
       # @option options [ Integer ] :generation Connection pool's generation
       #   for this connection.
+      # @option options [ Hash ] :server_api The requested server API version.
+      #   This hash can have the following items:
+      #   - *:version* -- string
+      #   - *:strict* -- boolean
+      #   - *:deprecation_errors* -- boolean
       #
       # @since 2.0.0
       def initialize(server, options = {})

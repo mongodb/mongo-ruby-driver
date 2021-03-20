@@ -134,7 +134,7 @@ module Mongo
             server = cluster.next_primary(nil, session)
           end
           validate_collation!(server)
-          initial_query_op(session).execute(server, client: client)
+          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
         def validate_collation!(server)

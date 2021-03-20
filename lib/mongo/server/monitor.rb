@@ -76,6 +76,12 @@ module Mongo
         unless monitoring.is_a?(Monitoring)
           raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}"
         end
+        unless options[:app_metadata]
+          raise ArgumentError, 'App metadata is required'
+        end
+        unless options[:push_monitor_app_metadata]
+          raise ArgumentError, 'Push monitor app metadata is required'
+        end
         @server = server
         @event_listeners = event_listeners
         @monitoring = monitoring
@@ -277,7 +283,15 @@ module Mongo
         if @connection
           result = server.round_trip_time_averager.measure do
             begin
-              message = @connection.dispatch_bytes(Monitor::Connection::ISMASTER_BYTES)
+              ismaster_bytes = if server_api = options[:server_api]
+                ismaster_doc = Monitor::Connection::ISMASTER.merge(
+                  Utils.transform_server_api(server_api)
+                )
+                Protocol::Query.new(Database::ADMIN, Database::COMMAND, ismaster_doc, limit: -1).serialize.to_s
+              else
+                Monitor::Connection::ISMASTER_BYTES
+              end
+              message = @connection.dispatch_bytes(ismaster_bytes)
               message.documents.first
             rescue Mongo::Error
               @connection.disconnect!
@@ -286,8 +300,7 @@ module Mongo
             end
           end
         else
-          connection = Connection.new(server.address, options.merge(
-            app_metadata: server.monitor_app_metadata))
+          connection = Connection.new(server.address, options)
           connection.connect!
           result = server.round_trip_time_averager.measure do
             connection.handshake!
@@ -302,6 +315,7 @@ module Mongo
                 monitoring,
                 **Utils.shallow_symbolize_keys(options.merge(
                   socket_timeout: heartbeat_interval + connection.socket_timeout,
+                  app_metadata: options[:push_monitor_app_metadata],
                 )),
               )
             end

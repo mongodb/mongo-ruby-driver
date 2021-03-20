@@ -352,6 +352,7 @@ describe Mongo::Cluster do
     end
 
     before do
+      cluster.next_primary
       cluster.servers.each do |server|
         expect(server).to receive(:reconnect!).and_call_original
       end

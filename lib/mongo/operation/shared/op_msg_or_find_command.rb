@@ -23,10 +23,10 @@ module Mongo
     module OpMsgOrFindCommand
       include PolymorphicLookup
 
-      def execute(server, client:)
+      def execute(server, context:)
         server.with_connection do |connection|
           operation = final_operation(connection)
-          operation.execute(connection, client: client)
+          operation.execute(connection, context: context)
         end
       end
 

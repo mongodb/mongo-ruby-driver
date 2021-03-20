@@ -107,6 +107,11 @@ module Mongo
     #   for the server monitor to refresh its description via ismaster.
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
+    # @option options [ Hash ] :server_api The requested server API version.
+    #   This hash can have the following items:
+    #   - *:version* -- string
+    #   - *:strict* -- boolean
+    #   - *:deprecation_errors* -- boolean
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)

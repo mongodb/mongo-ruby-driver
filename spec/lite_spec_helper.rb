@@ -69,6 +69,10 @@ unless SpecConfig.instance.client_debug?
 end
 Encoding.default_external = Encoding::UTF_8
 
+module Mrss
+  autoload :Utils, 'mrss/utils'
+end
+
 require 'mrss/lite_constraints'
 require 'support/matchers'
 require 'support/event_subscriber'

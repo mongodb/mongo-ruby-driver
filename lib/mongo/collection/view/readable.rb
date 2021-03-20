@@ -172,8 +172,8 @@ module Mongo
                                      :db_name => database.name,
                                      :options => {:limit => -1},
                                      :read => read_pref,
-                                     :session => session
-              ).execute(server, client: client)
+                                     :session => session,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end.n.to_i
           end
         end
@@ -245,8 +245,8 @@ module Mongo
                 selector: cmd,
                 db_name: database.name,
                 read: read_pref,
-                session: session
-              ).execute(server, client: client)
+                session: session,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end.n.to_i
           end
         end
@@ -290,8 +290,8 @@ module Mongo
                                         :db_name => database.name,
                                         :options => {:limit => -1},
                                         :read => read_pref,
-                                        :session => session
-                                       }).execute(server, client: client)
+                                        :session => session,
+                                       }).execute(server, context: Operation::Context.new(client: client, session: session))
             end.first['values']
           end
         end
@@ -626,21 +626,21 @@ module Mongo
                   :read_concern => read_concern,
                   :session => session,
                 }.merge!(options))
-          cmd.execute(server, client: client).cursor_ids.map do |cursor_id|
+          cmd.execute(server, context: Operation::Context.new(client: client, session: session)).cursor_ids.map do |cursor_id|
             result = if server.with_connection { |connection| connection.features }.find_command_enabled?
               Operation::GetMore.new({
                 :selector => {:getMore => BSON::Int64.new(cursor_id),
                              :collection => collection.name},
                 :db_name => database.name,
                 :session => session,
-              }).execute(server, client: client)
+              }).execute(server, context: Operation::Context.new(client: client, session: session))
              else
               Operation::GetMore.new({
                 :to_return => 0,
                 :cursor_id => BSON::Int64.new(cursor_id),
                 :db_name => database.name,
                 :coll_name => collection.name
-              }).execute(server, client: client)
+              }).execute(server, context: Operation::Context.new(client: client, session: session))
             end
             Cursor.new(self, result, server, session: session)
           end

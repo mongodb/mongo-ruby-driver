@@ -140,7 +140,13 @@ module Mongo
         self
       end
 
-      def maybe_decrypt(client)
+      # Possibly decrypt this message with libmongocrypt.
+      #
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      #
+      # @return [ Mongo::Protocol::Msg ] The decrypted message, or the original
+      #   message if decryption was not possible or necessary.
+      def maybe_decrypt(context)
         # TODO determine if we should be decrypting data coming from pre-4.2
         # servers, potentially using legacy wire protocols. If so we need
         # to implement decryption for those wire protocols as our current
@@ -148,9 +154,21 @@ module Mongo
         self
       end
 
-      def maybe_encrypt(server, client)
+      # Possibly encrypt this message with libmongocrypt.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      #
+      # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
+      #   message if encryption was not possible or necessary.
+      def maybe_encrypt(connection, context)
         # Do nothing if the Message subclass has not implemented this method
         self
+      end
+
+      def maybe_add_server_api(server_api)
+        raise Error::ServerApiNotSupported, "Server API parameters cannot be sent to pre-3.6 MongoDB servers. Please remove the :server_api parameter from Client options or use MongoDB 3.6 or newer"
       end
 
       private def merge_sections

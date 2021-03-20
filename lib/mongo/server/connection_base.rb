@@ -124,7 +124,7 @@ module Mongo
       #
       # @param [ Array<Message> ] messages A one-element array containing
       #   the message to dispatch.
-      # @param [ Integer ] operation_id The operation id to link messages.
+      # @param [ Operation::Context ] context The operation context.
       # @param [ Hash ] options
       #
       # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
@@ -134,24 +134,27 @@ module Mongo
       # @return [ Protocol::Message | nil ] The reply if needed.
       #
       # @since 2.0.0
-      def dispatch(messages, operation_id = nil, client = nil, options = {})
+      def dispatch(messages, context, options = {})
         # The monitoring code does not correctly handle multiple messages,
         # and the driver internally does not send more than one message at
         # a time ever. Thus prohibit multiple message use for now.
         if messages.length != 1
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
+        if description.unknown?
+          raise Error::InternalDriverError, "Cannot dispatch a message on a connection with unknown description: #{description.inspect}"
+        end
         message = messages.first
-        deliver(message, client, options)
+        deliver(message, context, options)
       end
 
       private
 
-      def deliver(message, client, options = {})
+      def deliver(message, context, options = {})
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
-        buffer = serialize(message, client)
+        buffer = serialize(message, context)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
           command_started(address, operation_id, message.payload,
@@ -178,14 +181,14 @@ module Mongo
             total_duration = Time.now - start
             command_completed(result, address, operation_id, message.payload, total_duration)
           end
-          if client && result
-            result = result.maybe_decrypt(client)
+          if result && context.decrypt?
+            result = result.maybe_decrypt(context)
           end
           result
         end
       end
 
-      def serialize(message, client, buffer = BSON::ByteBuffer.new)
+      def serialize(message, context, buffer = BSON::ByteBuffer.new)
         # Driver specifications only mandate the fixed 16MiB limit for
         # serialized BSON documents. However, the server returns its
         # active serialized BSON document size limit in the ismaster response,
@@ -194,7 +197,7 @@ module Mongo
         # only as the default if the server's ismaster did not contain
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
-        if client && client.encrypter && client.encrypter.encrypt?
+        if context.encrypt?
           # The client-side encryption specification requires bulk writes to
           # be split at a reduced maxBsonObjectSize. If this message is a bulk
           # write and its size exceeds the reduced size limit, the serializer

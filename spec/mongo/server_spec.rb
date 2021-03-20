@@ -40,14 +40,20 @@ describe Mongo::Server do
     )
   end
 
+  let(:monitor_app_metadata) do
+    Mongo::Server::Monitor::AppMetadata.new(
+      server_api: SpecConfig.instance.ruby_options[:server_api],
+    )
+  end
+
   shared_context 'with monitoring io' do
     let(:server_options) do
       {monitoring_io: true}
     end
 
     before do
-      allow(cluster).to receive(:monitor_app_metadata)
-      allow(cluster).to receive(:push_monitor_app_metadata)
+      allow(cluster).to receive(:monitor_app_metadata).and_return(monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata).and_return(monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(1000)
     end
   end
@@ -147,12 +153,9 @@ describe Mongo::Server do
     end
 
     context 'with monitoring app metadata option' do
-      let(:monitor_app_metadata) do
-        Mongo::Server::Monitor::AppMetadata.new
-      end
+      require_no_required_api_version
 
       it 'creates monitor with monitoring app metadata' do
-        expect(server).to receive(:monitor_app_metadata).and_return(monitor_app_metadata)
         server.monitor.scan!
         expect(server.monitor.connection.options[:app_metadata]).to be monitor_app_metadata
       end

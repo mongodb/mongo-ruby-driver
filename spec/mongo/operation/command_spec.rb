@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Command do
+  require_no_required_api_version
 
   let(:selector) { { :ismaster => 1 } }
   let(:options) { { :limit => -1 } }
@@ -11,6 +12,8 @@ describe Mongo::Operation::Command do
     }
   end
   let(:op) { described_class.new(spec) }
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#initialize' do
 
@@ -43,7 +46,7 @@ describe Mongo::Operation::Command do
     context 'when the command succeeds' do
 
       let(:response) do
-        op.execute(authorized_primary, client: nil)
+        op.execute(authorized_primary, context: context)
       end
 
       it 'returns the reponse' do
@@ -59,7 +62,7 @@ describe Mongo::Operation::Command do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          op.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
@@ -72,7 +75,7 @@ describe Mongo::Operation::Command do
 
       it 'raises an error' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          op.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end

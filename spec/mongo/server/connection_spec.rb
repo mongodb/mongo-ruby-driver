@@ -589,6 +589,8 @@ describe Mongo::Server::Connection do
 
     let(:server) { monitored_server }
 
+    let(:context) { Mongo::Operation::Context.new }
+
     let!(:connection) do
       described_class.new(
         server,
@@ -620,12 +622,12 @@ describe Mongo::Server::Connection do
     context 'when providing a single message' do
 
       let(:reply) do
-        connection.dispatch([ query ])
+        connection.dispatch([ query ], context)
       end
 
       before do
         authorized_collection.delete_many
-        connection.dispatch([ insert ])
+        authorized_collection.insert_one(name: 'testing')
       end
 
       it 'it dispatches the message to the socket' do
@@ -644,7 +646,7 @@ describe Mongo::Server::Connection do
       end
 
       let(:reply) do
-        connection.dispatch([ insert, command ])
+        connection.dispatch([ insert, command ], context)
       end
 
       before do
@@ -681,22 +683,22 @@ describe Mongo::Server::Connection do
       end
 
       before do
-        connection.dispatch([ insert ])
+        connection.dispatch([ insert ], context)
         # Fake a query for which we did not read the response. See RUBY-1117
         allow(query_bob).to receive(:replyable?) { false }
-        connection.dispatch([ query_bob ])
+        connection.dispatch([ query_bob ], context)
       end
 
       it 'raises an UnexpectedResponse error' do
         expect {
-          connection.dispatch([ query_alice ])
+          connection.dispatch([ query_alice ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse,
           /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
       it 'marks connection perished' do
         expect {
-          connection.dispatch([ query_alice ])
+          connection.dispatch([ query_alice ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
         connection.should be_error
@@ -704,16 +706,17 @@ describe Mongo::Server::Connection do
 
       it 'makes the connection no longer usable' do
         expect {
-          connection.dispatch([ query_alice ])
+          connection.dispatch([ query_alice ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
         expect {
-          connection.dispatch([ query_alice ])
+          connection.dispatch([ query_alice ], context)
         }.to raise_error(Mongo::Error::ConnectionPerished)
       end
     end
 
     context 'when a request is interrupted (Thread.kill)' do
+      require_no_required_api_version
 
       let(:documents) do
         [{ 'name' => 'bob' }, { 'name' => 'alice' }]
@@ -733,18 +736,19 @@ describe Mongo::Server::Connection do
 
       before do
         authorized_collection.delete_many
-        connection.dispatch([ insert ])
+        connection.dispatch([ insert ], context)
       end
 
       it 'closes the socket and does not use it for subsequent requests' do
         t = Thread.new {
           # Kill the thread just before the reply is read
           allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill && !t.alive? }
-          connection.dispatch([ query_bob ])
+          connection.dispatch([ query_bob ], context)
         }
         t.join
         allow(Mongo::Protocol::Message).to receive(:deserialize_header).and_call_original
-        expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
+        resp = connection.dispatch([ query_alice ], context)
+        expect(resp.documents.first['name']).to eq('alice')
       end
     end
 
@@ -761,7 +765,7 @@ describe Mongo::Server::Connection do
         end
 
         let(:reply) do
-          connection.dispatch([ insert ])
+          connection.dispatch([ insert ], context)
         end
 
         it 'checks the size against the max message size' do
@@ -788,7 +792,7 @@ describe Mongo::Server::Connection do
         end
 
         let(:reply) do
-          connection.dispatch([ command ])
+          connection.dispatch([ command ], context)
         end
 
         it 'checks the size against the max bson size' do
@@ -828,7 +832,7 @@ describe Mongo::Server::Connection do
 
         let(:result) do
           expect do
-            connection.dispatch([ insert ])
+            connection.dispatch([ insert ], context)
           end.to raise_error(Mongo::Error::SocketError)
         end
 
@@ -862,7 +866,7 @@ describe Mongo::Server::Connection do
 
         let(:result) do
           expect do
-            connection.dispatch([ insert ])
+            connection.dispatch([ insert ], context)
           end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
 
@@ -906,6 +910,7 @@ describe Mongo::Server::Connection do
       end
 
       before do
+        authorized_collection.insert_one(test: 1)
         client.cluster.next_primary
       end
 
@@ -919,6 +924,8 @@ describe Mongo::Server::Connection do
           end_time = Time.now
           expect(ex).to be_a(Mongo::Error::SocketTimeoutError)
           expect(ex.message).to match(/Took more than 1.5 seconds to receive data/)
+        else
+          fail 'Expected a timeout'
         end
         # allow 1.5 seconds +- 0.5 seconds
         expect(end_time - start).to be_within(1).of(2)
@@ -938,7 +945,7 @@ describe Mongo::Server::Connection do
 
         before do
           expect(message).to receive(:replyable?) { false }
-          connection.send(:deliver, message, nil)
+          connection.send(:deliver, message, context)
 
           connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end

@@ -524,6 +524,24 @@ zlib compression when launching the server:
     mongod --dbpath /tmp/mdb --setParameter enableTestCommands=1 \
       --networkMessageCompressors snappy,zlib
 
+## Server API
+
+To specify server API parameters, use the `SERVER_API` environment variable.
+The server API parameters cannot be specified via URI options.
+
+Both YAML and JSON syntaxes are accepted:
+    
+    SERVER_API='{version: "1", strict: true}' rake
+
+    SERVER_API='{"version":"1","strict":true}' rake
+
+Note that the input must be valid YAML or JSON and the version number must
+be a string, therefore all of the following specifications are invalid:
+
+    SERVER_API='{version:"1",strict:true}' rake
+    SERVER_API='{version: 1}' rake
+    SERVER_API='{"version":1,"strict":true}' rake
+
 ## Other Options
 
 Generally, all URI options recognized by the driver may be set for a test run,

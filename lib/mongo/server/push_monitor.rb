@@ -33,6 +33,9 @@ module Mongo
         if topology_version.nil?
           raise ArgumentError, 'Topology version must be provided but it was nil'
         end
+        unless options[:app_metadata]
+          raise ArgumentError, 'App metadata is required'
+        end
         @monitor = monitor
         @topology_version = topology_version
         @monitoring = monitoring
@@ -120,8 +123,7 @@ module Mongo
         @lock.synchronize do
           unless @connection
             @server_pushing = false
-            connection = PushMonitor::Connection.new(server.address, options.merge(
-              app_metadata: server.push_monitor_app_metadata))
+            connection = PushMonitor::Connection.new(server.address, options)
             connection.connect!
             @connection = connection
           end
@@ -140,7 +142,9 @@ module Mongo
           raise
         end
         @server_pushing = resp_msg.flags.include?(:more_to_come)
-        result = resp_msg.documents.first
+        result = Operation::Result.new(resp_msg)
+        result.validate!
+        result.documents.first
       end
 
       def write_ismaster
@@ -148,6 +152,11 @@ module Mongo
           topologyVersion: topology_version.to_doc,
           maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
         )
+        if server_api = options[:server_api]
+          payload.update(
+            Utils.transform_server_api(server_api)
+          )
+        end
 
         req_msg = Protocol::Msg.new([:exhaust_allowed], {}, payload)
         @lock.synchronize { @connection }.write_bytes(req_msg.serialize.to_s)

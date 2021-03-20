@@ -118,6 +118,7 @@ functions:
             export FORK="${FORK}"
             export SOLO="${SOLO}"
             export EXTRA_URI_OPTIONS="${EXTRA_URI_OPTIONS}"
+            export API_VERSION_REQUIRED="${API_VERSION_REQUIRED}"
 
             export STRESS="${STRESS}"
             export OCSP_ALGORITHM="${OCSP_ALGORITHM}"
@@ -784,6 +785,16 @@ axes:
         variables:
           EXTRA_URI_OPTIONS: "tlsAllowInvalidCertificates=true"
       
+
+  - id: api-version-required
+    display_name: API version required
+    values:
+      - id: yes
+        display_name: Yes
+        variables:
+          API_VERSION_REQUIRED: 1
+      - id: no
+        display_name: No
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
@@ -912,6 +923,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: '4.9'
       topology: "*"
+      api-version-required: "*"
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:

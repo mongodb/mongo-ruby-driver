@@ -18,7 +18,10 @@ describe 'fork reconnect' do
 
   describe 'monitoring connection' do
     let(:monitor) do
-      Mongo::Server::Monitor.new(server, [], Mongo::Monitoring.new, server.options)
+      Mongo::Server::Monitor.new(server, [], Mongo::Monitoring.new, server.options.merge(
+        app_metadata: client.cluster.monitor_app_metadata,
+        push_monitor_app_metadata: client.cluster.push_monitor_app_metadata,
+      ))
     end
 
     it 'reconnects' do

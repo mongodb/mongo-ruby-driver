@@ -69,6 +69,9 @@ show_local_instructions() {
   if test -n "$EXTRA_URI_OPTIONS"; then
     params="$params EXTRA_URI_OPTIONS=$EXTRA_URI_OPTIONS"
   fi
+  if test -n "$API_VERSION_REQUIRED"; then
+    params="$params API_VERSION_REQUIRED=$API_VERSION_REQUIRED"
+  fi
   # $0 has the current script being executed which is also the script that
   # was initially invoked EXCEPT for the AWS configurations which use the
   # wrapper script.

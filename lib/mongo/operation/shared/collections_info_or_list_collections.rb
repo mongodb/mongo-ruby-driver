@@ -21,20 +21,15 @@ module Mongo
 
       # Execute the operation.
       #
-      # @example
-      #   operation.execute(server, client: nil)
-      #
       # @param [ Mongo::Server ] server The server to send the operation to.
-      # @param [ Mongo::Client ] client The client that will be used to
-      #   perform auto-encryption if it is necessary to encrypt the command
-      #   being executed (optional).
+      # @param [ Operation::Context ] context The operation context.
       #
       # @return [ Mongo::Operation::CollectionsInfo::Result,
       #           Mongo::Operation::ListCollections::Result ] The operation result.
-      def execute(server, client:)
+      def execute(server, context:)
         server.with_connection do |connection|
           operation = final_operation(connection)
-          operation.execute(connection, client: client)
+          operation.execute(connection, context: context)
         end
       end
 

@@ -53,6 +53,8 @@ describe Mongo::Server::AppMetadata do
     end
 
     context 'when the client document exceeds the max of 512 bytes' do
+      # Server api parameters change metadata length
+      require_no_required_api_version
 
       context 'when the os.type length is too long' do
 

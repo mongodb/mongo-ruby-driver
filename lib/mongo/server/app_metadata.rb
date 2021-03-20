@@ -70,6 +70,11 @@ module Mongo
       #   the metadata printed to the mongod logs upon establishing a connection
       #   in server versions >= 3.4.
       # @option options [ Symbol ] :purpose The purpose of this connection.
+      # @option options [ Hash ] :server_api The requested server API version.
+      #   This hash can have the following items:
+      #   - *:version* -- string
+      #   - *:strict* -- boolean
+      #   - *:deprecation_errors* -- boolean
       # @option options [ String ] :user The user name.
       # @option options [ Array<Hash> ] :wrapping_libraries Information about
       #   libraries such as ODMs that are wrapping the driver. Specify the
@@ -87,6 +92,7 @@ module Mongo
         end
         @compressors = options[:compressors] || []
         @wrapping_libraries = options[:wrapping_libraries]
+        @server_api = options[:server_api]
 
         if options[:user] && !options[:auth_mech]
           auth_db = options[:auth_source] || 'admin'
@@ -147,22 +153,29 @@ module Mongo
       end
 
       def document
-        client_document = full_client_document
-        while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
-          if client_document[:os][:name] || client_document[:os][:architecture]
-            client_document[:os].delete(:name)
-            client_document[:os].delete(:architecture)
-          elsif client_document[:platform]
-            client_document.delete(:platform)
-          else
-            client_document = nil
+        @document ||= begin
+          client_document = full_client_document
+          while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
+            if client_document[:os][:name] || client_document[:os][:architecture]
+              client_document[:os].delete(:name)
+              client_document[:os].delete(:architecture)
+            elsif client_document[:platform]
+              client_document.delete(:platform)
+            else
+              client_document = nil
+            end
           end
+          document = Server::Monitor::Connection::ISMASTER
+          document = document.merge(compression: @compressors)
+          document[:client] = client_document
+          document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
+          if @server_api
+            document.update(
+              Utils.transform_server_api(@server_api)
+            )
+          end
+          document
         end
-        document = Server::Monitor::Connection::ISMASTER
-        document = document.merge(compression: @compressors)
-        document[:client] = client_document
-        document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
-        document
       end
 
       def driver_doc

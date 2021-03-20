@@ -222,9 +222,20 @@ module Mongo
         end
       end
 
-      def build_message(connection, client)
+      def build_message(connection, context)
+        if self.session != context.session
+          if self.session
+            raise Error::InternalDriverError, "Operation session #{self.session.inspect} does not match context session #{context.session.inspect}"
+          else
+            # Some operations are not constructed with sessions but are
+            # executed in a context where a session is available.
+            # This could be OK or a driver issue.
+            # TODO investigate.
+          end
+        end
+
         super.tap do |message|
-          if session
+          if session = context.session
             # Serialize the message to detect client-side problems,
             # such as invalid BSON keys. The message will be serialized again
             # later prior to being sent to the connection.
