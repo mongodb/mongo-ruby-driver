@@ -95,6 +95,26 @@ describe Mongo::Database do
         expect(collection.server_selector).to eq(Mongo::ServerSelector.get(mode: :secondary))
         expect(collection.read_preference).to eq(BSON::Document.new(mode: :secondary))
       end
+
+      context ':server_api option' do
+
+        let(:client) do
+          new_local_client_nmio(['localhost'], server_api: {version: '1'})
+        end
+
+        it 'is not transfered to the collection' do
+          client.options[:server_api].should == {'version' => '1'}
+          collection.options[:server_api].should be nil
+        end
+      end
+    end
+
+    context 'when providing :server_api option' do
+      it 'is rejected' do
+        lambda do
+          database['foo', server_api: {version: '1'}]
+        end.should raise_error(ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level')
+      end
     end
   end
 
