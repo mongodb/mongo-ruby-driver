@@ -741,6 +741,8 @@ module Mongo
     def update_options(new_options)
       old_options = @options
 
+      new_options = self.class.canonicalize_ruby_options(new_options || {})
+
       validate_new_options!(new_options).tap do |opts|
         # Our options are frozen
         options = @options.dup
