@@ -126,7 +126,18 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: '4.9'
       topology: "*"
-      api-version-required: "*"
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "mongo-4.9"
+    matrix_spec:
+      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+      ruby: "ruby-2.7"
+      mongodb-version: '4.9'
+      topology: standalone
+      api-version-required: yes
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
