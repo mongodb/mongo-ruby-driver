@@ -2303,6 +2303,37 @@ describe Mongo::Client do
         new_client.cluster.topology.class.should_not be Mongo::Cluster::Topology::Unknown
       end
     end
+
+    context 'when :server_api is changed' do
+
+      let(:client) do
+        new_local_client_nmio(['127.0.0.1:27017'])
+      end
+
+      let(:new_client) do
+        client.with(server_api: {version: '1'})
+      end
+
+      it 'changes :server_api' do
+        new_client.options[:server_api].should == {'version' => '1'}
+      end
+    end
+
+    context 'when :server_api is cleared' do
+
+      let(:client) do
+        new_local_client_nmio(['127.0.0.1:27017'], server_api: {version: '1'})
+      end
+
+      let(:new_client) do
+        client.with(server_api: nil)
+      end
+
+      it 'clears :server_api' do
+        new_client.options[:server_api].should be nil
+      end
+    end
+
   end
 
   describe '#dup' do
