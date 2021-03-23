@@ -32,6 +32,8 @@ To get a list of collections or collection names for a database, use
   database.collection_names # Returns an array of collection names as strings.
 
 
+.. _arbitrary-commands:
+
 Arbitrary Comands
 `````````````````
 

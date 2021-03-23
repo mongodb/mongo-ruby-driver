@@ -104,6 +104,9 @@ module Mongo
     #
     # @since 2.0.0
     def [](collection_name, options = {})
+      if options[:server_api]
+        raise ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level'
+      end
       Collection.new(self, collection_name, options)
     end
     alias_method :collection, :[]

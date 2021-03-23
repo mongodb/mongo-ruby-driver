@@ -538,6 +538,23 @@ describe Mongo::Client do
     end
   end
 
+  describe '#database' do
+
+    let(:database) { client.database }
+
+    context 'when client has :server_api option' do
+
+      let(:client) do
+        new_local_client_nmio(['localhost'], server_api: {version: '1'})
+      end
+
+      it 'is not transfered to the collection' do
+        database.options[:server_api].should be nil
+      end
+    end
+
+  end
+
   describe '#database_names' do
 
     it 'returns a list of database names' do
