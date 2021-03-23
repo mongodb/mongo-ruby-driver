@@ -514,7 +514,9 @@ module Mongo
       validate_options!(addresses)
       validate_authentication_options!
 
-      @database = Database.new(self, @options[:database], @options)
+      database_options = @options.dup
+      database_options.delete(:server_api)
+      @database = Database.new(self, @options[:database], database_options)
 
       # Temporarily set monitoring so that event subscriptions can be
       # set up without there being a cluster
