@@ -222,7 +222,9 @@ module Mongo
           :session => session
         )
 
-        op.execute(server, client: client, options: execution_opts)
+        op.execute(server,
+          context: Operation::Context.new(client: client, session: session),
+          options: execution_opts)
       end
     end
 
@@ -253,7 +255,7 @@ module Mongo
             :db_name => name,
             :read => preference,
             :session => session
-          }).execute(server, client: client)
+          }).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
     end
@@ -284,7 +286,7 @@ module Mongo
           db_name: name,
           write_concern: write_concern,
           session: session
-        }).execute(next_primary(nil, session), client: client)
+        }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
       end
     end
 

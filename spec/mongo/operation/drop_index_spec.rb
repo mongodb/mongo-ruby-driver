@@ -1,9 +1,13 @@
 require 'spec_helper'
 
 describe Mongo::Operation::DropIndex do
+  require_no_required_api_version
+
   before do
     authorized_collection.indexes.drop_all
   end
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
 
@@ -26,7 +30,7 @@ describe Mongo::Operation::DropIndex do
       end
 
       let(:response) do
-        operation.execute(authorized_primary, client: nil)
+        operation.execute(authorized_primary, context: context)
       end
 
       it 'removes the index' do
@@ -46,7 +50,7 @@ describe Mongo::Operation::DropIndex do
 
       it 'raises an exception' do
         expect {
-          operation.execute(authorized_primary, client: nil)
+          operation.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

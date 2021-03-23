@@ -25,6 +25,21 @@ class ServerSetup
     client.command(replSetReconfig: cfg)
   end
 
+  def require_api_version
+    client.cluster.next_primary
+    # In sharded clusters, the parameter must be set on each mongos.
+    if Mongo::Cluster::Topology::Sharded === client.cluster.topology
+      client.cluster.servers.each do |server|
+        host = server.address.seed
+        Mongo::Client.new([host], client.options.merge(connect: :direct)) do |c|
+          c.command(setParameter: 1, requireApiVersion: true)
+        end
+      end
+    else
+      client.command(setParameter: 1, requireApiVersion: true)
+    end
+  end
+
   private
 
   # Creates an appropriate AWS mapped user for the provided ARN.

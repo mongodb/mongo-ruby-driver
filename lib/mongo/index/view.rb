@@ -218,7 +218,7 @@ module Mongo
 
           spec[:write_concern] = write_concern if description.features.collation_enabled?
 
-          Operation::CreateIndex.new(spec).execute(server, client: client)
+          Operation::CreateIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
 
@@ -296,7 +296,7 @@ module Mongo
                  }
           server = next_primary(nil, session)
           spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
-          Operation::DropIndex.new(spec).execute(server, client: client)
+          Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
 
@@ -332,7 +332,7 @@ module Mongo
       end
 
       def send_initial_query(server, session)
-        initial_query_op(session).execute(server, client: client)
+        initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
       end
 
       def with_generated_names(models, server)

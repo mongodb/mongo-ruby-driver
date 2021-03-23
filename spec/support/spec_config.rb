@@ -8,6 +8,7 @@ class SpecConfig
   # only loading the lite spec helper. Do I/O eagerly in accessor methods.
   def initialize
     @uri_options = {}
+    @ruby_options = {}
     if ENV['MONGODB_URI']
       @mongodb_uri = Mongo::URI.new(ENV['MONGODB_URI'])
       @uri_options = Mongo::Options::Mapper.transform_keys_to_symbols(@mongodb_uri.uri_options)
@@ -46,9 +47,19 @@ class SpecConfig
     end
 
     @ssl ||= false
+
+    if (server_api = ENV['SERVER_API']) && !server_api.empty?
+      @ruby_options[:server_api] = BSON::Document.new(YAML.load(server_api))
+      # Since the tests pass options provided by SpecConfig directly to
+      # internal driver objects (e.g. connections), transform server api
+      # parameters here as they would be transformed by Client constructor.
+      if (v = @ruby_options[:server_api][:version]).is_a?(Integer)
+        @ruby_options[:server_api][:version] = v.to_s
+      end
+    end
   end
 
-  attr_reader :uri_options, :connect_options
+  attr_reader :uri_options, :ruby_options, :connect_options
 
   def addresses
     @addresses ||= begin
@@ -75,7 +86,7 @@ class SpecConfig
       # https://github.com/10gen/mongo-orchestration/issues/268
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
         server_selection_timeout: 5.03,
-      ).merge(ssl_options))
+      ).merge(ssl_options).merge(ruby_options))
 
       begin
         case client.cluster.topology.class.name
@@ -419,6 +430,20 @@ EOT
     {retry_writes: retry_writes?}
   end
 
+  # The options needed for a successful socket connection to the server(s).
+  # These exclude options needed to handshake (e.g. server api parameters).
+  def connection_options
+    ssl_options
+  end
+
+  # The options needed for successful monitoring of the server(s).
+  # These exclude options needed to perform operations (e.g. credentials).
+  def monitoring_options
+    ssl_options.merge(
+      server_api: ruby_options[:server_api],
+    )
+  end
+
   # Base test options.
   def base_test_options
     {
@@ -453,7 +478,9 @@ EOT
       # Uncomment to have exceptions in background threads log complete
       # backtraces.
       #bg_error_backtrace: true,
-   }
+    }.merge(ruby_options).merge(
+      server_api: ruby_options[:server_api] && ::Utils.underscore_hash(ruby_options[:server_api])
+    )
   end
 
   # Options for test suite clients.

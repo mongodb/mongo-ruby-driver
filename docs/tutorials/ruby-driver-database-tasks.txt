@@ -52,8 +52,7 @@ To execute any command on the database, use the ``command`` method.
   Specifying server API version as a client option and also specifying
   any of the respective command parameters to the ``command`` method
   (i.e. the ``apiVersion``, ``apiStrict`` and ``apiDeprecationErrors``
-  command parameters) at the same time is not allowed, and the result
-  of attempting to do so is undefined.
+  command parameters) at the same time is not allowed and will produce an error.
 
 
 Drop Database

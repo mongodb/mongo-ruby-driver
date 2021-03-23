@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Delete do
+  require_no_required_api_version
+
   before do
     begin
       authorized_collection.delete_many
@@ -29,6 +31,8 @@ describe Mongo::Operation::Delete do
   end
 
   let(:op) { described_class.new(spec) }
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#initialize' do
 
@@ -103,7 +107,7 @@ describe Mongo::Operation::Delete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary, client: nil)
+          delete.execute(authorized_primary, context: context)
         end
 
         it 'deletes the documents from the database' do
@@ -123,7 +127,7 @@ describe Mongo::Operation::Delete do
 
         it 'raises an exception' do
           expect {
-            delete.execute(authorized_primary, client: nil)
+            delete.execute(authorized_primary, context: context)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -147,7 +151,7 @@ describe Mongo::Operation::Delete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary, client: nil)
+          delete.execute(authorized_primary, context: context)
         end
 
         it 'deletes the documents from the database' do
@@ -166,13 +170,13 @@ describe Mongo::Operation::Delete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary, client: nil)
+          delete.execute(authorized_primary, context: context)
         end
 
         it 'does not delete any documents' do
 
           expect {
-            op.execute(authorized_primary, client: nil)
+            op.execute(authorized_primary, context: context)
           }.to raise_error(Mongo::Error::OperationFailure)
 
           expect(authorized_collection.find.count).to eq(2)
@@ -187,7 +191,7 @@ describe Mongo::Operation::Delete do
 
         it 'raises an error' do
           expect {
-            op.execute(authorized_primary, client: nil)
+            op.execute(authorized_primary, context: context)
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
@@ -211,7 +215,7 @@ describe Mongo::Operation::Delete do
       end
 
       let(:result) do
-        delete.execute(authorized_primary, client: nil)
+        delete.execute(authorized_primary, context: context)
       end
 
       before do

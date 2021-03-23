@@ -1,3 +1,4 @@
+require 'mongo/operation/context'
 require 'mongo/operation/result'
 
 require 'mongo/operation/shared/response_handling'

@@ -346,7 +346,7 @@ module Mongo
         end
 
         def send_initial_query(server, session)
-          initial_query_op(session).execute(server, client: client)
+          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
         def time_to_bson_timestamp(time)

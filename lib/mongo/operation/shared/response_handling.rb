@@ -22,9 +22,13 @@ module Mongo
 
       private
 
-      def validate_result(result, client, connection)
-        unpin_maybe(session) do
-          add_error_labels(client, connection, session) do
+      # @param [ Mongo::Operation::Result ] result The operation result.
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      def validate_result(result, connection, context)
+        unpin_maybe(context.session) do
+          add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
               result.validate!
             end
@@ -38,25 +42,29 @@ module Mongo
       # and server-side errors (Error::OperationFailure); it does not
       # handle server selection errors (Error::NoServerAvailable), for which
       # labels are added in the server selection code.
-      def add_error_labels(client, connection, session)
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      def add_error_labels(connection, context)
         begin
           yield
         rescue Mongo::Error::SocketError => e
-          if session && session.in_transaction? && !session.committing_transaction?
+          if context.in_transaction? && !context.committing_transaction?
             e.add_label('TransientTransactionError')
           end
-          if session && session.committing_transaction?
+          if context.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
           end
 
-          maybe_add_retryable_write_error_label!(e, connection, client, session)
+          maybe_add_retryable_write_error_label!(e, connection, context)
 
           raise e
         rescue Mongo::Error::SocketTimeoutError => e
-          maybe_add_retryable_write_error_label!(e, connection, client, session)
+          maybe_add_retryable_write_error_label!(e, connection, context)
           raise e
         rescue Mongo::Error::OperationFailure => e
-          if session && session.committing_transaction?
+          if context.committing_transaction?
             if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
                 !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
             ) || e.max_time_ms_expired?
@@ -64,7 +72,7 @@ module Mongo
             end
           end
 
-          maybe_add_retryable_write_error_label!(e, connection, client, session)
+          maybe_add_retryable_write_error_label!(e, connection, context)
 
           raise e
         end
@@ -125,21 +133,12 @@ module Mongo
       # @param [ Mongo::Error ] error The error to which to add the label.
       # @param [ Mongo::Server::Connection ] connection The connection on which
       #   the operation is performed.
-      # @param [ Mongo::Client | nil ] client The client that is performing
-      #   the operation.
-      # @param [ Mongo::Session ] session The operation's session.
+      # @param [ Mongo::Operation::Context ] context The operation context.
       #
       # @note The client argument is optional because some operations, such as
       #   end_session, do not pass the client as an argument to the execute
       #   method.
-      def maybe_add_retryable_write_error_label!(error, connection, client, session)
-        in_transaction = session && session.in_transaction?
-        committing_transaction = in_transaction && session.committing_transaction?
-        aborting_transaction = in_transaction && session.aborting_transaction?
-        modern_retry_writes = client && client.options[:retry_writes]
-        legacy_retry_writes = client && !client.options[:retry_writes] &&
-          client.max_write_retries > 0
-
+      def maybe_add_retryable_write_error_label!(error, connection, context)
         # An operation is retryable if it meets one of the following criteria:
         # - It is a commitTransaction or abortTransaction
         # - It does not occur during a transaction and the client has enabled
@@ -147,8 +146,9 @@ module Mongo
         #
         # Note: any write operation within a transaction (excepting commit and
         # abort is NOT a retryable operation)
-        retryable_operation = committing_transaction || aborting_transaction ||
-          (!in_transaction && (modern_retry_writes || legacy_retry_writes))
+        retryable_operation = context.committing_transaction? ||
+          context.aborting_transaction? ||
+          !context.in_transaction? && context.any_retry_writes?
 
         # An operation should add the RetryableWriteError label if one of the
         # following conditions is met:

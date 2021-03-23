@@ -69,8 +69,8 @@ module Mongo
                   :selector => cmd,
                   :db_name => database.name,
                   :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+                  :txn_num => txn_num,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end.first['value']
         end
@@ -154,8 +154,8 @@ module Mongo
                   :selector => cmd,
                   :db_name => database.name,
                   :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+                  :txn_num => txn_num,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end.first['value']
           value unless value.nil? || value.empty?
@@ -198,8 +198,8 @@ module Mongo
                   :coll_name => collection.name,
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session
-              ).execute(server, client: client)
+                  :session => session,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
         end
@@ -242,8 +242,8 @@ module Mongo
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+                  :txn_num => txn_num,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
         end
@@ -298,8 +298,8 @@ module Mongo
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+                  :txn_num => txn_num,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
         end
@@ -355,8 +355,8 @@ module Mongo
                   :coll_name => collection.name,
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session
-              ).execute(server, client: client)
+                  :session => session,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
         end
@@ -412,8 +412,8 @@ module Mongo
                   :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session,
-                  :txn_num => txn_num
-              ).execute(server, client: client)
+                  :txn_num => txn_num,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
         end

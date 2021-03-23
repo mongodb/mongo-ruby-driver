@@ -1,0 +1,99 @@
+# Copyright (C) 2021 MongoDB Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+module Mongo
+  module Operation
+
+    # Context for operations.
+    #
+    # Holds various objects needed to make decisions about operation execution
+    # in a single container, and provides facade methods for the contained
+    # objects.
+    #
+    # @api private
+    class Context
+      def initialize(client: nil, session: nil, options: nil)
+        if options
+          if client
+            raise ArgumentError, 'Client and options cannot both be specified'
+          end
+
+          if session
+            raise ArgumentError, 'Session and options cannot both be specified'
+          end
+        end
+
+        @client = client
+        @session = session
+        @options = options
+      end
+
+      attr_reader :client
+      attr_reader :session
+      attr_reader :options
+
+      def in_transaction?
+        session&.in_transaction? || false
+      end
+
+      def starting_transaction?
+        session&.starting_transaction? || false
+      end
+
+      def committing_transaction?
+        in_transaction? && session.committing_transaction?
+      end
+
+      def aborting_transaction?
+        in_transaction? && session.aborting_transaction?
+      end
+
+      def modern_retry_writes?
+        client && client.options[:retry_writes]
+      end
+
+      def legacy_retry_writes?
+        client && !client.options[:retry_writes] && client.max_write_retries > 0
+      end
+
+      def any_retry_writes?
+        modern_retry_writes? || legacy_retry_writes?
+      end
+
+      def server_api
+        if client
+          client.options[:server_api]
+        elsif options
+          options[:server_api]
+        end
+      end
+
+      def encrypt?
+        client&.encrypter&.encrypt? || false
+      end
+
+      def decrypt?
+        !!client&.encrypter
+      end
+
+      def encrypter
+        if client&.encrypter
+          client.encrypter
+        else
+          raise Error::InternalDriverError, 'Encrypter should only be accessed when encryption is to be performed'
+        end
+      end
+    end
+  end
+end

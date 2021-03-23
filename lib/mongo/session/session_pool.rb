@@ -119,8 +119,10 @@ module Mongo
             },
             db_name: Database::ADMIN,
           )
-          # end_sessions does not take a client as an argument
-          op.execute(server, client: nil)
+          context = Operation::Context.new(options: {
+            server_api: server.options[:server_api],
+          })
+          op.execute(server, context: context)
         end
       rescue Mongo::Error, Error::AuthError
       end

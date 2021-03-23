@@ -65,7 +65,7 @@ describe 'Client after reconnect' do
     end
 
     let(:client) do
-      new_local_client(uri, SpecConfig.instance.ssl_options.merge(
+      new_local_client(uri, SpecConfig.instance.monitoring_options.merge(
         server_selection_timeout: 3.86, logger: logger))
     end
 

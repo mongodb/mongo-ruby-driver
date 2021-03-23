@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Operation::CreateUser do
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
 
@@ -26,7 +29,7 @@ describe Mongo::Operation::CreateUser do
     context 'when user creation was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary, client: nil)
+        operation.execute(root_authorized_primary, context: context)
       end
 
       it 'saves the user in the database' do
@@ -38,8 +41,8 @@ describe Mongo::Operation::CreateUser do
 
       it 'raises an exception' do
         expect {
-          operation.execute(root_authorized_primary, client: nil)
-          operation.execute(root_authorized_primary, client: nil)
+          operation.execute(root_authorized_primary, context: context)
+          operation.execute(root_authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

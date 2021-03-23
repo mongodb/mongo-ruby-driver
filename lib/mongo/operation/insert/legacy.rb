@@ -30,9 +30,9 @@ module Mongo
 
         private
 
-        def get_result(connection, client, options = {})
+        def get_result(connection, context, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(connection, client), @ids)
+          Result.new(*dispatch_message(connection, context), @ids)
         end
 
         def selector

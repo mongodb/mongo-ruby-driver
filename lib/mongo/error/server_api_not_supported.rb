@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,12 @@
 # limitations under the License.
 
 module Mongo
-  module Operation
+  class Error
 
-    # Shared executable behavior of operations for operations
-    # whose result should not be validated.
-    #
-    # @api private
-    module ExecutableNoValidate
-
-      def execute(connection, context:)
-        do_execute(connection, context)
-      end
+    # Exception raised when a Client has :server_api configured and an
+    # operation is executed against a pre-3.6 MongoDB server using a legacy
+    # wire protocol message that does not permit sending API parameters.
+    class ServerApiNotSupported < Error
     end
   end
 end

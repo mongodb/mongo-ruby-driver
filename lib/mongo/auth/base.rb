@@ -100,7 +100,13 @@ module Mongo
       end
 
       def dispatch_msg(connection, conversation, msg)
-        reply = connection.dispatch([msg])
+        context = Operation::Context.new(options: {
+          server_api: connection.options[:server_api],
+        })
+        if server_api = context.server_api
+          msg = msg.maybe_add_server_api(server_api)
+        end
+        reply = connection.dispatch([msg], context)
         reply_document = reply.documents.first
         validate_reply!(connection, conversation, reply_document)
         result = Operation::Result.new(reply, connection.description)

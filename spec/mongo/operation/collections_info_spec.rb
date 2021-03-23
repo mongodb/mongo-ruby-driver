@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::CollectionsInfo do
+  require_no_required_api_version
 
   let(:spec) do
     { selector: { listCollections: 1 },
@@ -15,6 +16,8 @@ describe Mongo::Operation::CollectionsInfo do
   let(:op) do
     described_class.new(spec)
   end
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
 
@@ -31,7 +34,7 @@ describe Mongo::Operation::CollectionsInfo do
     end
 
     let(:info) do
-      docs = op.execute(authorized_primary, client: nil).documents
+      docs = op.execute(authorized_primary, context: context).documents
       docs.collect { |info| info['name'].sub("#{SpecConfig.instance.test_db}.", '') }
     end
 

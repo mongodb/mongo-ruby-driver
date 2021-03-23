@@ -157,7 +157,7 @@ module Mongo
 
         def send_initial_query(server, session = nil)
           validate_collation!(server, collation)
-          initial_query_op(server, session).execute(server, client: client)
+          initial_query_op(server, session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
         def use_query_cache?

@@ -8,6 +8,12 @@ describe 'Transactions examples' do
     authorized_client.with(read_concern: {level: :majority}, write: {w: :majority})
   end
 
+  before do
+    if SpecConfig.instance.client_debug?
+      Mongo::Logger.logger.level = 0
+    end
+  end
+
   let(:hr) do
     client.use(:hr).database
   end

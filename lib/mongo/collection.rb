@@ -254,8 +254,8 @@ module Mongo
                                 selector: operation,
                                 db_name: database.name,
                                 write_concern: write_concern,
-                                session: session
-                                }).execute(server, client: client)
+                                session: session,
+                                }).execute(server, context: Operation::Context.new(client: client, session: session))
       end
     end
 
@@ -287,8 +287,8 @@ module Mongo
                               selector: { :drop => name },
                               db_name: database.name,
                               write_concern: write_concern,
-                              session: session
-                              }).execute(next_primary(nil, session), client: client)
+                              session: session,
+                              }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
       end
     rescue Error::OperationFailure => ex
       # NamespaceNotFound
@@ -579,8 +579,8 @@ module Mongo
             :options => opts,
             :id_generator => client.options[:id_generator],
             :session => session,
-            :txn_num => txn_num
-          ).execute(server, client: client)
+            :txn_num => txn_num,
+          ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
     end

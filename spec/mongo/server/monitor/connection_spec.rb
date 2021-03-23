@@ -9,13 +9,19 @@ describe Mongo::Server::Monitor::Connection do
 
   declare_topology_double
 
+  let(:monitor_app_metadata) do
+    Mongo::Server::Monitor::AppMetadata.new(
+      server_api: SpecConfig.instance.ruby_options[:server_api],
+    )
+  end
+
   let(:cluster) do
     double('cluster').tap do |cluster|
       allow(cluster).to receive(:topology).and_return(topology)
       allow(cluster).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new({}))
       allow(cluster).to receive(:options).and_return({})
-      allow(cluster).to receive(:monitor_app_metadata)
-      allow(cluster).to receive(:push_monitor_app_metadata)
+      allow(cluster).to receive(:monitor_app_metadata).and_return(monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata).and_return(monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(1000)
       allow(cluster).to receive(:run_sdam_flow)
     end
@@ -29,10 +35,12 @@ describe Mongo::Server::Monitor::Connection do
   end
 
   let(:monitor) do
+    metadata = Mongo::Server::Monitor::AppMetadata.new(options)
     register_background_thread_object(
       Mongo::Server::Monitor.new(server, server.event_listeners, server.monitoring,
         {
-          app_metadata: Mongo::Server::Monitor::AppMetadata.new(options),
+          app_metadata: metadata,
+          push_monitor_app_metadata: metadata,
         }.update(options))
     ).tap do |monitor|
       monitor.scan!

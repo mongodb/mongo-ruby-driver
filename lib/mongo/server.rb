@@ -71,7 +71,7 @@ module Mongo
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
-            monitor_app_metadata: cluster.monitor_app_metadata,
+            app_metadata: cluster.monitor_app_metadata,
             push_monitor_app_metadata: cluster.push_monitor_app_metadata,
             heartbeat_interval: cluster.heartbeat_interval,
         ))

@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,10 @@
 # limitations under the License.
 
 module Mongo
-  module Operation
+  class Error
 
-    # Shared executable behavior of operations for operations
-    # whose result should not be validated.
-    #
-    # @api private
-    module ExecutableNoValidate
-
-      def execute(connection, context:)
-        do_execute(connection, context)
-      end
+    # Raised when the driver detects an internal implementation problem.
+    class InternalDriverError < Error
     end
   end
 end

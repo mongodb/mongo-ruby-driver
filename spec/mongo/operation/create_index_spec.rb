@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Operation::CreateIndex do
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   before do
     authorized_collection.drop
@@ -20,7 +23,7 @@ describe Mongo::Operation::CreateIndex do
       end
 
       let(:response) do
-        operation.execute(authorized_primary, client: nil)
+        operation.execute(authorized_primary, context: context)
       end
 
       it 'returns ok' do
@@ -43,12 +46,12 @@ describe Mongo::Operation::CreateIndex do
       end
 
       before do
-        operation.execute(authorized_primary, client: nil)
+        operation.execute(authorized_primary, context: context)
       end
 
       it 'raises an exception' do
         expect {
-          second_operation.execute(authorized_primary, client: nil)
+          second_operation.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

@@ -135,7 +135,7 @@ describe 'Command monitoring' do
 
       subscriber.clear_events!
       expect do
-        command.execute(server, client: nil)
+        command.execute(server, context: Mongo::Operation::Context.new(session: session))
       end.to raise_error(Mongo::Error::OperationFailure, /Not enough data-bearing nodes \(100\)/)
 
       expect(subscriber.started_events.length).to eq(1)

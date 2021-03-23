@@ -232,6 +232,8 @@ describe 'Connections' do
     end
 
     describe 'wire protocol version range update' do
+      require_no_required_api_version
+
       # 3.2 wire protocol is 4.
       # Wire protocol < 2 means only scram auth is available,
       # which is not supported by modern mongos.

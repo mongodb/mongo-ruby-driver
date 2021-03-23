@@ -8,7 +8,7 @@ describe Mongo::Auth::Scram do
   end
 
   let(:connection) do
-    Mongo::Server::Connection.new(server, SpecConfig.instance.test_options)
+    Mongo::Server::Connection.new(server, SpecConfig.instance.monitoring_options)
   end
 
   let(:cache_mod) { Mongo::Auth::CredentialCache }

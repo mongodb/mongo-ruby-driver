@@ -531,7 +531,7 @@ describe Mongo::Server::ConnectionPool do
         authorized_client
       end
 
-       let(:pool) do
+      let(:pool) do
         client.cluster.next_primary.pool
       end
 

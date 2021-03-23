@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Update do
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   let(:document) do
     { :q => { :foo => 1 },
@@ -100,7 +103,7 @@ describe Mongo::Operation::Update do
         end
 
         let(:result) do
-          update.execute(authorized_primary, client: nil)
+          update.execute(authorized_primary, context: context)
         end
 
         it 'updates the document' do
@@ -128,7 +131,7 @@ describe Mongo::Operation::Update do
 
         it 'raises an exception' do
           expect {
-            update.execute(authorized_primary, client: nil)
+            update.execute(authorized_primary, context: context)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -152,7 +155,7 @@ describe Mongo::Operation::Update do
         end
 
         let(:result) do
-          update.execute(authorized_primary, client: nil)
+          update.execute(authorized_primary, context: context)
         end
 
         it 'updates the documents' do
@@ -180,7 +183,7 @@ describe Mongo::Operation::Update do
 
         it 'raises an exception' do
           expect {
-            update.execute(authorized_primary, client: nil)
+            update.execute(authorized_primary, context: context)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -193,7 +196,7 @@ describe Mongo::Operation::Update do
 
         it 'raises an error' do
           expect {
-            update.execute(authorized_primary, client: nil)
+            update.execute(authorized_primary, context: context)
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
@@ -205,7 +208,7 @@ describe Mongo::Operation::Update do
         end
 
         let(:result) do
-          update.execute(authorized_primary, client: nil)
+          update.execute(authorized_primary, context: context)
         end
 
         it 'inserts the document' do
@@ -243,7 +246,7 @@ describe Mongo::Operation::Update do
       end
 
       let(:result) do
-        update.execute(authorized_primary, client: nil)
+        update.execute(authorized_primary, context: context)
       end
 
       before do
