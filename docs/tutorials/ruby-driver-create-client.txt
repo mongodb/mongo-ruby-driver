@@ -1707,6 +1707,110 @@ The server support for various compressors is as follows:
   MongoDB 4.2 and higher.
 
 
+Server API Parameters
+=====================
+
+Starting with MongoDB 5.0, applications can request that the server behaves
+in accordance with a particular server API version.
+
+Server API parameters can be specified via the ``:server_api`` option to
+``Client``. These parameters cannot be provided via a URI.
+
+Currently the only defined API version is ``"1"``. It can be requested
+as follows:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], server_api: {version: "1"})
+
+MongoDB server defines API versions as string values. For convenience, if the
+API version is provided as an integer, the Ruby driver will stringify it and
+send it to the server as a string:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], server_api: {version: 1})
+
+Note that the server may define API versions that are not stringified integers.
+Applications must not assume that all legal API versions can be expressed
+as integers.
+
+When a particular API version is requested, operations which are part of that
+API version behave as specified in that API version. Operations which are not
+part of the specified API version behave as they would had the API version
+not been specified at all. Operations whose behavior is subject to the
+configured API version are commands including command arguments, queries,
+aggregation pipeline stages and arguments.
+
+Applications may request that the server rejects all operations which are not
+part of the specified API version by setting the ``:strict`` option:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], server_api: {version: "1", strict: true})
+
+For example, since the ``:tailable`` option is not part of the server API
+version 1, the following query would fail:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], server_api: {version: "1", strict: true})
+  client['collection'].find({}, tailable: true)
+  # => Mongo::Error::OperationFailure (BSON field 'FindCommand.tailable' is not allowed with apiStrict:true. (323) (on localhost:27017, modern retry, attempt 1))
+
+Applications may request that the server rejects all operations which are
+deprecated in the specified API version by setting the ``:deprecation_errors``
+option:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new(['localhost'], server_api: {version: "1", deprecation_errors: true})
+
+Note that, as of this writing, there are no deprecated operations in API
+version ``"1"``.
+
+If the server API parameters have been defined on a ``Client`` object,
+they will be sent by the client as part of each [*]_ executed operation.
+
+.. [*] ``getMore`` commands and commands in transactions do not accept
+   API parameters, thus the driver will not send them in these cases.
+
+MongoDB servers prior to 5.0 do not recognize the API parameters, and will
+produce a variety of errors should the application configure them.
+The Ruby driver will send the API parameters to all MongoDB 3.6 and newer
+servers, but the API parameters should only be configured when the application
+is communicating with MongoDB 5.0 or newer servers. The API parameters
+cannot be sent to MongoDB 3.4 and older servers that use the legacy wire
+protocol; if an application configures the API parameters and connects to
+MongoDB 3.4 or older servers, the driver will produce an error on every
+operation.
+
+The :ref:`command helper <arbitrary-commands>` permits the application to
+send manually constructed commands to the server. If the client is not
+configured with server API parameters, the command helper may be used to
+issue commands with API parameters:
+
+.. code-block:: ruby
+
+  client.database.command(
+    ping: 1,
+    apiVersion: "1",
+    apiStrict: false,
+    apiDeprecationErrors: false,
+  )
+
+If the client is configured with server API parameters, the command helper
+may not be used to issue commands with server API parameters. This includes the
+case when the server API parameters provided to the client and to the
+command helper are identical. If a client is constructed with server API
+parameters, to send different API parameters (or none at all) a new client
+must be constructed, either from scratch or using the ``with`` method.
+
+The server API parameters may only be specified on the client level.
+They may not be specified on the database, collection, session, transaction
+or individual operation level.
+
+
 Development Configuration
 =========================
 
