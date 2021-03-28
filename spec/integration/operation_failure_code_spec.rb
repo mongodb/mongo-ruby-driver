@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'OperationFailure code' do
-  let(:collection_name) { 'operation_error_code_spec' }
+  let(:collection_name) { 'operation_failure_code_spec' }
   let(:collection) { authorized_client[collection_name] }
 
   before do

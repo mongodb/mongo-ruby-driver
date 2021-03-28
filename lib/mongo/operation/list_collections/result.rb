@@ -88,7 +88,10 @@ module Mongo
               code: parser.code,
               code_name: parser.code_name,
               labels: parser.labels,
-              wtimeout: parser.wtimeout)
+              wtimeout: parser.wtimeout,
+              document: parser.document,
+              server_message: parser.server_message,
+            )
           end
         end
 

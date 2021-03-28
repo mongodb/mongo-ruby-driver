@@ -337,7 +337,7 @@ describe Mongo::Operation::Result do
       it 'raises OperationFailure' do
         expect do
           result.validate!
-        end.to raise_error(Mongo::Error::OperationFailure, /Replication is being shut down \(91\)/)
+        end.to raise_error(Mongo::Error::OperationFailure, /\[91\]: Replication is being shut down/)
       end
     end
   end

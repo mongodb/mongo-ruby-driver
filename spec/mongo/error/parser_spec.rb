@@ -25,10 +25,22 @@ describe Mongo::Error::Parser do
       end
 
       it 'returns the message' do
-        expect(parser.message).to eq('no such command: notacommand (59)')
+        expect(parser.message).to eq('[59]: no such command: notacommand')
       end
     end
 
+    context 'when the document contains an errmsg and code name' do
+
+      let(:document) do
+        { 'errmsg' => 'no such command: notacommand', 'code' => 59, 'codeName' => 'foo' }
+      end
+
+      it 'returns the message' do
+        expect(parser.message).to eq('[59:foo]: no such command: notacommand')
+      end
+    end
+
+=begin
     context 'when the document contains writeErrors' do
 
       context 'when only a single error exists' do
@@ -38,7 +50,7 @@ describe Mongo::Error::Parser do
         end
 
         it 'returns the message' do
-          expect(parser.message).to eq('Unknown modifier: $st (9)')
+          expect(parser.message).to eq('[9]: Unknown modifier: $st')
         end
       end
 
@@ -55,11 +67,30 @@ describe Mongo::Error::Parser do
 
         it 'returns the messages concatenated' do
           expect(parser.message).to eq(
-            'Unknown modifier: $st (9), Unknown modifier: $bl (9)'
+            'Multiple errors: 9: Unknown modifier: $st; 9: Unknown modifier: $bl'
+          )
+        end
+      end
+
+      context 'when multiple errors with code names exist' do
+
+        let(:document) do
+          {
+            'writeErrors' => [
+              { 'code' => 9, 'codeName' => 'foo', 'errmsg' => 'Unknown modifier: $st' },
+              { 'code' => 9, 'codeName' => 'foo', 'errmsg' => 'Unknown modifier: $bl' },
+            ]
+          }
+        end
+
+        it 'returns the messages concatenated' do
+          expect(parser.message).to eq(
+            'Multiple errors: [9:foo]: Unknown modifier: $st; [9:foo]: Unknown modifier: $bl'
           )
         end
       end
     end
+=end
 
     context 'when the document contains $err' do
 
@@ -68,7 +99,7 @@ describe Mongo::Error::Parser do
       end
 
       it 'returns the message' do
-        expect(parser.message).to eq('not authorized for query (13)')
+        expect(parser.message).to eq('[13]: not authorized for query')
       end
     end
 
@@ -79,7 +110,7 @@ describe Mongo::Error::Parser do
       end
 
       it 'returns the message' do
-        expect(parser.message).to eq('not authorized for query (13)')
+        expect(parser.message).to eq('[13]: not authorized for query')
       end
     end
 
@@ -90,7 +121,7 @@ describe Mongo::Error::Parser do
       end
 
       it 'returns the message' do
-        expect(parser.message).to eq('Not enough data-bearing nodes (100)')
+        expect(parser.message).to eq('[100]: Not enough data-bearing nodes')
       end
     end
   end

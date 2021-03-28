@@ -15,8 +15,18 @@
 module Mongo
   class Error
 
-    # Exception raised if there are write errors upon executing the bulk
+    # Exception raised if there are write errors upon executing a bulk
     # operation.
+    #
+    # Unlike OperationFailure, BulkWriteError does not currently expose
+    # individual error components (such as the error code). The result document
+    # (which can be obtained using the +result+ attribute) provides detailed
+    # error information and can be examined by the application if desired.
+    #
+    # @note A bulk operation that resulted in a BulkWriteError may have
+    #   written some of the documents to the database. If the bulk write
+    #   was unordered, writes may have also continued past the write that
+    #   produced a BulkWriteError.
     #
     # @since 2.0.0
     class BulkWriteError < Error
@@ -47,10 +57,14 @@ module Mongo
         return nil unless errors
 
         fragment = errors.first(10).map do |error|
-          "#{error['errmsg']} (#{error['code']})"
-        end.join(', ')
+          "[#{error['code']}]: #{error['errmsg']}"
+        end.join('; ')
 
         fragment += '...' if errors.length > 10
+
+        if errors.length > 1
+          fragment = "Multiple errors: #{fragment}"
+        end
 
         fragment
       end
