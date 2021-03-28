@@ -21,14 +21,8 @@ module Mongo
     #
     # @api private
     module OpMsgOrFindCommand
+      include PolymorphicOperation
       include PolymorphicLookup
-
-      def execute(server, context:)
-        server.with_connection do |connection|
-          operation = final_operation(connection)
-          operation.execute(connection, context: context)
-        end
-      end
 
       private
 

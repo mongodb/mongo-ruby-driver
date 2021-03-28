@@ -251,9 +251,14 @@ module Unified
                 raise Error::ErrorMismatch, "Expected client error but got #{e}"
               end
             end
+            if code = expected_error.use('errorCode')
+              unless e.code == code
+                raise Error::ErrorMismatch, "Expected #{code} code but had #{e.code}"
+              end
+            end
             if code_name = expected_error.use('errorCodeName')
               unless e.code_name == code_name
-                raise Error::ErrorMismatch, "Expected #{code_name} code but had #{e.code_name}"
+                raise Error::ErrorMismatch, "Expected #{code_name} code name but had #{e.code_name}"
               end
             end
             if text = expected_error.use('errorContains')
@@ -291,7 +296,7 @@ module Unified
         else
           result = send(method_name, op)
           if expected_result = op.use('expectResult')
-            if !expected_result.empty? && result.nil?
+            if result.nil? && !expected_result.empty?
               raise Error::ResultMismatch, "Actual result nil but expected result #{expected_result}"
             elsif Array === expected_result
               assert_documents_match(result, expected_result)
@@ -322,7 +327,11 @@ module Unified
     end
 
     def use_arguments(op, &block)
-      use_sub(op, 'arguments', &block)
+      if op.key?('arguments')
+        use_sub(op, 'arguments', &block)
+      else
+        yield UsingHash.new
+      end
     end
 
     def disable_fail_points

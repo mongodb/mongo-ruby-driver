@@ -219,9 +219,6 @@ tests:
                 <<: *expectedApiVersion
 
   - description: "estimatedDocumentCount appends declared API version on 4.9.0 or greater"
-    skipReason: RUBY-2520
-    runOnRequirements:
-      - minServerVersion: "4.9.0"
     operations:
       - name: estimatedDocumentCount
         object: *collection

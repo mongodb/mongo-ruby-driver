@@ -230,24 +230,46 @@ module Mongo
             raise ArgumentError, "Cannot call estimated_document_count when querying with a filter"
           end
 
-          cmd = { count: collection.name }
-          cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          if read_concern
-            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
-              read_concern)
-          end
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
+            context = Operation::Context.new(client: client, session: session)
             read_with_retry(session, selector) do |server|
-              Operation::Count.new(
-                selector: cmd,
-                db_name: database.name,
-                read: read_pref,
-                session: session,
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
-            end.n.to_i
+              if server.description.server_version_gte?('5.0')
+                pipeline = [
+                  {'$collStats' => {'count' => {}}},
+                  {'$group' => {'_id' => 1, 'n' => {'$sum' => '$count'}}},
+                ]
+                spec = Builder::Aggregation.new(pipeline, self, options.merge(session: session)).specification
+                result = Operation::Aggregate.new(spec).execute(server, context: context)
+                result.documents.first.fetch('n')
+              else
+                cmd = { count: collection.name }
+                cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
+                if read_concern
+                  cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+                    read_concern)
+                end
+                result = Operation::Count.new(
+                  selector: cmd,
+                  db_name: database.name,
+                  read: read_pref,
+                  session: session,
+                ).execute(server, context: context)
+                result.n.to_i
+              end
+            end
+          end
+        rescue Error::OperationFailure => exc
+          if exc.code == 26
+            # NamespaceNotFound
+            # This should only happen with the aggregation pipeline path
+            # (server 4.9+). Previous servers should return 0 for nonexistent
+            # collections.
+            0
+          else
+            raise
           end
         end
 
