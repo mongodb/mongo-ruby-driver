@@ -1,4 +1,4 @@
-# Copyright (C) 2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,38 +15,24 @@
 module Mongo
   module Operation
 
+    # Shared behavior of implementing an operation differently based on
+    # the server that will be executing the operation.
+    #
     # @api private
-    module CollectionsInfoOrListCollections
-      include PolymorphicLookup
+    module PolymorphicOperation
 
       # Execute the operation.
       #
       # @param [ Mongo::Server ] server The server to send the operation to.
       # @param [ Operation::Context ] context The operation context.
+      # @param [ Hash ] options Operation execution options.
       #
-      # @return [ Mongo::Operation::CollectionsInfo::Result,
-      #           Mongo::Operation::ListCollections::Result ] The operation result.
-      def execute(server, context:)
+      # @return [ Mongo::Operation::Result ] The operation result.
+      def execute(server, context:, options: {})
         server.with_connection do |connection|
           operation = final_operation(connection)
-          operation.execute(connection, context: context)
+          operation.execute(connection, context: context, options: options)
         end
-      end
-
-      private
-
-      def final_operation(connection)
-         op_class = if connection.features.list_collections_enabled?
-          if connection.features.op_msg_enabled?
-            ListCollections::OpMsg
-          else
-            ListCollections::Command
-          end
-        else
-          CollectionsInfo::Command
-        end
-
-        op_class.new(spec)
       end
     end
   end

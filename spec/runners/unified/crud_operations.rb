@@ -29,7 +29,11 @@ module Unified
     def estimated_document_count(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.estimated_document_count
+        opts = {}
+        if max_time_ms = args.use('maxTimeMS')
+          opts[:max_time_ms] = max_time_ms
+        end
+        collection.estimated_document_count(**opts)
       end
     end
 

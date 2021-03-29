@@ -3,51 +3,55 @@ module Unified
   module Assertions
 
     def assert_result_matches(actual, expected)
-      use_all(expected, 'expected result', expected) do |expected|
-        %w(deleted inserted matched modified upserted).each do |k|
-          if count = expected.use("#{k}Count")
-            if Hash === count || count > 0
-              actual_count = case actual
-              when Mongo::BulkWrite::Result, Mongo::Operation::Delete::Result
-                actual.send("#{k}_count")
-              else
-                actual["n_#{k}"]
+      if Hash === expected
+        use_all(expected, 'expected result', expected) do |expected|
+          %w(deleted inserted matched modified upserted).each do |k|
+            if count = expected.use("#{k}Count")
+              if Hash === count || count > 0
+                actual_count = case actual
+                when Mongo::BulkWrite::Result, Mongo::Operation::Delete::Result
+                  actual.send("#{k}_count")
+                else
+                  actual["n_#{k}"]
+                end
+                assert_value_matches(actual_count, count, "#{k} count")
               end
-              assert_value_matches(actual_count, count, "#{k} count")
             end
           end
-        end
-        %w(inserted upserted).each do |k|
-          expected_v = expected.use("#{k}Ids")
-          next unless expected_v
-          actual_v = case actual
-          when Mongo::BulkWrite::Result, Mongo::Operation::Update::Result
-            # Ruby driver returns inserted ids as an array of ids.
-            # The yaml file specifies them as a map from operation.
-            if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
-              expected_v = expected_v.values.first.values
-            elsif Hash === expected_v
-              expected_v = expected_v.values
-            end
-            actual.send("#{k}_ids")
-          else
-            actual["#{k}_ids"]
-          end
-          if expected_v
-            if expected_v.empty?
-              if actual_v && !actual_v.empty?
-                raise Error::ResultMismatch, "Actual not empty"
+          %w(inserted upserted).each do |k|
+            expected_v = expected.use("#{k}Ids")
+            next unless expected_v
+            actual_v = case actual
+            when Mongo::BulkWrite::Result, Mongo::Operation::Update::Result
+              # Ruby driver returns inserted ids as an array of ids.
+              # The yaml file specifies them as a map from operation.
+              if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
+                expected_v = expected_v.values.first.values
+              elsif Hash === expected_v
+                expected_v = expected_v.values
               end
+              actual.send("#{k}_ids")
             else
-              if actual_v != expected_v
-                raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+              actual["#{k}_ids"]
+            end
+            if expected_v
+              if expected_v.empty?
+                if actual_v && !actual_v.empty?
+                  raise Error::ResultMismatch, "Actual not empty"
+                end
+              else
+                if actual_v != expected_v
+                  raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                end
               end
             end
           end
-        end
 
+          assert_matches(actual, expected, 'result')
+          expected.clear
+        end
+      else
         assert_matches(actual, expected, 'result')
-        expected.clear
       end
     end
 
