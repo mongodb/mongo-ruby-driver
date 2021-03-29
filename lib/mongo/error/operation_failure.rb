@@ -89,7 +89,7 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
-      # @return [ String ] message The server-returned error message
+      # @return [ String ] The server-returned error message
       #   parsed from the response.
       #
       # @api experimental
@@ -242,6 +242,8 @@ module Mongo
       # @option options [ String ] :code_name Error code name.
       # @option options [ BSON::Document ] :document The server-returned
       #   error document.
+      # @option options [ String ] server_message The server-returned
+      #   error message parsed from the response.
       # @option options [ Hash ] :write_concern_error_document The
       #   server-supplied write concern error document, if any.
       # @option options [ Integer ] :write_concern_error_code Error code for
