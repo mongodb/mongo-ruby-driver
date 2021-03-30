@@ -29,16 +29,19 @@ module Mongo
     # An error field, MongoDB < 2.6
     #
     # @since 2.0.0
+    # @deprecated
     ERR = '$err'.freeze
 
     # An error field, MongoDB < 2.4
     #
     # @since 2.0.0
+    # @deprecated
     ERROR = 'err'.freeze
 
     # The standard error message field, MongoDB 3.0+
     #
     # @since 2.0.0
+    # @deprecated
     ERRMSG = 'errmsg'.freeze
 
     # The constant for the writeErrors array.
