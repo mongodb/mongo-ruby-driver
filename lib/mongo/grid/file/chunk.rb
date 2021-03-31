@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -153,7 +156,7 @@ module Mongo
           # @since 2.0.0
           # @api private
           def assemble(chunks)
-            chunks.reduce(''){ |data, chunk| data << chunk.data.data }
+            chunks.reduce(+''){ |data, chunk| data << chunk.data.data }
           end
 
           # Split the provided data into multiple chunks.

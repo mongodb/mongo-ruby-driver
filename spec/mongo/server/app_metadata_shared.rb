@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 shared_examples 'app metadata document' do
   let(:app_metadata) do
     described_class.new({})

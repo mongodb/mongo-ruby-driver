@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Update top-level fields in a single document
 
 client[:restaurants].find(name: 'Juni').update_one('$set'=> { 'cuisine' => 'American (New)' },

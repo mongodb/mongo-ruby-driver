@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Matcher for determining if the server is of the expected type according to
 # the test.
 #

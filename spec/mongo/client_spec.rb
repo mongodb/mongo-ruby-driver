@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # NB: tests for .new, #initialize, #use, #with and #dup are in

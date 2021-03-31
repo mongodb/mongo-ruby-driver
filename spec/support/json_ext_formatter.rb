@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 class JsonExtFormatter < RSpec::Core::Formatters::JsonFormatter
   RSpec::Core::Formatters.register self, :message,
     :dump_summary, :dump_profile, :stop, :seed, :close

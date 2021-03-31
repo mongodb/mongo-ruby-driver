@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module CommonShortcuts
   module ClassMethods
     # Declares a topology double, which is configured to accept summary

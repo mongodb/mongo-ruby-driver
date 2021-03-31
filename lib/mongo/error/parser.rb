@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -148,7 +151,7 @@ module Mongo
       private
 
       def parse!
-        @message = ""
+        @message = +""
         parse_single(@message, ERR)
         parse_single(@message, ERROR)
         parse_single(@message, ERRMSG)
