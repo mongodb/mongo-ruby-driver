@@ -37,8 +37,7 @@ module Mongo
               read_concern)
           end
           sel[:maxTimeMS] = max_time_ms if max_time_ms
-          update_selector_for_read_pref(sel, connection)
-          sel
+          add_read_preference_legacy(sel, connection)
         end
 
         def message(connection)
