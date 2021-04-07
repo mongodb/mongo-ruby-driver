@@ -405,7 +405,6 @@ describe Mongo::Grid::FSBucket do
       before do
         fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
         expect(fs.chunks_collection).to receive(:indexes).and_call_original
-        expect(fs.files_collection).not_to receive(:indexes)
       end
 
       it 'raises the error to the user' do
