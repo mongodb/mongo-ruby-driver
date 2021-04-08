@@ -508,28 +508,26 @@ module Mongo
 
       def ensure_indexes!
         if files_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
-          unless index_exists?(files_name, FSBucket::FILES_INDEX)
-            files_collection.indexes.create_one(FSBucket::FILES_INDEX)
-          end
+          create_index_if_missing!(files_name, FSBucket::FILES_INDEX)
         end
 
         if chunks_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
-          unless index_exists?(chunks_name, FSBucket::CHUNKS_INDEX)
-            chunks_collection.indexes.create_one(FSBucket::CHUNKS_INDEX, :unique => true)
-          end
+          create_index_if_missing!(chunks_name, FSBucket::CHUNKS_INDEX, :unique => true)
         end
       end
 
-      # Helper method to test for index existence by first verifying the collection exists.
-      # This allows calling Mongo::Collection#indexes without raising
-      #   Mongo::Error::OperationFailure Exception: [26:NamespaceNotFound]
-      # if the collection doesn't exist
-      def index_exists?(collection_name, index_spec)
-        database_collections = database.list_collections({ :filter => { :type => "collection" } })
-        if database_collections.any? { |c| c["name"] == collection_name }
-          database[collection_name].indexes.get(index_spec).nil?
-        else
-          false
+      def create_index_if_missing!(collection_name, index_spec, options = {})
+        begin
+          unless database[collection_name].indexes.get(index_spec).nil?
+            database[collection_name].indexes.create_one(index_spec, options)
+          end
+        rescue Mongo::Error::OperationFailure => e
+          # proceed with index creation if a NamespaceNotFound error is thrown
+          if e.code == 26
+            database[collection_name].indexes.create_one(index_spec, options)
+          else
+            raise
+          end
         end
       end
     end
