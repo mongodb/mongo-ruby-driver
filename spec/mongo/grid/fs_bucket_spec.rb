@@ -363,8 +363,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       before do
-        expect(fs.files_collection).to receive(:indexes).and_call_original
-        expect(fs.chunks_collection).to receive(:indexes).and_call_original
         fs.insert_one(file)
       end
 
@@ -404,7 +402,6 @@ describe Mongo::Grid::FSBucket do
 
       before do
         fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
-        expect(fs.chunks_collection).to receive(:indexes).and_call_original
       end
 
       it 'raises the error to the user' do
@@ -418,8 +415,6 @@ describe Mongo::Grid::FSBucket do
 
       before do
         support_fs.insert_one(support_file)
-        expect(fs.files_collection).not_to receive(:indexes)
-        expect(fs.chunks_collection).not_to receive(:indexes)
         fs.insert_one(file)
       end
 
