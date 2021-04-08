@@ -480,7 +480,7 @@ module Mongo
       else
         "Retry"
       end
-      Logger.logger.warn "#{message} due to: #{e.class.name} #{e.message}"
+      Logger.logger.warn "#{message} due to: #{e.class.name}: #{e.message}"
     end
 
     # Retry writes on MMAPv1 should raise an actionable error; append actionable

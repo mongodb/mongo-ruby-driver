@@ -577,8 +577,9 @@ describe Mongo::Retryable do
     context 'when an error due to using an unsupported storage engine occurs' do
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('Transaction numbers are only allowed on...',
-            nil, :code=>20)).ordered
+          Mongo::Error::OperationFailure.new('message which is not checked',
+            nil, code: 20, server_message: 'Transaction numbers are only allowed on...',
+        )).ordered
       end
 
       it 'raises an exception with the correct error message' do

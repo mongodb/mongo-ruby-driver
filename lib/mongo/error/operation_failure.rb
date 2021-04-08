@@ -92,6 +92,12 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
+      # @return [ String ] The server-returned error message
+      #   parsed from the response.
+      #
+      # @api experimental
+      attr_reader :server_message
+
       # Whether the error is a retryable error according to the legacy
       # read retry logic.
       #
@@ -218,6 +224,11 @@ module Mongo
       # @since 2.10.0
       attr_reader :write_concern_error_code_name
 
+      # @return [ BSON::Document | nil ] The server-returned error document.
+      #
+      # @api experimental
+      attr_reader :document
+
       # Create the operation failure.
       #
       # @example Create the error object
@@ -232,6 +243,10 @@ module Mongo
       #
       # @option options [ Integer ] :code Error code.
       # @option options [ String ] :code_name Error code name.
+      # @option options [ BSON::Document ] :document The server-returned
+      #   error document.
+      # @option options [ String ] server_message The server-returned
+      #   error message parsed from the response.
       # @option options [ Hash ] :write_concern_error_document The
       #   server-supplied write concern error document, if any.
       # @option options [ Integer ] :write_concern_error_code Error code for
@@ -256,6 +271,8 @@ module Mongo
         @write_concern_error_labels = options[:write_concern_error_labels] || []
         @labels = options[:labels] || []
         @wtimeout = !!options[:wtimeout]
+        @document = options[:document]
+        @server_message = options[:server_message]
       end
 
       # Whether the error is a write concern timeout.
@@ -284,8 +301,10 @@ module Mongo
       #
       # @since 2.10.0
       def unsupported_retryable_write?
-        # code 20 is IllegalOperation
-        code == 20 && message.start_with?("Transaction numbers")
+        # code 20 is IllegalOperation.
+        # Note that the document is expected to be a BSON::Document, thus
+        # either having string keys or providing indifferent access.
+        code == 20 && server_message&.start_with?("Transaction numbers") || false
       end
     end
   end

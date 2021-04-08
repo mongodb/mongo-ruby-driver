@@ -121,14 +121,14 @@ module Mongo
       # raises Unauthorized if not.
       def validate_reply!(connection, conversation, doc)
         if doc[:ok] != 1
-          extra = [doc[:code], doc[:codeName]].compact.join(': ')
-          msg = doc[:errmsg]
-          unless extra.empty?
-            msg += " (#{extra})"
-          end
+          message = Error::Parser.build_message(
+            code: doc[:code],
+            code_name: doc[:codeName],
+            message: doc[:errmsg],
+          )
           raise Unauthorized.new(user,
             used_mechanism: self.class.const_get(:MECHANISM),
-            message: msg,
+            message: message,
             server: connection.server,
           )
         end
