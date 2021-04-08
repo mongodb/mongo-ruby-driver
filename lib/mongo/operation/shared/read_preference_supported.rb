@@ -96,7 +96,8 @@ module Mongo
         if read && connection.description.mongos? && read_pref = read.to_mongos
           # If the read preference contains only mode and mode is secondary
           # preferred and we are sending to a pre-OP_MSG server, this read
-          # preference is indicated by the :slave_ok wire protocol flag.
+          # preference is indicated by the :slave_ok wire protocol flag
+          # and $readPreference command parameter isn't sent.
           if read_pref != {mode: 'secondaryPreferred'}
             Mongo::Lint.validate_camel_case_read_preference(read_pref)
             sel = sel[:$query] ? sel : {:$query => sel}
