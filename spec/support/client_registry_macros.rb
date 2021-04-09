@@ -1,9 +1,9 @@
 module ClientRegistryMacros
-  def new_local_client(address, options=nil)
-    ClientRegistry.instance.new_local_client(address, options)
+  def new_local_client(address, options=nil, &block)
+    ClientRegistry.instance.new_local_client(address, options, &block)
   end
 
-  def new_local_client_nmio(address, options=nil)
+  def new_local_client_nmio(address, options=nil, &block)
     # Avoid type converting options.
     base_options = {monitoring_io: false}
     if BSON::Document === options || options&.keys&.any? { |key| String === key }
@@ -14,7 +14,7 @@ module ClientRegistryMacros
     else
       base_options
     end
-    new_local_client(address, options)
+    new_local_client(address, options, &block)
   end
 
   def close_local_clients

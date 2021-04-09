@@ -86,13 +86,8 @@ module Mongo
       #
       # @since 2.0.0
       def to_mongos
-        if tag_sets.empty? && max_staleness.nil? && hedge.nil?
-          # The server preference is not sent to mongos as part of the query
-          # selector if there are no tag sets, for maximum backwards compatibility.
-          nil
-        else
-          to_doc
-        end
+        # Always send the read preference to mongos: DRIVERS-1642.
+        to_doc
       end
 
       private

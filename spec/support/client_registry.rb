@@ -188,10 +188,14 @@ class ClientRegistry
   end
   private :new_global_client
 
-  def new_local_client(*args)
-    Mongo::Client.new(*args).tap do |client|
-      @lock.synchronize do
-        @local_clients << client
+  def new_local_client(*args, &block)
+    if block_given?
+      Mongo::Client.new(*args, &block)
+    else
+      Mongo::Client.new(*args).tap do |client|
+        @lock.synchronize do
+          @local_clients << client
+        end
       end
     end
   end
