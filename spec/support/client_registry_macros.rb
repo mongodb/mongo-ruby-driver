@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module ClientRegistryMacros
   def new_local_client(address, options=nil, &block)
     ClientRegistry.instance.new_local_client(address, options, &block)

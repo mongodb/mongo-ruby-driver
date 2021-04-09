@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,7 +91,7 @@ module Mongo
         # Server::Monitor::Connection does not reference its server, but
         # knows its address. Server::Connection delegates the address to its
         # server.
-        note = "on #{address.seed}"
+        note = +"on #{address.seed}"
         if respond_to?(:id)
           note << ", connection #{generation}:#{id}"
         end

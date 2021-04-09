@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'runners/cmap/verifier'
 
 module Mongo

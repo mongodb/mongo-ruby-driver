@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module Mongo
   class Error
     # @note Although not_master? and node_recovering? methods of this module

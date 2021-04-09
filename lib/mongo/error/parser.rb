@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -194,7 +197,7 @@ module Mongo
           raise ArgumentError, "writeErrors should only be given in successful responses"
         end
 
-        @message = ""
+        @message = +""
         parse_single(@message, '$err')
         parse_single(@message, 'err')
         parse_single(@message, 'errmsg')

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 autoload :Base64, 'base64'
 autoload :JSON, 'json'
 module Net
@@ -330,7 +333,7 @@ module Utils
     else
       ''
     end
-    uri = "mongodb://#{creds}#{address_strs.join(',')}/"
+    uri = +"mongodb://#{creds}#{address_strs.join(',')}/"
     if opts[:database]
       uri << opts[:database]
     end

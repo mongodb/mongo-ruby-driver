@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # max_pool_size is set to 1 to force a single connection being used for

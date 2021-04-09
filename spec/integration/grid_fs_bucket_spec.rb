@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'GridFS bucket integration' do
@@ -30,7 +33,7 @@ describe 'GridFS bucket integration' do
 
     context 'in binary encoding' do
       let(:data_to_write) do
-        data.force_encoding('binary').freeze
+        data.dup.force_encoding('binary').freeze
       end
 
       it_behaves_like 'round-trips'

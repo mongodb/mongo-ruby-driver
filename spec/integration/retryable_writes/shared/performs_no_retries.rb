@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module PerformsNoRetries
   shared_examples 'it performs no retries' do
     # required for failCommand
