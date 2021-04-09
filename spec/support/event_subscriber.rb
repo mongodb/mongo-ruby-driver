@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Test event subscriber.
 #
 # @since 2.5.0

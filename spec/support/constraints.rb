@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module Constraints
 
   # Some tests hardcode the TLS certificates shipped with the driver's

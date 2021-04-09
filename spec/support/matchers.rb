@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 RSpec::Matchers.define :be_int32 do |num|
   match do |actual|
     actual == [num].pack('l<')
@@ -20,7 +23,7 @@ end
 
 RSpec::Matchers.define :be_cstring do |string|
   match do |actual|
-    actual == "#{string.force_encoding(BSON::BINARY)}\0"
+    actual == "#{string.dup.force_encoding(BSON::BINARY)}\0"
   end
 end
 

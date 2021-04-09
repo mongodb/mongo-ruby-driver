@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require_relative './spec_config'
 require_relative './client_registry'
 

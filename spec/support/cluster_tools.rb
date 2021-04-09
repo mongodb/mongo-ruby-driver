@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'singleton'
 
 # There is an undocumented {replSetStepUp: 1} command which can be used to

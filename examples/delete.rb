@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Delete all documents matching a condition
 
 client[:restaurants].find('borough' => 'Manhattan').delete_many

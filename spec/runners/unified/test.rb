@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'runners/crud/requirement'
 require 'runners/unified/crud_operations'
 require 'runners/unified/grid_fs_operations'

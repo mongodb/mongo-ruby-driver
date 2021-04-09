@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # The only allowed read preference in transaction is primary.

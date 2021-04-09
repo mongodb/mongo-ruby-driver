@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 shared_context 'scram conversation context' do
   let(:connection) do
     double('connection').tap do |connection|

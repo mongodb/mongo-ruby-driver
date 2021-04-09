@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'runners/unified/error'
 require 'runners/unified/entity_map'
 require 'runners/unified/event_subscriber'

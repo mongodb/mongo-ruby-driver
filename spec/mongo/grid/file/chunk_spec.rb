@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 require 'stringio'
 
@@ -57,7 +60,7 @@ describe Mongo::Grid::File::Chunk do
     end
 
     let(:raw_data) do
-      'testing'
+      +'testing'
     end
 
     let(:data) do
@@ -150,7 +153,7 @@ describe Mongo::Grid::File::Chunk do
     context 'when the data is smaller than the default size' do
 
       let(:raw_data) do
-        'testing'
+        +'testing'
       end
 
       let(:data) do
@@ -185,7 +188,7 @@ describe Mongo::Grid::File::Chunk do
       end
 
       let(:raw_data) do
-        'testing'
+        +'testing'
       end
 
       let(:data) do
@@ -193,7 +196,7 @@ describe Mongo::Grid::File::Chunk do
       end
 
       let(:assembled) do
-        full_data = ''
+        full_data = +''
         chunks.each do |chunk|
           full_data << chunk.data.data
         end
