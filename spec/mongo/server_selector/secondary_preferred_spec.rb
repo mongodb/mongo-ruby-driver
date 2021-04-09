@@ -81,8 +81,8 @@ describe Mongo::ServerSelector::SecondaryPreferred do
 
     context 'tag sets not provided' do
 
-      it 'returns nil' do
-        expect(selector.to_mongos).to be_nil
+      it 'returns secondaryPreferred' do
+        selector.to_mongos.should == {mode: 'secondaryPreferred'}
       end
     end
 
@@ -92,8 +92,8 @@ describe Mongo::ServerSelector::SecondaryPreferred do
         { :mode => 'secondaryPreferred' }
       end
 
-      it 'returns nil' do
-        expect(selector.to_mongos).to be_nil
+      it 'returns secondaryPreferred' do
+        selector.to_mongos.should == {mode: 'secondaryPreferred'}
       end
     end
 
@@ -123,8 +123,8 @@ describe Mongo::ServerSelector::SecondaryPreferred do
     context 'hedge not provided' do
       let(:hedge) { nil }
 
-      it 'returns nil' do
-        expect(selector.to_mongos).to be_nil
+      it 'returns secondaryPreferred' do
+        selector.to_mongos.should == {mode: 'secondaryPreferred'}
       end
     end
 

@@ -174,9 +174,10 @@ module Mongo
         elsif connection.description.mongos?
           # When server is a mongos:
           # - $readPreference is never sent when mode is 'primary'
-          # - When mode is 'secondaryPreferred' $readPreference is only sent
-          #   when a non-mode field (i.e. tag_sets) is present
           # - Otherwise $readPreference is sent
+          # When mode is 'secondaryPreferred' $readPreference is currently
+          # required to only be sent when a non-mode field (i.e. tag_sets)
+          # is present, but this causes wrong behavior (DRIVERS-1642).
           if read
             doc = read.to_mongos
             if doc

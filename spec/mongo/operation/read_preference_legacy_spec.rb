@@ -49,10 +49,10 @@ describe Mongo::Operation::ReadPreferenceSupported do
     end
   end
 
-  describe '#add_slave_ok_flag_maybe' do
+  describe '#add_slave_ok_flag?' do
 
     let(:actual) do
-      operation.send(:add_slave_ok_flag_maybe, operation.send(:options), connection)
+      operation.send(:add_slave_ok_flag?, connection)
     end
 
     shared_examples_for 'sets the slave_ok flag as expected' do
@@ -63,9 +63,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
     shared_examples_for 'never sets slave_ok' do
 
-      let(:expected) do
-        { }
-      end
+      let(:expected) { false }
 
       context 'when no read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get }
@@ -88,9 +86,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
     shared_examples_for 'always sets slave_ok' do
 
-      let(:expected) do
-        { :flags => [ :slave_ok ] }
-      end
+      let(:expected) { true }
 
       context 'when no read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get }
@@ -117,9 +113,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
         let(:read_pref) { Mongo::ServerSelector.get }
 
-        let(:expected) do
-          { }
-        end
+        let(:expected) { false }
 
         it_behaves_like 'sets the slave_ok flag as expected'
       end
@@ -130,9 +124,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
           let(:read_pref) { Mongo::ServerSelector.get(:mode => :secondary) }
 
-          let(:expected) do
-            { :flags => [ :slave_ok ] }
-          end
+          let(:expected) { true }
 
           it_behaves_like 'sets the slave_ok flag as expected'
         end
@@ -141,9 +133,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
           let(:read_pref) { Mongo::ServerSelector.get(:mode => :primary) }
 
-          let(:expected) do
-            { }
-          end
+          let(:expected) { false }
 
           it_behaves_like 'sets the slave_ok flag as expected'
         end
@@ -209,7 +199,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
     end
   end
 
-  describe '#update_selector_for_read_pref' do
+  describe '#add_read_preference_legacy' do
 
     let(:read_pref) do
       Mongo::ServerSelector.get(:mode => mode)
@@ -218,7 +208,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
     # Behavior of sending $readPreference is the same regardless of topology.
     shared_examples_for '$readPreference in the command' do
       let(:actual) do
-        operation.send(:update_selector_for_read_pref, operation.send(:selector), connection)
+        operation.send(:add_read_preference_legacy, operation.send(:selector), connection)
       end
 
       let(:expected_read_preference) do
