@@ -46,18 +46,18 @@ module Mongo
       # @example Find all user ids.
       #   Query.new('xgen', 'users', {}, :fields => {:id => 1})
       #
-      # @param database [String, Symbol] The database to query.
-      # @param collection [String, Symbol] The collection to query.
-      # @param selector [Hash] The query selector.
-      # @param options [Hash] The additional query options.
+      # @param [ String, Symbol ] database The database to query.
+      # @param [ String, Symbol ] collection The collection to query.
+      # @param [ Hash ] selector The query selector.
+      # @param [ Hash ] options The additional query options.
       #
-      # @option options :project [Hash] The projection.
-      # @option options :skip [Integer] The number of documents to skip.
-      # @option options :limit [Integer] The number of documents to return.
-      # @option options :flags [Array] The flags for the query message.
-      #
-      #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
-      #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
+      # @option options [ Array<Symbol> ] :flags The flag bits.
+      #   Currently supported values are :await_data, :exhaust,
+      #   :no_cursor_timeout, :oplog_replay, :partial, :slave_ok,
+      #   :tailable_cursor.
+      # @option options [ Integer ] :limit The number of documents to return.
+      # @option options [ Hash ] :project The projection.
+      # @option options [ Integer ] :skip The number of documents to skip.
       def initialize(database, collection, selector, options = {})
         @database = database
         @namespace = "#{database}.#{collection}"

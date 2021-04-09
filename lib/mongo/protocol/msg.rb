@@ -43,8 +43,8 @@ module Mongo
       #   Msg.new([:more_to_come], {}, { ismaster: 1 },
       #           { type: 1, payload: { identifier: 'documents', sequence: [..] } })
       #
-      # @param [ Array<Symbol> ] flags The flag bits. Current supported values
-      #   are :more_to_come and :checksum_present.
+      # @param [ Array<Symbol> ] flags The flag bits. Currently supported
+      #   values are :more_to_come and :checksum_present.
       # @param [ Hash ] options The options.
       # @param [ BSON::Document, Hash ] main_document The document that will
       #   become the payload type 0 section. Can contain global args as they

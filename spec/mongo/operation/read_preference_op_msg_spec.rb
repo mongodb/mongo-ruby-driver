@@ -175,13 +175,13 @@ describe Mongo::Operation::SessionsSupported do
         let(:tag_sets) { nil }
 
         context 'without tag_sets specified' do
-          it_behaves_like 'does not modify selector'
+          it_behaves_like 'adds read preference'
         end
 
         context 'with empty tag_sets' do
           let(:tag_sets) { [] }
 
-          it_behaves_like 'does not modify selector'
+          it_behaves_like 'adds read preference'
         end
 
         context 'with tag_sets specified' do
@@ -256,7 +256,7 @@ describe Mongo::Operation::SessionsSupported do
           let(:hedge) { nil }
 
           context 'when tag_sets and hedge are not specified' do
-            it_behaves_like 'does not modify selector'
+            it_behaves_like 'adds read preference'
           end
 
           context 'when tag_sets are specified' do
