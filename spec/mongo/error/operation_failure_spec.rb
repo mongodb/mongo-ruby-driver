@@ -412,6 +412,16 @@ describe Mongo::Error::OperationFailure do
           :code => 999, :code_name => nil)
       end
 
+      it 'is false' do
+        expect(subject.not_master?).to be false
+      end
+    end
+
+    context 'not master in message without code' do
+      subject do
+        described_class.new('not master)', nil)
+      end
+
       it 'is true' do
         expect(subject.not_master?).to be true
       end
@@ -474,15 +484,35 @@ describe Mongo::Error::OperationFailure do
           :code => 999, :code_name => nil)
       end
 
+      it 'is false' do
+        expect(subject.node_recovering?).to be false
+      end
+    end
+
+    context 'node is recovering in message without code' do
+      subject do
+        described_class.new('node is recovering', nil)
+      end
+
       it 'is true' do
         expect(subject.node_recovering?).to be true
       end
     end
 
-    context 'not master or secondary text' do
+    context 'not master or secondary text with a code' do
       subject do
         described_class.new('not master or secondary (999)', nil,
           :code => 999, :code_name => nil)
+      end
+
+      it 'is false' do
+        expect(subject.node_recovering?).to be false
+      end
+    end
+
+    context 'not master or secondary text without code' do
+      subject do
+        described_class.new('not master or secondary', nil)
       end
 
       it 'is true' do
