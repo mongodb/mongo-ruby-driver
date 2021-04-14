@@ -369,7 +369,7 @@ module Mongo
     # @since 2.7.0
     def with_transaction(options=nil)
       # Non-configurable 120 second timeout for the entire operation
-      deadline = Time.now + 120
+      deadline = Utils.monotonic_time + 120
       transaction_in_progress = false
       loop do
         commit_options = {}
@@ -387,7 +387,7 @@ module Mongo
             transaction_in_progress = false
           end
 
-          if Time.now >= deadline
+          if Utils.monotonic_time >= deadline
             transaction_in_progress = false
             raise
           end
@@ -409,7 +409,7 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if Time.now >= deadline ||
+              if Utils.monotonic_time >= deadline ||
                 e.is_a?(Error::OperationFailure) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
@@ -426,7 +426,7 @@ module Mongo
               commit_options[:write_concern] = wc_options.merge(w: :majority)
               retry
             elsif e.label?('TransientTransactionError')
-              if Time.now >= deadline
+              if Utils.monotonic_time >= deadline
                 transaction_in_progress = false
                 raise
               end

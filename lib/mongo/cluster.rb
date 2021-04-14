@@ -214,6 +214,7 @@ module Mongo
 
       # Need to record start time prior to starting monitoring
       start_time = Time.now
+      start_time_monotonic = Utils.monotonic_time
 
       servers.each do |server|
         server.start_monitoring
@@ -229,7 +230,7 @@ module Mongo
         if server_selection_timeout < 3
           server_selection_timeout = 3
         end
-        deadline = start_time + server_selection_timeout
+        deadline = start_time_monotonic + server_selection_timeout
         # Wait for the first scan of each server to complete, for
         # backwards compatibility.
         # If any servers are discovered during this SDAM round we are going to
@@ -243,7 +244,7 @@ module Mongo
           if servers.all? { |server| server.last_scan && server.last_scan >= start_time }
             break
           end
-          if (time_remaining = deadline - Time.now) <= 0
+          if (time_remaining = deadline - Utils.monotonic_time) <= 0
             break
           end
           log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")

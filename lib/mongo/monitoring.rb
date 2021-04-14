@@ -324,7 +324,7 @@ module Mongo
       # message" (ismaster). This requirement does not make sense if,
       # for example, we were never able to connect to the server at all
       # and thus ismaster was never sent.
-      start_time = Time.now
+      start_time = Utils.monotonic_time
 
       begin
         result = yield
@@ -332,7 +332,7 @@ module Mongo
         if monitoring?
           event = Event::ServerHeartbeatFailed.new(
             server.address,
-            Time.now-start_time,
+            Utils.monotonic_time - start_time,
             exc,
             awaited: awaited,
             started_event: started_event,
@@ -344,7 +344,7 @@ module Mongo
         if monitoring?
           event = Event::ServerHeartbeatSucceeded.new(
             server.address,
-            Time.now-start_time,
+            Utils.monotonic_time - start_time,
             awaited: awaited,
             started_event: started_event,
           )
