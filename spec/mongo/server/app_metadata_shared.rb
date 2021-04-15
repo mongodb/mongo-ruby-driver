@@ -12,13 +12,13 @@ shared_examples 'app metadata document' do
   end
 
   it 'includes operating system information' do
-    document[:client][:os][:type].should == 'linux'
-    if BSON::Environment.jruby? || RUBY_VERSION >= '3.0'
-      document[:client][:os][:name].should == 'linux'
-    else
-      document[:client][:os][:name].should == 'linux-gnu'
+    %w(linux darwin).each do |os|
+      if !!(RUBY_PLATFORM =~ /\#{os}/)
+        document[:client][:os][:type].should == os
+      end
     end
-    document[:client][:os][:architecture].should == 'x86_64'
+    document[:client][:os][:name].should == RbConfig::CONFIG['host_os']
+    document[:client][:os][:architecture].should == RbConfig::CONFIG['target_cpu']
   end
 
   context 'mri' do
