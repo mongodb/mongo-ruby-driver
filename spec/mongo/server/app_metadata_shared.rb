@@ -8,14 +8,40 @@ shared_examples 'app metadata document' do
     document[:client][:driver][:version].should == Mongo::VERSION
   end
 
-  it 'includes operating system information' do
-    document[:client][:os][:type].should == 'linux'
-    if BSON::Environment.jruby? || RUBY_VERSION >= '3.0'
-      document[:client][:os][:name].should == 'linux'
-    else
-      document[:client][:os][:name].should == 'linux-gnu'
+  context 'linux' do
+    before(:all) do
+      unless SpecConfig.instance.linux?
+        skip "Linux required, we have #{RbConfig::CONFIG['host_os']}"
+      end
     end
-    document[:client][:os][:architecture].should == 'x86_64'
+
+    it 'includes operating system information' do
+      document[:client][:os][:type].should == 'linux'
+      if BSON::Environment.jruby? || RUBY_VERSION >= '3.0'
+        document[:client][:os][:name].should == 'linux'
+      else
+        document[:client][:os][:name].should == 'linux-gnu'
+      end
+      document[:client][:os][:architecture].should == 'x86_64'
+    end
+  end
+
+  context 'macos' do
+    before(:all) do
+      unless SpecConfig.instance.macos?
+        skip "MacOS required, we have #{RbConfig::CONFIG['host_os']}"
+      end
+    end
+
+    it 'includes operating system information' do
+      document[:client][:os][:type].should == 'darwin'
+      if BSON::Environment.jruby?
+        document[:client][:os][:name].should == 'darwin'
+      else
+        document[:client][:os][:name].should =~ /darwin\d+/
+      end
+      document[:client][:os][:architecture].should == 'x86_64'
+    end
   end
 
   context 'mri' do
