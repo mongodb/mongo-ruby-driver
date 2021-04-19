@@ -833,4 +833,22 @@ describe Mongo::Server::Description do
       end
     end
   end
+
+  describe '#last_update_monotime' do
+    context 'stub description' do
+      let(:description) { described_class.new(address) }
+
+      it 'is present' do
+        expect(description.last_update_monotime).to be_a(Float)
+      end
+    end
+
+    context 'filled out description' do
+      let(:description) { described_class.new(address, replica) }
+
+      it 'is present' do
+        expect(description.last_update_monotime).to be_a(Float)
+      end
+    end
+  end
 end
