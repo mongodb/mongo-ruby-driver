@@ -116,19 +116,15 @@ describe Mongo::Session do
     context 'timeout with callback raising TransientTransactionError' do
       max_example_run_time 7
 
-      after do
-        Timecop.return
-      end
-
       it 'times out' do
-        warp = Time.now + 200
+        warp = Mongo::Utils.monotonic_time + 200
         entered = false
 
         Thread.new do
           until entered
             sleep 0.1
           end
-          Timecop.travel warp
+          allow(Mongo::Utils).to receive(:monotonic_time).and_return(warp)
         end
 
         expect do
@@ -152,24 +148,20 @@ describe Mongo::Session do
       context "timeout with commit raising with #{label}" do
         max_example_run_time 7
 
-        after do
-          Timecop.return
-        end
-
         before do
           # create collection if it does not exist
           collection.insert_one(a: 1)
         end
 
         it 'times out' do
-          warp = Time.now + 200
+          warp = Mongo::Utils.monotonic_time + 200
           entered = false
 
           Thread.new do
             until entered
               sleep 0.1
             end
-            Timecop.travel warp
+            allow(Mongo::Utils).to receive(:monotonic_time).and_return(warp)
           end
 
           exc = Mongo::Error::OperationFailure.new('timeout test')

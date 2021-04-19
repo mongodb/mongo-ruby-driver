@@ -296,6 +296,7 @@ describe Mongo::Cluster do
         expect(server).not_to be nil
 
         expect(server.last_scan).to be nil
+        expect(server.last_scan_monotime).to be nil
       end
     end
   end

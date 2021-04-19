@@ -165,7 +165,7 @@ module Mongo
             connection_generation: generation,
             server_connection_id: description.server_connection_id,
           )
-          start = Time.now
+          start = Utils.monotonic_time
           result = nil
           begin
             result = add_server_diagnostics do
@@ -177,11 +177,11 @@ module Mongo
               end
             end
           rescue Exception => e
-            total_duration = Time.now - start
+            total_duration = Utils.monotonic_time - start
             command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
             raise
           else
-            total_duration = Time.now - start
+            total_duration = Utils.monotonic_time - start
             command_completed(result, address, operation_id, message.payload, total_duration)
           end
           if result && context.decrypt?

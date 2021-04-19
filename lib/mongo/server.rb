@@ -71,6 +71,7 @@ module Mongo
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {})
       @last_scan = nil
+      @last_scan_monotime = nil
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
@@ -117,6 +118,18 @@ module Mongo
         @last_scan
       end
     end
+
+    # @return [ Float | nil ] last_scan_monotime The monotonic time when the last server scan
+    #   completed, or nil if the server has not been scanned yet.
+    # @api private
+    def last_scan_monotime
+      if description && !description.config.empty?
+        description.last_update_monotime
+      else
+        @last_scan_monotime
+      end
+    end
+
 
     # @deprecated
     def heartbeat_frequency
@@ -553,6 +566,7 @@ module Mongo
     # @api private
     def update_last_scan
       @last_scan = Time.now
+      @last_scan_monotime = Utils.monotonic_time
     end
   end
 end

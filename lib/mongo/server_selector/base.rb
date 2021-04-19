@@ -184,7 +184,7 @@ module Mongo
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 
-        deadline = Time.now + server_selection_timeout
+        deadline = Utils.monotonic_time + server_selection_timeout
 
         if session && session.pinned_server
           if Mongo::Lint.enabled?
@@ -202,7 +202,7 @@ module Mongo
             # This will no longer be the case once SRV polling is implemented.
 
             unless server.mongos?
-              while (time_remaining = deadline - Time.now) > 0
+              while (time_remaining = deadline - Utils.monotonic_time) > 0
                 wait_for_server_selection(cluster, time_remaining)
               end
 
@@ -255,7 +255,7 @@ module Mongo
 
           cluster.scan!(false)
 
-          time_remaining = deadline - Time.now
+          time_remaining = deadline - Utils.monotonic_time
           if time_remaining > 0
             wait_for_server_selection(cluster, time_remaining)
 

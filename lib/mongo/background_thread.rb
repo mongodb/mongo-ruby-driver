@@ -129,7 +129,7 @@ module Mongo
       # However, we do not want to wait indefinitely because in theory
       # a background thread could be performing, say, network I/O and if
       # the network is no longer available that could take a long time.
-      start_time = Time.now
+      start_time = Utils.monotonic_time
       ([0.1, 0.15] + [0.2] * 5 + [0.3] * 20).each do |interval|
         begin
           Timeout.timeout(interval) do
@@ -143,7 +143,7 @@ module Mongo
       # Some driver objects can be reconnected, for backwards compatibiilty
       # reasons. Clear the thread instance variable to support this cleanly.
       if @thread.alive?
-        log_warn("Failed to stop the background thread in #{self} in #{(Time.now - start_time).to_i} seconds: #{@thread.inspect} (thread status: #{@thread.status})")
+        log_warn("Failed to stop the background thread in #{self} in #{(Utils.monotonic_time - start_time).to_i} seconds: #{@thread.inspect} (thread status: #{@thread.status})")
         # On JRuby the thread may be stuck in aborting state
         # seemingly indefinitely. If the thread is aborting, consider it dead
         # for our purposes (we will create a new thread if needed, and

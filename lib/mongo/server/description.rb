@@ -218,6 +218,7 @@ module Mongo
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
         @last_update_time = Time.now.dup.freeze
+        @last_update_monotime = Utils.monotonic_time
 
         if Mongo::Lint.enabled?
           # prepopulate cache instance variables
@@ -764,6 +765,15 @@ module Mongo
       #
       # @since 2.7.0
       attr_reader :last_update_time
+
+      # Time when this server description was created according to monotonic clock.
+      #
+      # @see Description::last_updated_time for more detail
+      #
+      # @return [ Float ] Server description creation monotonic time.
+      #
+      # @api private
+      attr_reader :last_update_monotime
 
       # @api experimental
       def server_connection_id

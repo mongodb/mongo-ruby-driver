@@ -294,7 +294,7 @@ module Mongo
           raise Error::PoolClosedError.new(@server.address, self)
         end
 
-        deadline = Time.now + wait_timeout
+        deadline = Utils.monotonic_time + wait_timeout
         pid = Process.pid
         connection = nil
         # It seems that synchronize sets up its own loop, thus a simple break
@@ -344,7 +344,7 @@ module Mongo
               end
             end
 
-            wait = deadline - Time.now
+            wait = deadline - Utils.monotonic_time
             if wait <= 0
               publish_cmap_event(
                 Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(

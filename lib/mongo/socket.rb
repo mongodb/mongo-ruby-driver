@@ -272,7 +272,7 @@ module Mongo
       _timeout = timeout || self.timeout
       if _timeout
         if _timeout > 0
-          deadline = Time.now + _timeout
+          deadline = Utils.monotonic_time + _timeout
         elsif _timeout < 0
           raise Errno::ETIMEDOUT, "Negative timeout #{_timeout} given to socket"
         end
@@ -327,7 +327,7 @@ module Mongo
       # reading from a TLS socket may require writing which may raise WaitWritable
       rescue IO::WaitReadable, IO::WaitWritable => exc
         if deadline
-          select_timeout = deadline - Time.now
+          select_timeout = deadline - Utils.monotonic_time
           if select_timeout <= 0
             raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
           end
@@ -345,7 +345,7 @@ module Mongo
           # even though we could have retried it.
           # Check the deadline ourselves.
           if deadline
-            select_timeout = deadline - Time.now
+            select_timeout = deadline - Utils.monotonic_time
             if select_timeout <= 0
               raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
             end
