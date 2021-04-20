@@ -156,7 +156,9 @@ module Unified
           assert_value_matches(actual_v, expected_v, 'inserted_id')
         else
           if expected.empty?
-            unless expected == actual
+            # This needs to be a match assertion. Check type only
+            # and allow BulkWriteResult and generic operation result.
+            unless Hash === actual || Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
               raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
             end
           else
