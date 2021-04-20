@@ -350,19 +350,20 @@ module Unified
     end
 
     def kill_sessions
-      if options[:kill_sessions] != false
-        begin
-          root_authorized_client.command(
-            killAllSessions: [],
-          )
-        rescue Mongo::Error::OperationFailure => e
-          if e.code == 11601
-            # operation was interrupted, ignore
-          elsif e.code == 59
-            # no such command (old server), ignore
-          else
-            raise
-          end
+      begin
+        root_authorized_client.command(
+          killAllSessions: [],
+        )
+      rescue Mongo::Error::OperationFailure => e
+        if e.code == 11601
+          # operation was interrupted, ignore. SERVER-38335
+        elsif e.code == 13
+          # Unauthorized - e.g. when running in Atlas as part of
+          # drivers-atlas-testing, ignore. SERVER-54216
+        elsif e.code == 59
+          # no such command (old server), ignore
+        else
+          raise
         end
       end
     end
