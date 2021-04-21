@@ -155,15 +155,23 @@ module Unified
           expected_v = expected.values.first.values.first
           assert_value_matches(actual_v, expected_v, 'inserted_id')
         else
-          expected.each do |k, expected_v|
-            if k.start_with?('$$')
-              assert_value_matches(actual, expected, k)
-            else
-              actual_v = actual[k]
-              if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
-                assert_value_matches(actual_v, expected_v, k)
+          if expected.empty?
+            # This needs to be a match assertion. Check type only
+            # and allow BulkWriteResult and generic operation result.
+            unless Hash === actual || Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
+              raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
+            end
+          else
+            expected.each do |k, expected_v|
+              if k.start_with?('$$')
+                assert_value_matches(actual, expected, k)
               else
-                assert_matches(actual_v, expected_v, "#{msg}: key #{k}")
+                actual_v = actual[k]
+                if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
+                  assert_value_matches(actual_v, expected_v, k)
+                else
+                  assert_matches(actual_v, expected_v, "#{msg}: key #{k}")
+                end
               end
             end
           end
