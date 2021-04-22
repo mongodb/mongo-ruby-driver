@@ -236,6 +236,8 @@ module Mongo
     #
     # @return [ Integer ] The length of bytes written to the socket.
     #
+    # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error during the write.
+    #
     # @since 2.0.0
     def write(*args)
       map_exceptions do

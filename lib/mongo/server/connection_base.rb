@@ -136,6 +136,8 @@ module Mongo
       #
       # @return [ Protocol::Message | nil ] The reply if needed.
       #
+      # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error.
+      #
       # @since 2.0.0
       def dispatch(messages, context, options = {})
         # The monitoring code does not correctly handle multiple messages,
@@ -153,6 +155,7 @@ module Mongo
 
       private
 
+      # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error.
       def deliver(message, context, options = {})
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
