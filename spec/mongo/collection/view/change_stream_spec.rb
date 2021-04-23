@@ -372,6 +372,19 @@ describe Mongo::Collection::View::ChangeStream do
 
   describe '#close' do
 
+    context 'ignores any exceptions or errors' do
+      [
+        Mongo::Error::OperationFailure,
+        Mongo::Error::SocketError,
+        Mongo::Error::SocketTimeoutError
+      ].each do |err|
+        it "ignores #{err}" do
+          expect(cursor).to receive(:close).and_raise(err)
+          change_stream.close
+        end
+      end
+    end
+
     context 'when documents have not been retrieved and the stream is closed' do
 
       before do

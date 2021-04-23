@@ -623,4 +623,44 @@ describe Mongo::Cursor do
       end
     end
   end
+
+  describe '#close' do
+    let(:view) do
+      Mongo::Collection::View.new(authorized_collection)
+    end
+
+    let(:server) do
+      view.send(:server_selector).select_server(authorized_client.cluster)
+    end
+
+    let(:reply) do
+      view.send(:send_initial_query, server)
+    end
+
+    let(:cursor) do
+      described_class.new(view, reply, server)
+    end
+
+    it 'closes' do
+      cursor.close
+      expect(cursor).to be_closed
+    end
+
+    context 'when there is a socket error during close' do
+      clean_slate
+
+      before do
+        server.with_connection do |conn|
+          expect(conn).to receive(:deliver)
+            .and_raise(Mongo::Error::SocketError, "test error")
+        end
+      end
+
+      it 'raises an error' do
+        expect do
+          cursor.close
+        end.to raise_error(Mongo::Error::SocketError, "test error")
+      end
+    end
+  end
 end

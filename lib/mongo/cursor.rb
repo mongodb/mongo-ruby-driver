@@ -268,6 +268,7 @@ module Mongo
     # @return [ nil ] Always nil.
     #
     # @raise [ Error::OperationFailure ] If the server cursor close fails.
+    # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error.
     def close
       return if closed?
 
