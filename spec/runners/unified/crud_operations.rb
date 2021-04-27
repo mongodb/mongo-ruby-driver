@@ -8,7 +8,11 @@ module Unified
     def find(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        req = collection.find(args.use!('filter'))
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        req = collection.find(args.use!('filter'), **opts)
         if batch_size = args.use('batchSize')
           req = req.batch_size(batch_size)
         end
