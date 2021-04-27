@@ -200,6 +200,10 @@ when querying and their corresponding methods as examples.
 
    * - Option
      - Description
+   * - ``allow_disk_use``
+     - When set to true, the server can write temporary data to disk while
+       executing the find operation. This option is only available on MongoDB
+       server versions 4.4 and newer.
    * - ``allow_partial_results``
      - For use with sharded clusters. If a shard is down, allows the query
        to return results from the shards that are up, potentially only getting
@@ -250,6 +254,8 @@ when querying and their corresponding methods as examples.
    * - ``max_scan(Integer)``
      - Sets the maximum number of documents to scan if a full collection scan
        would be performed. Deprecated as of MongoDB server version 4.0.
+   * - ``max_time_ms(Integer)``
+     - The maximum amount of time to allow the query to run, in milliseconds.
    * - ``no_cursor_timeout``
      - MongoDB automatically closes inactive cursors after a period of 10
        minutes. Call this for cursors to remain open indefinitely on the server.
@@ -267,6 +273,8 @@ when querying and their corresponding methods as examples.
 
          client[:artists].find.read(:mode => :secondary_preferred)
 
+   * - ``session(Session)``
+     - The session to use.
    * - ``show_disk_loc(Boolean)``
      - Tells the results to also include the location of the documents on disk.
    * - ``skip(Integer)``
@@ -279,6 +287,7 @@ when querying and their corresponding methods as examples.
        .. code-block:: ruby
 
          client[:artists].find.sort(:name => -1)
+
 
 Additional Query Operations
 ---------------------------
