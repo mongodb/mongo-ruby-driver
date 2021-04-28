@@ -321,11 +321,12 @@ module Mongo
     #   results if some shards are down.
     # @option options [ Integer ] :batch_size The number of documents returned in each batch
     #   of results from MongoDB.
+    # @option options [ Hash ] :collation The collation to use.
     # @option options [ String ] :comment Associate a comment with the query.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the query
-    #   to run in milliseconds.
+    # @option options [ Integer ] :max_time_ms
+    #   The maximum amount of time to allow the query to run, in milliseconds.
     # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
     #   output or behavior of a query.
     # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
@@ -335,11 +336,10 @@ module Mongo
     #   should not set.
     # @option options [ Hash ] :projection The fields to include or exclude from each doc
     #   in the result set.
+    # @option options [ Session ] :session The session to use.
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
-    # @option options [ Hash ] :collation The collation to use.
-    # @option options [ Session ] :session The session to use.
     #
     # @return [ CollectionView ] The collection view.
     #
