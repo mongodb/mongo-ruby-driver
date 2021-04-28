@@ -79,7 +79,7 @@ module Mongo
         @mongocryptd_client = Client.new(
           @options[:extra_options][:mongocryptd_uri],
           monitoring_io: @options[:client].options[:monitoring_io],
-          server_selection_timeout: 1,
+          server_selection_timeout: 10,
         )
 
         begin
