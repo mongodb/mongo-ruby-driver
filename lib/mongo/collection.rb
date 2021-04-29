@@ -460,14 +460,14 @@ module Mongo
     # @param [ Hash ] filter A filter for matching documents.
     # @param [ Hash ] options Options for the operation.
     #
-    # @option opts :skip [ Integer ] The number of documents to skip.
-    # @option opts :hint [ Hash ] Override default index selection and force
+    # @option options :skip [ Integer ] The number of documents to skip.
+    # @option options :hint [ Hash ] Override default index selection and force
     #   MongoDB to use a specific index for the query. Requires server version 3.6+.
-    # @option opts :limit [ Integer ] Max number of docs to count.
-    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
+    # @option options :limit [ Integer ] Max number of docs to count.
+    # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
     #   command to run.
-    # @option opts [ Hash ] :read The read preference options.
-    # @option opts [ Hash ] :collation The collation to use.
+    # @option options :read [ Hash ] The read preference options.
+    # @option options :collation [ Hash ] The collation to use.
     #
     # @return [ Integer ] The document count.
     #
