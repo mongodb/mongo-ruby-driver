@@ -236,8 +236,8 @@ module Mongo
             raise ArgumentError, "Cannot call estimated_document_count when querying with a filter"
           end
 
-          %w[limit skip].each do |opt|
-            unless @options[opt].nil?
+          %i[limit skip].each do |opt|
+            if @options.key?(opt)
               raise ArgumentError, "Cannot call estimated_document_count when querying with #{opt}"
             end
           end
