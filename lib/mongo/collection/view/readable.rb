@@ -236,6 +236,12 @@ module Mongo
             raise ArgumentError, "Cannot call estimated_document_count when querying with a filter"
           end
 
+          %i[limit skip].each do |opt|
+            if @options.key?(opt)
+              raise ArgumentError, "Cannot call estimated_document_count when querying with #{opt}"
+            end
+          end
+
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)

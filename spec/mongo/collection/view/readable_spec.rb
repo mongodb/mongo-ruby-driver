@@ -672,6 +672,22 @@ describe Mongo::Collection::View::Readable do
       view.estimated_document_count(options)
     end
 
+    context 'when limit is set' do
+      it 'raises an error' do
+        expect {
+          view.limit(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+      end
+    end
+
+    context 'when skip is set' do
+      it 'raises an error' do
+        expect {
+          view.skip(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+      end
+    end
+
     context 'when collection has documents' do
       let(:documents) do
         (1..10).map{ |i| { field: "test#{i}" }}
