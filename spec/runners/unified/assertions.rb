@@ -12,7 +12,7 @@ module Unified
             if count = expected.use("#{k}Count")
               if Hash === count || count > 0
                 actual_count = case actual
-                when Mongo::BulkWrite::Result, Mongo::Operation::Delete::Result
+                when Mongo::BulkWrite::Result, Mongo::Operation::Delete::Result, Mongo::Operation::Update::Result
                   actual.send("#{k}_count")
                 else
                   actual["n_#{k}"]
