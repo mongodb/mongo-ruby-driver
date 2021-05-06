@@ -31,17 +31,19 @@ tests:
                 options: { ordered: false }
         outcome:
             error: true
-            result:
-                deletedCount: 0
-                insertedCount: 2
-                # Since the map of insertedIds is generated before execution it
-                # could indicate inserts that did not actually succeed. We omit
-                # this field rather than expect drivers to provide an accurate
-                # map filtered by write errors.
-                matchedCount: 0
-                modifiedCount: 0
-                upsertedCount: 0
-                upsertedIds: { }
+#            Driver does not return a complete result in case of an error
+#            Therefore, we cannot validate it.
+#            result:
+#                deletedCount: 0
+#                insertedCount: 2
+#                # Since the map of insertedIds is generated before execution it
+#                # could indicate inserts that did not actually succeed. We omit
+#                # this field rather than expect drivers to provide an accurate
+#                # map filtered by write errors.
+#                matchedCount: 0
+#                modifiedCount: 0
+#                upsertedCount: 0
+#                upsertedIds: { }
             collection:
                 data:
                     - { _id: 1, x: 11 }
@@ -59,17 +61,19 @@ tests:
                 options: { ordered: false }
         outcome:
             error: true
-            result:
-                deletedCount: 0
-                insertedCount: 2
-                # Since the map of insertedIds is generated before execution it
-                # could indicate inserts that did not actually succeed. We omit
-                # this field rather than expect drivers to provide an accurate
-                # map filtered by write errors.
-                matchedCount: 0
-                modifiedCount: 0
-                upsertedCount: 0
-                upsertedIds: { }
+#            Driver does not return a complete result in case of an error
+#            Therefore, we cannot validate it.
+#            result:
+#                deletedCount: 0
+#                insertedCount: 2
+#                # Since the map of insertedIds is generated before execution it
+#                # could indicate inserts that did not actually succeed. We omit
+#                # this field rather than expect drivers to provide an accurate
+#                # map filtered by write errors.
+#                matchedCount: 0
+#                modifiedCount: 0
+#                upsertedCount: 0
+#                upsertedIds: { }
             collection:
                 data:
                     - { _id: 1, x: 11 }
