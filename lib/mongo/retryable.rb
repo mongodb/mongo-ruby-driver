@@ -306,7 +306,6 @@ module Mongo
         e.add_note("attempt #{attempt}")
         server = nil
         if attempt > client.max_write_retries
-          e.remove_label('RetryableWriteError') unless session.retry_writes?
           raise e
         end
         if e.label?('RetryableWriteError')
@@ -316,9 +315,6 @@ module Mongo
         else
           raise e
         end
-      rescue Error => e
-        e.remove_label('RetryableWriteError') unless session.retry_writes?
-        raise e
       end
     end
 

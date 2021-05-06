@@ -164,15 +164,6 @@ module Mongo
     def add_label(label)
       @labels << label unless label?(label)
     end
-
-    # Removes the specified label from the error instance.
-    #
-    # @param [ String ] label The label to remove.
-    #
-    # @api private
-    def remove_label(label)
-      @labels.delete(label)
-    end
   end
 end
 
