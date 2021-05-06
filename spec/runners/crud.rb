@@ -125,6 +125,15 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
           if operation.outcome.error?
             it 'raises an error' do
               expect(result).to be_a(Mongo::Error)
+              if operation.outcome.result
+                verifier.verify_operation_result(
+                  operation.outcome.result,
+                  {
+                    'errorContains' => result.message,
+                    'errorLabels' => result.labels,
+                  }
+                )
+              end
             end
           else
             tested = false
