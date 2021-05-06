@@ -600,67 +600,6 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
-
-    context 'with limit' do
-      let(:limit) { 6 }
-
-      it 'respects view limit' do
-        expect(view.limit(limit).count).to eq(limit)
-      end
-
-      it 'respects limit given as parameter' do
-        expect(view.count(limit: limit)).to eq(limit)
-      end
-    end
-
-    context 'with skip' do
-      let(:skip) { 6 }
-      let(:expected) { 4 }
-
-      it 'respects view skip' do
-        expect(view.skip(skip).count).to eq(expected)
-      end
-
-      it 'respects skip given as parameter' do
-        expect(view.count(skip: skip)).to eq(expected)
-      end
-    end
-  end
-
-  describe '#count_documents' do
-    let(:documents) do
-      (1..10).map{ |i| { field: "test#{i}" }}
-    end
-
-    before do
-      authorized_collection.delete_many
-      authorized_collection.insert_many(documents)
-    end
-
-    context 'with limit' do
-      let(:limit) { 6 }
-
-      it 'respects view limit' do
-        expect(view.limit(limit).count_documents).to eq(limit)
-      end
-
-      it 'respects limit given as parameter' do
-        expect(view.count_documents(limit: limit)).to eq(limit)
-      end
-    end
-
-    context 'with skip' do
-      let(:skip) { 6 }
-      let(:expected) { 4 }
-
-      it 'respects view skip' do
-        expect(view.skip(skip).count_documents).to eq(expected)
-      end
-
-      it 'respects skip given as parameter' do
-        expect(view.count_documents(skip: skip)).to eq(expected)
-      end
-    end
   end
 
   describe "#estimated_document_count" do
