@@ -14,7 +14,7 @@ implements for inserting, updating and retrieving data from MongoDB.
 
   crud-operations
   bulk-operations
-  projections
+  projection
   aggregation
   text-search
   geospatial-search

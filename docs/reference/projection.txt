@@ -1,6 +1,6 @@
-***********
-Projections
-***********
+**********
+Projection
+**********
 
 .. default-domain:: mongodb
 
@@ -17,7 +17,7 @@ applications, you can include a
 document in the query operation.
 
 Projection Document
-```````````````````
+===================
 
 The projection document limits the fields to return for all
 matching documents. The projection document can specify the
@@ -34,7 +34,7 @@ field, you may not have both inclusions and exclusions in the same
 projection document.
 
 Examples
-````````
+========
 
 The following code example uses the ``restaurants`` sample dataset.
 
