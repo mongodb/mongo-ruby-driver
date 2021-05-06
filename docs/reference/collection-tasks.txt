@@ -128,8 +128,3 @@ To drop a collection, call ``drop`` on the collection object.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
   artists = client[:artists]
   artists.drop
-
-Change Streams
-``````````````
-
-See :ref:`Change Streams <change-streams>`.

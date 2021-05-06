@@ -11,6 +11,6 @@ operations. This section is not meant to be an exhaustive list of all
 operations available in the Ruby driver.
 
 .. toctree::
-   :titlesonly:
+  :titlesonly:
 
-   /tutorials/quick-start
+  tutorials/quick-start

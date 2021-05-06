@@ -10,15 +10,12 @@ Databases
    :depth: 1
    :class: singlecol
 
-Databases
-=========
-
 The driver provides various helpers on database objects for executing
 commands, getting collection lists, and administrative tasks.
 
 
 List Collections
-````````````````
+================
 
 To get a list of collections or collection names for a database, use
 ``collections`` and ``collection_names``, respectively.
@@ -35,7 +32,7 @@ To get a list of collections or collection names for a database, use
 .. _arbitrary-commands:
 
 Arbitrary Comands
-`````````````````
+=================
 
 To execute any command on the database, use the ``command`` method.
 
@@ -56,7 +53,7 @@ To execute any command on the database, use the ``command`` method.
 
 
 Drop Database
-`````````````
+=============
 
 To drop a database, use the ``drop`` method.
 

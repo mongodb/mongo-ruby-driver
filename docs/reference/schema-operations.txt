@@ -1,0 +1,18 @@
+.. _schema-operations:
+
+*****************
+Schema Operations
+*****************
+
+.. default-domain:: mongodb
+
+This section describes schema-related operations that the driver provides,
+including managing databases, collections, indexes and users.
+
+.. toctree::
+  :titlesonly:
+
+  database-tasks
+  collection-tasks
+  indexing
+  collations

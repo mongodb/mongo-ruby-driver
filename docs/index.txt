@@ -16,7 +16,7 @@ Get Started
 ===========
 
 To get started with the Ruby driver, see :doc:`/installation` and
-:doc:`/quick-start`. Continue to :doc:`/tutorials`
+:doc:`/tutorials/quick-start`. Continue to :doc:`/tutorials`
 for high level documentation for common operations.
 
 BSON
@@ -53,34 +53,15 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
 
 .. class:: hidden
 
-   .. toctree::
-      :titlesonly:
+  .. toctree::
+    :titlesonly:
 
-      installation
-      support
-      tutorials
-      /reference/create-client
-      /reference/authentication
-      /reference/user-management
-      /reference/crud-operations
-      /reference/bulk-operations
-      /reference/collection-tasks
-      /reference/projections
-      /reference/sessions
-      /reference/transactions
-      /reference/change-streams
-      /reference/database-tasks
-      /reference/monitoring
-      /reference/indexing
-      /reference/collations
-      /reference/aggregation
-      /reference/text-search
-      /reference/geospatial-search
-      /reference/gridfs
-      /reference/client-side-encryption
-      /reference/query-cache
-      bson-tutorials
-      API <https://docs.mongodb.com/ruby-driver/master/api/>
-      /reference/driver-compatibility
-      /reference/additional-resources
-      contribute
+    getting-started
+    tutorials
+    reference/connection-and-configuration
+    reference/working-with-data
+    reference/schema-operations
+    bson-tutorials
+    API <https://docs.mongodb.com/ruby-driver/master/api/>
+    reference/additional-resources
+    contribute
