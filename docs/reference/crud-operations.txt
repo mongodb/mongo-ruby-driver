@@ -173,7 +173,7 @@ notation.
   end
 
 
-.. _ruby-driver-query-options:
+.. _query-options:
 
 Query Options
 -------------
@@ -370,7 +370,7 @@ following code example shows how a tailable cursor might be used:
 Read Concern
 ------------
 
-Read concern can be :ref:`set on the client <ruby-driver-client-options>`
+Read concern can be :ref:`set on the client <client-options>`
 or on the collection:
 
 .. code-block:: ruby
@@ -400,7 +400,7 @@ part of the command:
   client.database.command(collstats: 'test', readConcern: {level: :majority})
 
 
-.. _ruby-driver-read-preference:
+.. _read-preference:
 
 Read Preference
 ---------------
@@ -518,7 +518,7 @@ more information about hedged reads.
   The ``hedge`` option is only available on MongoDB server versions 4.4 and newer.
   Attempting to use this option on older server versions will result in an error.
 
-.. _ruby-driver-updating:
+.. _updating:
 
 Updating
 ========

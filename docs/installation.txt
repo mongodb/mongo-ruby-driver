@@ -29,7 +29,7 @@ to be present and working. The :ref:`TLS compatibility <tls-compatibility>`
 section provides further details on usage of newer TLS protocols like TLS 1.1.
 
 
-.. _ruby-driver-install:
+.. _installation:
 
 Install the Gem
 ===============

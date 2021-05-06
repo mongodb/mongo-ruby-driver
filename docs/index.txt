@@ -16,7 +16,7 @@ Get Started
 ===========
 
 To get started with the Ruby driver, see :doc:`/installation` and
-:doc:`/quick-start`. Continue to :doc:`/ruby-driver-tutorials`
+:doc:`/quick-start`. Continue to :doc:`/tutorials`
 for high level documentation for common operations.
 
 BSON
@@ -58,27 +58,27 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
 
       installation
       support
-      quick-start
-      /tutorials/ruby-driver-create-client
-      /tutorials/ruby-driver-authentication
-      /tutorials/user-management
-      /tutorials/ruby-driver-crud-operations
-      /tutorials/ruby-driver-bulk-operations
-      /tutorials/ruby-driver-collection-tasks
-      /tutorials/ruby-driver-projections
-      /tutorials/ruby-driver-sessions
-      /tutorials/ruby-driver-transactions
-      /tutorials/ruby-driver-change-streams
-      /tutorials/ruby-driver-database-tasks
-      /tutorials/ruby-driver-monitoring
-      /tutorials/ruby-driver-indexing
-      /tutorials/ruby-driver-collations
-      /tutorials/ruby-driver-aggregation
-      /tutorials/ruby-driver-text-search
-      /tutorials/ruby-driver-geospatial-search
-      /tutorials/ruby-driver-gridfs
-      /tutorials/client-side-encryption
-      /tutorials/query-cache
+      tutorials
+      /reference/create-client
+      /reference/authentication
+      /reference/user-management
+      /reference/crud-operations
+      /reference/bulk-operations
+      /reference/collection-tasks
+      /reference/projections
+      /reference/sessions
+      /reference/transactions
+      /reference/change-streams
+      /reference/database-tasks
+      /reference/monitoring
+      /reference/indexing
+      /reference/collations
+      /reference/aggregation
+      /reference/text-search
+      /reference/geospatial-search
+      /reference/gridfs
+      /reference/client-side-encryption
+      /reference/query-cache
       bson-tutorials
       API <https://docs.mongodb.com/ruby-driver/master/api/>
       /reference/driver-compatibility

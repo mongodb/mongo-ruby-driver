@@ -10,7 +10,7 @@ Bulk Writes
    :depth: 1
    :class: singlecol
 
-.. _ruby-driver-bulk-ops:
+.. _bulk-operations:
 
 The bulk write API sends several write operations to the server in a single
 command. Use the bulk write API to reduce the number of network round-trips

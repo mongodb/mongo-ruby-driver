@@ -14,7 +14,7 @@ Prerequisites
 =============
 
 - A running MongoDB instance on localhost using the default port, 27017.
-- The Ruby MongoDB driver. See :ref:`installation <ruby-driver-install>`
+- The Ruby MongoDB driver. See :ref:`installation <installation>`
   for instructions on how to install the MongoDB driver.
 - The following statement at the top of your code:
 
@@ -40,9 +40,9 @@ You can also use a URI connection string:
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
 
 .. seealso::
-  :ref:`Connect to a replica set <ruby-driver-connect-replica-set>`,
-  :ref:`Connect to a sharded cluster <ruby-driver-connect-sharded-cluster>`,
-  :ref:`Client options <ruby-driver-client-options>`
+  :ref:`Connect to a replica set <connect-replica-set>`,
+  :ref:`Connect to a sharded cluster <connect-sharded-cluster>`,
+  :ref:`Client options <client-options>`
 
 Access a Database and a Collection
 ==================================
@@ -155,7 +155,7 @@ The example should print the following:
 
 .. seealso::
 
-  :ref:`Query Options<ruby-driver-query-options>`, :ref:`Read Preference<ruby-driver-read-preference>`
+  :ref:`Query Options<query-options>`, :ref:`Read Preference<read-preference>`
 
 Update Documents
 ================
@@ -198,7 +198,7 @@ to update all the documents in the collection.
 
 .. seealso::
 
-  :ref:`Other update options<ruby-driver-updating>`
+  :ref:`Other update options<updating>`
 
 Delete Documents
 ================
@@ -261,7 +261,7 @@ different from ``create_one``.
 
 .. seealso::
 
-  :ref:`Index options <ruby-driver-index-options>`
+  :ref:`Index options <index-options>`
 
 Complete Sample App
 ===================
