@@ -16,7 +16,7 @@ describe 'Retryable writes spec tests' do
 
   define_crud_spec_tests(RETRYABLE_WRITES_TESTS) do |spec, req, test|
     let(:client) do
-      authorized_client.with(test.client_options)
+      authorized_client.with(test.client_options.merge({max_write_retries: 0}))
     end
   end
 end
