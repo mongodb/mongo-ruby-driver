@@ -155,7 +155,6 @@ module Mongo
         #     * $near should be replaced with $geoWithin with $center
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
-          opts = Utils.shallow_symbolize_keys(@options.merge(opts))
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
@@ -197,13 +196,11 @@ module Mongo
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Mongo::Session ] :session The session to use for the operation.
         #
         # @return [ Integer ] The document count.
         #
         # @since 2.6.0
         def count_documents(opts = {})
-          opts = Utils.shallow_symbolize_keys(@options.merge(opts))
           pipeline = [:'$match' => filter]
           pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
