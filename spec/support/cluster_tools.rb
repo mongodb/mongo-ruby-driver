@@ -121,7 +121,7 @@ class ClusterTools
       rescue Mongo::Error::OperationFailure => e
         # Election failed. (125)
         if e.code == 125
-          # Possible reason is the node we are trying to elect has denylisted
+          # Possible reason is the node we are trying to elect has deny-listed
           # itself. This is where {replSetFreeze: 0} should make it eligible
           # for election again but this seems to not always work.
         else
