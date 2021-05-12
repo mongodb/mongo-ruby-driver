@@ -51,7 +51,7 @@ options being specified on the top level.
     { key: { name: 1 }, unique: true, expire_after: 120 },
   ])
 
-.. _ruby-driver-index-options:
+.. _index-options:
 
 The following is a full list of the available options that can be added
 when creating indexes. These options mirror the options supported by the
