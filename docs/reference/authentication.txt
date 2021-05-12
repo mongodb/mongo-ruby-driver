@@ -219,6 +219,8 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
                              ssl_ca_cert: '/path/to/ca.pem' )
 
 
+.. _aws-auth:
+
 AWS
 ```
 

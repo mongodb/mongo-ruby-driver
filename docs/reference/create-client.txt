@@ -1104,6 +1104,9 @@ file and both must be stored in the same file. Example usage:
   URI option values must be properly URI escaped. This applies, for example, to
   slashes in the paths.
 
+
+.. _modifying-tls-context:
+
 Modifying ``SSLContext``
 ------------------------
 It may be desirable to further configure TLS options in the driver, for example
@@ -1223,6 +1226,9 @@ The ``:ssl_ca_cert_string`` option supports specifying only one CA certificate.
 
   If intermediate certificates need to be used, specify them as part of the
   client or server TLS certificate files.
+
+
+.. _ocsp-verification:
 
 OCSP Verification
 -----------------
@@ -1673,6 +1679,8 @@ option to the client instance.
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :truncate_logs => false )
 
 
+.. _compression:
+
 Compression
 ===========
 
@@ -1706,6 +1714,8 @@ The server support for various compressors is as follows:
 - ``zlib`` requires MongoDB 3.6 or higher and is enabled by default in
   MongoDB 4.2 and higher.
 
+
+.. _server-api-parameters:
 
 Server API Parameters
 =====================
