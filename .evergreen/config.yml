@@ -1221,14 +1221,15 @@ buildvariants:
     tasks:
       - name: "test-kerberos-integration"
 
-  - matrix_name: "kerberos-integration-rhel"
-    matrix_spec:
-      # Other Rubies segfault
-      ruby: [ruby-2.7]
-      os: rhel70
-    display_name: "Kerberos integration RHEL ${ruby} ${os}"
-    tasks:
-      - name: "test-kerberos-integration"
+  # All skipped because of segfaults
+  #- matrix_name: "kerberos-integration-rhel"
+  #  matrix_spec:
+  #    # Other Rubies segfault
+  #    ruby: [ruby-2.7]
+  #    os: rhel70
+  #  display_name: "Kerberos integration RHEL ${ruby} ${os}"
+  #  tasks:
+  #    - name: "test-kerberos-integration"
 
   # Kerberos integration tests on debian are omitted due to segfaults:
   # https://jira.mongodb.org/browse/RUBY-1534
