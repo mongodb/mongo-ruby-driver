@@ -117,25 +117,15 @@ describe Mongo::Session do
       max_example_run_time 7
 
       it 'times out' do
-        warp = Mongo::Utils.monotonic_time + 200
-        entered = false
+        start = Mongo::Utils.monotonic_time
 
-        Thread.new do
-          until entered
-            sleep 0.1
-          end
-          allow(Mongo::Utils).to receive(:monotonic_time).and_return(warp)
-        end
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 1)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 2)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
 
         expect do
           session.with_transaction do
-            entered = true
-
-            # This sleep is to give the interrupting thread a chance to run,
-            # it significantly affects how much time is burned in this
-            # looping thread
-            sleep 0.1
-
             exc = Mongo::Error::OperationFailure.new('timeout test')
             exc.add_label('TransientTransactionError')
             raise exc
@@ -154,15 +144,12 @@ describe Mongo::Session do
         end
 
         it 'times out' do
-          warp = Mongo::Utils.monotonic_time + 200
-          entered = false
+          start = Mongo::Utils.monotonic_time
 
-          Thread.new do
-            until entered
-              sleep 0.1
-            end
-            allow(Mongo::Utils).to receive(:monotonic_time).and_return(warp)
+          10.times do |i|
+            expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
           end
+          expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
 
           exc = Mongo::Error::OperationFailure.new('timeout test')
           exc.add_label(label)
@@ -171,13 +158,6 @@ describe Mongo::Session do
 
           expect do
             session.with_transaction do
-              entered = true
-
-              # This sleep is to give the interrupting thread a chance to run,
-              # it significantly affects how much time is burned in this
-              # looping thread
-              sleep 0.1
-
               collection.insert_one(a: 2)
             end
           end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')
