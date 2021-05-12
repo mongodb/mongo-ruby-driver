@@ -9,10 +9,10 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          closeConnection: true
+        failCommands: ["getMore"]
+        closeConnection: true
     target: collection
-    topology: 
+    topology:
       - replicaset
       - sharded
     changeStreamPipeline: []
@@ -73,11 +73,11 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 6
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 6
+        closeConnection: false
     target: collection
-    topology: 
+    topology:
       - replicaset
       - sharded
     changeStreamPipeline: []
@@ -138,9 +138,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 7
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 7
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -203,9 +203,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 89
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 89
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -268,9 +268,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 91
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 91
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -333,9 +333,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 189
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 189
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -398,9 +398,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 262
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 262
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -463,9 +463,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 9001
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 9001
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -521,16 +521,16 @@ tests:
             x:
               $numberInt: "1"
   -
-    description: "change stream resumes after NotMaster"
+    description: "change stream resumes after NotWritablePrimary"
     minServerVersion: "4.2"
     maxServerVersion: "4.2.99"
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 10107
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 10107
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -593,9 +593,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 11600
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 11600
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -658,9 +658,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 11602
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 11602
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -716,16 +716,16 @@ tests:
             x:
               $numberInt: "1"
   -
-    description: "change stream resumes after NotMasterNoSlaveOk"
+    description: "change stream resumes after NotPrimaryNoSecondaryOk"
     minServerVersion: "4.2"
     maxServerVersion: "4.2.99"
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 13435
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 13435
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -781,16 +781,16 @@ tests:
             x:
               $numberInt: "1"
   -
-    description: "change stream resumes after NotMasterOrSecondary"
+    description: "change stream resumes after NotPrimaryOrSecondary"
     minServerVersion: "4.2"
     maxServerVersion: "4.2.99"
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 13436
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 13436
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -853,9 +853,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 63
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 63
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -918,9 +918,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 150
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 150
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -983,9 +983,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 234
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 234
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -1048,9 +1048,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 133
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 133
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -1114,9 +1114,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 43
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 43
+        closeConnection: false
     target: collection
     topology:
       - replicaset

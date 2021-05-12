@@ -199,7 +199,7 @@ module Mongo
       # auto-encryption options, the client has not been instructed to bypass
       # auto-encryption, and mongocryptd determines that this message is
       # eligible for encryption. A message is eligible for encryption if it
-      # represents one of the command types whitelisted by libmongocrypt and it
+      # represents one of the command types allowlisted by libmongocrypt and it
       # contains data that is required to be encrypted by a local or remote json schema.
       #
       # @param [ Mongo::Server::Connection ] connection The connection on which
@@ -238,7 +238,7 @@ module Mongo
       # decrypted if the specified client exists, that client has been given
       # auto-encryption options, and this message is eligible for decryption.
       # A message is eligible for decryption if it represents one of the command
-      # types whitelisted by libmongocrypt and it contains data that is required
+      # types allowlisted by libmongocrypt and it contains data that is required
       # to be encrypted by a local or remote json schema.
       #
       # @param [ Mongo::Operation::Context ] context The operation context.
