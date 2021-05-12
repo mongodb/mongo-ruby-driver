@@ -1,0 +1,26 @@
+.. _working-with-data:
+
+*****************
+Working With Data
+*****************
+
+.. default-domain:: mongodb
+
+This section describes in detail the functionality that the Ruby driver
+implements for inserting, updating and retrieving data from MongoDB.
+
+.. toctree::
+  :titlesonly:
+
+  crud-operations
+  bulk-operations
+  projection
+  aggregation
+  text-search
+  geospatial-search
+  query-cache
+  gridfs
+  change-streams
+  sessions
+  transactions
+  client-side-encryption

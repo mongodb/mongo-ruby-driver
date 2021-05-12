@@ -16,7 +16,7 @@ Get Started
 ===========
 
 To get started with the Ruby driver, see :doc:`/installation` and
-:doc:`/quick-start`. Continue to :doc:`/ruby-driver-tutorials`
+:doc:`/tutorials/quick-start`. Continue to :doc:`/tutorials`
 for high level documentation for common operations.
 
 BSON
@@ -53,34 +53,15 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
 
 .. class:: hidden
 
-   .. toctree::
-      :titlesonly:
+  .. toctree::
+    :titlesonly:
 
-      installation
-      support
-      quick-start
-      /tutorials/ruby-driver-create-client
-      /tutorials/ruby-driver-authentication
-      /tutorials/user-management
-      /tutorials/ruby-driver-crud-operations
-      /tutorials/ruby-driver-bulk-operations
-      /tutorials/ruby-driver-collection-tasks
-      /tutorials/ruby-driver-projections
-      /tutorials/ruby-driver-sessions
-      /tutorials/ruby-driver-transactions
-      /tutorials/ruby-driver-change-streams
-      /tutorials/ruby-driver-database-tasks
-      /tutorials/ruby-driver-monitoring
-      /tutorials/ruby-driver-indexing
-      /tutorials/ruby-driver-collations
-      /tutorials/ruby-driver-aggregation
-      /tutorials/ruby-driver-text-search
-      /tutorials/ruby-driver-geospatial-search
-      /tutorials/ruby-driver-gridfs
-      /tutorials/client-side-encryption
-      /tutorials/query-cache
-      bson-tutorials
-      API <https://docs.mongodb.com/ruby-driver/master/api/>
-      /reference/driver-compatibility
-      /reference/additional-resources
-      contribute
+    getting-started
+    tutorials
+    reference/connection-and-configuration
+    reference/working-with-data
+    reference/schema-operations
+    bson-tutorials
+    API <https://docs.mongodb.com/ruby-driver/master/api/>
+    reference/additional-resources
+    contribute

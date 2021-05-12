@@ -130,7 +130,7 @@ To force all operations to be performed on the designated server, specify the
   Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?directConnection=true")
 
 
-.. _ruby-driver-connect-replica-set:
+.. _connect-replica-set:
 
 Replica Set Connection
 ----------------------
@@ -158,7 +158,7 @@ connect to the replica set.
   Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?replicaSet=myapp")
 
 
-.. _ruby-driver-connect-sharded-cluster:
+.. _connect-sharded-cluster:
 
 Sharded Cluster Connection
 --------------------------
@@ -216,7 +216,7 @@ URI, keep in mind the following:
    set.
 
 
-.. _ruby-driver-client-options:
+.. _client-options:
 
 Client Options
 ==============
