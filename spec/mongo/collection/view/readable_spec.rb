@@ -13,6 +13,8 @@ describe Mongo::Collection::View::Readable do
     {}
   end
 
+  let(:authorized_collection) { authorized_client['readable_spec'] }
+
   let(:view) do
     Mongo::Collection::View.new(authorized_collection, selector, options)
   end
