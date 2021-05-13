@@ -6,6 +6,8 @@ require 'spec_helper'
 describe Mongo::Collection::View::MapReduce do
   clean_slate_on_evergreen
 
+  let(:authorized_collection) { authorized_client['map_reduce_spec'] }
+
   let(:map) do
   %Q{
   function() {

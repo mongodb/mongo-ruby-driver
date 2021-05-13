@@ -115,13 +115,6 @@ module Authorization
       authorized_client[TEST_COLL]
     end
 
-    # Gets the default test collection from the unauthorized client.
-    #
-    # @since 2.0.0
-    context.let(:unauthorized_collection) do
-      unauthorized_client[TEST_COLL]
-    end
-
     # Gets a primary server for the default authorized client.
     #
     # @since 2.0.0
