@@ -69,6 +69,12 @@ published=#{published_events.length}>`
     end
   end
 
+  def select_completed_events(*classes)
+    (succeeded_events + failed_events).select do |event|
+      classes.any? { |c| c === event }
+    end
+  end
+
   def select_published_events(cls)
     published_events.select do |event|
       event.is_a?(cls)
