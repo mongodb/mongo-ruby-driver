@@ -637,25 +637,27 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when connection set up throws an error during check out' do
       let(:client) do
-        authorized_client
+        authorized_client.with(app_name: 'connection pool spec')
       end
 
       let(:pool) do
         client.cluster.next_primary.pool
       end
 
-       it 'raises an error and emits ConnectionCheckOutFailedEvent' do
+      it 'raises an error and emits ConnectionCheckOutFailedEvent' do
         pool
 
         subscriber = Mrss::EventSubscriber.new
         client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
         subscriber.clear_events!
-        expect(Mongo::Auth).to receive(:get).at_least(:once).and_raise(Mongo::Error)
-        expect { pool.check_out }.to raise_error(Mongo::Error)
+        expect(Mongo::Auth).to receive(:get).at_least(:once).and_raise(Mongo::Error, 'Test auth error')
+        expect do
+          pool.check_out
+        end.to raise_error(Mongo::Error, 'Test auth error')
         expect(pool.size).to eq(0)
 
-         checkout_failed_events = subscriber.published_events.select do |event|
+        checkout_failed_events = subscriber.published_events.select do |event|
           event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
         end
         expect(checkout_failed_events.size).to eq(1)
