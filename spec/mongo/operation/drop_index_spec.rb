@@ -7,6 +7,7 @@ describe Mongo::Operation::DropIndex do
   require_no_required_api_version
 
   before do
+    authorized_collection.delete_many
     authorized_collection.indexes.drop_all
   end
 
