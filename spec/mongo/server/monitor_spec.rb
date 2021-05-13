@@ -189,7 +189,9 @@ describe Mongo::Server::Monitor do
         ClientRegistry.instance.close_all_clients
         sleep 1
         thread
-        sleep 0.5
+        Utils.wait_for_condition(10) do
+          monitor.running? && monitor.connection&.connected?
+        end
         monitor.running?.should be true
         monitor.connection.connected?.should be true
 
