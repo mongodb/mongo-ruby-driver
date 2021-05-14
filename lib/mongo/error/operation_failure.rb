@@ -41,7 +41,7 @@ module Mongo
         {:code_name => 'NotMaster', :code => 10107},
         {:code_name => 'InterruptedAtShutdown', :code => 11600},
         {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
-        {:code_name => 'NotMasterNoSlaveOk', :code => 13435},
+        {:code_name => 'NotPrimaryNoSecondaryOk', :code => 13435},
         {:code_name => 'NotMasterOrSecondary', :code => 13436},
       ].freeze
 
@@ -148,7 +148,7 @@ module Mongo
         {code_name: 'NotMaster', code: 10107},
         {code_name: 'InterruptedAtShutdown', code: 11600},
         {code_name: 'InterruptedDueToReplStateChange', code: 11602},
-        {code_name: 'NotMasterNoSlaveOk', code: 13435},
+        {code_name: 'NotPrimaryNoSecondaryOk', code: 13435},
         {code_name: 'NotMasterOrSecondary', code: 13436},
 
         {code_name: 'StaleShardVersion', code: 63},

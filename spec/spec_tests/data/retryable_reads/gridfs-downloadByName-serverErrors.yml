@@ -70,7 +70,7 @@ tests:
              - *retryable_command_started_event
              - *find_chunks_command_started_event
     -
-        description: "DownloadByName succeeds after NotMasterNoSlaveOk"
+        description: "DownloadByName succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [find], errorCode: 13435 }

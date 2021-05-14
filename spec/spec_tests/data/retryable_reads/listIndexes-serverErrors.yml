@@ -48,7 +48,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "ListIndexes succeeds after NotMasterNoSlaveOk"
+        description: "ListIndexes succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [listIndexes], errorCode: 13435 }

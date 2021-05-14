@@ -61,7 +61,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "Aggregate succeeds after NotMasterNoSlaveOk"
+        description: "Aggregate succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [aggregate], errorCode: 13435 }
