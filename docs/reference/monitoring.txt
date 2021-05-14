@@ -21,6 +21,9 @@ These events are organized into the following categories:
 
 Topology and server events are part of Server Discovery and Monitoring (SDAM).
 
+
+.. _command-monitoring:
+
 Command Monitoring
 ==================
 
@@ -276,6 +279,8 @@ Sample output:
   a default set of event subscribers. If this happens, the provided
   ``:sdam_proc`` is not called and the application may miss events.
 
+
+.. _server-heartbeats:
 
 Server Heartbeats
 =================

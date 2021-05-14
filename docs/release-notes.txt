@@ -1,0 +1,222 @@
+.. _release-notes:
+
+*************
+Release Notes
+*************
+
+.. default-domain:: mongodb
+
+This page documents significant changes in driver releases.
+
+It is not an exhaustive list of changes and generally does not enumerate
+bug fixes; please consult the `releases page on GitHub
+<https://github.com/mongodb/mongo-ruby-driver/releases>`_ for a more
+comprehensive list of changes in each version of the driver and the
+`releases page in Jira
+<https://jira.mongodb.org/projects/RUBY?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=released>`_
+for the complete list of changes, including those internal to the driver and
+its test suite.
+
+
+2.15
+====
+
+This release adds the following new features:
+
+- Ability to specify the :ref:`server API parameters <server-api-parameters>`.
+- Support for Zstandard and Snappy :ref:`wire protocol compression <compression>`.
+- :ref:`Query cache middleware <query-cache-middleware>` was moved to the
+  driver from Mongoid and is now usable in applications that do not use Mongoid.
+
+The following smaller improvements have been made:
+
+- The ``OperationFailure`` exception message now contains the server error code
+  name, if provided by the server. The layout of the message was changed to
+  accommodate the error code name.
+- The generic SSL messaging has been removed from ``SocketError`` messages
+  when TLS is used. TLS connections to MongoDB are now the norm, with Atlas
+  requiring TLS, and it is more likely that a connection fails due to failed
+  certificate verification than due to the server not having TLS enabled.
+- A hook was added to permit applications to :ref:`modify the TLS context
+  <modifying-tls-context>` used for TLS connections, for example to exclude
+  ciphers.
+- Heartbeat succeeded and heartbeat failed :ref:`server monitoring events
+  <server-heartbeats>` are now linked to the respective heartbeat started
+  event, to improve usability.
+- When the driver closes network sockets it now enforces the socket timeout.
+- ``estimated_document_count`` collection method now uses the ``$collStats``
+  aggregation pipeline stage instead of the count command on 5.0 and newer
+  servers.
+- The platform metadata sent by the driver to the server in the handshake
+  now includes the purpose of the connection being established, permitting
+  administrators to distinguish monitoring connections from application
+  connections.
+
+
+2.14
+====
+
+This release adds the following new features:
+
+- Queries against Atlas Data Lake are now supported.
+- The :ref:`query cache <query-cache>` has been moved from Mongoid into the
+  driver. Mongoid will use the driver's query cache as of driver 2.14.
+  As part of the move, several issues with the query cache have been fixed
+  and its functionality was extended to cover aggregation pipeline queries
+  and to support result sets of any size.
+- Explain verbosity can now :ref:`be specified <query-options>` when explaining.
+- Mixed case read preference tag names are now supported.
+- The driver will perform :ref:`OCSP endpoint verification <ocsp-verification>`
+  by default when TLS is enabled. Due to lack of support in Ruby's ``openssl``
+  extension, OCSP stapling is not yet implemented.
+
+The following smaller improvements have been made:
+
+- Default logger level for ``Client`` objects is now info (up from debug).
+  This reduces the amount of log output produced by the driver by default.
+- Database and collection write methods support specifying write concern for
+  the individual operations.
+- ``Client#summary`` method now shows the monitoring state of each server.
+- When objects other than hashes are attempted to be inserted (which is not
+  allowed), the driver now provides better diagnostics.
+- DNS queries for SRV URIs are now subject to configured socket timeouts.
+- When the ``Client`` object is reconnected, session pools are now cleared.
+
+Support for Ruby versions 2.3 and 2.4 has been deprecated as of this release.
+
+
+2.13
+====
+
+This release implements the necessary client-side functionality to use the
+features added in MongoDB 4.4. Specifically, the following new driver
+functionality has been added:
+
+- Support for the ``directConnection`` URI option to provide a consistent
+  cross-driver mechanims to discover deployment topology or force direct
+  connection.
+- Support for :ref:`MONGODB-AWS authentication mechanism <aws-auth>`.
+- When SCRAM authentication is used with 4.4 and newer servers, the driver will 
+  complete authentication with fewer network roundtrips.
+- The driver creates an additional monitoring connection for 4.4 and newer
+  servers, permitting the server to notify the driver when its state changes.
+  This reduces the time for the driver to discover the new primary during
+  failover events.
+- ``Client`` constructor can be given a block, in which case the client object
+  will be yielded to the block and automatically closed when the block ends.
+- ``start_session`` can be given a block, in which case the session object will
+  be yielded to the block and automatically ended when the block ends.
+- Write options can now be specified for individual CRUD operations.
+- The ``:allow_disk_use`` option was added to find operations.
+- The ``:authorized_databases`` option was added to ``list_databases``
+  method.
+- The ``list_collections`` method now passes through all options.
+- Ability to set an index :ref:`as hidden <index-options>` when creating it.
+- Ability to specify commit quorum when creating indexes.
+- ``:wrapping_libraries`` :ref:`client option <client-options>`, to be used
+  by libraries like Mongoid which wrap the driver to report their version to
+  the server for troubleshooting/statistics aggregation purposes.
+
+The following smaller improvements have been made:
+
+- ``count_documents`` can now be invoked with no arguments.
+- The default TCP keep-alive time has been reduced to make the driver
+  correctly detect dropped connections on Microsoft Azure.
+- ``CursorNotFound`` is now a resumable change stream error.
+- The number of backtrace lines in exceptions handled by background threads
+  can now be configured.
+
+
+2.12
+====
+
+This release adds the following new features:
+
+- :ref:`Client-side encryption <client-side-encryption>`.
+- ``list_collections`` method now accepts the ``:filter`` option.
+
+The following smaller improvements have been made:
+
+- Authentication exceptions now include server information to aid in
+  troubleshooting.
+
+
+2.11
+====
+
+This release adds the following new features:
+
+- If a minimum connection pool size is specified, the pool for each server
+  will create a background thread to eagerly establish connections up to
+  the specified minimum pool size.
+- If the driver connects to the deployment using a SRV URI and the deployment
+  is a sharded cluster, the driver will poll the SRV DNS records to
+  automatically discover new and removed mongos servers and adjust the
+  set of known servers accordingly.
+
+The following smaller improvements have been made:
+
+- The driver now permits unencoded subdelimiters in usernames and passwords in
+  MongoDB URIs.
+- User management helpers now accept the write concern option.
+- The :ref:`command monitoring <command-monitoring>` logger provided with the
+  driver will now log connection ids used for each command.
+- When legacy read retries are used, retry on the same set of server errors
+  that the modern retries would have retried on.
+- The ``distinct(nil)`` call is prohibited because it is rejected by MongoDB
+  4.4 and newer servers.
+
+This release of the Ruby driver increases the minimum required Ruby version
+to 2.3, as well as minimum supported JRuby version to 9.2.
+
+
+2.10
+====
+
+This release implements the necessary client-side functionality to use the
+features added in MongoDB 4.2. Specifically, the following new driver
+functionality has been added:
+
+- Support for sharded transactions.
+- Applications can set the ``:max_time_ms`` option in ``commit_transaction``
+  method.
+- Support for database-level aggregation.
+- Support for ``$merge`` aggregation pipeline stage.
+- The update operations now accept an aggregation pipeline as an array.
+- TLS regenotiation is now disabled when possible.
+- Change streams now handle post-batch resume tokens provided by the server.
+
+The following smaller improvements have been made:
+
+- All methods now accept ``:write_concern`` option for the write concern,
+  including those that previously accepted the ``:write`` option.
+- The query string in a MongoDB URI can now start with ``&``.
+
+Support for Ruby versions less than 2.3 is deprecated in this release.
+
+
+2.9
+===
+
+This release adds the following new features:
+
+- A rewrite of the connection pool code with improved monitoring,
+  compliant with the CMAP specification
+- A modern retryable reads implementation compliant with the cross-driver
+  retryable reads specification, enabled by default.
+- Modern retryable writes are now enabled by default.
+- Legacy retryable writes can be disabled in most cases.
+- The driver now supports certificate chains being provided as client
+  certificates for TLS connections.
+- Ability to specify multiple CA certificates when creating a ``Client``.
+- Ability to pass the private key and certificate via URI options.
+
+The following smaller improvements have been made:
+
+- Support for the ``startAfter`` option in the ``$changeStream``        
+  aggregation pipeline stage.
+- Field order of BSON documents sent to the server changed for better logging.
+- Certificate paths with unescaped slashes can now be specified in
+  MongoDB URIs.
+
+This release deprecates support for Ruby versions less than 2.3.

@@ -50,6 +50,7 @@ To install the driver manually:
 What's New
 ==========
 
-Please consult the `releases page on GitHub
-<https://github.com/mongodb/mongo-ruby-driver/releases>`_ for the list
-of improvements and changes in each version of the driver.
+Please see the :ref:`release notes <release-notes>` for the major changes
+in each driver release and the `releases page on GitHub
+<https://github.com/mongodb/mongo-ruby-driver/releases>`_ for the complete
+list of changes for each release of the driver.

@@ -63,5 +63,6 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
     reference/schema-operations
     bson-tutorials
     API <https://docs.mongodb.com/ruby-driver/master/api/>
+    release-notes
     reference/additional-resources
     contribute
