@@ -9,10 +9,10 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout # SERVER-46091 explains why a new failpoint was needed
       mode: { times: 1 }
       data:
-          errorCode: 6
-          closeConnection: false
+        errorCode: 6
+        closeConnection: false
     target: collection
-    topology: 
+    topology:
       - replicaset
       - sharded
     changeStreamPipeline: []
@@ -72,8 +72,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 7
-          closeConnection: false
+        errorCode: 7
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -135,8 +135,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 89
-          closeConnection: false
+        errorCode: 89
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -198,8 +198,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 91
-          closeConnection: false
+        errorCode: 91
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -261,8 +261,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 189
-          closeConnection: false
+        errorCode: 189
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -324,8 +324,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 262
-          closeConnection: false
+        errorCode: 262
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -387,8 +387,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 9001
-          closeConnection: false
+        errorCode: 9001
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -444,14 +444,14 @@ tests:
             x:
               $numberInt: "1"
   -
-    description: "change stream resumes after NotMaster"
+    description: "change stream resumes after NotWritablePrimary"
     minServerVersion: "4.3.1"
     failPoint:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 10107
-          closeConnection: false
+        errorCode: 10107
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -513,8 +513,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 11600
-          closeConnection: false
+        errorCode: 11600
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -576,8 +576,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 11602
-          closeConnection: false
+        errorCode: 11602
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -633,14 +633,14 @@ tests:
             x:
               $numberInt: "1"
   -
-    description: "change stream resumes after NotMasterNoSlaveOk"
+    description: "change stream resumes after NotPrimaryNoSecondaryOk"
     minServerVersion: "4.3.1"
     failPoint:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 13435
-          closeConnection: false
+        errorCode: 13435
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -696,14 +696,14 @@ tests:
             x:
               $numberInt: "1"
   -
-    description: "change stream resumes after NotMasterOrSecondary"
+    description: "change stream resumes after NotPrimaryOrSecondary"
     minServerVersion: "4.3.1"
     failPoint:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 13436
-          closeConnection: false
+        errorCode: 13436
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -765,8 +765,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 63
-          closeConnection: false
+        errorCode: 63
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -828,8 +828,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 150
-          closeConnection: false
+        errorCode: 150
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -891,8 +891,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 234
-          closeConnection: false
+        errorCode: 234
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -954,8 +954,8 @@ tests:
       configureFailPoint: failGetMoreAfterCursorCheckout
       mode: { times: 1 }
       data:
-          errorCode: 133
-          closeConnection: false
+        errorCode: 133
+        closeConnection: false
     target: collection
     topology:
       - replicaset
@@ -1010,7 +1010,7 @@ tests:
           fullDocument:
             x:
               $numberInt: "1"
-  # The next two tests ensure that the driver only uses the error label, not the whitelist.
+  # The next two tests ensure that the driver only uses the error label, not the allow list.
   -
     description: "change stream resumes if error contains ResumableChangeStreamError"
     minServerVersion: "4.3.1"
@@ -1018,10 +1018,10 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 50 # Use an error code that does not have the whitelist label by default
-          closeConnection: false
-          errorLabels: ["ResumableChangeStreamError"]
+        failCommands: ["getMore"]
+        errorCode: 50 # Use an error code that does not have the allow list label by default
+        closeConnection: false
+        errorLabels: ["ResumableChangeStreamError"]
     target: collection
     topology:
       - replicaset
@@ -1080,12 +1080,12 @@ tests:
     description: "change stream does not resume if error does not contain ResumableChangeStreamError"
     minServerVersion: "4.3.1"
     failPoint:
-      configureFailPoint: failCommand # failCommand will not add the whitelist error label
+      configureFailPoint: failCommand # failCommand will not add the allow list error label
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 6 # Use an error code that is on the whitelist
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 6 # Use an error code that is on the allow list
+        closeConnection: false
     target: collection
     topology:
       - replicaset

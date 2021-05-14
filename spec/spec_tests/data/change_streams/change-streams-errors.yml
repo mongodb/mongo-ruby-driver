@@ -41,7 +41,7 @@ tests:
             aggregate: *collection_name
             cursor: {}
             pipeline:
-              - 
+              -
                 $changeStream: {}
               -
                 $unsupported: foo
@@ -79,9 +79,9 @@ tests:
       configureFailPoint: failCommand
       mode: { times: 1 }
       data:
-          failCommands: ["getMore"]
-          errorCode: 216 # An error code that's not on the old blacklist or whitelist
-          closeConnection: false
+        failCommands: ["getMore"]
+        errorCode: 216 # An error code that's not on the old deny or allow lists
+        closeConnection: false
     target: collection
     topology:
       - replicaset

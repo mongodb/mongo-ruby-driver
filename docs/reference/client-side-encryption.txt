@@ -108,7 +108,7 @@ in order to perform automatic encryption.
   Automatic encryption is an enterprise only feature that only applies to
   operations on a collection. Automatic encryption is not supported for operations
   on a database or view, and operations that are not bypassed will result in
-  error (see `Auto Encryption Whitelist <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#libmongocrypt-auto-encryption-whitelist>`_
+  error (see `Auto Encryption Allow-List <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#libmongocrypt-auto-encryption-allow-list>`_
   ). To bypass automatic encryption for all operations, set ``bypass_auto_encryption``
   to true in ``auto_encryption_options``.
 
