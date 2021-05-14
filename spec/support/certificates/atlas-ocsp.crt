@@ -1,3 +1,133 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            04:7c:0a:b8:c1:3a:aa:b5:98:83:b0:fb:55:39:4a:62
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C = US, O = DigiCert Inc, CN = DigiCert SHA2 Secure Server CA
+        Validity
+            Not Before: Feb  7 00:00:00 2018 GMT
+            Not After : May  7 00:00:00 2021 GMT
+        Subject: C = US, ST = New York, L = New York, O = "MongoDB, Inc.", OU = Cloud SRE, CN = *.mongodb-dev.net
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:d2:81:1d:b0:83:8d:ed:a8:de:a2:c1:8a:05:a6:
+                    78:b3:33:79:f2:41:73:e0:41:c1:ae:01:ac:ec:de:
+                    57:fb:8c:1e:a2:59:38:2e:8b:94:d2:75:0e:d9:20:
+                    f0:8d:d2:4b:e4:aa:5b:6f:5a:d4:6f:7b:1a:b5:35:
+                    40:b8:d8:f6:08:3a:77:2f:29:d6:66:08:2d:7f:73:
+                    82:6c:11:cc:2a:61:54:33:16:22:ae:21:06:53:f0:
+                    42:1e:8f:aa:2a:55:a3:d1:e3:35:a9:15:82:ff:da:
+                    a3:6e:0e:7e:a6:f9:e1:60:43:98:66:03:30:ac:88:
+                    c3:f1:5f:e3:ff:c7:ce:da:67:c1:4e:92:be:e7:15:
+                    de:2d:76:88:64:a2:e0:16:51:d6:84:bb:9e:4c:13:
+                    8d:85:28:c6:08:70:8a:b8:8f:71:2f:a9:41:ca:cd:
+                    ec:42:ab:12:31:96:35:c1:e7:9c:0f:88:cf:f2:75:
+                    71:b8:7a:4e:9f:07:56:3a:8d:81:1f:c7:78:9e:1f:
+                    0f:a3:04:18:4a:36:eb:2a:6d:a7:d5:c0:c6:9d:a9:
+                    3b:a2:a6:78:86:94:78:ce:31:b4:e3:33:ab:2f:3c:
+                    3d:a7:9b:b3:52:3e:28:7c:f8:6c:69:40:bd:2b:8b:
+                    0b:02:1d:35:3d:94:67:22:5f:6d:22:f4:24:a7:45:
+                    dc:f1
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Authority Key Identifier: 
+                keyid:0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2
+
+            X509v3 Subject Key Identifier: 
+                23:76:0B:B3:8F:3C:97:F3:18:A1:12:A3:C0:DD:7A:E3:33:5D:61:4B
+            X509v3 Subject Alternative Name: 
+                DNS:*.mongodb-dev.net, DNS:mongodb-dev.net
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://crl3.digicert.com/ssca-sha2-g6.crl
+
+                Full Name:
+                  URI:http://crl4.digicert.com/ssca-sha2-g6.crl
+
+            X509v3 Certificate Policies: 
+                Policy: 2.16.840.1.114412.1.1
+                  CPS: https://www.digicert.com/CPS
+                Policy: 2.23.140.1.2.2
+
+            Authority Information Access: 
+                OCSP - URI:http://ocsp.digicert.com
+                CA Issuers - URI:http://cacerts.digicert.com/DigiCertSHA2SecureServerCA.crt
+
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            CT Precertificate SCTs: 
+                Signed Certificate Timestamp:
+                    Version   : v1 (0x0)
+                    Log ID    : A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:
+                                3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10
+                    Timestamp : Feb  7 16:10:36.548 2018 GMT
+                    Extensions: none
+                    Signature : ecdsa-with-SHA256
+                                30:46:02:21:00:B0:1C:25:11:40:09:A2:A5:8A:18:79:
+                                46:D4:8C:3E:67:D8:6B:DD:13:CF:C9:2A:0F:4F:83:C1:
+                                8D:64:67:5A:97:02:21:00:BB:57:D1:05:10:D9:7B:3E:
+                                4E:8D:3B:04:68:D6:3A:19:38:1E:14:37:26:61:D5:85:
+                                65:40:E5:F2:64:AD:2D:52
+                Signed Certificate Timestamp:
+                    Version   : v1 (0x0)
+                    Log ID    : 87:75:BF:E7:59:7C:F8:8C:43:99:5F:BD:F3:6E:FF:56:
+                                8D:47:56:36:FF:4A:B5:60:C1:B4:EA:FF:5E:A0:83:0F
+                    Timestamp : Feb  7 16:10:36.573 2018 GMT
+                    Extensions: none
+                    Signature : ecdsa-with-SHA256
+                                30:45:02:21:00:BB:DA:8A:34:D4:0C:33:C9:82:BE:FD:
+                                40:31:CD:EF:5D:36:13:78:69:8A:52:C4:99:5D:36:0F:
+                                98:DB:23:77:9F:02:20:75:F0:D3:43:89:F7:9B:60:14:
+                                41:00:BC:95:15:97:F9:4C:FC:0C:27:81:DB:FF:FA:E8:
+                                1D:D4:DF:F9:DA:9B:57
+                Signed Certificate Timestamp:
+                    Version   : v1 (0x0)
+                    Log ID    : BB:D9:DF:BC:1F:8A:71:B5:93:94:23:97:AA:92:7B:47:
+                                38:57:95:0A:AB:52:E8:1A:90:96:64:36:8E:1E:D1:85
+                    Timestamp : Feb  7 16:10:36.436 2018 GMT
+                    Extensions: none
+                    Signature : ecdsa-with-SHA256
+                                30:46:02:21:00:96:A8:4B:96:8A:BA:E7:6F:F5:90:38:
+                                75:40:FF:80:4C:DD:1D:9B:05:DC:CF:71:B1:AF:8A:64:
+                                76:73:8A:74:F5:02:21:00:D7:30:10:30:AA:76:A5:AF:
+                                3F:3A:BE:6C:A0:2E:CC:1E:BB:32:91:61:17:63:79:69:
+                                14:2B:32:40:CF:91:3C:75
+                Signed Certificate Timestamp:
+                    Version   : v1 (0x0)
+                    Log ID    : 6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:
+                                15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13
+                    Timestamp : Feb  7 16:10:37.099 2018 GMT
+                    Extensions: none
+                    Signature : ecdsa-with-SHA256
+                                30:46:02:21:00:E1:B7:17:10:0B:3F:75:E8:BA:95:FD:
+                                12:A1:4C:D3:A2:DF:D2:D6:E1:D3:0F:02:5E:D0:79:63:
+                                D3:69:49:37:74:02:21:00:E8:10:88:50:18:92:02:6F:
+                                BA:7F:61:66:4F:F0:59:9F:0F:69:92:4E:1A:72:A7:90:
+                                B7:53:33:78:FB:65:D4:CD
+    Signature Algorithm: sha256WithRSAEncryption
+         7a:ac:ad:70:03:52:2c:40:26:55:49:7a:28:56:de:fd:12:01:
+         77:24:c9:60:c8:24:59:29:31:43:d4:a6:6d:90:a1:bb:9f:d6:
+         08:d0:06:ad:c3:78:6f:2a:9a:3c:39:5e:0a:0b:52:30:d4:87:
+         ba:27:06:d5:4d:cc:f2:1c:0a:51:38:b4:9e:48:74:ed:c5:b7:
+         e2:35:79:98:a8:d5:44:09:24:2d:23:e7:47:01:87:37:f0:42:
+         82:6f:f5:e0:c6:a7:c5:ad:ad:2f:25:17:02:cd:dd:72:1c:b2:
+         89:ea:e1:11:23:a7:09:ef:fb:e4:2e:a2:62:45:27:07:36:1e:
+         3d:3f:2f:18:3a:c8:a3:76:a7:74:05:99:f0:01:d1:4a:a4:fb:
+         66:bc:f3:4f:1f:d2:56:bb:c4:65:71:f5:94:ba:42:4a:17:56:
+         20:cd:e0:a3:cf:9d:03:2f:8e:d8:92:a8:7b:0b:c6:80:4f:d0:
+         79:cb:39:03:34:18:3a:e7:36:52:78:39:d7:e8:51:68:d1:90:
+         bc:04:cc:6a:37:e9:02:ca:4d:df:6a:f3:f7:34:ff:05:06:69:
+         04:64:fa:98:d3:03:21:dd:7b:1d:39:d4:8d:75:c1:8f:06:53:
+         78:32:24:ce:22:45:96:e8:9a:d9:97:ac:bf:85:0f:37:92:d6:
+         06:f3:0c:18
 -----BEGIN CERTIFICATE-----
 MIIHOjCCBiKgAwIBAgIQBHwKuME6qrWYg7D7VTlKYjANBgkqhkiG9w0BAQsFADBN
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMScwJQYDVQQDEx5E
