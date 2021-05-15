@@ -63,7 +63,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "Find succeeds after NotMasterNoSlaveOk"
+        description: "Find succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [find], errorCode: 13435 }

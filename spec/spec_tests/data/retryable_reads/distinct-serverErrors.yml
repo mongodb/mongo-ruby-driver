@@ -59,7 +59,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "Distinct succeeds after NotMasterNoSlaveOk"
+        description: "Distinct succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [distinct], errorCode: 13435 }

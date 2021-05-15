@@ -50,7 +50,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "EstimatedDocumentCount succeeds after NotMasterNoSlaveOk"
+        description: "EstimatedDocumentCount succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [aggregate], errorCode: 13435 }

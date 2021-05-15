@@ -47,7 +47,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "ListDatabases succeeds after NotMasterNoSlaveOk"
+        description: "ListDatabases succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [listDatabases], errorCode: 13435 }

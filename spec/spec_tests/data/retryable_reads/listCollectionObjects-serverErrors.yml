@@ -47,7 +47,7 @@ tests:
              - *retryable_command_started_event
              - *retryable_command_started_event
     -
-        description: "ListCollectionObjects succeeds after NotMasterNoSlaveOk"
+        description: "ListCollectionObjects succeeds after NotPrimaryNoSecondaryOk"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [listCollections], errorCode: 13435 }
