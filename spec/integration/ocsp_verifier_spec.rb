@@ -6,6 +6,7 @@ require 'webrick'
 
 describe Mongo::Socket::OcspVerifier do
   require_ocsp_verifier
+  with_openssl_debug
 
   shared_examples 'verifies' do
     context 'mri' do
