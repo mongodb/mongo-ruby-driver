@@ -8,8 +8,9 @@ the x509gen MongoDB tool.
 The file extensions map to content as follows:
 
 - `.key` - private key
-- `.crt` - certificate
-- `.pem` - certificate and private key combined in the same file
+- `.crt` - certificate or a certificate chain
+- `.pem` - certificate (or a certificate chain) and private key combined
+in the same file
 
 The file name fragments have the following meaning:
 

@@ -13,10 +13,11 @@ describe Mongo::Collection do
     end
   end
 
-  let(:authorized_collection) { client['collection_spec'] }
+  let(:collection_name) { 'collection_crud_spec' }
+  let(:authorized_collection) { client[collection_name] }
 
   before do
-    authorized_client['collection_spec'].drop
+    authorized_client[collection_name].drop
   end
 
   let(:collection_invalid_write_concern) do
@@ -32,15 +33,15 @@ describe Mongo::Collection do
     describe 'updating cluster time' do
 
       let(:operation) do
-        client[TEST_COLL].find.first
+        client[collection_name].find.first
       end
 
       let(:operation_with_session) do
-        client[TEST_COLL].find({}, session: session).first
+        client[collection_name].find({}, session: session).first
       end
 
       let(:second_operation) do
-        client[TEST_COLL].find({}, session: session).first
+        client[collection_name].find({}, session: session).first
       end
 
       it_behaves_like 'an operation updating cluster time'
@@ -102,7 +103,7 @@ describe Mongo::Collection do
       require_auth
 
       let(:view) do
-        unauthorized_collection.find
+        unauthorized_client[collection_name].find
       end
 
       it 'iterates over the documents' do
@@ -178,11 +179,11 @@ describe Mongo::Collection do
         end
 
         let(:view) do
-          Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
+          Mongo::Collection::View.new(client[collection_name], selector, view_options)
         end
 
         let(:command) do
-          client[TEST_COLL].find({}, session: session).explain
+          client[collection_name].find({}, session: session).explain
           subscriber.started_events.find { |c| c.command_name == 'explain' }.command
         end
 
@@ -400,7 +401,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do
@@ -608,15 +609,15 @@ describe Mongo::Collection do
     describe 'updating cluster time' do
 
       let(:operation) do
-        client[TEST_COLL].insert_one({ name: 'testing' })
+        client[collection_name].insert_one({ name: 'testing' })
       end
 
       let(:operation_with_session) do
-        client[TEST_COLL].insert_one({ name: 'testing' }, session: session)
+        client[collection_name].insert_one({ name: 'testing' }, session: session)
       end
 
       let(:second_operation) do
-        client[TEST_COLL].insert_one({ name: 'testing' }, session: session)
+        client[collection_name].insert_one({ name: 'testing' }, session: session)
       end
 
       it_behaves_like 'an operation updating cluster time'
@@ -673,7 +674,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do
@@ -768,7 +769,7 @@ describe Mongo::Collection do
       end
 
       let(:custom_collection) do
-        custom_client[TEST_COLL]
+        custom_client[collection_name]
       end
 
       before do
@@ -885,15 +886,15 @@ describe Mongo::Collection do
     describe 'updating cluster time' do
 
       let(:operation) do
-        client[TEST_COLL].aggregate([]).first
+        client[collection_name].aggregate([]).first
       end
 
       let(:operation_with_session) do
-        client[TEST_COLL].aggregate([], session: session).first
+        client[collection_name].aggregate([], session: session).first
       end
 
       let(:second_operation) do
-        client[TEST_COLL].aggregate([], session: session).first
+        client[collection_name].aggregate([], session: session).first
       end
 
       it_behaves_like 'an operation updating cluster time'
@@ -1426,7 +1427,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do
@@ -1656,7 +1657,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes are used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do
@@ -2308,7 +2309,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do
@@ -2775,7 +2776,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do
@@ -3178,7 +3179,7 @@ describe Mongo::Collection do
 
       before do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
-        client[TEST_COLL].update_one({ a: 1 }, {'$set' => { 'name' => '1'*16777149 }})
+        client[collection_name].update_one({ a: 1 }, {'$set' => { 'name' => '1'*16777149 }})
       end
 
       let(:update_events) do
@@ -3232,7 +3233,7 @@ describe Mongo::Collection do
     context 'when unacknowledged writes is used with an implicit session' do
 
       let(:collection_with_unacknowledged_write_concern) do
-        client.with(write: { w: 0 })[TEST_COLL]
+        client.with(write: { w: 0 })[collection_name]
       end
 
       let(:operation) do

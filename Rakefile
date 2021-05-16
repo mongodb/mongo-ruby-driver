@@ -93,6 +93,7 @@ namespace :spec do
       root: ROOT,
       classifiers: CLASSIFIERS,
       priority_order: RUN_PRIORITY,
+      randomize: true,
     )
   end
 

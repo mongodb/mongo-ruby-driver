@@ -101,7 +101,10 @@ describe 'SDAM events' do
         (started_awaited = events.select(&:awaited?)).should_not be_empty
         (started_regular = events.reject(&:awaited?)).should_not be_empty
 
-        events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
+        events = subscriber.select_completed_events(
+          Mongo::Monitoring::Event::ServerHeartbeatSucceeded,
+          Mongo::Monitoring::Event::ServerHeartbeatFailed,
+        )
         events.length.should >= 6
         events.length.should <= 18
         (succeeded_awaited = events.select(&:awaited?)).should_not be_empty
