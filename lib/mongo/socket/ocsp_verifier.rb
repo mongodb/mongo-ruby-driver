@@ -219,7 +219,12 @@ module Mongo
           break
         end
 
-        resp = OpenSSL::OCSP::Response.new(http_response.body).basic
+        resp = OpenSSL::OCSP::Response.new(http_response.body)
+        unless resp.basic
+          @resp_errors << "OCSP response from #{report_uri(original_uri, uri)} is #{resp.status}: #{resp.status_string}"
+          return false
+        end
+        resp = resp.basic
         unless resp.verify([ca_cert], cert_store)
           # Ruby's OpenSSL binding discards error information - see
           # https://github.com/ruby/openssl/issues/395
