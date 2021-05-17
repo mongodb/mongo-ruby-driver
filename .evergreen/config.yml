@@ -414,7 +414,7 @@ tasks:
   - name: "test-mlaunch"
     commands:
       - func: "run tests"
-  - name: "test-docker"
+  - name: "test-via-docker"
     commands:
       - func: "run tests via docker"
   - name: "test-kerberos-integration"
@@ -606,13 +606,13 @@ axes:
     values:
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-test
+        run_on: ubuntu1804-small
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
-        run_on: ubuntu1604-test
+        run_on: ubuntu1604-small
       - id: ubuntu1404
         display_name: "Ubuntu 14.04"
-        run_on: ubuntu1404-test
+        run_on: ubuntu1404-small
       - id: rhel70
         display_name: "RHEL 7"
         run_on: rhel70-small
@@ -709,7 +709,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1604-test
+        run_on: ubuntu1604-small
         variables:
           MMAPV1: 'true'
 
@@ -822,4 +822,4 @@ buildvariants:
       os: ubuntu1604
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
-      - name: test-docker
+      - name: test-via-docker
