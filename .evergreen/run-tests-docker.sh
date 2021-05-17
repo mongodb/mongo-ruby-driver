@@ -21,4 +21,4 @@ do
   fi
 done
 
-./.evergreen/test-on-docker -d ubuntu1604 $params
+./.evergreen/test-on-docker -p -d ubuntu1604 $params
