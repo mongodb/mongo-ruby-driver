@@ -396,6 +396,16 @@ functions:
           ${PREPARE_SHELL}
           <%= egos_wrap %> .evergreen/run-tests.sh
 
+  "run tests via docker":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          <%= egos_wrap %> .evergreen/run-tests-docker.sh
+
   "run AWS auth tests":
     - command: shell.exec
       type: test
