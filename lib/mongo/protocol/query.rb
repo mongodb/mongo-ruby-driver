@@ -44,7 +44,7 @@ module Mongo
       #                                                  :limit => 10)
       #
       # @example Find all users with slave ok bit set
-      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :flags => [:slave_ok])
+      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :flags => [:secondary_ok])
       #
       # @example Find all user ids.
       #   Query.new('xgen', 'users', {}, :fields => {:id => 1})
@@ -56,7 +56,7 @@ module Mongo
       #
       # @option options [ Array<Symbol> ] :flags The flag bits.
       #   Currently supported values are :await_data, :exhaust,
-      #   :no_cursor_timeout, :oplog_replay, :partial, :slave_ok,
+      #   :no_cursor_timeout, :oplog_replay, :partial, :secondary_ok,
       #   :tailable_cursor.
       # @option options [ Integer ] :limit The number of documents to return.
       # @option options [ Hash ] :project The projection.
@@ -174,7 +174,7 @@ module Mongo
       FLAGS = [
         :reserved,
         :tailable_cursor,
-        :slave_ok,
+        :secondary_ok,
         :oplog_replay,
         :no_cursor_timeout,
         :await_data,

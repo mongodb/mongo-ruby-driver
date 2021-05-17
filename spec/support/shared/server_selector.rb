@@ -61,10 +61,10 @@ shared_examples 'a server selector mode' do
     end
   end
 
-  describe '#slave_ok?' do
+  describe '#secondary_ok?' do
 
-    it 'returns whether the slave_ok bit should be set' do
-      expect(selector.slave_ok?).to eq(slave_ok)
+    it 'returns whether the secondary_ok bit should be set' do
+      expect(selector.secondary_ok?).to eq(secondary_ok)
     end
   end
 
