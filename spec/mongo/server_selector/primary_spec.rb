@@ -13,6 +13,7 @@ describe Mongo::ServerSelector::Primary do
     let(:secondary_ok) { false }
   end
   it_behaves_like 'a server selector with sensitive data in its options'
+  it_behaves_like 'a server selector with legacy secondary_ok'
 
   describe '#initialize' do
 

@@ -16,6 +16,7 @@ describe Mongo::ServerSelector::Nearest do
   it_behaves_like 'a server selector accepting tag sets'
   it_behaves_like 'a server selector accepting hedge'
   it_behaves_like 'a server selector with sensitive data in its options'
+  it_behaves_like 'a server selector with legacy secondary_ok'
 
   describe '#initialize' do
 

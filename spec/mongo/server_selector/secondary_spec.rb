@@ -17,6 +17,8 @@ describe Mongo::ServerSelector::Secondary do
   it_behaves_like 'a server selector accepting tag sets'
   it_behaves_like 'a server selector accepting hedge'
 
+  it_behaves_like 'a server selector with legacy secondary_ok'
+
   describe '#initialize' do
 
     context 'when max_staleness is provided' do

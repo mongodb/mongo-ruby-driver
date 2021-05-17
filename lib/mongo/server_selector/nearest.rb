@@ -46,10 +46,19 @@ module Mongo
       #
       # @return [ true ] true
       #
-      # @since 2.0.0
+      # @since 2.15.0
       def secondary_ok?
         true
       end
+
+      # Whether the secondaryOk bit should be set on wire protocol messages.
+      #   I.e. whether the operation can be performed on a secondary server.
+      #
+      # @return [ true ] true
+      #
+      # @since 2.0.0
+      # @deprecated Will be removed in 3.0. Use #secondary_ok?.
+      alias_method :slave_ok?, :secondary_ok?
 
       # Whether tag sets are allowed to be defined for this server preference.
       #
