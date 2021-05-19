@@ -87,6 +87,7 @@ require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
 require 'support/session_registry'
+require 'support/local_resource_registry'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'

@@ -229,7 +229,7 @@ module CommonShortcuts
       allow(cluster).to receive(:push_monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(10)
       server = Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+        monitoring_io: false)
       # Since the server references a double for the cluster, the server
       # must be closed in the scope of the example.
       register_server(server)
