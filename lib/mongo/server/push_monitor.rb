@@ -168,7 +168,6 @@ module Mongo
             Utils.transform_server_api(server_api)
           )
         end
-        log_error(payload)
         req_msg = Protocol::Msg.new([:exhaust_allowed], {}, payload)
         @lock.synchronize { @connection }.write_bytes(req_msg.serialize.to_s)
       end
