@@ -171,6 +171,7 @@ module Mongo
       end
 
       # Available flags for a Query message.
+      # @api private
       FLAGS = [
         :reserved,
         :tailable_cursor,
