@@ -232,7 +232,7 @@ module Mongo
         end
 
         def handshake!
-          is_versioned_api = !options.fetch(:server_api, {})[:version].nil?
+          is_versioned_api = !(options.fetch(:server_api, {})[:version].nil?)
           hello_doc = @app_metadata.validated_document(legacy: !is_versioned_api)
           hello_command = if is_versioned_api
                             Protocol::Msg.new([], {}, hello_doc)

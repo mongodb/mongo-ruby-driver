@@ -113,7 +113,7 @@ module Mongo
 
         # TODO
         # hello_doc = app_metadata.validated_document
-        is_versioned_api = !options.fetch(:server_api, {})[:version].nil?
+        is_versioned_api = !(options.fetch(:server_api, {})[:version].nil?)
         hello_doc = app_metadata.validated_document(legacy: !is_versioned_api)
         if speculative_auth_doc
           hello_doc = hello_doc.merge(speculativeAuthenticate: speculative_auth_doc)
