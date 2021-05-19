@@ -111,26 +111,31 @@ module Mongo
           raise Error::InternalDriverError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
-        ismaster_doc = app_metadata.validated_document
+        # TODO
+        # hello_doc = app_metadata.validated_document
+        is_versioned_api = !options.fetch(:server_api, {})[:version].nil?
+        hello_doc = app_metadata.validated_document(legacy: !is_versioned_api)
         if speculative_auth_doc
-          ismaster_doc = ismaster_doc.merge(speculativeAuthenticate: speculative_auth_doc)
+          hello_doc = hello_doc.merge(speculativeAuthenticate: speculative_auth_doc)
         end
-
         if server_api = options[:server_api]
-          ismaster_doc = ismaster_doc.merge(
+          hello_doc = hello_doc.merge(
             Utils.transform_server_api(server_api)
           )
         end
 
-        ismaster_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND,
-          ismaster_doc, :limit => -1)
+        hello_command = if is_versioned_api
+                             Protocol::Msg.new([], {}, hello_doc)
+                           else
+                             Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
+                           end
 
         doc = nil
         @server.handle_handshake_failure! do
           begin
             response = @server.round_trip_time_averager.measure do
               add_server_diagnostics do
-                socket.write(ismaster_command.serialize.to_s)
+                socket.write(hello_command.serialize.to_s)
                 Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
               end
             end

@@ -26,6 +26,12 @@ module Mongo
       class Connection < Server::ConnectionCommon
         include Loggable
 
+        HELLO = {
+          hello: 1,
+          helloOk: true,
+          '$db' => Database::ADMIN,
+        }.freeze
+
         # The command used for determining server status.
         #
         # The case matters here for fail points.
@@ -226,7 +232,14 @@ module Mongo
         end
 
         def handshake!
-          payload = @app_metadata.ismaster_bytes
+          is_versioned_api = !options.fetch(:server_api, {})[:version].nil?
+          hello_doc = @app_metadata.validated_document(legacy: !is_versioned_api)
+          hello_command = if is_versioned_api
+                            Protocol::Msg.new([], {}, hello_doc)
+                          else
+                            Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
+                          end
+          payload = hello_command.serialize.to_s
           message = dispatch_bytes(payload)
           result = Operation::Result.new(message)
           result.validate!

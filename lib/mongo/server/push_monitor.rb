@@ -151,16 +151,24 @@ module Mongo
       end
 
       def write_ismaster
-        payload = Monitor::Connection::ISMASTER_OP_MSG.merge(
-          topologyVersion: topology_version.to_doc,
-          maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
-        )
+        payload = if server_api = options[:server_api]
+                    Monitor::Connection::HELLO.merge(Utils.transform_server_api(server_api))
+                  else
+                    Monitor::Connection::HELLO
+                  end.merge(
+                    topologyVersion: topology_version.to_doc,
+                    maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
+                )
+        # payload = Monitor::Connection::ISMASTER_OP_MSG.merge(
+        #   topologyVersion: topology_version.to_doc,
+        #   maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
+        # )
         if server_api = options[:server_api]
           payload.update(
             Utils.transform_server_api(server_api)
           )
         end
-
+        log_error(payload)
         req_msg = Protocol::Msg.new([:exhaust_allowed], {}, payload)
         @lock.synchronize { @connection }.write_bytes(req_msg.serialize.to_s)
       end

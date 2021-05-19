@@ -287,10 +287,10 @@ module Mongo
           result = server.round_trip_time_averager.measure do
             begin
               ismaster_bytes = if server_api = options[:server_api]
-                ismaster_doc = Monitor::Connection::ISMASTER.merge(
+                ismaster_doc = Monitor::Connection::HELLO.merge(
                   Utils.transform_server_api(server_api)
                 )
-                Protocol::Query.new(Database::ADMIN, Database::COMMAND, ismaster_doc, limit: -1).serialize.to_s
+                Protocol::Msg.new([], {}, ismaster_doc).serialize.to_s
               else
                 Monitor::Connection::ISMASTER_BYTES
               end

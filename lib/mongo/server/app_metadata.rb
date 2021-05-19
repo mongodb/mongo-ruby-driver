@@ -51,6 +51,12 @@ module Mongo
       # @api private
       PURPOSES = %i(application monitor push_monitor).freeze
 
+      HELLO = {
+        hello: 1,
+        helloOk: true,
+        '$db' => Database::ADMIN,
+      }.freeze
+
       # Instantiate the new AppMetadata object.
       #
       # @api private
@@ -128,9 +134,9 @@ module Mongo
         @ismaster_bytes ||= validate! && serialize.to_s
       end
 
-      def validated_document
+      def validated_document(legacy: true)
         validate!
-        document
+        document(legacy: legacy)
       end
 
       private
@@ -155,7 +161,7 @@ module Mongo
         Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
       end
 
-      def document
+      def document(legacy: true)
         @document ||= begin
           client_document = full_client_document
           while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
@@ -168,7 +174,11 @@ module Mongo
               client_document = nil
             end
           end
-          document = Server::Monitor::Connection::ISMASTER
+          document = if legacy
+                       Server::Monitor::Connection::ISMASTER
+                     else
+                       HELLO
+                     end
           document = document.merge(compression: @compressors)
           document[:client] = client_document
           document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
