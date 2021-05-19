@@ -45,8 +45,6 @@ module Mongo
       #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ true ] true
-      #
-      # @since 2.15.0
       def secondary_ok?
         true
       end
@@ -56,7 +54,6 @@ module Mongo
       #
       # @return [ true ] true
       #
-      # @since 2.0.0
       # @deprecated Will be removed in 3.0. Use #secondary_ok?.
       alias_method :slave_ok?, :secondary_ok?
 

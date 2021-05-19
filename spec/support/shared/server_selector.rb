@@ -235,7 +235,7 @@ end
 shared_examples 'a server selector with legacy secondary_ok' do
   describe '#slave_ok?' do
     it 'behaves like #secondary_ok?' do
-      selector = Mongo::ServerSelector::Nearest.new
+      selector = described_class.new
       expect(selector.slave_ok?).to eq(selector.secondary_ok?)
     end
   end
