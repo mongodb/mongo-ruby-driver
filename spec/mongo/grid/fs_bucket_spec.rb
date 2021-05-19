@@ -737,7 +737,8 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'sets the read preference on the Stream::Read object' do
-        expect(stream.read_preference).to eq(options[:read])
+        expect(stream.read_preference).to be_a(BSON::Document)
+        expect(stream.read_preference).to eq(BSON::Document.new(options[:read]))
       end
     end
 
