@@ -67,19 +67,39 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
       context 'when provided read preference' do
 
-        let(:options) do
-          {
+        context 'when given as a hash with symbol keys' do
+          let(:options) do
+            {
+                file_id: file_id,
+                read: { mode: :primary_preferred },
+            }
+          end
+
+          it 'sets the read preference as a BSON::Document' do
+            expect(stream.read_preference).to be_a(BSON::Document)
+            expect(stream.read_preference).to eq('mode' => :primary_preferred)
+          end
+
+          it 'sets the read preference on the view' do
+            expect(stream.send(:view).read).to eq(BSON::Document.new(options[:read]))
+          end
+        end
+
+        context 'when given as a BSON::Document' do
+          let(:options) do
+            BSON::Document.new(
               file_id: file_id,
-              read: { mode: :primary_preferred }
-          }
-        end
+              read: { mode: :primary_preferred },
+            )
+          end
 
-        it 'sets the read preference' do
-          expect(stream.read_preference).to eq(options[:read])
-        end
+          it 'sets the read preference' do
+            expect(stream.read_preference).to eq(options[:read])
+          end
 
-        it 'sets the read preference on the view' do
-          expect(stream.send(:view).read).to eq(BSON::Document.new(options[:read]))
+          it 'sets the read preference on the view' do
+            expect(stream.send(:view).read).to eq(options[:read])
+          end
         end
       end
 

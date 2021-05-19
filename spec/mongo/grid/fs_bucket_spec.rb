@@ -67,12 +67,25 @@ describe Mongo::Grid::FSBucket do
 
       context 'when a read preference is set' do
 
-        let(:options) do
-          { read: { mode: :secondary } }
+        context 'when given as a hash with symbol keys' do
+          let(:options) do
+            { read: { mode: :secondary } }
+          end
+
+          it 'returns the read preference as a BSON::Document' do
+            expect(fs.send(:read_preference)).to be_a(BSON::Document)
+            expect(fs.send(:read_preference)).to eq('mode' => :secondary)
+          end
         end
 
-        it 'sets the read preference' do
-          expect(fs.send(:read_preference)).to eq(options[:read])
+        context 'when given as a BSON::Document' do
+          let(:options) do
+            BSON::Document.new(read: { mode: :secondary })
+          end
+
+          it 'returns the read preference as set' do
+            expect(fs.send(:read_preference)).to eq(options[:read])
+          end
         end
       end
 
@@ -724,7 +737,8 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'sets the read preference on the Stream::Read object' do
-        expect(stream.read_preference).to eq(options[:read])
+        expect(stream.read_preference).to be_a(BSON::Document)
+        expect(stream.read_preference).to eq(BSON::Document.new(options[:read]))
       end
     end
 

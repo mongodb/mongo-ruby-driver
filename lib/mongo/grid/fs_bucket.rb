@@ -53,7 +53,13 @@ module Mongo
       #   size.
       # @option options [ String ] :fs_name The prefix for the files and chunks
       #   collections.
-      # @option options [ String ] :read The read preference.
+      # @option options [ Hash ] :read The read preference options. The hash
+      #   may have the following items:
+      #   - *:mode* -- read preference specified as a symbol; valid values are
+      #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+      #     and *:nearest*.
+      #   - *:tag_sets* -- an array of hashes.
+      #   - *:local_threshold*.
       # @option options [ Session ] :session The session to use.
       # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
       #   option.
@@ -440,14 +446,26 @@ module Mongo
 
       # Get the read preference.
       #
-      # @example Get the read preference.
-      #   fs.read_preference
+      # @note This method always returns a BSON::Document instance, even though
+      #   the FSBucket constructor specifies the type of :read as a Hash, not
+      #   as a BSON::Document.
       #
-      # @return [ Mongo::ServerSelector ] The read preference.
-      #
-      # @since 2.1.0
+      # @return [ BSON::Document ] The read preference.
+      #   The document may have the following fields:
+      #   - *:mode* -- read preference specified as a symbol; valid values are
+      #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+      #     and *:nearest*.
+      #   - *:tag_sets* -- an array of hashes.
+      #   - *:local_threshold*.
       def read_preference
-        @read_preference ||= options[:read] || database.read_preference
+        @read_preference ||= begin
+          pref = options[:read] || database.read_preference
+          if BSON::Document === pref
+            pref
+          else
+            BSON::Document.new(pref)
+          end
+        end
       end
 
       # Get the write concern.
