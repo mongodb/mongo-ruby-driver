@@ -67,6 +67,7 @@ module Mongo
       :database,
       :heartbeat_frequency,
       :id_generator,
+      :load_balanced,
       :local_threshold,
       :logger,
       :log_prefix,
@@ -251,6 +252,8 @@ module Mongo
     #   for the server monitor to refresh its description via ismaster.
     # @option options [ Object ] :id_generator A custom object to generate ids
     #   for documents. Must respond to #generate.
+    # @option options [ true | false ] :load_balanced Whether to expect to
+    #   connect to a load balancer.
     # @option options [ Integer ] :local_threshold The local threshold boundary
     #   in seconds for selecting a near server for an operation.
     # @option options [ Logger ] :logger A custom logger to use.
@@ -1245,6 +1248,24 @@ module Mongo
         # When a client is copied using #with, we have a cluster
         if cluster && !cluster.topology.is_a?(Mongo::Cluster::Topology::Single)
           raise ArgumentError, "direct_connection=true cannot be used with topologies other than Single (this client is #{cluster.topology.class.name.sub(/.*::/, '')})"
+        end
+      end
+
+      if options[:load_balanced]
+        if addresses && addresses.length > 1
+          raise ArgumentError, "load_balanced=true cannot be used with multiple seeds"
+        end
+
+        if options[:direct_connection]
+          raise ArgumentError, "direct_connection=true cannot be used with load_balanced=true"
+        end
+
+        if options[:connect] && %i(direct replica_set).include?(options[:connect].to_sym)
+          raise ArgumentError, "connect=#{options[:connect]} cannot be used with load_balanced=true"
+        end
+
+        if options[:replica_set]
+          raise ArgumentError, "load_balanced=true cannot be used with replica_set option"
         end
       end
 
