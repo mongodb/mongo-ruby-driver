@@ -40,37 +40,37 @@ module Mongo
       # @since 2.0.0
       def options(connection)
         options = super
-        if add_slave_ok_flag?(connection)
+        if add_secondary_ok_flag?(connection)
           flags = options[:flags]&.dup || []
-          flags << :slave_ok
+          flags << :secondary_ok
           options = options.merge(flags: flags)
         end
         options
       end
 
-      # Whether to add the :slave_ok flag to the request based on the
+      # Whether to add the :secondary_ok flag to the request based on the
       # read preference specified in the operation or implied by the topology
       # that the connection's server is a part of.
       #
       # @param [ Server::Connection ] connection The connection that the
       #   operation will be executed on.
       #
-      # @return [ true | false ] Whether the :slave_ok flag should be added.
-      def add_slave_ok_flag?(connection)
+      # @return [ true | false ] Whether the :secondary_ok flag should be added.
+      def add_secondary_ok_flag?(connection)
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
         if connection.description.standalone?
           # Read preference is never sent to standalones.
           false
         elsif connection.server.cluster.single?
           # In Single topology the driver forces primaryPreferred read
-          # preference mode (via the slave_ok flag, in case of old servers)
+          # preference mode (via the secondary_ok flag, in case of old servers)
           # so that the query is satisfied.
           true
         else
           # In replica sets and sharded clusters, read preference is passed
           # to the server if one is specified by the application, and there
           # is no default.
-          read && read.slave_ok? || false
+          read && read.secondary_ok? || false
         end
       end
 
@@ -99,7 +99,7 @@ module Mongo
         if read && connection.description.mongos? && read_pref = read.to_mongos
           # If the read preference contains only mode and mode is secondary
           # preferred and we are sending to a pre-OP_MSG server, this read
-          # preference is indicated by the :slave_ok wire protocol flag
+          # preference is indicated by the :secondary_ok wire protocol flag
           # and $readPreference command parameter isn't sent.
           if read_pref != {mode: 'secondaryPreferred'}
             Mongo::Lint.validate_camel_case_read_preference(read_pref)

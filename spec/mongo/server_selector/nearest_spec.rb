@@ -13,7 +13,7 @@ describe Mongo::ServerSelector::Nearest do
   let(:default_address) { 'test.host' }
 
   it_behaves_like 'a server selector mode' do
-    let(:slave_ok) { true }
+    let(:secondary_ok) { true }
   end
 
   it_behaves_like 'a server selector accepting tag sets'

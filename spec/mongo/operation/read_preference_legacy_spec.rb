@@ -49,65 +49,65 @@ describe Mongo::Operation::ReadPreferenceSupported do
     end
   end
 
-  describe '#add_slave_ok_flag?' do
+  describe '#add_secondary_ok_flag?' do
 
     let(:actual) do
-      operation.send(:add_slave_ok_flag?, connection)
+      operation.send(:add_secondary_ok_flag?, connection)
     end
 
-    shared_examples_for 'sets the slave_ok flag as expected' do
-      it 'sets the slave_ok flag as expected' do
+    shared_examples_for 'sets the secondary_ok flag as expected' do
+      it 'sets the secondary_ok flag as expected' do
         expect(actual).to eq(expected)
       end
     end
 
-    shared_examples_for 'never sets slave_ok' do
+    shared_examples_for 'never sets secondary_ok' do
 
       let(:expected) { false }
 
       context 'when no read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
 
       context 'when primary read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get(:mode => :primary) }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
 
       context 'when secondary read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get(:mode => :secondary) }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
     end
 
-    shared_examples_for 'always sets slave_ok' do
+    shared_examples_for 'always sets secondary_ok' do
 
       let(:expected) { true }
 
       context 'when no read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
 
       context 'when primary read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get(:mode => :primary) }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
 
       context 'when secondary read preference is specified' do
         let(:read_pref) { Mongo::ServerSelector.get(:mode => :secondary) }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
     end
 
-    shared_examples_for 'sets slave_ok if read preference is specified and is not primary' do
+    shared_examples_for 'sets secondary_ok if read preference is specified and is not primary' do
 
       context 'when there is no read preference set' do
 
@@ -115,27 +115,27 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
         let(:expected) { false }
 
-        it_behaves_like 'sets the slave_ok flag as expected'
+        it_behaves_like 'sets the secondary_ok flag as expected'
       end
 
       context 'when there is a read preference' do
 
-        context 'when the read preference requires the slave_ok flag' do
+        context 'when the read preference requires the secondary_ok flag' do
 
           let(:read_pref) { Mongo::ServerSelector.get(:mode => :secondary) }
 
           let(:expected) { true }
 
-          it_behaves_like 'sets the slave_ok flag as expected'
+          it_behaves_like 'sets the secondary_ok flag as expected'
         end
 
-        context 'when the read preference does not require the slave_ok flag' do
+        context 'when the read preference does not require the secondary_ok flag' do
 
           let(:read_pref) { Mongo::ServerSelector.get(:mode => :primary) }
 
           let(:expected) { false }
 
-          it_behaves_like 'sets the slave_ok flag as expected'
+          it_behaves_like 'sets the secondary_ok flag as expected'
         end
       end
     end
@@ -149,7 +149,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
         let(:standalone?) { true }
 
-        it_behaves_like 'never sets slave_ok'
+        it_behaves_like 'never sets secondary_ok'
       end
 
       context 'when the server is a mongos' do
@@ -157,7 +157,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
         let(:standalone?) { false }
         let(:mongos?) { true }
 
-        it_behaves_like 'always sets slave_ok'
+        it_behaves_like 'always sets secondary_ok'
       end
 
       context 'when the server is a replica set member' do
@@ -165,7 +165,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
         let(:standalone?) { false }
         let(:mongos?) { false }
 
-        it_behaves_like 'always sets slave_ok'
+        it_behaves_like 'always sets secondary_ok'
       end
     end
 
@@ -178,7 +178,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
 
         let(:standalone?) { true }
 
-        it_behaves_like 'never sets slave_ok'
+        it_behaves_like 'never sets secondary_ok'
       end
 
       context 'when the server is a mongos' do
@@ -186,7 +186,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
         let(:standalone?) { false }
         let(:mongos?) { true }
 
-        it_behaves_like 'sets slave_ok if read preference is specified and is not primary'
+        it_behaves_like 'sets secondary_ok if read preference is specified and is not primary'
       end
 
       context 'when the server is a replica set member' do
@@ -194,7 +194,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
         let(:standalone?) { false }
         let(:mongos?) { false }
 
-        it_behaves_like 'sets slave_ok if read preference is specified and is not primary'
+        it_behaves_like 'sets secondary_ok if read preference is specified and is not primary'
       end
     end
   end
@@ -335,7 +335,7 @@ describe Mongo::Operation::ReadPreferenceSupported do
         let(:mongos?) { false }
 
         # $readPreference is not sent to replica set nodes running legacy
-        # servers - the allowance of secondary reads is handled by slave_ok
+        # servers - the allowance of secondary reads is handled by secondary_ok
         # flag.
         it_behaves_like 'does not send read preference'
       end
