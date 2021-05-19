@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-require 'spec_helper'
+require 'lite_spec_helper'
+require 'support/shared/server_selector'
 
 describe Mongo::ServerSelector do
 
