@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-require 'spec_helper'
+require 'lite_spec_helper'
+require 'support/shared/server_selector'
 
 describe Mongo::ServerSelector::Secondary do
 
@@ -9,8 +10,10 @@ describe Mongo::ServerSelector::Secondary do
 
   include_context 'server selector'
 
+  let(:default_address) { 'test.host' }
+
   it_behaves_like 'a server selector mode' do
-    let(:slave_ok) { true }
+    let(:secondary_ok) { true }
   end
   it_behaves_like 'a server selector with sensitive data in its options'
 

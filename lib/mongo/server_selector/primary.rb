@@ -42,13 +42,12 @@ module Mongo
         :primary
       end
 
-      # Whether the slaveOk bit should be set on wire protocol messages.
+      # Whether the secondaryOk bit should be set on wire protocol messages.
       #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ false ] false
-      #
-      # @since 2.0.0
-      def slave_ok?
+      # @api private
+      def secondary_ok?
         false
       end
 

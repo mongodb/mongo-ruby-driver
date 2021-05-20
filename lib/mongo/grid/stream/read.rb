@@ -136,16 +136,28 @@ module Mongo
             !@open
           end
 
-          # Get the read preference used when streaming.
+          # Get the read preference.
           #
-          # @example Get the read preference.
-          #   stream.read_preference
+          # @note This method always returns a BSON::Document instance, even
+          #   though the constructor specifies the type of :read as a Hash, not
+          #   as a BSON::Document.
           #
-          # @return [ Mongo::ServerSelector ] The read preference.
-          #
-          # @since 2.1.0
+          # @return [ BSON::Document ] The read preference.
+          #   The document may have the following fields:
+          #   - *:mode* -- read preference specified as a symbol; valid values are
+          #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+          #     and *:nearest*.
+          #   - *:tag_sets* -- an array of hashes.
+          #   - *:local_threshold*.
           def read_preference
-            @read_preference ||= options[:read] || fs.read_preference
+            @read_preference ||= begin
+              pref = options[:read] || fs.read_preference
+              if BSON::Document === pref
+                pref
+              else
+                BSON::Document.new(pref)
+              end
+            end
           end
 
           # Get the files collection file information document for the file

@@ -105,7 +105,7 @@ describe Mongo::Operation::Find::Legacy do
       end
 
       it 'applies the correct flags' do
-        expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
+        expect(message.flags).to eq([ :no_cursor_timeout, :secondary_ok ])
       end
     end
 
