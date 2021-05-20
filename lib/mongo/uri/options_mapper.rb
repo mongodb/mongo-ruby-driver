@@ -268,6 +268,7 @@ module Mongo
       # Topology options
       uri_option 'directConnection', :direct_connection, type: :bool
       uri_option 'connect', :connect, type: :symbol
+      uri_option 'loadBalanced', :load_balanced, type: :bool
 
       # Auth Options
       uri_option 'authSource', :auth_source
