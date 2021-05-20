@@ -25,6 +25,22 @@ module Mongo
         def socket_timeout
           options[:socket_timeout]
         end
+
+        # Build a document that should be used for connection check.
+        #
+        # @param [Server::AppMetadata] app_metadata Application metadata
+        #
+        # @return [BSON::Document] Document that should be sent to a server
+        #     for handshake purposes.
+        #
+        # @api private
+        def check_document(app_metadata)
+          if app_metadata.server_api && app_metadata.server_api[:version]
+            HELLO_OP_MSG
+          else
+            LEGACY_HELLO_OP_MSG
+          end
+        end
       end
     end
   end

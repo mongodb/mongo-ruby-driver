@@ -17,7 +17,7 @@
 
 module Mongo
   class Server
-    # Application metadata that is sent to the server in an ismaster command,
+    # Application metadata that is sent to the server during a handshake,
     #   when a new connection is established.
     #
     # @api private
@@ -50,12 +50,6 @@ module Mongo
       #
       # @api private
       PURPOSES = %i(application monitor push_monitor).freeze
-
-      HELLO = {
-        hello: 1,
-        helloOk: true,
-        '$db' => Database::ADMIN,
-      }.freeze
 
       # Instantiate the new AppMetadata object.
       #
@@ -115,28 +109,34 @@ module Mongo
       # @api private
       attr_reader :purpose
 
+      # @return [ Hash | nil ] Information server api.
+      #
+      #   Thes hash can have the following items:
+      #   - *:version* -- string
+      #   - *:strict* -- boolean
+      #   - *:deprecation_errors* -- boolean
+      #
+      # @api private
+      attr_reader :server_api
+
       # @return [ Array<Hash> | nil ] Information about libraries wrapping
       #   the driver.
       attr_reader :wrapping_libraries
 
-      # Get the bytes of the ismaster message including this metadata.
+      # Get the metadata as BSON::Document to be sent to
+      # a server for handshake purposes. The document is incomplete, and should
+      # be appended to a suitable handshake command.
+      #
+      # This method ensures that the metadata are valid.
+      #
+      # @return [BSON::Document] Valid document for connection's handshake.
+      #
+      # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
       #
       # @api private
-      #
-      # @example Get the ismaster message bytes.
-      #   metadata.ismaster_bytes
-      #
-      # @return [ String ] The raw bytes.
-      #
-      # @since 2.4.0
-      # @deprecated
-      def ismaster_bytes
-        @ismaster_bytes ||= validate! && serialize.to_s
-      end
-
-      def validated_document(legacy: true)
+      def validated_document
         validate!
-        document(legacy: legacy)
+        document
       end
 
       private
@@ -157,11 +157,7 @@ module Mongo
         end
       end
 
-      def serialize
-        Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
-      end
-
-      def document(legacy: true)
+      def document
         @document ||= begin
           client_document = full_client_document
           while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
@@ -174,13 +170,12 @@ module Mongo
               client_document = nil
             end
           end
-          document = if legacy
-                       Server::Monitor::Connection::ISMASTER
-                     else
-                       HELLO
-                     end
-          document = document.merge(compression: @compressors)
-          document[:client] = client_document
+          document = BSON::Document.new(
+            {
+              compression: @compressors,
+              client: client_document,
+            }
+          )
           document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
           if @server_api
             document.update(

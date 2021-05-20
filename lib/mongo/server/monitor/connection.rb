@@ -26,50 +26,6 @@ module Mongo
       class Connection < Server::ConnectionCommon
         include Loggable
 
-        HELLO = {
-          hello: 1,
-          helloOk: true,
-          '$db' => Database::ADMIN,
-        }.freeze
-
-        # The command used for determining server status.
-        #
-        # The case matters here for fail points.
-        #
-        # @since 2.2.0
-        ISMASTER = { isMaster: 1 }.freeze
-
-        # The command used for determining server status formatted for an
-        # OP_MSG (server versions >= 3.6).
-        #
-        # The case matters here for fail points.
-        #
-        # @since 2.5.0
-        ISMASTER_OP_MSG = {
-          isMaster: 1,
-          '$db' => Database::ADMIN,
-        }.freeze
-
-        # The constant for the ismaster command.
-        #
-        # @since 2.2.0
-        ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, limit: -1)
-
-        # The constant for the ismaster command as an OP_MSG (server versions >= 3.6).
-        #
-        # @since 2.5.0
-        ISMASTER_OP_MSG_MESSAGE = Protocol::Msg.new([], {}, ISMASTER_OP_MSG)
-
-        # The raw bytes for the ismaster message.
-        #
-        # @since 2.2.0
-        ISMASTER_BYTES = ISMASTER_MESSAGE.serialize.to_s.freeze
-
-        # The raw bytes for the ismaster OP_MSG message (server versions >= 3.6).
-        #
-        # @since 2.5.0
-        ISMASTER_OP_MSG_BYTES = ISMASTER_OP_MSG_MESSAGE.serialize.to_s.freeze
-
         # Creates a new connection object to the specified target address
         # with the specified options.
         #
@@ -231,15 +187,15 @@ module Mongo
           true
         end
 
+        # Send handshake command to connected host and validate the response.
+        #
+        # @return [BSON::Document] Handshake response from server
+        #
+        # @raise [Mongo::Error] If handshake failed.
         def handshake!
-          is_versioned_api = !!(options[:server_api] && options[:server_api][:version])
-          hello_doc = @app_metadata.validated_document(legacy: !is_versioned_api)
-          hello_command = if is_versioned_api
-                            Protocol::Msg.new([], {}, hello_doc)
-                          else
-                            Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
-                          end
-          payload = hello_command.serialize.to_s
+          document = handshake_document(@app_metadata)
+          command = Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1)
+          payload = command.serialize.to_s
           message = dispatch_bytes(payload)
           result = Operation::Result.new(message)
           result.validate!
@@ -255,6 +211,22 @@ module Mongo
             bg_error_backtrace: options[:bg_error_backtrace],
           )
           raise
+        end
+
+        # Build a document that should be used for connection check.
+        #
+        # @param [Server::AppMetadata] app_metadata Application metadata
+        #
+        # @return [BSON::Document] Document that should be sent to a server
+        #     for handshake purposes.
+        #
+        # @api private
+        def check_document(app_metadata)
+          if app_metadata.server_api && app_metadata.server_api[:version]
+            HELLO_OP_QUERY
+          else
+            LEGACY_HELLO_OP_QUERY
+          end
         end
 
         private

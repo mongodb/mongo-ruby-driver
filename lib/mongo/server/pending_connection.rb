@@ -102,31 +102,21 @@ module Mongo
       private
 
       # @param [ BSON::Document | nil ] speculative_auth_doc The document to
-      #   provide in speculativeAuthenticate field of ismaster command.
+      #   provide in speculativeAuthenticate field of handshake command.
       #
-      # @return [ BSON::Document ] The document of the ismaster response for
+      # @return [ BSON::Document ] The document of the handshake response for
       #   this particular connection.
       def handshake!(speculative_auth_doc: nil)
         unless socket
           raise Error::InternalDriverError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
-        is_versioned_api = !!(options[:server_api] && options[:server_api][:version])
-        hello_doc = app_metadata.validated_document(legacy: !is_versioned_api)
+        hello_doc = handshake_document(app_metadata)
         if speculative_auth_doc
           hello_doc = hello_doc.merge(speculativeAuthenticate: speculative_auth_doc)
         end
-        if server_api = options[:server_api]
-          hello_doc = hello_doc.merge(
-            Utils.transform_server_api(server_api)
-          )
-        end
 
-        hello_command = if is_versioned_api
-                             Protocol::Msg.new([], {}, hello_doc)
-                           else
-                             Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
-                           end
+        hello_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
 
         doc = nil
         @server.handle_handshake_failure! do

@@ -132,13 +132,7 @@ module Mongo
         end
       end
 
-      # Runs the server monitor. Refreshing happens on a separate thread per
-      # server.
-      #
-      # @example Run the monitor.
-      #   monitor.run
-      #
-      # @return [ Thread ] The thread the monitor runs on.
+      # Perform a check of the server.
       #
       # @since 2.0.0
       def do_work
@@ -263,10 +257,10 @@ module Mongo
       def do_scan
         begin
           monitoring.publish_heartbeat(server) do
-            ismaster
+            check
           end
         rescue => exc
-          msg = "Error running ismaster on #{server.address}"
+          msg = "Error checking #{server.address}"
           Utils.warn_bg_exception(msg, exc,
             logger: options[:logger],
             log_prefix: options[:log_prefix],
@@ -276,7 +270,7 @@ module Mongo
         end
       end
 
-      def ismaster
+      def check
         if @connection && @connection.pid != Process.pid
           log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{@connection.pid}, new pid #{Process.pid}")
           @connection.disconnect!
@@ -286,15 +280,15 @@ module Mongo
         if @connection
           result = server.round_trip_time_averager.measure do
             begin
-              ismaster_bytes = if server_api = options[:server_api]
-                ismaster_doc = Monitor::Connection::HELLO.merge(
-                  Utils.transform_server_api(server_api)
-                )
-                Protocol::Msg.new([], {}, ismaster_doc).serialize.to_s
-              else
-                Monitor::Connection::ISMASTER_BYTES
+              doc = @connection.check_document(options[:app_metadata]).tap do |doc|
+                if server_api = options[:server_api]
+                  doc.merge(Utils.transform_server_api(server_api))
+                else
+                  doc
+                end
               end
-              message = @connection.dispatch_bytes(ismaster_bytes)
+              bytes = Protocol::Msg.new([], {}, doc).serialize.to_s
+              message = @connection.dispatch_bytes(bytes)
               message.documents.first
             rescue Mongo::Error
               @connection.disconnect!
