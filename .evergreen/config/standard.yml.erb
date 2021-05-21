@@ -567,7 +567,7 @@ buildvariants:
       os: ubuntu1604
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
-      - name: test-mlaunch
+      - name: test-via-docker
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
