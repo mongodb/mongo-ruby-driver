@@ -591,13 +591,13 @@ axes:
     values:
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-test
+        run_on: ubuntu1804-small
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
-        run_on: ubuntu1604-test
+        run_on: ubuntu1604-small
       - id: ubuntu1404
         display_name: "Ubuntu 14.04"
-        run_on: ubuntu1404-test
+        run_on: ubuntu1404-small
       - id: rhel70
         display_name: "RHEL 7"
         run_on: rhel70-small
@@ -694,7 +694,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1604-test
+        run_on: ubuntu1604-small
         variables:
           MMAPV1: 'true'
 
@@ -1217,7 +1217,7 @@ buildvariants:
       ruby: [ruby-2.5, ruby-2.4]
     display_name: "Kerberos integration Ubuntu ${ruby}"
     run_on:
-      - ubuntu1604-test
+      - ubuntu1604-small
     tasks:
       - name: "test-kerberos-integration"
 
