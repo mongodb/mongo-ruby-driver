@@ -12,6 +12,8 @@ describe 'Client authentication options' do
   let(:client_opts) { {} }
 
   let(:client) { new_local_client_nmio(uri, client_opts) }
+  let(:auth_source_in_options) { client.options[:auth_source] }
+  let(:final_auth_source) { Mongo::Auth::User.new(client.options).auth_source }
 
   let(:user) { 'username' }
   let(:pwd) { 'password' }
@@ -48,7 +50,8 @@ describe 'Client authentication options' do
         let(:options) { "?authMechanism=#{auth_mech_string}" }
 
         it 'creates a client with default auth source' do
-          expect(client.options['auth_source']).to eq(default_auth_source)
+          expect(auth_source_in_options).to eq(default_auth_source)
+          expect(final_auth_source).to eq(default_auth_source)
         end
       end
 
@@ -62,7 +65,8 @@ describe 'Client authentication options' do
         end
 
         it 'creates a client with default auth source' do
-          expect(client.options['auth_source']).to eq(default_auth_source)
+          expect(auth_source_in_options).to eq(default_auth_source)
+          expect(final_auth_source).to eq(default_auth_source)
         end
       end
     end
@@ -75,7 +79,8 @@ describe 'Client authentication options' do
         let(:options) { "#{database}?authMechanism=#{auth_mech_string}" }
 
         it 'creates a client with database as auth source' do
-          expect(client.options['auth_source']).to eq(database)
+          expect(auth_source_in_options).to eq(database)
+          expect(final_auth_source).to eq(database)
         end
       end
 
@@ -90,7 +95,8 @@ describe 'Client authentication options' do
         end
 
         it 'creates a client with database as auth source' do
-          expect(client.options['auth_source']).to eq(database)
+          expect(auth_source_in_options).to eq(database)
+          expect(final_auth_source).to eq(database)
         end
       end
     end
@@ -324,7 +330,8 @@ describe 'Client authentication options' do
       let(:options) { '?authMechanism=MONGODB-X509' }
 
       it 'sets default auth source' do
-        expect(client.options[:auth_source]).to eq('$external')
+        expect(auth_source_in_options).to eq('$external')
+        expect(final_auth_source).to eq('$external')
       end
 
       context 'when username is not provided' do
@@ -350,7 +357,8 @@ describe 'Client authentication options' do
       let(:client_opts) { { auth_mech: :mongodb_x509, user: user } }
 
       it 'sets default auth source' do
-        expect(client.options[:auth_source]).to eq('$external')
+        expect(auth_source_in_options).to eq('$external')
+        expect(final_auth_source).to eq('$external')
       end
 
       context 'when username is not provided' do
@@ -420,7 +428,8 @@ describe 'Client authentication options' do
       let(:options) { "?authSource=#{auth_source}" }
 
       it 'correctly sets auth source on the client' do
-        expect(client.options[:auth_source]).to eq(auth_source)
+        expect(auth_source_in_options).to eq(auth_source)
+        expect(final_auth_source).to eq(auth_source)
       end
     end
 
@@ -428,7 +437,8 @@ describe 'Client authentication options' do
       let(:client_opts) { { auth_source: auth_source } }
 
       it 'correctly sets auth source on the client' do
-        expect(client.options[:auth_source]).to eq(auth_source)
+        expect(auth_source_in_options).to eq(auth_source)
+        expect(final_auth_source).to eq(auth_source)
       end
     end
   end

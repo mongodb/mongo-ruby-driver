@@ -106,10 +106,28 @@ module Mongo
         expected_credential
       end
 
-      def received_credential
+      def actual_client_options
         client.options.select do |k, _|
           %w(auth_mech auth_mech_properties auth_source password user).include?(k)
         end
+      end
+
+      def actual_user_attributes
+        user = Mongo::Auth::User.new(client.options)
+        attrs = {}
+        {
+          auth_mech_properties: 'auth_mech_properties',
+          auth_source: 'auth_source',
+          name: 'user',
+          password: 'password',
+          mechanism: 'auth_mech',
+        }.each do |attr, field|
+          value = user.send(attr)
+          unless value.nil? || attr == :auth_mech_properties && value == {}
+            attrs[field] = value
+          end
+        end
+        attrs
       end
 
       private
