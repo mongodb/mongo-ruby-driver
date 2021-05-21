@@ -18,24 +18,38 @@ describe 'Auth' do
             require_mongo_kerberos
           end
 
-          context 'when the auth configuration is invalid', unless: test.valid? do
-            it 'raises an error' do
-              expect do
-                test.client
-              end.to raise_error(Mongo::Auth::InvalidConfiguration)
-            end
-          end
+          if test.valid?
 
-          context 'when the auth configuration is valid' do
-            context 'with empty credentials', if: test.valid? && test.credential.nil? do
-              it 'creates a client with no credential information' do
-                expect(test.client).to have_blank_credentials
+            context 'the auth configuration is valid' do
+              if test.credential
+
+                it 'creates a client with options matching the credential' do
+                  expect(test.actual_client_options).to eq(test.expected_credential)
+                end
+
+                it 'creates a user with attributes matching the credential' do
+                  expect(test.actual_user_attributes).to eq(test.expected_credential)
+                end
+              else
+
+                context 'with empty credentials' do
+                  it 'creates a client with no credential information' do
+                    expect(test.client).to have_blank_credentials
+                  end
+                end
               end
             end
 
-            it 'creates a client with the correct credentials', if: test.valid? && test.credential do
-              expect(test.received_credential).to eq(test.expected_credential)
+          else
+
+            context 'the auth configuration is invalid' do
+              it 'raises an error' do
+                expect do
+                  test.client
+                end.to raise_error(Mongo::Auth::InvalidConfiguration)
+              end
             end
+
           end
         end
       end
