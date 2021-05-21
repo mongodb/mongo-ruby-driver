@@ -170,12 +170,9 @@ module Mongo
               client_document = nil
             end
           end
-          document = BSON::Document.new(
-            {
-              compression: @compressors,
-              client: client_document,
-            }
-          )
+          document = BSON::Document.new({})
+          document[:compression] = @compressors unless @compressors.empty?
+          document[:client] = client_document if client_document
           document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
           if @server_api
             document.update(

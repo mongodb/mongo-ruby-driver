@@ -299,7 +299,7 @@ describe 'SDAM error handling' do
       expect(server.monitor.connection).not_to be nil
       set_subscribers
       RSpec::Mocks.with_temporary_scope do
-        expect(server.monitor).to receive(:ismaster).and_raise(exception)
+        expect(server.monitor).to receive(:check).and_raise(exception)
         server.monitor.scan!
       end
       expect_server_state_change
