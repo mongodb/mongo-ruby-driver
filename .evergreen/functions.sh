@@ -58,6 +58,11 @@ set_env_vars() {
 
 bundle_install() {
   args=--quiet
+  
+  if test "$BSON" = master; then
+    # In Docker bson is installed in the image, remove it if we need bson master.
+    gem uni bson || true
+  fi
 
   # On JRuby we can test against bson master but not in a conventional way.
   # See https://jira.mongodb.org/browse/RUBY-2156
