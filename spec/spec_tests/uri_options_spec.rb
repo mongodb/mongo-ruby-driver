@@ -52,8 +52,8 @@ describe 'URI options' do
               expect(test.client).to match_auth(test)
             end
 
-            if test.options
-              if test.options['compressors'] && test.options['compressors'].include?('snappy')
+            if opts = test.expected_options
+              if opts['compressors'] && opts['compressors'].include?('snappy')
                 before do
                   unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /snappy/
                     skip "This test requires snappy compression"
@@ -61,7 +61,7 @@ describe 'URI options' do
                 end
               end
 
-              if test.options['compressors'] && test.options['compressors'].include?('zstd')
+              if opts['compressors'] && opts['compressors'].include?('zstd')
                 before do
                   unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /zstd/
                     skip "This test requires zstd compression"
@@ -72,7 +72,7 @@ describe 'URI options' do
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
-                  test.options,
+                  opts,
                 )
                 mapped.should == expected
               end

@@ -147,8 +147,12 @@ module Mongo
         end
       end
 
-      def options
+      def expected_options
         @spec['options']
+      end
+
+      def non_uri_options
+        @spec['parsed_options']
       end
 
       def client
@@ -307,14 +311,14 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
               expect(test.client).to match_auth(test)
             end
 
-            if test.options
+            if test.expected_options
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 # Connection string spec tests do not use canonical URI option names
                 actual = Utils.downcase_keys(mapped)
                 actual.delete('authsource')
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
-                  test.options,
+                  test.expected_options,
                 )
                 actual.should == expected
               end

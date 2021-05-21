@@ -80,7 +80,7 @@ module Mongo
       DOT_PARTITION = '.'.freeze
 
       # @return [ Array<String> ] VALID_TXT_OPTIONS The valid options for a TXT record to specify.
-      VALID_TXT_OPTIONS = ['replicaset', 'authsource'].freeze
+      VALID_TXT_OPTIONS = %w(replicaset authsource loadbalanced).freeze
 
       # @return [ String ] INVALID_HOST Error message format string indicating that the hostname in
       #   in the URI does not fit the expected form.
@@ -101,11 +101,6 @@ module Mongo
       # @return [ String ] NO_SRV_RECORDS Error message format string indicating that no SRV records
       #   were found.
       NO_SRV_RECORDS = "The DNS query returned no SRV records for '%s'".freeze
-
-      # @return [ String ] INVALID_TXT_RECORD_OPTION Error message format string indicating that an
-      #   unexpected TXT record option was found.
-      INVALID_TXT_RECORD_OPTION = "TXT records can only specify the options " +
-                                    "[#{VALID_TXT_OPTIONS.join(', ')}].".freeze
 
       # @return [ String ] FORMAT The expected SRV URI format.
       FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'.freeze
@@ -222,8 +217,11 @@ module Mongo
       def parse_txt_options!(string)
         string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |txt_options, opt|
           raise Error::InvalidTXTRecord.new(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
-          key, value = opt.split(URI_OPTS_VALUE_DELIM)
-          raise Error::InvalidTXTRecord.new(INVALID_TXT_RECORD_OPTION) unless VALID_TXT_OPTIONS.include?(key.downcase)
+          key, value = opt.split('=')
+          unless VALID_TXT_OPTIONS.include?(key.downcase)
+            msg = "TXT records can only specify the options [#{VALID_TXT_OPTIONS.join(', ')}]: #{string}"
+            raise Error::InvalidTXTRecord.new(msg)
+          end
           options_mapper.add_uri_option(key, value, txt_options)
           txt_options
         end
