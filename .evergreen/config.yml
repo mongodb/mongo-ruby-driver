@@ -14,11 +14,8 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-
 # 45 minutes is the longest we'll ever run
 exec_timeout_secs: 2700
-
-
 
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
@@ -56,7 +53,6 @@ functions:
           curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
 
-  
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -121,6 +117,7 @@ functions:
             export SOLO="${SOLO}"
             export EXTRA_URI_OPTIONS="${EXTRA_URI_OPTIONS}"
             export API_VERSION_REQUIRED="${API_VERSION_REQUIRED}"
+            export DOCKER_DISTRO="${DOCKER_DISTRO}"
 
             export STRESS="${STRESS}"
             export OCSP_ALGORITHM="${OCSP_ALGORITHM}"
@@ -133,7 +130,6 @@ functions:
 
           # See what we've done
           cat expansion.yml
-  
 
     # Load the expansion file to make an evergreen variable with the current
     # unique version
@@ -440,11 +436,9 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
-  
 
 tasks:
 
-  
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -469,7 +463,6 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
-  
 axes:
 
   - id: preload
@@ -661,6 +654,18 @@ axes:
         display_name: "RHEL 6"
         run_on: rhel62-small
 
+  - id: docker-distro
+    display_name: Docker Distro
+    values:
+        - id: debian92
+          display_name: debian92
+          variables:
+            DOCKER_DISTRO: debian92
+        - id: debian10
+          display_name: debian10
+          variables:
+            DOCKER_DISTRO: debian10
+
   - id: "compressor"
     display_name: Compressor
     values:
@@ -815,32 +820,26 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-      
       - id: pass
         display_name: pass
         variables:
           OCSP_CONNECTIVITY: pass
-      
       - id: fail
         display_name: fail
         variables:
           OCSP_CONNECTIVITY: fail
-      
 
   - id: extra-uri-options
     display_name: extra URI options
     values:
       - id: none
         display_name: None
-      
       - id: "tlsInsecure=true"
         variables:
           EXTRA_URI_OPTIONS: "tlsInsecure=true"
-      
       - id: "tlsAllowInvalidCertificates=true"
         variables:
           EXTRA_URI_OPTIONS: "tlsAllowInvalidCertificates=true"
-      
 
   - id: api-version-required
     display_name: API version required
@@ -851,7 +850,6 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
-
 
 buildvariants:
   - matrix_name: "docker"
@@ -1410,17 +1408,60 @@ buildvariants:
     tasks:
       - name: "test-aws-auth"
 
-  - matrix_name: ocsp-verifier
-    matrix_spec:
-      ocsp-verifier: on
-      # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4, ruby-2.3]
-      topology: standalone
-      mongodb-version: '4.4'
-      os: ubuntu1604
-    display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
-    tasks:
-      - name: test-via-docker
+  # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
+  
+- matrix_name: ocsp-verifier - ruby-2.3    
+  matrix_spec:    
+    ocsp-verifier: true    
+    ruby: ruby-2.3    
+    topology: standalone    
+    mongodb-version: '4.4'    
+    os: ubuntu1604    
+    docker-distro: debian92    
+  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
+  tasks: &1    
+  - name: test-via-docker    
+- matrix_name: ocsp-verifier - ruby-2.4    
+  matrix_spec:    
+    ocsp-verifier: true    
+    ruby: ruby-2.4    
+    topology: standalone    
+    mongodb-version: '4.4'    
+    os: ubuntu1604    
+    docker-distro: debian92    
+  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
+  tasks: *1    
+- matrix_name: ocsp-verifier - ruby-2.5    
+  matrix_spec:    
+    ocsp-verifier: true    
+    ruby: ruby-2.5    
+    topology: standalone    
+    mongodb-version: '4.4'    
+    os: ubuntu1604    
+    docker-distro: debian10    
+  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
+  tasks: *1    
+- matrix_name: ocsp-verifier - ruby-2.6    
+  matrix_spec:    
+    ocsp-verifier: true    
+    ruby: ruby-2.6    
+    topology: standalone    
+    mongodb-version: '4.4'    
+    os: ubuntu1604    
+    docker-distro: debian10    
+  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
+  tasks: *1    
+- matrix_name: ocsp-verifier - ruby-2.7    
+  matrix_spec:    
+    ocsp-verifier: true    
+    ruby: ruby-2.7    
+    topology: standalone    
+    mongodb-version: '4.4'    
+    os: ubuntu1604    
+    docker-distro: debian10    
+  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
+  tasks: *1    
+
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
@@ -1449,7 +1490,6 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1464,7 +1504,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1479,7 +1518,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1494,7 +1532,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1509,7 +1546,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1524,7 +1560,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1539,7 +1574,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1554,7 +1588,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1569,7 +1602,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1584,7 +1616,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:

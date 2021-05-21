@@ -22,4 +22,4 @@ do
 done
 
 # OCSP verifier tests need debian10 so that ocsp mock works
-./.evergreen/test-on-docker -p -d debian10 $params
+./.evergreen/test-on-docker -p -d $DOCKER_DISTRO $params
