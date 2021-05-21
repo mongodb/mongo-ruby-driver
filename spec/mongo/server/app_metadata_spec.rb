@@ -118,14 +118,10 @@ describe Mongo::Server::AppMetadata do
           allow(app_metadata).to receive(:driver_doc).and_return('x'*500)
         end
 
-        it 'truncates the document to be just an ismaster command and the compressors' do
-          # Because we sometimes request that the server provide a list of valid auth mechanisms for
-          # the user, we need to conditionally add the length of that metadata to the expected
-          # length of the document.
-          sasl_supported_mechs = app_metadata.instance_variable_get(:@request_auth_mech)
+        it 'truncates the document' do
           expect(
             app_metadata.validated_document.to_bson.to_s.size
-          ).to eq(BSON::Document.new({saslSupportedMechs: sasl_supported_mechs}).to_bson.to_s.size)
+          ).to be < described_class::MAX_DOCUMENT_SIZE
         end
       end
     end
