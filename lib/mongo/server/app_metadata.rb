@@ -109,7 +109,7 @@ module Mongo
       # @api private
       attr_reader :purpose
 
-      # @return [ Hash | nil ] Information server api.
+      # @return [ Hash | nil ] The requested server API version.
       #
       #   Thes hash can have the following items:
       #   - *:version* -- string
@@ -124,7 +124,7 @@ module Mongo
       attr_reader :wrapping_libraries
 
       # Get the metadata as BSON::Document to be sent to
-      # a server for handshake purposes. The document is incomplete, and should
+      # as part of the handshake. The document should
       # be appended to a suitable handshake command.
       #
       # This method ensures that the metadata are valid.

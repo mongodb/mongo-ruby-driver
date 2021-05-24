@@ -152,17 +152,19 @@ module Mongo
       end
 
       def write_check_command
-        payload = @connection.check_document(@app_metadata).merge(
+        document = @connection.check_document(@app_metadata).merge(
           topologyVersion: topology_version.to_doc,
           maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
         )
         if server_api = options[:server_api]
-          payload.update(
+          document.update(
             Utils.transform_server_api(server_api)
           )
         end
-        req_msg = Protocol::Msg.new([:exhaust_allowed], {}, payload)
-        @lock.synchronize { @connection }.write_bytes(req_msg.serialize.to_s)
+         command = Protocol::Msg.new(
+           [:exhaust_allowed], {}, document.merge({'$db' => Database::ADMIN})
+         )
+        @lock.synchronize { @connection }.write_bytes(command.serialize.to_s)
       end
 
       def read_response

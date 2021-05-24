@@ -31,14 +31,14 @@ module Mongo
         # @param [Server::AppMetadata] app_metadata Application metadata
         #
         # @return [BSON::Document] Document that should be sent to a server
-        #     for handshake purposes.
+        #     as part of the handshake.
         #
         # @api private
         def check_document(app_metadata)
           if app_metadata.server_api && app_metadata.server_api[:version]
-            HELLO_OP_MSG
+            HELLO_DOC
           else
-            LEGACY_HELLO_OP_MSG
+            LEGACY_HELLO_DOC
           end
         end
       end

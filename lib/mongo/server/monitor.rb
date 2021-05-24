@@ -287,10 +287,10 @@ module Mongo
                   doc
                 end
               end
-              bytes = Protocol::Query.new(
+              cmd = Protocol::Query.new(
                 Database::ADMIN, Database::COMMAND, doc, :limit => -1
-              ).serialize.to_s
-              message = @connection.dispatch_bytes(bytes)
+              )
+              message = @connection.dispatch_bytes(cmd.serialize.to_s)
               message.documents.first
             rescue Mongo::Error
               @connection.disconnect!

@@ -14,6 +14,14 @@ describe Mongo::Server::AppMetadata do
     authorized_client.cluster
   end
 
+  describe 'MAX_DOCUMENT_SIZE' do
+    it 'should be 512 bytes' do
+      # This test is an additional check that MAX_DOCUMENT_SIZE
+      # has not been accidentially changed.
+      expect(described_class::MAX_DOCUMENT_SIZE).to eq(512)
+    end
+  end
+
   describe '#initialize' do
 
     context 'when the cluster has an app name option set' do

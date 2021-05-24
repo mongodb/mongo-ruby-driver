@@ -62,26 +62,18 @@ module Mongo
       # @api private
       def handshake_document(app_metadata)
         document = if app_metadata.server_api && app_metadata.server_api[:version]
-                     HELLO_OP_QUERY
+                     HELLO_DOC
                    else
-                     LEGACY_HELLO_OP_QUERY
+                     LEGACY_HELLO_DOC
                    end
         document.merge(app_metadata.validated_document)
       end
 
-      HELLO_OP_QUERY = BSON::Document.new(
+      HELLO_DOC = BSON::Document.new(
         { hello: 1, helloOk: true }
       ).freeze
 
-      HELLO_OP_MSG = BSON::Document.new(
-        { hello: 1, helloOk: true, '$db' => Database::ADMIN }
-      ).freeze
-
-      LEGACY_HELLO_OP_QUERY = BSON::Document.new({ isMaster: 1 }).freeze
-
-      LEGACY_HELLO_OP_MSG = BSON::Document.new(
-        { isMaster: 1, '$db' => Database::ADMIN }
-      ).freeze
+      LEGACY_HELLO_DOC = BSON::Document.new({ isMaster: 1 }).freeze
 
 
       private

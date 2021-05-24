@@ -194,6 +194,8 @@ module Mongo
         # @raise [Mongo::Error] If handshake failed.
         def handshake!
           document = handshake_document(@app_metadata)
+          # TODO (DR): OP_MSG should be used if api version is declared.
+          # See https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.rst#id5
           command = Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1)
           payload = command.serialize.to_s
           message = dispatch_bytes(payload)
@@ -218,14 +220,14 @@ module Mongo
         # @param [Server::AppMetadata] app_metadata Application metadata
         #
         # @return [BSON::Document] Document that should be sent to a server
-        #     for handshake purposes.
+        #     as part of handshake.
         #
         # @api private
         def check_document(app_metadata)
           if app_metadata.server_api && app_metadata.server_api[:version]
-            HELLO_OP_QUERY
+            HELLO_DOC
           else
-            LEGACY_HELLO_OP_QUERY
+            LEGACY_HELLO_DOC
           end
         end
 

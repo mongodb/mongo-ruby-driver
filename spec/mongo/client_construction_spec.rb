@@ -1682,7 +1682,7 @@ describe Mongo::Client do
             client.should be_a(Mongo::Client)
           end
 
-          it 'does not discovers servers' do
+          it 'does not discover servers' do
             client.cluster.servers_list.each do |s|
               expect(s.status).to eq('UNKNOWN')
             end

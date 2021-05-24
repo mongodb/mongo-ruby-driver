@@ -116,6 +116,8 @@ module Mongo
           hello_doc = hello_doc.merge(speculativeAuthenticate: speculative_auth_doc)
         end
 
+        # TODO (DR): OP_MSG should be used if api version is declared.
+        # See https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.rst#id5
         hello_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
 
         doc = nil
