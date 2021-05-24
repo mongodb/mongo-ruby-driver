@@ -152,7 +152,7 @@ module Mongo
       end
 
       def write_check_command
-        document = @connection.check_document(@app_metadata).merge(
+        document = @connection.check_document.merge(
           topologyVersion: topology_version.to_doc,
           maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
         )

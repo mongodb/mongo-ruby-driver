@@ -152,4 +152,20 @@ describe Mongo::Server::AppMetadata do
 
     it_behaves_like 'app metadata document'
   end
+
+  describe '#validated_document' do
+    it 'raises with too long app name' do
+      app_name = 'app'*500
+      expect {
+        described_class.new(app_name: app_name).validated_document
+      }.to raise_error(Mongo::Error::InvalidApplicationName)
+    end
+
+    it 'does not raise with correct app name' do
+      app_name = 'app'
+      expect {
+        described_class.new(app_name: app_name).validated_document
+      }.not_to raise_error(Mongo::Error::InvalidApplicationName)
+    end
+  end
 end

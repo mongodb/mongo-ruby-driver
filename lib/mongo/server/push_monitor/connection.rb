@@ -28,14 +28,12 @@ module Mongo
 
         # Build a document that should be used for connection check.
         #
-        # @param [Server::AppMetadata] app_metadata Application metadata
-        #
         # @return [BSON::Document] Document that should be sent to a server
         #     as part of the handshake.
         #
         # @api private
-        def check_document(app_metadata)
-          if app_metadata.server_api && app_metadata.server_api[:version]
+        def check_document
+          if @app_metadata.server_api && @app_metadata.server_api[:version]
             HELLO_DOC
           else
             LEGACY_HELLO_DOC

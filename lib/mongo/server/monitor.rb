@@ -280,7 +280,7 @@ module Mongo
         if @connection
           result = server.round_trip_time_averager.measure do
             begin
-              doc = @connection.check_document(options[:app_metadata]).tap do |doc|
+              doc = @connection.check_document.tap do |doc|
                 if server_api = options[:server_api]
                   doc.merge(Utils.transform_server_api(server_api))
                 else
