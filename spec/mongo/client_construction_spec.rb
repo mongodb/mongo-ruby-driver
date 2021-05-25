@@ -1363,7 +1363,7 @@ describe Mongo::Client do
           end
         end
 
-        [:direct, 'direct'].each do |v|
+        [:direct, 'direct', :sharded, 'sharded'].each do |v|
           context "load_balanced: true and connect: #{v.inspect}" do
             let(:client) do
               new_local_client_nmio(['127.0.0.1:27017'],
@@ -1373,12 +1373,12 @@ describe Mongo::Client do
             it 'is rejected' do
               lambda do
                 client
-              end.should raise_error(ArgumentError, /connect=direct cannot be used with load_balanced=true/)
+              end.should raise_error(ArgumentError, /connect=#{v} cannot be used with load_balanced=true/)
             end
           end
         end
 
-        [nil, :sharded, 'sharded'].each do |v|
+        [nil].each do |v|
           context "load_balanced: true and connect: #{v.inspect}" do
             let(:client) do
               new_local_client_nmio(['127.0.0.1:27017'],
