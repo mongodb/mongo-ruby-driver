@@ -141,14 +141,14 @@ describe Mongo::Server::Monitor::Connection do
       meta = Mongo::Server::AppMetadata.new({
         server_api: { version: '1' }
       })
-      subject = described_class.new(dup(), {app_metadata: meta})
+      subject = described_class.new(double("address"), app_metadata: meta)
       document = subject.check_document
       expect(document['hello']).to eq(1)
     end
 
     it 'returns legacy hello document without API version' do
       meta = Mongo::Server::AppMetadata.new({})
-      subject = described_class.new(dup(), {app_metadata: meta})
+      subject = described_class.new(double("address"), app_metadata: meta)
       document = subject.check_document
       expect(document['isMaster']).to eq(1)
     end

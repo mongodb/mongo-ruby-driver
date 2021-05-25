@@ -141,6 +141,10 @@ module Mongo
 
       private
 
+      # Check whether it is possible to build a valid app metadata document
+      # with params provided on intialization.
+      #
+      # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
       def validate!
         if @app_name && @app_name.bytesize > MAX_APP_NAME_SIZE
           raise Error::InvalidApplicationName.new(@app_name, MAX_APP_NAME_SIZE)
@@ -148,6 +152,10 @@ module Mongo
         true
       end
 
+      # Get BSON::Document to be used as value for `client` key in
+      # handshake document.
+      #
+      # @return [BSON::Document] Document describing client for handshake.
       def full_client_document
         BSON::Document.new.tap do |doc|
           doc[:application] = { name: @app_name } if @app_name
@@ -157,6 +165,12 @@ module Mongo
         end
       end
 
+
+      # Get the metadata as BSON::Document to be sent to
+      # as part of the handshake. The document should
+      # be appended to a suitable handshake command.
+      #
+      # @return [BSON::Document] Document for connection's handshake.
       def document
         @document ||= begin
           client_document = full_client_document

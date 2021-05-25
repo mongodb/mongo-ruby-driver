@@ -69,12 +69,12 @@ module Mongo
         document.merge(app_metadata.validated_document)
       end
 
+
+      private
+
       HELLO_DOC = BSON::Document.new({ hello: 1 }).freeze
 
       LEGACY_HELLO_DOC = BSON::Document.new({ isMaster: 1 }).freeze
-
-
-      private
 
       attr_reader :socket
 
