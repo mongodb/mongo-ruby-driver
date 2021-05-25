@@ -46,7 +46,7 @@ describe 'Heartbeat events' do
 
   it 'notifies on failed heartbeats' do
     exc = HeartbeatEventsSpecTestException.new
-    expect_any_instance_of(Mongo::Server::Monitor).to receive(:ismaster).at_least(:once).and_raise(exc)
+    expect_any_instance_of(Mongo::Server::Monitor).to receive(:check).at_least(:once).and_raise(exc)
 
     expect do
       client.database.command(ismaster: 1)

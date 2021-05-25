@@ -21,8 +21,8 @@ module Mongo
     # A monitor utilizing server-pushed ismaster requests.
     #
     # When a Monitor handshakes with a 4.4+ server, it creates an instance
-    # of PushMonitor. PushMonitor subsequently executes server-pushed ismaster
-    # (i.e. awaited & exhausted ismaster) to receive topology changes from the
+    # of PushMonitor. PushMonitor subsequently executes server-pushed hello
+    # (i.e. awaited & exhausted hello) to receive topology changes from the
     # server as quickly as possible. The Monitor still monitors the server
     # for round-trip time calculations and to perform immediate checks as
     # requested by the application.
@@ -39,6 +39,7 @@ module Mongo
         unless options[:app_metadata]
           raise ArgumentError, 'App metadata is required'
         end
+        @app_metadata = options[:app_metadata]
         @monitor = monitor
         @topology_version = topology_version
         @monitoring = monitoring
@@ -71,7 +72,7 @@ module Mongo
         @lock.synchronize do
           @stop_requested = true
           if @connection
-            # Interrupt any in-progress exhausted ismaster reads by
+            # Interrupt any in-progress exhausted hello reads by
             # disconnecting the connection.
             @connection.send(:socket).close
           end
@@ -92,7 +93,7 @@ module Mongo
         end
 
         result = monitoring.publish_heartbeat(server, awaited: true) do
-          ismaster
+          check
         end
         new_description = monitor.run_sdam_flow(result, awaited: true)
         # When ismaster fails due to a fail point, the response does not
@@ -114,7 +115,7 @@ module Mongo
         )
       end
 
-      def ismaster
+      def check
         @lock.synchronize do
           if @connection && @connection.pid != Process.pid
             log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{@connection.pid}, new pid #{Process.pid}")
@@ -134,7 +135,7 @@ module Mongo
 
         resp_msg = begin
           unless @server_pushing
-            write_ismaster
+            write_check_command
           end
           read_response
         rescue Mongo::Error
@@ -150,19 +151,20 @@ module Mongo
         result.documents.first
       end
 
-      def write_ismaster
-        payload = Monitor::Connection::ISMASTER_OP_MSG.merge(
+      def write_check_command
+        document = @connection.check_document.merge(
           topologyVersion: topology_version.to_doc,
           maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
         )
         if server_api = options[:server_api]
-          payload.update(
+          document.update(
             Utils.transform_server_api(server_api)
           )
         end
-
-        req_msg = Protocol::Msg.new([:exhaust_allowed], {}, payload)
-        @lock.synchronize { @connection }.write_bytes(req_msg.serialize.to_s)
+         command = Protocol::Msg.new(
+           [:exhaust_allowed], {}, document.merge({'$db' => Database::ADMIN})
+         )
+        @lock.synchronize { @connection }.write_bytes(command.serialize.to_s)
       end
 
       def read_response
@@ -179,6 +181,7 @@ module Mongo
           @lock.synchronize { @connection }.read_response(socket_timeout: timeout)
         end
       end
+
     end
   end
 end

@@ -1812,14 +1812,16 @@ describe Mongo::Client do
             client.should be_a(Mongo::Client)
           end
 
-          it 'discovers servers' do
-            client.summary.should_not =~ /UNKNOWN/
+          it 'does not discover servers' do
+            client.cluster.servers_list.each do |s|
+              expect(s.status).to eq('UNKNOWN')
+            end
           end
 
           it 'fails operations' do
             lambda do
               client.command(ping: 1)
-            end.should raise_error(Mongo::Error::ServerApiNotSupported)
+            end.should raise_error(Mongo::Error::NoServerAvailable)
           end
         end
       end
