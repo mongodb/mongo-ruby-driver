@@ -66,7 +66,7 @@ describe Mongo::Server::Monitor do
       end
 
       it 'runs sdam flow on unknown description' do
-        expect(monitor).to receive(:ismaster).once.and_raise(Mongo::Error::SocketError)
+        expect(monitor).to receive(:check).once.and_raise(Mongo::Error::SocketError)
         expect(cluster).to receive(:run_sdam_flow)
         monitor.scan!
       end
@@ -116,7 +116,7 @@ describe Mongo::Server::Monitor do
         before do
           server.unknown!
           expect(server.description).to be_unknown
-          expect(monitor).to receive(:ismaster).and_raise(Mongo::Error::SocketError)
+          expect(monitor).to receive(:check).and_raise(Mongo::Error::SocketError)
           monitor.scan!
         end
 
@@ -265,9 +265,9 @@ describe Mongo::Server::Monitor do
       expect(result['ok']).to eq(1.0)
     end
 
-    context 'network error during ismaster' do
+    context 'network error during check' do
       let(:result) do
-        expect(monitor).to receive(:ismaster).and_raise(IOError)
+        expect(monitor).to receive(:check).and_raise(IOError)
         # The retry is done on a new socket instance.
         #expect(socket).to receive(:write).and_call_original
 
@@ -278,7 +278,7 @@ describe Mongo::Server::Monitor do
         expect(Mongo::Logger.logger).to receive(:warn) do |msg|
           # The "on <address>" and "for <address>" bits are in different parts
           # of the message.
-          expect(msg).to match(/on #{server.address}/)
+          expect(msg).to match(/#{server.address}/)
         end
         expect(result).to be_a(Hash)
       end
@@ -316,8 +316,8 @@ describe Mongo::Server::Monitor do
         expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
 
         expect do
-          monitor.send(:ismaster)
-        end.to raise_error(Mongo::Error::SocketError, /on #{server.address}/)
+          monitor.send(:check)
+        end.to raise_error(Mongo::Error::SocketError, /#{server.address}/)
       end
     end
   end

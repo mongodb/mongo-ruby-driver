@@ -573,7 +573,7 @@ module Mongo
       # @since 2.0.0
       def primary?
         ok? &&
-        config['ismaster'] == true &&
+          (config['ismaster'] == true || config['isWritablePrimary'] == true ) &&
         !!config['setName']
       end
 

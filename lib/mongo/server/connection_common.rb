@@ -52,7 +52,29 @@ module Mongo
       # @api private
       attr_reader :pid
 
+      # Build a document that should be used for connection handshake.
+      #
+      # @param [Server::AppMetadata] app_metadata Application metadata
+      #
+      # @return [BSON::Document] Document that should be sent to a server
+      #     for handshake purposes.
+      #
+      # @api private
+      def handshake_document(app_metadata)
+        document = if app_metadata.server_api && app_metadata.server_api[:version]
+                     HELLO_DOC
+                   else
+                     LEGACY_HELLO_DOC
+                   end
+        document.merge(app_metadata.validated_document)
+      end
+
+
       private
+
+      HELLO_DOC = BSON::Document.new({ hello: 1 }).freeze
+
+      LEGACY_HELLO_DOC = BSON::Document.new({ isMaster: 1 }).freeze
 
       attr_reader :socket
 

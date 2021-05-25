@@ -17,7 +17,7 @@
 
 module Mongo
   class Server
-    # Application metadata that is sent to the server in an ismaster command,
+    # Application metadata that is sent to the server during a handshake,
     #   when a new connection is established.
     #
     # @api private
@@ -109,25 +109,31 @@ module Mongo
       # @api private
       attr_reader :purpose
 
+      # @return [ Hash | nil ] The requested server API version.
+      #
+      #   Thes hash can have the following items:
+      #   - *:version* -- string
+      #   - *:strict* -- boolean
+      #   - *:deprecation_errors* -- boolean
+      #
+      # @api private
+      attr_reader :server_api
+
       # @return [ Array<Hash> | nil ] Information about libraries wrapping
       #   the driver.
       attr_reader :wrapping_libraries
 
-      # Get the bytes of the ismaster message including this metadata.
+      # Get the metadata as BSON::Document to be sent to
+      # as part of the handshake. The document should
+      # be appended to a suitable handshake command.
+      #
+      # This method ensures that the metadata are valid.
+      #
+      # @return [BSON::Document] Valid document for connection's handshake.
+      #
+      # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
       #
       # @api private
-      #
-      # @example Get the ismaster message bytes.
-      #   metadata.ismaster_bytes
-      #
-      # @return [ String ] The raw bytes.
-      #
-      # @since 2.4.0
-      # @deprecated
-      def ismaster_bytes
-        @ismaster_bytes ||= validate! && serialize.to_s
-      end
-
       def validated_document
         validate!
         document
@@ -135,6 +141,10 @@ module Mongo
 
       private
 
+      # Check whether it is possible to build a valid app metadata document
+      # with params provided on intialization.
+      #
+      # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
       def validate!
         if @app_name && @app_name.bytesize > MAX_APP_NAME_SIZE
           raise Error::InvalidApplicationName.new(@app_name, MAX_APP_NAME_SIZE)
@@ -142,6 +152,10 @@ module Mongo
         true
       end
 
+      # Get BSON::Document to be used as value for `client` key in
+      # handshake document.
+      #
+      # @return [BSON::Document] Document describing client for handshake.
       def full_client_document
         BSON::Document.new.tap do |doc|
           doc[:application] = { name: @app_name } if @app_name
@@ -151,10 +165,12 @@ module Mongo
         end
       end
 
-      def serialize
-        Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
-      end
 
+      # Get the metadata as BSON::Document to be sent to
+      # as part of the handshake. The document should
+      # be appended to a suitable handshake command.
+      #
+      # @return [BSON::Document] Document for connection's handshake.
       def document
         @document ||= begin
           client_document = full_client_document
@@ -168,9 +184,12 @@ module Mongo
               client_document = nil
             end
           end
-          document = Server::Monitor::Connection::ISMASTER
-          document = document.merge(compression: @compressors)
-          document[:client] = client_document
+          document = BSON::Document.new(
+            {
+              compression: @compressors,
+              client: client_document,
+            }
+          )
           document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
           if @server_api
             document.update(

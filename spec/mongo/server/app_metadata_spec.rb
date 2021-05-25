@@ -14,6 +14,14 @@ describe Mongo::Server::AppMetadata do
     authorized_client.cluster
   end
 
+  describe 'MAX_DOCUMENT_SIZE' do
+    it 'should be 512 bytes' do
+      # This test is an additional check that MAX_DOCUMENT_SIZE
+      # has not been accidentially changed.
+      expect(described_class::MAX_DOCUMENT_SIZE).to eq(512)
+    end
+  end
+
   describe '#initialize' do
 
     context 'when the cluster has an app name option set' do
@@ -66,7 +74,9 @@ describe Mongo::Server::AppMetadata do
         end
 
         it 'truncates the document' do
-          expect(app_metadata.send(:ismaster_bytes)).to be_a(String)
+          expect(
+            app_metadata.validated_document.to_bson.to_s.size
+          ).to be < described_class::MAX_DOCUMENT_SIZE
         end
       end
 
@@ -77,7 +87,9 @@ describe Mongo::Server::AppMetadata do
         end
 
         it 'truncates the document' do
-          expect(app_metadata.send(:ismaster_bytes)).to be_a(String)
+          expect(
+            app_metadata.validated_document.to_bson.to_s.size
+          ).to be < described_class::MAX_DOCUMENT_SIZE
         end
       end
 
@@ -88,7 +100,9 @@ describe Mongo::Server::AppMetadata do
         end
 
         it 'truncates the document' do
-          expect(app_metadata.send(:ismaster_bytes)).to be_a(String)
+          expect(
+            app_metadata.validated_document.to_bson.to_s.size
+          ).to be < described_class::MAX_DOCUMENT_SIZE
         end
       end
 
@@ -98,8 +112,10 @@ describe Mongo::Server::AppMetadata do
           allow(app_metadata).to receive(:platform).and_return('x'*500)
         end
 
-        it 'truncates the document to be just an ismaster command' do
-          expect(app_metadata.send(:ismaster_bytes)).to be_a(String)
+        it 'truncates the document' do
+          expect(
+            app_metadata.validated_document.to_bson.to_s.size
+          ).to be < described_class::MAX_DOCUMENT_SIZE
         end
       end
 
@@ -110,21 +126,10 @@ describe Mongo::Server::AppMetadata do
           allow(app_metadata).to receive(:driver_doc).and_return('x'*500)
         end
 
-        it 'truncates the document to be just an ismaster command and the compressors' do
-          # Because we sometimes request that the server provide a list of valid auth mechanisms for
-          # the user, we need to conditionally add the length of that metadata to the expected
-          # length of the isMaster document.
-          sasl_supported_mechs_size = 0
-          sasl_supported_mechs = app_metadata.instance_variable_get(:@request_auth_mech)
-
-          if sasl_supported_mechs
-            sasl_supported_mechs_size += 1                               # length of BSON type byte
-            sasl_supported_mechs_size += 'saslSupportedMechs'.length + 1        # length of BSON key
-            sasl_supported_mechs_size += 4                               # length of BSON string length
-            sasl_supported_mechs_size += sasl_supported_mechs.length + 1 # length of BSON string
-          end
-
-          expect(app_metadata.ismaster_bytes.length).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES.length + sasl_supported_mechs_size + 26)
+        it 'truncates the document' do
+          expect(
+            app_metadata.validated_document.to_bson.to_s.size
+          ).to be < described_class::MAX_DOCUMENT_SIZE
         end
       end
     end
@@ -146,5 +151,21 @@ describe Mongo::Server::AppMetadata do
     end
 
     it_behaves_like 'app metadata document'
+  end
+
+  describe '#validated_document' do
+    it 'raises with too long app name' do
+      app_name = 'app'*500
+      expect {
+        described_class.new(app_name: app_name).validated_document
+      }.to raise_error(Mongo::Error::InvalidApplicationName)
+    end
+
+    it 'does not raise with correct app name' do
+      app_name = 'app'
+      expect {
+        described_class.new(app_name: app_name).validated_document
+      }.not_to raise_error(Mongo::Error::InvalidApplicationName)
+    end
   end
 end
