@@ -1260,7 +1260,7 @@ module Mongo
           raise ArgumentError, "direct_connection=true cannot be used with load_balanced=true"
         end
 
-        if options[:connect] && %i(direct replica_set).include?(options[:connect].to_sym)
+        if options[:connect]
           raise ArgumentError, "connect=#{options[:connect]} cannot be used with load_balanced=true"
         end
 
