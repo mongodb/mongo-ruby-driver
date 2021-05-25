@@ -209,7 +209,10 @@ module Mongo
           @sasl_supported_mechanisms = nil
         end
 
-        @description = Description.new(address, response, average_rtt).tap do |new_description|
+        @description = Description.new(
+          address, response,
+          average_round_trip_time: average_rtt,
+        ).tap do |new_description|
           @server.cluster.run_sdam_flow(@server.description, new_description)
         end
       end

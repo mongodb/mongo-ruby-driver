@@ -54,6 +54,8 @@ module Mongo
     #   done by this server. Note: setting this option to false will make
     #   the server non-functional. It is intended for use in tests which
     #   manually invoke SDAM state transitions.
+    # @option options [ true | false ] :load_balancer Whether this server
+    #   is a load balancer.
     #
     # @since 2.0.0
     def initialize(address, cluster, monitoring, event_listeners, options = {})
@@ -69,7 +71,8 @@ module Mongo
       end
       @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
-      @description = Description.new(address, {})
+      @description = Description.new(address, {},
+        load_balancer: options[:load_balancer])
       @last_scan = nil
       @last_scan_monotime = nil
       unless options[:monitoring_io] == false
@@ -180,6 +183,7 @@ module Mongo
                    :secondary?,
                    :standalone?,
                    :unknown?,
+                   :load_balancer?,
                    :last_write_date,
                    :logical_session_timeout
 
@@ -520,6 +524,10 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
+      if options[:load_balancer]
+        return
+      end
+
       if options[:generation] && options[:generation] < pool.generation
         return
       end
