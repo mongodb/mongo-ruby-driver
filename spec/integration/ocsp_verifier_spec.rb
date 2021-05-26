@@ -184,6 +184,8 @@ describe Mongo::Socket::OcspVerifier do
         ensure
           server.shutdown
         end
+
+        ::Utils.wait_for_port_free(8100, 5)
       end
 
       include_context 'verifier', algorithm: algorithm
@@ -257,6 +259,8 @@ describe Mongo::Socket::OcspVerifier do
         ensure
           server.shutdown
         end
+
+        ::Utils.wait_for_port_free(8100, 5)
       end
 
       include_context 'verifier', algorithm: algorithm
@@ -305,6 +309,8 @@ describe Mongo::Socket::OcspVerifier do
         ensure
           server.shutdown
         end
+
+        ::Utils.wait_for_port_free(8100, 5)
       end
 
       context "code 204" do
