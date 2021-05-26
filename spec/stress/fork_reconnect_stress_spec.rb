@@ -38,7 +38,7 @@ describe 'fork reconnect' do
         else
           Utils.wrap_forked_child do
             while Time.now < deadline
-              client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+              client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
             end
           end
         end
@@ -69,7 +69,7 @@ describe 'fork reconnect' do
         wait_queue_timeout: 10, socket_timeout: 2, connect_timeout: 2) }
 
       it 'works' do
-        client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+        client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
 
         threads = []
         5.times do
@@ -88,7 +88,7 @@ describe 'fork reconnect' do
           else
             Utils.wrap_forked_child do
               while Time.now < deadline
-                client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+                client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
               end
             end
           end

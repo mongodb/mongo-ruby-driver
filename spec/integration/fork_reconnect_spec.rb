@@ -137,7 +137,7 @@ describe 'fork reconnect' do
         status.exitstatus.should == 0
       else
         Utils.wrap_forked_child do
-          client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+          client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
         end
       end
 

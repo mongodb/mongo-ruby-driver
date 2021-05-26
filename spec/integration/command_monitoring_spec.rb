@@ -14,26 +14,26 @@ describe 'Command monitoring' do
   end
 
   it 'notifies on successful commands' do
-    result = client.database.command(:ismaster => 1)
-    expect(result.documents.first['ismaster']).to be true
+    result = client.database.command(:hello => 1)
+    expect(result.documents.first['isWritablePrimary']).to be true
 
     started_events = subscriber.started_events.select do |event|
-      event.command_name == 'ismaster'
+      event.command_name == 'hello'
     end
     expect(started_events.length).to eql(1)
     started_event = started_events.first
-    expect(started_event.command_name).to eql('ismaster')
+    expect(started_event.command_name).to eql('hello')
     expect(started_event.address).to be_a(Mongo::Address)
     expect(started_event.command).to have_key('$db')
 
     succeeded_events = subscriber.succeeded_events.select do |event|
-      event.command_name == 'ismaster'
+      event.command_name == 'hello'
     end
     expect(succeeded_events.length).to eql(1)
     succeeded_event = succeeded_events.first
-    expect(succeeded_event.command_name).to eql('ismaster')
+    expect(succeeded_event.command_name).to eql('hello')
     expect(succeeded_event.reply).to be_a(BSON::Document)
-    expect(succeeded_event.reply['ismaster']).to eql(true)
+    expect(succeeded_event.reply['isWritablePrimary']).to eql(true)
     expect(succeeded_event.reply['ok']).to eq(1)
     expect(succeeded_event.address).to be_a(Mongo::Address)
     expect(succeeded_event.duration).to be_a(Float)
@@ -55,7 +55,7 @@ describe 'Command monitoring' do
     expect(started_event.address).to be_a(Mongo::Address)
 
     succeeded_events = subscriber.succeeded_events.select do |event|
-      event.command_name == 'ismaster'
+      event.command_name == 'hello'
     end
     expect(succeeded_events.length).to eql(0)
 
