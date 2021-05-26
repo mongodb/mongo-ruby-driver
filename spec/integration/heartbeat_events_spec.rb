@@ -28,7 +28,7 @@ describe 'Heartbeat events' do
       server_selection_timeout: 0.1, connect: :direct)) }
 
   it 'notifies on successful heartbeats' do
-    client.database.command(hello: 1)
+    client.database.command(ping: 1)
 
     started_event = subscriber.started_events.first
     expect(started_event).not_to be nil
@@ -49,7 +49,7 @@ describe 'Heartbeat events' do
     expect_any_instance_of(Mongo::Server::Monitor).to receive(:check).at_least(:once).and_raise(exc)
 
     expect do
-      client.database.command(hello: 1)
+      client.database.command(ping: 1)
     end.to raise_error(Mongo::Error::NoServerAvailable)
 
     started_event = subscriber.started_events.first
@@ -75,7 +75,7 @@ describe 'Heartbeat events' do
 
     shared_examples_for 'does not notify on heartbeats' do
       it 'does not notify on heartbeats' do
-        client.database.command(hello: 1)
+        client.database.command(ping: 1)
 
         started_event = subscriber.started_events.first
         expect(started_event).to be nil

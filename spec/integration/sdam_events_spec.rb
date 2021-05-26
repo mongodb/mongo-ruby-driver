@@ -13,7 +13,7 @@ describe 'SDAM events' do
       client.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
 
       # get the client connected
-      client.database.command(hello: 1)
+      client.database.command(ping: 1)
       expect(subscriber.succeeded_events).to be_empty
 
       client.close
@@ -31,7 +31,7 @@ describe 'SDAM events' do
       client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, subscriber)
 
       # get the client connected
-      client.database.command(hello: 1)
+      client.database.command(ping: 1)
       expect(subscriber.succeeded_events).to be_empty
 
       client.close
