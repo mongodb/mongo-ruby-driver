@@ -18,7 +18,7 @@
 module Mongo
   class Server
 
-    # A monitor utilizing server-pushed ismaster requests.
+    # A monitor utilizing server-pushed hello requests.
     #
     # When a Monitor handshakes with a 4.4+ server, it creates an instance
     # of PushMonitor. PushMonitor subsequently executes server-pushed hello
@@ -96,18 +96,18 @@ module Mongo
           check
         end
         new_description = monitor.run_sdam_flow(result, awaited: true)
-        # When ismaster fails due to a fail point, the response does not
+        # When hello fails due to a fail point, the response does not
         # include topology version. In this case we need to keep our existing
         # topology version so that we can resume monitoring.
         # The spec does not appear to directly address this case but
         # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.rst#streaming-ismaster
         # says that topologyVersion should only be updated from successful
-        # ismaster responses.
+        # hello responses.
         if new_description.topology_version
           @topology_version = new_description.topology_version
         end
       rescue Mongo::Error => exc
-        msg = "Error running awaited ismaster on #{server.address}"
+        msg = "Error running awaited hello on #{server.address}"
         Utils.warn_bg_exception(msg, exc,
           logger: options[:logger],
           log_prefix: options[:log_prefix],
@@ -177,7 +177,7 @@ module Mongo
         end
         # We set the timeout twice: once passed into read_socket which applies
         # to each individual read operation, and again around the entire read.
-        Timeout.timeout(timeout, Error::SocketTimeoutError, "Failed to read an awaited ismaster response in #{timeout} seconds") do
+        Timeout.timeout(timeout, Error::SocketTimeoutError, "Failed to read an awaited hello response in #{timeout} seconds") do
           @lock.synchronize { @connection }.read_response(socket_timeout: timeout)
         end
       end
