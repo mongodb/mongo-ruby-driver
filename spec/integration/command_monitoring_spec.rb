@@ -48,7 +48,7 @@ describe 'Command monitoring' do
     min_server_fcv '3.6'
 
     it 'notifies on successful commands' do
-      result = client.database.command(hello => 1)
+      result = client.database.command(hello: 1)
       expect(result.documents.first['isWritablePrimary']).to be true
 
       started_events = subscriber.started_events.select do |event|
