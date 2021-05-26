@@ -36,7 +36,7 @@ describe 'Direct connection with RS name' do
 
       it 'creates a working client' do
         expect do
-          res = client.database.command(hello: 1)
+          res = client.database.command(ping: 1)
           p res
         end.not_to raise_error
       end
@@ -50,7 +50,7 @@ describe 'Direct connection with RS name' do
       it 'creates a client which does not find a suitable server' do
         # TODO When RUBY-2197 is implemented, assert the error message also
         expect do
-          client.database.command(hello: 1)
+          client.database.command(ping: 1)
         end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
@@ -67,7 +67,7 @@ describe 'Direct connection with RS name' do
       it 'creates a client which raises on every operation' do
         # TODO When RUBY-2197 is implemented, assert the error message also
         expect do
-          client.database.command(hello: 1)
+          client.database.command(ping: 1)
         end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end

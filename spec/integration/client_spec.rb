@@ -12,7 +12,7 @@ describe 'Client' do
     end
 
     it 'is still usable for operations' do
-      resp = client.database.command(hello: 1)
+      resp = client.database.command(ping: 1)
       expect(resp).to be_a(Mongo::Operation::Result)
     end
 
@@ -30,7 +30,7 @@ describe 'Client' do
       context 'operation that never uses sessions' do
         it 'fails server selection' do
           expect do
-            client.database.command(hello: 1)
+            client.database.command(ping: 1)
           end.to raise_error(Mongo::Error::NoServerAvailable)
         end
       end
