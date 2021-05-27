@@ -6,7 +6,7 @@ require 'spec_helper'
 describe Mongo::Operation::Command do
   require_no_required_api_version
 
-  let(:selector) { { :hello => 1 } }
+  let(:selector) { { :ping => 1 } }
   let(:options) { { :limit => -1 } }
   let(:spec) do
     { :selector => selector,
