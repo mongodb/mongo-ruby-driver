@@ -41,7 +41,7 @@ To execute any command on the database, use the ``command`` method.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music')
   database = client.database
 
-  result = database.command(:ismaster => 1)
+  result = database.command(:ping => 1)
   result.first # Returns the BSON::Document returned from the server.
 
 .. note::
