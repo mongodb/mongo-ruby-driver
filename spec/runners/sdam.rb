@@ -123,8 +123,8 @@ module Mongo
       # @return [ String ] address The server address.
       attr_reader :address
 
-      # @return [ Hash ] ismaster The ismaster response.
-      attr_reader :ismaster
+      # @return [ Hash ] hello The hello response.
+      attr_reader :hello
 
       # Create the new response.
       #
@@ -138,7 +138,7 @@ module Mongo
       def initialize(response, uri)
         @uri = uri
         @address = response[0]
-        @ismaster = BSON::ExtJSON.parse_obj(response[1])
+        @hello = BSON::ExtJSON.parse_obj(response[1])
       end
     end
 

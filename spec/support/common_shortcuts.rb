@@ -201,7 +201,7 @@ module CommonShortcuts
         config = {}
       else
         config = {
-          'ismaster' => mode == :primary,
+          'isWritablePrimary' => mode == :primary,
           'secondary' => mode == :secondary,
           'arbiterOnly' => mode == :arbiter,
           'isreplicaset' => mode == :ghost,

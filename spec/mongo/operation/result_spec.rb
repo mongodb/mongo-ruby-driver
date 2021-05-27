@@ -148,7 +148,7 @@ describe Mongo::Operation::Result do
     context 'when the reply is for a read command' do
 
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [{ 'hello' => true, 'ok' => 1.0 }]
       end
 
       it 'returns the number returned' do

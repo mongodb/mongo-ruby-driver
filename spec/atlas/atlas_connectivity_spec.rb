@@ -14,7 +14,7 @@ describe 'Atlas connectivity' do
   end
 
   describe 'connection to Atlas' do
-    it 'runs ismaster successfully' do
+    it 'runs hello successfully' do
       result = client.database.command(:hello => 1)
       expect(result.documents.first['isWritablePrimary']).to be true
     end
