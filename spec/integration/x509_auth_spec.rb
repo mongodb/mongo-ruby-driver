@@ -62,7 +62,7 @@ describe 'X.509 auth integration tests' do
       context 'server 4.4 and higher' do
         min_server_fcv '4.4'
 
-        it 'uses speculative authentication in ismaster to authenticate' do
+        it 'uses speculative authentication in hello to authenticate' do
           commands.should == %w(connectionStatus)
         end
       end

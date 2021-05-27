@@ -13,7 +13,7 @@ describe 'SDAM events' do
       client.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
 
       # get the client connected
-      client.database.command(ismaster: 1)
+      client.database.command(ping: 1)
       expect(subscriber.succeeded_events).to be_empty
 
       client.close
@@ -31,7 +31,7 @@ describe 'SDAM events' do
       client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, subscriber)
 
       # get the client connected
-      client.database.command(ismaster: 1)
+      client.database.command(ping: 1)
       expect(subscriber.succeeded_events).to be_empty
 
       client.close
@@ -94,7 +94,7 @@ describe 'SDAM events' do
 
         events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
         # We could have up to 16 events and should have no fewer than 8 events.
-        # Whenever an awaited ismaster succeeds while the regular monitor is
+        # Whenever an awaited hello succeeds while the regular monitor is
         # waiting, the regular monitor's next scan is pushed forward.
         events.length.should >= 6
         events.length.should <= 18
@@ -107,7 +107,7 @@ describe 'SDAM events' do
         (succeeded_awaited = events.select(&:awaited?)).should_not be_empty
         (succeeded_regular = events.reject(&:awaited?)).should_not be_empty
 
-        # There may be in-flight ismasters that don't complete, both
+        # There may be in-flight hellos that don't complete, both
         # regular and awaited.
         started_awaited.length.should > 1
         (succeeded_awaited.length..succeeded_awaited.length+1).should include(started_awaited.length)

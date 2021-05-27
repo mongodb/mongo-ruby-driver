@@ -249,7 +249,7 @@ module Mongo
     #   attempt a connection.
     # @option options [ String ] :database The database to connect to.
     # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
-    #   for the server monitor to refresh its description via ismaster.
+    #   for the server monitor to refresh its description via hello.
     # @option options [ Object ] :id_generator A custom object to generate ids
     #   for documents. Must respond to #generate.
     # @option options [ true | false ] :load_balanced Whether to expect to

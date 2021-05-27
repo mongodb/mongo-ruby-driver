@@ -73,7 +73,7 @@ describe 'Client-Side Encryption' do
           client['coll'].insert_one(encrypted: 'test')
         end.should_not raise_error
         lambda do
-          mongocryptd_client.database.command(ismaster: 1)
+          mongocryptd_client.database.command(hello: 1)
         end.should raise_error(Mongo::Error::NoServerAvailable)
       end
     end

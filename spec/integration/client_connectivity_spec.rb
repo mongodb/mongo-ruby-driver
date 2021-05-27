@@ -23,7 +23,7 @@ describe 'Client connectivity' do
     it_behaves_like 'is correctly configured'
 
     it 'connects and is usable' do
-      resp = client.database.command(ismaster: 1)
+      resp = client.database.command(ping: 1)
       expect(resp).to be_a(Mongo::Operation::Result)
     end
   end
