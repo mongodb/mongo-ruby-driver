@@ -18,7 +18,7 @@
 module Mongo
   class Server
 
-    # Responsible for periodically polling a server via ismaster commands to
+    # Responsible for periodically polling a server via hello commands to
     # keep the server's status up to date.
     #
     # Does all work in a background thread so as to not interfere with other
@@ -184,7 +184,7 @@ module Mongo
       #
       # If the server was checked less than MIN_SCAN_INTERVAL seconds
       # ago, sleep until MIN_SCAN_INTERVAL seconds have passed since the last
-      # check. Then perform the check which involves running isMaster
+      # check. Then perform the check which involves running hello
       # on the server being monitored and updating the server description
       # as a result.
       #

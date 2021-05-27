@@ -185,7 +185,7 @@ module Mongo
       # Separate method to permit easier mocking in the test suite.
       #
       # @return [ Array<Socket, Server::Description> ] Connected socket and
-      #   a server description instance from the ismaster response of the
+      #   a server description instance from the hello response of the
       #   returned socket.
       private def do_connect
         socket = add_server_diagnostics do

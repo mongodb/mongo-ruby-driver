@@ -55,7 +55,7 @@ module Mongo
         # @param [ Server::Description ] previous_description The previous description.
         # @param [ Server::Description ] new_description The new description.
         # @param [ true | false ] awaited Whether the server description was
-        #   a result of processing an awaited ismaster response.
+        #   a result of processing an awaited hello response.
         #
         # @since 2.4.0
         # @api private

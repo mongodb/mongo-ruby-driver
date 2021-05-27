@@ -43,7 +43,7 @@ module Mongo
       # Creates a new OP_MSG protocol message
       #
       # @example Create a OP_MSG wire protocol message
-      #   Msg.new([:more_to_come], {}, { ismaster: 1 },
+      #   Msg.new([:more_to_come], {}, { hello: 1 },
       #           { type: 1, payload: { identifier: 'documents', sequence: [..] } })
       #
       # @param [ Array<Symbol> ] flags The flag bits. Currently supported

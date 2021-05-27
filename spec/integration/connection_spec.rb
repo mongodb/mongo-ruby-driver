@@ -246,12 +246,12 @@ describe 'Connections' do
 
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
-      it 'updates on ismaster response from non-monitoring connections' do
+      it 'updates on hello response from non-monitoring connections' do
         # connect server
         client['test'].insert_one(test: 1)
 
         # kill background threads so that they are not interfering with
-        # our mocked ismaster response
+        # our mocked hello response
         client.cluster.servers.each do |server|
           server.monitor.stop!
         end
@@ -260,17 +260,17 @@ describe 'Connections' do
         expect(server.features.server_wire_versions.max >= 4).to be true
         max_version = server.features.server_wire_versions.max
 
-        # Depending on server version, ismaster here may return a
+        # Depending on server version, hello here may return a
         # description that compares equal to the one we got from a
         # monitoring connection (pre-4.2) or not (4.2+).
-        # Since we do run SDAM flow on ismaster responses on
+        # Since we do run SDAM flow on hello responses on
         # non-monitoring connections, force descriptions to be different
         # by setting the existing description here to unknown.
         server.monitor.instance_variable_set('@description',
           Mongo::Server::Description.new(server.address))
 
         RSpec::Mocks.with_temporary_scope do
-          # now pretend an ismaster returned a different range
+          # now pretend an hello returned a different range
           features = Mongo::Server::Description::Features.new(0..3)
           # One Features instantiation is for SDAM event publication, this
           # one always happens. The second one happens on servers
@@ -280,14 +280,14 @@ describe 'Connections' do
           connection = Mongo::Server::Connection.new(server, server.options)
           expect(connection.connect!).to be true
 
-          # ismaster response should update server description via sdam flow,
+          # hello response should update server description via sdam flow,
           # which includes wire version range
           expect(server.features.server_wire_versions.max).to eq(3)
         end
       end
     end
 
-    describe 'SDAM flow triggered by ismaster on non-monitoring thread' do
+    describe 'SDAM flow triggered by hello on non-monitoring thread' do
       # replica sets can transition between having and not having a primary
       require_topology :replica_set
 
