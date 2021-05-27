@@ -6,7 +6,7 @@ require 'spec_helper'
 describe Mongo::Operation::Command do
   require_no_required_api_version
 
-  let(:selector) { { :ismaster => 1 } }
+  let(:selector) { { :hello => 1 } }
   let(:options) { { :limit => -1 } }
   let(:spec) do
     { :selector => selector,
@@ -73,7 +73,7 @@ describe Mongo::Operation::Command do
     context 'when a document exceeds max bson size' do
 
       let(:selector) do
-        { :ismaster => '1'*17000000 }
+        { :hello => '1'*17000000 }
       end
 
       it 'raises an error' do

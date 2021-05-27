@@ -40,6 +40,8 @@ describe 'SDAM prose tests' do
         configureFailPoint: 'failCommand',
         mode: {times: 1000},
         data: {
+          # TODO: Replace with hello (or add test for hello) when hello heartbeat is implemented
+          # when server responds with helloOk attribute.
           failCommands: ["isMaster"],
           blockConnection: true,
           blockTimeMS: 500,
