@@ -58,7 +58,7 @@ module Mongo
         # @return [ true ] A standalone always has a writable server.
         def has_writable_server?(cluster); true; end
 
-        # A single topology is not a replica set.
+        # Returns whether this topology is one of the replica set ones.
         #
         # @return [ false ] Always false.
         def replica_set?; false; end
@@ -72,17 +72,17 @@ module Mongo
           servers
         end
 
-        # A single topology is not sharded.
+        # Returns whether this topology is sharded.
         #
         # @return [ false ] Always false.
         def sharded?; false; end
 
-        # A single topology is single.
+        # Returns whether this topology is Single.
         #
-        # @return [ true ] Always true.
+        # @return [ true ] Always false.
         def single?; false; end
 
-        # An single topology is not unknown.
+        # Returns whether this topology is Unknown.
         #
         # @return [ false ] Always false.
         def unknown?; false; end
