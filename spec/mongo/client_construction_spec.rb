@@ -98,7 +98,7 @@ describe Mongo::Client do
           expect(time_taken).to be < 5
 
           # run a command to ensure the client is a working one
-          client.database.command(ismaster: 1)
+          client.database.command(ping: 1)
         end
       end
     end

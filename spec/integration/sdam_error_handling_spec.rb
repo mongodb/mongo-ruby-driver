@@ -400,6 +400,8 @@ describe 'SDAM error handling' do
           configureFailPoint: 'failCommand',
           mode: {times: 2},
           data: {
+            # TODO: Replace with hello (or add test for hello) when hello heartbeat is implemented
+            # when server responds with helloOk attribute.
             failCommands: %w(isMaster),
             closeConnection: true,
           },

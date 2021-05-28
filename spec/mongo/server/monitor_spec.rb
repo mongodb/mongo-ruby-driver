@@ -59,7 +59,7 @@ describe Mongo::Server::Monitor do
       end
     end
 
-    context 'when the ismaster fails the first time' do
+    context 'when the hello fails the first time' do
 
       let(:monitor_options) do
         {monitoring_io: false}
@@ -72,7 +72,7 @@ describe Mongo::Server::Monitor do
       end
     end
 
-    context 'when the ismaster command succeeds' do
+    context 'when the hello command succeeds' do
 
       it 'invokes sdam flow' do
         server.unknown!
@@ -88,7 +88,7 @@ describe Mongo::Server::Monitor do
       end
     end
 
-    context 'when the ismaster command fails' do
+    context 'when the hello command fails' do
 
       context 'when no server is running on the address' do
 

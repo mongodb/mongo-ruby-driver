@@ -96,7 +96,7 @@ describe Mongo::Server::Description do
   end
 
   context 'primary' do
-    let(:desc_options) { {'ismaster' => true,
+    let(:desc_options) { {'isWritablePrimary' => true,
       'minWireVersion' => 2, 'maxWireVersion' => 8,
       'setName' => 'foo', 'ok' => ok} }
 

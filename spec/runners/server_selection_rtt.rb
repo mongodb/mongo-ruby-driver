@@ -16,7 +16,7 @@ module Mongo
         # @return [ Float ] average_rtt The starting average round trip time, in seconds.
         attr_reader :average_rtt
 
-        # @return [ Float ] new_rtt The new round trip time for ismaster, in seconds.
+        # @return [ Float ] new_rtt The new round trip time for hello, in seconds.
         attr_reader :new_rtt
 
         # @return [ Float ] new_average_rtt The newly calculated moving average round trip time, in seconds.

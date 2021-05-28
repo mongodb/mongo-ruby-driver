@@ -198,10 +198,10 @@ module CommonShortcuts
       end
 
       if mode == :unknown
-        ismaster = {}
+        config = {}
       else
-        ismaster = {
-          'ismaster' => mode == :primary,
+        config = {
+          'isWritablePrimary' => mode == :primary,
           'secondary' => mode == :secondary,
           'arbiterOnly' => mode == :arbiter,
           'isreplicaset' => mode == :ghost,
@@ -212,7 +212,7 @@ module CommonShortcuts
           'minWireVersion' => 2, 'maxWireVersion' => 8,
         }
         if [:primary, :secondary, :arbiter, :other].include?(mode)
-          ismaster['setName'] = 'mongodb_set'
+          config['setName'] = 'mongodb_set'
         end
       end
 
@@ -233,7 +233,11 @@ module CommonShortcuts
       # Since the server references a double for the cluster, the server
       # must be closed in the scope of the example.
       register_server(server)
-      description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
+      description = Mongo::Server::Description.new(
+        address,
+        config,
+        average_round_trip_time,
+      )
       server.tap do |s|
         allow(s).to receive(:description).and_return(description)
       end
