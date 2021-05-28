@@ -39,7 +39,7 @@ module Unified
       end.map do |spec|
         spec['client']['useMultipleMongoses']
       end.compact.uniq
-      @multiple_mongoses = mongoses.any?(true)
+      @multiple_mongoses = mongoses.any? { |v| v }
       @test_spec.freeze
       @subscribers = {}
       @options = opts
