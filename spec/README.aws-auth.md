@@ -299,13 +299,13 @@ If the public IP address is in the `IP` shell variable, provision the task:
 
 To run the credentials retrieval test on the ECS task, execute:
 
-    ./.evergreen/test-remote root@$IP env AUTH=aws-ecs RVM_RUBY=ruby-2.7 MONGODB_VERSION=4.4 TEST_CMD='rspec spec/integration/aws*spec.rb' .evergreen/run-tests.sh
+    ./.evergreen/test-remote root@$IP env AUTH=aws-ecs RVM_RUBY=ruby-3.0 MONGODB_VERSION=4.4 TEST_CMD='rspec spec/integration/aws*spec.rb' .evergreen/run-tests.sh
 
 To run the test again without rebuilding the remote environment, execute:
 
     ./.evergreen/test-remote -e root@$IP \
-      env AUTH=aws-ecs RVM_RUBY=ruby-2.7 sh -c '\
-        export PATH=`pwd`/rubies/ruby-2.7/bin:$PATH && \
+      env AUTH=aws-ecs RVM_RUBY=ruby-3.0 sh -c '\
+        export PATH=`pwd`/rubies/ruby-3.0/bin:$PATH && \
         eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` && \
         bundle exec rspec spec/integration/aws*spec.rb'
 

@@ -213,6 +213,7 @@ for that Ruby version is deprecated.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - Ruby 3.0
      - Ruby 2.7
      - Ruby 2.6
      - Ruby 2.5

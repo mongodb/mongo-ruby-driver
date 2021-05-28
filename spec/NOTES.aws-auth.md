@@ -66,7 +66,7 @@ similar to the following:
     opened
     starting SSL for sts.amazonaws.com:443...
     SSL established, protocol: TLSv1.2, cipher: ECDHE-RSA-AES128-SHA
-    <- "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded; charset=utf-8\r\nAccept-Encoding: \r\nUser-Agent: aws-sdk-ruby3/3.91.1 ruby/2.7.0 x86_64-linux aws-sdk-core/3.91.1\r\nHost: sts.amazonaws.com\r\nX-Amz-Date: 20200317T194745Z\r\nX-Amz-Content-Sha256: ab821ae955788b0e33ebd34c208442ccfc2d406e2edc5e7a39bd6458fbb4f843\r\nAuthorization: AWS4-HMAC-SHA256 Credential=AKIAREALKEY/20200317/us-east-1/sts/aws4_request, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=6cd3a60a2d7dfba0dcd17f9c4c42d0186de5830cf99545332253a327bba14131\r\nContent-Length: 43\r\nAccept: */*\r\n\r\n"
+    <- "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded; charset=utf-8\r\nAccept-Encoding: \r\nUser-Agent: aws-sdk-ruby3/3.91.1 ruby/3.0.1 x86_64-linux aws-sdk-core/3.91.1\r\nHost: sts.amazonaws.com\r\nX-Amz-Date: 20200317T194745Z\r\nX-Amz-Content-Sha256: ab821ae955788b0e33ebd34c208442ccfc2d406e2edc5e7a39bd6458fbb4f843\r\nAuthorization: AWS4-HMAC-SHA256 Credential=AKIAREALKEY/20200317/us-east-1/sts/aws4_request, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=6cd3a60a2d7dfba0dcd17f9c4c42d0186de5830cf99545332253a327bba14131\r\nContent-Length: 43\r\nAccept: */*\r\n\r\n"
     -> "HTTP/1.1 200 OK\r\n"
     -> "x-amzn-RequestId: c56f5d68-8763-4032-a835-fd95efd83fa6\r\n"
     -> "Content-Type: text/xml\r\n"
@@ -112,7 +112,7 @@ tool in combination with the [printf](https://linux.die.net/man/3/printf)
 utility to transform the newline escapes. A sample command replaying the
 request printed above is as follows:
 
-    (printf "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded; charset=utf-8\r\nAccept-Encoding: \r\nUser-Agent: aws-sdk-ruby3/3.91.1 ruby/2.7.0 x86_64-linux aws-sdk-core/3.91.1\r\nHost: sts.amazonaws.com\r\nX-Amz-Date: 20200317T194745Z\r\nX-Amz-Content-Sha256: ab821ae955788b0e33ebd34c208442ccfc2d406e2edc5e7a39bd6458fbb4f843\r\nAuthorization: AWS4-HMAC-SHA256 Credential=AKIAREALKEY/20200317/us-east-1/sts/aws4_request, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=6cd3a60a2d7dfba0dcd17f9c4c42d0186de5830cf99545332253a327bba14131\r\nContent-Length: 43\r\nAccept: */*\r\n\r\n" &&
+    (printf "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded; charset=utf-8\r\nAccept-Encoding: \r\nUser-Agent: aws-sdk-ruby3/3.91.1 ruby/3.0.1 x86_64-linux aws-sdk-core/3.91.1\r\nHost: sts.amazonaws.com\r\nX-Amz-Date: 20200317T194745Z\r\nX-Amz-Content-Sha256: ab821ae955788b0e33ebd34c208442ccfc2d406e2edc5e7a39bd6458fbb4f843\r\nAuthorization: AWS4-HMAC-SHA256 Credential=AKIAREALKEY/20200317/us-east-1/sts/aws4_request, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=6cd3a60a2d7dfba0dcd17f9c4c42d0186de5830cf99545332253a327bba14131\r\nContent-Length: 43\r\nAccept: */*\r\n\r\n" &&
       echo "Action=GetCallerIdentity&Version=2011-06-15" &&
       sleep 5) |openssl s_client -connect sts.amazonaws.com:443
 
