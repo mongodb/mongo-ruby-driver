@@ -30,7 +30,7 @@ module Mongo
       include Monitoring::Publishable
 
       # The maximum allowed size in bytes that a user-supplied document may
-      # take up when serialized, if the server's ismaster response does not
+      # take up when serialized, if the server's hello response does not
       # include maxBsonObjectSize field.
       #
       # The commands that are sent to the server may exceed this size by
@@ -66,7 +66,7 @@ module Mongo
                      :update_cluster_time
 
       # Returns the server description for this connection, derived from
-      # the isMaster response for the handshake performed on this connection.
+      # the hello response for the handshake performed on this connection.
       #
       # @note A connection object that hasn't yet connected (handshaken and
       #   authenticated, if authentication is required) does not have a
@@ -197,10 +197,10 @@ module Mongo
       def serialize(message, context, buffer = BSON::ByteBuffer.new)
         # Driver specifications only mandate the fixed 16MiB limit for
         # serialized BSON documents. However, the server returns its
-        # active serialized BSON document size limit in the ismaster response,
+        # active serialized BSON document size limit in the hello response,
         # which is +max_bson_object_size+ below. The +DEFAULT_MAX_BSON_OBJECT_SIZE+
         # is the 16MiB value mandated by the specifications which we use
-        # only as the default if the server's ismaster did not contain
+        # only as the default if the server's hello did not contain
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
         if context.encrypt?

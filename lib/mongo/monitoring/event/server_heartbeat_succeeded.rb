@@ -30,7 +30,7 @@ module Mongo
         #   ServerHeartbeatSucceeded.new(address, duration)
         #
         # @param [ Address ] address The server address.
-        # @param [ Float ] round_trip_time Duration of ismaster call in seconds.
+        # @param [ Float ] round_trip_time Duration of hello call in seconds.
         # @param [ true | false ] awaited Whether the heartbeat was awaited.
         # @param [ Monitoring::Event::ServerHeartbeatStarted ] started_event
         #   The corresponding started event.
@@ -49,7 +49,7 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
-        # @return [ Float ] round_trip_time Duration of ismaster call in seconds.
+        # @return [ Float ] round_trip_time Duration of hello call in seconds.
         attr_reader :round_trip_time
 
         # Alias of round_trip_time.

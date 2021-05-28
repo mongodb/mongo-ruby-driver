@@ -318,12 +318,12 @@ module Mongo
       # The duration we publish in heartbeat succeeded/failed events is
       # the time spent on the entire heartbeat. This could include time
       # to connect the socket (including TLS handshake), not just time
-      # spent on ismaster call itself.
+      # spent on hello call itself.
       # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
       # requires that the duration exposed here start from "sending the
-      # message" (ismaster). This requirement does not make sense if,
+      # message" (hello). This requirement does not make sense if,
       # for example, we were never able to connect to the server at all
-      # and thus ismaster was never sent.
+      # and thus hello was never sent.
       start_time = Utils.monotonic_time
 
       begin

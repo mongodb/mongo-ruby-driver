@@ -188,7 +188,7 @@ module Mongo
     # Execute a command on the database.
     #
     # @example Execute a command.
-    #   database.command(:ismaster => 1)
+    #   database.command(:hello => 1)
     #
     # @param [ Hash ] operation The command to execute.
     # @param [ Hash ] opts The command options.

@@ -71,7 +71,7 @@ module Mongo
       # @param [ Server::Connection ] connection The connection.
       # @param [ Auth::*::Conversation ] conversation The conversation.
       # @param [ BSON::Document | nil ] speculative_auth_result The
-      #   value of speculativeAuthenticate field of ismaster response of
+      #   value of speculativeAuthenticate field of hello response of
       #   the handshake on the specified connection.
       def converse_multi_step(connection, conversation,
         speculative_auth_result: nil
