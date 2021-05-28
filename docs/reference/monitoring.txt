@@ -91,8 +91,8 @@ Sample output:
 
 .. code-block:: none
 
-  D, [2018-09-23T13:47:31.258020 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.ismaster | STARTED | {"ismaster"=>1, "$readPreference"=>{"mode"=>"primary"}, "lsid"=>{"id"=><BSON::Binary:0x47111693353080 type=uuid data=0x730341e880dc40a2...>}}
-  D, [2018-09-23T13:47:31.259145 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.ismaster | SUCCEEDED | 0.000791175s
+  D, [2018-09-23T13:47:31.258020 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.hello | STARTED | {"hello"=>1, "$readPreference"=>{"mode"=>"primary"}, "lsid"=>{"id"=><BSON::Binary:0x47111693353080 type=uuid data=0x730341e880dc40a2...>}}
+  D, [2018-09-23T13:47:31.259145 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.hello | SUCCEEDED | 0.000791175s
 
 
 .. _sdam:
@@ -293,10 +293,10 @@ method depending on the outcome of the heartbeat.
 
 All heartbeat events contain the address of the server that the heartbeat
 was sent to. Succeeded and failed events contain the round trip time for
-the ismaster command. Failed event also contains the exception instance that
-was raised during ismaster command execution. Please review the API
-documentation for ServerHeartbeatStarted, ServerHeartbeatSucceeded and
-ServerHeartbeatFailed for event attribute details.
+the hello or legacy hello command. Failed event also contains the exception
+instance that was raised during hello or legacy hello command execution.
+Please review the API documentation for ServerHeartbeatStarted,
+ServerHeartbeatSucceeded and ServerHeartbeatFailed for event attribute details.
 
 The following is an example logging heartbeat event subscriber:
 

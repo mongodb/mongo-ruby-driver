@@ -55,13 +55,7 @@ describe Mongo::Server::Connection, retry: 3 do
       described_class.new(server, server.options)
     end
 
-    let(:reply) do
-      double('reply').tap do |r|
-        allow(r).to receive(:documents).and_return([ ismaster ])
-      end
-    end
-
-    context 'when the ismaster response includes saslSupportedMechs' do
+    context 'when the hello response includes saslSupportedMechs' do
       min_server_fcv '4.0'
 
       let(:server_options) do
@@ -97,7 +91,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when the ismaster response indicates the auth mechanism is :scram' do
+    context 'when the hello response indicates the auth mechanism is :scram' do
       require_no_external_user
 
       let(:features) do
@@ -119,7 +113,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when the ismaster response indicates the auth mechanism is :mongodb_cr' do
+    context 'when the hello response indicates the auth mechanism is :mongodb_cr' do
       let(:features) do
         Mongo::Server::Description::Features.new(0..2)
       end

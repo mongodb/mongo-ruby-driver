@@ -76,12 +76,12 @@ describe Mongo::Cluster::Topology::Single do
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8,
         'setName' => 'testing' })
     end

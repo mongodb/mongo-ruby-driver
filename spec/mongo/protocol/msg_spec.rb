@@ -103,7 +103,7 @@ describe Mongo::Protocol::Msg do
       context 'when the main_document are not equal' do
 
         let(:other_main_document) do
-          { '$db'=> SpecConfig.instance.test_db, ismaster: 1 }
+          { '$db'=> SpecConfig.instance.test_db, hello: 1 }
         end
 
         let(:other) do

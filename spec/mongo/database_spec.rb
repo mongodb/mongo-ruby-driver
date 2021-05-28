@@ -656,18 +656,18 @@ describe Mongo::Database do
     end
 
     it 'sends the query command to the cluster' do
-      expect(database.command(:ismaster => 1).written_count).to eq(0)
+      expect(database.command(:ping => 1).written_count).to eq(0)
     end
 
     it 'does not mutate the command selector' do
-      expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
+      expect(database.command({:ping => 1}.freeze).written_count).to eq(0)
     end
 
     context 'when provided a session' do
       min_server_fcv '3.6'
 
       let(:operation) do
-        client.database.command({ :ismaster => 1 }, session: session)
+        client.database.command({ :ping => 1 }, session: session)
       end
 
       let(:failed_operation) do
@@ -691,7 +691,7 @@ describe Mongo::Database do
 
 
       let(:full_command) do
-        subscriber.started_events.find { |cmd| cmd.command_name == 'ismaster' }.command
+        subscriber.started_events.find { |cmd| cmd.command_name == 'ping' }.command
       end
 
       it 'does not add a afterClusterTime field' do
@@ -709,7 +709,7 @@ describe Mongo::Database do
 
         it 'sends the read concern' do
           expect {
-            database.command(:ismaster => 1, readConcern: { level: 'local' })
+            database.command(:ping => 1, readConcern: { level: 'local' })
           }.to_not raise_error
         end
       end
@@ -719,7 +719,7 @@ describe Mongo::Database do
 
         it 'raises an exception' do
           expect {
-            database.command(:ismaster => 1, readConcern: { level: 'yay' })
+            database.command(:ping => 1, readConcern: { level: 'yay' })
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
