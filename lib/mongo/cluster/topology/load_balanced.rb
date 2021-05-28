@@ -27,9 +27,6 @@ module Mongo
 
         # Get the display name.
         #
-        # @example Get the display name.
-        #   Single.display_name
-        #
         # @return [ String ] The display name.
         def display_name
           self.class.name.gsub(/.*::/, '')
@@ -46,9 +43,6 @@ module Mongo
         # Determine if the topology would select a readable server for the
         # provided candidates and read preference.
         #
-        # @example Is a readable server present?
-        #   topology.has_readable_server?(cluster, server_selector)
-        #
         # @param [ Cluster ] cluster The cluster.
         # @param [ ServerSelector ] server_selector The server
         #   selector.
@@ -59,9 +53,6 @@ module Mongo
         # Determine if the topology would select a writable server for the
         # provided candidates.
         #
-        # @example Is a writable server present?
-        #   topology.has_writable_server?(servers)
-        #
         # @param [ Cluster ] cluster The cluster.
         #
         # @return [ true ] A standalone always has a writable server.
@@ -69,16 +60,10 @@ module Mongo
 
         # A single topology is not a replica set.
         #
-        # @example Is the topology a replica set?
-        #   Single.replica_set?
-        #
         # @return [ false ] Always false.
         def replica_set?; false; end
 
         # Select appropriate servers for this topology.
-        #
-        # @example Select the servers.
-        #   Single.servers(servers, 'test')
         #
         # @param [ Array<Server> ] servers The known servers.
         #
@@ -89,24 +74,15 @@ module Mongo
 
         # A single topology is not sharded.
         #
-        # @example Is the topology sharded?
-        #   Single.sharded?
-        #
         # @return [ false ] Always false.
         def sharded?; false; end
 
         # A single topology is single.
         #
-        # @example Is the topology single?
-        #   Single.single?
-        #
         # @return [ true ] Always true.
         def single?; false; end
 
         # An single topology is not unknown.
-        #
-        # @example Is the topology unknown?
-        #   Single.unknown?
         #
         # @return [ false ] Always false.
         def unknown?; false; end
