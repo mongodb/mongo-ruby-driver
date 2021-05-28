@@ -782,8 +782,11 @@ module Mongo
     def add(host, add_options=nil)
       address = Address.new(host, options)
       if !addresses.include?(address)
-        server = Server.new(address, self, @monitoring, event_listeners, options.merge(
-          monitor: false))
+        opts = options.merge(monitor: false)
+        if Topology::LoadBalanced === topology
+          opts[:load_balancer] = true
+        end
+        server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
           # the previous check was not under a lock.

@@ -345,7 +345,7 @@ describe Mongo::Server::Description do
       describe '#average_round_trip_time' do
 
         let(:description) do
-          described_class.new(address, { 'secondary' => false }, 4.5)
+          described_class.new(address, { 'secondary' => false }, average_round_trip_time: 4.5)
         end
 
         it 'defaults to nil' do
