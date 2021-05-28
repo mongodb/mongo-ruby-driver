@@ -201,7 +201,8 @@ module Mongo
                                ].freeze
 
       # Instantiate the new server description from the result of the hello
-      # command.
+      # command or fabricate a placeholder description for Unknown and
+      # LoadBalancer servers.
       #
       # @example Instantiate the new description.
       #   Description.new(address, { 'isWritablePrimary' => true }, 0.5)
@@ -209,12 +210,19 @@ module Mongo
       # @param [ Address ] address The server address.
       # @param [ Hash ] config The result of the hello command.
       # @param [ Float ] average_round_trip_time The moving average time (sec) the hello
-      #   call took to complete.
+      #   command took to complete.
+      # @param [ Float ] average_round_trip_time The moving average time (sec)
+      #   the ismaster call took to complete.
+      # @param [ true | false ] load_balancer Whether the server is a load
+      #   balancer.
       #
-      # @since 2.0.0
-      def initialize(address, config = {}, average_round_trip_time = nil)
+      # @api private
+      def initialize(address, config = {}, average_round_trip_time: nil,
+        load_balancer: false
+      )
         @address = address
         @config = config
+        @load_balancer = !!load_balancer
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
         @last_update_time = Time.now.dup.freeze
@@ -236,6 +244,13 @@ module Mongo
 
       # @return [ Hash ] The actual result from the hello command.
       attr_reader :config
+
+      # Returns whether this server is a load balancer.
+      #
+      # @return [ true | false ] Whether this server is a load balancer.
+      def load_balancer?
+        @load_balancer
+      end
 
       # @return [ Features ] features The features for the server.
       def features

@@ -233,7 +233,10 @@ module CommonShortcuts
       # Since the server references a double for the cluster, the server
       # must be closed in the scope of the example.
       register_server(server)
-      description = Mongo::Server::Description.new(address, config, average_round_trip_time)
+      description = Mongo::Server::Description.new(
+        address, config,
+        average_round_trip_time: average_round_trip_time,
+      )
       server.tap do |s|
         allow(s).to receive(:description).and_return(description)
       end

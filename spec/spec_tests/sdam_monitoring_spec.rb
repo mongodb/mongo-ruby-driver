@@ -68,7 +68,7 @@ describe 'SDAM Monitoring' do
               result['minWireVersion'] ||= 0
               result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
-                server.description.address, result, 0.5)
+                server.description.address, result, average_round_trip_time: 0.5)
               @client.cluster.run_sdam_flow(server.description, new_description)
             end
             @subscriber.phase_finished(phase_index)
