@@ -245,6 +245,9 @@ module Mongo
       # @return [ Hash ] The actual result from the hello command.
       attr_reader :config
 
+      # Returns whether this server is a load balancer.
+      #
+      # @return [ true | false ] Whether this server is a load balancer.
       def load_balancer?
         @load_balancer
       end
