@@ -155,7 +155,7 @@ module Mongo
       #   for speculative auth, if speculative auth succeeded. If speculative
       #   auth was not performed or it failed, this must be nil.
       # @param [ BSON::Document | nil ] speculative_auth_result The
-      #   value of speculativeAuthenticate field of ismaster response of
+      #   value of speculativeAuthenticate field of hello response of
       #   the handshake on this connection.
       def authenticate!(
         speculative_auth_client_nonce: nil,
@@ -192,12 +192,12 @@ module Mongo
       # This is a separate method to keep the nesting level down.
       #
       # @return [ Server::Description ] The server description calculated from
-      #   ismaster response for this particular connection.
+      #   hello response for this particular connection.
       def post_handshake(response, average_rtt)
         if response["ok"] == 1
           # Auth mechanism is entirely dependent on the contents of
-          # ismaster response *for this connection*.
-          # Ismaster received by the monitoring connection should advertise
+          # hello response *for this connection*.
+          # Hello received by the monitoring connection should advertise
           # the same wire protocol, but if it doesn't, we use whatever
           # the monitoring connection advertised for filling out the
           # server description and whatever the non-monitoring connection
@@ -209,7 +209,10 @@ module Mongo
           @sasl_supported_mechanisms = nil
         end
 
-        @description = Description.new(address, response, average_rtt).tap do |new_description|
+        @description = Description.new(
+          address, response,
+          average_round_trip_time: average_rtt,
+        ).tap do |new_description|
           @server.cluster.run_sdam_flow(@server.description, new_description)
         end
       end
@@ -231,7 +234,7 @@ module Mongo
           user_options = Options::Redacted.new(
             # When speculative auth is performed, we always use SCRAM-SHA-256.
             # At the same time we perform SCRAM mechanism negotiation in the
-            # ismaster request.
+            # hello request.
             # If the credentials we are trying to authenticate with do not
             # map to an existing user, SCRAM mechanism negotiation will not
             # return anything which would cause the driver to use

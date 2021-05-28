@@ -107,7 +107,7 @@ module Mongo
     #   to not start the periodic executor. If :monitoring_io is false,
     #   :cleanup automatically defaults to false as well.
     # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
-    #   for the server monitor to refresh its description via ismaster.
+    #   for the server monitor to refresh its description via hello.
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
     # @option options [ Hash ] :server_api The requested server API version.
@@ -598,7 +598,7 @@ module Mongo
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
     # @option aptions [ true | false ] :awaited Whether the updated description
-    #   was a result of processing an awaited ismaster.
+    #   was a result of processing an awaited hello.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
@@ -765,7 +765,7 @@ module Mongo
     end
 
     # Add a server to the cluster with the provided address. Useful in
-    # auto-discovery of new servers when an existing server executes an ismaster
+    # auto-discovery of new servers when an existing server executes an hello
     # and potentially non-configured servers were included.
     #
     # @example Add the server for the address to the cluster.
@@ -782,8 +782,11 @@ module Mongo
     def add(host, add_options=nil)
       address = Address.new(host, options)
       if !addresses.include?(address)
-        server = Server.new(address, self, @monitoring, event_listeners, options.merge(
-          monitor: false))
+        opts = options.merge(monitor: false)
+        if Topology::LoadBalanced === topology
+          opts[:load_balancer] = true
+        end
+        server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
           # the previous check was not under a lock.

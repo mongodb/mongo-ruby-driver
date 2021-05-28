@@ -43,7 +43,7 @@ module Mongo
       #   Query.new('xgen', 'users', {:name => 'Tyler'}, :skip => 5,
       #                                                  :limit => 10)
       #
-      # @example Find all users with slave ok bit set
+      # @example Find all users with secondaryOk bit set
       #   Query.new('xgen', 'users', {:name => 'Tyler'}, :flags => [:secondary_ok])
       #
       # @example Find all user ids.

@@ -21,7 +21,7 @@ module Mongo
   class Server
 
     # Represents a description of the server, populated by the result of the
-    # ismaster command.
+    # hello command.
     #
     # Note: Unknown servers do not have wire versions, but for legacy reasons
     # we return 0 for min_wire_version and max_wire_version of any server that does
@@ -200,21 +200,29 @@ module Mongo
                                  CONNECTION_ID,
                                ].freeze
 
-      # Instantiate the new server description from the result of the ismaster
-      # command.
+      # Instantiate the new server description from the result of the hello
+      # command or fabricate a placeholder description for Unknown and
+      # LoadBalancer servers.
       #
       # @example Instantiate the new description.
-      #   Description.new(address, { 'ismaster' => true }, 0.5)
+      #   Description.new(address, { 'isWritablePrimary' => true }, 0.5)
       #
       # @param [ Address ] address The server address.
-      # @param [ Hash ] config The result of the ismaster command.
-      # @param [ Float ] average_round_trip_time The moving average time (sec) the ismaster
-      #   call took to complete.
+      # @param [ Hash ] config The result of the hello command.
+      # @param [ Float ] average_round_trip_time The moving average time (sec) the hello
+      #   command took to complete.
+      # @param [ Float ] average_round_trip_time The moving average time (sec)
+      #   the ismaster call took to complete.
+      # @param [ true | false ] load_balancer Whether the server is a load
+      #   balancer.
       #
-      # @since 2.0.0
-      def initialize(address, config = {}, average_round_trip_time = nil)
+      # @api private
+      def initialize(address, config = {}, average_round_trip_time: nil,
+        load_balancer: false
+      )
         @address = address
         @config = config
+        @load_balancer = !!load_balancer
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
         @last_update_time = Time.now.dup.freeze
@@ -234,15 +242,22 @@ module Mongo
       # @return [ Address ] address The server's address.
       attr_reader :address
 
-      # @return [ Hash ] The actual result from the ismaster command.
+      # @return [ Hash ] The actual result from the hello command.
       attr_reader :config
+
+      # Returns whether this server is a load balancer.
+      #
+      # @return [ true | false ] Whether this server is a load balancer.
+      def load_balancer?
+        @load_balancer
+      end
 
       # @return [ Features ] features The features for the server.
       def features
         @features
       end
 
-      # @return [ Float ] The moving average time the ismaster call took to complete.
+      # @return [ Float ] The moving average time the hello call took to complete.
       attr_reader :average_round_trip_time
 
       # Returns whether this server is an arbiter, per the SDAM spec.
@@ -743,7 +758,7 @@ module Mongo
         !!(address.to_s.downcase != me.downcase if me)
       end
 
-      # opTime in lastWrite subdocument of the ismaster response.
+      # opTime in lastWrite subdocument of the hello response.
       #
       # @return [ BSON::Timestamp ] The timestamp.
       #

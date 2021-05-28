@@ -18,7 +18,7 @@
 module Mongo
   class Server
 
-    # Responsible for periodically polling a server via ismaster commands to
+    # Responsible for periodically polling a server via hello commands to
     # keep the server's status up to date.
     #
     # Does all work in a background thread so as to not interfere with other
@@ -184,7 +184,7 @@ module Mongo
       #
       # If the server was checked less than MIN_SCAN_INTERVAL seconds
       # ago, sleep until MIN_SCAN_INTERVAL seconds have passed since the last
-      # check. Then perform the check which involves running isMaster
+      # check. Then perform the check which involves running hello
       # on the server being monitored and updating the server description
       # as a result.
       #
@@ -215,7 +215,8 @@ module Mongo
           old_description = server.description
 
           new_description = Description.new(server.address, result,
-            server.round_trip_time_averager.average_round_trip_time)
+            average_round_trip_time: server.round_trip_time_averager.average_round_trip_time
+          )
 
           server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited)
 

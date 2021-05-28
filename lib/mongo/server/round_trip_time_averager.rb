@@ -46,7 +46,7 @@ module Mongo
         end
         last_round_trip_time = Utils.monotonic_time - start
 
-        # If ismaster fails, we need to return the last round trip time
+        # If hello fails, we need to return the last round trip time
         # because it is used in the heartbeat failed SDAM event,
         # but we must not update the round trip time recorded in the server.
         unless exc

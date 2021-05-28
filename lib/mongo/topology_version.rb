@@ -17,7 +17,7 @@
 
 module Mongo
   # TopologyVersion encapsulates the topologyVersion document obtained from
-  # ismaster responses and not master-like OperationFailure errors.
+  # hello responses and not master-like OperationFailure errors.
   #
   # @api private
   class TopologyVersion < BSON::Document

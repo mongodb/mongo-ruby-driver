@@ -362,6 +362,11 @@ Ruby Options
      - ``Object``
      - none
 
+   * - ``:load_balanced``
+     - Whether to expect to connect to a load balancer.
+     - ``Boolean``
+     - false
+
    * - ``:local_threshold``
      - Specifies the maximum latency in seconds between the nearest
        server and the servers that can be available for selection to operate on.
@@ -781,6 +786,9 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - journal=Boolean
      - ``{ :write_concern => { :j => true|false }}``
+
+   * - loadBalanced=Boolean
+     - ``:load_balanced => Boolean``
 
    * - localThresholdMS=Integer
      - ``:local_threshold => Float``

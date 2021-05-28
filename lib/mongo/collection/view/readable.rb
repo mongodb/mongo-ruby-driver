@@ -636,10 +636,10 @@ module Mongo
         end
 
         def server_selector
-          if options[:session] && options[:session].in_transaction?
+          @server_selector ||= if options[:session] && options[:session].in_transaction?
             ServerSelector.get(read_preference || client.server_selector)
           else
-            @server_selector ||= ServerSelector.get(read_preference || collection.server_selector)
+            ServerSelector.get(read_preference || collection.server_selector)
           end
         end
 

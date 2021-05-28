@@ -520,6 +520,24 @@ module Mongo
       elsif uri_options[:direct_connection] == false && uri_options[:connect].to_s == 'direct'
         raise_invalid_error_no_fmt!("directConnection=false cannot be used with connect=direct")
       end
+
+      if uri_options[:load_balanced]
+        if servers.length > 1
+          raise_invalid_error_no_fmt!("loadBalanced=true cannot be used with multiple seeds")
+        end
+
+        if uri_options[:direct_connection]
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with loadBalanced=true")
+        end
+
+        if uri_options[:connect] && uri_options[:connect].to_sym == :direct
+          raise_invalid_error_no_fmt!("connect=direct cannot be used with loadBalanced=true")
+        end
+
+        if uri_options[:replica_set]
+          raise_invalid_error_no_fmt!("loadBalanced=true cannot be used with replicaSet option")
+        end
+      end
     end
   end
 end

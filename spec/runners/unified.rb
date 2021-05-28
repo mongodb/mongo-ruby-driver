@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
+require 'support/using_hash'
 require 'runners/unified/error'
 require 'runners/unified/entity_map'
 require 'runners/unified/event_subscriber'
 require 'runners/unified/test'
 require 'runners/unified/test_group'
-require 'runners/unified/using_hash'
 
 def define_unified_spec_tests(base_path, paths, expect_failure: false)
   paths.each do |path|

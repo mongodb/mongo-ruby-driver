@@ -548,7 +548,7 @@ module Mongo
         :bool
       )
 
-      # Configure the Context object to take a masterk ey from AWS
+      # Configure the Context object to take a master key from AWS
       #
       # @param [ Mongo::Crypt::Context ] context
       # @param [ String ] endpoint The custom AWS master key endpoint

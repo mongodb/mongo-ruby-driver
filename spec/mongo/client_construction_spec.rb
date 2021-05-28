@@ -1292,6 +1292,136 @@ describe Mongo::Client do
             client.options[:connect].should be :sharded
           end
         end
+
+        context 'load_balanced: true and multiple seeds' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017', '127.0.0.2:27017'],
+              load_balanced: true)
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /load_balanced=true cannot be used with multiple seeds/)
+          end
+        end
+
+        context 'load_balanced: false and multiple seeds' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017', '127.0.0.2:27017'],
+              load_balanced: false)
+          end
+
+          it 'is accepted' do
+            lambda do
+              client
+            end.should_not raise_error
+            client.options[:load_balanced].should be false
+          end
+        end
+
+        context 'load_balanced: true and direct_connection: true' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+              load_balanced: true, direct_connection: true)
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with load_balanced=true/)
+          end
+        end
+
+        context 'load_balanced: true and direct_connection: false' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+              load_balanced: true, direct_connection: false)
+          end
+
+          it 'is accepted' do
+            lambda do
+              client
+            end.should_not raise_error
+            client.options[:load_balanced].should be true
+            client.options[:direct_connection].should be false
+          end
+        end
+
+        context 'load_balanced: false and direct_connection: true' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+              load_balanced: false, direct_connection: true)
+          end
+
+          it 'is accepted' do
+            lambda do
+              client
+            end.should_not raise_error
+            client.options[:load_balanced].should be false
+            client.options[:direct_connection].should be true
+          end
+        end
+
+        [:direct, 'direct', :sharded, 'sharded'].each do |v|
+          context "load_balanced: true and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                load_balanced: true, connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /connect=#{v} cannot be used with load_balanced=true/)
+            end
+          end
+        end
+
+        [nil].each do |v|
+          context "load_balanced: true and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                load_balanced: true, connect: v)
+            end
+
+            it 'is accepted' do
+              lambda do
+                client
+              end.should_not raise_error
+              client.options[:load_balanced].should be true
+              client.options[:connect].should eq v
+            end
+          end
+        end
+
+        [:replica_set, 'replica_set'].each do |v|
+          context "load_balanced: true and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                load_balanced: true, connect: v, replica_set: 'x')
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /connect=replica_set cannot be used with load_balanced=true/)
+            end
+          end
+
+          context "load_balanced: true and #{v.inspect} option" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                load_balanced: true, v => 'rs')
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /load_balanced=true cannot be used with replica_set option/)
+            end
+          end
+        end
       end
 
       context ':bg_error_backtrace option' do
