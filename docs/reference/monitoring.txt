@@ -294,7 +294,7 @@ method depending on the outcome of the heartbeat.
 All heartbeat events contain the address of the server that the heartbeat
 was sent to. Succeeded and failed events contain the round trip time for
 the hello or legacy hello command. Failed event also contains the exception
-instance thatwas raised during hello or legacy hello command execution.
+instance that was raised during hello or legacy hello command execution.
 Please review the API documentation for ServerHeartbeatStarted,
 ServerHeartbeatSucceeded and ServerHeartbeatFailed for event attribute details.
 
