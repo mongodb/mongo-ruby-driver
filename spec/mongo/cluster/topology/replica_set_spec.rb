@@ -407,7 +407,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       context 'description with non-nil max set version' do
         let(:description) do
-          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+          Mongo::Server::Description.new('a', { 'setVersion' => 5 }).tap do |description|
             expect(description.set_version).to eq(5)
           end
         end
@@ -441,7 +441,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       context 'description with a higher max set version' do
         let(:description) do
-          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+          Mongo::Server::Description.new('a', { 'setVersion' => 5 }).tap do |description|
             expect(description.set_version).to eq(5)
           end
         end
@@ -453,7 +453,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       context 'description with a lower max set version' do
         let(:description) do
-          Mongo::Server::Description.new('a', 'setVersion' => 3).tap do |description|
+          Mongo::Server::Description.new('a', { 'setVersion' => 3 }).tap do |description|
             expect(description.set_version).to eq(3)
           end
         end
@@ -491,7 +491,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         let(:new_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004f') }
 
         let(:description) do
-          Mongo::Server::Description.new('a', 'electionId' => new_election_id).tap do |description|
+          Mongo::Server::Description.new('a', { 'electionId' => new_election_id }).tap do |description|
             expect(description.election_id).to be new_election_id
           end
         end
@@ -529,7 +529,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         let(:new_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004f') }
 
         let(:description) do
-          Mongo::Server::Description.new('a', 'electionId' => new_election_id).tap do |description|
+          Mongo::Server::Description.new('a', { 'electionId' => new_election_id }).tap do |description|
             expect(description.election_id).to be new_election_id
           end
         end
@@ -543,7 +543,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         let(:low_election_id) { BSON::ObjectId.from_string('7fffffff0000000000000042') }
 
         let(:description) do
-          Mongo::Server::Description.new('a', 'electionId' => low_election_id).tap do |description|
+          Mongo::Server::Description.new('a', { 'electionId' => low_election_id }).tap do |description|
             expect(description.election_id).to be low_election_id
           end
         end
