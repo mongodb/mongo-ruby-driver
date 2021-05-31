@@ -61,7 +61,7 @@ describe 'SDAM Monitoring' do
                 raise "Server should have been found"
               end
 
-              result = response.ismaster
+              result = response.hello
               # Spec tests do not always specify wire versions, but the
               # driver requires them. Set them to zero which was
               # the legacy default in the driver.
