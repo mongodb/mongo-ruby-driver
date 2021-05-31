@@ -11,6 +11,7 @@ def standard_dependencies
     gem 'rspec', '~> 3.10'
     gem 'activesupport'
     gem 'rake'
+    gem 'webrick'
 
     gem 'byebug', platforms: :mri
     gem 'ruby-debug', platforms: :jruby
