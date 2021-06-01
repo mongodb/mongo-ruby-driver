@@ -404,10 +404,10 @@ describe Mongo::Grid::FSBucket do
         fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
       end
 
-      it 'raises the error to the user' do
+      it 'should not raise an error to the user' do
         expect {
           fs.insert_one(file)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        }.not_to raise_error
       end
     end
 

@@ -518,7 +518,7 @@ module Mongo
 
       def create_index_if_missing!(collection_name, index_spec, options = {})
         begin
-          unless database[collection_name].indexes.get(index_spec).nil?
+          if database[collection_name].indexes.get(index_spec).nil?
             database[collection_name].indexes.create_one(index_spec, options)
           end
         rescue Mongo::Error::OperationFailure => e
