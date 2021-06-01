@@ -137,20 +137,35 @@ describe Mongo::Server::Monitor::Connection do
   end
 
   describe '#check_document' do
-    it 'returns hello document with API version' do
-      meta = Mongo::Server::AppMetadata.new({
-        server_api: { version: '1' }
-      })
-      subject = described_class.new(double("address"), app_metadata: meta)
-      document = subject.check_document
-      expect(document['hello']).to eq(1)
+    context 'with API version' do
+      it 'always returns hello document' do
+        meta = Mongo::Server::AppMetadata.new({
+          server_api: { version: '1' }
+        })
+        subject = described_class.new(double("address"), app_metadata: meta)
+        [false, true].each do |hello_ok|
+          subject.instance_variable_set(:@hello_ok, hello_ok)
+          document = subject.check_document
+          expect(document['hello']).to eq(1)
+        end
+      end
     end
 
-    it 'returns legacy hello document without API version' do
-      meta = Mongo::Server::AppMetadata.new({})
-      subject = described_class.new(double("address"), app_metadata: meta)
-      document = subject.check_document
-      expect(document['isMaster']).to eq(1)
+    context 'without API version' do
+      let(:meta) { Mongo::Server::AppMetadata.new({}) }
+
+      it 'returns legacy hello document' do
+        subject = described_class.new(double("address"), app_metadata: meta)
+        document = subject.check_document
+        expect(document['isMaster']).to eq(1)
+      end
+
+      it 'returns hello document when server responded with helloOk' do
+        subject = described_class.new(double("address"), app_metadata: meta)
+        subject.instance_variable_set(:@hello_ok, true)
+        document = subject.check_document
+        expect(document['hello']).to eq(1)
+      end
     end
   end
 end

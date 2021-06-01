@@ -74,7 +74,7 @@ module Mongo
 
       HELLO_DOC = BSON::Document.new({ hello: 1 }).freeze
 
-      LEGACY_HELLO_DOC = BSON::Document.new({ isMaster: 1 }).freeze
+      LEGACY_HELLO_DOC = BSON::Document.new({ isMaster: 1, helloOk: true }).freeze
 
       attr_reader :socket
 

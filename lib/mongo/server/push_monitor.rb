@@ -39,7 +39,11 @@ module Mongo
         unless options[:app_metadata]
           raise ArgumentError, 'App metadata is required'
         end
+        unless options[:check_document]
+          raise ArgumentError, 'Check document is required'
+        end
         @app_metadata = options[:app_metadata]
+        @check_document = options[:check_document]
         @monitor = monitor
         @topology_version = topology_version
         @monitoring = monitoring
@@ -152,7 +156,7 @@ module Mongo
       end
 
       def write_check_command
-        document = @connection.check_document.merge(
+        document = @check_document.merge(
           topologyVersion: topology_version.to_doc,
           maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
         )
@@ -161,9 +165,9 @@ module Mongo
             Utils.transform_server_api(server_api)
           )
         end
-         command = Protocol::Msg.new(
-           [:exhaust_allowed], {}, document.merge({'$db' => Database::ADMIN})
-         )
+        command = Protocol::Msg.new(
+          [:exhaust_allowed], {}, document.merge({'$db' => Database::ADMIN})
+        )
         @lock.synchronize { @connection }.write_bytes(command.serialize.to_s)
       end
 
