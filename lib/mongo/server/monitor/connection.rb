@@ -245,6 +245,10 @@ module Mongo
           raise e
         end
 
+        # Detect whether server supports hello command based on server reply
+        # to legacy hello.
+        #
+        # @param [ BSON::Document ] reply Server reply to legacy hello command.
         def set_hello_ok!(reply)
           @hello_ok = !!reply[:helloOk]
         end
