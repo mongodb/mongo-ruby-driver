@@ -8,7 +8,7 @@ def standard_dependencies
   group :development, :testing do
     gem 'jruby-openssl', platforms: :jruby
     gem 'json', platforms: :jruby
-    gem 'rspec', '~> 3.10'
+    gem 'rspec-core', '~> 3.9'
     gem 'activesupport'
     gem 'rake'
     gem 'webrick'
@@ -33,6 +33,8 @@ def standard_dependencies
     gem 'ice_nine'
     gem 'rubydns', platforms: :mri
     gem 'rspec-retry'
+    gem 'rspec-expectations', '~> 3.9'
+    gem 'rspec-mocks-diag', '~> 3.9'
     gem 'rfc', '~> 0.2.0'
     gem 'fuubar'
     gem 'timeout-interrupt', platforms: :mri
