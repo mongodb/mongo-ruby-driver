@@ -8,6 +8,8 @@ def standard_dependencies
   group :development, :testing do
     gem 'jruby-openssl', platforms: :jruby
     gem 'json', platforms: :jruby
+    # Explicitly specify each rspec dependency so that we can use
+    # rspec-mocks-diag instead of rspec-mocks
     gem 'rspec-core', '~> 3.9'
     gem 'activesupport'
     gem 'rake'
