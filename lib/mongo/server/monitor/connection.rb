@@ -224,7 +224,7 @@ module Mongo
         #
         # @api private
         def check_document
-          if @hello_ok
+          if hello_ok?
             HELLO_DOC
           elsif @app_metadata.server_api && @app_metadata.server_api[:version]
             HELLO_DOC
@@ -245,12 +245,17 @@ module Mongo
           raise e
         end
 
-        # Detect whether server supports hello command based on server reply
-        # to legacy hello.
+        # Update @hello_ok flag according to server reply to legacy hello
+        # command. The flag will be set to true if connected server supports
+        # hello command, otherwise the flag will be set to false.
         #
         # @param [ BSON::Document ] reply Server reply to legacy hello command.
         def set_hello_ok!(reply)
           @hello_ok = !!reply[:helloOk]
+        end
+
+        def hello_ok?
+          @hello_ok
         end
       end
     end

@@ -138,13 +138,16 @@ describe Mongo::Server::Monitor::Connection do
 
   describe '#check_document' do
     context 'with API version' do
-      it 'always returns hello document' do
-        meta = Mongo::Server::AppMetadata.new({
+      let(:meta) do
+        Mongo::Server::AppMetadata.new({
           server_api: { version: '1' }
         })
-        subject = described_class.new(double("address"), app_metadata: meta)
-        [false, true].each do |hello_ok|
-          subject.instance_variable_set(:@hello_ok, hello_ok)
+      end
+
+      [false, true].each do |hello_ok|
+        it "returns hello document if server #{ if hello_ok then 'supports' else 'does not support' end } hello" do
+          subject = described_class.new(double("address"), app_metadata: meta)
+          expect(subject).to receive(:hello_ok?).and_return(hello_ok)
           document = subject.check_document
           expect(document['hello']).to eq(1)
         end
@@ -156,13 +159,14 @@ describe Mongo::Server::Monitor::Connection do
 
       it 'returns legacy hello document' do
         subject = described_class.new(double("address"), app_metadata: meta)
+        expect(subject).to receive(:hello_ok?).and_return(false)
         document = subject.check_document
         expect(document['isMaster']).to eq(1)
       end
 
       it 'returns hello document when server responded with helloOk' do
         subject = described_class.new(double("address"), app_metadata: meta)
-        subject.instance_variable_set(:@hello_ok, true)
+        expect(subject).to receive(:hello_ok?).and_return(true)
         document = subject.check_document
         expect(document['hello']).to eq(1)
       end
