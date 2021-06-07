@@ -1097,9 +1097,21 @@ buildvariants:
   - matrix_name: "zlib-auth"
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
-      ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: "4.2"
-      topology: ["standalone", "replica-set", "sharded-cluster"]
+      ruby: ["ruby-2.7"]
+      mongodb-version: "4.4"
+      topology: "replica-set"
+      compressor: 'zlib'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "zlib-auth-3.0"
+    matrix_spec:
+      auth-and-ssl: "auth-and-ssl"
+      ruby: ["ruby-3.0"]
+      mongodb-version: "4.4"
+      topology: "standalone"
       compressor: 'zlib'
       os: ubuntu1604
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1122,8 +1134,20 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
       ruby: ["ruby-2.7"]
-      mongodb-version: "4.2"
-      topology: ["standalone", "replica-set", "sharded-cluster"]
+      mongodb-version: "4.4"
+      topology: "replica-set"
+      compressor: 'snappy'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "snappy-auth-3.0"
+    matrix_spec:
+      auth-and-ssl: "auth-and-ssl"
+      ruby: ["ruby-3.0"]
+      mongodb-version: "4.4"
+      topology: "standalone"
       compressor: 'snappy'
       os: ubuntu1604
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1157,8 +1181,20 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
       ruby: ["ruby-2.7"]
-      mongodb-version: "4.2"
-      topology: ["standalone", "replica-set", "sharded-cluster"]
+      mongodb-version: "4.4"
+      topology: "replica-set"
+      compressor: 'zstd'
+      os: ubuntu1604
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "zstd-auth-3.0"
+    matrix_spec:
+      auth-and-ssl: "auth-and-ssl"
+      ruby: ["ruby-3.0"]
+      mongodb-version: "4.4"
+      topology: "standalone"
       compressor: 'zstd'
       os: ubuntu1604
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1201,8 +1237,8 @@ buildvariants:
 
   - matrix_name: "activesupport"
     matrix_spec:
-      ruby: ruby-2.6
-      mongodb-version: '4.2'
+      ruby: ["ruby-3.0", "ruby-2.7"]
+      mongodb-version: '4.4'
       topology: replica-set
       as: as
       os: ubuntu1604
@@ -1212,8 +1248,8 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: [ruby-2.6, jruby-9.2]
-      mongodb-version: '4.2'
+      ruby: [ruby-3.0, ruby-2.7, jruby-9.2]
+      mongodb-version: '4.4'
       topology: replica-set
       bson: "*"
       os: rhel70
@@ -1294,7 +1330,7 @@ buildvariants:
   - matrix_name: "fle-4.4"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-2.7]
+      ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: ['4.4']
       os: rhel70
@@ -1342,7 +1378,7 @@ buildvariants:
       ocsp-algorithm: ecdsa
       ocsp-must-staple: on
       ocsp-delegate: on
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1355,7 +1391,7 @@ buildvariants:
     matrix_spec:
       ocsp-algorithm: rsa
       ocsp-status: unknown
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1372,7 +1408,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "none"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1387,7 +1423,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "none"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1402,7 +1438,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: fail
       extra-uri-options: "none"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1417,7 +1453,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1432,7 +1468,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1447,7 +1483,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1462,7 +1498,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1477,7 +1513,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -1492,7 +1528,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: [ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
