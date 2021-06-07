@@ -501,6 +501,10 @@ axes:
         display_name: Sharded
         variables:
           TOPOLOGY: sharded-cluster
+      - id: "load-balanced"
+        display_name: Load Balanced
+        variables:
+          TOPOLOGY: load-balanced
 
   - id: "single-mongos"
     display_name: Single Mongos
@@ -795,6 +799,8 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
+
+
 buildvariants:
   - matrix_name: "docker"
     matrix_spec:
@@ -823,7 +829,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-2.7", "ruby-2.3"]
       mongodb-version: ['4.2']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -834,7 +840,7 @@ buildvariants:
       auth-and-ssl: ["noauth-and-ssl", "auth-and-nossl"]
       ruby: "ruby-2.6"
       mongodb-version: ['4.0']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel70
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -845,7 +851,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.5"
       mongodb-version: ['3.6']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -856,7 +862,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.4"
       mongodb-version: ['3.4']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -867,7 +873,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.3"
       mongodb-version: ['3.2']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -878,7 +884,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.7"
       mongodb-version: ['3.0']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -889,7 +895,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.6"
       mongodb-version: ['2.6']
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -900,7 +906,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.7"
       mongodb-version: '4.4'
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -911,7 +917,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.7"
       mongodb-version: '4.7'
-      topology: "*"
+      topology: '*'
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -922,7 +928,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.7"
       mongodb-version: '4.9'
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -957,7 +963,7 @@ buildvariants:
       retry-reads: no-retry-reads
       ruby: "ruby-2.6"
       mongodb-version: ["4.0"]
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
     tasks:
@@ -978,7 +984,7 @@ buildvariants:
     matrix_spec:
       ruby: "ruby-2.5"
       mongodb-version: ['3.4', '3.6', '4.0']
-      topology: '*'
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       storage-engine: mmapv1
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
@@ -989,8 +995,8 @@ buildvariants:
     matrix_spec:
       lint: on
       ruby: "ruby-2.6"
-      mongodb-version: ["4.2"]
-      topology: '*'
+      mongodb-version: ["4.4"]
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
@@ -1001,7 +1007,7 @@ buildvariants:
       fork: on
       ruby: "ruby-2.7"
       mongodb-version: ["4.4"]
-      topology: '*'
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
     tasks:
@@ -1012,7 +1018,7 @@ buildvariants:
       solo: on
       ruby: [ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4, ruby-2.3, jruby-9.2]
       mongodb-version: ["4.4"]
-      topology: '*'
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
@@ -1056,7 +1062,7 @@ buildvariants:
       auth-and-ssl: "auth-and-ssl"
       ruby: "jruby-9.2"
       mongodb-version: "4.2"
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel70
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -1067,7 +1073,7 @@ buildvariants:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "jruby-9.2"
       mongodb-version: "2.6"
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel62
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
@@ -1078,7 +1084,7 @@ buildvariants:
       auth-and-ssl: "auth-and-ssl"
       ruby: "ruby-2.7"
       mongodb-version: "4.2"
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       compressor: 'zlib'
       os: ubuntu1604
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1102,7 +1108,7 @@ buildvariants:
       auth-and-ssl: "auth-and-ssl"
       ruby: "ruby-2.7"
       mongodb-version: "4.2"
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       compressor: 'snappy'
       os: ubuntu1604
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1137,7 +1143,7 @@ buildvariants:
       auth-and-ssl: "auth-and-ssl"
       ruby: "ruby-2.7"
       mongodb-version: "4.2"
-      topology: "*"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       compressor: 'zstd'
       os: ubuntu1604
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
