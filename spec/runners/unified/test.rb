@@ -39,10 +39,7 @@ module Unified
       end.map do |spec|
         spec['client']['useMultipleMongoses']
       end.compact.uniq
-      if mongoses.length > 1
-        raise Error::InvalidTest, "Conflicting useMultipleMongoses values"
-      end
-      @multiple_mongoses = mongoses.first
+      @multiple_mongoses = mongoses.any? { |v| v }
       @test_spec.freeze
       @subscribers = {}
       @options = opts
@@ -81,13 +78,26 @@ module Unified
 
         entity = case type
         when 'client'
-          # Handled earlier
-          spec.delete('useMultipleMongoses')
-
           if smc_opts = spec.use('uriOptions')
             opts = Mongo::URI::OptionsMapper.new.smc_to_ruby(smc_opts)
           else
             opts = {}
+          end
+
+          if spec.use('useMultipleMongoses')
+            if ClusterConfig.instance.topology == :sharded
+              unless SpecConfig.instance.addresses.length > 1
+                raise "useMultipleMongoses requires more than one address in MONGODB_URI"
+              end
+            end
+          else
+            # If useMultipleMongoses isn't true, truncate the address
+            # list to the first address.
+            # This works OK in replica sets because the driver will discover
+            # the other set members, in standalone deployments because
+            # there is only one server, but changes behavior in
+            # sharded clusters compared to how the test suite is configured.
+            opts[:single_address] = true
           end
 
           if store_events = spec.use('storeEventsAsEntities')
@@ -382,8 +392,12 @@ module Unified
       when String
         [v, {}]
       else
+        addresses = SpecConfig.instance.addresses
+        if options[:single_address]
+          addresses = [addresses.first]
+        end
         [
-          SpecConfig.instance.addresses,
+          addresses,
           SpecConfig.instance.all_test_options,
         ]
       end
