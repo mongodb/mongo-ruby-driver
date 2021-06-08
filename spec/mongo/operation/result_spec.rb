@@ -6,8 +6,10 @@ require 'spec_helper'
 describe Mongo::Operation::Result do
 
   let(:description) do
-    Mongo::Server::Description.new(double('description address'),
-      'minWireVersion' => 0, 'maxWireVersion' => 2)
+    Mongo::Server::Description.new(
+      double('description address'),
+      { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+    )
   end
 
   let(:result) do

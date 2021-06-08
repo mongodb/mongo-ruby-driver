@@ -45,6 +45,16 @@ The first column lists the driver versions.
      - MongoDB 3.0
      - MongoDB 2.6
 
+   * - 2.15
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
    * - 2.14
      - |checkmark|
      - |checkmark|
@@ -213,6 +223,7 @@ for that Ruby version is deprecated.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - Ruby 3.0
      - Ruby 2.7
      - Ruby 2.6
      - Ruby 2.5
@@ -226,7 +237,22 @@ for that Ruby version is deprecated.
      - JRuby 9.1
      - JRuby
 
+   * - 2.15
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     - D
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
    * - 2.14
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -241,6 +267,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.13
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -255,6 +282,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.12
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -269,6 +297,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.11
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -283,6 +312,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.10
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -298,6 +328,7 @@ for that Ruby version is deprecated.
 
    * - 2.9
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -311,6 +342,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.8
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -326,6 +358,7 @@ for that Ruby version is deprecated.
 
    * - 2.7
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -340,6 +373,7 @@ for that Ruby version is deprecated.
 
    * - 2.6
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -353,6 +387,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.5
+     -
      -
      -
      -
@@ -371,6 +406,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -381,6 +417,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.3
+     -
      -
      -
      -
@@ -399,6 +436,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -413,6 +451,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -423,6 +462,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.0
+     -
      -
      -
      -
