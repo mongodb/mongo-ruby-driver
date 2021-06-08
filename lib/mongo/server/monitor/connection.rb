@@ -64,6 +64,7 @@ module Mongo
           @socket = nil
           @pid = Process.pid
           @compressor = nil
+          @hello_ok = false
         end
 
         # @return [ Hash ] options The passed in options.
@@ -203,6 +204,7 @@ module Mongo
           result.validate!
           reply = result.documents.first
           set_compressor!(reply)
+          set_hello_ok!(reply)
           @server_connection_id = reply['connectionId']
           reply
         rescue => exc
@@ -222,7 +224,9 @@ module Mongo
         #
         # @api private
         def check_document
-          if @app_metadata.server_api && @app_metadata.server_api[:version]
+          if hello_ok?
+            HELLO_DOC
+          elsif @app_metadata.server_api && @app_metadata.server_api[:version]
             HELLO_DOC
           else
             LEGACY_HELLO_DOC
@@ -239,6 +243,19 @@ module Mongo
             e.add_note(note)
           end
           raise e
+        end
+
+        # Update @hello_ok flag according to server reply to legacy hello
+        # command. The flag will be set to true if connected server supports
+        # hello command, otherwise the flag will be set to false.
+        #
+        # @param [ BSON::Document ] reply Server reply to legacy hello command.
+        def set_hello_ok!(reply)
+          @hello_ok = !!reply[:helloOk]
+        end
+
+        def hello_ok?
+          @hello_ok
         end
       end
     end
