@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 require 'spec_helper'
-require_relative './app_metadata_shared'
 
 describe Mongo::Server::AppMetadata do
 
@@ -165,7 +164,7 @@ describe Mongo::Server::AppMetadata do
       app_name = 'app'
       expect {
         described_class.new(app_name: app_name).validated_document
-      }.not_to raise_error(Mongo::Error::InvalidApplicationName)
+      }.not_to raise_error
     end
   end
 end
