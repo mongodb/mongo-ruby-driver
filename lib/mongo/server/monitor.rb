@@ -316,6 +316,7 @@ module Mongo
                 **Utils.shallow_symbolize_keys(options.merge(
                   socket_timeout: heartbeat_interval + connection.socket_timeout,
                   app_metadata: options[:push_monitor_app_metadata],
+                  check_document: @connection.check_document
                 )),
               )
             end
