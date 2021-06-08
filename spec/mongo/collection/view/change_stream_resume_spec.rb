@@ -47,8 +47,10 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   let(:connection_description) do
-    Mongo::Server::Description.new(double('description address'),
-      'minWireVersion' => 0, 'maxWireVersion' => 2)
+    Mongo::Server::Description.new(
+      double('description address'),
+      { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+    )
   end
 
   let(:result) do

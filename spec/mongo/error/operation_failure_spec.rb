@@ -85,9 +85,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -98,9 +101,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -122,9 +128,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -148,9 +157,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -161,9 +173,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -202,9 +217,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -216,9 +234,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -239,9 +260,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -255,9 +279,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -283,9 +310,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
