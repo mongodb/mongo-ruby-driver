@@ -425,7 +425,7 @@ describe Mongo::Cluster do
     end
 
     let(:primary_candidates) do
-      if cluster.single?
+      if cluster.single? || cluster.load_balanced?
         cluster.servers
       elsif cluster.sharded?
         cluster.servers
@@ -611,7 +611,17 @@ describe Mongo::Cluster do
             monitoring_io: false, server_selection_timeout: 0.183))
       end
 
-      it_behaves_like 'does not support sessions'
+      context 'in load-balanced topology' do
+        require_topology :load_balanced
+
+        it_behaves_like 'supports sessions'
+      end
+
+      context 'not in load-balanced topology' do
+        require_topology :single, :replica_set, :sharded
+
+        it_behaves_like 'does not support sessions'
+      end
     end
 
     context 'when client has contacted servers and then disconnected' do
@@ -761,6 +771,9 @@ describe Mongo::Cluster do
     let(:default_address) { SpecConfig.instance.addresses.first }
 
     context 'cluster has unknown servers' do
+      # Servers are never unknown in load-balanced topology.
+      require_topology :single, :replica_set, :sharded
+
       it 'includes unknown servers' do
         cluster.servers_list.each do |server|
           expect(server).to be_unknown

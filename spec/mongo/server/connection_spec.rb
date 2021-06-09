@@ -817,8 +817,10 @@ describe Mongo::Server::Connection do
           # of the test, i.e. to avoid racing with the monitor thread
           # which may put the server back into non-unknown state before
           # we can verify that the server was marked unknown, kill off
-          # the monitor thread
-          server.monitor.instance_variable_get('@thread').kill
+          # the monitor thread.
+          unless ClusterConfig.instance.topology == :load_balanced
+            server.monitor.instance_variable_get('@thread').kill
+          end
         end
       end
 
@@ -844,20 +846,39 @@ describe Mongo::Server::Connection do
           expect(connection).to be_error
         end
 
-        it 'disconnects connection pool' do
-          expect(server.pool).to receive(:disconnect!)
-          result
+        context 'in load-balanced topology' do
+          require_topology :load_balanced
+
+          it 'does not disconnect connection pool' do
+            expect(server.pool).not_to receive(:disconnect!)
+            result
+          end
+
+          it 'does not mark server unknown' do
+            expect(server).not_to be_unknown
+            result
+            expect(server).not_to be_unknown
+          end
+        end
+
+        context 'in non-lb topologies' do
+          require_topology :single, :replica_set, :sharded
+
+          it 'disconnects connection pool' do
+            expect(server.pool).to receive(:disconnect!)
+            result
+          end
+
+          it 'marks server unknown' do
+            expect(server).not_to be_unknown
+            result
+            expect(server).to be_unknown
+          end
         end
 
         it 'does not request server scan' do
           expect(server.scan_semaphore).not_to receive(:signal)
           result
-        end
-
-        it 'marks server unknown' do
-          expect(server).not_to be_unknown
-          result
-          expect(server).to be_unknown
         end
       end
 

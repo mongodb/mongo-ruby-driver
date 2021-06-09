@@ -138,7 +138,8 @@ module Mongo
           }
           context = Operation::Context.new(options: options)
           op_specs.each do |op_spec|
-            if server.features.find_command_enabled?
+            # TODO use connection properties, see RUBY-2326
+            if server.load_balancer? || server.features.find_command_enabled?
               Cursor::Builder::KillCursorsCommand.update_cursors(op_spec, active_cursors_copy.to_a)
               if Cursor::Builder::KillCursorsCommand.get_cursors_list(op_spec).size > 0
                 Operation::KillCursors.new(op_spec).execute(server, context: context)

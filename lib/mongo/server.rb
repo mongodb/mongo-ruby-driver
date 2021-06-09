@@ -331,6 +331,8 @@ module Mongo
     # @api private
     def status
       case
+      when load_balancer?
+        'LB'
       when primary?
         'PRIMARY'
       when secondary?

@@ -192,7 +192,7 @@ module Mongo
       # This is a separate method to keep the nesting level down.
       #
       # @return [ Server::Description ] The server description calculated from
-      #   hello response for this particular connection.
+      #   the handshake response for this particular connection.
       def post_handshake(response, average_rtt)
         if response["ok"] == 1
           # Auth mechanism is entirely dependent on the contents of

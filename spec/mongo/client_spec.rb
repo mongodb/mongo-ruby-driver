@@ -939,13 +939,15 @@ describe Mongo::Client do
     end
 
     context 'monitoring present' do
+      require_topology :single, :replica_set, :sharded
+
       let(:client) do
         authorized_client
       end
 
       it 'does not indicate lack of monitoring' do
-        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS)/
-        client.summary.should_not =~ /servers=.*(STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+        client.summary.should =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS)/
+        client.summary.should_not =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
       end
     end
 
@@ -957,7 +959,7 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/
       end
     end
   end

@@ -39,7 +39,7 @@ class BackgroundThreadRegistry
     @lock.synchronize do
       alive_thread_records = @records.select { |record| record.thread.alive? }
       if alive_thread_records.any?
-        msg = "Live background threads after closing all clients:"
+        msg = +"Live background threads after closing all clients:"
         alive_thread_records.each do |record|
           msg << "\n  #{record.object}"
           if record.object.respond_to?(:options)

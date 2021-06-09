@@ -212,54 +212,56 @@ module Mongo
         @periodic_executor.run!
       end
 
-      # Need to record start time prior to starting monitoring
-      start_monotime = Utils.monotonic_time
+      unless load_balanced?
+        # Need to record start time prior to starting monitoring
+        start_monotime = Utils.monotonic_time
 
-      servers.each do |server|
-        server.start_monitoring
-      end
-
-      if options[:scan] != false
-        server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
-        # The server selection timeout can be very short especially in
-        # tests, when the client waits for a synchronous scan before
-        # starting server selection. Limiting the scan to server selection time
-        # then aborts the scan before it can process even local servers.
-        # Therefore, allow at least 3 seconds for the scan here.
-        if server_selection_timeout < 3
-          server_selection_timeout = 3
+        servers.each do |server|
+          server.start_monitoring
         end
-        deadline = start_monotime + server_selection_timeout
-        # Wait for the first scan of each server to complete, for
-        # backwards compatibility.
-        # If any servers are discovered during this SDAM round we are going to
-        # wait for these servers to also be queried, and so on, up to the
-        # server selection timeout or the 3 second minimum.
-        loop do
-          # Ensure we do not try to read the servers list while SDAM is running
-          servers = @sdam_flow_lock.synchronize do
-            servers_list.dup
+
+        if options[:scan] != false
+          server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
+          # The server selection timeout can be very short especially in
+          # tests, when the client waits for a synchronous scan before
+          # starting server selection. Limiting the scan to server selection time
+          # then aborts the scan before it can process even local servers.
+          # Therefore, allow at least 3 seconds for the scan here.
+          if server_selection_timeout < 3
+            server_selection_timeout = 3
           end
-          if servers.all? { |server| server.last_scan_monotime && server.last_scan_monotime >= start_monotime }
-            break
-          end
-          if (time_remaining = deadline - Utils.monotonic_time) <= 0
-            break
-          end
-          log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
-          # Since the semaphore may have been signaled between us checking
-          # the servers list above and the wait call below, we should not
-          # wait for the full remaining time - wait for up to 1 second, then
-          # recheck the state.
-          begin
-            server_selection_semaphore.wait([time_remaining, 1].min)
-          rescue ::Timeout::Error
-            # nothing
+          deadline = start_monotime + server_selection_timeout
+          # Wait for the first scan of each server to complete, for
+          # backwards compatibility.
+          # If any servers are discovered during this SDAM round we are going to
+          # wait for these servers to also be queried, and so on, up to the
+          # server selection timeout or the 3 second minimum.
+          loop do
+            # Ensure we do not try to read the servers list while SDAM is running
+            servers = @sdam_flow_lock.synchronize do
+              servers_list.dup
+            end
+            if servers.all? { |server| server.last_scan_monotime && server.last_scan_monotime >= start_monotime }
+              break
+            end
+            if (time_remaining = deadline - Utils.monotonic_time) <= 0
+              break
+            end
+            log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
+            # Since the semaphore may have been signaled between us checking
+            # the servers list above and the wait call below, we should not
+            # wait for the full remaining time - wait for up to 1 second, then
+            # recheck the state.
+            begin
+              server_selection_semaphore.wait([time_remaining, 1].min)
+            rescue ::Timeout::Error
+              # nothing
+            end
           end
         end
-      end
 
-      start_stop_srv_monitor
+        start_stop_srv_monitor
+      end
     end
 
     # Create a cluster for the provided client, for use when we don't want the
@@ -320,6 +322,14 @@ module Mongo
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?
+
+    # Returns whether the cluster is configured to be in the load-balanced
+    # topology.
+    #
+    # @return [ true | false ] Whether the topology is load-balanced.
+    def load_balanced?
+      topology.is_a?(Topology::LoadBalanced)
+    end
 
     [:register_cursor, :schedule_kill_cursor, :unregister_cursor].each do |m|
       define_method(m) do |*args|
@@ -602,6 +612,10 @@ module Mongo
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
+      if load_balanced?
+        return
+      end
+
       @sdam_flow_lock.synchronize do
         flow = SdamFlow.new(self, previous_desc, updated_desc,
           awaited: options[:awaited])
@@ -902,6 +916,10 @@ module Mongo
     #
     # @api private
     def validate_session_support!
+      if topology.is_a?(Topology::LoadBalanced)
+        return
+      end
+
       @state_change_lock.synchronize do
         @sdam_flow_lock.synchronize do
           if topology.data_bearing_servers?

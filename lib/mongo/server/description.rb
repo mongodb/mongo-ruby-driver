@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/description/features'
-
 module Mongo
   class Server
 
@@ -640,6 +638,7 @@ module Mongo
       #
       # @since 2.4.0
       def server_type
+        return :load_balancer if load_balancer?
         return :arbiter if arbiter?
         return :ghost if ghost?
         return :sharded if mongos?
@@ -674,6 +673,7 @@ module Mongo
       #
       # @since 2.0.0
       def unknown?
+        return false if load_balancer?
         config.empty? || config.keys == %w(topologyVersion) || !ok?
       end
 
@@ -845,3 +845,6 @@ module Mongo
     end
   end
 end
+
+require 'mongo/server/description/features'
+require 'mongo/server/description/load_balancer'

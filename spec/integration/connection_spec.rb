@@ -246,43 +246,60 @@ describe 'Connections' do
 
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
-      it 'updates on hello response from non-monitoring connections' do
-        # connect server
-        client['test'].insert_one(test: 1)
+      context 'non-lb' do
+        require_topology :single, :replica_set, :sharded
 
-        # kill background threads so that they are not interfering with
-        # our mocked hello response
-        client.cluster.servers.each do |server|
-          server.monitor.stop!
+        it 'updates on handshake response from non-monitoring connections' do
+          # connect server
+          client['test'].insert_one(test: 1)
+
+          # kill background threads so that they are not interfering with
+          # our mocked hello response
+          client.cluster.servers.each do |server|
+            server.monitor.stop!
+          end
+
+          server = client.cluster.servers.first
+          expect(server.features.server_wire_versions.max >= 4).to be true
+          max_version = server.features.server_wire_versions.max
+
+          # Depending on server version, handshake here may return a
+          # description that compares equal to the one we got from a
+          # monitoring connection (pre-4.2) or not (4.2+).
+          # Since we do run SDAM flow on handshake responses on
+          # non-monitoring connections, force descriptions to be different
+          # by setting the existing description here to unknown.
+          server.monitor.instance_variable_set('@description',
+            Mongo::Server::Description.new(server.address))
+
+          RSpec::Mocks.with_temporary_scope do
+            # now pretend a handshake returned a different range
+            features = Mongo::Server::Description::Features.new(0..3)
+            # One Features instantiation is for SDAM event publication, this
+            # one always happens. The second one happens on servers
+            # where we do not negotiate auth mechanism.
+            expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
+
+            connection = Mongo::Server::Connection.new(server, server.options)
+            expect(connection.connect!).to be true
+
+            # hello response should update server description via sdam flow,
+            # which includes wire version range
+            expect(server.features.server_wire_versions.max).to eq(3)
+          end
         end
+      end
 
-        server = client.cluster.servers.first
-        expect(server.features.server_wire_versions.max >= 4).to be true
-        max_version = server.features.server_wire_versions.max
+      context 'lb' do
+        require_topology :load_balanced
 
-        # Depending on server version, hello here may return a
-        # description that compares equal to the one we got from a
-        # monitoring connection (pre-4.2) or not (4.2+).
-        # Since we do run SDAM flow on hello responses on
-        # non-monitoring connections, force descriptions to be different
-        # by setting the existing description here to unknown.
-        server.monitor.instance_variable_set('@description',
-          Mongo::Server::Description.new(server.address))
+        it 'does not update on handshake response from non-monitoring connections since there are not any' do
+          # connect server
+          client['test'].insert_one(test: 1)
 
-        RSpec::Mocks.with_temporary_scope do
-          # now pretend an hello returned a different range
-          features = Mongo::Server::Description::Features.new(0..3)
-          # One Features instantiation is for SDAM event publication, this
-          # one always happens. The second one happens on servers
-          # where we do not negotiate auth mechanism.
-          expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
-
-          connection = Mongo::Server::Connection.new(server, server.options)
-          expect(connection.connect!).to be true
-
-          # hello response should update server description via sdam flow,
-          # which includes wire version range
-          expect(server.features.server_wire_versions.max).to eq(3)
+          server = client.cluster.servers.first
+          server.load_balancer?.should be true
+          server.features.server_wire_versions.max.should be 0
         end
       end
     end
