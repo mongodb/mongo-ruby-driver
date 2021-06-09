@@ -765,7 +765,7 @@ module Mongo
     end
 
     # Add a server to the cluster with the provided address. Useful in
-    # auto-discovery of new servers when an existing server executes an hello
+    # auto-discovery of new servers when an existing server executes a hello
     # and potentially non-configured servers were included.
     #
     # @example Add the server for the address to the cluster.

@@ -88,7 +88,7 @@ class ClientRegistry
 
   def new_global_client(name)
     case name
-    # Provides a basic scanned client to do an hello check.
+    # Provides a basic scanned client to do a hello check.
     when 'basic'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
