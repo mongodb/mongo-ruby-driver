@@ -409,10 +409,24 @@ describe Mongo::Client do
             end.should_not raise_error
           end
 
-          it 'fails server selection due to very small timeout' do
-            lambda do
-              client.database.command(ping: 1)
-            end.should raise_error(Mongo::Error::NoServerAvailable)
+          context 'non-lb' do
+            require_topology :single, :replica_set, :sharded
+
+            it 'fails server selection due to very small timeout' do
+              lambda do
+                client.database.command(ping: 1)
+              end.should raise_error(Mongo::Error::NoServerAvailable)
+            end
+          end
+
+          context 'lb' do
+            require_topology :load_balanced
+
+            it 'fails the operation after successful server selection' do
+              lambda do
+                client.database.command(ping: 1)
+              end.should raise_error(Mongo::Error::SocketTimeoutError, /socket took over.*to connect/)
+            end
           end
         end
 
