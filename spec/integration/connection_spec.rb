@@ -270,7 +270,7 @@ describe 'Connections' do
           Mongo::Server::Description.new(server.address))
 
         RSpec::Mocks.with_temporary_scope do
-          # now pretend an hello returned a different range
+          # now pretend a hello returned a different range
           features = Mongo::Server::Description::Features.new(0..3)
           # One Features instantiation is for SDAM event publication, this
           # one always happens. The second one happens on servers
