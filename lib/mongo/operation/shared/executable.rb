@@ -73,10 +73,7 @@ module Mongo
       # @param [ Mongo::Operation::Context ] context The operation context.
       def build_message(connection, context)
         msg = message(connection)
-        if (server_api = context.server_api) &&
-          # Commands in a transaction do not allow API parameters.
-          !(context.in_transaction? && !context.starting_transaction?)
-        then
+        if server_api = context.server_api
           msg = msg.maybe_add_server_api(server_api)
         end
         msg
