@@ -21,6 +21,8 @@ describe 'Client' do
     end
 
     context 'after all servers are marked unknown' do
+      require_topology :single, :replica_set, :sharded
+
       before do
         client.cluster.servers.each do |server|
           server.unknown!

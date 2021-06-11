@@ -33,6 +33,8 @@ describe 'Server' do
       end
 
       context 'unknown server in disconnected cluster' do
+        require_topology :single, :replica_set, :sharded
+
         before do
           client.close
           server.unknown!

@@ -267,19 +267,52 @@ describe Mongo::URI do
 
   context 'connect' do
 
-    let(:string) { 'mongodb://example.com/?connect=sharded' }
+    let(:client) { new_local_client_nmio(string) }
 
-    it_behaves_like 'parses successfully'
+    shared_examples 'raises an error when client is created' do
+      it 'raises an error when client is created' do
+        lambda do
+          client
+        end.should raise_error(ArgumentError, /Invalid :connect option value/)
+      end
+    end
 
-    it 'is a symbol' do
-      expect(uri.uri_options[:connect]).to eq(:sharded)
+    %i(direct sharded replica_set load_balanced).each do |value|
+      context "#{value}" do
+        let(:string) { "mongodb://example.com/?connect=#{value}" }
+
+        it_behaves_like 'parses successfully'
+
+        it 'is a symbol' do
+          expect(uri.uri_options[:connect]).to eq(value)
+        end
+      end
+    end
+
+    %i(replica-set load-balanced).each do |value|
+      context "#{value}" do
+        let(:string) { "mongodb://example.com/?connect=#{value}" }
+
+        it_behaves_like 'parses successfully'
+
+        it 'is a symbol' do
+          expect(uri.uri_options[:connect]).to eq(value)
+        end
+
+        include_examples 'raises an error when client is created'
+      end
     end
 
     context 'invalid value' do
       let(:string) { 'mongodb://example.com/?connect=bogus' }
 
-      # should raise an error
       it_behaves_like 'parses successfully'
+
+      it 'is a symbol' do
+        expect(uri.uri_options[:connect]).to eq(:bogus)
+      end
+
+      include_examples 'raises an error when client is created'
     end
   end
 

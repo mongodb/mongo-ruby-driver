@@ -173,6 +173,10 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil)
+        if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
+          return cluster.servers.first
+        end
+
         server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
 
         # Special handling for zero timeout: if we have to select a server,

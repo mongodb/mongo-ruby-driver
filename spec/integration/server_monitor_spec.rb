@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe 'Server::Monitor' do
+  require_topology :single, :replica_set, :sharded
 
   let(:client) do
     new_local_client([ClusterConfig.instance.primary_address_str],

@@ -105,6 +105,11 @@ class Mongo::Cluster
       end
 
       case topology
+      when Topology::LoadBalanced
+        @updated_desc = ::Mongo::Server::Description::LoadBalancer.new(
+          updated_desc.address,
+        )
+        update_server_descriptions
       when Topology::Single
         if topology.replica_set_name
           if updated_desc.replica_set_name != topology.replica_set_name

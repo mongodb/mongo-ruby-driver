@@ -51,10 +51,12 @@ module Mongo
       # The various topologies for server selection.
       #
       # @since 2.0.0
+      # @api private
       OPTIONS = {
+        direct: Single,
+        load_balanced: LoadBalanced,
         replica_set: ReplicaSetNoPrimary,
         sharded: Sharded,
-        direct: Single,
       }.freeze
 
       # Get the initial cluster topology for the provided options.
@@ -72,7 +74,10 @@ module Mongo
       # @option options [ Symbol ] :connect Deprecated - use :direct_connection
       #   option instead of this option. The connection method to use. This
       #   forces the cluster to behave in the specified way instead of
-      #   auto-discovering. One of :direct, :replica_set, :sharded
+      #   auto-discovering. One of :direct, :replica_set, :sharded,
+      #   :load_balanced. If :connect is set to :load_balanced, the driver
+      #   will behave as if the server is a load balancer even if it isn't
+      #   connected to a load balancer.
       # @option options [ true | false ] :load_balanced Whether to expect to
       #   connect to a load balancer.
       # @option options [ Symbol ] :replica_set The name of the replica set to
@@ -83,17 +88,18 @@ module Mongo
       # @since 2.0.0
       # @api private
       def initial(cluster, monitoring, options)
+        connect = options[:connect]&.to_sym
         cls = if options[:direct_connection]
-          if options[:connect] && options[:connect] && options[:connect].to_sym != :direct
-            raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{options[:connect]}"
+          if connect && connect != :direct
+            raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{connect}"
           end
           if options[:load_balanced]
             raise ArgumentError, "Conflicting topology options: direct_connection=true and load_balanced=true"
           end
           Single
-        elsif options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
-          raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{options[:connect]}"
-        elsif options.key?(:connect)
+        elsif options[:direct_connection] == false && connect && connect == :direct
+          raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{connect}"
+        elsif connect && connect != :load_balanced
           if options[:load_balanced]
             raise ArgumentError, "Conflicting topology options: connect=#{options[:connect].inspect} and load_balanced=true"
           end
@@ -103,7 +109,7 @@ module Mongo
             raise ArgumentError, "Conflicting topology options: replica_set/replica_set_name and load_balanced=true"
           end
           ReplicaSetNoPrimary
-        elsif options[:load_balanced]
+        elsif options[:load_balanced] || connect == :load_balanced
           LoadBalanced
         else
           Unknown

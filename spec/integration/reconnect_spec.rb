@@ -16,20 +16,38 @@ describe 'Client after reconnect' do
     expect(doc['testk']).to eq('testv')
   end
 
-  it 'recreates monitor thread' do
-    thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
-    expect(thread).to be_alive
+  context 'non-lb' do
+    require_topology :single, :replica_set, :sharded
 
-    thread.kill
-    # context switch to let the thread get killed
-    sleep 0.1
-    expect(thread).not_to be_alive
+    it 'recreates monitor thread' do
+      thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      expect(thread).to be_alive
 
-    client.reconnect
+      thread.kill
+      # context switch to let the thread get killed
+      sleep 0.1
+      expect(thread).not_to be_alive
 
-    new_thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
-    expect(new_thread).not_to eq(thread)
-    expect(new_thread).to be_alive
+      client.reconnect
+
+      new_thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      expect(new_thread).not_to eq(thread)
+      expect(new_thread).to be_alive
+    end
+  end
+
+  context 'lb' do
+    require_topology :load_balanced
+
+    it 'does not recreate monitor thread' do
+      thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      expect(thread).to be nil
+
+      client.reconnect
+
+      new_thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      expect(new_thread).to be nil
+    end
   end
 
   context 'with min_pool_size > 0' do

@@ -59,15 +59,30 @@ describe 'Server selector' do
           primary_server.unknown!
         end
 
-        it 'raises NoServerAvailable with a message explaining the situation' do
-          expect do
-            result
-          end.to raise_error(Mongo::Error::NoServerAvailable, /The cluster is disconnected \(client may have been closed\)/)
+        context 'non-lb' do
+          require_topology :single, :replica_set, :sharded
+
+          it 'raises NoServerAvailable with a message explaining the situation' do
+            expect do
+              result
+            end.to raise_error(Mongo::Error::NoServerAvailable, /The cluster is disconnected \(client may have been closed\)/)
+          end
+        end
+
+        context 'lb' do
+          require_topology :load_balanced
+
+          it 'returns the load balancer' do
+            expect(result).to be_a(Mongo::Server)
+            result.should be_load_balancer
+          end
         end
       end
     end
 
     context 'monitoring thread is dead' do
+      require_topology :single, :replica_set, :sharded
+
       before do
         client.cluster.servers.each do |server|
           server.monitor.instance_variable_get('@thread').kill

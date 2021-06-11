@@ -111,16 +111,166 @@ their stated purposes:
 Connection Types
 ================
 
+The driver will, by default, discover the type of deployment it is instructed
+to connect to (except for load-balanced deployments)
+and behave in the manner that matches the deployment type.
+The subsections below describe how the driver behaves in each of the deployment
+types as well as how to force particular behavior, bypassing automatic
+deployment type detection.
+
+Note that the detection of deployment type happens when the driver receives
+the first reply from any of the servers it is instructed to connect to
+(unless the load-balancing mode is requested, see below). The driver will
+remain in the discovered or configured topology even if the underlying
+deployment is replaced by one of a different type. In particular, when
+replacing a replica set with a sharded cluster at the same address
+the client instance must be recreated (such as by restarting the application)
+for it to communicate with the sharded cluster.
+
+Automatic discovery of load-balanced deployments is currently not supported.
+Load-balanced deployments will be treated as deployments of their underlying
+type, which would generally be sharded clusters. The driver will fail to
+correctly operate when treating a load-balanced deployment as a sharded
+cluster, therefore when the deployment is a load-balanced one the client
+must be explicitly configured to :ref:`connect to a load balancer
+<load-balancer-connection>`.
+
+
+Standalone Server Connection
+----------------------------
+
+If the deployment is a single server, also known as a standalone deployment,
+all operations will be directed to the specified server.
+
+If the server is shut down and replaced by a replica set node, the driver
+will continue sending all operations to that node, even if the node is or
+becomes a secondary.
+
+To force a standalone connection, see the :ref:`direct connection
+<direct-connection>` section below.
+
+
+.. _connect-replica-set:
+
+Replica Set Connection
+----------------------
+
+When connecting to a :manual:`replica set</replication/>`, it is sufficient
+to pass the address of any node in the replica set to the driver.
+The node does not have to be the primary and it may be a hidden node.
+The driver will then automatically discover the remaining nodes.
+
+However, it is recommended to specify all nodes that are part of the
+replica set, so that in the event of one or more nodes being unavailable
+(for example, due to maintenance or reconfiguration) the driver can still
+connect to the replica set.
+
+Replica set connection examples:
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017' ], database: 'mydb')
+
+  Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ], database: 'mydb')
+
+  # Or using the URI syntax:
+  Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb")
+
+To make the driver verify the replica set name upon connection, pass it using
+the ``replica_set`` Ruby option or the ``replicaSet`` URI option:
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ],
+    database: 'mydb', replica_set: 'myapp')
+
+  # Or using the URI syntax:
+  Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?replicaSet=myapp")
+
+If the deployment is not a replica set or uses a different replica set name,
+all operations will fail (until the expected replica set is returned by
+the servers).
+
+It is also possible to force a replica set connection without specifying
+the replica set name. Doing so is generally unnecessary and is deprecated:
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ],
+    database: 'mydb', connect: :replica_set)
+
+  # Or using the URI syntax:
+  Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?connect=replica_set")
+
+To connect to a MongoDB Atlas cluster which is deployed as a replica set,
+connect to the URI:
+
+.. code-block:: ruby
+
+  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority")
+
+Please review the :ref:`SRV URI notes <srv-uri-notes>` if using SRV URIs.
+
+
+.. _connect-sharded-cluster:
+
+Sharded Cluster Connection
+--------------------------
+
+To connect to a :manual:`sharded cluster</sharding/>` deployment, specify
+the addresses of the ``mongos`` routers:
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '1.2.3.4:27017', '1.2.3.5:27017' ], database: 'mydb')
+
+  Mongo::Client.new("mongodb://1.2.3.4:27017,1.2.3.5:27017/mydb")
+
+Note that unlike a replica set connection, you may choose to connect to a
+subset of the ``mongos`` routers that exist in the deployment. The driver
+will monitor each router and will use the ones that are available
+(i.e., the driver will generally handle individual routers becoming
+unavailable due to failures or maintenance). When specifying the list of
+routers explicitly, the driver will not discover remaining routers that
+may be configured and will not attempt to connect to them.
+
+The driver will automatically balance the operation load among the routers
+it is aware of. 
+
+To connect to a MongoDB Atlas cluster which is deployed as a sharded cluster,
+connect to the URI:
+
+.. code-block:: ruby
+
+  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority")
+
+When the driver connects to a sharded cluster via an SRV URI, it will
+periodically poll the SRV records of the address specified in the URI
+for changes and will automatically add and remove the ``mongos`` hosts
+to/from its list of servers as they are added and removed to/from the
+sharded cluster.
+
+To force a sharded cluster connection, use the ``connect: :sharded``
+option. Doing so is generally unnecessary and is deprecated:
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ],
+    database: 'mydb', connect: :sharded)
+
+  # Or using the URI syntax:
+  Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?connect=sharded")
+
+Please review the :ref:`SRV URI notes <srv-uri-notes>` if using SRV URIs.
+
+
+.. _direct-connection:
+
 Direct Connection
 -----------------
 
-If the deployment is a replica set, the driver will by default discover all
-members of the replica set given the address of any one member, and will
-dispatch operations to the appropriate member (for example, writes would be
-dispatched to the primary).
-
-To force all operations to be performed on the designated server, specify the
-``direct_connection`` option:
+To disable the deployment type discovery and force all operations to be
+performed on a particular server, specify the ``direct_connection`` option:
 
 .. code-block:: ruby
 
@@ -129,69 +279,60 @@ To force all operations to be performed on the designated server, specify the
   # Or using the URI syntax:
   Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?directConnection=true")
 
-
-.. _connect-replica-set:
-
-Replica Set Connection
-----------------------
-
-To connect to a :manual:`replica set</replication/>` deployment managed by a
-service providing SRV URIs (such as MongoDB Atlas), connect to the URI:
+Alternatively, the deprecated ``connect: :direct`` option is equivalent:
 
 .. code-block:: ruby
 
-  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority")
-
-If not using SRV URIs, it is sufficient to pass the address of any node in the
-replica set to the driver; the driver will then automatically discover the
-remaining nodes. However, it is recommended to specify all nodes that are part
-of the replica set, so that in the event of one or more nodes being unavailable
-(for example, due to maintenance or reconfiguration) the driver can still
-connect to the replica set.
-
-.. code-block:: ruby
-
-  Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ],
-    :database => 'mydb', replica_set: 'myapp')
+  Mongo::Client.new([ '1.2.3.4:27017' ], database: 'mydb', connect: :direct)
 
   # Or using the URI syntax:
-  Mongo::Client.new("mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?replicaSet=myapp")
+  Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?connect=direct")
+
+The direct connection mode is most useful for performing operations on a
+particular replica set node, although it also permits the underlying server
+to change type (e.g. from a replica set node to a ``mongos`` router, or vice
+versa).
 
 
-.. _connect-sharded-cluster:
+.. _load-balancer-connection:
 
-Sharded Cluster Connection
---------------------------
+Load Balancer Connection
+------------------------
 
-To connect to a :manual:`sharded cluster</sharding/>` deployment managed by a
-service providing SRV URIs (such as MongoDB Atlas), connect to the URI:
+Unlike other deployment types, the driver does not currently automatically
+detect a load-balanced deployment.
 
-.. code-block:: ruby
-
-  Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority")
-
-When the driver connects to a sharded cluster via an SRV URI, it will monitor
-the SRV records of the address specified in the URI for changes and will
-automatically add and remove ``mongos`` hosts to/from its list of servers as
-they are added and removed to/from the sharded cluster.
-
-If not using SRV URIs, pass the addresses of one or more
-:manual:`mongos</reference/program/mongos/>` hosts. Unlike with
-replica set deployments, the driver is not able to discover all ``mongos``
-nodes in a sharded cluster when not using SRV URIs. It is not required that all
-``mongos`` node addresses are given to the driver - the driver will balance
-the operation load among the nodes it is given. Specifying more nodes will
-spread the operation load accordingly.
+To connect to a load balancer, specify the ``load_balanced: true`` Ruby option
+or the ``loadBalanced=true`` URI option:
 
 .. code-block:: ruby
 
-  Mongo::Client.new([ '1.2.3.4:27017', '1.2.3.5:27017' ], :database => 'mydb')
+  Mongo::Client.new([ '1.2.3.4:27017' ], database: 'mydb', load_balanced: true)
 
-  Mongo::Client.new("mongodb://1.2.3.4:27017,1.2.3.5:27017/mydb")
+  # Or using the URI syntax:
+  Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?loadBalanced=true")
+
+When using these options, if the specified server is not a load balancer,
+the client will fail all operations (until the server becomes a load balancer).
+
+To treat the server as a load balancer even if it doesn't identify as such,
+use the ``connect: :load_balanced`` Ruby option or the ``connect=load_balanced``
+URI option:
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '1.2.3.4:27017' ],
+    database: 'mydb', load_balanced: true, connect: :load_balanced)
+
+  # Or using the URI syntax:
+  Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?loadBalanced=true&connect=load_balanced")
 
 
-SRV URIs
-========
+
+.. _srv-uri-notes:
+
+SRV URI Notes
+=============
 
 When the driver connects to a
 :manual:`mongodb+srv protocol <reference/connection-string/#dns-seedlist-connection-format>`
@@ -209,7 +350,18 @@ URI, keep in mind the following:
 2. The driver looks up URI options in the DNS TXT records corresponding to the
    SRV records. These options can be overridden by URI options specified in the
    URI and by Ruby options, in this order.
-3. If the topology of the constructed ``Client`` object is unknown or a
+3. Because the URI options are retrieved in a separate DNS query from the
+   SRV lookup, in environments with unreliable network connectivity
+   the URI option query may fail when the SRV lookup succeeds. Such a failure
+   would cause the driver to use the wrong auth source leading to
+   authentication failures. This can be worked around by explicitly specifying
+   the auth source:
+
+   .. code-block:: ruby
+
+     Mongo::Client.new("mongodb+srv://username:myRealPassword@cluster0.mongodb.net/test?w=majority&authSource=admin")
+
+4. If the topology of the constructed ``Client`` object is unknown or a
    sharded cluster, the driver will begin monitoring the specified SRV DNS
    records for changes and will automatically update the list of servers in the
    cluster. The updates will stop if the topology becomes a single or a replica
@@ -327,7 +479,11 @@ Ruby Options
    * - ``:connect``
      - **Deprecated.** Disables deployment topology discovery normally
        performed by the dirver and forces the cluster topology to a specific
-       type. Choices: ``:direct``, ``:replica_set`` or ``:sharded``.
+       type. Valid values are ``:direct``, ``:load_balanced``,
+       ``:replica_set`` or ``:sharded``. If ``:load_balanced`` is used,
+       the client will behave as if it is connected to a load balancer
+       regardless of whether the server(s) it connects to advertise themselves
+       as load balancers.
      - ``Symbol``
      - none
 
@@ -767,6 +923,11 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - connect=String
      - ``:connect => Symbol``
+
+       The same values that the ``:connect`` Ruby option accepts are
+       accepted here. For multi-word values, the values must be provided
+       using underscores to separate the words, i.e.
+       ``connect=replica_set`` and ``connect=load_balanced``.
 
    * - connectTimeoutMS=Integer
      - ``:connect_timeout => Float``

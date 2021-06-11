@@ -24,26 +24,8 @@ describe Mongo::Client do
     end
 
     context 'with default scan: true' do
-      # TODO this test requires there being no outstanding background
-      # monitoring threads running, as otherwise the scan! expectation
-      # can be executed on a thread that belongs to one of the global
-      # clients for instance
-      it 'performs one round of sdam' do
-        # Does not work due to
-        # https://github.com/rspec/rspec-mocks/issues/1242.
-        #expect_any_instance_of(Mongo::Server::Monitor).to receive(:scan!).
-        #  exactly(SpecConfig.instance.addresses.length).times.and_call_original
-        c = new_local_client(
-          SpecConfig.instance.addresses, SpecConfig.instance.test_options)
-        expect(c.cluster.servers).not_to be_empty
-      end
 
-      # This checks the case of all initial seeds being removed from
-      # cluster during SDAM
-      context 'me mismatch on the only initial seed' do
-        let(:address) do
-          ClusterConfig.instance.alternate_address.to_s
-        end
+      shared_examples 'does not wait for server selection timeout' do
 
         let(:logger) do
           Logger.new(STDOUT, level: Logger::DEBUG)
@@ -94,12 +76,51 @@ describe Mongo::Client do
             Mongo::Cluster::Topology::ReplicaSetWithPrimary,
             Mongo::Cluster::Topology::Single,
             Mongo::Cluster::Topology::Sharded,
+            Mongo::Cluster::Topology::LoadBalanced,
           ]).to include(actual_class)
           expect(time_taken).to be < 5
 
           # run a command to ensure the client is a working one
           client.database.command(ping: 1)
         end
+      end
+
+      context 'when cluster is monitored' do
+        require_topology :single, :replica_set, :sharded
+
+        # TODO this test requires there being no outstanding background
+        # monitoring threads running, as otherwise the scan! expectation
+        # can be executed on a thread that belongs to one of the global
+        # clients for instance
+        it 'performs one round of sdam' do
+          # Does not work due to
+          # https://github.com/rspec/rspec-mocks/issues/1242.
+          #expect_any_instance_of(Mongo::Server::Monitor).to receive(:scan!).
+          #  exactly(SpecConfig.instance.addresses.length).times.and_call_original
+          c = new_local_client(
+            SpecConfig.instance.addresses, SpecConfig.instance.test_options)
+          expect(c.cluster.servers).not_to be_empty
+        end
+
+        # This checks the case of all initial seeds being removed from
+        # cluster during SDAM
+        context 'me mismatch on the only initial seed' do
+          let(:address) do
+            ClusterConfig.instance.alternate_address.to_s
+          end
+
+          include_examples 'does not wait for server selection timeout'
+        end
+      end
+
+      context 'when cluster is not monitored' do
+        require_topology :load_balanced
+
+        let(:address) do
+          ClusterConfig.instance.alternate_address.to_s
+        end
+
+        include_examples 'does not wait for server selection timeout'
       end
     end
 
@@ -388,10 +409,24 @@ describe Mongo::Client do
             end.should_not raise_error
           end
 
-          it 'fails server selection due to very small timeout' do
-            lambda do
-              client.database.command(ping: 1)
-            end.should raise_error(Mongo::Error::NoServerAvailable)
+          context 'non-lb' do
+            require_topology :single, :replica_set, :sharded
+
+            it 'fails server selection due to very small timeout' do
+              lambda do
+                client.database.command(ping: 1)
+              end.should raise_error(Mongo::Error::NoServerAvailable)
+            end
+          end
+
+          context 'lb' do
+            require_topology :load_balanced
+
+            it 'fails the operation after successful server selection' do
+              lambda do
+                client.database.command(ping: 1)
+              end.should raise_error(Mongo::Error::SocketTimeoutError, /socket took over.*to connect/)
+            end
           end
         end
 
@@ -1379,6 +1414,23 @@ describe Mongo::Client do
         end
 
         [nil].each do |v|
+          context "load_balanced: true and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                load_balanced: true, connect: v)
+            end
+
+            it 'is accepted' do
+              lambda do
+                client
+              end.should_not raise_error
+              client.options[:load_balanced].should be true
+              client.options[:connect].should eq v
+            end
+          end
+        end
+
+        [:load_balanced, 'load_balanced'].each do |v|
           context "load_balanced: true and connect: #{v.inspect}" do
             let(:client) do
               new_local_client_nmio(['127.0.0.1:27017'],
@@ -2436,7 +2488,12 @@ describe Mongo::Client do
       before do
         client.cluster.next_primary
         events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
-        events.length.should > 0
+        if ClusterConfig.instance.topology == :load_balanced
+          # No server monitoring in LB topology
+          events.length.should == 0
+        else
+          events.length.should > 0
+        end
       end
 
       it 'does not copy sdam_proc option to new client' do
@@ -2448,7 +2505,12 @@ describe Mongo::Client do
         # Give those some time to be processed.
         sleep 2
 
-        expect(subscriber.started_events.length).to be > 0
+        if ClusterConfig.instance.topology == :load_balanced
+          # No server monitoring in LB topology
+          expect(subscriber.started_events.length).to eq 0
+        else
+          expect(subscriber.started_events.length).to be > 0
+        end
         subscriber.started_events.clear
 
         # If this test takes longer than heartbeat interval,
