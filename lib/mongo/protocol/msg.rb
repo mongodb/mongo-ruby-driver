@@ -279,11 +279,6 @@ module Mongo
       end
 
       def maybe_add_server_api(server_api)
-        if @main_document[:getMore]
-          # getMore does not allow API parameters.
-          return self
-        end
-
         conflicts = {}
         %i(apiVersion apiStrict apiDeprecationErrors).each do |key|
           if @main_document.key?(key)

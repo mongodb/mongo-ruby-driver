@@ -134,17 +134,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-4.7"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
-      mongodb-version: '4.7'
-      topology: '*'
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "single-mongos"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
