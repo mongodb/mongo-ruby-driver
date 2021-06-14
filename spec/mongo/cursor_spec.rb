@@ -450,6 +450,7 @@ describe Mongo::Cursor do
     end
 
     before do
+      collection.delete_many
       collection.insert_many(documents)
     end
 
@@ -500,19 +501,42 @@ describe Mongo::Cursor do
       end
 
 
-      context 'when not all documents are iterated' do
+      context 'when result set is not iterated fully but the known # of documents is retrieved' do
+        # These tests set up a collection with 4 documents and find all
+        # of them but, instead of iterating the result set to completion,
+        # manually retrieve the 4 documents that are expected to exist.
+        # On 4.9 and lower servers, the server closes the cursor after
+        # retrieving the 4 documents.
+        # On 5.0, the server does not close the cursor after the 4 documents
+        # have been retrieved, and the client must attempt to retrieve the
+        # next batch (which would be empty) for the server to realize that
+        # the result set is fully iterated and close the cursor.
+        max_server_version '4.9'
 
-        it 'returns the session to the cluster session pool' do
-          3.times { enum.next }
-          expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
-          expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+        context 'when not all documents are iterated' do
+
+          it 'returns the session to the cluster session pool' do
+            3.times { enum.next }
+            expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+            expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+          end
+        end
+
+        context 'when the same number of documents is iterated as # in the collection' do
+
+          it 'returns the session to the cluster session pool' do
+            4.times { enum.next }
+            expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+            expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+          end
         end
       end
 
-      context 'when all documents are iterated' do
+      context 'when result set is iterated fully' do
 
         it 'returns the session to the cluster session pool' do
-          4.times { enum.next }
+          # Iterate fully and assert that there are 4 documents total
+          enum.to_a.length.should == 4
           expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
           expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
         end
