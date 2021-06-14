@@ -41,7 +41,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
               elsif test.require_single_mongos? && SpecConfig.instance.addresses.length > 1
                 # Many transaction spec tests that do not specifically deal with
                 # sharded transactions fail when run against a multi-mongos cluster
-                skip "Test requires single mongos"
+                skip "Test requires single mongos" unless Utils.serverless?
               end
             end
           end

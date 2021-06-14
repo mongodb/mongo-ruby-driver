@@ -6,8 +6,10 @@ require 'spec_helper'
 require 'runners/crud'
 
 describe 'Retryable writes spec tests' do
-  require_wired_tiger
-  require_no_multi_shard
+  unless Utils.serverless?
+    require_wired_tiger
+    require_no_multi_shard
+  end
 
   # Do not run these tests when write retries are disabled globally -
   # the tests won't work in that case and testing them with retries enabled

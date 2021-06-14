@@ -7,7 +7,7 @@ require 'runners/crud'
 require 'runners/transactions'
 
 describe 'Transactions' do
-  require_wired_tiger
+  require_wired_tiger unless Utils.serverless?
 
   define_transactions_spec_tests(TRANSACTIONS_TESTS)
 end
