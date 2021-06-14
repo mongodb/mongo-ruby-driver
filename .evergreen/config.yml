@@ -437,14 +437,10 @@ axes:
         display_name: "latest"
         variables:
           MONGODB_VERSION: "latest"
-      - id: "4.9"
-        display_name: "4.9"
+      - id: "5.0"
+        display_name: "5.0"
         variables:
-          MONGODB_VERSION: "4.9"
-      - id: "4.7"
-        display_name: "4.7"
-        variables:
-          MONGODB_VERSION: "4.7"
+          MONGODB_VERSION: "5.0"
       - id: "4.4"
         display_name: "4.4"
         variables:
@@ -910,33 +906,22 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-4.7"
+  - matrix_name: "mongo-5.0"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-2.7"]
-      mongodb-version: '4.7'
+      mongodb-version: '5.0'
       topology: "*"
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-4.9"
+  - matrix_name: "mongo-5.0-api-version"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-2.7"]
-      mongodb-version: '4.9'
-      topology: "*"
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-4.9-api-version"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
-      mongodb-version: '4.9'
+      mongodb-version: '5.0'
       topology: standalone
       api-version-required: yes
       os: ubuntu1804
