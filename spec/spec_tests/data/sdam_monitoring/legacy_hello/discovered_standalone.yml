@@ -1,8 +1,12 @@
-description: "Monitoring a replica set with non member"
-uri: "mongodb://a,b/"
+description: "Monitoring a discovered standalone connection"
+uri: "mongodb://a:27017/?directConnection=false"
 phases:
   -
-    responses: []
+    responses:
+      -
+        - "a:27017"
+        - { ok: 1, ismaster: true, minWireVersion: 0, maxWireVersion: 4 }
+
     outcome:
       events:
         -
@@ -23,39 +27,10 @@ phases:
                   hosts: []
                   passives: []
                   type: "Unknown"
-                -
-                  address: "b:27017"
-                  arbiters: []
-                  hosts: []
-                  passives: []
-                  type: "Unknown"
         -
           server_opening_event:
             topologyId: "42"
             address: "a:27017"
-        -
-          server_opening_event:
-            topologyId: "42"
-            address: "b:27017"
-  -
-    responses:
-      -
-        - "a:27017"
-        - {
-            ok: 1,
-            isWritablePrimary: true,
-            setName: "rs",
-            setVersion: 1.0,
-            primary: "a:27017",
-            hosts: [ "a:27017" ],
-            minWireVersion: 0,
-            maxWireVersion: 4
-          }
-      -
-        - "b:27017"
-        - { ok: 1, isWritablePrimary: true }
-    outcome:
-      events:
         -
           server_description_changed_event:
             topologyId: "42"
@@ -69,15 +44,9 @@ phases:
             newDescription:
               address: "a:27017"
               arbiters: []
-              hosts: [ "a:27017" ]
+              hosts: []
               passives: []
-              primary: "a:27017"
-              setName: "rs"
-              type: "RSPrimary"
-        -
-          server_closed_event:
-            topologyId: "42"
-            address: "b:27017"
+              type: "Standalone"
         -
           topology_description_changed_event:
             topologyId: "42"
@@ -90,21 +59,12 @@ phases:
                   hosts: []
                   passives: []
                   type: "Unknown"
-                -
-                  address: "b:27017"
-                  arbiters: []
-                  hosts: []
-                  passives: []
-                  type: "Unknown"
             newDescription:
-              topologyType: "ReplicaSetWithPrimary"
-              setName: "rs"
+              topologyType: "Single"
               servers:
                 -
                   address: "a:27017"
                   arbiters: []
-                  hosts: [ "a:27017" ]
+                  hosts: []
                   passives: []
-                  primary: "a:27017"
-                  setName: "rs"
-                  type: "RSPrimary"
+                  type: "Standalone"

@@ -43,7 +43,7 @@ phases:
         - "a:27017"
         - {
             ok: 1,
-            isWritablePrimary: true,
+            ismaster: true,
             setName: "rs",
             setVersion: 1.0,
             primary: "a:27017",
@@ -53,7 +53,7 @@ phases:
           }
       -
         - "b:27017"
-        - { ok: 1, isWritablePrimary: true }
+        - { ok: 1, ismaster: true }
     outcome:
       events:
         -
