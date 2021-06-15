@@ -844,6 +844,7 @@ module Mongo
           # If we are talking to a load balancer, there is no monitoring
           # and we don't know what server is behind the load balancer.
           # Assume everything is supported.
+          # TODO remove this when RUBY-2220 is implemented.
           return true
         end
 
