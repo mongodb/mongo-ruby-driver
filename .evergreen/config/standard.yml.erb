@@ -116,7 +116,7 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-2.7"]
       mongodb-version: '5.0'
-      topology: <%= tt %>
+      topology: '*'
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
