@@ -107,6 +107,9 @@ module Unified
         expected_events.each_with_index do |event, i|
           assert_event_matches(actual_events[i], event)
         end
+        unless spec.empty?
+          raise NotImplementedError, "Unhandled keys: #{spec}"
+        end
       end
     end
 
@@ -124,6 +127,12 @@ module Unified
       end
       if command = spec.use('command')
         assert_matches(actual.command, command, 'Commands differ')
+      end
+      if reply = spec.use('reply')
+        assert_matches(actual.reply, reply, 'Command reply does not match expectation')
+      end
+      unless spec.empty?
+        raise NotImplementedError, "Unhandled keys: #{spec}"
       end
     end
 
