@@ -56,20 +56,6 @@ describe Mongo::Server::Description do
         end
       end
 
-      describe '#initialize' do
-        context 'when Time.now is mocked' do
-          it 'does not freeze mocked time' do
-            obj = Time.now
-            expect(Time).to receive(:now).at_least(:once).and_return(obj)
-            expect(obj.frozen?).to be false
-
-            description = described_class.new(address, replica)
-            expect(description.last_update_time).to eq(obj)
-            expect(obj.frozen?).to be false
-          end
-        end
-      end
-
       describe '#arbiters' do
 
         context 'when the replica set has arbiters' do
