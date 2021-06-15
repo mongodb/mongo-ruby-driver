@@ -8,7 +8,7 @@ phases: [
         responses: [
              ["a:27017", {
                 ok: 1,
-                ismaster: true,
+                isWritablePrimary: true,
                 hosts: ["a:27017", "b:27017", "c:27017", "d:27017", "e:27017"],
                 setName: "rs",
                 logicalSessionTimeoutMinutes: 3,
@@ -46,7 +46,7 @@ phases: [
         responses: [
             ["d:27017", {
                 ok: 1,
-                ismaster: false,
+                isWritablePrimary: false,
                 isreplicaset: true,
                 minWireVersion: 0,
                 maxWireVersion: 6
@@ -82,7 +82,7 @@ phases: [
         responses: [
            ["e:27017", {
                 ok: 1,
-                ismaster: false,
+                isWritablePrimary: false,
                 hosts: ["a:27017", "b:27017", "c:27017", "d:27017", "e:27017"],
                 setName: "rs",
                 arbiterOnly: true,
@@ -121,7 +121,7 @@ phases: [
         responses: [
             ["b:27017", {
                 ok: 1,
-                ismaster: false,
+                isWritablePrimary: false,
                 secondary: true,
                 hosts: ["a:27017", "b:27017", "c:27017", "d:27017", "e:27017"],
                 setName: "rs",
@@ -162,7 +162,7 @@ phases: [
         responses: [
             ["c:27017", {
                 ok: 1,
-                ismaster: false,
+                isWritablePrimary: false,
                 setName: "rs",
                 hidden: true,
                 logicalSessionTimeoutMinutes: 1,
@@ -202,7 +202,7 @@ phases: [
         responses: [
             ["b:27017", {
                 ok: 1,
-                ismaster: false,
+                isWritablePrimary: false,
                 secondary: true,
                 hosts: ["a:27017", "b:27017", "c:27017", "d:27017", "e:27017"],
                 setName: "rs",

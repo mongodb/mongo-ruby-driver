@@ -1,4 +1,4 @@
-description: Repeated ismaster response must be processed
+description: Repeated isWritablePrimary response must be processed
 
 uri: "mongodb://a,b/?replicaSet=rs"
 
@@ -8,7 +8,7 @@ phases:
     -
       - "a:27017"
       - ok: 1
-        ismaster: false
+        isWritablePrimary: false
         secondary: true
         hidden: true
         hosts: ["a:27017", "c:27017"]
@@ -35,7 +35,7 @@ phases:
     -
       - "c:27017"
       - ok: 1
-        ismaster: true
+        isWritablePrimary: true
         minWireVersion: 0
         maxWireVersion: 6
     outcome:
@@ -55,7 +55,7 @@ phases:
     -
       - "a:27017"
       - ok: 1
-        ismaster: false
+        isWritablePrimary: false
         secondary: true
         hidden: true
         hosts: ["a:27017", "c:27017"]
@@ -82,7 +82,7 @@ phases:
     -
       - "c:27017"
       - ok: 1
-        ismaster: true
+        isWritablePrimary: true
         hosts: ["a:27017", "c:27017"]
         setName: "rs"
         minWireVersion: 0

@@ -9,7 +9,7 @@ phases: [
         responses: [
             ["a:27017", {
                 ok: 1,
-                ismaster: true,
+                isWritablePrimary: true,
                 hosts: ["a:27017", "b:27017", "c:27017"],
                 setVersion: 1,
                 setName: "rs",
@@ -49,7 +49,7 @@ phases: [
         responses: [
             ["b:27017", {
                 ok: 1,
-                ismaster: true,
+                isWritablePrimary: true,
                 hosts: ["a:27017", "b:27017", "c:27017"],
                 setName: "rs",
                 setVersion: 1,
@@ -91,7 +91,7 @@ phases: [
         responses: [
             ["a:27017", {
                 ok: 1,
-                ismaster: true,
+                isWritablePrimary: true,
                 hosts: ["a:27017", "b:27017", "c:27017"],
                 setVersion: 1,
                 setName: "rs",
@@ -132,7 +132,7 @@ phases: [
         responses: [
             ["c:27017", {
                 ok: 1,
-                ismaster: true,
+                isWritablePrimary: true,
                 hosts: ["a:27017", "b:27017", "c:27017"],
                 setName: "rs",
                 setVersion: 1,
