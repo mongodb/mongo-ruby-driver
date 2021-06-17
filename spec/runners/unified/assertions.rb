@@ -4,6 +4,7 @@
 module Unified
 
   module Assertions
+    include RSpec::Matchers
 
     def assert_result_matches(actual, expected)
       if Hash === expected
@@ -86,8 +87,6 @@ module Unified
 
     def assert_document_matches(actual, expected, msg)
       unless actual == expected
-    p actual
-    p expected
         raise Error::ResultMismatch, "#{msg} does not match"
       end
     end
@@ -130,7 +129,7 @@ module Unified
       expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
       assert_eq(actual.class.name.sub(/.*::/, ''), expected_name, 'Event name does not match')
       if spec.use('hasServiceId')
-        # TODO: RUBY-2654
+        actual.service_id.should_not be nil
       end
       if db_name = spec.use('databaseName')
         assert_eq(actual.database_name, db_name, 'Database names differ')

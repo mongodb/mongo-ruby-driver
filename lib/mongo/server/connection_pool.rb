@@ -475,6 +475,8 @@ module Mongo
       #   subsequent check out operation.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
+      # @option options [ Object ] :service_id Clear connections with
+      #   the specified service id only.
       #
       # @return [ true ] true.
       #
@@ -488,18 +490,38 @@ module Mongo
           stop_populator
         end
 
+        service_id = options && options[:service_id]
+
         @lock.synchronize do
           @generation += 1
 
           publish_cmap_event(
-            Monitoring::Event::Cmap::PoolCleared.new(@server.address)
+            Monitoring::Event::Cmap::PoolCleared.new(
+              @server.address,
+              service_id: service_id,
+            )
           )
 
           unless options && options[:lazy]
-            until @available_connections.empty?
-              connection = @available_connections.pop
-              connection.disconnect!(reason: :stale)
-              @populate_semaphore.signal
+            if service_id
+              loop do
+                conn = @available_connections.detect do |conn|
+                  conn.service_id == service_id
+                end
+                if conn
+                  @available_connections.delete(conn)
+                  conn.disconnect!(reason: :stale)
+                  @populate_semaphore.signal
+                else
+                  break
+                end
+              end
+            else
+              until @available_connections.empty?
+                connection = @available_connections.pop
+                connection.disconnect!(reason: :stale)
+                @populate_semaphore.signal
+              end
             end
           end
         end

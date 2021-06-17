@@ -167,6 +167,7 @@ module Mongo
             socket_object_id: socket.object_id, connection_id: id,
             connection_generation: generation,
             server_connection_id: description.server_connection_id,
+            service_id: description.service_id,
           )
           start = Utils.monotonic_time
           result = nil
@@ -181,11 +182,17 @@ module Mongo
             end
           rescue Exception => e
             total_duration = Utils.monotonic_time - start
-            command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
+            command_failed(nil, address, operation_id, message.payload,
+              e.message, total_duration,
+              service_id: description.service_id,
+            )
             raise
           else
             total_duration = Utils.monotonic_time - start
-            command_completed(result, address, operation_id, message.payload, total_duration)
+            command_completed(result, address, operation_id, message.payload,
+              total_duration,
+              service_id: description.service_id,
+            )
           end
           if result && context.decrypt?
             result = result.maybe_decrypt(context)

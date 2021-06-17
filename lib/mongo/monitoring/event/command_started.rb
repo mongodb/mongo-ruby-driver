@@ -43,6 +43,9 @@ module Mongo
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
 
+        # @return [ nil | Object ] The service id, if any.
+        attr_reader :service_id
+
         # object_id of the socket object used for this command.
         #
         # @api private
@@ -70,18 +73,21 @@ module Mongo
         # @param [ Integer ] request_id The request id.
         # @param [ Integer ] operation_id The operation id.
         # @param [ BSON::Document ] command The command arguments.
+        # @param [ Object ] service_id The service id, if any.
         #
         # @since 2.1.0
         # @api private
         def initialize(command_name, database_name, address, request_id,
           operation_id, command, socket_object_id: nil, connection_id: nil,
-          connection_generation: nil, server_connection_id: nil
+          connection_generation: nil, server_connection_id: nil,
+          service_id: nil
         )
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
           @operation_id = operation_id
+          @service_id = service_id
           @command = redacted(command_name, command)
           @socket_object_id = socket_object_id
           @connection_id = connection_id
@@ -126,6 +132,7 @@ module Mongo
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] operation_id The operation id.
         # @param [ Hash ] payload The message payload.
+        # @param [ Object ] service_id The service id, if any.
         #
         # @return [ CommandStarted ] The event.
         #
@@ -133,7 +140,7 @@ module Mongo
         # @api private
         def self.generate(address, operation_id, payload,
           socket_object_id: nil, connection_id: nil, connection_generation: nil,
-          server_connection_id: nil
+          server_connection_id: nil, service_id: nil
         )
           new(
             payload[:command_name],
@@ -151,6 +158,7 @@ module Mongo
             connection_id: connection_id,
             connection_generation: connection_generation,
             server_connection_id: server_connection_id,
+            service_id: service_id,
           )
         end
 
