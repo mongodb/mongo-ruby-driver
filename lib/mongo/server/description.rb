@@ -840,6 +840,14 @@ module Mongo
             raise ArgumentError, "Bogus required version #{version}"
           end
 
+        if load_balancer?
+          # If we are talking to a load balancer, there is no monitoring
+          # and we don't know what server is behind the load balancer.
+          # Assume everything is supported.
+          # TODO remove this when RUBY-2220 is implemented.
+          return true
+        end
+
         required_wv >= min_wire_version && required_wv <= max_wire_version
       end
     end
