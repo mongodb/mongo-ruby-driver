@@ -144,6 +144,13 @@ module Unified
                   if ignore_events = spec.use('ignoreCommandMonitoringEvents')
                     subscriber.ignore_commands(ignore_events)
                   end
+                when /^pool/
+                  subscriber = (@subscribers[client] ||= EventSubscriber.new)
+                  unless client.send(:monitoring).subscribers[Mongo::Monitoring::CONNECTION_POOL]&.include?(subscriber)
+                    client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+                  end
+                  kind = event.sub('Event', '').gsub(/([A-Z])/) { "_#{$1}" }.sub('pool', 'Pool').downcase.to_sym
+                  subscriber.add_wanted_events(kind)
                 else
                   raise NotImplementedError, "Unknown event #{event}"
                 end
@@ -260,8 +267,10 @@ module Unified
             send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
-              unless BSON::String::IllegalKey === e
-                raise Error::ErrorMismatch, "Expected client error but got #{e}"
+              # isClientError doesn't actually mean a client error.
+              # It means anything other than OperationFailure. DRIVERS-1799
+              if Mongo::Error::OperationFailure === e
+                raise Error::ErrorMismatch, %Q,Expected not OperationFailure ("isClientError") but got #{e},
               end
             end
             if code = expected_error.use('errorCode')

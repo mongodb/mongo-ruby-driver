@@ -613,6 +613,13 @@ module Mongo
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
       if load_balanced?
+        if updated_desc.unknown?
+          unless options[:keep_connection_pool]
+            servers_list.each do |server|
+              server.clear_connection_pool
+            end
+          end
+        end
         return
       end
 

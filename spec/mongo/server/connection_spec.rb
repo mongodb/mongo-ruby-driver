@@ -849,8 +849,9 @@ describe Mongo::Server::Connection do
         context 'in load-balanced topology' do
           require_topology :load_balanced
 
-          it 'does not disconnect connection pool' do
-            expect(server.pool).not_to receive(:disconnect!)
+          it 'disconnects connection pool for service id' do
+            # TODO RUBY-2665 assert that service id is passed to disconnect
+            expect(server.pool).to receive(:disconnect!)
             result
           end
 
