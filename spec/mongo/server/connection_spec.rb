@@ -849,6 +849,12 @@ describe Mongo::Server::Connection do
           result
         end
 
+        it 'marks server unknown' do
+          expect(server).not_to be_unknown
+          result
+          expect(server).to be_unknown
+        end
+
         it 'does not request server scan' do
           expect(server.scan_semaphore).not_to receive(:signal)
           result

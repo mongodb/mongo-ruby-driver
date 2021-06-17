@@ -12,17 +12,22 @@ module Unified
 
     def wanted_events
       all_events.select do |event|
-        kind = event.class.name.sub(/.*::/, '').sub('Command', '').downcase.to_sym
+        kind = event.class.name.sub(/.*::/, '').sub('Command', '').gsub(/([A-Z])/) { "_#{$1}" }.sub(/^_/, '').downcase.to_sym
         @wanted_events[kind]
       end.select do |event|
-        event.command_name != 'configureFailPoint' &&
-          if @ignore_commands
-            !@ignore_commands.include?(event.command_name)
-          else
-            true
-          end
+        if event.respond_to?(:command_name)
+          event.command_name != 'configureFailPoint' &&
+            if @ignore_commands
+              !@ignore_commands.include?(event.command_name)
+            else
+              true
+            end
+        else
+          true
+        end
       end.reject do |event|
-        %w(authenticate getnonce saslStart saslContinue).include?(event.command_name)
+        event.respond_to?(:command_name) &&
+          %w(authenticate getnonce saslStart saslContinue).include?(event.command_name)
       end
     end
 

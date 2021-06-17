@@ -101,6 +101,16 @@ module Unified
         subscriber = @subscribers.fetch(client)
         expected_events = spec.use!('events')
         actual_events = subscriber.wanted_events
+        case spec.use('eventType')
+        when nil, 'command'
+          actual_events.select! do |event|
+            event.class.name.sub(/.*::/, '') =~ /^Command/
+          end
+        when 'cmap'
+          actual_events.select! do |event|
+            event.class.name.sub(/.*::/, '') =~ /^Pool/
+          end
+        end
         unless actual_events.length == expected_events.length
           raise Error::ResultMismatch, "Event count mismatch: expected #{expected_events.length}, actual #{actual_events.length}\nExpected: #{expected_events}\nActual: #{actual_events}"
         end
@@ -119,6 +129,9 @@ module Unified
       spec = UsingHash[spec]
       expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
       assert_eq(actual.class.name.sub(/.*::/, ''), expected_name, 'Event name does not match')
+      if spec.use('hasServiceId')
+        # TODO: RUBY-2654
+      end
       if db_name = spec.use('databaseName')
         assert_eq(actual.database_name, db_name, 'Database names differ')
       end
