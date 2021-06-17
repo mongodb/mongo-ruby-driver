@@ -33,12 +33,16 @@ describe Mongo::Operation::ReadPreferenceSupported do
     double('description').tap do |description|
       allow(description).to receive(:mongos?).and_return(mongos?)
       allow(description).to receive(:standalone?).and_return(standalone?)
+      # TODO consider adding tests for load-balanced topologies also
+      allow(description).to receive(:load_balancer?).and_return(false)
     end
   end
 
   let(:server) do
     double('server').tap do |server|
       allow(server).to receive(:cluster).and_return(cluster)
+      # TODO consider adding tests for load-balanced topologies also
+      allow(server).to receive(:load_balancer?).and_return(false)
     end
   end
 

@@ -169,8 +169,11 @@ module Mongo
         Lint.assert_type(connection, Server::Connection)
 
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
-        if connection.description.standalone?
+        read_doc = if connection.description.standalone?
           # Read preference is never sent to standalones.
+          nil
+        elsif connection.server.load_balancer?
+          read&.to_mongos
         elsif connection.description.mongos?
           # When server is a mongos:
           # - $readPreference is never sent when mode is 'primary'
@@ -178,12 +181,7 @@ module Mongo
           # When mode is 'secondaryPreferred' $readPreference is currently
           # required to only be sent when a non-mode field (i.e. tag_sets)
           # is present, but this causes wrong behavior (DRIVERS-1642).
-          if read
-            doc = read.to_mongos
-            if doc
-              sel['$readPreference'] = doc
-            end
-          end
+          read&.to_mongos
         elsif connection.server.cluster.single?
           # In Single topology:
           # - If no read preference is specified by the application, the driver
@@ -198,13 +196,15 @@ module Mongo
           if [nil, 'primary'].include?(read_doc['mode'])
             read_doc['mode'] = 'primaryPreferred'
           end
-          sel['$readPreference'] = read_doc
+          read_doc
         else
           # In replica sets, read preference is passed to the server if one
           # is specified by the application, and there is no default.
-          if read
-            sel['$readPreference'] = read.to_doc
-          end
+          read&.to_doc
+        end
+
+        if read_doc
+          sel['$readPreference'] = read_doc
         end
       end
 

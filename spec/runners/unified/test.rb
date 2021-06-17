@@ -164,6 +164,9 @@ module Unified
           database = entities.get(:database, spec.use!('database'))
           # TODO verify
           opts = Utils.snakeize_hash(spec.use('collectionOptions') || {})
+          if opts.key?(:read_preference)
+            opts[:read] = opts.delete(:read_preference)
+          end
           database[spec.use!('collectionName'), opts]
         when 'bucket'
           database = entities.get(:database, spec.use!('database'))
