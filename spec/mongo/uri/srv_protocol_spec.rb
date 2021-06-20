@@ -4,6 +4,7 @@
 require 'lite_spec_helper'
 
 describe Mongo::URI::SRVProtocol do
+  require_external_connectivity
   clean_slate_for_all_if_possible
 
   let(:scheme) { 'mongodb+srv://' }
