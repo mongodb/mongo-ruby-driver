@@ -78,6 +78,7 @@ describe Mongo::Operation::Find::Legacy do
         double('description').tap do |description|
           expect(description).to receive(:mongos?) { false }
           expect(description).to receive(:standalone?) { false }
+          expect(description).to receive(:load_balancer?) { false }
         end
       end
 

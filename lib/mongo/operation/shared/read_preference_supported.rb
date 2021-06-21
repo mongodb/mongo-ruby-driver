@@ -96,7 +96,9 @@ module Mongo
       #
       # @return [ Hash ] New command document to send to the server.
       def add_read_preference_legacy(sel, connection)
-        if read && connection.description.mongos? && read_pref = read.to_mongos
+        if read && (
+          connection.description.mongos? || connection.description.load_balancer?
+        ) && read_pref = read.to_mongos
           # If the read preference contains only mode and mode is secondary
           # preferred and we are sending to a pre-OP_MSG server, this read
           # preference is indicated by the :secondary_ok wire protocol flag
