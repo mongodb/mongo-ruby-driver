@@ -36,6 +36,34 @@ describe 'CRUD operations' do
         end
       end
     end
+
+    context 'when using the legacy $query syntax' do
+      before do
+        collection.insert_one(_id: 1, test: 1)
+        collection.insert_one(_id: 2, test: 2)
+        collection.insert_one(_id: 3, test: 3)
+      end
+
+      context 'filter only' do
+        it 'passes the filter' do
+          collection.find(:'$query' => {test: 1}).first.should == {'_id' => 1, 'test' => 1}
+        end
+      end
+
+      context 'empty filter with order' do
+        it 'passes the filter' do
+          collection.find(:'$query' => {}, :'$orderby' => {test: 1}).first.should == {'_id' => 1, 'test' => 1}
+          collection.find(:'$query' => {}, :'$orderby' => {test: -1}).first.should == {'_id' => 3, 'test' => 3}
+        end
+      end
+
+      context 'filter with order' do
+        it 'passes both filter and order' do
+          collection.find(:'$query' => {test: {'$gt' => 1}}, '$orderby' => {test: 1}).first.should == {'_id' => 2, 'test' => 2}
+          collection.find(:'$query' => {test: {'$gt' => 1}}, '$orderby' => {test: -1}).first.should == {'_id' => 3, 'test' => 3}
+        end
+      end
+    end
   end
 
   describe 'insert' do

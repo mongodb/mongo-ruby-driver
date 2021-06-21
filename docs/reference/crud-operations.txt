@@ -173,6 +173,29 @@ notation.
   end
 
 
+Legacy ``$query`` Syntax
+------------------------
+
+*This usage is deprecated.*
+
+The ``find`` method allows providing the query and the options using the
+legacy ``$query`` syntax in the first parameter:
+
+.. code-block:: ruby
+
+  collection.find(:'$query' => {name: 'Mr. Smith'})
+  # Equivalent to:
+  collection.find(name: 'Mr. Smith')
+
+  collection.find(:'$query' => {name: 'Mr. Smith'}, :'$sort' => {age: 1})
+  # Equivalent to:
+  collection.find(name: 'Mr. Smith').sort(age: 1)
+
+When the query is executed against MongoDB 3.2 or newer, the driver will
+use the protocol appropriate for the server version in question, automatically
+converting the query as needed to either a find command or an OP_MSG payload.
+
+
 .. _query-options:
 
 Query Options
