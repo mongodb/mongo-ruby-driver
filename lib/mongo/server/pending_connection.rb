@@ -212,6 +212,7 @@ module Mongo
         @description = Description.new(
           address, response,
           average_round_trip_time: average_rtt,
+          load_balancer: server.load_balancer?,
         ).tap do |new_description|
           @server.cluster.run_sdam_flow(@server.description, new_description)
         end

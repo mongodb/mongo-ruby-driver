@@ -609,14 +609,16 @@ module Mongo
     #   on 4.2+ servers).
     # @option aptions [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
+    # @option options [ Object ] :service_id Change state for the specified
+    #   service id only.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
       if load_balanced?
-        if updated_desc.unknown?
+        if updated_desc.config.empty?
           unless options[:keep_connection_pool]
             servers_list.each do |server|
-              server.clear_connection_pool
+              server.clear_connection_pool(service_id: options[:service_id])
             end
           end
         end

@@ -72,7 +72,7 @@ module Mongo
       @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {},
-        load_balancer: options[:load_balancer])
+        load_balancer: !!@options[:load_balancer])
       @last_scan = nil
       @last_scan_monotime = nil
       unless options[:monitoring_io] == false
@@ -523,6 +523,8 @@ module Mongo
     #   of the error response that is causing the server to be marked unknown.
     # @option options [ true | false ] :stop_push_monitor Whether to stop
     #   the PushMonitor associated with the server, if any.
+    # @option options [ Object ] :service_id Discard state for the specified
+    #   service id only.
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
@@ -550,7 +552,9 @@ module Mongo
       if options[:topology_version]
         config['topologyVersion'] = options[:topology_version]
       end
-      new_description = Description.new(address, config)
+      new_description = Description.new(address, config,
+        load_balancer: load_balancer?,
+      )
       cluster.run_sdam_flow(description, new_description, options)
     end
 
@@ -559,11 +563,14 @@ module Mongo
       @description = description
     end
 
+    # @param [ Object ] :service_id Close connections with the specified
+    #   service id only.
+    #
     # @api private
-    def clear_connection_pool
+    def clear_connection_pool(service_id: nil)
       @pool_lock.synchronize do
         if @pool
-          @pool.disconnect!
+          @pool.disconnect!(service_id: service_id)
         end
       end
     end
