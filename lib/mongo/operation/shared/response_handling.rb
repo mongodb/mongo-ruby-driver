@@ -112,6 +112,7 @@ module Mongo
       rescue Error, Error::AuthError => e
         e.add_note("on #{connection.address.seed}")
         e.generation = connection.generation
+        e.service_id = connection.description.service_id
         raise e
       end
 

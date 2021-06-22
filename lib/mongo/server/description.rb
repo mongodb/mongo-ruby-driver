@@ -226,6 +226,12 @@ module Mongo
         @last_update_time = Time.now.freeze
         @last_update_monotime = Utils.monotonic_time
 
+        if load_balancer
+          if ok? && !service_id
+            @config = @config.merge('serviceId' => "fake:#{rand(2**32-1)+1}")
+          end
+        end
+
         if Mongo::Lint.enabled?
           # prepopulate cache instance variables
           hosts
@@ -800,6 +806,11 @@ module Mongo
       # @api experimental
       def server_connection_id
         config['connectionId']
+      end
+
+      # @api experimental
+      def service_id
+        config['serviceId']
       end
 
       # Check equality of two descriptions.

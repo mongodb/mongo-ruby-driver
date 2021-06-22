@@ -316,8 +316,9 @@ module Mongo
           @error = e
           @server.unknown!(
             generation: e.generation,
+            # or description.service_id?
+            service_id: e.service_id,
             stop_push_monitor: true,
-            service_id: description.service_id,
           )
           raise
         rescue Error::SocketTimeoutError => e

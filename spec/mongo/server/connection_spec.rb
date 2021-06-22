@@ -850,9 +850,12 @@ describe Mongo::Server::Connection do
           require_topology :load_balanced
 
           it 'disconnects connection pool for service id' do
-            # TODO RUBY-2665 assert that service id is passed to disconnect
-            expect(server.pool).to receive(:disconnect!)
-            result
+            connection.description.service_id.should_not be nil
+
+            RSpec::Mocks.with_temporary_scope do
+              expect(server.pool).to receive(:disconnect!).with(service_id: connection.description.service_id)
+              result
+            end
           end
 
           it 'does not mark server unknown' do

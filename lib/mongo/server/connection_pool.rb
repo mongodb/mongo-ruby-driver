@@ -473,6 +473,8 @@ module Mongo
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
+      # @option options [ Object ] :service_id Discard state for the specified
+      #   service id only.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
       # @option options [ Object ] :service_id Clear connections with
@@ -794,7 +796,11 @@ module Mongo
           raise
         end
       rescue Error::SocketError, Error::SocketTimeoutError => exc
-        @server.unknown!(generation: exc.generation, stop_push_monitor: true)
+        @server.unknown!(
+          generation: exc.generation,
+          service_id: exc.service_id,
+          stop_push_monitor: true,
+        )
         raise
       end
 
