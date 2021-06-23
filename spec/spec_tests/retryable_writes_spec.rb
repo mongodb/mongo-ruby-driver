@@ -7,9 +7,12 @@ require 'runners/crud'
 
 describe 'Retryable writes spec tests' do
   unless Utils.serverless?
+    # Storage detection fails for serverless instances. However, it is save to
+    # assume that a serverless instance uses WiredTiger Storage Engine,
+    # so we skip the check.
     require_wired_tiger
-    require_no_multi_shard
   end
+  require_no_multi_shard
 
   # Do not run these tests when write retries are disabled globally -
   # the tests won't work in that case and testing them with retries enabled
