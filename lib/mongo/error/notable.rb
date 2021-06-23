@@ -63,6 +63,13 @@ module Mongo
       # @return [ Integer | nil ] Connection pool generation.
       attr_accessor :generation
 
+      # Returns service id for the connection on which the error occurred.
+      #
+      # @return [ Object | nil ] Service id.
+      #
+      # @api experimental
+      attr_accessor :service_id
+
       # @api public
       def to_s
         super + notes_tail

@@ -450,7 +450,11 @@ module Mongo
     def handle_handshake_failure!
       yield
     rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError => e
-      unknown!(generation: e.generation, stop_push_monitor: true)
+      unknown!(
+        generation: e.generation,
+        service_id: e.service_id,
+        stop_push_monitor: true,
+      )
       raise
     end
 
@@ -473,7 +477,11 @@ module Mongo
       raise
     rescue Mongo::Error::SocketError => e
       # non-timeout network error
-      unknown!(generation: e.generation, stop_push_monitor: true)
+      unknown!(
+        generation: e.generation,
+        service_id: e.service_id,
+        stop_push_monitor: true,
+      )
       raise
     rescue Auth::Unauthorized
       # auth error, keep server description and topology as they are
@@ -519,6 +527,8 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
+    # @option options [ Object ] :service_id Discard state for the specified
+    #   service id only.
     # @option options [ TopologyVersion ] :topology_version Topology version
     #   of the error response that is causing the server to be marked unknown.
     # @option options [ true | false ] :stop_push_monitor Whether to stop
@@ -528,7 +538,11 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
-      if options[:load_balancer]
+    if options[:load_balancer]; raise 'not supported' end
+      if load_balancer?
+        if service_id = options[:service_id]
+          pool.disconnect!(service_id: service_id)
+        end
         return
       end
 
@@ -549,6 +563,9 @@ module Mongo
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
       config = {}
+      if options[:service_id]
+        config['serviceId'] = options[:service_id]
+      end
       if options[:topology_version]
         config['topologyVersion'] = options[:topology_version]
       end
