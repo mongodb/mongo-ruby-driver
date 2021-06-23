@@ -980,11 +980,24 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  # TODO remove this configuration when 5.0 final ships and just leave
+  # the lint-5.0 one.
   - matrix_name: "lint"
     matrix_spec:
       lint: on
       ruby: "ruby-2.7"
       mongodb-version: ["4.4"]
+      topology: ["standalone", "replica-set", "sharded-cluster"]
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "lint-5.0"
+    matrix_spec:
+      lint: on
+      ruby: "ruby-2.7"
+      mongodb-version: ["5.0"]
       topology: '*'
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"

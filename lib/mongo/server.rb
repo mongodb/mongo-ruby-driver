@@ -538,10 +538,18 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
-    if options[:load_balancer]; raise 'not supported' end
       if load_balancer?
+        # When the client is in load-balanced topology, servers (the one and
+        # only that can be) starts out as a load balancer and stays as a
+        # load balancer indefinitely. As such it is not marked unknown.
+        #
+        # However, this method also clears connection pool for the server
+        # when the latter is marked unknown, and this part needs to happen
+        # when the server is a load balancer.
         if service_id = options[:service_id]
           pool.disconnect!(service_id: service_id)
+        elsif Lint.enabled?
+          raise Error::LintError, 'Load balancer was asked to be marked unknown without a service id'
         end
         return
       end

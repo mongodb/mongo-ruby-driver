@@ -80,6 +80,8 @@ describe Mongo::Cursor do
     end
 
     context 'server is unknown' do
+      require_topology :single, :replica_set, :sharded
+
       let(:server) do
         view.send(:server_selector).select_server(authorized_client.cluster).tap do |server|
           authorized_client.cluster.disconnect!

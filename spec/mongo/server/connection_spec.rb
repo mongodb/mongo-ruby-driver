@@ -448,8 +448,16 @@ describe Mongo::Server::Connection do
           )
         end
 
+        let(:exception) do
+          Mongo::Error::SocketError.new.tap do |exc|
+            if server.load_balancer?
+              allow(exc).to receive(:service_id).and_return('fake')
+            end
+          end
+        end
+
         let(:error) do
-          expect_any_instance_of(auth_mechanism).to receive(:login).and_raise(Mongo::Error::SocketError)
+          expect_any_instance_of(auth_mechanism).to receive(:login).and_raise(exception)
           begin
             connection.send(:connect!)
           rescue => ex
