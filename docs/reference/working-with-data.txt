@@ -16,6 +16,7 @@ implements for inserting, updating and retrieving data from MongoDB.
   bulk-operations
   projection
   aggregation
+  map-reduce
   text-search
   geospatial-search
   query-cache
