@@ -810,9 +810,9 @@ buildvariants:
     matrix_spec:
       # We exclude ruby 2.3 because we do not have this version on Ubuntu 18.04.
       # Since it is planned to drop support of this version from the driver
-      # in the next release, it does not worth to invest time into supporting
+      # in the next release, it is not worth it to invest time into supporting
       # this version.
-      ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0"]
+      ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
     display_name: "Atlas tests ${ruby}"
     run_on:
       - ubuntu1804-small
@@ -823,9 +823,9 @@ buildvariants:
     matrix_spec:
       # We exclude ruby 2.3 because we do not have this version on Ubuntu 18.04.
       # Since it is planned to drop support of this version from the driver
-      # in the next release, it does not worth to invest time into supporting
+      # in the next release, it is not worth it to invest time into supporting
       # this version.
-      ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0"]
+      ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
     display_name: "Atlas serverless tests ${ruby}"
     run_on:
       - ubuntu1804-small
