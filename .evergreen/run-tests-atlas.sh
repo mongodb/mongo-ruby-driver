@@ -25,7 +25,7 @@ do
   this_test_status=$?
   echo "TEST STATUS"
   echo ${this_test_status}
-  
+
   if test $this_test_status != 0; then
     test_status=$this_test_status
   fi

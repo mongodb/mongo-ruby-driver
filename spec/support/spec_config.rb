@@ -416,17 +416,24 @@ EOT
   end
 
   def ssl_options
-    if ssl?
-      {
+    return {} unless ssl?
+    {
         ssl: true,
         ssl_verify: true,
-        ssl_cert:  client_cert_path,
-        ssl_key:  client_key_path,
-        ssl_ca_cert: ca_cert_path,
-      }.merge(Utils.underscore_hash(@uri_tls_options))
-    else
-      {}
-    end
+    }.tap do |options|
+      # We should use bundled cetificates for ssl except for testing against
+      # Atlas instances. Atlas instances have addresses in domains
+      # mongodb.net or mongodb-dev.net.
+      if @mongodb_uri.servers.grep(/mongodb.*\.net/).empty?
+        options.merge!(
+          {
+            ssl_cert: client_cert_path,
+            ssl_key: client_key_path,
+            ssl_ca_cert: ca_cert_path,
+          }
+        )
+      end
+    end.merge(Utils.underscore_hash(@uri_tls_options))
   end
 
   def compressor_options
@@ -532,6 +539,10 @@ EOT
 
   # Get the default test user for the suite on versions 2.6 and higher.
   def test_user
+    # When testing against a serverless instance, we are not allowed to create
+    # new users, we just have one user for everyhing.
+    return root_user if Utils.serverless?
+
     Mongo::Auth::User.new(
       database: 'admin',
       user: 'ruby-test-user',

@@ -37,7 +37,7 @@ functions:
         working_dir: "src"
         script: |
           set -ex
-          
+
           git submodule update --init --recursive
 
   "fetch egos":
@@ -46,15 +46,15 @@ functions:
         working_dir: "src"
         script: |
           set -e
-          
+
           # Python version:
           #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
-          
+
           # C version:
           curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
 
-  
+
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -131,13 +131,24 @@ functions:
 
           # See what we've done
           cat expansion.yml
-  
+
 
     # Load the expansion file to make an evergreen variable with the current
     # unique version
     - command: expansions.update
       params:
         file: src/expansion.yml
+
+  "delete serverless instance":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        shell: bash
+        script: |
+          ${PREPARE_SHELL}
+          if [[ -n "${SERVERLESS_INSTANCE_NAME}" ]]; then
+            SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} .evergreen/serverless/delete-instance.sh
+          fi
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -378,7 +389,32 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
+          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
+
+  "run serverless tests":
+    - command: shell.exec
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # This hack with PROJECT env is necessary while serverless
+          # rejects creating instances with too long names.
+          PROJECT="mongo-ruby-driver" .evergreen/serverless/create-instance.sh
+          cat serverless-expansion.yml
+
+    - command: expansions.update
+      params:
+        file: src/serverless-expansion.yml
+
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SERVERLESS_URI="${MONGODB_URI}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"
@@ -393,9 +429,10 @@ post:
   #- func: "upload test results"
   - func: "upload test results to s3"
 
+
 tasks:
 
-  
+
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -417,7 +454,7 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
-  
+
 axes:
 
   - id: preload
@@ -759,32 +796,32 @@ axes:
   - id: ocsp-connectivity
     display_name: OCSP Connectivity
     values:
-      
+
       - id: pass
         display_name: pass
         variables:
           OCSP_CONNECTIVITY: pass
-      
+
       - id: fail
         display_name: fail
         variables:
           OCSP_CONNECTIVITY: fail
-      
+
 
   - id: extra-uri-options
     display_name: extra URI options
     values:
       - id: none
         display_name: None
-      
+
       - id: "tlsInsecure=true"
         variables:
           EXTRA_URI_OPTIONS: "tlsInsecure=true"
-      
+
       - id: "tlsAllowInvalidCertificates=true"
         variables:
           EXTRA_URI_OPTIONS: "tlsAllowInvalidCertificates=true"
-      
+
 
   - id: api-version-required
     display_name: API version required
@@ -1378,7 +1415,7 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1393,7 +1430,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1408,7 +1445,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1423,7 +1460,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1438,7 +1475,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1453,7 +1490,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1468,7 +1505,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1483,7 +1520,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1498,7 +1535,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
   - matrix_name: ocsp-connectivity
     matrix_spec:
       ocsp-algorithm: '*'
@@ -1513,7 +1550,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-  
+
 
   - matrix_name: ocsp-connectivity-jruby
     matrix_spec:

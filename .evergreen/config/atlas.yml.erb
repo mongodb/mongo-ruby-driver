@@ -4,6 +4,15 @@ buildvariants:
     #matrix_spec: { }
     display_name: "Atlas tests ${ruby}"
     run_on:
-      - ubuntu1604-small
+      - ubuntu1804-small
     tasks:
        - name: test-atlas
+
+  - matrix_name: "serverless"
+    matrix_spec: { ruby: 'ruby-3.0' }
+    #matrix_spec: { }
+    display_name: "Atlas serverless tests ${ruby}"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-serverless

@@ -21,7 +21,7 @@ RSpec.configure do |config|
   config.extend(Constraints)
 
   config.before(:all) do
-    if ClusterConfig.instance.fcv_ish >= '3.6'
+    if ClusterConfig.instance.fcv_ish >= '3.6' && !Utils.serverless? # Serverless instances do not support killAllSessions command.
       kill_all_server_sessions
     end
   end

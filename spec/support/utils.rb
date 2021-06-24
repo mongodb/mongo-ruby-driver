@@ -595,4 +595,14 @@ module Utils
       end
     end
   end
+
+  # Detect whether specs are running against Mongodb Atlas serverless instance.
+  # This method does not do any magic, it just checks whether environment
+  # variable SERVERLESS is set. This is a recommended way to inform spec runners
+  # that they are running against a serverless instance
+  #
+  # @return [ true | false ] Whether specs are running against a serverless instance.
+  module_function def serverless?
+    !!ENV['SERVERLESS']
+  end
 end

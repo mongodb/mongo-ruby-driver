@@ -4,7 +4,7 @@
 module Mongo
   module CRUD
     class Requirement
-      YAML_KEYS = %w(minServerVersion maxServerVersion topology topologies serverParameters).freeze
+      YAML_KEYS = %w(minServerVersion maxServerVersion topology topologies serverParameters serverless).freeze
 
       def initialize(spec)
         spec = spec.dup
@@ -37,11 +37,22 @@ module Mongo
           nil
         end
         @server_parameters = spec['serverParameters']
+        @serverless = if serverless = spec['serverless']
+          case spec['serverless']
+          when 'require' then :require
+          when 'forbid' then :forbid
+          when 'allow' then :allow
+          else raise "Unknown serverless requirement: #{serverless}"
+          end
+        else
+          nil
+        end
       end
 
       attr_reader :min_server_version
       attr_reader :max_server_version
       attr_reader :topologies
+      attr_reader :serverless
 
       def short_min_server_version
         if min_server_version
@@ -85,6 +96,13 @@ module Mongo
                 ok = false
               end
             end
+          end
+        end
+        if @serverless
+          if ::Utils.serverless?
+            ok = ok && [:allow, :require].include?(serverless)
+          else
+            ok = ok && [:allow, :forbid].include?(serverless)
           end
         end
         ok

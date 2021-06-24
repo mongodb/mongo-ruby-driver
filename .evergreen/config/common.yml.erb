@@ -37,7 +37,7 @@ functions:
         working_dir: "src"
         script: |
           set -ex
-          
+
           git submodule update --init --recursive
 
   "fetch egos":
@@ -46,10 +46,10 @@ functions:
         working_dir: "src"
         script: |
           set -e
-          
+
           # Python version:
           #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
-          
+
           # C version:
           curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
@@ -105,6 +105,11 @@ functions:
             export ATLAS_TLS11_URI="${atlas_tls11_uri}"
             export ATLAS_TLS12_URI="${atlas_tls12_uri}"
             export RVM_RUBY="${RVM_RUBY}"
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
+            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
+            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
           EOT
           # See what we've done
           cat expansion.yml
@@ -192,6 +197,17 @@ functions:
     - command: expansions.update
       params:
         file: src/expansion.yml
+
+  "delete serverless instance":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        shell: bash
+        script: |
+          ${PREPARE_SHELL}
+          if [[ -n "${SERVERLESS_INSTANCE_NAME}" ]]; then
+            SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} .evergreen/serverless/delete-instance.sh
+          fi
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -432,7 +448,32 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
+          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
+
+  "run serverless tests":
+    - command: shell.exec
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # This hack with PROJECT env is necessary while serverless
+          # rejects creating instances with too long names.
+          PROJECT="mongo-ruby-driver" .evergreen/serverless/create-instance.sh
+          cat serverless-expansion.yml
+
+    - command: expansions.update
+      params:
+        file: src/serverless-expansion.yml
+
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SERVERLESS_URI="${MONGODB_URI}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"
@@ -446,6 +487,9 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
+  <% if @atlas %>
+  - func: "delete serverless instance"
+  <% end %>
 
 tasks:
 
@@ -453,6 +497,9 @@ tasks:
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
+  - name: "test-serverless"
+    commands:
+      - func: "run serverless tests"
   <% else %>
   - name: "test-docker"
     commands:
