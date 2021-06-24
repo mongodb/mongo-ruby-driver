@@ -224,12 +224,12 @@ def define_spec_tests_with_requirements(spec, &block)
         if req.topologies
           require_topology *req.topologies
         end
-        if ::Utils.serverless? && req.serverless == :forbid
+        if SpecConfig.instance.serverless? && req.serverless == :forbid
           before(:all) do
             skip "Serverless forbidden"
           end
         end
-        if !::Utils.serverless? && req.serverless == :require
+        if !SpecConfig.instance.serverless? && req.serverless == :require
           before(:all) do
             skip "Serverless required"
           end
