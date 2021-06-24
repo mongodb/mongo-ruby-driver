@@ -67,7 +67,7 @@ tests:
     runOnRequirements:
         # serverless does not support either of the current database-level aggregation stages ($listLocalSessions and
         # $currentOp)
-      #- serverless: forbid
+      - serverless: forbid
     operations:
       - name: aggregate
         object: *adminDatabase
