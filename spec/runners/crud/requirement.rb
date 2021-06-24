@@ -99,7 +99,7 @@ module Mongo
           end
         end
         if @serverless
-          if ::Utils.serverless?
+          if SpecConfig.instance.serverless?
             ok = ok && [:allow, :require].include?(serverless)
           else
             ok = ok && [:allow, :forbid].include?(serverless)

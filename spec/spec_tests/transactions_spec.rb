@@ -7,10 +7,7 @@ require 'runners/crud'
 require 'runners/transactions'
 
 describe 'Transactions' do
-  # Storage detection fails for serverless instances. However, it is safe to
-  # assume that a serverless instance uses WiredTiger Storage Engine,
-  # so we skip the check.
-  require_wired_tiger unless Utils.serverless?
+  require_wired_tiger
 
   define_transactions_spec_tests(TRANSACTIONS_TESTS)
 end
