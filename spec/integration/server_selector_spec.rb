@@ -52,6 +52,8 @@ describe 'Server selector' do
       end
 
       context 'there is no known primary' do
+        require_topology :single, :replica_set, :sharded
+
         before do
           primary_server = client.cluster.next_primary
           client.close
