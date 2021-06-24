@@ -156,6 +156,16 @@ class SpecConfig
     ENV.key?('OCSP_CONNECTIVITY') && ENV['OCSP_CONNECTIVITY'] != ''
   end
 
+  # Detect whether specs are running against Mongodb Atlas serverless instance.
+  # This method does not do any magic, it just checks whether environment
+  # variable SERVERLESS is set. This is a recommended way to inform spec runners
+  # that they are running against a serverless instance
+  #
+  # @return [ true | false ] Whether specs are running against a serverless instance.
+  def serverless?
+    !!ENV['SERVERLESS']
+  end
+
   # Test suite configuration
 
   def client_debug?
@@ -535,7 +545,7 @@ EOT
   def test_user
     # When testing against a serverless instance, we are not allowed to create
     # new users, we just have one user for everyhing.
-    return root_user if Utils.serverless?
+    return root_user if serverless?
 
     Mongo::Auth::User.new(
       database: 'admin',
