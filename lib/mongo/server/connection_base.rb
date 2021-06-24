@@ -88,6 +88,9 @@ module Mongo
         :max_message_size,
         :mongos?
 
+      # @return [ nil | Object ] The service id, if any.
+      def_delegators :description, :service_id
+
       # Connection pool generation from which this connection was created.
       # May be nil.
       #

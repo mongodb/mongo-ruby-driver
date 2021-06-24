@@ -105,7 +105,7 @@ module Mongo
           connection.server.unknown!(
             keep_connection_pool: keep_pool,
             generation: connection.generation,
-            service_id: connection.description.service_id,
+            service_id: connection.service_id,
             topology_version: result.topology_version,
           )
 
