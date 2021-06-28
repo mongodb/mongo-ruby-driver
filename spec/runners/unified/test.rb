@@ -156,6 +156,15 @@ module Unified
                 end
               end
             end
+            if @observe_secnsitive = spec.use('observeSensitiveCommands')
+              %w(authenticate saslStart saslContinue getnonce createUser updateUser copydbgetnonce copydbsaslstart copydb hello ismaster isMaster).each do |event|
+                  subscriber = (@subscribers[client] ||= EventSubscriber.new)
+                  unless client.send(:monitoring).subscribers[Mongo::Monitoring::COMMAND].include?(subscriber)
+                    client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+                  end
+                  subscriber.add_wanted_events(event)
+              end
+            end
           end
         when 'database'
           client = entities.get(:client, spec.use!('client'))

@@ -48,13 +48,34 @@ describe Mongo::Monitoring::Event::Secure do
 
     context 'when the command is not in the redacted list' do
 
-      let(:redacted) do
-        secure.redacted(:find, document)
+      context 'the command is not a hello/legacy hello command' do
+
+        let(:redacted) do
+          secure.redacted(:find, document)
+        end
+
+        it 'returns the document' do
+          expect(redacted).to eq(document)
+        end
+
       end
 
-      it 'returns the document' do
-        expect(redacted).to eq(document)
+      %w(hello ismaster isMaster).each do |command|
+        context command do
+          it 'returns an empty document if speculative auth' do
+            expect(
+              secure.redacted(command, BSON::Document.new('speculativeAuthenticate' => "foo"))
+            ).to be_empty
+          end
+
+          it 'returns an original document if no speculative auth' do
+            expect(
+              secure.redacted(command, document)
+            ).to eq(document)
+          end
+        end
       end
+
     end
   end
 
