@@ -973,7 +973,6 @@ buildvariants:
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
       ruby: "ruby-2.6"
       mongodb-version: "4.2"
       topology: standalone
