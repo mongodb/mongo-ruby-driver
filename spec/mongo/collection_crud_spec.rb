@@ -1894,6 +1894,11 @@ describe Mongo::Collection do
     context 'when a session supporting causal consistency is used' do
       require_wired_tiger
 
+      before do
+        collection.drop
+        collection.create
+      end
+
       let(:cursors) do
         collection.parallel_scan(2, session: session)
       end

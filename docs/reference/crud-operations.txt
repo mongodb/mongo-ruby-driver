@@ -260,6 +260,32 @@ when querying and their corresponding methods as examples.
          # MongoDB 2.6
          client[:artists].find.explain(verbose: true)
          
+       The explain operation supports ``:session`` and ``:read``
+       (for read preference) options. To specify these options for a single
+       explain operation, they must be given to the ``find`` method as
+       follows:
+     
+       .. code-block:: ruby
+
+         client[:artists].find({}, session: session).explain
+
+         client[:artists].find({}, read: {mode: :secondary_preferred}).explain
+       
+       If the read preference option is specified on the client or on the
+       collection, it will be passed to the explain operation:
+     
+       .. code-block:: ruby
+
+         client[:artists, read: {mode: :secondary_preferred}].find.explain
+       
+       Note that the session option is not accepted when creating a collection
+       object.
+       
+       The explain command does not support passing the read concern option.
+       If the read concern is specifed on the client or collection level, or
+       if the read concern is specified as a find option, it will NOT be passed
+       by the driver to the explain command.
+       
        .. note::
        
          The information returned by the server for the ``explain`` command

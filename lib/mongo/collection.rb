@@ -237,7 +237,7 @@ module Mongo
       # TODO put the list of read options in a class-level constant when
       # we figure out what the full set of them is.
       options = Hash[self.options.reject do |key, value|
-        %w(read read_preference).include?(key.to_s)
+        %w(read read_preference read_concern).include?(key.to_s)
       end]
       operation = { :create => name }.merge(options)
       operation.delete(:write)
@@ -253,12 +253,12 @@ module Mongo
           raise Error::UnsupportedCollation
         end
 
-        Operation::Create.new({
-                                selector: operation,
-                                db_name: database.name,
-                                write_concern: write_concern,
-                                session: session,
-                                }).execute(server, context: Operation::Context.new(client: client, session: session))
+        Operation::Create.new(
+          selector: operation,
+          db_name: database.name,
+          write_concern: write_concern,
+          session: session,
+        ).execute(server, context: Operation::Context.new(client: client, session: session))
       end
     end
 
@@ -332,8 +332,8 @@ module Mongo
     # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
     #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
     #   Set this option to prevent that.
-    # @option options [ true, false ] :oplog_replay Internal replication use only - driver
-    #   should not set.
+    # @option options [ true, false ] :oplog_replay For internal replication
+    #   use only, applications should not set this option.
     # @option options [ Hash ] :projection The fields to include or exclude from each doc
     #   in the result set.
     # @option options [ Session ] :session The session to use.

@@ -133,7 +133,7 @@ module Mongo
           end
         end
 
-        sel = selector(connection).dup
+        sel = BSON::Document.new(selector(connection))
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
 

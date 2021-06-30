@@ -19,7 +19,7 @@ module Mongo
   module Operation
     class MapReduce
 
-      # A MongoDB mapreduce operation sent as an op message.
+      # A MongoDB map-reduce operation sent as an op message.
       #
       # @api private
       #

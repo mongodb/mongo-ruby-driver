@@ -19,6 +19,7 @@ require 'mongo/operation/find/command'
 require 'mongo/operation/find/op_msg'
 require 'mongo/operation/find/legacy'
 require 'mongo/operation/find/result'
+require 'mongo/operation/find/builder'
 
 module Mongo
   module Operation

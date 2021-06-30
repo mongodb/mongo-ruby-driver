@@ -141,6 +141,8 @@ module Mongo
       # @option options [ Hash ] :read The read preference to use for the
       #   query. If none is provided, the collection's default read preference
       #   is used.
+      # @option options [ Hash ] :read_concern The read concern to use for
+      #   the query.
       # @option options [ true | false ] :show_disk_loc Return disk location
       #   info as a field in each doc.
       # @option options [ Integer ] :skip The number of documents to skip.
@@ -153,7 +155,19 @@ module Mongo
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
         @collection = collection
-        parse_parameters!(BSON::Document.new(filter), BSON::Document.new(options))
+
+        filter = BSON::Document.new(filter)
+        options = BSON::Document.new(options)
+
+        # This is when users pass $query in filter and other modifiers
+        # alongside?
+        query = filter.delete(:$query)
+        # This makes modifiers contain the filter if filter wasn't
+        # given via $query but as top-level keys, presumably
+        # downstream code ignores non-modifier keys in the modifiers?
+        modifiers = filter.merge(options.delete(:modifiers) || {})
+        @filter = (query || filter).freeze
+        @options = Operation::Find::Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
       end
 
       # Get a human-readable string representation of +View+.
@@ -187,13 +201,6 @@ module Mongo
         @collection = other.collection
         @options = other.options.dup
         @filter = other.filter.dup
-      end
-
-      def parse_parameters!(filter, options)
-        query = filter.delete(QUERY)
-        modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
-        @filter = (query || filter).freeze
-        @options = Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
       end
 
       def new(options)

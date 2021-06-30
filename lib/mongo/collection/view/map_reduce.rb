@@ -156,6 +156,28 @@ module Mongo
           configure(:out, location)
         end
 
+        # Returns the collection name where the map-reduce result is written to.
+        # If the result is returned inline, returns nil.
+        def out_collection_name
+          if options[:out].respond_to?(:keys)
+            options[:out][OUT_ACTIONS.find do |action|
+              options[:out][action]
+            end]
+          end || options[:out]
+        end
+
+        # Returns the database name where the map-reduce result is written to.
+        # If the result is returned inline, returns nil.
+        def out_database_name
+          if options[:out]
+            if options[:out].respond_to?(:keys) && (db = options[:out][:db])
+              db
+            else
+              database.name
+            end
+          end
+        end
+
         # Set or get a scope on the operation.
         #
         # @example Set the scope value.
@@ -207,6 +229,8 @@ module Mongo
 
         private
 
+        OUT_ACTIONS = [ :replace, :merge, :reduce ].freeze
+
         def server_selector
           @view.send(:server_selector)
         end
@@ -257,11 +281,15 @@ module Mongo
         end
 
         def fetch_query_op(server, session)
-          if server.with_connection { |connection| connection.features }.find_command_enabled?
-            Operation::Find.new(find_command_spec(session))
-          else
-            Operation::Find.new(fetch_query_spec)
-          end
+          spec = {
+            coll_name: out_collection_name,
+            db_name: out_database_name,
+            filter: {},
+            session: session,
+            read: read,
+            read_concern: options[:read_concern] || collection.read_concern,
+          }
+          Operation::Find.new(spec)
         end
 
         def send_fetch_query(server, session)

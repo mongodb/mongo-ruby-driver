@@ -54,6 +54,14 @@ require 'mongo/operation/drop_index'
 
 module Mongo
 
+  # This module encapsulates all of the operation classes defined by the driver.
+  #
+  # The operation classes take Ruby options as constructor parameters.
+  # For example, :read contains read preference and :read_concern contains read
+  # concern, whereas server commands use readConcern field for the read
+  # concern and read preference is passed as $readPreference or secondaryOk
+  # wire protocol flag bit.
+  #
   # @api private
   module Operation
 

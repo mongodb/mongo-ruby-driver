@@ -16,54 +16,62 @@
 # limitations under the License.
 
 module Mongo
-  class Collection
-    class View
+  module Operation
+    class Find
       module Builder
 
-        # Provides behavior for mapping modifiers.
+        # Provides behavior for mapping Ruby options to legacy OP_QUERY
+        # find modifiers.
         #
-        # @since 2.2.0
+        # This module is used in two ways:
+        # 1. When Collection#find is invoked with the legacy OP_QUERY
+        #    syntax (:$query argument etc.), this module is used to map
+        #    the legacy parameters into the Ruby options that normally
+        #    are used by applications.
+        # 2. When sending a find operation using the OP_QUERY protocol,
+        #    this module is used to map the Ruby find options to the
+        #    modifiers in the wire protocol message.
+        #
+        # @api private
         module Modifiers
-          extend self
 
-          # Mappings from driver options to legacy server values.
-          #
-          # @since 2.2.0
+          # Mappings from Ruby options to OP_QUERY modifiers.
           DRIVER_MAPPINGS = BSON::Document.new(
-            sort: '$orderby',
-            hint: '$hint',
             comment: '$comment',
-            snapshot: '$snapshot',
+            explain: '$explain',
+            hint: '$hint',
             max_scan: '$maxScan',
+            max_time_ms: '$maxTimeMS',
             max_value: '$max',
             min_value: '$min',
-            max_time_ms: '$maxTimeMS',
             return_key: '$returnKey',
             show_disk_loc: '$showDiskLoc',
-            explain: '$explain'
+            snapshot: '$snapshot',
+            sort: '$orderby',
           ).freeze
 
-          # Mappings from server values to driver options.
-          #
-          # @since 2.2.0
+          # Mappings from OP_QUERY modifiers to Ruby options.
           SERVER_MAPPINGS = BSON::Document.new(DRIVER_MAPPINGS.invert).freeze
 
-          # Transform the provided server modifiers to driver options.
+          # Transform the provided OP_QUERY modifiers to Ruby options.
           #
           # @example Transform to driver options.
           #   Modifiers.map_driver_options(modifiers)
           #
           # @param [ Hash ] modifiers The modifiers.
           #
-          # @return [ BSON::Document ] The driver options.
-          #
-          # @since 2.2.0
-          def self.map_driver_options(modifiers)
+          # @return [ BSON::Document ] The Ruby options.
+          module_function def map_driver_options(modifiers)
             Options::Mapper.transform_documents(modifiers, SERVER_MAPPINGS)
           end
 
-          # Transform the provided options into a document of only server
+          # Transform the provided Ruby options into a document of OP_QUERY
           # modifiers.
+          #
+          # Accepts both string and symbol keys.
+          #
+          # The input mapping may contain additional keys that do not map to
+          # OP_QUERY modifiers, in which case the extra keys are ignored.
           #
           # @example Map the server modifiers.
           #   Modifiers.map_server_modifiers(options)
@@ -71,9 +79,7 @@ module Mongo
           # @param [ Hash, BSON::Document ] options The options.
           #
           # @return [ BSON::Document ] The modifiers.
-          #
-          # @since 2.2.0
-          def self.map_server_modifiers(options)
+          module_function def map_server_modifiers(options)
             Options::Mapper.transform_documents(options, DRIVER_MAPPINGS)
           end
         end
