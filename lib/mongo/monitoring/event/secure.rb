@@ -63,6 +63,11 @@ module Mongo
           elsif %w(hello ismaster isMaster).include?(command_name.to_s) &&
             !!document['speculativeAuthenticate']
           then
+            # According to Command Monitoring spec,for hello/lecagy hello commands
+            # when speculativeAuthenticate is present, their commands AND replies
+            # MUST be redacted from the events. So, we replace the entire event
+            # payload.
+            # See https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst#security
             BSON::Document.new
           else
             document

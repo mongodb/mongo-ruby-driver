@@ -43,6 +43,7 @@ module Unified
       @test_spec.freeze
       @subscribers = {}
       @options = opts
+      @observe_sensitive = spec.use('observeSensitiveCommands')
     end
 
     attr_reader :test_spec
@@ -154,15 +155,6 @@ module Unified
                 else
                   raise NotImplementedError, "Unknown event #{event}"
                 end
-              end
-            end
-            if @observe_secnsitive = spec.use('observeSensitiveCommands')
-              %w(authenticate saslStart saslContinue getnonce createUser updateUser copydbgetnonce copydbsaslstart copydb hello ismaster isMaster).each do |event|
-                  subscriber = (@subscribers[client] ||= EventSubscriber.new)
-                  unless client.send(:monitoring).subscribers[Mongo::Monitoring::COMMAND].include?(subscriber)
-                    client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-                  end
-                  subscriber.add_wanted_events(event)
               end
             end
           end
