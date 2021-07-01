@@ -157,6 +157,9 @@ describe 'CRUD operations' do
     context 'with read preference specified on operation level' do
       require_topology :sharded
 
+      # RUBY-2706
+      min_server_fcv '3.6'
+
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
           client['foo'].find({}, read: {mode: :secondary_preferred}).explain.should be_explain_output
@@ -168,6 +171,9 @@ describe 'CRUD operations' do
     context 'with read preference specified on collection level' do
       require_topology :sharded
 
+      # RUBY-2706
+      min_server_fcv '3.6'
+
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
           client['foo', read: {mode: :secondary_preferred}].find.explain.should be_explain_output
@@ -178,6 +184,9 @@ describe 'CRUD operations' do
 
     context 'with read preference specified on client level' do
       require_topology :sharded
+
+      # RUBY-2706
+      min_server_fcv '3.6'
 
       let(:client) { authorized_client.with(read: {mode: :secondary_preferred}) }
 
