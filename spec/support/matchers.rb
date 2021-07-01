@@ -73,3 +73,16 @@ RSpec::Matchers.define :take_shorter_than do |min_expected_time|
     (Time.now - start_time).should < min_expected_time
   end
 end
+
+RSpec::Matchers.define :be_explain_output do
+  match do |actual|
+    Hash === actual && (
+      actual.key?('queryPlanner') ||
+      actual.key?('allPlans')
+    )
+  end
+
+  failure_message do |actual|
+    "expected that #{actual} is explain output: is a hash with either allPlans or queryPlanner keys present"
+  end
+end

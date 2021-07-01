@@ -147,7 +147,7 @@ describe 'CRUD operations' do
       it 'passes the session' do
         client.start_session do |session|
           event = Utils.get_command_event(client, 'explain') do |client|
-            client['foo'].find({}, session: session).explain.should have_key('queryPlanner')
+            client['foo'].find({}, session: session).explain.should be_explain_output
           end
           event.command.fetch('lsid').should == session.session_id
         end
@@ -159,7 +159,7 @@ describe 'CRUD operations' do
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
-          client['foo'].find({}, read: {mode: :secondary_preferred}).explain.should have_key('queryPlanner')
+          client['foo'].find({}, read: {mode: :secondary_preferred}).explain.should be_explain_output
         end
         event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
       end
@@ -170,7 +170,7 @@ describe 'CRUD operations' do
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
-          client['foo', read: {mode: :secondary_preferred}].find.explain.should have_key('queryPlanner')
+          client['foo', read: {mode: :secondary_preferred}].find.explain.should be_explain_output
         end
         event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
       end
@@ -183,7 +183,7 @@ describe 'CRUD operations' do
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
-          client['foo'].find.explain.should have_key('queryPlanner')
+          client['foo'].find.explain.should be_explain_output
         end
         event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
       end
