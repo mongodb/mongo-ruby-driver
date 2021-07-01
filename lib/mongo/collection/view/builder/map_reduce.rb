@@ -114,6 +114,11 @@ module Mongo
                 collection.read_concern)
             end
             command.merge!(view_options)
+            # Read preference isn't simply passed in the command payload
+            # (it may need to be converted to wire protocol flags)
+            # so remove it here and hopefully it's handled elsewhere.
+            # If not, RUBY-2706.
+            command.delete(:read)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
