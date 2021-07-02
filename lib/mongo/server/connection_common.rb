@@ -128,15 +128,17 @@ module Mongo
         if respond_to?(:id)
           note << ", connection #{generation}:#{id}"
         end
-        if respond_to?(:description) && description&.service_id
-          note << ", service id #{description.service_id}"
+        # Non-monitoring connections have service id.
+        # Monitoring connections do not.
+        if respond_to?(:service_id) && service_id
+          note << ", service id #{service_id}"
         end
         e.add_note(note)
         if respond_to?(:generation)
           # Non-monitoring connections
           e.generation = generation
           if respond_to?(:description)
-            e.service_id = description&.service_id
+            e.service_id = service_id
           end
         end
         raise e

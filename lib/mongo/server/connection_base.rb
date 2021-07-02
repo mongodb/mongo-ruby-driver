@@ -89,7 +89,9 @@ module Mongo
         :mongos?
 
       # @return [ nil | Object ] The service id, if any.
-      def_delegators :description, :service_id
+      def service_id
+        description&.service_id
+      end
 
       # Connection pool generation from which this connection was created.
       # May be nil.
