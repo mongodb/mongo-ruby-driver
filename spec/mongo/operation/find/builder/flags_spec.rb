@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-require 'spec_helper'
+require 'lite_spec_helper'
 
-describe Mongo::Collection::View::Builder::Flags do
+describe Mongo::Operation::Find::Builder::Flags do
 
   describe '.map_flags' do
 

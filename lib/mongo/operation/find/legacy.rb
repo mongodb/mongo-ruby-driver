@@ -35,7 +35,16 @@ module Mongo
         private
 
         def message(connection)
-          Protocol::Query.new(db_name, coll_name, command(connection), options(connection))
+          selector = Find::Builder::Legacy.selector(spec, connection)
+          options = options(connection).update(
+            Find::Builder::Legacy.query_options(spec, connection),
+          )
+          Protocol::Query.new(
+            db_name,
+            coll_name,
+            selector,
+            options,
+          )
         end
       end
     end

@@ -27,6 +27,7 @@ module Mongo
       class OpMsg < OpMsgBase
         include ExecutableTransactionLabel
         include PolymorphicResult
+        include CommandBuilder
       end
     end
   end

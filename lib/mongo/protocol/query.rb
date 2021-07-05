@@ -64,13 +64,21 @@ module Mongo
       def initialize(database, collection, selector, options = {})
         @database = database
         @namespace = "#{database}.#{collection}"
+        if selector.nil?
+          raise ArgumentError, 'Selector cannot be nil'
+        end
         @selector = selector
         @options = options
         @project = options[:project]
         @limit = determine_limit
         @skip = options[:skip]  || 0
         @flags = options[:flags] || []
-        @upconverter = Upconverter.new(collection, selector, options, flags)
+        @upconverter = Upconverter.new(
+          collection,
+          BSON::Document.new(selector),
+          BSON::Document.new(options),
+          flags,
+        )
         super
       end
 
@@ -224,7 +232,7 @@ module Mongo
         }.freeze
 
         SPECIAL_FIELD_MAPPINGS = {
-          :$readPreference => 'readPreference',
+          :$readPreference => '$readPreference',
           :$orderby => 'sort',
           :$hint => 'hint',
           :$comment => 'comment',
@@ -248,16 +256,6 @@ module Mongo
           :await_data => 'awaitData',
           :partial => 'allowPartialResults'
         }.freeze
-
-        # Find command constant.
-        #
-        # @since 2.1.0
-        FIND = 'find'.freeze
-
-        # Filter attribute constant.
-        #
-        # @since 2.1.0
-        FILTER = 'filter'.freeze
 
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
@@ -283,6 +281,15 @@ module Mongo
         #
         # @since 2.1.0
         def initialize(collection, filter, options, flags)
+          # Although the docstring claims both hashes and BSON::Documents
+          # are acceptable, this class expects the filter and options to
+          # contain symbol keys which isn't what the operation layer produces.
+          unless BSON::Document === filter
+            raise ArgumentError, 'Filter must provide indifferent access'
+          end
+          unless BSON::Document === options
+            raise ArgumentError, 'Options must provide indifferent access'
+          end
           @collection = collection
           @filter = filter
           @options = options
@@ -311,7 +318,7 @@ module Mongo
         #
         # @since 2.1.0
         def command_name
-          ((filter[:$query] || !command?) ? FIND : filter.keys.first).to_s
+          ((filter[:$query] || !command?) ? :find : filter.keys.first).to_s
         end
 
         private
@@ -333,15 +340,25 @@ module Mongo
         end
 
         def find_command
-          document = BSON::Document.new
-          document.store(FIND, collection)
-          document.store(FILTER, query_filter)
+          document = BSON::Document.new(
+            find: collection,
+            filter: query_filter,
+          )
           OPTION_MAPPINGS.each do |legacy, option|
             document.store(option, options[legacy]) unless options[legacy].nil?
           end
-          Mongo::Lint.validate_camel_case_read_preference(filter['readPreference'])
+          if Lint.enabled?
+            filter.each do |k, v|
+              unless String === k
+                raise Error::LintError, "All keys in filter must be strings: #{filter.inspect}"
+              end
+            end
+          end
+          Lint.validate_camel_case_read_preference(filter['readPreference'])
           SPECIAL_FIELD_MAPPINGS.each do |special, normal|
-            document.store(normal, filter[special]) unless filter[special].nil?
+            unless (v = filter[special]).nil?
+              document.store(normal, v)
+            end
           end
           FLAG_MAPPINGS.each do |legacy, flag|
             document.store(flag, true) if flags.include?(legacy)

@@ -4,7 +4,8 @@
 require 'spec_helper'
 
 describe 'CRUD operations' do
-  let(:collection) { authorized_client['crud_integration'] }
+  let(:client) { authorized_client }
+  let(:collection) { client['crud_integration'] }
 
   before do
     collection.delete_many
@@ -61,6 +62,178 @@ describe 'CRUD operations' do
         it 'passes both filter and order' do
           collection.find(:'$query' => {test: {'$gt' => 1}}, '$orderby' => {test: 1}).first.should == {'_id' => 2, 'test' => 2}
           collection.find(:'$query' => {test: {'$gt' => 1}}, '$orderby' => {test: -1}).first.should == {'_id' => 3, 'test' => 3}
+        end
+      end
+    end
+
+    context 'with read concern' do
+      # Read concern requires 3.2+ server.
+      min_server_fcv '3.2'
+
+      context 'with read concern specified on operation level' do
+
+        it 'passes the read concern' do
+          event = Utils.get_command_event(client, 'find') do |client|
+            client['foo'].find({}, read_concern: {level: :local}).to_a
+          end
+          event.command.fetch('readConcern').should == {'level' => 'local'}
+        end
+      end
+
+      context 'with read concern specified on collection level' do
+
+        it 'passes the read concern' do
+          event = Utils.get_command_event(client, 'find') do |client|
+            client['foo', read_concern: {level: :local}].find.to_a
+          end
+          event.command.fetch('readConcern').should == {'level' => 'local'}
+        end
+      end
+
+      context 'with read concern specified on client level' do
+
+        let(:client) { authorized_client.with(read_concern: {level: :local}) }
+
+        it 'passes the read concern' do
+          event = Utils.get_command_event(client, 'find') do |client|
+            client['foo'].find.to_a
+          end
+          event.command.fetch('readConcern').should == {'level' => 'local'}
+        end
+      end
+    end
+
+    context 'with oplog_replay option' do
+      let(:collection_name) { 'crud_integration_oplog_replay' }
+
+      let(:oplog_query) do
+        {ts: {'$gt' => 1}}
+      end
+
+      context 'passed to operation' do
+        it 'passes the option' do
+          event = Utils.get_command_event(client, 'find') do |client|
+            client[collection_name].find(oplog_query, oplog_replay: true).to_a
+          end
+          event.command.fetch('oplogReplay').should be true
+        end
+
+        it 'warns' do
+          client.should receive(:log_warn).with('The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later')
+          client[collection_name].find(oplog_query, oplog_replay: true).to_a
+        end
+      end
+
+      context 'set on collection' do
+        it 'passes the option' do
+          event = Utils.get_command_event(client, 'find') do |client|
+            client[collection_name, oplog_replay: true].find(oplog_query).to_a
+          end
+          event.command.fetch('oplogReplay').should be true
+        end
+
+        it 'warns' do
+          client.should receive(:log_warn).with('The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later')
+          client[collection_name, oplog_replay: true].find(oplog_query).to_a
+        end
+      end
+    end
+  end
+
+  describe 'explain' do
+    context 'with explicit session' do
+      min_server_fcv '3.6'
+
+      it 'passes the session' do
+        client.start_session do |session|
+          event = Utils.get_command_event(client, 'explain') do |client|
+            client['foo'].find({}, session: session).explain.should be_explain_output
+          end
+          event.command.fetch('lsid').should == session.session_id
+        end
+      end
+    end
+
+    context 'with read preference specified on operation level' do
+      require_topology :sharded
+
+      # RUBY-2706
+      min_server_fcv '3.6'
+
+      it 'passes the read preference' do
+        event = Utils.get_command_event(client, 'explain') do |client|
+          client['foo'].find({}, read: {mode: :secondary_preferred}).explain.should be_explain_output
+        end
+        event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
+      end
+    end
+
+    context 'with read preference specified on collection level' do
+      require_topology :sharded
+
+      # RUBY-2706
+      min_server_fcv '3.6'
+
+      it 'passes the read preference' do
+        event = Utils.get_command_event(client, 'explain') do |client|
+          client['foo', read: {mode: :secondary_preferred}].find.explain.should be_explain_output
+        end
+        event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
+      end
+    end
+
+    context 'with read preference specified on client level' do
+      require_topology :sharded
+
+      # RUBY-2706
+      min_server_fcv '3.6'
+
+      let(:client) { authorized_client.with(read: {mode: :secondary_preferred}) }
+
+      it 'passes the read preference' do
+        event = Utils.get_command_event(client, 'explain') do |client|
+          client['foo'].find.explain.should be_explain_output
+        end
+        event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
+      end
+    end
+
+    context 'with read concern' do
+      # Read concern requires 3.2+ server.
+      min_server_fcv '3.2'
+
+      context 'with read concern specifed on operation level' do
+
+        # Read concern is not allowed in explain command, driver drops it.
+        it 'drops the read concern' do
+          event = Utils.get_command_event(client, 'explain') do |client|
+            client['foo'].find({}, read_concern: {level: :local}).explain.should have_key('queryPlanner')
+          end
+          event.command.should_not have_key('readConcern')
+        end
+      end
+
+      context 'with read concern specifed on collection level' do
+
+        # Read concern is not allowed in explain command, driver drops it.
+        it 'drops the read concern' do
+          event = Utils.get_command_event(client, 'explain') do |client|
+            client['foo', read_concern: {level: :local}].find.explain.should have_key('queryPlanner')
+          end
+          event.command.should_not have_key('readConcern')
+        end
+      end
+
+      context 'with read concern specifed on client level' do
+
+        let(:client) { authorized_client.with(read_concern: {level: :local}) }
+
+        # Read concern is not allowed in explain command, driver drops it.
+        it 'drops the read concern' do
+          event = Utils.get_command_event(client, 'explain') do |client|
+            client['foo'].find.explain.should have_key('queryPlanner')
+          end
+          event.command.should_not have_key('readConcern')
         end
       end
     end

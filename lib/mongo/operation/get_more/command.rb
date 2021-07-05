@@ -30,6 +30,7 @@ module Mongo
         include Limited
         include ReadPreferenceSupported
         include PolymorphicResult
+        include CommandBuilder
 
         private
 

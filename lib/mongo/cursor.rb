@@ -369,11 +369,24 @@ module Mongo
     end
 
     def get_more_operation
-      if @server.with_connection { |connection| connection.features }.find_command_enabled?
-        spec = Builder::GetMoreCommand.new(self, @session).specification
-      else
-        spec = Builder::OpGetMore.new(self).specification
-      end
+      spec = {
+        session: @session,
+        db_name: database.name,
+        coll_name: collection_name,
+        cursor_id: id,
+        # 3.2+ servers use batch_size, 3.0- servers use to_return.
+        # TODO should to_return be calculated in the operation layer?
+        batch_size: batch_size,
+        to_return: to_return,
+        max_time_ms: if view.respond_to?(:max_await_time_ms) &&
+          view.max_await_time_ms &&
+          view.options[:await_data]
+        then
+          view.max_await_time_ms
+        else
+          nil
+        end,
+      }
       Operation::GetMore.new(spec)
     end
 

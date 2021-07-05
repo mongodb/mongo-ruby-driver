@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2018-2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,30 +17,20 @@
 
 module Mongo
   module Operation
-    class Explain
+    class GetMore
 
-      # A MongoDB explain operation sent as an op message.
-      #
       # @api private
-      #
-      # @since 2.5.2
-      class OpMsg < OpMsgBase
-        include CausalConsistencySupported
-        include ExecutableTransactionLabel
-        include PolymorphicResult
+      module CommandBuilder
 
         private
 
         def selector(connection)
-          # The mappings are BSON::Documents and as such store keys as
-          # strings, the spec here has symbol keys.
-          spec = BSON::Document.new(self.spec)
-          {
-            explain: {
-              find: coll_name,
-            }.update(Find::Builder::Command.selector(spec, connection)),
-            Protocol::Msg::DATABASE_IDENTIFIER => db_name,
-          }.update(spec[:explain] || {})
+          Utils.compact_hash(
+            getMore: BSON::Int64.new(spec.fetch(:cursor_id)),
+            collection: spec.fetch(:coll_name),
+            batchSize: spec[:batch_size],
+            maxTimeMS: spec[:max_time_ms],
+          )
         end
       end
     end

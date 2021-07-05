@@ -15,23 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/get_more/command_builder'
-require 'mongo/operation/get_more/command'
-require 'mongo/operation/get_more/op_msg'
-require 'mongo/operation/get_more/legacy'
-require 'mongo/operation/get_more/result'
-
-module Mongo
-  module Operation
-
-    # A MongoDB getMore operation.
-    #
-    # @api private
-    #
-    # @since 2.5.0
-    class GetMore
-      include Specifiable
-      include OpMsgOrFindCommand
-    end
-  end
-end
+require 'mongo/operation/find/builder/command'
+require 'mongo/operation/find/builder/flags'
+require 'mongo/operation/find/builder/legacy'
+require 'mongo/operation/find/builder/modifiers'

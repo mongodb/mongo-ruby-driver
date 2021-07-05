@@ -95,7 +95,7 @@ describe Mongo::Operation::Insert::OpMsg do
     context 'when write concern is specified' do
 
       it 'includes write concern in the selector' do
-        expect(op.send(:command, connection)[:writeConcern]).to eq(write_concern.options)
+        expect(op.send(:command, connection)[:writeConcern]).to eq(BSON::Document.new(write_concern.options))
       end
     end
   end

@@ -32,12 +32,15 @@ module Mongo
 
         private
 
-        def selector(connection)
-          super.merge(spec[:explain])
-        end
-
         def message(connection)
-          Protocol::Query.new(db_name, coll_name, command(connection), options(connection))
+          Protocol::Query.new(
+            db_name,
+            coll_name,
+            Find::Builder::Legacy.selector(spec, connection),
+            options(connection).update(
+              Find::Builder::Legacy.query_options(spec, connection),
+            ),
+          )
         end
       end
     end

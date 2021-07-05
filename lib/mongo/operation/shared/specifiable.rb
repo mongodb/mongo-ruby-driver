@@ -238,7 +238,7 @@ module Mongo
       #
       # @since 2.0.0
       def coll_name
-        spec[COLL_NAME]
+        spec.fetch(COLL_NAME)
       end
 
       # The id of the cursor created on the server.

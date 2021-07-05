@@ -16,19 +16,17 @@
 # limitations under the License.
 
 module Mongo
-  class Collection
-    class View
+  module Operation
+    class Find
       module Builder
 
-        # Provides behavior for mapping flags.
+        # Provides behavior for converting Ruby options to wire protocol flags
+        # when sending find and related commands (e.g. explain).
         #
-        # @since 2.2.0
+        # @api private
         module Flags
-          extend self
 
           # Options to cursor flags mapping.
-          #
-          # @since 2.2.0
           MAPPINGS = {
             :allow_partial_results => [ :partial ],
             :oplog_replay => [ :oplog_replay ],
@@ -36,20 +34,18 @@ module Mongo
             :tailable => [ :tailable_cursor ],
             :tailable_await => [ :await_data, :tailable_cursor],
             :await_data => [ :await_data ],
-            :exhaust => [ :exhaust ]
+            :exhaust => [ :exhaust ],
           }.freeze
 
-          # Maps an array of flags from the provided options.
+          # Converts Ruby find options to an array of flags.
           #
-          # @example Map the flags.
-          #   Flags.map_flags(options)
+          # Any keys in the input hash that are not options that map to flags
+          # are ignored.
           #
           # @param [ Hash, BSON::Document ] options The options.
           #
           # @return [ Array<Symbol> ] The flags.
-          #
-          # @since 2.2.0
-          def map_flags(options)
+          module_function def map_flags(options)
             MAPPINGS.each.reduce(options[:flags] || []) do |flags, (key, value)|
               cursor_type = options[:cursor_type]
               if options[key] || (cursor_type && cursor_type == key)
