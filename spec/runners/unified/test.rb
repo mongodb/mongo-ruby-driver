@@ -43,7 +43,6 @@ module Unified
       @test_spec.freeze
       @subscribers = {}
       @options = opts
-      @observe_sensitive = spec.use('observeSensitiveCommands')
     end
 
     attr_reader :test_spec
@@ -132,6 +131,7 @@ module Unified
           end
 
           create_client(**opts).tap do |client|
+            @observe_sensitive = spec.use('observeSensitiveCommands')
             if oe = spec.use('observeEvents')
               oe.each do |event|
                 case event
