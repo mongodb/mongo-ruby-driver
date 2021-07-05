@@ -107,8 +107,10 @@ module Mongo
             ok = ok && [:allow, :forbid].include?(serverless)
           end
         end
-        if @auth
+        if @auth == true
           ok &&= cc.auth_enabled?
+        elsif @auth == false
+          ok &&= !cc.auth_enabled?
         end
         ok
       end
