@@ -131,6 +131,7 @@ module Unified
           end
 
           create_client(**opts).tap do |client|
+            @observe_sensitive = spec.use('observeSensitiveCommands')
             if oe = spec.use('observeEvents')
               oe.each do |event|
                 case event

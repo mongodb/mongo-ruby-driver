@@ -100,7 +100,7 @@ module Unified
         client = entities.get(:client, client_id)
         subscriber = @subscribers.fetch(client)
         expected_events = spec.use!('events')
-        actual_events = subscriber.wanted_events
+        actual_events = subscriber.wanted_events(@observe_sensitive)
         case spec.use('eventType')
         when nil, 'command'
           actual_events.select! do |event|

@@ -41,7 +41,8 @@ module Mongo
         ].freeze
 
         # Redact secure information from the document if it's command is in the
-        # list.
+        # list or if it's command is a hello/legacy hello command, and
+        # speculative authentication is enabled.
         #
         # @example Get the redacted document.
         #   secure.redacted(command_name, document)
@@ -53,9 +54,20 @@ module Mongo
         #
         # @since 2.1.0
         def redacted(command_name, document)
-          if REDACTED_COMMANDS.include?(command_name.to_s) &&
-            !%w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
+          if %w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
+            return document
+          end
+
+          if REDACTED_COMMANDS.include?(command_name.to_s)
+            BSON::Document.new
+          elsif %w(hello ismaster isMaster).include?(command_name.to_s) &&
+            !!document['speculativeAuthenticate']
           then
+            # According to Command Monitoring spec,for hello/lecagy hello commands
+            # when speculativeAuthenticate is present, their commands AND replies
+            # MUST be redacted from the events. So, we replace the entire event
+            # payload.
+            # See https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst#security
             BSON::Document.new
           else
             document

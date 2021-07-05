@@ -4,7 +4,7 @@
 module Mongo
   module CRUD
     class Requirement
-      YAML_KEYS = %w(minServerVersion maxServerVersion topology topologies serverParameters serverless).freeze
+      YAML_KEYS = %w(auth minServerVersion maxServerVersion topology topologies serverParameters serverless).freeze
 
       def initialize(spec)
         spec = spec.dup
@@ -47,6 +47,7 @@ module Mongo
         else
           nil
         end
+        @auth = spec['auth']
       end
 
       attr_reader :min_server_version
@@ -104,6 +105,11 @@ module Mongo
           else
             ok = ok && [:allow, :forbid].include?(serverless)
           end
+        end
+        if @auth == true
+          ok &&= cc.auth_enabled?
+        elsif @auth == false
+          ok &&= !cc.auth_enabled?
         end
         ok
       end
