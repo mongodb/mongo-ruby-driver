@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/cursor/builder'
-
 module Mongo
 
   # Client-side representation of an iterator over a query result set on
@@ -82,9 +80,8 @@ module Mongo
       @session = @options[:session]
       unless closed?
         register
-        ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
+        ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec,
           cluster,
-          kill_cursors_op_spec,
           server,
           @session))
       end
@@ -96,20 +93,19 @@ module Mongo
     # Finalize the cursor for garbage collection. Schedules this cursor to be included
     # in a killCursors operation executed by the Cluster's CursorReaper.
     #
-    # @example Finalize the cursor.
-    #   Cursor.finalize(id, cluster, op, server)
-    #
-    # @param [ Integer ] cursor_id The cursor's id.
+    # @param [ Cursor::KillSpec ] kill_spec The KillCursor operation specification.
     # @param [ Mongo::Cluster ] cluster The cluster associated with this cursor and its server.
-    # @param [ Hash ] op_spec The killCursors operation specification.
     # @param [ Mongo::Server ] server The server to send the killCursors operation to.
     #
     # @return [ Proc ] The Finalizer.
     #
-    # @since 2.3.0
-    def self.finalize(cursor_id, cluster, op_spec, server, session)
+    # @api private
+    def self.finalize(kill_spec, cluster, server, session)
+      unless KillSpec === kill_spec
+        raise ArgumentError, "First argument must be a KillSpec: #{kill_spec.inspect}"
+      end
       proc do
-        cluster.schedule_kill_cursor(cursor_id, op_spec, server)
+        cluster.schedule_kill_cursor(kill_spec, server)
         session.end_session if session && session.implicit?
       end
     end
@@ -274,7 +270,13 @@ module Mongo
 
       unregister
       read_with_one_retry do
-        kill_cursors_operation.execute(@server, context: Operation::Context.new(client: client, session: @session))
+        spec = {
+          coll_name: collection_name,
+          db_name: database.name,
+          cursor_ids: [id],
+        }
+        op = Operation::KillCursors.new(spec)
+        op.execute(@server, context: Operation::Context.new(client: client, session: @session))
       end
 
       nil
@@ -352,6 +354,15 @@ module Mongo
       process(get_more_operation.execute(@server, context: Operation::Context.new(client: client, session: @session)))
     end
 
+    # @api private
+    def kill_spec
+      KillSpec.new(
+        cursor_id: id,
+        coll_name: collection_name,
+        db_name: database.name,
+      )
+    end
+
     private
 
     def exhausted?
@@ -392,18 +403,6 @@ module Mongo
 
     def end_session
       @session.end_session if @session && @session.implicit?
-    end
-
-    def kill_cursors_operation
-      Operation::KillCursors.new(kill_cursors_op_spec)
-    end
-
-    def kill_cursors_op_spec
-      if @server.with_connection { |connection| connection.features }.find_command_enabled?
-        Builder::KillCursorsCommand.new(self).specification
-      else
-        Builder::OpKillCursors.new(self).specification
-      end
     end
 
     def limited?
@@ -448,3 +447,5 @@ module Mongo
     end
   end
 end
+
+require 'mongo/cursor/kill_spec'

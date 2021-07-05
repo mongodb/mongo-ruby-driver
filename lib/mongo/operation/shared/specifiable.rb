@@ -60,11 +60,6 @@ module Mongo
       # @since 2.0.0
       CURSOR_ID = :cursor_id.freeze
 
-      # The field for cursor ids.
-      #
-      # @since 2.0.0
-      CURSOR_IDS = :cursor_ids.freeze
-
       # The field for an index.
       #
       # @since 2.0.0
@@ -251,18 +246,6 @@ module Mongo
       # @since 2.0.0
       def cursor_id
         spec[CURSOR_ID]
-      end
-
-      # The ids of the cursors to kill from the spec.
-      #
-      # @example Get the cursor ids from the spec.
-      #   specifiable.cursor_ids
-      #
-      # @return [ Array<Integer> ] The cursor ids.
-      #
-      # @since 2.0.0
-      def cursor_ids
-        spec[CURSOR_IDS]
       end
 
       # Get the index from the specification.

@@ -8,6 +8,8 @@ describe 'Cursor reaping' do
   # in MRI, I don't currently know how to force GC to run in JRuby
   require_mri
 
+# Uncomment for debugging this test.
+=begin
   around(:all) do |example|
     saved_level = Mongo::Logger.logger.level
     Mongo::Logger.logger.level = Logger::DEBUG
@@ -17,6 +19,7 @@ describe 'Cursor reaping' do
       Mongo::Logger.logger.level = saved_level
     end
   end
+=end
 
   let(:subscriber) { EventSubscriber.new }
 
@@ -57,10 +60,11 @@ describe 'Cursor reaping' do
         10.times do
           scope = collection.find.batch_size(2).no_cursor_timeout
 
-          # there is no API for retrieving the cursor
+          # Begin iteration, creating the cursor
           scope.each.first
-          # and keep the first cursor
-          cursor_ids << scope.instance_variable_get('@cursor').id
+
+          scope.cursor.should_not be nil
+          cursor_ids << scope.cursor.id
         end
       end
     end

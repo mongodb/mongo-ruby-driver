@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2015-2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/kill_cursors/command_builder'
-require 'mongo/operation/kill_cursors/command'
-require 'mongo/operation/kill_cursors/op_msg'
-require 'mongo/operation/kill_cursors/legacy'
-
 module Mongo
-  module Operation
+  class Cursor
 
-    # A MongoDB killcursors operation.
+    # This class contains the operation specification for KillCursors.
+    #
+    # Its purpose is to ensure we don't misspell attribute names accidentally.
     #
     # @api private
-    #
-    # @since 2.0.0
-    class KillCursors
-      include Specifiable
-      include OpMsgOrFindCommand
+    class KillSpec
+
+      def initialize(cursor_id:, coll_name:, db_name:)
+        @cursor_id = cursor_id
+        @coll_name = coll_name
+        @db_name = db_name
+      end
+
+      attr_reader :cursor_id, :coll_name, :db_name
     end
   end
 end

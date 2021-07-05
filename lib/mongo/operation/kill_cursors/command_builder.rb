@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2015-2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,5 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/cursor/builder/op_kill_cursors'
-require 'mongo/cursor/builder/kill_cursors_command'
+module Mongo
+  module Operation
+    class KillCursors
+
+      # @api private
+      module CommandBuilder
+
+        private
+
+        def int64_cursor_ids
+          spec.fetch(:cursor_ids).map do |id|
+            BSON::Int64.new(id)
+          end
+        end
+      end
+    end
+  end
+end
