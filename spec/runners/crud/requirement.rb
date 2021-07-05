@@ -108,7 +108,7 @@ module Mongo
           end
         end
         if @auth
-          ok &&= (@auth == cc.auth_enabled?)
+          ok &&= cc.auth_enabled?
         end
         ok
       end
