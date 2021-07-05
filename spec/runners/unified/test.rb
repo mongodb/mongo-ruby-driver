@@ -144,7 +144,7 @@ module Unified
                   if ignore_events = spec.use('ignoreCommandMonitoringEvents')
                     subscriber.ignore_commands(ignore_events)
                   end
-                when /^pool/
+                when /\A(?:pool|connection)/
                   subscriber = (@subscribers[client] ||= EventSubscriber.new)
                   unless client.send(:monitoring).subscribers[Mongo::Monitoring::CONNECTION_POOL]&.include?(subscriber)
                     client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
