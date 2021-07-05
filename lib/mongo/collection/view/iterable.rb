@@ -25,6 +25,13 @@ module Mongo
       # @since 2.0.0
       module Iterable
 
+        # Returns the cursor associated with this view, if any.
+        #
+        # @return [ nil | Cursor ] The cursor, if any.
+        #
+        # @api private
+        attr_reader :cursor
+
         # Iterate through documents returned by a query with this +View+.
         #
         # @example Iterate through the result of the view.

@@ -26,6 +26,16 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include ExecutableTransactionLabel
+        include CommandBuilder
+
+        private
+
+        def selector(connection)
+          {
+            killCursors: coll_name,
+            cursors: int64_cursor_ids,
+          }
+        end
       end
     end
   end

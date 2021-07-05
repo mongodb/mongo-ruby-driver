@@ -28,8 +28,16 @@ module Mongo
         include Specifiable
         include Executable
         include Limited
+        include CommandBuilder
 
         private
+
+        def selector(connection)
+          {
+            killCursors: coll_name,
+            cursors: int64_cursor_ids,
+          }
+        end
 
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, selector(connection), options(connection))

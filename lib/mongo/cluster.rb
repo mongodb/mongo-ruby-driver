@@ -203,7 +203,7 @@ module Mongo
       @connected = true
 
       if options[:cleanup] != false
-        @cursor_reaper = CursorReaper.new
+        @cursor_reaper = CursorReaper.new(self)
         @socket_reaper = SocketReaper.new(self)
         @periodic_executor = PeriodicExecutor.new([
           @cursor_reaper, @socket_reaper,

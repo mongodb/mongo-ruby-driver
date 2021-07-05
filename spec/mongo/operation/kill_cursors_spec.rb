@@ -35,9 +35,12 @@ describe Mongo::Operation::KillCursors::Legacy do
   end
 
   describe '#message' do
+    let(:expected_cursor_ids) do
+      spec[:cursor_ids].map { |v| BSON::Int64.new(v) }
+    end
 
     it 'creates a kill cursors wire protocol message with correct specs' do
-      expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, SpecConfig.instance.test_db, spec[:cursor_ids])
+      expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, SpecConfig.instance.test_db, expected_cursor_ids)
       op.send(:message, double('server'))
     end
   end
