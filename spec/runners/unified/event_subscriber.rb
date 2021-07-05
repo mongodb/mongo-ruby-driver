@@ -10,8 +10,8 @@ module Unified
       @ignore_commands = command_names
     end
 
-    def wanted_events
-      all_events.select do |event|
+    def wanted_events(observe_sensitive = false)
+      events = all_events.select do |event|
         kind = event.class.name.sub(/.*::/, '').sub('Command', '').gsub(/([A-Z])/) { "_#{$1}" }.sub(/^_/, '').downcase.to_sym
         @wanted_events[kind]
       end.select do |event|
@@ -25,9 +25,14 @@ module Unified
         else
           true
         end
-      end.reject do |event|
-        event.respond_to?(:command_name) &&
-          %w(authenticate getnonce saslStart saslContinue).include?(event.command_name)
+      end
+      if observe_sensitive
+        events
+      else
+        events.reject do |event|
+          event.respond_to?(:command_name) &&
+            %w(authenticate getnonce saslStart saslContinue).include?(event.command_name)
+        end
       end
     end
 
