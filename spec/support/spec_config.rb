@@ -628,4 +628,9 @@ EOT
       creds
     end
   end
+
+  # Returns whether the test suite was configured with a single mongos.
+  def single_mongos?
+    %w(1 true yes).include?(ENV['SINGLE_MONGOS'])
+  end
 end

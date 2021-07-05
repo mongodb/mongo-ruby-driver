@@ -9,9 +9,6 @@ describe 'Retryable reads spec tests' do
   require_wired_tiger
   require_no_multi_shard
 
-  # Change streams need driver changes to work with load balancers. RUBY-2649
-  require_topology :single, :replica_set, :sharded
-
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client) do
       authorized_client.use(spec.database_name).with({max_read_retries: 0}.update(test.client_options)).tap do |client|
@@ -23,9 +20,6 @@ end
 
 describe 'Retryable reads spec tests - legacy' do
   require_no_multi_shard
-
-  # Change streams need driver changes to work with load balancers. RUBY-2649
-  require_topology :single, :replica_set, :sharded
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client_options) do
