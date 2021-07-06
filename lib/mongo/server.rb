@@ -226,20 +226,6 @@ module Mongo
       address == other.address
     end
 
-    # Get a new context for this server in which to send messages.
-    #
-    # @example Get the server context.
-    #   server.context
-    #
-    # @return [ Mongo::Server::Context ] context The server context.
-    #
-    # @since 2.0.0
-    #
-    # @deprecated Will be removed in version 3.0
-    def context
-      Context.new(self)
-    end
-
     # Determine if a connection to the server is able to be established and
     # messages can be sent to it.
     #
@@ -619,7 +605,6 @@ require 'mongo/server/connection_base'
 require 'mongo/server/pending_connection'
 require 'mongo/server/connection'
 require 'mongo/server/connection_pool'
-require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
 require 'mongo/server/round_trip_time_averager'
