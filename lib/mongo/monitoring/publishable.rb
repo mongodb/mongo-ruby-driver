@@ -50,36 +50,38 @@ module Mongo
         socket_object_id: nil, connection_id: nil, connection_generation: nil,
         server_connection_id: nil, service_id: nil
       )
-        monitoring.started(
-          Monitoring::COMMAND,
-          Event::CommandStarted.generate(address, operation_id, payload,
+        event = Event::CommandStarted.generate(address, operation_id, payload,
             socket_object_id: socket_object_id, connection_id: connection_id,
             connection_generation: connection_generation,
             server_connection_id: server_connection_id,
             service_id: service_id,
           )
+        monitoring.started(
+          Monitoring::COMMAND,
+          event
         )
+        event
       end
 
       def command_completed(result, address, operation_id, payload, duration,
-        service_id: nil
+        started_event:, service_id: nil
       )
         document = result ? (result.documents || []).first : nil
         if document && (document['ok'] && document['ok'] != 1 || document.key?('$err'))
           parser = Error::Parser.new(document)
           command_failed(document, address, operation_id,
             payload, parser.message, duration,
-            service_id: service_id,
+            started_event: started_event, service_id: service_id,
           )
         else
           command_succeeded(result, address, operation_id, payload, duration,
-            service_id: service_id,
+            started_event: started_event, service_id: service_id,
           )
         end
       end
 
       def command_succeeded(result, address, operation_id, payload, duration,
-        service_id: nil
+        started_event:, service_id: nil
       )
         monitoring.succeeded(
           Monitoring::COMMAND,
@@ -89,18 +91,20 @@ module Mongo
             payload,
             result ? result.payload : nil,
             duration,
+            started_event: started_event,
             service_id: service_id,
           )
         )
       end
 
       def command_failed(failure, address, operation_id, payload, message, duration,
-        service_id: nil
+        started_event:, service_id: nil
       )
         monitoring.failed(
           Monitoring::COMMAND,
           Event::CommandFailed.generate(address, operation_id, payload,
             message, failure, duration,
+            started_event: started_event,
             service_id: service_id,
           )
         )
