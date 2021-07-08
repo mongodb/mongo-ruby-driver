@@ -237,43 +237,12 @@ module Mongo
           return false
         end
 
-        if resp.respond_to?(:find_response)
-          # Ruby 2.4+
-          resp = resp.find_response(cert_id)
-          # TODO make a new class instead of patching the stdlib one?
-          resp.instance_variable_set('@uri', uri)
-          resp.instance_variable_set('@original_uri', original_uri)
-          class << resp
-            attr_reader :uri, :original_uri
-          end
-        else
-          # Ruby 2.3
-          found = nil
-          resp.status.each do |_cert_id, cert_status, revocation_reason, revocation_time, this_update, next_update, extensions|
-            if _cert_id.cmp(cert_id)
-              found = OpenStruct.new(
-                cert_status: cert_status,
-                certid: _cert_id,
-                next_update: next_update,
-                this_update: this_update,
-                revocation_reason: revocation_reason,
-                revocation_time: revocation_time,
-                extensions: extensions,
-                uri: uri,
-                original_uri: original_uri,
-              )
-              class << found
-                # Unlike the stdlib method, this one doesn't accept
-                # any arguments.
-                def check_validity
-                  now = Time.now
-                  this_update <= now && next_update >= now
-                end
-              end
-              break
-            end
-          end
-          resp = found
+        resp = resp.find_response(cert_id)
+        # TODO make a new class instead of patching the stdlib one?
+        resp.instance_variable_set('@uri', uri)
+        resp.instance_variable_set('@original_uri', original_uri)
+        class << resp
+          attr_reader :uri, :original_uri
         end
 
         unless resp

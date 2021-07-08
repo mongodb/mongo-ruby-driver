@@ -103,6 +103,7 @@ module Mongo
     end
 
     # Hash#compact implementation for Ruby 2.3
+    # @deprecated Use stdlib version since min Ruby version required is 2.4.
     module_function def compact_hash(hash)
       Hash[hash.reject do |k, v|
         v.nil?

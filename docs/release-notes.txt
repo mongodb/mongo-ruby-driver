@@ -65,6 +65,8 @@ The following smaller improvements have been made:
   ``writeErrors`` field in the server response.
 - Server selection timeout for ``mongocryptd`` has been increased to 10 seconds.
 
+This release of the Ruby driver increases the minimum required Ruby version
+to 2.4.
 
 2.14
 ====

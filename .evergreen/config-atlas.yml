@@ -588,10 +588,6 @@ axes:
         display_name: ruby-2.4
         variables:
           RVM_RUBY: "ruby-2.4"
-      - id: "ruby-2.3"
-        display_name: ruby-2.3
-        variables:
-          RVM_RUBY: "ruby-2.3"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
@@ -819,10 +815,6 @@ axes:
 buildvariants:
   - matrix_name: "all"
     matrix_spec:
-      # We exclude ruby 2.3 because we do not have this version on Ubuntu 18.04.
-      # Since it is planned to drop support of this version from the driver
-      # in the next release, it is not worth it to invest time into supporting
-      # this version.
       ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
     display_name: "Atlas tests ${ruby}"
     run_on:
@@ -832,10 +824,6 @@ buildvariants:
 
   - matrix_name: "serverless"
     matrix_spec:
-      # We exclude ruby 2.3 because we do not have this version on Ubuntu 18.04.
-      # Since it is planned to drop support of this version from the driver
-      # in the next release, it is not worth it to invest time into supporting
-      # this version.
       ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
     display_name: "Atlas serverless tests ${ruby}"
     run_on:
