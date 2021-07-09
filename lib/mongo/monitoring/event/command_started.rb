@@ -43,6 +43,9 @@ module Mongo
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
 
+        # @return [ nil | Object ] The service id, if any.
+        attr_reader :service_id
+
         # object_id of the socket object used for this command.
         #
         # @api private
@@ -60,6 +63,11 @@ module Mongo
         # @api private
         attr_reader :server_connection_id
 
+        # @return [ true | false ] Whether the event contains sensitive data.
+        #
+        # @api private
+        attr_reader :sensitive
+
         # Create the new event.
         #
         # @example Create the event.
@@ -75,13 +83,19 @@ module Mongo
         # @api private
         def initialize(command_name, database_name, address, request_id,
           operation_id, command, socket_object_id: nil, connection_id: nil,
-          connection_generation: nil, server_connection_id: nil
+          connection_generation: nil, server_connection_id: nil,
+          service_id: nil
         )
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
           @operation_id = operation_id
+          @service_id = service_id
+          @sensitive = sensitive?(
+            command_name: @command_name,
+            document: command
+          )
           @command = redacted(command_name, command)
           @socket_object_id = socket_object_id
           @connection_id = connection_id
@@ -133,7 +147,7 @@ module Mongo
         # @api private
         def self.generate(address, operation_id, payload,
           socket_object_id: nil, connection_id: nil, connection_generation: nil,
-          server_connection_id: nil
+          server_connection_id: nil, service_id: nil
         )
           new(
             payload[:command_name],
@@ -151,6 +165,7 @@ module Mongo
             connection_id: connection_id,
             connection_generation: connection_generation,
             server_connection_id: server_connection_id,
+            service_id: service_id,
           )
         end
 

@@ -163,7 +163,7 @@ module Mongo
         buffer = serialize(message, context)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
-          command_started(address, operation_id, message.payload,
+          started_event = command_started(address, operation_id, message.payload,
             socket_object_id: socket.object_id, connection_id: id,
             connection_generation: generation,
             server_connection_id: description.server_connection_id,
@@ -181,11 +181,17 @@ module Mongo
             end
           rescue Exception => e
             total_duration = Utils.monotonic_time - start
-            command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
+            command_failed(nil, address, operation_id, message.payload,
+              e.message, total_duration,
+              started_event: started_event,
+            )
             raise
           else
             total_duration = Utils.monotonic_time - start
-            command_completed(result, address, operation_id, message.payload, total_duration)
+            command_completed(result, address, operation_id, message.payload,
+              total_duration,
+              started_event: started_event,
+            )
           end
           if result && context.decrypt?
             result = result.maybe_decrypt(context)
