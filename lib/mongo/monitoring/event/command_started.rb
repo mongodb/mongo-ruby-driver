@@ -63,6 +63,11 @@ module Mongo
         # @api private
         attr_reader :server_connection_id
 
+        # @return [ true | false ] Whether the event contains sensitive data.
+        #
+        # @api private
+        attr_reader :sensitive
+
         # Create the new event.
         #
         # @example Create the event.
@@ -88,6 +93,10 @@ module Mongo
           @request_id = request_id
           @operation_id = operation_id
           @service_id = service_id
+          @sensitive = sensitive?(
+            command_name: @command_name,
+            document: command
+          )
           @command = redacted(command_name, command)
           @socket_object_id = socket_object_id
           @connection_id = connection_id

@@ -40,9 +40,36 @@ module Mongo
           'copydb'
         ].freeze
 
-        # Redact secure information from the document if it's command is in the
-        # list or if it's command is a hello/legacy hello command, and
+        # Check whether the command is sensitive in terms of command monitoring
+        # spec. A command is detected as sensitive if it is in the
+        # list or if it is a hello/legacy hello command, and
         # speculative authentication is enabled.
+        #
+        # @param [ String, Symbol ] command_name The command name.
+        # @param [ BSON::Document ] document The document.
+        #
+        # @return [ true | false ] Whether the command is sensitive.
+        def sensitive?(command_name:, document:)
+          if REDACTED_COMMANDS.include?(command_name.to_s)
+            true
+          elsif %w(hello ismaster isMaster).include?(command_name.to_s) &&
+            document['speculativeAuthenticate']
+            then
+            # According to Command Monitoring spec,for hello/legacy hello commands
+            # when speculativeAuthenticate is present, their commands AND replies
+            # MUST be redacted from the events.
+            # See https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst#security
+            true
+          else
+            false
+          end
+        end
+
+        # Redact secure information from the document if:
+        #   - its command is in the sensitive commands;
+        #   - its command is a hello/legacy hello command, and
+        #     speculative authentication is enabled;
+        #   - corresponding started event is sensitive.
         #
         # @example Get the redacted document.
         #   secure.redacted(command_name, document)
@@ -55,24 +82,16 @@ module Mongo
         # @since 2.1.0
         def redacted(command_name, document)
           if %w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
-            return document
-          end
-
-          if REDACTED_COMMANDS.include?(command_name.to_s)
-            BSON::Document.new
-          elsif %w(hello ismaster isMaster).include?(command_name.to_s) &&
-            !!document['speculativeAuthenticate']
-          then
-            # According to Command Monitoring spec,for hello/lecagy hello commands
-            # when speculativeAuthenticate is present, their commands AND replies
-            # MUST be redacted from the events. So, we replace the entire event
-            # payload.
-            # See https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst#security
+            document
+          elsif respond_to?(:started_event) && started_event.sensitive
+            return BSON::Document.new
+          elsif sensitive?(command_name: command_name, document: document)
             BSON::Document.new
           else
             document
           end
         end
+
 
         # Is compression allowed for a given command message.
         #
