@@ -46,33 +46,44 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ BSON::Document, nil ] The document, if found.
         #
         # @since 2.0.0
         def find_one_and_delete(opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          cmd = { :findAndModify => collection.name, :query => filter, :remove => true }
-          cmd[:fields] = projection if projection
-          cmd[:sort] = sort if sort
-          cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          if opts[:bypass_document_validation]
-            cmd[:bypassDocumentValidation] = true
-          end
-
           with_session(opts) do |session|
-            applied_write_concern = applied_write_concern(session)
-            cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
-            write_with_retry(session, applied_write_concern) do |server, txn_num|
-              apply_collation!(cmd, server, opts)
-              apply_hint!(cmd, server, opts.merge(write_concern: applied_write_concern))
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            end
 
-              Operation::Command.new(
-                  :selector => cmd,
-                  :db_name => database.name,
-                  :session => session,
-                  :txn_num => txn_num,
+            QueryCache.clear_namespace(collection.namespace)
+
+            cmd = Utils.compact_hash(
+              findAndModify: collection.name,
+              query: filter,
+              remove: true,
+              fields: projection,
+              sort: sort,
+              maxTimeMS: max_time_ms,
+              bypassDocumentValidation: opts[:bypass_document_validation],
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+
+            write_with_retry(session, write_concern) do |server, txn_num|
+              Operation::WriteCommand.new(
+                selector: cmd,
+                db_name: database.name,
+                write_concern: write_concern,
+                session: session,
+                txn_num: txn_num,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end.first['value']
@@ -96,6 +107,8 @@ module Mongo
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -127,37 +140,47 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ BSON::Document ] The document.
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          cmd = { :findAndModify => collection.name, :query => filter }
-          cmd[:update] = document
-          cmd[:fields] = projection if projection
-          cmd[:sort] = sort if sort
-          cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
-          cmd[:upsert] = opts[:upsert] if opts[:upsert]
-          cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          if opts[:bypass_document_validation]
-            cmd[:bypassDocumentValidation] = true
-          end
-
           value = with_session(opts) do |session|
-            applied_write_concern = applied_write_concern(opts[:session])
-            cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
-            write_with_retry(session, applied_write_concern) do |server, txn_num|
-              apply_collation!(cmd, server, opts)
-              apply_array_filters!(cmd, server, opts)
-              apply_hint!(cmd, server, opts.merge(write_concern: applied_write_concern))
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              write_concern_with_session(session)
+            end
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            end
 
-              Operation::Command.new(
-                  :selector => cmd,
-                  :db_name => database.name,
-                  :session => session,
-                  :txn_num => txn_num,
+            QueryCache.clear_namespace(collection.namespace)
+
+            cmd = Utils.compact_hash(
+              findAndModify: collection.name,
+              query: filter,
+              arrayFilters: opts[:array_filters] || opts['array_filters'],
+              update: document,
+              fields: projection,
+              sort: sort,
+              new: !!(opts[:return_document] && opts[:return_document] == :after),
+              upsert: opts[:upsert],
+              maxTimeMS: max_time_ms,
+              bypassDocumentValidation: opts[:bypass_document_validation],
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+
+            write_with_retry(session, write_concern) do |server, txn_num|
+              Operation::WriteCommand.new(
+                selector: cmd,
+                db_name: database.name,
+                write_concern: write_concern,
+                session: session,
+                txn_num: txn_num,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end.first['value']
@@ -182,26 +205,33 @@ module Mongo
         #
         # @since 2.0.0
         def delete_many(opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
               WriteConcern.get(opts[:write_concern])
             else
               write_concern_with_session(session)
             end
-            nro_write_with_retry(session, write_concern) do |server|
-              apply_collation!(delete_doc, server, opts)
-              apply_hint!(delete_doc, server, opts.merge(write_concern: write_concern))
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            end
 
+            QueryCache.clear_namespace(collection.namespace)
+
+            delete_doc = Utils.compact_hash(
+              Operation::Q => filter,
+              Operation::LIMIT => 0,
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+
+            nro_write_with_retry(session, write_concern) do |server|
               Operation::Delete.new(
-                  :deletes => [ delete_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session,
+                deletes: [ delete_doc ],
+                db_name: collection.database.name,
+                coll_name: collection.name,
+                write_concern: write_concern,
+                bypass_document_validation: !!opts[:bypass_document_validation],
+                session: session,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -225,27 +255,34 @@ module Mongo
         #
         # @since 2.0.0
         def delete_one(opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
               WriteConcern.get(opts[:write_concern])
             else
               write_concern_with_session(session)
             end
-            write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(delete_doc, server, opts)
-              apply_hint!(delete_doc, server, opts.merge(write_concern: write_concern))
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            end
 
+            QueryCache.clear_namespace(collection.namespace)
+
+            delete_doc = Utils.compact_hash(
+              Operation::Q => filter,
+              Operation::LIMIT => 1,
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+
+            write_with_retry(session, write_concern) do |server, txn_num|
               Operation::Delete.new(
-                  :deletes => [ delete_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session,
-                  :txn_num => txn_num,
+                deletes: [ delete_doc ],
+                db_name: collection.database.name,
+                coll_name: collection.name,
+                write_concern: write_concern,
+                bypass_document_validation: !!opts[:bypass_document_validation],
+                session: session,
+                txn_num: txn_num,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -274,34 +311,38 @@ module Mongo
         #
         # @since 2.0.0
         def replace_one(replacement, opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          update_doc = { Operation::Q => filter,
-                         Operation::U => replacement,
-                        }
-          if opts[:upsert]
-            update_doc['upsert'] = true
-          end
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
               WriteConcern.get(opts[:write_concern])
             else
               write_concern_with_session(session)
             end
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            end
+
+            QueryCache.clear_namespace(collection.namespace)
+
+            update_doc = Utils.compact_hash(
+              Operation::Q => filter,
+              arrayFilters: opts[:array_filters] || opts['array_filters'],
+              Operation::U => replacement,
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+            if opts[:upsert]
+              update_doc['upsert'] = true
+            end
 
             write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, opts.merge(write_concern: write_concern))
-
               Operation::Update.new(
-                  :updates => [ update_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session,
-                  :txn_num => txn_num,
+                updates: [ update_doc ],
+                db_name: collection.database.name,
+                coll_name: collection.name,
+                write_concern: write_concern,
+                bypass_document_validation: !!opts[:bypass_document_validation],
+                session: session,
+                txn_num: txn_num,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -332,33 +373,38 @@ module Mongo
         #
         # @since 2.0.0
         def update_many(spec, opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          update_doc = { Operation::Q => filter,
-                         Operation::U => spec,
-                         Operation::MULTI => true,
-                         }
-          if opts[:upsert]
-            update_doc['upsert'] = true
-          end
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
               WriteConcern.get(opts[:write_concern])
             else
               write_concern_with_session(session)
             end
-            nro_write_with_retry(session, write_concern) do |server|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, opts.merge(write_concern: write_concern))
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
+              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            end
 
+            QueryCache.clear_namespace(collection.namespace)
+
+            update_doc = Utils.compact_hash(
+              Operation::Q => filter,
+              arrayFilters: opts[:array_filters] || opts['array_filters'],
+              Operation::U => spec,
+              Operation::MULTI => true,
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+            if opts[:upsert]
+              update_doc['upsert'] = true
+            end
+
+            nro_write_with_retry(session, write_concern) do |server|
               Operation::Update.new(
-                  :updates => [ update_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session,
+                updates: [ update_doc ],
+                db_name: collection.database.name,
+                coll_name: collection.name,
+                write_concern: write_concern,
+                bypass_document_validation: !!opts[:bypass_document_validation],
+                session: session,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -389,83 +435,40 @@ module Mongo
         #
         # @since 2.0.0
         def update_one(spec, opts = {})
-          QueryCache.clear_namespace(collection.namespace)
-
-          update_doc = { Operation::Q => filter,
-                         Operation::U => spec,
-                         }
-          if opts[:upsert]
-            update_doc['upsert'] = true
-          end
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
               WriteConcern.get(opts[:write_concern])
             else
               write_concern_with_session(session)
             end
-            write_with_retry(session, write_concern) do |server, txn_num|
-              apply_collation!(update_doc, server, opts)
-              apply_array_filters!(update_doc, server, opts)
-              apply_hint!(update_doc, server, opts.merge(write_concern: write_concern))
-
-              Operation::Update.new(
-                  :updates => [ update_doc ],
-                  :db_name => collection.database.name,
-                  :coll_name => collection.name,
-                  :write_concern => write_concern,
-                  :bypass_document_validation => !!opts[:bypass_document_validation],
-                  :session => session,
-                  :txn_num => txn_num,
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
-            end
-          end
-        end
-
-        private
-
-        def apply_hint!(doc, server, opts)
-          if hint = opts[:hint]
-            features = server.with_connection do |connection|
-              connection.description.features
-            end
-
-            write_concern = opts[:write_concern]
-            if write_concern && !write_concern.acknowledged?
+            if opts[:hint] && write_concern && !write_concern.acknowledged?
               raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
             end
 
-            if doc.key?(:findAndModify) &&
-                !features.find_and_modify_option_validation_enabled?
-              raise Error::UnsupportedOption.hint_error
-            elsif !features.update_delete_option_validation_enabled?
-              raise Error::UnsupportedOption.hint_error
+            QueryCache.clear_namespace(collection.namespace)
+
+            update_doc = Utils.compact_hash(
+              Operation::Q => filter,
+              arrayFilters: opts[:array_filters] || opts['array_filters'],
+              Operation::U => spec,
+              hint: opts[:hint],
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+            if opts[:upsert]
+              update_doc['upsert'] = true
             end
 
-            doc[:hint] = opts[:hint]
-          end
-        end
-
-        def apply_array_filters!(doc, server, opts = {})
-          if filters = opts[:array_filters] || opts[ARRAY_FILTERS]
-            validate_array_filters!(server, filters)
-            doc[:arrayFilters] = filters
-          end
-        end
-
-        def validate_array_filters!(server, filters)
-          if filters && !server.with_connection { |connection| connection.features }.array_filters_enabled?
-            raise Error::UnsupportedArrayFilters.new
-          end
-        end
-
-        # Get the write concern for an operation
-        #
-        # @return [ Mongo::WriteConcern ] The write concern.
-        def applied_write_concern(session)
-          if wco = options[:write_concern] || options[:write]
-            WriteConcern.get(wco)
-          else
-            write_concern_with_session(session)
+            write_with_retry(session, write_concern) do |server, txn_num|
+              Operation::Update.new(
+                updates: [ update_doc ],
+                db_name: collection.database.name,
+                coll_name: collection.name,
+                write_concern: write_concern,
+                bypass_document_validation: !!opts[:bypass_document_validation],
+                session: session,
+                txn_num: txn_num,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
+            end
           end
         end
       end

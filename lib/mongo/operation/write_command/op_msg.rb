@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2018-2020 MongoDB Inc.
+# Copyright (C) 2021 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,29 +17,25 @@
 
 module Mongo
   module Operation
-    class Distinct
+    class WriteCommand
 
-      # A MongoDB distinct operation sent as a command message.
+      # A MongoDB write command operation sent as an op message.
       #
       # @api private
-      #
-      # @since 2.5.2
-      class Command
-        include Specifiable
-        include Executable
-        include Limited
-        include ReadPreferenceSupported
+      class OpMsg < OpMsgBase
+        include Validatable
 
         private
 
         def selector(connection)
-          selector = spec[:selector]
-          selector = apply_collation(selector, connection, spec[:collation])
-          selector
-        end
-
-        def message(connection)
-          Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
+          super.tap do |selector|
+            if selector.key?(:findAndModify)
+              validate_find_options(connection, selector)
+            end
+            if wc = spec[:write_concern]
+              selector[:writeConcern] = wc.options
+            end
+          end
         end
       end
     end

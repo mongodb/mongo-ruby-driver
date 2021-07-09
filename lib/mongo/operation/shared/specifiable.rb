@@ -519,17 +519,6 @@ module Mongo
         @spec[:txn_num]
       end
 
-      # For createIndexes operations, the number of votes that a primary must
-      # wait for before commiting an index. Potential values are:
-      # - an integer from 0 to the number of members of the replica set
-      # - "majority" indicating that a majority of data bearing nodes must vote
-      # - "votingMembers" which means that all voting data bearing nodes must vote
-      #
-      # @return [ nil | Integer | String ] The commitQuorum value of the operation.
-      def commit_quorum
-        @spec[:commit_quorum]
-      end
-
       # The command.
       #
       # @return [ Hash ] The command.
@@ -562,6 +551,16 @@ module Mongo
       # @since 2.5.2
       def acknowledged_write?
         write_concern.nil? || write_concern.acknowledged?
+      end
+
+      def apply_collation(selector, connection, collation)
+        if collation
+          unless connection.features.collation_enabled?
+            raise Error::UnsupportedCollation
+          end
+          selector = selector.merge(collation: collation)
+        end
+        selector
       end
     end
   end

@@ -32,13 +32,16 @@ module Mongo
         include BypassDocumentValidation
         include ExecutableNoValidate
         include PolymorphicResult
+        include Validatable
 
         private
 
         def selector(connection)
-          { update: coll_name,
-            updates: send(IDENTIFIER),
-            ordered: ordered? }
+          {
+            update: coll_name,
+            updates: validate_updates(connection, send(IDENTIFIER)),
+            ordered: ordered?,
+          }
         end
 
         def message(connection)

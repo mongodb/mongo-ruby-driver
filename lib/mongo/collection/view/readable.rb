@@ -159,13 +159,15 @@ module Mongo
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
-              apply_collation!(cmd, server, opts)
               Operation::Count.new(
-                                     :selector => cmd,
-                                     :db_name => database.name,
-                                     :options => {:limit => -1},
-                                     :read => read_pref,
-                                     :session => session,
+                selector: cmd,
+                db_name: database.name,
+                options: {:limit => -1},
+                read: read_pref,
+                session: session,
+                # For some reason collation was historically accepted as a
+                # string key. Note that this isn't documented as valid usage.
+                collation: opts[:collation] || opts['collation'] || collation,
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end.n.to_i
           end
@@ -305,14 +307,16 @@ module Mongo
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
-              apply_collation!(cmd, server, opts)
-              Operation::Distinct.new({
-                                        :selector => cmd,
-                                        :db_name => database.name,
-                                        :options => {:limit => -1},
-                                        :read => read_pref,
-                                        :session => session,
-                                       }).execute(server, context: Operation::Context.new(client: client, session: session))
+              Operation::Distinct.new(
+                selector: cmd,
+                db_name: database.name,
+                options: {:limit => -1},
+                read: read_pref,
+                session: session,
+                # For some reason collation was historically accepted as a
+                # string key. Note that this isn't documented as valid usage.
+                collation: opts[:collation] || opts['collation'] || collation,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
             end.first['values']
           end
         end

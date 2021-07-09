@@ -58,6 +58,10 @@ module Mongo
               raise Error::UnsupportedOption.allow_disk_use_error
             end
 
+            if spec[:collation] && !connection.features.collation_enabled?
+              raise Error::UnsupportedCollation
+            end
+
             modifiers = {}
             DRIVER_MAPPINGS.each do |k, server_k|
               unless (value = spec[k]).nil?

@@ -31,13 +31,16 @@ module Mongo
         include WriteConcernSupported
         include ExecutableNoValidate
         include PolymorphicResult
+        include Validatable
 
         private
 
         def selector(connection)
-          { delete: coll_name,
-            deletes: send(IDENTIFIER),
-            ordered: ordered? }
+          {
+            delete: coll_name,
+            deletes: validate_updates(connection, send(IDENTIFIER)),
+            ordered: ordered?,
+          }
         end
 
         def message(connection)

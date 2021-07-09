@@ -34,6 +34,14 @@ module Mongo
 
         private
 
+        def selector(connection)
+          super.tap do |selector|
+            if selector[:collation] && !connection.features.collation_enabled?
+              raise Error::UnsupportedCollation
+            end
+          end
+        end
+
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end

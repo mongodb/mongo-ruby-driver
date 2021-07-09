@@ -38,28 +38,29 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
-          :retryable_write_error_label => 9,
+          retryable_write_error_label: 9,
+          commit_quorum: 9,
           # Server versions older than 4.2 do not reliably validate options
           # provided by the client during findAndModify operations, requiring the
           # driver to raise client-side errors when those options are provided.
-          :find_and_modify_option_validation => 8,
-          :transactions => 7,
-          :scram_sha_256 => 7,
-          :array_filters => 6,
-          :op_msg => 6,
-          :sessions => 6,
-          :collation => 5,
-          :max_staleness => 5,
+          find_and_modify_option_validation: 8,
+          transactions: 7,
+          scram_sha_256: 7,
+          array_filters: 6,
+          op_msg: 6,
+          sessions: 6,
+          collation: 5,
+          max_staleness: 5,
           # Server versions older than 3.4 do not reliably validate options
           # provided by the client during update/delete operations, requiring the
           # driver to raise client-side errors when those options are provided.
-          :update_delete_option_validation => 5,
-          :find_command => 4,
-          :list_collections => 3,
-          :list_indexes => 3,
-          :scram_sha_1 => 3,
-          :write_command => 2,
-          :users_info => 2
+          update_delete_option_validation: 5,
+          find_command: 4,
+          list_collections: 3,
+          list_indexes: 3,
+          scram_sha_1: 3,
+          write_command: 2,
+          users_info: 2,
         }.freeze
 
         # Error message if the server is too old for this version of the driver.

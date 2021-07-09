@@ -26,6 +26,12 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include CausalConsistencySupported
+
+        private
+
+        def selector(connection)
+          Utils.compact_hash(spec[:selector].merge(collation: spec[:collation]))
+        end
       end
     end
   end
