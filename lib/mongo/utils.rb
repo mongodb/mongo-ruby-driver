@@ -109,5 +109,10 @@ module Mongo
       end]
     end
 
+    # Hash#compact implementation for Ruby 2.3/2.4
+    # Implementation based on activesupport 5.2.3
+    module_function def slice_hash(hash, *keys)
+      keys.each_with_object({}) { |k, res| res[k] = hash[k] if hash.key?(k) }
+    end
   end
 end
