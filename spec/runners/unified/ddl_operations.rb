@@ -17,7 +17,14 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        database[args.use!('collection')].create(**opts)
+        collection_opts = {}
+        if timeseries = args.use('timeseries')
+          collection_opts[:time_series] = timeseries
+        end
+        if expire_after_seconds = args.use('expireAfterSeconds')
+          collection_opts[:expire_after] = expire_after_seconds
+        end
+        database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
 

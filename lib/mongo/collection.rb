@@ -58,6 +58,12 @@ module Mongo
     # @since 2.1.0
     CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :write_concern ].freeze
 
+    # Options that can be used for creating a time-series collection.
+    TIME_SERIES_OPTIONS = {
+      :time_series => :timeseries,
+      :expire_after => :expireAfterSeconds
+    }
+
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
     #
@@ -87,6 +93,11 @@ module Mongo
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
+    # @option options [ Hash ] :time_series Create a time-series collection.
+    #   See https://docs.mongodb.com/manual/core/timeseries-collections/ for more
+    #   information about time-series collection.
+    # @option options [ Integer ] :expire_after Number indicating
+    #   after how many seconds old time-series data should be deleted.
     #
     # @since 2.0.0
     def initialize(database, name, options = {})
@@ -225,8 +236,11 @@ module Mongo
     #
     # @param [ Hash ] opts The options for the create operation.
     #
-    # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Session ] :session The session to use for the operation.
     # @option opts [ Hash ] :write_concern The write concern options.
+    # @option opts [ Hash ] :time_series Create a time-series collection.
+    # @option opts [ Integer ] :expire_after Number indicating
+    #   after how many seconds old time-series data should be deleted.
     #
     # @return [ Result ] The result of the command.
     #
@@ -239,6 +253,13 @@ module Mongo
       options = Hash[self.options.reject do |key, value|
         %w(read read_preference).include?(key.to_s)
       end]
+      options.update(Utils.slice_hash(opts, *TIME_SERIES_OPTIONS.keys))
+      # Converting Ruby spelled time series options to server style.
+      TIME_SERIES_OPTIONS.each do |ruby_key, server_key|
+        if options.key?(ruby_key)
+          options[server_key] = options.delete(ruby_key)
+        end
+      end
       operation = { :create => name }.merge(options)
       operation.delete(:write)
       operation.delete(:write_concern)

@@ -474,7 +474,7 @@ describe Mongo::Client do
           end
 
           it 'does not set the compressor and warns' do
-            expect(Mongo::Logger.logger).to receive(:warn)
+            expect(Mongo::Logger.logger).to receive(:warn).with(/Unsupported compressor/)
             expect(client.options['compressors']).to be_nil
           end
 
