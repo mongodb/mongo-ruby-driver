@@ -65,9 +65,9 @@ module Mongo
           end
         end
 
-        # Redact secure information from the document:
-        #   - it's command is in the sensitive commands;
-        #   - it's command is a hello/legacy hello command, and
+        # Redact secure information from the document if:
+        #   - its command is in the sensitive commands;
+        #   - its command is a hello/legacy hello command, and
         #     speculative authentication is enabled;
         #   - corresponding started event is sensitive.
         #
