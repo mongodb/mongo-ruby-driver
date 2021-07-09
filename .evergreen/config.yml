@@ -812,8 +812,8 @@ axes:
   - id: ocsp-verifier
     display_name: OCSP Verifier
     values:
-      - id: on
-        display_name: on
+      - id: true
+        display_name: true
         variables:
           OCSP_VERIFIER: 1
 
@@ -1409,59 +1409,60 @@ buildvariants:
       - name: "test-aws-auth"
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
+  # TODO Add ruby-3.0: RUBY-2717
   
-- matrix_name: ocsp-verifier - ruby-2.3    
-  matrix_spec:    
-    ocsp-verifier: true    
-    ruby: ruby-2.3    
-    topology: standalone    
-    mongodb-version: '4.4'    
-    os: ubuntu1604    
-    docker-distro: debian92    
-  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
-  tasks: &1    
-  - name: test-via-docker    
-- matrix_name: ocsp-verifier - ruby-2.4    
-  matrix_spec:    
-    ocsp-verifier: true    
-    ruby: ruby-2.4    
-    topology: standalone    
-    mongodb-version: '4.4'    
-    os: ubuntu1604    
-    docker-distro: debian92    
-  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
-  tasks: *1    
-- matrix_name: ocsp-verifier - ruby-2.5    
-  matrix_spec:    
-    ocsp-verifier: true    
-    ruby: ruby-2.5    
-    topology: standalone    
-    mongodb-version: '4.4'    
-    os: ubuntu1604    
-    docker-distro: debian10    
-  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
-  tasks: *1    
-- matrix_name: ocsp-verifier - ruby-2.6    
-  matrix_spec:    
-    ocsp-verifier: true    
-    ruby: ruby-2.6    
-    topology: standalone    
-    mongodb-version: '4.4'    
-    os: ubuntu1604    
-    docker-distro: debian10    
-  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
-  tasks: *1    
-- matrix_name: ocsp-verifier - ruby-2.7    
-  matrix_spec:    
-    ocsp-verifier: true    
-    ruby: ruby-2.7    
-    topology: standalone    
-    mongodb-version: '4.4'    
-    os: ubuntu1604    
-    docker-distro: debian10    
-  display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'    
-  tasks: *1    
-
+  - matrix_name: ocsp-verifier - ruby-2.3
+    matrix_spec:
+      ocsp-verifier: true
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1604
+      ruby: ruby-2.3
+      docker-distro: debian92
+    display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
+    tasks: &1
+    - name: test-via-docker
+  - matrix_name: ocsp-verifier - ruby-2.4
+    matrix_spec:
+      ocsp-verifier: true
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1604
+      ruby: ruby-2.4
+      docker-distro: debian92
+    display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
+    tasks: *1
+  - matrix_name: ocsp-verifier - ruby-2.5
+    matrix_spec:
+      ocsp-verifier: true
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1604
+      ruby: ruby-2.5
+      docker-distro: debian10
+    display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
+    tasks: *1
+  - matrix_name: ocsp-verifier - ruby-2.6
+    matrix_spec:
+      ocsp-verifier: true
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1604
+      ruby: ruby-2.6
+      docker-distro: debian10
+    display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
+    tasks: *1
+  - matrix_name: ocsp-verifier - ruby-2.7
+    matrix_spec:
+      ocsp-verifier: true
+      topology: standalone
+      mongodb-version: '4.4'
+      os: ubuntu1604
+      ruby: ruby-2.7
+      docker-distro: debian10
+    display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
+    tasks: *1
+  
 
   - matrix_name: ocsp-must-staple
     matrix_spec:

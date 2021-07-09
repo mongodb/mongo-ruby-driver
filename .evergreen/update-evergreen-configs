@@ -51,6 +51,7 @@ EOT
     'ruby-2.5' => 'debian10',
     'ruby-2.6' => 'debian10',
     'ruby-2.7' => 'debian10',
+    'ruby-3.0' => 'debian10',
   }
 
   def standard_debian_rubies(rubies, key: nil, &block)
@@ -70,8 +71,8 @@ EOT
     unless text
       raise "Couldn't figure out indentation level"
     end
-    indent = $1.length
-    "\n" + out.sub(/\A---.*\n/, '').gsub("\n", ' ' * indent + "\n")
+    indent = ' ' * ($1.length - 2)
+    "\n" + out.sub(/\A---.*\n/, indent).gsub("\n", "\n#{indent}")
   end
 end
 
