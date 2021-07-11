@@ -160,11 +160,6 @@ module Mongo
           topologyVersion: topology_version.to_doc,
           maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
         )
-        if server_api = options[:server_api]
-          document.update(
-            Utils.transform_server_api(server_api)
-          )
-        end
         command = Protocol::Msg.new(
           [:exhaust_allowed], {}, document.merge({'$db' => Database::ADMIN})
         )
