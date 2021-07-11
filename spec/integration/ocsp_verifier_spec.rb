@@ -6,6 +6,7 @@ require 'webrick'
 
 describe Mongo::Socket::OcspVerifier do
   require_ocsp_verifier
+  with_openssl_debug
 
   shared_examples 'verifies' do
     context 'mri' do
@@ -328,6 +329,11 @@ describe Mongo::Socket::OcspVerifier do
 
     include_context 'basic verifier'
 
+    # The fake certificates all have paths in them for use with the ocsp mock.
+    # Use real certificates retrieved from Atlas for this test as they don't
+    # have a path in the OCSP URI (which the test also asserts).
+    # Note that these certificates expire in 3 months and need to be replaced
+    # with a more permanent solution.
     let(:cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp.crt') }
     let(:ca_cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp-ca.crt') }
     let(:cert_store) do
@@ -342,7 +348,7 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     it 'verifies' do
-      # TODO This test might fail if the certificate expires?
+      # TODO This test will fail if the certificate expires
       verifier.verify.should be true
     end
   end

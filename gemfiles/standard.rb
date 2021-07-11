@@ -47,5 +47,7 @@ def standard_dependencies
 
   group :development do
     gem 'ruby-prof', platforms: :mri
+    gem 'erubi'
+    gem 'tilt'
   end
 end
