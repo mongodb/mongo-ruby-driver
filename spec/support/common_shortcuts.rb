@@ -156,6 +156,18 @@ module CommonShortcuts
         end
       end
     end
+
+    def with_openssl_debug
+      around do |example|
+        v = OpenSSL.debug
+        OpenSSL.debug = true
+        begin
+          example.run
+        ensure
+          OpenSSL.debug = v
+        end
+      end
+    end
   end
 
   module InstanceMethods

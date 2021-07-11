@@ -542,17 +542,19 @@ buildvariants:
     tasks:
       - name: "test-aws-auth"
 
-  - matrix_name: ocsp-verifier
+  # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
+  # TODO Add ruby-3.0: RUBY-2717
+  <%|= standard_debian_rubies(%w(ruby-2.3 ruby-2.4 ruby-2.5 ruby-2.6 ruby-2.7), key: 'docker-distro') do %>
+    matrix_name: ocsp-verifier
     matrix_spec:
-      ocsp-verifier: on
-      # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4, ruby-2.3]
+      ocsp-verifier: true
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
-      - name: test-mlaunch
+      - name: test-via-docker
+  <%| end %>
 
   - matrix_name: ocsp-must-staple
     matrix_spec:

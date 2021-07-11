@@ -185,6 +185,16 @@ axes:
         display_name: "RHEL 6"
         run_on: rhel62-small
 
+  - id: docker-distro
+    display_name: Docker Distro
+    values:
+      <% %w(debian92 debian10).each do |distro| %>
+        - id: <%= distro %>
+          display_name: <%= distro %>
+          variables:
+            DOCKER_DISTRO: <%= distro %>
+      <% end %>
+
   - id: "compressor"
     display_name: Compressor
     values:
@@ -331,8 +341,8 @@ axes:
   - id: ocsp-verifier
     display_name: OCSP Verifier
     values:
-      - id: on
-        display_name: on
+      - id: true
+        display_name: true
         variables:
           OCSP_VERIFIER: 1
 
