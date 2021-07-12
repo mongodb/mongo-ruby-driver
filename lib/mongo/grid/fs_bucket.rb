@@ -508,16 +508,16 @@ module Mongo
 
       def ensure_indexes!
         if files_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
-          create_index_if_missing!(files_name, FSBucket::FILES_INDEX)
+          create_index_if_missing!(files_collection, FSBucket::FILES_INDEX)
         end
 
         if chunks_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
-          create_index_if_missing!(chunks_name, FSBucket::CHUNKS_INDEX, :unique => true)
+          create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, :unique => true)
         end
       end
 
-      def create_index_if_missing!(collection_name, index_spec, options = {})
-        indexes_view = database[collection_name].indexes
+      def create_index_if_missing!(collection, index_spec, options = {})
+        indexes_view = collection.indexes
         begin
           if indexes_view.get(index_spec).nil?
             indexes_view.create_one(index_spec, options)
