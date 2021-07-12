@@ -517,14 +517,15 @@ module Mongo
       end
 
       def create_index_if_missing!(collection_name, index_spec, options = {})
+        indexes_view = database[collection_name].indexes
         begin
-          if database[collection_name].indexes.get(index_spec).nil?
-            database[collection_name].indexes.create_one(index_spec, options)
+          if indexes_view.get(index_spec).nil?
+            indexes_view.create_one(index_spec, options)
           end
         rescue Mongo::Error::OperationFailure => e
           # proceed with index creation if a NamespaceNotFound error is thrown
           if e.code == 26
-            database[collection_name].indexes.create_one(index_spec, options)
+            indexes_view.create_one(index_spec, options)
           else
             raise
           end
