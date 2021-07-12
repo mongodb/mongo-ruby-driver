@@ -23,7 +23,9 @@ shared_examples 'app metadata document' do
       if BSON::Environment.jruby? || RUBY_VERSION >= '3.0'
         document[:client][:os][:name].should == 'linux'
       else
-        document[:client][:os][:name].should == 'linux-gnu'
+        # Ruby 2.7.2 and earlier use linux-gnu.
+        # Ruby 2.7.3 uses linux.
+        %w(linux linux-gnu).should include(document[:client][:os][:name])
       end
       document[:client][:os][:architecture].should == 'x86_64'
     end
