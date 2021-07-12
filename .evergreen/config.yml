@@ -1196,15 +1196,17 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "snappy-jruby"
-    matrix_spec:
-      ruby: jruby-9.2
-      mongodb-version: "4.4"
-      topology: replica-set
-      compressor: 'snappy'
-      os: ubuntu1604
-    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
+#  https://jira.mongodb.org/browse/RUBY-2723
+#  Enable or remove when the ticket is resolved.
+#  - matrix_name: "snappy-jruby"
+#    matrix_spec:
+#      ruby: jruby-9.2
+#      mongodb-version: "4.4"
+#      topology: replica-set
+#      compressor: 'snappy'
+#      os: ubuntu1604
+#    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+#    tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "zstd-auth"
