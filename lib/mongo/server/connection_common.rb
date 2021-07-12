@@ -59,15 +59,15 @@ module Mongo
       #   authentication document, if any.
       # @param [ true | false ] load_balancer Whether the connection is to
       #   a load balancer.
-      # @param server_api [ Hash ] server_api Server API version.
+      # @param server_api [ Hash | nil ] server_api Server API version.
       #
       # @return [BSON::Document] Document that should be sent to a server
       #     for handshake purposes.
       #
       # @api private
-      def handshake_document(app_metadata, speculative_auth_doc: nil, load_balancer: false, server_api: {})
-        serv_api = app_metadata.server_api || server_api || {}
-        document = if serv_api[:version]
+      def handshake_document(app_metadata, speculative_auth_doc: nil, load_balancer: false, server_api: nil)
+        serv_api = app_metadata.server_api || server_api
+        document = if serv_api
                      HELLO_DOC.merge(Utils.transform_server_api(serv_api))
                    else
                      LEGACY_HELLO_DOC

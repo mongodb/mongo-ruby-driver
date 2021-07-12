@@ -227,15 +227,16 @@ module Mongo
         #
         # @api private
         def check_document
-          server_api = @app_metadata.server_api || options[:server_api] || {}
-          if !hello_ok? && !server_api[:version]
-            return LEGACY_HELLO_DOC
+          server_api = @app_metadata.server_api || options[:server_api]
+          if hello_ok? || server_api
+            doc = HELLO_DOC
+            if server_api
+              doc = doc.merge(Utils.transform_server_api(server_api))
+            end
+            doc
+          else
+            LEGACY_HELLO_DOC
           end
-          doc = HELLO_DOC
-          if server_api[:version]
-            doc = doc.merge(Utils.transform_server_api(server_api))
-          end
-          doc
         end
 
         private
