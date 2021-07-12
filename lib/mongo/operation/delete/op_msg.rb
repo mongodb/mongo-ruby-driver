@@ -29,13 +29,20 @@ module Mongo
         include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
+        include Validatable
 
         private
 
         def selector(connection)
           { delete: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
-            ordered: ordered? }
+            ordered: ordered?,
+          }.tap do |selector|
+            if hint = spec[:hint]
+              validate_hint_on_update(connection, selector)
+              selector[:hint] = hint
+            end
+          end
         end
 
         def message(connection)

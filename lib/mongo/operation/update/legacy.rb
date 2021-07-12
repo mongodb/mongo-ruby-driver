@@ -30,24 +30,32 @@ module Mongo
         include Specifiable
         include Executable
         include PolymorphicResult
+        include Validatable
 
         private
 
-        def selector
-          send(IDENTIFIER).first
+        def selector(connection)
+          # This returns the first update.
+          # The driver only puts one update into the list normally, so this
+          # doesn't discard operations.
+          send(IDENTIFIER).first.tap do |selector|
+            validate_find_options(connection, selector)
+          end
         end
 
         def message(connection)
+          selector = selector(connection)
+
           flags = []
           flags << :multi_update if selector[Operation::MULTI]
           flags << :upsert if selector[Operation::UPSERT]
 
           Protocol::Update.new(
-              db_name,
-              coll_name,
-              selector[Operation::Q],
-              selector[Operation::U],
-              flags.empty? ? {} : { flags: flags }
+            db_name,
+            coll_name,
+            selector[Operation::Q],
+            selector[Operation::U],
+            flags.empty? ? {} : { flags: flags },
           )
         end
 
@@ -55,10 +63,10 @@ module Mongo
           wc = write_concern ||  WriteConcern.get(WriteConcern::DEFAULT)
           if gle_message = wc.get_last_error
             Protocol::Query.new(
-                db_name,
-                Database::COMMAND,
-                gle_message,
-                options.merge(limit: -1)
+              db_name,
+              Database::COMMAND,
+              gle_message,
+              options.merge(limit: -1),
             )
           end
         end

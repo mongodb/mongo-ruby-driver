@@ -19,7 +19,7 @@ module Mongo
   module Operation
     class Create
 
-      # A MongoDB count operation sent as a command message.
+      # A MongoDB create collection operation sent as a command message.
       #
       # @api private
       #
@@ -31,6 +31,12 @@ module Mongo
         include WriteConcernSupported
 
         private
+
+        def selector(connection)
+          selector = spec[:selector]
+          selector = apply_collation(selector, connection, spec[:collation])
+          selector
+        end
 
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))

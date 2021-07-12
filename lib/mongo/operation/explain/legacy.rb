@@ -33,6 +33,10 @@ module Mongo
         private
 
         def message(connection)
+          if spec[:collation] && !connection.features.collation_enabled?
+            raise Error::UnsupportedCollation
+          end
+
           Protocol::Query.new(
             db_name,
             coll_name,

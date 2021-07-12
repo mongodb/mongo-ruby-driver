@@ -129,7 +129,10 @@ module Mongo
       # @option options [ String | Integer ] :commit_quorum Specify how many
       #   data-bearing members of a replica set, including the primary, must
       #   complete the index builds successfully before the primary marks
-      #   the indexes as ready.
+      #   the indexes as ready. Potential values are:
+      #   - an integer from 0 to the number of members of the replica set
+      #   - "majority" indicating that a majority of data bearing nodes must vote
+      #   - "votingMembers" which means that all voting data bearing nodes must vote
       # @option options [ Session ] :session The session to use for the operation.
       #
       # @note Note that the options listed may be subset of those available.
@@ -177,7 +180,10 @@ module Mongo
       #   The following options are accepted:
       #   - commit_quorum: Specify how many data-bearing members of a replica set,
       #     including the primary, must complete the index builds successfully
-      #     before the primary marks the indexes as ready.
+      #     before the primary marks the indexes as ready. Potential values are:
+      #     - an integer from 0 to the number of members of the replica set
+      #     - "majority" indicating that a majority of data bearing nodes must vote
+      #     - "votingMembers" which means that all voting data bearing nodes must vote
       #   - session: The session to use.
       #
       # @return [ Result ] The result of the command.
@@ -193,17 +199,6 @@ module Mongo
         client.send(:with_session, @options.merge(options)) do |session|
           server = next_primary(nil, session)
 
-          # While server versions 3.4 and newer generally perform option
-          # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
-          # the server would accept the commitQuorum option and use it internally
-          # (see SERVER-47193). As a result, the drivers specifications require
-          # drivers to perform validation and raise an error when the commitQuorum
-          # option is passed to servers that don't support it.
-          description = server.with_connection { |connection| connection.description }
-          if description.max_wire_version < 9 && options[:commit_quorum]
-            raise Error::UnsupportedOption.commit_quorum_error
-          end
-
           indexes = normalize_models(models, server)
           indexes.each do |index|
             if index[:bucketSize] || index['bucketSize']
@@ -216,10 +211,9 @@ module Mongo
             db_name: database.name,
             coll_name: collection.name,
             session: session,
-            commit_quorum: options[:commit_quorum]
-           }
-
-          spec[:write_concern] = write_concern if description.features.collation_enabled?
+            commit_quorum: options[:commit_quorum],
+            write_concern: write_concern,
+          }
 
           Operation::CreateIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
         end
@@ -292,13 +286,13 @@ module Mongo
       def drop_by_name(name)
         client.send(:with_session, @options) do |session|
           spec = {
-                   db_name: database.name,
-                   coll_name: collection.name,
-                   index_name: name,
-                   session: session
-                 }
+            db_name: database.name,
+            coll_name: collection.name,
+            index_name: name,
+            session: session,
+            write_concern: write_concern,
+          }
           server = next_primary(nil, session)
-          spec[:write_concern] = write_concern if server.with_connection { |connection| connection.features }.collation_enabled?
           Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
@@ -329,29 +323,16 @@ module Mongo
       end
 
       def normalize_models(models, server)
-        with_generated_names(models, server).map do |model|
-          Options::Mapper.transform(model, OPTIONS)
+        models.map do |model|
+          # Transform options first which gives us a mutable hash
+          Options::Mapper.transform(model, OPTIONS).tap do |model|
+            model[:name] ||= index_name(model.fetch(:key))
+          end
         end
       end
 
       def send_initial_query(server, session)
         initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
-      end
-
-      def with_generated_names(models, server)
-        models.dup.each do |model|
-          validate_collation!(model, server)
-          unless model[:name]
-            model[:name] = index_name(model[:key])
-          end
-        end
-      end
-
-      def validate_collation!(model, server)
-        if (model[:collation] || model[Operation::COLLATION]) &&
-            !server.with_connection { |connection| connection.features }.collation_enabled?
-          raise Error::UnsupportedCollation.new
-        end
       end
     end
   end

@@ -36,7 +36,7 @@ module Mongo
             scope: 'scope',
             verbose: 'verbose',
             bypass_document_validation: 'bypassDocumentValidation',
-            collation: 'collation'
+            collation: 'collation',
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :read, :write_concern
@@ -113,7 +113,8 @@ module Mongo
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
                 collection.read_concern)
             end
-            command.merge!(view_options)
+            command.update(view_options)
+            command.update(Utils.slice_hash(options, :collation))
             # Read preference isn't simply passed in the command payload
             # (it may need to be converted to wire protocol flags)
             # so remove it here and hopefully it's handled elsewhere.

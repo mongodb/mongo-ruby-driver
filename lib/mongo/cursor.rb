@@ -90,6 +90,9 @@ module Mongo
     # @api private
     attr_reader :server
 
+    # @api private
+    attr_reader :initial_result
+
     # Finalize the cursor for garbage collection. Schedules this cursor to be included
     # in a killCursors operation executed by the Cluster's CursorReaper.
     #

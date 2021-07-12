@@ -4357,7 +4357,7 @@ describe Mongo::Collection do
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(1)
         expect(command[:upsert]).to be(true)
-        expect(command[:bypassDocumentValidation]).to be_nil
+        expect(command[:bypassDocumentValidation]).to be false
         expect(command[:maxTimeMS]).to eq(200)
       end
     end

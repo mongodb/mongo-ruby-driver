@@ -269,17 +269,17 @@ module Mongo
         else
           self.write_concern
         end
-        server = next_primary(nil, session)
-        if (options[:collation] || options[Operation::COLLATION]) && !server.with_connection { |connection| connection.features }.collation_enabled?
-          raise Error::UnsupportedCollation
-        end
 
+        context = Operation::Context.new(client: client, session: session)
         Operation::Create.new(
           selector: operation,
           db_name: database.name,
           write_concern: write_concern,
           session: session,
-        ).execute(server, context: Operation::Context.new(client: client, session: session))
+          # Note that these are collection options, collation isn't
+          # taken from options passed to the create method.
+          collation: options[:collation] || options['collation'],
+        ).execute(next_primary(nil, session), context: context)
       end
     end
 
