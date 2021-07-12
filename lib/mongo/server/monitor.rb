@@ -280,13 +280,7 @@ module Mongo
         if @connection
           result = server.round_trip_time_averager.measure do
             begin
-              doc = @connection.check_document.tap do |doc|
-                if server_api = options[:server_api]
-                  doc.merge(Utils.transform_server_api(server_api))
-                else
-                  doc
-                end
-              end
+              doc = @connection.check_document
               cmd = Protocol::Query.new(
                 Database::ADMIN, Database::COMMAND, doc, :limit => -1
               )

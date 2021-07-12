@@ -54,19 +54,27 @@ module Mongo
 
       # Build a document that should be used for connection handshake.
       #
-      # @param [Server::AppMetadata] app_metadata Application metadata
+      # @param [ Server::AppMetadata ] app_metadata Application metadata
+      # @param [ BSON::Document ] speculative_auth_doc The speculative
+      #   authentication document, if any.
+      # @param server_api [ Hash | nil ] server_api Server API version.
       #
       # @return [BSON::Document] Document that should be sent to a server
       #     for handshake purposes.
       #
       # @api private
-      def handshake_document(app_metadata)
-        document = if app_metadata.server_api && app_metadata.server_api[:version]
-                     HELLO_DOC
+      def handshake_document(app_metadata, speculative_auth_doc: nil, server_api: nil)
+        serv_api = app_metadata.server_api || server_api
+        document = if serv_api
+                     HELLO_DOC.merge(Utils.transform_server_api(serv_api))
                    else
                      LEGACY_HELLO_DOC
                    end
-        document.merge(app_metadata.validated_document)
+        document.merge(app_metadata.validated_document).tap do |doc|
+          if speculative_auth_doc
+            doc.update(speculativeAuthenticate: speculative_auth_doc)
+          end
+        end
       end
 
 

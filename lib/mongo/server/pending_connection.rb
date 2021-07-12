@@ -111,10 +111,11 @@ module Mongo
           raise Error::InternalDriverError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
-        hello_doc = handshake_document(app_metadata)
-        if speculative_auth_doc
-          hello_doc = hello_doc.merge(speculativeAuthenticate: speculative_auth_doc)
-        end
+        hello_doc = handshake_document(
+          app_metadata,
+          speculative_auth_doc: speculative_auth_doc,
+          server_api: options[:server_api],
+        )
 
         # TODO (DR): OP_MSG should be used if api version is declared.
         # See https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.rst#id5
