@@ -115,6 +115,7 @@ module Mongo
           app_metadata,
           speculative_auth_doc: speculative_auth_doc,
           load_balancer: server.load_balancer?,
+          server_api: options[:server_api]
         )
 
         # TODO (DR): OP_MSG should be used if api version is declared.
