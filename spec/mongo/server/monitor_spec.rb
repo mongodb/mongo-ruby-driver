@@ -176,6 +176,7 @@ describe Mongo::Server::Monitor do
       before do
         monitor.stop!
         sleep(1)
+        monitor.running?.should be false
       end
 
       it 'creates a new thread' do
@@ -187,7 +188,11 @@ describe Mongo::Server::Monitor do
       it 'starts the thread' do
         ClientRegistry.instance.close_all_clients
         thread
-        sleep 0.5
+        Utils.wait_for_condition(10) do
+          monitor.running? && monitor.connection&.connected?
+        end
+        monitor.running?.should be true
+        monitor.connection.connected?.should be true
 
         RSpec::Mocks.with_temporary_scope do
           expect(monitor.connection).to receive(:disconnect!).and_call_original
