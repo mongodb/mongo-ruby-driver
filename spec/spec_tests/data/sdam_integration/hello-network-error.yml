@@ -2,6 +2,8 @@
 runOn:
     # failCommand appName requirements
     - minServerVersion: "4.9"
+      # TODO Uncomment the line below when load balancer is ready.
+      topology: ["replicaset","sharded","single"]
 
 database_name: &database_name "sdam-tests"
 collection_name: &collection_name "hello-network-error"
