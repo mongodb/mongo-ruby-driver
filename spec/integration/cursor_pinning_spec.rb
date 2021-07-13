@@ -26,10 +26,12 @@ describe 'Cursor pinning' do
     it 'creates new connections for iteration' do
       server.pool.size.should == 0
 
-      enum = collection.find({}, batch_size: 1).to_enum
+      # Use batch_size of 2 until RUBY-2727 is fixed.
+      enum = collection.find({}, batch_size: 2).to_enum
       # Still zero because we haven't iterated
       server.pool.size.should == 0
 
+      enum.next
       enum.next
       server.pool.size.should == 1
 
