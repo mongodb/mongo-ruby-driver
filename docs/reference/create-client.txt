@@ -535,7 +535,14 @@ Ruby Options
      - ``Logger``
 
    * - ``:max_idle_time``
-     - The maximum seconds a socket can remain idle since it has been checked in to the pool.
+     - The maximum time, in seconds, that a connection can be idle before it
+       is closed by the connection pool.
+       
+       *Warning:* when connected to a load balancer, the driver uses existing
+       connections for iterating cursors (which includes change streams)
+       and executing transactions. Setting an idle time via this option may
+       cause the driver to close connections that are needed for subsequent
+       operations, causing those operations to fail.
      - ``Integer``
      - none
 

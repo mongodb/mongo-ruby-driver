@@ -556,8 +556,17 @@ describe Mongo::Cursor do
         db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL }
     end
 
+    let(:conn_desc) do
+      double('connection description').tap do |cd|
+        allow(cd).to receive(:service_id).and_return(nil)
+      end
+    end
+
     let(:reply) do
-      Mongo::Operation::Find.new(query_spec).tap do |reply|
+      double('reply').tap do |reply|
+        allow(reply).to receive(:is_a?).with(Mongo::Operation::Result).and_return(true)
+        allow(reply).to receive(:namespace)
+        allow(reply).to receive(:connection_description).and_return(conn_desc)
         allow(reply).to receive(:cursor_id).and_return(42)
       end
     end

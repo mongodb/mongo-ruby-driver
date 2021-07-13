@@ -67,6 +67,10 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(view, result, server, options = {})
+      unless result.is_a?(Operation::Result)
+        raise ArgumentError, "Second argument must be a Mongo::Operation::Result: #{result.inspect}"
+      end
+
       @view = view
       @server = server
       @initial_result = result
@@ -279,7 +283,7 @@ module Mongo
           cursor_ids: [id],
         }
         op = Operation::KillCursors.new(spec)
-        op.execute(@server, context: Operation::Context.new(client: client, session: @session))
+        execute_operation(op)
       end
 
       nil
@@ -354,7 +358,7 @@ module Mongo
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
-      process(get_more_operation.execute(@server, context: Operation::Context.new(client: client, session: @session)))
+      process(execute_operation(get_more_operation))
     end
 
     # @api private
@@ -363,6 +367,7 @@ module Mongo
         cursor_id: id,
         coll_name: collection_name,
         db_name: database.name,
+        service_id: initial_result.connection_description.service_id,
       )
     end
 
@@ -447,6 +452,15 @@ module Mongo
 
     def unregister
       cluster.unregister_cursor(@cursor_id)
+    end
+
+    def execute_operation(op)
+      context = Operation::Context.new(
+        client: client,
+        session: @session,
+        service_id: initial_result.connection_description.service_id,
+      )
+      op.execute(@server, context: context)
     end
   end
 end

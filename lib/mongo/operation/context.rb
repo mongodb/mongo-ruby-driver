@@ -35,7 +35,7 @@ module Mongo
     #
     # @api private
     class Context
-      def initialize(client: nil, session: nil, options: nil)
+      def initialize(client: nil, session: nil, service_id: nil, options: nil)
         if options
           if client
             raise ArgumentError, 'Client and options cannot both be specified'
@@ -48,11 +48,13 @@ module Mongo
 
         @client = client
         @session = session
+        @service_id = service_id
         @options = options
       end
 
       attr_reader :client
       attr_reader :session
+      attr_reader :service_id
       attr_reader :options
 
       def in_transaction?
