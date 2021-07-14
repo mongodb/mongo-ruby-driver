@@ -14,7 +14,7 @@ describe 'Versioned API examples' do
     "mongodb://#{SpecConfig.instance.addresses.join(',')}"
   end
 
-  it 'Versioned API examples' do
+  it 'Versioned API example 1' do
 
     # Start Versioned API Example 1
 
@@ -22,23 +22,48 @@ describe 'Versioned API examples' do
 
     # End Versioned API Example 1
 
+    # Run a command to ensure the client works.
+    client['test'].find.to_a.should be_a(Array)
+    # Do not leak clients.
+    client.close
+  end
+
+  it 'Versioned API example 2' do
     # Start Versioned API Example 2
 
     client = Mongo::Client.new(uri_string, server_api: {version: "1", strict: true})
 
     # End Versioned API Example 2
 
+    # Run a command to ensure the client works.
+    client['test'].find.to_a.should be_a(Array)
+    # Do not leak clients.
+    client.close
+  end
+
+  it 'Versioned API example 3' do
     # Start Versioned API Example 3
 
     client = Mongo::Client.new(uri_string, server_api: {version: "1", strict: false})
 
     # End Versioned API Example 3
 
+    # Run a command to ensure the client works.
+    client['test'].find.to_a.should be_a(Array)
+    # Do not leak clients.
+    client.close
+  end
+
+  it 'Versioned API example 4' do
     # Start Versioned API Example 4
 
     client = Mongo::Client.new(uri_string, server_api: {version: "1", deprecation_errors: true})
 
     # End Versioned API Example 4
+
+    # Run a command to ensure the client works.
+    client['test'].find.to_a.should be_a(Array)
+    # Do not leak clients.
+    client.close
   end
 end
-
