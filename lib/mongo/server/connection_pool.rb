@@ -336,29 +336,21 @@ module Mongo
               end
 
               if service_id
-                publish_cmap_event(
-                  Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-                    @server.address,
-                    # CONNECTION_ERROR is the closest reason.
-                    # Technically we haven't attempted to create a connection
-                    # (because there is no way to request a connection to a
-                    # specific service), but another way of looking at it
-                    # is that the pool did fail to provide a connection as
-                    # requested.
-                    Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
-                  ),
-                )
-
-                raise Error::NoServiceConnectionAvailable.generate(
-                  address: @server.address, service_id: service_id)
-              end
-
-              # Ruby does not allow a thread to lock a mutex which it already
-              # holds.
-              if unsynchronized_size < max_size
-                connection = create_connection
-                @pending_connections << connection
-                throw(:done)
+                # If we need a connection to a particular service, we can't
+                # create one if we don't already have one, but we can wait
+                # for an in-progress operation to return such a connection
+                # to the pool, or for the populator to create a suitable
+                # connection.
+              else
+                # If we are below pool capacity, create a new connection.
+                #
+                # Ruby does not allow a thread to lock a mutex which it already
+                # holds.
+                if unsynchronized_size < max_size
+                  connection = create_connection
+                  @pending_connections << connection
+                  throw(:done)
+                end
               end
             end
 
@@ -372,8 +364,14 @@ module Mongo
               )
 
               msg = @lock.synchronize do
+                service_id_msg = if service_id
+                  " for service #{service_id}"
+                else
+                  ''
+                end
+
                 "Timed out attempting to check out a connection " +
-                  "from pool for #{@server.address} after #{wait_timeout} sec. " +
+                  "from pool for #{@server.address}#{service_id_msg} after #{wait_timeout} sec. " +
                   "Connections in pool: #{@available_connections.length} available, " +
                   "#{@checked_out_connections.length} checked out, " +
                   "#{@pending_connections.length} pending " +
