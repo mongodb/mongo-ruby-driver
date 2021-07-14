@@ -277,7 +277,7 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       #
       # @since 2.9.0
-      def check_out
+      def check_out(service_id: nil)
         check_invariants
 
         publish_cmap_event(
@@ -306,7 +306,7 @@ module Mongo
             # a connection while this thread is waiting for one.
             @lock.synchronize do
               until @available_connections.empty?
-                connection = @available_connections.pop
+                connection = next_available_connection(service_id: service_id)
 
                 if connection.pid != pid
                   log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
@@ -333,6 +333,24 @@ module Mongo
 
                 @pending_connections << connection
                 throw(:done)
+              end
+
+              if service_id
+                publish_cmap_event(
+                  Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+                    @server.address,
+                    # CONNECTION_ERROR is the closest reason.
+                    # Technically we haven't attempted to create a connection
+                    # (because there is no way to request a connection to a
+                    # specific service), but another way of looking at it
+                    # is that the pool did fail to provide a connection as
+                    # requested.
+                    Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
+                  ),
+                )
+
+                raise Error::NoServiceConnectionAvailable.generate(
+                  address: @server.address, service_id: service_id)
               end
 
               # Ruby does not allow a thread to lock a mutex which it already
@@ -610,10 +628,10 @@ module Mongo
       # @return [ Object ] The result of the block.
       #
       # @since 2.0.0
-      def with_connection
+      def with_connection(service_id: nil)
         raise_if_closed!
 
-        connection = check_out
+        connection = check_out(service_id: service_id)
         yield(connection)
       ensure
         if connection
@@ -728,6 +746,18 @@ module Mongo
       end
 
       private
+
+      def next_available_connection(service_id: nil)
+        if service_id
+          conn = @available_connections.detect do |conn|
+            conn.service_id == service_id
+          end
+          @available_connections.delete(conn)
+          conn
+        else
+          @available_connections.pop
+        end
+      end
 
       def create_connection
         connection = Connection.new(@server, options.merge(

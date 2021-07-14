@@ -25,13 +25,14 @@ module Mongo
     # @api private
     class KillSpec
 
-      def initialize(cursor_id:, coll_name:, db_name:)
+      def initialize(cursor_id:, coll_name:, db_name:, service_id:)
         @cursor_id = cursor_id
         @coll_name = coll_name
         @db_name = db_name
+        @service_id = service_id
       end
 
-      attr_reader :cursor_id, :coll_name, :db_name
+      attr_reader :cursor_id, :coll_name, :db_name, :service_id
     end
   end
 end

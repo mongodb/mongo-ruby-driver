@@ -425,8 +425,8 @@ module Mongo
     # @return [ Object ] The result of the block execution.
     #
     # @since 2.3.0
-    def with_connection(&block)
-      pool.with_connection(&block)
+    def with_connection(service_id: nil, &block)
+      pool.with_connection(service_id: service_id, &block)
     end
 
     # Handle handshake failure.

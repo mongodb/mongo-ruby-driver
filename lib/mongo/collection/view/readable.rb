@@ -235,8 +235,8 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            context = Operation::Context.new(client: client, session: session)
             read_with_retry(session, selector) do |server|
+              context = Operation::Context.new(client: client, session: session)
               if server.description.server_version_gte?('5.0')
                 pipeline = [
                   {'$collStats' => {'count' => {}}},
@@ -664,7 +664,8 @@ module Mongo
           # Note that the context object shouldn't be reused for subsequent
           # GetMore operations.
           context = Operation::Context.new(client: client, session: session)
-          op.execute(server, context: context).cursor_ids.map do |cursor_id|
+          result = op.execute(server, context: context)
+          result.cursor_ids.map do |cursor_id|
             spec = {
               cursor_id: cursor_id,
               coll_name: collection.name,
@@ -675,7 +676,12 @@ module Mongo
               # max_time_ms is not being passed here, I assume intentionally?
             }
             op = Operation::GetMore.new(spec)
-            result = op.execute(server, context: Operation::Context.new(client: client, session: session))
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              service_id: result.connection_description.service_id,
+            )
+            result = op.execute(server, context: context)
             Cursor.new(self, result, server, session: session)
           end
         end
