@@ -46,6 +46,10 @@ module Mongo
           end
         end
 
+        if service_id && session&.pinned_service_id
+          raise ArgumentError, 'Trying to pin context to a service when the session is already pinned to a service'
+        end
+
         @client = client
         @session = session
         @service_id = service_id
@@ -54,8 +58,11 @@ module Mongo
 
       attr_reader :client
       attr_reader :session
-      attr_reader :service_id
       attr_reader :options
+
+      def service_id
+        @service_id || session&.pinned_service_id
+      end
 
       def in_transaction?
         session&.in_transaction? || false

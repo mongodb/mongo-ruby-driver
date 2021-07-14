@@ -251,7 +251,7 @@ module Mongo
             end
 
             if session && session.starting_transaction? && cluster.sharded?
-              session.pin(server)
+              session.pin_to_server(server)
             end
 
             return server
