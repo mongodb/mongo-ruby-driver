@@ -35,6 +35,7 @@ autoload :CGI, 'cgi'
 require 'bson'
 
 require 'mongo/id'
+require 'mongo/generation_generator'
 require 'mongo/bson'
 require 'mongo/semaphore'
 require 'mongo/distinguishing_semaphore'

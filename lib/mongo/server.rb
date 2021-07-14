@@ -25,6 +25,7 @@ module Mongo
     extend Forwardable
     include Monitoring::Publishable
     include Event::Publisher
+    include GenerationGenerator
 
     # The default time in seconds to timeout a connection attempt.
     #
@@ -56,6 +57,7 @@ module Mongo
     #   manually invoke SDAM state transitions.
     # @option options [ true | false ] :load_balancer Whether this server
     #   is a load balancer.
+    # @option options [ String ] :connect The client connection mode.
     #
     # @since 2.0.0
     def initialize(address, cluster, monitoring, event_listeners, options = {})
@@ -72,7 +74,8 @@ module Mongo
       @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {},
-        load_balancer: !!@options[:load_balancer])
+        load_balancer: !!@options[:load_balancer],
+      )
       @last_scan = nil
       @last_scan_monotime = nil
       unless options[:monitoring_io] == false
@@ -109,6 +112,15 @@ module Mongo
     # @return [ Server::Description ] description The server
     #   description the monitor refreshes.
     attr_reader :description
+
+    # Returns whether this server is forced to be a load balancer.
+    #
+    # @return [ true | false ] Whether this server is forced to be a load balancer.
+    #
+    # @api private
+    def force_load_balancer?
+      options[:connect] == :load_balanced
+    end
 
     # @return [ Time | nil ] last_scan The time when the last server scan
     #   completed, or nil if the server has not been scanned yet.

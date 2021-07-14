@@ -760,12 +760,15 @@ module Mongo
       end
 
       def create_connection
-        connection = Connection.new(@server, options.merge(
-          generation: generation,
+        opts = options.merge(
           connection_pool: self,
           # Do not pass app metadata - this will be retrieved by the connection
           # based on the auth needs.
-        ))
+        )
+        unless @server.load_balancer?
+          opts[:generation] = generation
+        end
+        connection = Connection.new(@server, opts)
       end
 
       # Create a connection, connect it, and add it to the pool.

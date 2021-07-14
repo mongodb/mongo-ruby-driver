@@ -86,8 +86,12 @@ module Mongo
       # @param [ Mongo::Server ] server The server the connection is for.
       # @param [ Hash ] options The connection options.
       #
-      # @option options [ Integer ] :generation Connection pool's generation
-      #   for this connection.
+      # @option options [ Integer ] :generation The generation of this
+      #   connection. The generation should only be specified in this option
+      #   when not in load-balancing mode, and it should be the generation
+      #   of the connection pool when the connection is created. In
+      #   load-balancing mode, the generation is set on the connection
+      #   after the handshake completes.
       # @option options [ Hash ] :server_api The requested server API version.
       #   This hash can have the following items:
       #   - *:version* -- string
@@ -96,6 +100,10 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(server, options = {})
+        if server.load_balancer? && options[:generation]
+          raise ArgumentError, "Generation cannot be set when server is a load balancer"
+        end
+
         @id = server.next_connection_id
         @monitoring = server.monitoring
         @options = options.freeze
@@ -172,6 +180,15 @@ module Mongo
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
           @socket, @description, @compressor = do_connect
+
+          if server.load_balancer?
+            if Lint.enabled?
+              unless service_id
+                raise Error::LintError, "If the server is a load balancer, the connection must have service_id here"
+              end
+            end
+            @generation = server.generation_from_service_id(service_id)
+          end
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionReady.new(address, id)

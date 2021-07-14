@@ -41,7 +41,10 @@ describe Mongo::Server::Connection do
   let(:server_options) { SpecConfig.instance.test_options.merge(monitoring_io: false) }
   let(:server) do
     register_server(
-      Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, server_options.merge(
+        # Normally the load_balancer option is set by the cluster
+        load_balancer: ClusterConfig.instance.topology == :load_balanced,
+      ))
     )
   end
 
@@ -226,12 +229,15 @@ describe Mongo::Server::Connection do
 
       context 'when #handshake! dependency raises a network exception' do
         let(:exception) do
-          Mongo::Error::SocketError.new
+          Mongo::Error::SocketError.new.tap do |exc|
+            allow(exc).to receive(:service_id).and_return('fake')
+          end
         end
 
         let(:error) do
           # The exception is mutated when notes are added to it
-          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception.dup)
+          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+          allow(connection).to receive(:service_id).and_return('fake')
           begin
             connection.connect!
           rescue Exception => e
@@ -1306,6 +1312,53 @@ describe Mongo::Server::Connection do
       it 'includes request auth mechanism' do
         document = connection.app_metadata.send(:document)
         expect(document[:saslSupportedMechs]).to eq('admin.foo')
+      end
+    end
+  end
+
+  describe '#generation' do
+
+    context 'non-lb' do
+      require_topology :single, :replica_set, :sharded
+
+      it 'is set' do
+        server.with_connection do |conn|
+          conn.service_id.should be nil
+          conn.generation.should be_a(Integer)
+        end
+      end
+
+      context 'clean slate' do
+        clean_slate
+
+        it 'starts from 1' do
+          server.with_connection do |conn|
+            conn.service_id.should be nil
+            conn.generation.should == 1
+          end
+        end
+      end
+    end
+
+    context 'lb' do
+      require_topology :load_balanced
+
+      it 'is set' do
+        server.with_connection do |conn|
+          conn.service_id.should_not be nil
+          conn.generation.should be_a(Integer)
+        end
+      end
+
+      context 'clean slate' do
+        clean_slate
+
+        it 'starts from 1' do
+          server.with_connection do |conn|
+            conn.service_id.should_not be nil
+            conn.generation.should == 1
+          end
+        end
       end
     end
   end

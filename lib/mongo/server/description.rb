@@ -226,12 +226,6 @@ module Mongo
         @last_update_time = Time.now.freeze
         @last_update_monotime = Utils.monotonic_time
 
-        if load_balancer
-          if ok? && !service_id
-            @config = @config.merge('serviceId' => "fake:#{rand(2**32-1)+1}")
-          end
-        end
-
         if Mongo::Lint.enabled?
           # prepopulate cache instance variables
           hosts
@@ -263,9 +257,7 @@ module Mongo
 
       # @return [ nil | Object ] The service id, if any.
       def service_id
-        if load_balancer?
-          rand(2**32-1) + 1
-        end
+        config['serviceId']
       end
 
       # @return [ Float ] The moving average time the hello call took to complete.

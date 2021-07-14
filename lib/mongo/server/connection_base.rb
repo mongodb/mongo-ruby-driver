@@ -98,7 +98,10 @@ module Mongo
       #
       # @return [ Integer | nil ] Connection pool generation.
       def generation
-        options[:generation]
+        # If the connection is to a load balancer, @generation is set
+        # after handshake completes. If the connection is to another server
+        # type, generation is specified during connection creation.
+        @generation || options[:generation]
       end
 
       def app_metadata
