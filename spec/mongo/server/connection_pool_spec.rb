@@ -489,13 +489,31 @@ describe Mongo::Server::ConnectionPool do
 
       context 'when the max size is reached' do
 
-        it 'raises a timeout error' do
-          expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
-          expect {
+        context 'without service_id' do
+          it 'raises a timeout error' do
+            expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
             pool.check_out
-            pool.check_out
-          }.to raise_error(::Timeout::Error)
-          expect(pool.size).to eq(1)
+            expect {
+              pool.check_out
+            }.to raise_error(::Timeout::Error)
+            expect(pool.size).to eq(1)
+          end
+        end
+
+        context 'with service_id' do
+          require_topology :load_balanced
+
+          it 'raises a timeout error' do
+            expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
+            connection = pool.check_out
+            pool.check_in(connection)
+            pool.check_out(service_id: connection.service_id)
+            expect {
+              pool.check_out(service_id: connection.service_id)
+            # TODO RUBY-2657 wait for up to the timeout, expect ::Timeout::Error
+            }.to raise_error(Mongo::Error::NoServiceConnectionAvailable)
+            expect(pool.size).to eq(1)
+          end
         end
       end
     end

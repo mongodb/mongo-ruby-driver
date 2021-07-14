@@ -749,9 +749,11 @@ module Mongo
 
       def next_available_connection(service_id: nil)
         if service_id
-          @available_connections.detect do |conn|
+          conn = @available_connections.detect do |conn|
             conn.service_id == service_id
           end
+          @available_connections.delete(conn)
+          conn
         else
           @available_connections.pop
         end
