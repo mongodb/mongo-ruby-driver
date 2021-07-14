@@ -1,0 +1,90 @@
+description: "Direct connection to a replica set node with a me mismatch"
+uri: "mongodb://a/?directConnection=true"
+phases: 
+  -
+    responses: []
+    outcome:
+      events:
+        - 
+          topology_opening_event: 
+            topologyId: "42"
+        - 
+          topology_description_changed_event: 
+            topologyId: "42"
+            previousDescription: 
+              topologyType: "Unknown"
+              servers: []
+            newDescription:
+              topologyType: "Single"
+              servers: 
+                - 
+                  address: "a:27017"
+                  arbiters: []
+                  hosts: []
+                  passives: []
+                  type: "Unknown"
+        - 
+          server_opening_event: 
+            topologyId: "42"
+            address: "a:27017"
+  # phase 1 - server is a primary with mismatched me
+  - 
+    responses: 
+      - 
+        - "a:27017"
+        - 
+          ok: 1
+          ismaster: true
+          setName: "rs"
+          setVersion: 1
+          primary: "aa:27017"
+          me: "aa:27017"
+          hosts: 
+            - "aa:27017"
+          minWireVersion: 0
+          maxWireVersion: 4
+    outcome: 
+      events: 
+        - 
+          server_description_changed_event: 
+            topologyId: "42"
+            address: "a:27017"
+            previousDescription: 
+              address: "a:27017"
+              arbiters: []
+              hosts: []
+              passives: []
+              type: "Unknown"
+            newDescription: 
+              address: "a:27017"
+              arbiters: []
+              hosts: 
+                - "aa:27017"
+              passives: []
+              primary: "aa:27017"
+              setName: "rs"
+              type: "RSPrimary"
+        - 
+          topology_description_changed_event: 
+            topologyId: "42"
+            previousDescription: 
+              topologyType: "Single"
+              servers: 
+                - 
+                  address: "a:27017"
+                  arbiters: []
+                  hosts: []
+                  passives: []
+                  type: "Unknown"
+            newDescription: 
+              topologyType: "Single"
+              servers: 
+                - 
+                  address: "a:27017"
+                  arbiters: []
+                  hosts: 
+                    - "aa:27017"
+                  passives: []
+                  primary: "aa:27017"
+                  setName: "rs"
+                  type: "RSPrimary"
