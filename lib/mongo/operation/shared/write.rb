@@ -35,7 +35,7 @@ module Mongo
       #
       # @since 2.5.2
       def execute(server, context:)
-        server.with_connection do |connection|
+        server.with_connection(service_id: context.service_id) do |connection|
           validate!(connection)
           op = if connection.features.op_msg_enabled?
               self.class::OpMsg.new(spec)
