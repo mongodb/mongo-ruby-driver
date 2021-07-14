@@ -76,10 +76,7 @@ describe 'Cursor pinning' do
     end
 
     context 'when connection is available' do
-      # This is tricky to test because the server doesn't report service ids,
-      # hence every connection has its own service id presently and
-      # therefore we cannot use another connection for completing iteration
-      # other than the one on which the iteration started.
+      require_multi_mongos
 
       let(:client) { authorized_client.with(max_pool_size: 4) }
 
