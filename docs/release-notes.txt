@@ -27,6 +27,10 @@ This release adds the following new features:
 - Support for Zstandard and Snappy :ref:`wire protocol compression <compression>`.
 - :ref:`Query cache middleware <query-cache-middleware>` was moved to the
   driver from Mongoid and is now usable in applications that do not use Mongoid.
+- It is now possible to create collections with time-series options.
+- Experimental support for `MongoDB Atlas Serverless
+  <https://www.mongodb.com/cloud/atlas/serverless>`_ when not using a
+  load balancer.
 
 The following smaller improvements have been made:
 
@@ -43,6 +47,10 @@ The following smaller improvements have been made:
 - Heartbeat succeeded and heartbeat failed :ref:`server monitoring events
   <server-heartbeats>` are now linked to the respective heartbeat started
   event, to improve usability.
+- ``skip`` and ``limit`` options are now prohibited when calling
+  ``estimated_document_count``, because the server command does not accept them.
+- The driver will now omit command monitoring reply payloads when they are
+  in response to sensitive commands.
 - When the driver closes network sockets it now enforces the socket timeout.
 - ``estimated_document_count`` collection method now uses the ``$collStats``
   aggregation pipeline stage instead of the count command on 5.0 and newer
@@ -51,6 +59,10 @@ The following smaller improvements have been made:
   now includes the purpose of the connection being established, permitting
   administrators to distinguish monitoring connections from application
   connections.
+- The driver now uses monotonic clock for timeouts.
+- The driver will no longer mark servers unknown based on errors in
+  ``writeErrors`` field in the server response.
+- Server selection timeout for ``mongocryptd`` has been increased to 10 seconds.
 
 
 2.14
