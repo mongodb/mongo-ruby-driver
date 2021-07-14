@@ -228,7 +228,9 @@ module Mongo
 
         if load_balancer
           if ok? && !service_id
-            @config = @config.merge('serviceId' => "fake:#{rand(2**32-1)+1}")
+            fake_service_id = topology_version && topology_version['processId'] ||
+              "fake:#{rand(2**32-1)+1}"
+            @config = @config.merge('serviceId' => fake_service_id)
           end
         end
 
