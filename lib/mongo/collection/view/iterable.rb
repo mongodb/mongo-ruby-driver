@@ -157,6 +157,7 @@ module Mongo
             read_concern: options[:read_concern] || read_concern,
             batch_size: batch_size,
             hint: options[:hint],
+            max_scan: options[:max_scan],
             max_time_ms: options[:max_time_ms],
             max_value: options[:max_value],
             min_value: options[:min_value],
