@@ -4,19 +4,19 @@ runOn:
     - minServerVersion: "4.4"
 
 database_name: &database_name "sdam-tests"
-collection_name: &collection_name "isMaster-command-error"
+collection_name: &collection_name "hello-command-error"
 
 data: []
 
 tests:
   - description: Command error on Monitor handshake
     # Configure the initial handshake to fail with a command error.
-    # Use times: 2 so that the RTT isMaster fails as well.
+    # Use times: 2 so that the RTT hello fails as well.
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
       data:
-          failCommands: ["isMaster", "hello"]
+          failCommands: ["hello", "isMaster"]
           appName: commandErrorHandshakeTest
           closeConnection: false
           errorCode: 91 # ShutdownInProgress
@@ -33,12 +33,6 @@ tests:
         arguments:
           event: ServerMarkedUnknownEvent
           count: 1
-# https://jira.mongodb.org/browse/DRIVERS-1314
-#       - name: waitForEvent
-#         object: testRunner
-#         arguments:
-#           event: PoolClearedEvent
-#           count: 1
       # Perform an operation to ensure the node is discovered.
       - name: insertMany
         object: collection
@@ -47,7 +41,7 @@ tests:
             - _id: 1
             - _id: 2
       # We cannot assert the server was marked Unknown and pool was cleared an
-      # exact number of times because the RTT isMaster may or may not have
+      # exact number of times because the RTT hello may or may not have
       # triggered this failpoint as well.
       # - name: assertEventCount
       #   object: testRunner
@@ -90,9 +84,9 @@ tests:
           documents:
             - _id: 1
             - _id: 2
-      # Configure the next streaming isMaster check to fail with a command
+      # Configure the next streaming hello check to fail with a command
       # error.
-      # Use times: 2 so that the RTT isMaster is blocked as well.
+      # Use times: 2 so that the RTT hello is blocked as well.
       - name: configureFailPoint
         object: testRunner
         arguments:
@@ -100,7 +94,7 @@ tests:
             configureFailPoint: failCommand
             mode: { times: 2 }
             data:
-                failCommands: ["isMaster", "hello"]
+                failCommands: ["hello", "isMaster"]
                 appName: commandErrorCheckTest
                 closeConnection: false
                 blockConnection: true
@@ -112,14 +106,12 @@ tests:
         object: testRunner
         arguments:
           event: ServerMarkedUnknownEvent
-          # Ruby driver marks server unknown for each fail point hit
-          count: 2
-# Ruby driver normally produces 2 pool clears, but sometimes only 1
-#       - name: waitForEvent
-#         object: testRunner
-#         arguments:
-#           event: PoolClearedEvent
-#           count: 1
+          count: 1
+      - name: waitForEvent
+        object: testRunner
+        arguments:
+          event: PoolClearedEvent
+          count: 1
       # Perform an operation to ensure the node is rediscovered.
       - name: insertMany
         object: collection
@@ -132,14 +124,12 @@ tests:
         object: testRunner
         arguments:
           event: ServerMarkedUnknownEvent
-          # Ruby driver marks server unknown for each fail point hit
-          count: 2
-# Ruby driver normally produces 2 pool clears, but sometimes only 1
-#       - name: waitForEvent
-#         object: testRunner
-#         arguments:
-#           event: PoolClearedEvent
-#           count: 1
+          count: 1
+      - name: assertEventCount
+        object: testRunner
+        arguments:
+          event: PoolClearedEvent
+          count: 1
 
     expectations:
       - command_started_event:
