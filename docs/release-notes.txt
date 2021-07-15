@@ -23,6 +23,7 @@ its test suite.
 
 This release adds the following new features:
 
+- Ruby 3.0 support.
 - Ability to specify the :ref:`server API parameters <server-api-parameters>`.
 - Support for Zstandard and Snappy :ref:`wire protocol compression <compression>`.
 - :ref:`Query cache middleware <query-cache-middleware>` was moved to the
