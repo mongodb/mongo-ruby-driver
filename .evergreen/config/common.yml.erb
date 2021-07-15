@@ -106,6 +106,8 @@ functions:
             export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
             export ATLAS_TLS11_URI="${atlas_tls11_uri}"
             export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
+            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
             export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
             export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
@@ -461,7 +463,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} .evergreen/run-tests-atlas.sh
+          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} .evergreen/run-tests-atlas.sh
 
   "run serverless tests":
     - command: shell.exec
