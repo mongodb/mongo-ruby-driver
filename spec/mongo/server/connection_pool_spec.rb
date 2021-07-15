@@ -503,16 +503,39 @@ describe Mongo::Server::ConnectionPool do
         context 'with service_id' do
           require_topology :load_balanced
 
+          let(:service_id) do
+            pool.with_connection do |connection|
+              connection.service_id.should_not be nil
+              connection.service_id
+            end
+          end
+
           it 'raises a timeout error' do
             expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
-            connection = pool.check_out
-            pool.check_in(connection)
-            pool.check_out(service_id: connection.service_id)
+            service_id
+
+            pool.check_out(service_id: service_id)
+
             expect {
-              pool.check_out(service_id: connection.service_id)
-            # TODO RUBY-2657 wait for up to the timeout, expect ::Timeout::Error
-            }.to raise_error(Mongo::Error::NoServiceConnectionAvailable)
+              pool.check_out(service_id: service_id)
+            }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+
             expect(pool.size).to eq(1)
+          end
+
+          it 'waits for the timeout' do
+            expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
+            service_id
+
+            pool.check_out(service_id: service_id)
+
+            start_time = Mongo::Utils.monotonic_time
+            expect {
+              pool.check_out(service_id: service_id)
+            }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+            elapsed_time = Mongo::Utils.monotonic_time - start_time
+
+            elapsed_time.should > 1
           end
         end
       end

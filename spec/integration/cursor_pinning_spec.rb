@@ -53,7 +53,7 @@ describe 'Cursor pinning' do
 
     context 'when no connection is available' do
 
-      it 'raises NoServiceConnectionAvailable' do
+      it 'raises ConnectionCheckOutTimeout' do
         server.pool.size.should == 0
 
         enum = collection.find({}, batch_size: 1).to_enum
@@ -68,7 +68,7 @@ describe 'Cursor pinning' do
           # This requires a new connection, but we cannot make one.
           lambda do
             enum.next
-          end.should raise_error(Mongo::Error::NoServiceConnectionAvailable)
+          end.should raise_error(Mongo::Error::ConnectionCheckOutTimeout)
 
           server.pool.size.should == 1
         end
