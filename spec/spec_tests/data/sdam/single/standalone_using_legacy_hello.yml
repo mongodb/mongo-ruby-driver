@@ -1,6 +1,6 @@
-description: "Direct connection to slave"
+description: "Connect to standalone using legacy hello"
 
-uri: "mongodb://a/?directConnection=true"
+uri: "mongodb://a"
 
 phases: [
 
@@ -10,7 +10,7 @@ phases: [
                 ["a:27017", {
 
                     ok: 1,
-                    ismaster: false,
+                    ismaster: true,
                     minWireVersion: 0,
                     maxWireVersion: 6
                 }]
