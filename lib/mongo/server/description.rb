@@ -232,7 +232,7 @@ module Mongo
           # in ismaster/hello response.
           #
           # In practice, there are currently no server version that actually
-          # set this field.
+          # sets this field.
           #
           # Therefore, when connect=:load_balanced Ruby option is used instead
           # of the loadBalanced=true URI option, if serviceId is not set in
