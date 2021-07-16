@@ -254,7 +254,7 @@ module Mongo
           # mapped to a string for clarity that this is a fake service id.
           if ok? && !service_id
             fake_service_id = if process_id = topology_version && topology_version['processId']
-              "processId:#{process_id}"
+              "process:#{process_id}"
             else
               "fake:#{rand(2**32-1)+1}"
             end
