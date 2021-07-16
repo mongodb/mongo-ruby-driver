@@ -1421,17 +1421,6 @@ buildvariants:
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
   
-  - matrix_name: ocsp-verifier - ruby-2.3
-    matrix_spec:
-      ocsp-verifier: true
-      ruby: ruby-2.3
-      topology: standalone
-      mongodb-version: '4.4'
-      os: ubuntu1604
-      docker-distro: debian92
-    display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
-    tasks: &1
-    - name: test-via-docker
   - matrix_name: ocsp-verifier - ruby-2.4
     matrix_spec:
       ocsp-verifier: true
@@ -1441,7 +1430,8 @@ buildvariants:
       os: ubuntu1604
       docker-distro: debian92
     display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
-    tasks: *1
+    tasks: &1
+    - name: test-via-docker
   - matrix_name: ocsp-verifier - ruby-2.5
     matrix_spec:
       ocsp-verifier: true

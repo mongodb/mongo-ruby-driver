@@ -65,7 +65,7 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            cmd = Utils.compact_hash(
+            cmd = {
               findAndModify: collection.name,
               query: filter,
               remove: true,
@@ -75,7 +75,7 @@ module Mongo
               bypassDocumentValidation: opts[:bypass_document_validation],
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
               Operation::WriteCommand.new(
@@ -159,7 +159,7 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            cmd = Utils.compact_hash(
+            cmd = {
               findAndModify: collection.name,
               query: filter,
               arrayFilters: opts[:array_filters] || opts['array_filters'],
@@ -172,7 +172,7 @@ module Mongo
               bypassDocumentValidation: opts[:bypass_document_validation],
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
               Operation::WriteCommand.new(
@@ -217,12 +217,12 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            delete_doc = Utils.compact_hash(
+            delete_doc = {
               Operation::Q => filter,
               Operation::LIMIT => 0,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
 
             nro_write_with_retry(session, write_concern) do |server|
               Operation::Delete.new(
@@ -267,12 +267,12 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            delete_doc = Utils.compact_hash(
+            delete_doc = {
               Operation::Q => filter,
               Operation::LIMIT => 1,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
               Operation::Delete.new(
@@ -323,13 +323,13 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            update_doc = Utils.compact_hash(
+            update_doc = {
               Operation::Q => filter,
               arrayFilters: opts[:array_filters] || opts['array_filters'],
               Operation::U => replacement,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
             if opts[:upsert]
               update_doc['upsert'] = true
             end
@@ -385,14 +385,14 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            update_doc = Utils.compact_hash(
+            update_doc = {
               Operation::Q => filter,
               arrayFilters: opts[:array_filters] || opts['array_filters'],
               Operation::U => spec,
               Operation::MULTI => true,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
             if opts[:upsert]
               update_doc['upsert'] = true
             end
@@ -447,13 +447,13 @@ module Mongo
 
             QueryCache.clear_namespace(collection.namespace)
 
-            update_doc = Utils.compact_hash(
+            update_doc = {
               Operation::Q => filter,
               arrayFilters: opts[:array_filters] || opts['array_filters'],
               Operation::U => spec,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-            )
+            }.compact
             if opts[:upsert]
               update_doc['upsert'] = true
             end

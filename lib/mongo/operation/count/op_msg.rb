@@ -30,7 +30,7 @@ module Mongo
         private
 
         def selector(connection)
-          Utils.compact_hash(spec[:selector].merge(collation: spec[:collation]))
+          spec[:selector].merge(collation: spec[:collation]).compact
         end
       end
     end

@@ -25,12 +25,12 @@ module Mongo
         private
 
         def selector(connection)
-          Utils.compact_hash(
+          {
             getMore: BSON::Int64.new(spec.fetch(:cursor_id)),
             collection: spec.fetch(:coll_name),
             batchSize: spec[:batch_size],
             maxTimeMS: spec[:max_time_ms],
-          )
+          }.compact
         end
       end
     end
