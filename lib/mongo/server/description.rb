@@ -227,6 +227,31 @@ module Mongo
         @last_update_monotime = Utils.monotonic_time
 
         if load_balancer
+          # When loadBalanced=true URI option is set, the driver will refuse
+          # to work if the server it communicates with does not set serviceId
+          # in ismaster/hello response.
+          #
+          # In practice, there are currently no server version that actually
+          # set this field.
+          #
+          # Therefore, when connect=:load_balanced Ruby option is used instead
+          # of the loadBalanced=true URI option, if serviceId is not set in
+          # ismaster/hello response, the driver fabricates a serviceId and
+          # proceeds to treat a server that does not report itself as being
+          # behind a load balancer as a server that is behind a load balancer.
+          #
+          # 5.0+ servers should provide topologyVersion.processId which
+          # is specific to the particular process instance. We can use that
+          # field as a proxy for serviceId.
+          #
+          # If the topologyVersion isn't provided for whatever reason, we
+          # fabricate a serviceId locally.
+          #
+          # In either case, a serviceId provided by an actual server behind
+          # a load balancer is supposed to be a BSON::ObjectId. The fabricated
+          # service ids are strings, to distinguish them from the real ones.
+          # In particular processId is also a BSON::ObjectId, but will be
+          # mapped to a string for clarity that this is a fake service id.
           if ok? && !service_id
             fake_service_id = if process_id = topology_version && topology_version['processId']
               "processId:#{process_id}"
