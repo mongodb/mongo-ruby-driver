@@ -102,13 +102,6 @@ module Mongo
       Process.clock_gettime(Process::CLOCK_MONOTONIC)
     end
 
-    # Hash#compact implementation for Ruby 2.3
-    module_function def compact_hash(hash)
-      Hash[hash.reject do |k, v|
-        v.nil?
-      end]
-    end
-
     # Hash#compact implementation for Ruby 2.3/2.4
     # Implementation based on activesupport 5.2.3
     module_function def slice_hash(hash, *keys)

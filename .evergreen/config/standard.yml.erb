@@ -26,7 +26,7 @@ buildvariants:
   - matrix_name: "mongo-4.2"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7", "ruby-2.3"]
+      ruby: ["ruby-2.7", "ruby-2.4"]
       mongodb-version: ['4.2']
       topology: <%= tt %>
       os: ubuntu1604
@@ -70,7 +70,7 @@ buildvariants:
   - matrix_name: "mongo-3.2"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: "ruby-2.3"
+      ruby: "ruby-2.4"
       mongodb-version: ['3.2']
       topology: <%= tt %>
       os: ubuntu1604
@@ -229,7 +229,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4, ruby-2.3, jruby-9.2]
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4, jruby-9.2]
       mongodb-version: ["4.4"]
       topology: <%= tt %>
       os: ubuntu1604
@@ -330,7 +330,7 @@ buildvariants:
   - matrix_name: "zlib-noauth"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: "ruby-2.3"
+      ruby: "ruby-2.4"
       mongodb-version: "3.6"
       topology: replica-set
       compressor: 'zlib'
@@ -366,7 +366,7 @@ buildvariants:
   - matrix_name: "snappy-noauth"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: "ruby-2.3"
+      ruby: "ruby-2.4"
       mongodb-version: ["3.6", "3.4"]
       topology: replica-set
       compressor: 'snappy'
@@ -415,7 +415,7 @@ buildvariants:
   - matrix_name: "zstd-noauth"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: "ruby-2.3"
+      ruby: "ruby-2.4"
       mongodb-version: "4.2"
       topology: replica-set
       compressor: 'zstd'
@@ -516,7 +516,7 @@ buildvariants:
   - matrix_name: "fle-4.2"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-2.7, ruby-2.3, jruby-9.2]
+      ruby: [ruby-2.7, ruby-2.4, jruby-9.2]
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
       os: rhel70
@@ -573,10 +573,12 @@ buildvariants:
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
-  <%|= standard_debian_rubies(%w(ruby-2.3 ruby-2.4 ruby-2.5 ruby-2.6 ruby-2.7), key: 'docker-distro') do %>
+  <%|= standard_debian_rubies(%w(ruby-2.4 ruby-2.5 ruby-2.6 ruby-2.7), key: 'docker-distro') do %>
     matrix_name: ocsp-verifier
     matrix_spec:
       ocsp-verifier: true
+      # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
+      ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, ruby-2.4]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -590,7 +592,7 @@ buildvariants:
       ocsp-algorithm: ecdsa
       ocsp-must-staple: on
       ocsp-delegate: on
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -603,7 +605,7 @@ buildvariants:
     matrix_spec:
       ocsp-algorithm: rsa
       ocsp-status: unknown
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604
@@ -633,7 +635,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: <%= outcome %>
       extra-uri-options: "<%= extra_uri_options %>"
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.3]
+      ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1604

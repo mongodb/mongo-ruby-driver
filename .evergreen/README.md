@@ -61,7 +61,7 @@ names must be uppercased.
 For example, to execute Kerberos integration tests which require private
 variables pertanining to the test Kerberos server, you could run:
 
-    ./.evergreen/test-on-docker -d rhel70 RVM_RUBY=ruby-2.3 \
+    ./.evergreen/test-on-docker -d rhel70 RVM_RUBY=ruby-2.4 \
       -s .evergreen/run-tests-kerberos-integration.sh -pa .env.private
 
 The `.env.private` path specifically is listed in .gitignore and .dockerignore
