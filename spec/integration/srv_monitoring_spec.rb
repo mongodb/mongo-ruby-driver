@@ -144,7 +144,7 @@ describe 'SRV Monitoring' do
 
     context 'sharded cluster' do
       require_topology :sharded
-      require_multi_shard
+      require_multi_mongos
 
       it 'updates topology via SRV records' do
 

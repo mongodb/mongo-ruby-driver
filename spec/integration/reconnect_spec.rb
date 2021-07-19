@@ -132,7 +132,7 @@ describe 'Client after reconnect' do
     context 'in sharded topology' do
       require_topology :sharded
       require_default_port_deployment
-      require_multi_shard
+      require_multi_mongos
 
       let(:expected_topology_cls) { Mongo::Cluster::Topology::Sharded }
 
