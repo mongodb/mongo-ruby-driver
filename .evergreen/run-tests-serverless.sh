@@ -11,7 +11,9 @@ set_env_ruby
 
 bundle_install
 
-export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb:\/\//mongodb:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
+SINGLE_HOST_URI=${SERVERLESS_URI%%,*}
+
+export MONGODB_URI=`echo ${SINGLE_HOST_URI} | sed -r 's/mongodb:\/\//mongodb:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
 
 echo "Running specs"
 
