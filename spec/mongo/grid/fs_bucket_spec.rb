@@ -362,7 +362,7 @@ describe Mongo::Grid::FSBucket do
         fs.database[fs.files_collection.name].indexes
       end
 
-      before do
+      let(:operation) do
         expect(fs.files_collection).to receive(:indexes).and_call_original
         expect(fs.chunks_collection).to receive(:indexes).and_call_original
         fs.insert_one(file)
@@ -376,26 +376,36 @@ describe Mongo::Grid::FSBucket do
         fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
       end
 
+      it 'tries to create indexes' do
+        expect(fs).to receive(:create_index_if_missing!).twice.and_call_original
+        operation
+      end
+
       it 'creates an index on the files collection' do
+        operation
         expect(files_index[:name]).to eq('filename_1_uploadDate_1')
       end
 
       it 'creates an index on the chunks collection' do
+        operation
         expect(chunks_index[:name]).to eq('files_id_1_n_1')
       end
 
       context 'when a write operation is called more than once' do
-
-        before do
-          expect(fs).not_to receive(:ensure_indexes!)
-        end
 
         let(:file2) do
           Mongo::Grid::File.new('Goodbye!', :filename => 'test2.txt')
         end
 
         it 'only creates the indexes the first time' do
-          expect(fs.insert_one(file2)).to be_a(BSON::ObjectId)
+          RSpec::Mocks.with_temporary_scope do
+            expect(fs).to receive(:create_index_if_missing!).twice.and_call_original
+            operation
+          end
+          RSpec::Mocks.with_temporary_scope do
+            expect(fs).not_to receive(:create_index_if_missing!)
+            expect(fs.insert_one(file2)).to be_a(BSON::ObjectId)
+          end
         end
       end
     end
@@ -404,14 +414,12 @@ describe Mongo::Grid::FSBucket do
 
       before do
         fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
-        expect(fs.chunks_collection).to receive(:indexes).and_call_original
-        expect(fs.files_collection).not_to receive(:indexes)
       end
 
-      it 'raises the error to the user' do
+      it 'should not raise an error to the user' do
         expect {
           fs.insert_one(file)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        }.not_to raise_error
       end
     end
 
@@ -419,8 +427,6 @@ describe Mongo::Grid::FSBucket do
 
       before do
         support_fs.insert_one(support_file)
-        expect(fs.files_collection).not_to receive(:indexes)
-        expect(fs.chunks_collection).not_to receive(:indexes)
         fs.insert_one(file)
       end
 
