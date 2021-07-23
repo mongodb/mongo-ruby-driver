@@ -142,6 +142,9 @@ module Mongo
       end
 
       def prune!
+        # Load balancers spec explicitly requires not to prune sessions.
+        return if @cluster.load_balanced?
+
         while !@queue.empty?
           if about_to_expire?(@queue[-1])
             @queue.pop
