@@ -212,7 +212,33 @@ module Mongo
         @periodic_executor.run!
       end
 
-      unless load_balanced?
+      if load_balanced?
+        server = @servers.first
+        server_desc = server.description
+        publish_sdam_event(
+          Monitoring::SERVER_OPENING,
+          Monitoring::Event::ServerOpening.new(server.address, topology)
+        )
+        server.update_description(
+          Server::Description.new(server.address, {},
+            load_balancer: true)
+        )
+        publish_sdam_event(
+          Monitoring::SERVER_DESCRIPTION_CHANGED,
+          Monitoring::Event::ServerDescriptionChanged.new(
+            server.address,
+            topology,
+            server_desc,
+            server.description
+          )
+        )
+        previous_topology = topology
+        @topology = topology.class.new(topology.options, topology.monitoring, self)
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
+        )
+      else
         # Need to record start time prior to starting monitoring
         start_monotime = Utils.monotonic_time
 
@@ -809,9 +835,6 @@ module Mongo
       address = Address.new(host, options)
       if !addresses.include?(address)
         opts = options.merge(monitor: false)
-        if Topology::LoadBalanced === topology
-          opts[:load_balancer] = true
-        end
         server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
