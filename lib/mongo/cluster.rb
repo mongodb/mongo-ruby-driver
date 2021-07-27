@@ -213,31 +213,34 @@ module Mongo
       end
 
       if load_balanced?
+        # Although there is no monitoring connection in load balanced mode,
+        # we must emit the following series of SDAM events.
         server = @servers.first
-        server_desc = server.description
-        publish_sdam_event(
-          Monitoring::SERVER_OPENING,
-          Monitoring::Event::ServerOpening.new(server.address, topology)
-        )
-        server.update_description(
-          Server::Description.new(server.address, {},
-            load_balancer: true)
-        )
-        publish_sdam_event(
-          Monitoring::SERVER_DESCRIPTION_CHANGED,
-          Monitoring::Event::ServerDescriptionChanged.new(
-            server.address,
-            topology,
-            server_desc,
-            server.description
+        if server
+          publish_sdam_event(
+            Monitoring::SERVER_OPENING,
+            Monitoring::Event::ServerOpening.new(server.address, topology)
           )
-        )
-        previous_topology = topology
-        @topology = topology.class.new(topology.options, topology.monitoring, self)
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
-        )
+          server_desc = server.description
+          server.update_description(
+            Server::Description.new(server.address, {}, load_balancer: true)
+          )
+          publish_sdam_event(
+            Monitoring::SERVER_DESCRIPTION_CHANGED,
+            Monitoring::Event::ServerDescriptionChanged.new(
+              server.address,
+              topology,
+              server_desc,
+              server.description
+            )
+          )
+          previous_topology = topology
+          @topology = topology.class.new(topology.options, topology.monitoring, self)
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
+          )
+        end
       else
         # Need to record start time prior to starting monitoring
         start_monotime = Utils.monotonic_time
