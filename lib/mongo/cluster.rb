@@ -186,6 +186,8 @@ module Mongo
         )
       end
 
+      fabricate_lb_sdam_events if load_balanced?
+
       if options[:monitoring_io] == false
         # Omit periodic executor construction, because without servers
         # no commands can be sent to the cluster and there shouldn't ever
@@ -212,36 +214,7 @@ module Mongo
         @periodic_executor.run!
       end
 
-      if load_balanced?
-        # Although there is no monitoring connection in load balanced mode,
-        # we must emit the following series of SDAM events.
-        server = @servers.first
-        if server
-          publish_sdam_event(
-            Monitoring::SERVER_OPENING,
-            Monitoring::Event::ServerOpening.new(server.address, topology)
-          )
-          server_desc = server.description
-          server.update_description(
-            Server::Description.new(server.address, {}, load_balancer: true)
-          )
-          publish_sdam_event(
-            Monitoring::SERVER_DESCRIPTION_CHANGED,
-            Monitoring::Event::ServerDescriptionChanged.new(
-              server.address,
-              topology,
-              server_desc,
-              server.description
-            )
-          )
-          previous_topology = topology
-          @topology = topology.class.new(topology.options, topology.monitoring, self)
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
-          )
-        end
-      else
+      unless load_balanced?
         # Need to record start time prior to starting monitoring
         start_monotime = Utils.monotonic_time
 
@@ -1040,6 +1013,37 @@ module Mongo
       end
       msg = "The deployment that the driver is connected to does not support sessions: #{reason}"
       raise Error::SessionsNotSupported, msg
+    end
+
+    def fabricate_lb_sdam_events
+      # Although there is no monitoring connection in load balanced mode,
+        # we must emit the following series of SDAM events.
+        server = @servers.first
+        if server
+          publish_sdam_event(
+            Monitoring::SERVER_OPENING,
+            Monitoring::Event::ServerOpening.new(server.address, topology)
+          )
+          server_desc = server.description
+          server.update_description(
+            Server::Description.new(server.address, {}, load_balancer: true)
+          )
+          publish_sdam_event(
+            Monitoring::SERVER_DESCRIPTION_CHANGED,
+            Monitoring::Event::ServerDescriptionChanged.new(
+              server.address,
+              topology,
+              server_desc,
+              server.description
+            )
+          )
+          previous_topology = topology
+          @topology = topology.class.new(topology.options, topology.monitoring, self)
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
+          )
+        end
     end
   end
 end

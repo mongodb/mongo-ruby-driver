@@ -53,7 +53,7 @@ describe 'SDAM Monitoring' do
         context("Phase: #{phase_index + 1}") do
 
           before(:all) do
-            phase.responses.each do |response|
+            phase.responses&.each do |response|
               # For each response in the phase, we need to change that server's description.
               server = find_server(@client, response.address)
               server ||= @servers_cache[response.address.to_s]
