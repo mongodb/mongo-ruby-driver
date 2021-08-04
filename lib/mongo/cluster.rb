@@ -1021,30 +1021,29 @@ module Mongo
 
     def fabricate_lb_sdam_events
       # Although there is no monitoring connection in load balanced mode,
-        # we must emit the following series of SDAM events.
-        server = @servers.first
-        if server
-          server.publish_opening_event
-          server_desc = server.description
-          server.update_description(
-            Server::Description.new(server.address, {}, load_balancer: true)
-          )
-          publish_sdam_event(
-            Monitoring::SERVER_DESCRIPTION_CHANGED,
-            Monitoring::Event::ServerDescriptionChanged.new(
-              server.address,
-              topology,
-              server_desc,
-              server.description
-            )
-          )
-          previous_topology = topology
-          @topology = topology.class.new(topology.options, topology.monitoring, self)
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
-          )
-        end
+      # we must emit the following series of SDAM events.
+      server = @servers.first
+      # We are guaranteed to have the server here.
+      server.publish_opening_event
+      server_desc = server.description
+      server.update_description(
+        Server::Description.new(server.address, {}, load_balancer: true)
+      )
+      publish_sdam_event(
+        Monitoring::SERVER_DESCRIPTION_CHANGED,
+        Monitoring::Event::ServerDescriptionChanged.new(
+          server.address,
+          topology,
+          server_desc,
+          server.description
+        )
+      )
+      previous_topology = topology
+      @topology = topology.class.new(topology.options, topology.monitoring, self)
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
+      )
     end
   end
 end
