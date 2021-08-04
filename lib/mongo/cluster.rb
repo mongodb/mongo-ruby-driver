@@ -196,7 +196,7 @@ module Mongo
         #
         # Note that this call must be done above the monitoring_io check
         # because that short-circuits the rest of the constructor.
-        fabricate_lb_sdam_events_and_change_server_type
+        fabricate_lb_sdam_events_and_set_server_type
       end
 
       if options[:monitoring_io] == false
@@ -828,7 +828,7 @@ module Mongo
         # specifications to pretent the server started out as an unknown one
         # and publish server description change event into the load balancer
         # one. The actual correct description for this server will be set
-        # by the fabricate_lb_sdam_events_and_change_server_type method.
+        # by the fabricate_lb_sdam_events_and_set_server_type method.
         server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
@@ -1033,13 +1033,15 @@ module Mongo
       raise Error::SessionsNotSupported, msg
     end
 
-    def fabricate_lb_sdam_events_and_change_server_type
+    def fabricate_lb_sdam_events_and_set_server_type
       # Although there is no monitoring connection in load balanced mode,
       # we must emit the following series of SDAM events.
       server = @servers.first
       # We are guaranteed to have the server here.
       server.publish_opening_event
       server_desc = server.description
+      # This is where a load balancer actually gets its correct server
+      # description.
       server.update_description(
         Server::Description.new(server.address, {}, load_balancer: true)
       )
