@@ -1,8 +1,7 @@
 # Test SDAM error handling.
 runOn:
     # failCommand appName requirements
-    -
-      minServerVersion: "4.4"
+    - minServerVersion: "4.4"
       # It seems this spec should not run against LB.
       topology: ["single", "replicaset", "sharded"]
 
