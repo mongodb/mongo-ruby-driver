@@ -1024,10 +1024,7 @@ module Mongo
         # we must emit the following series of SDAM events.
         server = @servers.first
         if server
-          publish_sdam_event(
-            Monitoring::SERVER_OPENING,
-            Monitoring::Event::ServerOpening.new(server.address, topology)
-          )
+          server.publish_opening_event
           server_desc = server.description
           server.update_description(
             Server::Description.new(server.address, {}, load_balancer: true)
