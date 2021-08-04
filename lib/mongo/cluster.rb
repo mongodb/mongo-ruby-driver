@@ -183,11 +183,7 @@ module Mongo
 
       if seeds.size >= 1
         # Recreate the topology to get the current server list into it
-        @topology = topology.class.new(topology.options, topology.monitoring, self)
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
-        )
+        recreate_topology(topology, opening_topology)
       end
 
       if load_balanced?
@@ -1056,12 +1052,11 @@ module Mongo
           server.description
         )
       )
-      recreate_topology
+      recreate_topology(topology, topology)
     end
 
-    def recreate_topology
-      previous_topology = topology
-      @topology = topology.class.new(topology.options, topology.monitoring, self)
+    def recreate_topology(new_topology_template, previous_topology)
+      @topology = topology.class.new(new_topology_template.options, new_topology_template.monitoring, self)
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
