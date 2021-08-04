@@ -159,6 +159,10 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       Session::SessionPool.create(self)
 
+      if seeds.empty? && load_balanced?
+        raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited'
+      end
+
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
       opening_topology = Topology::Unknown.new(options, monitoring, self)
