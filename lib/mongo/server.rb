@@ -291,15 +291,20 @@ module Mongo
     #
     # @api private
     def start_monitoring
-      unless load_balancer?
-        publish_sdam_event(
-          Monitoring::SERVER_OPENING,
-          Monitoring::Event::ServerOpening.new(address, cluster.topology)
-        )
-      end
+      publish_opening_event
       if options[:monitoring_io] != false
         monitor.run!
       end
+    end
+
+    # Publishes the server opening event.
+    #
+    # @api private
+    def publish_opening_event
+      publish_sdam_event(
+        Monitoring::SERVER_OPENING,
+        Monitoring::Event::ServerOpening.new(address, cluster.topology)
+      )
     end
 
     # Get a pretty printed server inspection.
