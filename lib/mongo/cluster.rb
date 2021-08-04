@@ -190,7 +190,18 @@ module Mongo
         )
       end
 
-      fabricate_lb_sdam_events if load_balanced?
+      if load_balanced?
+        # We are required by the specifications to produce certain SDAM events
+        # when in load-balanced topology.
+        # These events don't make a lot of sense from the standpoint of the
+        # driver's SDAM implementation, nor from the standpoint of the
+        # driver's load balancer implementation.
+        # They are just required boilerplate.
+        #
+        # Note that this call must be done above the monitoring_io check
+        # because that short-circuits the rest of the constructor.
+        fabricate_lb_sdam_events_and_change_server_type
+      end
 
       if options[:monitoring_io] == false
         # Omit periodic executor construction, because without servers
@@ -815,6 +826,13 @@ module Mongo
       address = Address.new(host, options)
       if !addresses.include?(address)
         opts = options.merge(monitor: false)
+        # Note that in a load-balanced topology, every server must be a
+        # load balancer (load_balancer: true is specified in the options)
+        # but this option isn't set here because we are required by the
+        # specifications to pretent the server started out as an unknown one
+        # and publish server description change event into the load balancer
+        # one. The actual correct description for this server will be set
+        # by the fabricate_lb_sdam_events_and_change_server_type method.
         server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
@@ -1019,7 +1037,7 @@ module Mongo
       raise Error::SessionsNotSupported, msg
     end
 
-    def fabricate_lb_sdam_events
+    def fabricate_lb_sdam_events_and_change_server_type
       # Although there is no monitoring connection in load balanced mode,
       # we must emit the following series of SDAM events.
       server = @servers.first
@@ -1038,6 +1056,10 @@ module Mongo
           server.description
         )
       )
+      recreate_topology
+    end
+
+    def recreate_topology
       previous_topology = topology
       @topology = topology.class.new(topology.options, topology.monitoring, self)
       publish_sdam_event(
