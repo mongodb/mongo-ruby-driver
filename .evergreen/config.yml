@@ -640,9 +640,6 @@ axes:
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
         run_on: ubuntu1604-small
-      - id: ubuntu1404
-        display_name: "Ubuntu 16.04 (instead of 14.04)"
-        run_on: ubuntu1604-small
       - id: rhel70
         display_name: "RHEL 7"
         run_on: rhel70-small
@@ -931,7 +928,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: ['3.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1404
+      os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -942,7 +939,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: ['2.6']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1404
+      os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1112,7 +1109,7 @@ buildvariants:
       ruby: "ruby-2.5"
       mongodb-version: ['2.6']
       topology: replica-set
-      os: ubuntu1404
+      os: ubuntu1604
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
