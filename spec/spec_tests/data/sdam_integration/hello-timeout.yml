@@ -5,7 +5,6 @@ runOn:
       # It seems this spec should not run against LB.
       topology: ["single", "replicaset", "sharded"]
 
-
 database_name: &database_name "sdam-tests"
 collection_name: &collection_name "hello-timeout"
 

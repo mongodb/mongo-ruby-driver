@@ -41,6 +41,34 @@ describe Mongo::Cluster do
       end
     end
 
+    context 'when topology is load-balanced' do
+      require_topology :load_balanced
+
+      it 'emits SDAM events' do
+        allow(monitoring).to receive(:succeeded)
+
+        register_cluster(
+          described_class.new(
+            SpecConfig.instance.addresses,
+            monitoring,
+            SpecConfig.instance.test_options
+            )
+          )
+
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::TOPOLOGY_OPENING, any_args
+          )
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::TOPOLOGY_CHANGED, any_args
+          ).twice
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::SERVER_OPENING, any_args
+          )
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, any_args
+          )
+      end
+    end
   end
 
   describe '#==' do
