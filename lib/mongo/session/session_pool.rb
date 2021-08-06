@@ -133,6 +133,13 @@ module Mongo
       private
 
       def about_to_expire?(session)
+        # Load balancers spec explicitly requires to ignore the logical session
+        # timeout value.
+        # No rationale is provided as of the time of this writing.
+        if @cluster.load_balanced?
+          return false
+        end
+
         logical_session_timeout = @cluster.logical_session_timeout
 
         if logical_session_timeout
@@ -143,6 +150,7 @@ module Mongo
 
       def prune!
         # Load balancers spec explicitly requires not to prune sessions.
+        # No rationale is provided as of the time of this writing.
         return if @cluster.load_balanced?
 
         while !@queue.empty?
