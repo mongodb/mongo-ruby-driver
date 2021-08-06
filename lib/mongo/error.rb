@@ -168,6 +168,7 @@ module Mongo
 end
 
 require 'mongo/error/auth_error'
+require 'mongo/error/bad_load_balancer_target'
 require 'mongo/error/sdam_error_detection'
 require 'mongo/error/parser'
 require 'mongo/error/write_retryable'

@@ -236,4 +236,31 @@ describe 'Client construction' do
       expect(client.cluster.addresses).to eq([Mongo::Address.new(primary_address)])
     end
   end
+
+  context 'when deployment is not a sharded cluster' do
+    require_topology :single, :replica_set
+
+    let(:client) do
+      ClientRegistry.instance.new_local_client(
+        [SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options.merge(options),
+      )
+    end
+
+    context 'when load-balanced topology is requested' do
+      let(:options) do
+        {connect: :load_balanced, replica_set: nil}
+      end
+
+      it 'creates the client successfully' do
+        client.should be_a(Mongo::Client)
+      end
+
+      it 'fails all operations' do
+        lambda do
+          client.command(ping: true)
+        end.should raise_error(Mongo::Error::BadLoadBalancerTarget)
+      end
+    end
+  end
 end

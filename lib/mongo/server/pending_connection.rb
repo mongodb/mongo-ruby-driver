@@ -97,6 +97,10 @@ module Mongo
         if description.unknown?
           raise Error::InternalDriverError, "Connection description cannot be unknown after successful authentication: #{description.inspect}"
         end
+
+        if server.load_balancer? && !description.mongos?
+          raise Error::BadLoadBalancerTarget, "Load-balanced operation requires being connected a mongos, but the server at #{address.seed} reported itself as #{description.server_type.to_s.gsub('_', ' ')}"
+        end
       end
 
       private
