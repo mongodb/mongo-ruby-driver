@@ -72,7 +72,9 @@ module Mongo
       @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {},
-        load_balancer: !!@options[:load_balancer])
+        load_balancer: !!@options[:load_balancer],
+        force_load_balancer: options[:connect] == :load_balanced,
+      )
       @last_scan = nil
       @last_scan_monotime = nil
       unless options[:monitoring_io] == false
@@ -572,6 +574,7 @@ module Mongo
       end
       new_description = Description.new(address, config,
         load_balancer: load_balancer?,
+        force_load_balancer: options[:connect] == :load_balanced,
       )
       cluster.run_sdam_flow(description, new_description, options)
     end

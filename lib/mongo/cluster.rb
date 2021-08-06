@@ -1043,7 +1043,10 @@ module Mongo
       # This is where a load balancer actually gets its correct server
       # description.
       server.update_description(
-        Server::Description.new(server.address, {}, load_balancer: true)
+        Server::Description.new(server.address, {},
+          load_balancer: true,
+          force_load_balancer: options[:connect] == :load_balanced,
+        )
       )
       publish_sdam_event(
         Monitoring::SERVER_DESCRIPTION_CHANGED,

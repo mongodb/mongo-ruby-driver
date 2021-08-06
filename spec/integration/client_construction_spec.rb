@@ -263,4 +263,31 @@ describe 'Client construction' do
       end
     end
   end
+
+  context 'when in load-balanced mode' do
+    require_topology :load_balanced
+
+    let(:client) do
+      ClientRegistry.instance.new_local_client(
+        [SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options.merge(options),
+      )
+    end
+
+    context 'when load-balanced topology is requested via the URI option' do
+      let(:options) do
+        {connect: nil, load_balanced: true}
+      end
+
+      it 'creates the client successfully' do
+        client.should be_a(Mongo::Client)
+      end
+
+      it 'fails all operations' do
+        lambda do
+          client.command(ping: true)
+        end.should raise_error(Mongo::Error::MissingServiceId)
+      end
+    end
+  end
 end

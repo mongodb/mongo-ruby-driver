@@ -219,6 +219,7 @@ module Mongo
           address, response,
           average_round_trip_time: average_rtt,
           load_balancer: server.load_balancer?,
+          force_load_balancer: options[:connect] == :load_balanced,
         ).tap do |new_description|
           @server.cluster.run_sdam_flow(@server.description, new_description)
         end
