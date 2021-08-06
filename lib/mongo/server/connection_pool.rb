@@ -824,11 +824,13 @@ module Mongo
           raise
         end
       rescue Error::SocketError, Error::SocketTimeoutError => exc
-        @server.unknown!(
-          generation: exc.generation,
-          service_id: exc.service_id,
-          stop_push_monitor: true,
-        )
+        unless @server.load_balancer?
+          @server.unknown!(
+            generation: exc.generation,
+            service_id: exc.service_id,
+            stop_push_monitor: true,
+          )
+        end
         raise
       end
 

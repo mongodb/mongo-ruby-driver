@@ -443,11 +443,13 @@ module Mongo
     def handle_handshake_failure!
       yield
     rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError => e
-      unknown!(
-        generation: e.generation,
-        service_id: e.service_id,
-        stop_push_monitor: true,
-      )
+      unless load_balancer?
+        unknown!(
+          generation: e.generation,
+          service_id: e.service_id,
+          stop_push_monitor: true,
+        )
+      end
       raise
     end
 
@@ -470,11 +472,13 @@ module Mongo
       raise
     rescue Mongo::Error::SocketError => e
       # non-timeout network error
-      unknown!(
-        generation: e.generation,
-        service_id: e.service_id,
-        stop_push_monitor: true,
-      )
+      unless load_balancer?
+        unknown!(
+          generation: e.generation,
+          service_id: e.service_id,
+          stop_push_monitor: true,
+        )
+      end
       raise
     rescue Auth::Unauthorized
       # auth error, keep server description and topology as they are
