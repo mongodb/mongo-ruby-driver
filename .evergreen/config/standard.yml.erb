@@ -1,3 +1,11 @@
+# Note that:
+# - MongoDB 2.6 and 3.0 are tested on ubuntu1604.
+#   This is because the Python that ships with ubuntu1404 is ancient and
+#   is no longer usable with the current Python infrastructure (pip, etc.).
+#   There are no ubuntu1604 builds for 2.6 and 3.0 servers however - they
+#   are only built for ubuntu1204 and ubuntu1404. We use the ubuntu1404
+#   builds on ubuntu1604 and the dependencies are satisfied.
+
 <% tt = %w(standalone replica-set sharded-cluster) %>
 
 buildvariants:
@@ -84,7 +92,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: ['3.0']
       topology: <%= tt %>
-      os: ubuntu1404
+      os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -95,7 +103,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: ['2.6']
       topology: <%= tt %>
-      os: ubuntu1404
+      os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -265,7 +273,7 @@ buildvariants:
       ruby: "ruby-2.5"
       mongodb-version: ['2.6']
       topology: replica-set
-      os: ubuntu1404
+      os: ubuntu1604
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"

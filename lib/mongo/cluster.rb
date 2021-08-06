@@ -159,6 +159,10 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       Session::SessionPool.create(self)
 
+      if seeds.empty? && load_balanced?
+        raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited'
+      end
+
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
       opening_topology = Topology::Unknown.new(options, monitoring, self)
@@ -179,11 +183,20 @@ module Mongo
 
       if seeds.size >= 1
         # Recreate the topology to get the current server list into it
-        @topology = topology.class.new(topology.options, topology.monitoring, self)
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
-        )
+        recreate_topology(topology, opening_topology)
+      end
+
+      if load_balanced?
+        # We are required by the specifications to produce certain SDAM events
+        # when in load-balanced topology.
+        # These events don't make a lot of sense from the standpoint of the
+        # driver's SDAM implementation, nor from the standpoint of the
+        # driver's load balancer implementation.
+        # They are just required boilerplate.
+        #
+        # Note that this call must be done above the monitoring_io check
+        # because that short-circuits the rest of the constructor.
+        fabricate_lb_sdam_events_and_set_server_type
       end
 
       if options[:monitoring_io] == false
@@ -809,9 +822,13 @@ module Mongo
       address = Address.new(host, options)
       if !addresses.include?(address)
         opts = options.merge(monitor: false)
-        if Topology::LoadBalanced === topology
-          opts[:load_balancer] = true
-        end
+        # Note that in a load-balanced topology, every server must be a
+        # load balancer (load_balancer: true is specified in the options)
+        # but this option isn't set here because we are required by the
+        # specifications to pretent the server started out as an unknown one
+        # and publish server description change event into the load balancer
+        # one. The actual correct description for this server will be set
+        # by the fabricate_lb_sdam_events_and_set_server_type method.
         server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
@@ -1014,6 +1031,38 @@ module Mongo
       end
       msg = "The deployment that the driver is connected to does not support sessions: #{reason}"
       raise Error::SessionsNotSupported, msg
+    end
+
+    def fabricate_lb_sdam_events_and_set_server_type
+      # Although there is no monitoring connection in load balanced mode,
+      # we must emit the following series of SDAM events.
+      server = @servers.first
+      # We are guaranteed to have the server here.
+      server.publish_opening_event
+      server_desc = server.description
+      # This is where a load balancer actually gets its correct server
+      # description.
+      server.update_description(
+        Server::Description.new(server.address, {}, load_balancer: true)
+      )
+      publish_sdam_event(
+        Monitoring::SERVER_DESCRIPTION_CHANGED,
+        Monitoring::Event::ServerDescriptionChanged.new(
+          server.address,
+          topology,
+          server_desc,
+          server.description
+        )
+      )
+      recreate_topology(topology, topology)
+    end
+
+    def recreate_topology(new_topology_template, previous_topology)
+      @topology = topology.class.new(new_topology_template.options, new_topology_template.monitoring, self)
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
+      )
     end
   end
 end

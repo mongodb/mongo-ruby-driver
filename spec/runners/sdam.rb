@@ -253,7 +253,7 @@ module Mongo
         'server_opening_event' => Mongo::Monitoring::Event::ServerOpening,
         'topology_description_changed_event' => Mongo::Monitoring::Event::TopologyChanged,
         'topology_opening_event' => Mongo::Monitoring::Event::TopologyOpening
-      }
+      }.freeze
 
       attr_reader :name
       attr_reader :data

@@ -39,8 +39,13 @@ describe 'SDAM Monitoring' do
           # Since we set monitoring_io: false, servers are not monitored
           # by the cluster. Start monitoring on them manually (this publishes
           # the server opening event but, again due to monitoring_io being
-          # false, does not do network I/O or change server status)>
-          server.start_monitoring
+          # false, does not do network I/O or change server status).
+          #
+          # If the server is a load balancer, it doesn't normally get monitored
+          # so don't start here either.
+          unless server.load_balancer?
+            server.start_monitoring
+          end
         end
       end
 
@@ -53,7 +58,7 @@ describe 'SDAM Monitoring' do
         context("Phase: #{phase_index + 1}") do
 
           before(:all) do
-            phase.responses.each do |response|
+            phase.responses&.each do |response|
               # For each response in the phase, we need to change that server's description.
               server = find_server(@client, response.address)
               server ||= @servers_cache[response.address.to_s]
