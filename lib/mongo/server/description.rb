@@ -211,16 +211,19 @@ module Mongo
       #   command took to complete.
       # @param [ Float ] average_round_trip_time The moving average time (sec)
       #   the ismaster call took to complete.
-      # @param [ true | false ] load_balancer Whether the server is a load
-      #   balancer.
+      # @param [ true | false ] load_balancer Whether the server is treated as
+      #   a load balancer.
+      # @param [ true | false ] force_load_balancer Whether the server is
+      #   forced to be a load balancer.
       #
       # @api private
       def initialize(address, config = {}, average_round_trip_time: nil,
-        load_balancer: false
+        load_balancer: false, force_load_balancer: false
       )
         @address = address
         @config = config
         @load_balancer = !!load_balancer
+        @force_load_balancer = !!force_load_balancer
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
         @last_update_time = Time.now.freeze
@@ -253,6 +256,10 @@ module Mongo
           # In particular processId is also a BSON::ObjectId, but will be
           # mapped to a string for clarity that this is a fake service id.
           if ok? && !service_id
+            unless force_load_balancer
+              raise Error::MissingServiceId, "The server at #{address.seed} did not provide a service id in handshake response"
+            end
+
             fake_service_id = if process_id = topology_version && topology_version['processId']
               "process:#{process_id}"
             else

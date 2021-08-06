@@ -11,7 +11,7 @@ describe Mongo::Auth::Scram do
   end
 
   let(:connection) do
-    Mongo::Server::Connection.new(server, SpecConfig.instance.monitoring_options)
+    Mongo::Server::Connection.new(server, SpecConfig.instance.monitoring_options.merge(connect: SpecConfig.instance.test_options[:connect]))
   end
 
   let(:cache_mod) { Mongo::Auth::CredentialCache }

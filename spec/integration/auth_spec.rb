@@ -14,7 +14,7 @@ describe 'Auth' do
     end
 
     let(:base_options) do
-      SpecConfig.instance.monitoring_options
+      SpecConfig.instance.monitoring_options.merge(connect: SpecConfig.instance.test_options[:connect])
     end
 
     let(:connection) do
