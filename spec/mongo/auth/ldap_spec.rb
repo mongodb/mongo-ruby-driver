@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 require 'spec_helper'
+require 'support/shared/auth_context'
 
 describe Mongo::Auth::LDAP do
 
@@ -9,9 +10,7 @@ describe Mongo::Auth::LDAP do
     authorized_client.cluster.next_primary
   end
 
-  let(:connection) do
-    Mongo::Server::Connection.new(server, SpecConfig.instance.test_options)
-  end
+  include_context 'auth unit tests'
 
   let(:user) do
     Mongo::Auth::User.new(

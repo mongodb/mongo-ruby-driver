@@ -149,6 +149,10 @@ module Mongo
           end
         end
 
+        if @server.force_load_balancer?
+          doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
+        end
+
         post_handshake(doc, @server.round_trip_time_averager.average_round_trip_time)
 
         doc
