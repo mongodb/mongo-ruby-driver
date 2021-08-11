@@ -16,7 +16,7 @@ describe 'SDAM error handling' do
 
   # These tests operate on specific servers, and don't work in a multi
   # shard cluster where multiple servers are equally eligible
-  require_no_multi_shard
+  require_no_multi_mongos
 
   let(:diagnostic_subscriber) { VerboseEventSubscriber.new }
 

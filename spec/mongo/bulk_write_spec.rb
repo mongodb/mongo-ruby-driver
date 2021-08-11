@@ -1424,7 +1424,7 @@ describe Mongo::BulkWrite do
 
               # In a multi-sharded cluster, the write seems to go to a
               # different shard from the read
-              require_no_multi_shard
+              require_no_multi_mongos
 
               let(:extra_options) do
                 { write_concern: { w: 0 } }
@@ -2103,7 +2103,7 @@ describe Mongo::BulkWrite do
 
             # In a multi-shard cluster, retries may go to a different server
             # than original command which these tests are not prepared to handle
-            require_no_multi_shard
+            require_no_multi_mongos
 
 
             let(:subscriber) { EventSubscriber.new }

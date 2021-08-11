@@ -20,7 +20,7 @@ describe 'Retryable writes integration tests' do
 
   # These tests override server selector, which fails if there are multiple
   # eligible servers as would be the case in a multi-shard sharded cluster
-  require_no_multi_shard
+  require_no_multi_mongos
 
   # Note: these tests are deprecated in favor of the tests in the file
   # spec/integration/retryable_writes/retryable_writes_40_and_newer_spec.rb

@@ -7,7 +7,7 @@ require 'runners/crud'
 
 describe 'Retryable writes spec tests' do
   require_wired_tiger
-  require_no_multi_shard
+  require_no_multi_mongos
 
   # Do not run these tests when write retries are disabled globally -
   # the tests won't work in that case and testing them with retries enabled

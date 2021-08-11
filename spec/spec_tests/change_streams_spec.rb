@@ -8,7 +8,7 @@ require 'runners/change_streams/spec'
 
 describe 'ChangeStreams' do
   require_wired_tiger
-  require_no_multi_shard
+  require_no_multi_mongos
 
   CHANGE_STREAMS_TESTS.each do |file|
 
