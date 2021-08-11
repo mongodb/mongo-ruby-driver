@@ -175,7 +175,7 @@ module Mongo
       @seeds = seeds = seeds.uniq
       servers = seeds.map do |seed|
         # Server opening events must be sent after topology change events.
-        # Therefore separate server addition, done here before topoolgy change
+        # Therefore separate server addition, done here before topology change
         # event is published, from starting to monitor the server which is
         # done later.
         add(seed, monitor: false)
