@@ -68,6 +68,42 @@ And to disable the query cache in the context of a block:
 You may check whether the query cache is enabled at any time by calling
 ``Mongo::QueryCache.enabled?``, which will return ``true`` or ``false``.
 
+
+Interactions With Fibers
+========================
+
+The Query cache enablement flag is stored in fiber-local storage (using
+`Thread.current <https://ruby-doc.org/core/Thread.html#class-Thread-label-Fiber-local+vs.+Thread-local>`_.
+This, in principle, permits query cache state to be per fiber, although
+this is not currently tested.
+
+There are methods in the Ruby standard library, like ``Enumerable#next``,
+that `utilize fibers <https://stackoverflow.com/questions/11057223/how-does-rubys-enumerator-object-iterate-externally-over-an-internal-iterator/11058270#11058270>`_
+in their implementation. These methods would not see the query cache
+enablement flag when it is set by the applications, and subsequently would
+not use the query cache. For example, the following code does not utilize
+the query cache despite requesting it:
+
+.. code-block:: ruby
+
+    Mongo::QueryCache.enabled = true
+    
+    client['artists'].find({}, limit: 1).to_enum.next
+    # Issues the query again.
+    client['artists'].find({}, limit: 1).to_enum.next
+
+Rewriting this code to use ``first`` instead of ``next`` would make it use
+the query cache:
+
+.. code-block:: ruby
+
+    Mongo::QueryCache.enabled = true
+    
+    client['artists'].find({}, limit: 1).first
+    # Utilizes the cached result from the first query.
+    client['artists'].find({}, limit: 1).first
+
+
 .. _query-cache-matching:
 
 Query Matching

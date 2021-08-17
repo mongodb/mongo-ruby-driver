@@ -1045,4 +1045,49 @@ describe 'QueryCache' do
       expect(events.length).to eq(2)
     end
   end
+
+  context 'when result set has multiple documents and cursor is iterated partially' do
+
+    before do
+      Mongo::QueryCache.enabled = false
+      5.times do
+        authorized_collection.insert_one({ name: 'testing' })
+      end
+    end
+
+    shared_examples 'retrieves full result set on second iteration' do
+      it 'retrieves full result set on second iteration' do
+        Mongo::QueryCache.clear
+        Mongo::QueryCache.enabled = true
+
+        partial_first_iteration
+
+        authorized_collection.find.to_a.length.should == 5
+      end
+
+    end
+
+    context 'using each & break' do
+      let(:partial_first_iteration) do
+        called = false
+        authorized_collection.find.each do
+          called = true
+          break
+        end
+        called.should be true
+      end
+
+      include_examples 'retrieves full result set on second iteration'
+    end
+
+    context 'using next' do
+      let(:partial_first_iteration) do
+        # #next is executed in its own fiber, and query cache is disabled
+        # for that operation.
+        authorized_collection.find.to_enum.next
+      end
+
+      include_examples 'retrieves full result set on second iteration'
+    end
+  end
 end
