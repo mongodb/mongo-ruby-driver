@@ -270,6 +270,21 @@ module Mongo
       ensure
         QueryCache.clear
       end
+
+      # ActiveJob middleware that activates the query cache for each job.
+      module ActiveJob
+        def self.included(base)
+          base.class_eval do
+            around_perform do |_job, block|
+              QueryCache.cache do
+                block.call
+              end
+            ensure
+              QueryCache.clear
+            end
+          end
+        end
+      end
     end
   end
 end

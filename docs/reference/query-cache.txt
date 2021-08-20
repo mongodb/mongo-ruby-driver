@@ -275,6 +275,9 @@ You may read more about system collections in the
 Query Cache Middleware
 ======================
 
+Rack Middleware
+---------------
+
 The driver provides a Rack middleware which enables the query cache for the
 duration of each web request. Below is an example of how to enable the
 query cache middleware in a Ruby on Rails application:
@@ -290,3 +293,18 @@ query cache middleware in a Ruby on Rails application:
 Please refer to the `Rails on Rack guide
 <https://guides.rubyonrails.org/rails_on_rack.html#configuring-middleware-stack>`_
 for more information about using Rack middleware in Rails applications.
+
+Active Job Middleware
+---------------------
+
+The driver provides an Active Job middleware which enables the query cache for
+each job. Below is an example of how to enable the query cache Active Job
+middleware in a Ruby on Rails application:
+
+.. code-block:: ruby
+
+  # config/application.rb
+
+  ActiveSupport.on_load(:active_job) do
+    include Mongo::QueryCache::Middleware::ActiveJob
+  end
