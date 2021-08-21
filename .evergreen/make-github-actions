@@ -94,7 +94,7 @@ class GithubConfig < YamlConfig
 end
 
 class Transmogrifier
-  SPLATTABLE_FIELDS  = %i[mongodb ruby topology auth]
+  SPLATTABLE_FIELDS  = %i[mongodb ruby topology auth bson compressor]
   COMPACTABLE_FIELDS = %i[mongodb ruby topology gemfile]
 
   attr_reader :eg_config,
