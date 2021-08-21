@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-# TODO: Support i18n-fallbacks test
-# TODO: Support app-tests tests
+# TODO: Support topology=sharded-cluster (requires better MongoDB Github Action)
+# TODO: Support auth-and-ssl (requires better MongoDB Github Action)
 
 require 'fileutils'
 require 'active_support/dependencies/autoload'
