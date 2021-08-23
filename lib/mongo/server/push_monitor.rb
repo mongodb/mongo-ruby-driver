@@ -111,6 +111,12 @@ module Mongo
           @topology_version = new_description.topology_version
         end
       rescue Mongo::Error => exc
+        stop_requested = @lock.synchronize { @stop_requested }
+        if stop_requested
+          # Ignore the exception, see RUBY-2771.
+          return
+        end
+
         msg = "Error running awaited hello on #{server.address}"
         Utils.warn_bg_exception(msg, exc,
           logger: options[:logger],
