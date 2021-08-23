@@ -76,6 +76,9 @@ describe 'Cmap' do
         allow(socket).to receive(:alive?).and_return(true)
 
         allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(socket)
+        if @server.load_balancer?
+          allow_any_instance_of(Mongo::Server::Connection).to receive(:service_id).and_return('very fake')
+        end
         spec.run
       end
 
