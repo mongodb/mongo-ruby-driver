@@ -11,7 +11,7 @@ describe 'Server selector' do
   describe '#select_server' do
     # These tests operate on specific servers, and don't work in a multi
     # shard cluster where multiple servers are equally eligible
-    require_no_multi_shard
+    require_no_multi_mongos
 
     let(:result) { selector.select_server(cluster) }
 

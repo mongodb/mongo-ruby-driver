@@ -10,7 +10,7 @@ describe 'fork reconnect' do
   # On multi-shard sharded clusters a succeeding write request does not
   # guarantee that the next operation will succeed (since it could be sent to
   # another shard with a dead connection).
-  require_no_multi_shard
+  require_no_multi_mongos
 
   require_stress
 
