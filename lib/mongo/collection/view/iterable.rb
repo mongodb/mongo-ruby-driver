@@ -35,18 +35,28 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
-          @cursor = if use_query_cache? && cached_cursor
+          # If the caching cursor is closed and was not fully iterated,
+          # the documents we have in it are not the complete result set and
+          # we have no way of completing that iteration.
+          # Therefore, discard that cursor and start iteration again.
+          # The case of the caching cursor not being closed and not having
+          # been fully iterated isn't tested - see RUBY-2773.
+          @cursor = if use_query_cache? && cached_cursor && (
+            cached_cursor.fully_iterated? || !cached_cursor.closed?
+          )
             cached_cursor
           else
             session = client.send(:get_session, @options)
-            select_cursor(session)
+            select_cursor(session).tap do |cursor|
+              if use_query_cache?
+                # No need to store the cursor in the query cache if there is
+                # already a cached cursor stored at this key.
+                QueryCache.set(cursor, **cache_options)
+              end
+            end
           end
 
           if use_query_cache?
-            # No need to store the cursor in the query cache if there is
-            # already a cached cursor stored at this key.
-            QueryCache.set(@cursor, **cache_options) unless cached_cursor
-
             # If a query with a limit is performed, the query cache will
             # re-use results from an earlier query with the same or larger
             # limit, and then impose the lower limit during iteration.
