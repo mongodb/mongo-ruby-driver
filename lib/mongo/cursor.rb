@@ -212,10 +212,12 @@ module Mongo
         unless closed?
           if exhausted?
             close
+            @fully_iterated = true
             raise StopIteration
           end
           @documents = get_more
         else
+          @fully_iterated = true
           raise StopIteration
         end
       else
@@ -232,6 +234,9 @@ module Mongo
       # over the last document, or if the batch is empty
       if @documents.size <= 1
         cache_batch_resume_token
+        if closed?
+          @fully_iterated = true
+        end
       end
 
       return @documents.shift
@@ -350,6 +355,11 @@ module Mongo
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
       process(get_more_operation.execute(@server, context: Operation::Context.new(client: client, session: @session)))
+    end
+
+    # @api private
+    def fully_iterated?
+      !!@fully_iterated
     end
 
     private
