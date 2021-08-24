@@ -1278,6 +1278,16 @@ module Mongo
         end
       end
 
+      if connect == :load_balanced
+        if addresses && addresses.length > 1
+          raise ArgumentError, "connect=load_balanced cannot be used with multiple seeds"
+        end
+
+        if options[:replica_set]
+          raise ArgumentError, "connect=load_balanced cannot be used with replica_set option"
+        end
+      end
+
       if options[:direct_connection] == false && connect && connect == :direct
         raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{connect}"
       end

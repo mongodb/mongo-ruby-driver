@@ -1445,6 +1445,45 @@ describe Mongo::Client do
               client.options[:connect].should eq v
             end
           end
+
+          context "replica_set and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                replica_set: 'foo', connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /connect=load_balanced cannot be used with replica_set option/)
+            end
+          end
+
+          context "direct_connection=true and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                direct_connection: true, connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=load_balanced/)
+            end
+          end
+
+          context "multiple seed addresses and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017', '127.0.0.1:1234'],
+                connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /connect=load_balanced cannot be used with multiple seeds/)
+            end
+          end
         end
 
         [:replica_set, 'replica_set'].each do |v|
