@@ -843,6 +843,14 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
+# Note that:
+# - MongoDB 2.6 and 3.0 are tested on ubuntu1604.
+#   This is because the Python that ships with ubuntu1404 is ancient and
+#   is no longer usable with the current Python infrastructure (pip, etc.).
+#   There are no ubuntu1604 builds for 2.6 and 3.0 servers however - they
+#   are only built for ubuntu1204 and ubuntu1404. We use the ubuntu1404
+#   builds on ubuntu1604 and the dependencies are satisfied.
+
 
 buildvariants:
   - matrix_name: "docker"
@@ -1230,7 +1238,7 @@ buildvariants:
 #      os: ubuntu1604
 #    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
 #    tasks:
-      - name: "test-mlaunch"
+#      - name: "test-mlaunch"
 
   - matrix_name: "zstd-auth"
     matrix_spec:
