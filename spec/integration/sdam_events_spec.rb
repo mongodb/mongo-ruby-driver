@@ -92,23 +92,27 @@ describe 'SDAM events' do
         sleep 3
         client.close
 
-        events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
+        started_events = subscriber.select_started_events(
+          Mongo::Monitoring::Event::ServerHeartbeatStarted
+        )
         # We could have up to 16 events and should have no fewer than 8 events.
         # Whenever an awaited hello succeeds while the regular monitor is
         # waiting, the regular monitor's next scan is pushed forward.
-        events.length.should >= 6
-        events.length.should <= 18
-        (started_awaited = events.select(&:awaited?)).should_not be_empty
-        (started_regular = events.reject(&:awaited?)).should_not be_empty
+        started_events.length.should >= 6
+        started_events.length.should <= 18
+        (started_awaited = started_events.select(&:awaited?)).should_not be_empty
+        (started_regular = started_events.reject(&:awaited?)).should_not be_empty
 
-        events = subscriber.select_completed_events(
+        completed_events = subscriber.select_completed_events(
           Mongo::Monitoring::Event::ServerHeartbeatSucceeded,
           Mongo::Monitoring::Event::ServerHeartbeatFailed,
-        )
-        events.length.should >= 6
-        events.length.should <= 18
-        (succeeded_awaited = events.select(&:awaited?)).should_not be_empty
-        (succeeded_regular = events.reject(&:awaited?)).should_not be_empty
+        ).select do |evt|
+          started_events.include?(evt.started_event)
+        end
+        completed_events.length.should >= 6
+        completed_events.length.should <= 18
+        (succeeded_awaited = completed_events.select(&:awaited?)).should_not be_empty
+        (succeeded_regular = completed_events.reject(&:awaited?)).should_not be_empty
 
         # There may be in-flight hellos that don't complete, both
         # regular and awaited.
