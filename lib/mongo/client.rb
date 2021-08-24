@@ -1283,10 +1283,6 @@ module Mongo
           raise ArgumentError, "connect=load_balanced cannot be used with multiple seeds"
         end
 
-        if options[:direct_connection]
-          raise ArgumentError, "connect=load_balanced cannot be used with load_balanced=true"
-        end
-
         if options[:replica_set]
           raise ArgumentError, "connect=load_balanced cannot be used with replica_set option"
         end
