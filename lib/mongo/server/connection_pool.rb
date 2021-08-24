@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'mongo/server/connection_pool/populator'
 
 module Mongo
   class Server
@@ -111,7 +110,7 @@ module Mongo
         @server = server
         @options = options.freeze
 
-        @generation = 1
+        @generation_manager = GenerationManager.new(server: server)
         @closed = false
 
         # A connection owned by this pool should be either in the
@@ -189,12 +188,14 @@ module Mongo
         @max_idle_time ||= options[:max_idle_time]
       end
 
+      # @api private
+      attr_reader :generation_manager
+
       # @return [ Integer ] generation Generation of connections currently
       #   being used by the queue.
       #
-      # @since 2.9.0
       # @api private
-      attr_reader :generation
+      def_delegator :generation_manager, :generation
 
       # Size of the connection pool.
       #
@@ -308,6 +309,11 @@ module Mongo
               until @available_connections.empty?
                 connection = next_available_connection(service_id: service_id)
 
+                # If service_id is not nil, connection may be nil here
+                # even if there are available connections in the pool
+                # (they could be to other services).
+                break unless connection
+
                 if connection.pid != pid
                   log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
                   connection.disconnect!(reason: :stale)
@@ -315,7 +321,7 @@ module Mongo
                   next
                 end
 
-                if connection.generation != generation
+                if connection.generation != generation(service_id: connection.service_id)
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
@@ -465,7 +471,7 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-          elsif connection.generation != @generation
+          elsif connection.generation != generation(service_id: connection.service_id)
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
           else
@@ -511,7 +517,7 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
-          @generation += 1
+          @generation_manager.bump(service_id: service_id)
 
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
@@ -745,12 +751,17 @@ module Mongo
 
       private
 
+      # Returns the next available connection, optionally scoped to the
+      # specified service. If no suitable connections are available,
+      # returns nil.
       def next_available_connection(service_id: nil)
         if service_id
           conn = @available_connections.detect do |conn|
             conn.service_id == service_id
           end
-          @available_connections.delete(conn)
+          if conn
+            @available_connections.delete(conn)
+          end
           conn
         else
           @available_connections.pop
@@ -758,12 +769,15 @@ module Mongo
       end
 
       def create_connection
-        connection = Connection.new(@server, options.merge(
-          generation: generation,
+        opts = options.merge(
           connection_pool: self,
           # Do not pass app metadata - this will be retrieved by the connection
           # based on the auth needs.
-        ))
+        )
+        unless @server.load_balancer?
+          opts[:generation] = generation
+        end
+        connection = Connection.new(@server, opts)
       end
 
       # Create a connection, connect it, and add it to the pool.
@@ -856,3 +870,6 @@ module Mongo
     end
   end
 end
+
+require 'mongo/server/connection_pool/generation_manager'
+require 'mongo/server/connection_pool/populator'

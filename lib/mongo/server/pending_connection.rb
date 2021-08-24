@@ -71,27 +71,32 @@ module Mongo
           raise Error::InternalDriverError, "Connection description cannot be unknown after successful handshake: #{description.inspect}"
         end
 
-        if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
-          unless description.features.scram_sha_1_enabled?
-            raise Error::InvalidServerAuthResponse, "Speculative auth succeeded on a pre-3.0 server"
+        begin
+          if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
+            unless description.features.scram_sha_1_enabled?
+              raise Error::InvalidServerAuthResponse, "Speculative auth succeeded on a pre-3.0 server"
+            end
+            case speculative_auth_user.mechanism
+            when :mongodb_x509
+              # Done
+            # We default auth mechanism to scram256, but if user specified
+            # scram explicitly we may be able to authenticate speculatively
+            # with scram.
+            when :scram, :scram256
+              authenticate!(
+                speculative_auth_client_nonce: speculative_auth.conversation.client_nonce,
+                speculative_auth_mech: speculative_auth_user.mechanism,
+                speculative_auth_result: speculative_auth_result,
+              )
+            else
+              raise Error::InternalDriverError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
+            end
+          elsif !description.arbiter?
+            authenticate!
           end
-          case speculative_auth_user.mechanism
-          when :mongodb_x509
-            # Done
-          # We default auth mechanism to scram256, but if user specified
-          # scram explicitly we may be able to authenticate speculatively
-          # with scram.
-          when :scram, :scram256
-            authenticate!(
-              speculative_auth_client_nonce: speculative_auth.conversation.client_nonce,
-              speculative_auth_mech: speculative_auth_user.mechanism,
-              speculative_auth_result: speculative_auth_result,
-            )
-          else
-            raise Error::InternalDriverError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
-          end
-        elsif !description.arbiter?
-          authenticate!
+        rescue Mongo::Error, Mongo::Error::AuthError => exc
+          exc.service_id = service_id
+          raise
         end
 
         if description.unknown?
@@ -147,6 +152,10 @@ module Mongo
             )
             raise
           end
+        end
+
+        if @server.force_load_balancer?
+          doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
         end
 
         post_handshake(doc, @server.round_trip_time_averager.average_round_trip_time)

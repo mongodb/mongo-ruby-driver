@@ -10,7 +10,7 @@ describe 'fork reconnect' do
   # On multi-shard sharded clusters a succeeding write request does not
   # guarantee that the next operation will succeed (since it could be sent to
   # another shard with a dead connection).
-  require_no_multi_shard
+  require_no_multi_mongos
 
   let(:client) { authorized_client }
   let(:server) { client.cluster.next_primary }

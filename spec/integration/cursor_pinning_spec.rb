@@ -18,7 +18,7 @@ describe 'Cursor pinning' do
 
   context 'non-lb' do
     require_topology :single, :replica_set, :sharded
-    require_no_multi_shard
+    require_no_multi_mongos
 
     # When not in load-balanced topology, iterating a cursor creates
     # new connections as needed.

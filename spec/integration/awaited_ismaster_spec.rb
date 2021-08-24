@@ -9,7 +9,7 @@ describe 'awaited hello' do
   # If we send the consecutive hello commands to different mongoses,
   # they have different process ids, and so the awaited one would return
   # immediately.
-  require_no_multi_shard
+  require_no_multi_mongos
 
   let(:client) { authorized_client }
 
