@@ -50,13 +50,20 @@ describe 'SDAM events' do
     context 'pre-4.4 servers' do
       max_server_version '4.2'
 
+      let(:sdam_proc) do
+        Proc.new do |client|
+          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+        end
+      end
+
       let(:client) do
         new_local_client(SpecConfig.instance.addresses,
           # Heartbeat interval is bound by 500 ms
-          SpecConfig.instance.test_options.merge(heartbeat_frequency: 0.5),
-        ).tap do |client|
-          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
-        end
+          SpecConfig.instance.test_options.merge(
+            heartbeat_frequency: 0.5,
+            sdam_proc: sdam_proc
+          ),
+        )
       end
 
       it 'is published every heartbeat interval' do
@@ -78,13 +85,20 @@ describe 'SDAM events' do
     context '4.4+ servers' do
       min_server_fcv '4.4'
 
+      let(:sdam_proc) do
+        Proc.new do |client|
+          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+        end
+      end
+
       let(:client) do
         new_local_client(SpecConfig.instance.addresses,
           # Heartbeat interval is bound by 500 ms
-          SpecConfig.instance.test_options.merge(heartbeat_frequency: 0.5),
-        ).tap do |client|
-          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
-        end
+          SpecConfig.instance.test_options.merge(
+            heartbeat_frequency: 0.5,
+            sdam_proc: sdam_proc
+          ),
+        )
       end
 
       it 'is published up to twice every heartbeat interval' do
@@ -106,9 +120,7 @@ describe 'SDAM events' do
         completed_events = subscriber.select_completed_events(
           Mongo::Monitoring::Event::ServerHeartbeatSucceeded,
           Mongo::Monitoring::Event::ServerHeartbeatFailed,
-        ).select do |evt|
-          started_events.include?(evt.started_event)
-        end
+        )
         completed_events.length.should >= 6
         completed_events.length.should <= 18
         (succeeded_awaited = completed_events.select(&:awaited?)).should_not be_empty
