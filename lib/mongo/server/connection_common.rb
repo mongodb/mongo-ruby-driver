@@ -89,6 +89,8 @@ module Mongo
       #
       # @return [ Protocol::Message ] Command that should be sent to a server
       #   for handshake purposes.
+      #
+      # @api private
       def handshake_command(handshake_document)
         if handshake_document['apiVersion']
           Protocol::Msg.new(
