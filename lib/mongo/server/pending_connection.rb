@@ -120,17 +120,14 @@ module Mongo
           raise Error::InternalDriverError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
-        hello_doc = handshake_document(
-          app_metadata,
-          speculative_auth_doc: speculative_auth_doc,
-          load_balancer: server.load_balancer?,
-          server_api: options[:server_api]
+        hello_command = handshake_command(
+          handshake_document(
+            app_metadata,
+            speculative_auth_doc: speculative_auth_doc,
+            load_balancer: server.load_balancer?,
+            server_api: options[:server_api]
+          )
         )
-
-        # TODO (DR): OP_MSG should be used if api version is declared.
-        # See https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.rst#id5
-        hello_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND, hello_doc, :limit => -1)
-
         doc = nil
         @server.handle_handshake_failure! do
           begin

@@ -82,6 +82,30 @@ module Mongo
         end
       end
 
+      # Build a command that should be used for connection handshake.
+      #
+      # @param [ BSON::Document ] handshake_document Document that should be
+      #   sent to a server for handshake purpose.
+      #
+      # @return [ Protocol::Message ] Command that should be sent to a server
+      #   for handshake purposes.
+      #
+      # @api private
+      def handshake_command(handshake_document)
+        if handshake_document['apiVersion']
+          Protocol::Msg.new(
+            [], {}, handshake_document.merge({'$db' => Database::ADMIN})
+          )
+        else
+          Protocol::Query.new(
+            Database::ADMIN,
+            Database::COMMAND,
+            handshake_document,
+            :limit => -1
+          )
+        end
+      end
+
 
       private
 
