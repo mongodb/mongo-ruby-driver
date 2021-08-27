@@ -6,11 +6,11 @@ require 'lite_spec_helper'
 describe Mongo::Server::ConnectionCommon do
   let(:subject) { described_class.new }
 
-  describe '#handshake_document' do
-    let(:metadata) do
-      Mongo::Server::AppMetadata.new({})
-    end
+  let(:metadata) do
+    Mongo::Server::AppMetadata.new({})
+  end
 
+  describe '#handshake_document' do
     let(:document) do
       subject.handshake_document(metadata)
     end
@@ -41,6 +41,34 @@ describe Mongo::Server::ConnectionCommon do
 
       it 'includes loadBalanced: true' do
         document['loadBalanced'].should be true
+      end
+    end
+  end
+
+  describe '#handshake_command' do
+    let(:document) do
+      subject.handshake_document(metadata)
+    end
+
+    context 'with api version' do
+      let(:metadata) do
+        Mongo::Server::AppMetadata.new({
+          server_api: { version: '1'  }
+        })
+      end
+
+      it 'returns OP_MSG command' do
+        expect(
+          subject.handshake_command(document)
+        ).to be_a(Mongo::Protocol::Msg)
+      end
+    end
+
+    context 'without api version' do
+      it 'returns OP_QUERY command' do
+        expect(
+          subject.handshake_command(document)
+        ).to be_a(Mongo::Protocol::Query)
       end
     end
   end
