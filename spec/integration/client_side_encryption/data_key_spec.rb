@@ -11,7 +11,7 @@ describe 'Client-Side Encryption' do
 
     include_context 'define shared FLE helpers'
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:client) do
       new_local_client(

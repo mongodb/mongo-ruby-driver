@@ -5,7 +5,7 @@ require 'spec_helper'
 
 describe 'Command' do
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   describe 'payload' do
     let(:server) { authorized_client.cluster.next_primary }

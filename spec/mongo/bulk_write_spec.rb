@@ -2106,7 +2106,7 @@ describe Mongo::BulkWrite do
             require_no_multi_mongos
 
 
-            let(:subscriber) { EventSubscriber.new }
+            let(:subscriber) { Mrss::EventSubscriber.new }
 
             let(:client) do
               authorized_client_with_retry_writes.tap do |client|

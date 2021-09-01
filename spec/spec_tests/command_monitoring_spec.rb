@@ -24,7 +24,7 @@ describe 'Command Monitoring Events' do
           end
 
           let(:subscriber) do
-            EventSubscriber.new
+            Mrss::EventSubscriber.new
           end
 
           let(:monitoring) do
@@ -54,7 +54,7 @@ describe 'Command Monitoring Events' do
 
   def check_event(subscriber, index, expectation)
     subscriber.all_events.length.should > index
-    # TODO move this filtering into EventSubscriber
+    # TODO move this filtering into Mrss::EventSubscriber
     events = subscriber.all_events.reject do |event|
       (
         event.is_a?(Mongo::Monitoring::Event::CommandStarted) ||

@@ -16,7 +16,7 @@ describe 'SDAM Monitoring' do
     context("#{spec.description} (#{file.sub(%r'.*/data/sdam_monitoring/', '')})") do
 
       before(:all) do
-        @subscriber = PhasedEventSubscriber.new
+        @subscriber = Mrss::PhasedEventSubscriber.new
         sdam_proc = lambda do |client|
           client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
           client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)

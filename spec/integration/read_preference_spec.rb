@@ -16,7 +16,7 @@ describe 'Read preference' do
     authorized_client.with(client_options)
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   before do
     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)

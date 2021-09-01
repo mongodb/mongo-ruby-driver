@@ -185,7 +185,7 @@ end
 
 shared_examples 'an operation supporting causally consistent reads' do
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|
@@ -622,7 +622,7 @@ shared_examples 'an operation updating cluster time' do
     client.start_session
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

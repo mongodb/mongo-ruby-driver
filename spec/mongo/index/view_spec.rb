@@ -266,7 +266,7 @@ describe Mongo::Index::View do
           context 'on server versions >= 4.4' do
             min_server_fcv '4.4'
 
-            let(:subscriber) { EventSubscriber.new }
+            let(:subscriber) { Mrss::EventSubscriber.new }
 
             let(:client) do
               authorized_client.tap do |client|
@@ -932,7 +932,7 @@ describe Mongo::Index::View do
       context 'on server versions >= 4.4' do
         min_server_fcv '4.4'
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
           authorized_client.tap do |client|

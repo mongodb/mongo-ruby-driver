@@ -21,7 +21,7 @@ describe 'Bulk writes' do
   end
 
   context 'when bulk write needs to be split' do
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:max_bson_size) { Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE }
 

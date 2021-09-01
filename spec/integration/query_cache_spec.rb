@@ -28,7 +28,7 @@ describe 'QueryCache' do
     SessionRegistry.instance.verify_sessions_ended!
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

@@ -40,7 +40,7 @@ describe 'Cmap' do
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
 
       before do
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
 
         monitoring = Mongo::Monitoring.new(monitoring: false)
         monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)

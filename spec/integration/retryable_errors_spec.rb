@@ -7,7 +7,7 @@ describe 'Failing retryable operations' do
   # Requirement for fail point
   min_server_fcv '4.0'
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client_options) do
     {}

@@ -141,11 +141,11 @@ module Mongo
       end
 
       def command_subscriber
-        @command_subscriber ||= EventSubscriber.new
+        @command_subscriber ||= Mrss::EventSubscriber.new
       end
 
       def sdam_subscriber
-        @sdam_subscriber ||= EventSubscriber.new(name: 'sdam subscriber')
+        @sdam_subscriber ||= Mrss::EventSubscriber.new(name: 'sdam subscriber')
       end
 
       # Run the test.

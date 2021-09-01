@@ -11,7 +11,7 @@ describe 'Heartbeat events' do
 
   clean_slate_for_all
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   before do
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)

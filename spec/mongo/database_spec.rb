@@ -218,7 +218,7 @@ describe Mongo::Database do
           described_class.new(client, SpecConfig.instance.test_db)
         end
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
           authorized_client.tap do |client|
@@ -391,7 +391,7 @@ describe Mongo::Database do
           described_class.new(client, SpecConfig.instance.test_db)
         end
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
           authorized_client.tap do |client|
@@ -583,7 +583,7 @@ describe Mongo::Database do
           described_class.new(client, SpecConfig.instance.test_db)
         end
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
           authorized_client.tap do |client|
@@ -678,7 +678,7 @@ describe Mongo::Database do
         client.start_session
       end
 
-      let(:subscriber) { EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       let(:client) do
         authorized_client.tap do |client|
@@ -969,7 +969,7 @@ describe Mongo::Database do
           client.start_session
         end
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
           root_authorized_client.tap do |client|

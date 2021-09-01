@@ -21,7 +21,7 @@ describe 'Cursor reaping' do
   end
 =end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

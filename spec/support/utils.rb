@@ -556,7 +556,7 @@ module Utils
   # command event published, asserts the command event published has the
   # specified command name, and returns the published event.
   module_function def get_command_event(client, command_name, include_auth: false)
-    subscriber = EventSubscriber.new
+    subscriber = Mrss::EventSubscriber.new
     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     begin
       yield client
