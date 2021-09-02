@@ -53,7 +53,7 @@ describe 'Change stream integration', retry: 4 do
       it 'raises an exception and does not attempt to resume' do
         change_stream
 
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
         authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
 
         expect do
@@ -523,7 +523,7 @@ describe 'Change stream integration', retry: 4 do
     let(:events) do
       start_after
 
-      subscriber = EventSubscriber.new
+      subscriber = Mrss::EventSubscriber.new
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       use_stream
 
@@ -582,7 +582,7 @@ describe 'Change stream integration', retry: 4 do
     let(:stream) { authorized_collection.watch }
 
     let(:events) do
-      subscriber = EventSubscriber.new
+      subscriber = Mrss::EventSubscriber.new
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       use_stream
       subscriber.succeeded_events.select { |e|

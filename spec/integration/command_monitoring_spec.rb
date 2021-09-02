@@ -5,7 +5,7 @@ require 'spec_helper'
 
 describe 'Command monitoring' do
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.with(app_name: 'command monitoring spec').tap do |client|

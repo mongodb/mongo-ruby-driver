@@ -89,7 +89,7 @@ module Mongo
 
         setup_fail_point(client)
 
-        @subscriber = EventSubscriber.new
+        @subscriber = Mrss::EventSubscriber.new
         client.subscribe(Mongo::Monitoring::COMMAND, @subscriber)
 
         @target = case @target_type

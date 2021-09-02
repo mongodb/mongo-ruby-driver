@@ -33,7 +33,7 @@ module Mongo
       # @return [ Mongo::ConnectionPool ] pool The connection pool to use for operations.
       attr_reader :pool
 
-      # @return [ EventSubscriber ] subscriber The subscriber receiving the CMAP events.
+      # @return [ Mrss::EventSubscriber ] subscriber The subscriber receiving the CMAP events.
       attr_reader :subscriber
 
       # Instantiate the new spec.

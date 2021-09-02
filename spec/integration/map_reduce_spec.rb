@@ -7,7 +7,7 @@ describe 'Map-reduce operations' do
   let(:client) { authorized_client }
   let(:collection) { client['mr_integration'] }
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:find_options) { {} }
 

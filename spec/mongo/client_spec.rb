@@ -635,7 +635,7 @@ describe Mongo::Client do
         root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
       end
 
-      let(:subscriber) { EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       let(:client) do
         ClientRegistry.instance.new_local_client(

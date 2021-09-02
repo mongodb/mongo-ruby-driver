@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 describe 'SDAM events' do
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   describe 'server closed event' do
     it 'is published when client is closed' do

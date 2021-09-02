@@ -11,7 +11,7 @@ describe 'Bulk writes with auto-encryption enabled' do
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     new_local_client(

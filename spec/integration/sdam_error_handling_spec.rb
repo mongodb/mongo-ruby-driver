@@ -18,7 +18,7 @@ describe 'SDAM error handling' do
   # shard cluster where multiple servers are equally eligible
   require_no_multi_mongos
 
-  let(:diagnostic_subscriber) { VerboseEventSubscriber.new }
+  let(:diagnostic_subscriber) { Mrss::VerboseEventSubscriber.new }
 
   let(:client) do
     new_local_client(SpecConfig.instance.addresses,
@@ -290,7 +290,7 @@ describe 'SDAM error handling' do
   describe 'when there is an error on monitoring connection' do
     clean_slate_for_all
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:set_subscribers) do
       client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)

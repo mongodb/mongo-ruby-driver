@@ -602,7 +602,7 @@ describe Mongo::Server::ConnectionPool do
        it 'raises an error and emits ConnectionCheckOutFailedEvent' do
         pool
 
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
         client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
         subscriber.clear_events!

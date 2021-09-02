@@ -235,7 +235,7 @@ describe Mongo::Collection::View::Aggregation do
         { session: session }
       end
 
-      let(:subscriber) { EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       let(:client) do
         authorized_client.tap do |client|

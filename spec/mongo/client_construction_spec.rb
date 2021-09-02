@@ -6,7 +6,7 @@ require 'spec_helper'
 describe Mongo::Client do
   clean_slate
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   describe '.new' do
     context 'with scan: false' do

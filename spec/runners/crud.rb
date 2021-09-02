@@ -96,7 +96,7 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
       end
 
       let(:event_subscriber) do
-        EventSubscriber.new
+        Mrss::EventSubscriber.new
       end
 
       let(:verifier) { Mongo::CRUD::Verifier.new(test) }

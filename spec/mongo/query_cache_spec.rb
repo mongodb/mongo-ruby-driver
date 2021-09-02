@@ -14,7 +14,7 @@ describe Mongo::QueryCache do
     authorized_collection.delete_many
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

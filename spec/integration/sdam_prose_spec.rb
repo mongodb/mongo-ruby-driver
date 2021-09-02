@@ -11,7 +11,7 @@ describe 'SDAM prose tests' do
     min_server_fcv '4.4'
     require_topology :single
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:client) do
       new_local_client(SpecConfig.instance.addresses,
