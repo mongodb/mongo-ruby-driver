@@ -138,6 +138,11 @@ describe Mongo::Session do
       context "timeout with commit raising with #{label}" do
         max_example_run_time 7
 
+        # JRuby seems to burn through the monotonic time expectations
+        # very quickly and the retries of the transaction get the original
+        # time which causes the transaction to be stuck there.
+        fails_on_jruby
+
         before do
           # create collection if it does not exist
           collection.insert_one(a: 1)
@@ -146,7 +151,7 @@ describe Mongo::Session do
         it 'times out' do
           start = Mongo::Utils.monotonic_time
 
-          10.times do |i|
+          100.times do |i|
             expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
           end
           expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
