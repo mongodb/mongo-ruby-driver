@@ -34,7 +34,6 @@ Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
 Encoding.default_external = Encoding::UTF_8
 
-require 'support/travis'
 require 'support/matchers'
 require 'support/authorization'
 require 'support/server_discovery_and_monitoring'
