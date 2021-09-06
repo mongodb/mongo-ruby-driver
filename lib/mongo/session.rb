@@ -436,6 +436,7 @@ module Mongo
                 transaction_in_progress = false
                 raise
               end
+              @state = NO_TRANSACTION_STATE
               next
             else
               transaction_in_progress = false
