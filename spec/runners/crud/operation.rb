@@ -376,9 +376,11 @@ module Mongo
         arguments.merge(arguments['options'] || {}).each do |spec_k, v|
           ruby_k = ::Utils.underscore(spec_k).to_sym
 
-          if v.is_a?(Hash) && v['$numberLong']
-            v = v['$numberLong'].to_i
-          end
+          ruby_k = {
+            min: :min_value,
+            max: :max_value,
+            show_record_id: :show_disk_loc
+          }[ruby_k] || ruby_k
 
           if respond_to?("transform_#{ruby_k}", true)
             v = send("transform_#{ruby_k}", v)
