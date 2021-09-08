@@ -2,31 +2,29 @@
 # at 2021-09-08T09:43:46Z
 ---
 name: Run Mongoid Tests
-'on':
-- push
-- pull_request
+on: [push, pull_request]
 jobs:
   build:
-    name: "${{matrix.ruby}} mongodb-${{matrix.mongodb}} ${{matrix.topology}}"
+    name: "${{matrix.os}} ruby-${{matrix.ruby}} mongodb-${{matrix.mongodb}} ${{matrix.topology}}"
     env:
       CI: true
       TESTOPTS: "-v"
     runs-on: ubuntu-latest
-    continue-on-error: "${{matrix.experimental}}"
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        os: ubuntu-latest
+        os: [ ubuntu-latest ]
         ruby: [2.5, 2.6, 2.7, 3.0]
         mongodb: [3.6, 4.4, 5.0]
         topology: [replica_set, sharded_cluster]
         include:
           - os: macos
-            ruby: 3.0
+            ruby: [2.6, 2.7, 3.0]
             mongodb: 5.0
             topology: server
           - os: ubuntu-latest
-            ruby: 3.0
+            ruby: [2.6, 2.7, 3.0]
             mongodb: 5.0
             topology: server
           - os: ubuntu-18.04
@@ -42,7 +40,8 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: start mongodb
+    - id: start-mongodb
+      name: start mongodb
       uses: mongodb-labs/drivers-evergreen-tools@master
       with:
         version: "${{matrix.mongodb}}"
@@ -60,8 +59,7 @@ jobs:
         BUNDLE_GEMFILE: "${{matrix.gemfile}}"
     - name: test
       timeout-minutes: 60
-      continue-on-error: "${{matrix.experimental}}"
+      continue-on-error: true
       run: bundle exec rake spec:ci
       env:
-        BUNDLE_GEMFILE: "${{matrix.gemfile}}"
-        MONGODB_URI: ${{ steps.setup-mongodb.outputs.cluster-uri }}
+        MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
