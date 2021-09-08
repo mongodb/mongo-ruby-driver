@@ -5,7 +5,7 @@ require 'spec_helper'
 
 describe Mongo::Collection do
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

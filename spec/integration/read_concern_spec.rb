@@ -7,7 +7,7 @@ describe 'read concern' do
   min_server_version '3.2'
 
   let(:subscriber) do
-    EventSubscriber.new
+    Mrss::EventSubscriber.new
   end
 
   let(:specified_read_concern) do

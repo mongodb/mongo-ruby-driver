@@ -276,4 +276,34 @@ describe 'Auth' do
       client.database.command(ping: 1)
     end
   end
+
+  context 'in lb topology' do
+    require_topology :load_balanced
+
+    context 'when authentication fails with network error' do
+      let(:server) do
+        authorized_client.cluster.next_primary
+      end
+
+      let(:base_options) do
+        SpecConfig.instance.monitoring_options.merge(connect: SpecConfig.instance.test_options[:connect])
+      end
+
+      let(:connection) do
+        Mongo::Server::Connection.new(server, base_options)
+      end
+
+      it 'includes service id in exception' do
+        expect_any_instance_of(Mongo::Server::PendingConnection).to receive(:authenticate!).and_raise(Mongo::Error::SocketError)
+
+        begin
+          connection.connect!
+        rescue Mongo::Error::SocketError => exc
+          exc.service_id.should_not be nil
+        else
+          fail 'Expected the SocketError to be raised'
+        end
+      end
+    end
+  end
 end

@@ -843,6 +843,14 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
+# Note that:
+# - MongoDB 2.6 and 3.0 are tested on ubuntu1604.
+#   This is because the Python that ships with ubuntu1404 is ancient and
+#   is no longer usable with the current Python infrastructure (pip, etc.).
+#   There are no ubuntu1604 builds for 2.6 and 3.0 servers however - they
+#   are only built for ubuntu1204 and ubuntu1404. We use the ubuntu1404
+#   builds on ubuntu1604 and the dependencies are satisfied.
+
 
 buildvariants:
   - matrix_name: "docker"
@@ -1357,13 +1365,25 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
+  - matrix_name: "fle-4.4"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: [ruby-3.0, ruby-2.7, jruby-9.2]
+      topology: standalone
+      mongodb-version: ['4.4']
+      os: ubuntu1804
+      fle: fle
+    display_name: "FLE: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: "test-fle"
+
   - matrix_name: "fle-4.2"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-2.7, ruby-2.4, jruby-9.2]
+      ruby: [ruby-2.5]
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
-      os: rhel70
+      os: ubuntu1804
       fle: fle
     display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
@@ -1372,22 +1392,10 @@ buildvariants:
   - matrix_name: "fle-4.0"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-2.6, jruby-9.2]
+      ruby: [ruby-2.6]
       topology: standalone
       mongodb-version: ["4.0"]
-      os: rhel70
-      fle: fle
-    display_name: "FLE: ${mongodb-version} ${ruby}"
-    tasks:
-      - name: "test-fle"
-
-  - matrix_name: "fle-4.4"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-3.0, ruby-2.7]
-      topology: standalone
-      mongodb-version: ['4.4']
-      os: rhel70
+      os: ubuntu1804
       fle: fle
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:

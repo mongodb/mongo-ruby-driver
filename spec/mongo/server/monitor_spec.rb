@@ -186,16 +186,17 @@ describe Mongo::Server::Monitor do
     context 'when running after a stop' do
       it 'starts the thread' do
         ClientRegistry.instance.close_all_clients
+        sleep 1
         thread
-        sleep 0.5
+        sleep 1
 
         RSpec::Mocks.with_temporary_scope do
           expect(monitor.connection).to receive(:disconnect!).and_call_original
           monitor.stop!
-          sleep 0.5
+          sleep 1
           expect(thread.alive?).to be false
           new_thread = monitor.run!
-          sleep 0.5
+          sleep 1
           expect(new_thread.alive?).to be(true)
         end
       end

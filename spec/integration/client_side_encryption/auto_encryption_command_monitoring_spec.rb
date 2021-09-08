@@ -15,7 +15,7 @@ describe 'Auto Encryption' do
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
   let(:db_name) { 'auto_encryption' }
 
   let(:encryption_client) do

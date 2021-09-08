@@ -192,7 +192,7 @@ describe Mongo::Session::SessionPool do
       pool.checkout
     end
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:client) do
       authorized_client.tap do |client|

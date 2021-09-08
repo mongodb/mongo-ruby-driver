@@ -242,7 +242,7 @@ describe Mongo::Collection::View::MapReduce do
             Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
           end
 
-          let(:subscriber) { EventSubscriber.new }
+          let(:subscriber) { Mrss::EventSubscriber.new }
 
           let(:client) do
             authorized_client.tap do |client|

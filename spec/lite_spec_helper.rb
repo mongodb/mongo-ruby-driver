@@ -77,7 +77,7 @@ end
 
 require 'mrss/lite_constraints'
 require 'support/matchers'
-require 'support/event_subscriber'
+require 'mrss/event_subscriber'
 require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'

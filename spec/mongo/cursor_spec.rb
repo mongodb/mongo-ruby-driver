@@ -438,7 +438,7 @@ describe Mongo::Cursor do
   context 'when an implicit session is used' do
     min_server_fcv '3.6'
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:subscribed_client) do
       authorized_client.tap do |client|

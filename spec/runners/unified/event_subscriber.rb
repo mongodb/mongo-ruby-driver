@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-require 'support/event_subscriber'
+require 'mrss/event_subscriber'
 
 module Unified
 
-  class EventSubscriber < ::EventSubscriber
+  class EventSubscriber < Mrss::EventSubscriber
     def ignore_commands(command_names)
       @ignore_commands = command_names
     end

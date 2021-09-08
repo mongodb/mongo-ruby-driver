@@ -362,7 +362,7 @@ describe Mongo::Cluster do
       end
 
       let(:monitoring) { Mongo::Monitoring.new }
-      let(:subscriber) { EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       it 'publishes server closed event once' do
         monitoring.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)

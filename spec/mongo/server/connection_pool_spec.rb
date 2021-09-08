@@ -317,6 +317,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'connection of the same generation as pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       before do
         expect(pool.generation).to eq(connection.generation)
       end
@@ -349,6 +354,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'connection of earlier generation than pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       let(:connection) do
         pool.check_out.tap do |connection|
           expect(connection).to receive(:generation).at_least(:once).and_return(0)
@@ -364,6 +374,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'connection of later generation than pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       let(:connection) do
         pool.check_out.tap do |connection|
           expect(connection).to receive(:generation).at_least(:once).and_return(7)
@@ -449,6 +464,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when there is an available connection which is stale' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       let(:options) do
         { max_pool_size: 2, max_idle_time: 0.1 }
       end
@@ -582,7 +602,7 @@ describe Mongo::Server::ConnectionPool do
        it 'raises an error and emits ConnectionCheckOutFailedEvent' do
         pool
 
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
         client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
         subscriber.clear_events!
@@ -620,6 +640,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     shared_examples_for 'disconnects and removes all connections in the pool and bumps generation' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       it 'disconnects and removes and bumps' do
         old_connections = []
         pool.instance_variable_get('@available_connections').each do |connection|

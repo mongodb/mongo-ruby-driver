@@ -40,7 +40,7 @@ describe 'Cmap' do
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
 
       before do
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
 
         monitoring = Mongo::Monitoring.new(monitoring: false)
         monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
@@ -76,6 +76,9 @@ describe 'Cmap' do
         allow(socket).to receive(:alive?).and_return(true)
 
         allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(socket)
+        if @server.load_balancer?
+          allow_any_instance_of(Mongo::Server::Connection).to receive(:service_id).and_return('very fake')
+        end
         spec.run
       end
 

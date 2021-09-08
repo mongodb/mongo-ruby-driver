@@ -38,7 +38,7 @@ describe 'X.509 auth integration tests' do
       "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost".freeze
     end
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     shared_examples 'authenticates successfully' do
       it 'authenticates successfully' do

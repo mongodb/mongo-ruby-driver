@@ -508,8 +508,27 @@ module Mongo
 
       def ensure_indexes!
         if files_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
-          chunks_collection.indexes.create_one(FSBucket::CHUNKS_INDEX, :unique => true)
-          files_collection.indexes.create_one(FSBucket::FILES_INDEX)
+          create_index_if_missing!(files_collection, FSBucket::FILES_INDEX)
+        end
+
+        if chunks_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
+          create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, :unique => true)
+        end
+      end
+
+      def create_index_if_missing!(collection, index_spec, options = {})
+        indexes_view = collection.indexes
+        begin
+          if indexes_view.get(index_spec).nil?
+            indexes_view.create_one(index_spec, options)
+          end
+        rescue Mongo::Error::OperationFailure => e
+          # proceed with index creation if a NamespaceNotFound error is thrown
+          if e.code == 26
+            indexes_view.create_one(index_spec, options)
+          else
+            raise
+          end
         end
       end
     end

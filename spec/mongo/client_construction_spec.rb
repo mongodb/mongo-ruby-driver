@@ -6,7 +6,7 @@ require 'spec_helper'
 describe Mongo::Client do
   clean_slate
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   describe '.new' do
     context 'with scan: false' do
@@ -447,7 +447,7 @@ describe Mongo::Client do
             end.should_not raise_error
           end
 
-          it 'fails operations due to very small timeout' do
+          it 'fails operations due to very small timeout', retry: 3 do
             lambda do
               client.database.command(ping: 1)
             end.should raise_error(Mongo::Error::SocketTimeoutError)
@@ -1443,6 +1443,45 @@ describe Mongo::Client do
               end.should_not raise_error
               client.options[:load_balanced].should be true
               client.options[:connect].should eq v
+            end
+          end
+
+          context "replica_set and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                replica_set: 'foo', connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /connect=load_balanced cannot be used with replica_set option/)
+            end
+          end
+
+          context "direct_connection=true and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017'],
+                direct_connection: true, connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=load_balanced/)
+            end
+          end
+
+          context "multiple seed addresses and connect: #{v.inspect}" do
+            let(:client) do
+              new_local_client_nmio(['127.0.0.1:27017', '127.0.0.1:1234'],
+                connect: v)
+            end
+
+            it 'is rejected' do
+              lambda do
+                client
+              end.should raise_error(ArgumentError, /connect=load_balanced cannot be used with multiple seeds/)
             end
           end
         end

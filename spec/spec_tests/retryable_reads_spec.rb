@@ -7,7 +7,7 @@ require 'runners/crud'
 
 describe 'Retryable reads spec tests' do
   require_wired_tiger
-  require_no_multi_shard
+  require_no_multi_mongos
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client) do
@@ -19,7 +19,7 @@ describe 'Retryable reads spec tests' do
 end
 
 describe 'Retryable reads spec tests - legacy' do
-  require_no_multi_shard
+  require_no_multi_mongos
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client_options) do

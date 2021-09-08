@@ -106,7 +106,7 @@ module Mongo
 
       def process_result_for_sdam(result, connection)
         if (result.not_master? || result.node_recovering?) &&
-          connection.generation >= connection.server.pool.generation
+          connection.generation >= connection.server.pool.generation(service_id: connection.service_id)
         then
           if result.node_shutting_down?
             keep_pool = false

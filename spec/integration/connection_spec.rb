@@ -50,7 +50,7 @@ describe 'Connections' do
 
       context 'with sdam event subscription' do
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
         let(:client) do
           ClientRegistry.instance.global_client('authorized').with(app_name: 'connection_integration').tap do |client|
             client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)

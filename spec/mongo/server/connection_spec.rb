@@ -9,6 +9,10 @@ describe Mongo::Server::Connection do
 
   clean_slate_for_all
 
+  let(:generation_manager) do
+    Mongo::Server::ConnectionPool::GenerationManager.new(server: server)
+  end
+
   let!(:address) do
     default_address
   end
@@ -41,7 +45,10 @@ describe Mongo::Server::Connection do
   let(:server_options) { SpecConfig.instance.test_options.merge(monitoring_io: false) }
   let(:server) do
     register_server(
-      Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, server_options.merge(
+        # Normally the load_balancer option is set by the cluster
+        load_balancer: ClusterConfig.instance.topology == :load_balanced,
+      ))
     )
   end
 
@@ -59,6 +66,7 @@ describe Mongo::Server::Connection do
   let(:pool) do
     double('pool').tap do |pool|
       allow(pool).to receive(:close)
+      allow(pool).to receive(:generation_manager).and_return(generation_manager)
     end
   end
 
@@ -81,7 +89,7 @@ describe Mongo::Server::Connection do
     context 'when no socket exists' do
 
       let(:connection) do
-        described_class.new(server, server.options)
+        described_class.new(server, server.options.merge(connection_pool: pool))
       end
 
       let(:result) do
@@ -226,12 +234,15 @@ describe Mongo::Server::Connection do
 
       context 'when #handshake! dependency raises a network exception' do
         let(:exception) do
-          Mongo::Error::SocketError.new
+          Mongo::Error::SocketError.new.tap do |exc|
+            allow(exc).to receive(:service_id).and_return('fake')
+          end
         end
 
         let(:error) do
           # The exception is mutated when notes are added to it
-          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception.dup)
+          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+          allow(connection).to receive(:service_id).and_return('fake')
           begin
             connection.connect!
           rescue Exception => e
@@ -310,7 +321,7 @@ describe Mongo::Server::Connection do
     context 'when a socket exists' do
 
       let(:connection) do
-        described_class.new(server, server.options)
+        described_class.new(server, server.options.merge(connection_pool: pool))
       end
 
       let(:socket) do
@@ -369,10 +380,12 @@ describe Mongo::Server::Connection do
           described_class.new(
             server,
             SpecConfig.instance.test_options.merge(
-              :user => 'notauser',
-              :password => 'password',
-              :database => SpecConfig.instance.test_db,
-              :heartbeat_frequency => 30)
+              user: 'notauser',
+              password: 'password',
+              database: SpecConfig.instance.test_db,
+              heartbeat_frequency: 30,
+              connection_pool: pool,
+            )
           )
         end
 
@@ -481,9 +494,11 @@ describe Mongo::Server::Connection do
           described_class.new(
             server,
             SpecConfig.instance.test_options.merge(
-              :user => SpecConfig.instance.test_user.name,
-              :password => SpecConfig.instance.test_user.password,
-              :database => SpecConfig.instance.test_user.database )
+              user: SpecConfig.instance.test_user.name,
+              password: SpecConfig.instance.test_user.password,
+              database: SpecConfig.instance.test_user.database,
+              connection_pool: pool,
+            )
           )
         end
 
@@ -571,7 +586,7 @@ describe Mongo::Server::Connection do
     context 'when a socket is not connected' do
 
       let(:connection) do
-        described_class.new(server, server.options)
+        described_class.new(server, server.options.merge(connection_pool: pool))
       end
 
       it 'does not raise an error' do
@@ -582,7 +597,7 @@ describe Mongo::Server::Connection do
     context 'when a socket is connected' do
 
       let(:connection) do
-        described_class.new(server, server.options)
+        described_class.new(server, server.options.merge(connection_pool: pool))
       end
 
       before do
@@ -606,7 +621,8 @@ describe Mongo::Server::Connection do
       described_class.new(
         server,
         SpecConfig.instance.test_options.merge(
-          :database => SpecConfig.instance.test_user.database,
+          database: SpecConfig.instance.test_user.database,
+          connection_pool: pool,
         ).merge(Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
           SpecConfig.instance.credentials_or_external_user(
             user: SpecConfig.instance.test_user.name,
@@ -970,7 +986,7 @@ describe Mongo::Server::Connection do
       context 'when the socket_timeout is negative' do
 
         let(:connection) do
-          described_class.new(server, server.options).tap do |connection|
+          described_class.new(server, server.options.merge(connection_pool: pool)).tap do |connection|
             connection.connect!
           end
         end
@@ -1029,7 +1045,7 @@ describe Mongo::Server::Connection do
     context 'when host and port are provided' do
 
       let(:connection) do
-        described_class.new(server, server.options)
+        described_class.new(server, server.options.merge(connection_pool: pool))
       end
 
       it 'sets the address' do
@@ -1044,7 +1060,7 @@ describe Mongo::Server::Connection do
         it 'use incrementing ids' do
           expect(connection.id).to eq(1)
 
-          second_connection = described_class.new(server, server.options)
+          second_connection = described_class.new(server, server.options.merge(connection_pool: pool))
           expect(second_connection.id).to eq(2)
         end
       end
@@ -1052,7 +1068,11 @@ describe Mongo::Server::Connection do
       context 'two pools for different servers' do
         let(:server2) do
           register_server(
-            Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+            Mongo::Server.new(address, cluster, monitoring, listeners,
+              server_options.merge(
+                load_balancer: ClusterConfig.instance.topology == :load_balanced,
+              )
+            )
           )
         end
 
@@ -1146,10 +1166,11 @@ describe Mongo::Server::Connection do
       let(:connection) do
         described_class.new(
           server,
-          :user => SpecConfig.instance.test_user.name,
-          :password => SpecConfig.instance.test_user.password,
-          :database => SpecConfig.instance.test_db,
-          :auth_mech => :mongodb_cr,
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password,
+          database: SpecConfig.instance.test_db,
+          auth_mech: :mongodb_cr,
+          connection_pool: pool,
         )
       end
 
@@ -1182,7 +1203,7 @@ describe Mongo::Server::Connection do
     end
 
     let(:connection) do
-      described_class.new(server, server.options)
+      described_class.new(server, server.options.merge(connection_pool: pool))
     end
 
     context 'when a connect_timeout is in the options' do
@@ -1271,7 +1292,7 @@ describe Mongo::Server::Connection do
   describe '#app_metadata' do
     context 'when all options are identical to server' do
       let(:connection) do
-        described_class.new(server, server.options)
+        described_class.new(server, server.options.merge(connection_pool: pool))
       end
 
       it 'is the same object as server app_metadata' do
@@ -1282,7 +1303,7 @@ describe Mongo::Server::Connection do
 
     context 'when auth options are identical to server' do
       let(:connection) do
-        described_class.new(server, server.options.merge(socket_timeout: 2))
+        described_class.new(server, server.options.merge(socket_timeout: 2, connection_pool: pool))
       end
 
       it 'is the same object as server app_metadata' do
@@ -1295,7 +1316,7 @@ describe Mongo::Server::Connection do
       require_no_external_user
 
       let(:connection) do
-        described_class.new(server, server.options.merge(user: 'foo'))
+        described_class.new(server, server.options.merge(user: 'foo', connection_pool: pool))
       end
 
       it 'is different object from server app_metadata' do
@@ -1306,6 +1327,53 @@ describe Mongo::Server::Connection do
       it 'includes request auth mechanism' do
         document = connection.app_metadata.send(:document)
         expect(document[:saslSupportedMechs]).to eq('admin.foo')
+      end
+    end
+  end
+
+  describe '#generation' do
+
+    context 'non-lb' do
+      require_topology :single, :replica_set, :sharded
+
+      it 'is set' do
+        server.with_connection do |conn|
+          conn.service_id.should be nil
+          conn.generation.should be_a(Integer)
+        end
+      end
+
+      context 'clean slate' do
+        clean_slate
+
+        it 'starts from 1' do
+          server.with_connection do |conn|
+            conn.service_id.should be nil
+            conn.generation.should == 1
+          end
+        end
+      end
+    end
+
+    context 'lb' do
+      require_topology :load_balanced
+
+      it 'is set' do
+        server.with_connection do |conn|
+          conn.service_id.should_not be nil
+          conn.generation.should be_a(Integer)
+        end
+      end
+
+      context 'clean slate' do
+        clean_slate
+
+        it 'starts from 1' do
+          server.with_connection do |conn|
+            conn.service_id.should_not be nil
+            conn.generation.should == 1
+          end
+        end
       end
     end
   end

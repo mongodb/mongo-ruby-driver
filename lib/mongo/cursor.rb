@@ -215,10 +215,12 @@ module Mongo
         unless closed?
           if exhausted?
             close
+            @fully_iterated = true
             raise StopIteration
           end
           @documents = get_more
         else
+          @fully_iterated = true
           raise StopIteration
         end
       else
@@ -235,6 +237,9 @@ module Mongo
       # over the last document, or if the batch is empty
       if @documents.size <= 1
         cache_batch_resume_token
+        if closed?
+          @fully_iterated = true
+        end
       end
 
       return @documents.shift
@@ -369,6 +374,11 @@ module Mongo
         db_name: database.name,
         service_id: initial_result.connection_description.service_id,
       )
+    end
+
+    # @api private
+    def fully_iterated?
+      !!@fully_iterated
     end
 
     private

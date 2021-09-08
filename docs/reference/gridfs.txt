@@ -103,7 +103,7 @@ The options can be provided as the last argument to the write stream methods:
     fs_bucket.open_upload_stream('my-file.txt', write_concern: {w: 2}) do |stream|
       stream.write_concern
       # => #<Mongo::WriteConcern::Acknowledged:0x46980201422160 options={:w=>2}>
-      
+
       # ...
     end
 
@@ -262,12 +262,25 @@ filesystem with a ``:fs_name`` option.
 
   client.database.fs(:fs_name => 'grid').insert_one(file)
 
-Note that the first time a file is inserted, it will create the required index
-for you on the ``chunks`` collection. This index is a compound index:
+When the driver is inserting the first file into a bucket, it will attempt to create the required
+indexes on ``files`` and ``chunks`` collections. The required indexes are as follows:
 
 .. code-block:: ruby
+  # files collection
+  { :filename => 1, :uploadDate => 1 }
 
-  { :files_id => 1, :n => 1 }
+  # chunks collection
+  { :files_id => 1, :n => 1 }, { :unique => true }
+
+.. note::
+
+  If the indexes cannot be created, such as due to the current user lacking the permissions to do so,
+  the file insert will be aborted. If the application does not have permissions to create indexes,
+  a database administrator must create the required indexes ahead of time.
+
+  If the bucket already has files, the driver will not attempt to create indexes, even if they are
+  missing and the current user has permissions to create them. In this case a database administrator
+  should create the needed indexes as soon as possible to ensure data integrity.
 
 Files can also be streamed as an alternative to a direct insert.
 

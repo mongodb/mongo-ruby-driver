@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Insert do
-  require_no_multi_shard
+  require_no_multi_mongos
   require_no_required_api_version
 
   let(:context) { Mongo::Operation::Context.new }

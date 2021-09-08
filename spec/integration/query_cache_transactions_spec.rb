@@ -23,7 +23,7 @@ describe 'QueryCache with transactions' do
   # leak sessions independently of the query cache. This will be resolved by
   # RUBY-2391.
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|
