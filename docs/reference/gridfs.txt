@@ -266,6 +266,7 @@ When the driver is inserting the first file into a bucket, it will attempt to cr
 indexes on ``files`` and ``chunks`` collections. The required indexes are as follows:
 
 .. code-block:: ruby
+
   # files collection
   { :filename => 1, :uploadDate => 1 }
 
