@@ -17,11 +17,23 @@ comprehensive list of changes in each version of the driver and the
 for the complete list of changes, including those internal to the driver and
 its test suite.
 
+
 2.16
 ====
 
+This release adds the following new feature:
+
+- Experimental load balancer support.
+
+The following minor improvement has been made:
+
+- GridFS file retrieval no longer requires index creation privileges when
+  the indexes already exist, and is thus usable with users that have only
+  read permissions.
+
 This release of the Ruby driver increases the minimum required Ruby version
 to 2.4.
+
 
 2.15
 ====
@@ -69,6 +81,7 @@ The following smaller improvements have been made:
 - The driver will no longer mark servers unknown based on errors in
   ``writeErrors`` field in the server response.
 - Server selection timeout for ``mongocryptd`` has been increased to 10 seconds.
+
 
 2.14
 ====

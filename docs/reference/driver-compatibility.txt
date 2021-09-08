@@ -36,6 +36,7 @@ The first column lists the driver versions.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - MongoDB 5.0
      - MongoDB 4.4
      - MongoDB 4.2
      - MongoDB 4.0
@@ -46,6 +47,7 @@ The first column lists the driver versions.
      - MongoDB 2.6
 
    * - 2.16
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -56,6 +58,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.15
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -66,6 +69,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.14
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -76,6 +80,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.13
+     -
      - |checkmark| [#ocsp]_
      - |checkmark|
      - |checkmark|
@@ -87,6 +92,7 @@ The first column lists the driver versions.
 
    * - 2.12
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -97,6 +103,7 @@ The first column lists the driver versions.
 
    * - 2.11
      -
+     -
      - |checkmark| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -106,6 +113,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.10
+     -
      -
      - |checkmark| [#srv-polling]_ [#client-side-encryption]_
      - |checkmark|
@@ -118,6 +126,7 @@ The first column lists the driver versions.
    * - 2.9
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -126,6 +135,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.8
+     -
      -
      -
      - |checkmark|
@@ -138,6 +148,7 @@ The first column lists the driver versions.
    * - 2.7
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -146,6 +157,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.6
+     -
      -
      -
      - |checkmark|
@@ -159,6 +171,7 @@ The first column lists the driver versions.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -166,6 +179,7 @@ The first column lists the driver versions.
      - |checkmark|
 
    * - 2.4
+     -
      -
      -
      -
@@ -181,6 +195,7 @@ The first column lists the driver versions.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -191,11 +206,13 @@ The first column lists the driver versions.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
 
    * - 2.0
+     -
      -
      -
      -
@@ -593,7 +610,7 @@ the driver.
    * - Ruby Driver
      - mongo_kerberos |nbsp| 2.1
 
-   * - 2.7 - 2.14
+   * - 2.7 - 2.16
      - |checkmark|
 
 
