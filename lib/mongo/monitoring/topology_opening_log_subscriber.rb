@@ -1,4 +1,7 @@
-# Copyright (C) 2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -15,7 +18,7 @@
 module Mongo
   class Monitoring
 
-    # Subscribes to Topology Openeing events and logs them.
+    # Subscribes to Topology Opening events and logs them.
     #
     # @since 2.4.0
     class TopologyOpeningLogSubscriber < SDAMLogSubscriber

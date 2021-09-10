@@ -1,6 +1,83 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
 
 describe Mongo::URI do
+
+  describe '.get' do
+
+    let(:uri) { described_class.get(string) }
+
+    describe 'invalid uris' do
+
+      context 'string is not uri' do
+
+        let(:string) { 'tyler' }
+
+        it 'raises an error' do
+          expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        end
+      end
+
+      context 'nil' do
+
+        let(:string) { nil }
+
+        it 'raises an error' do
+          expect do
+            uri
+          end.to raise_error(Mongo::Error::InvalidURI, /URI must be a string, not nil/)
+        end
+      end
+
+      context 'empty string' do
+
+        let(:string) { '' }
+
+        it 'raises an error' do
+          expect do
+            uri
+          end.to raise_error(Mongo::Error::InvalidURI, /Cannot parse an empty URI/)
+        end
+      end
+    end
+
+    context 'when the scheme is mongodb://' do
+
+      let(:string) do
+        'mongodb://localhost:27017'
+      end
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+    end
+
+    context 'when the scheme is mongodb+srv://' do
+      require_external_connectivity
+
+      let(:string) do
+        'mongodb+srv://test5.test.build.10gen.cc'
+      end
+
+      it 'returns a Mongo::URI::SRVProtocol object' do
+        expect(uri).to be_a(Mongo::URI::SRVProtocol)
+      end
+    end
+
+    context 'when the scheme is invalid' do
+
+      let(:string) do
+        'mongo://localhost:27017'
+      end
+
+      it 'raises an exception' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+  end
+
   let(:scheme) { 'mongodb://' }
   let(:uri) { described_class.new(string) }
 
@@ -15,12 +92,25 @@ describe Mongo::URI do
       end
     end
 
+    context 'nil' do
+
+      let(:string) { nil }
+
+      it 'raises an error' do
+        expect do
+          uri
+        end.to raise_error(Mongo::Error::InvalidURI, /URI must be a string, not nil/)
+      end
+    end
+
     context 'empty string' do
 
       let(:string) { '' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect do
+          uri
+        end.to raise_error(Mongo::Error::InvalidURI, /Cannot parse an empty URI/)
       end
     end
 
@@ -168,12 +258,12 @@ describe Mongo::URI do
       end
     end
 
-    context 'mongodb://example.com?w=1' do
+    context 'no slash after hosts, and options' do
 
-      let(:string) { 'mongodb://example.com?w=1' }
+      let(:string) { 'mongodb://example.com?tls=true' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI, %r,MongoDB URI must have a slash \(/\) after the hosts if options are given,)
       end
     end
 
@@ -182,7 +272,56 @@ describe Mongo::URI do
       let(:string) { 'mongodb://example.com/?w' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI, /Option w has no value/)
+      end
+    end
+
+    context 'equal sign in option value' do
+
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=foo:a=b&appname=test' }
+
+      it 'is allowed' do
+        expect(uri.uri_options[:auth_mech_properties]).to eq('foo' => 'a=b')
+      end
+    end
+
+    context 'slash in option value' do
+
+      let(:string) { 'mongodb://example.com/?tlsCAFile=a/b' }
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+
+      it 'parses correctly' do
+        expect(uri.servers).to eq(['example.com'])
+        expect(uri.uri_options[:ssl_ca_cert]).to eq('a/b')
+      end
+    end
+
+    context 'numeric value in a string option' do
+
+      let(:string) { 'mongodb://example.com/?appName=1' }
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+
+      it 'sets option to the string value' do
+        expect(uri.uri_options[:app_name]).to eq('1')
+      end
+    end
+
+    context 'options start with ampersand' do
+
+      let(:string) { 'mongodb://example.com/?&appName=foo' }
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+
+      it 'parses the options' do
+        expect(uri.uri_options[:app_name]).to eq('foo')
       end
     end
 
@@ -263,7 +402,7 @@ describe Mongo::URI do
       let(:servers) { '%2Ftmp%2Fmongodb-27017.sock' }
 
       it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
+        expect(uri.servers).to eq([URI::DEFAULT_PARSER.unescape(servers)])
       end
     end
 
@@ -286,7 +425,7 @@ describe Mongo::URI do
 
   describe '#client_options' do
 
-    let(:db)          { TEST_DB }
+    let(:db)          { 'dummy_db' }
     let(:servers)     { 'localhost' }
     let(:string)      { "#{scheme}#{credentials}@#{servers}/#{db}" }
     let(:user)        { 'tyler' }
@@ -298,14 +437,14 @@ describe Mongo::URI do
     end
 
     it 'includes the database in the options' do
-      expect(options[:database]).to eq(TEST_DB)
+      expect(options[:database]).to eq('dummy_db')
     end
 
-    it 'includes the credentials in the options' do
+    it 'includes the user in the options' do
       expect(options[:user]).to eq(user)
     end
 
-    it 'includes the options in the options' do
+    it 'includes the password in the options' do
       expect(options[:password]).to eq(password)
     end
   end
@@ -368,11 +507,12 @@ describe Mongo::URI do
         let(:concern) { Mongo::Options::Redacted.new(:w => 1)}
 
         it 'sets the write concern options' do
-          expect(uri.uri_options[:write]).to eq(concern)
+          expect(uri.uri_options[:write_concern]).to eq(concern)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+          client = new_local_client_nmio(string)
+          expect(client.options[:write_concern]).to eq(concern)
         end
       end
 
@@ -381,11 +521,12 @@ describe Mongo::URI do
         let(:concern) { Mongo::Options::Redacted.new(:w => :majority) }
 
         it 'sets the write concern options' do
-          expect(uri.uri_options[:write]).to eq(concern)
+          expect(uri.uri_options[:write_concern]).to eq(concern)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+          client = new_local_client_nmio(string)
+          expect(client.options[:write_concern]).to eq(concern)
         end
       end
 
@@ -394,11 +535,12 @@ describe Mongo::URI do
         let(:concern) { Mongo::Options::Redacted.new(:j => true) }
 
         it 'sets the write concern options' do
-          expect(uri.uri_options[:write]).to eq(concern)
+          expect(uri.uri_options[:write_concern]).to eq(concern)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+          client = new_local_client_nmio(string)
+          expect(client.options[:write_concern]).to eq(concern)
         end
       end
 
@@ -407,25 +549,27 @@ describe Mongo::URI do
         let(:concern) { Mongo::Options::Redacted.new(:fsync => true) }
 
         it 'sets the write concern options' do
-          expect(uri.uri_options[:write]).to eq(concern)
+          expect(uri.uri_options[:write_concern]).to eq(concern)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+          client = new_local_client_nmio(string)
+          expect(client.options[:write_concern]).to eq(concern)
         end
       end
 
       context 'wtimeoutMS' do
         let(:timeout) { 1234 }
         let(:options) { "w=2&wtimeoutMS=#{timeout}" }
-        let(:concern) { Mongo::Options::Redacted.new(:w => 2, :timeout => timeout) }
+        let(:concern) { Mongo::Options::Redacted.new(:w => 2, :wtimeout => timeout) }
 
         it 'sets the write concern options' do
-          expect(uri.uri_options[:write]).to eq(concern)
+          expect(uri.uri_options[:write_concern]).to eq(concern)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+          client = new_local_client_nmio(string)
+          expect(client.options[:write_concern]).to eq(concern)
         end
       end
     end
@@ -442,7 +586,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -455,7 +600,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -468,7 +614,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -481,7 +628,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -494,7 +642,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
     end
@@ -515,7 +664,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -533,7 +683,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+          expect(client.options[:read]).to eq(read)
         end
       end
     end
@@ -553,7 +704,8 @@ describe Mongo::URI do
       end
 
       it 'sets the options on a client created with the uri' do
-        expect(Mongo::Client.new(string).options[:read]).to eq(read)
+          client = new_local_client_nmio(string)
+        expect(client.options[:read]).to eq(read)
       end
 
       context 'when the read preference and max staleness combination is invalid' do
@@ -565,8 +717,9 @@ describe Mongo::URI do
           end
 
           it 'raises an exception when read preference is accessed on the client' do
+            client = new_local_client_nmio(string)
             expect {
-              Mongo::Client.new(string).read_preference
+              client.server_selector
             }.to raise_exception(Mongo::Error::InvalidServerPreference)
           end
         end
@@ -577,15 +730,16 @@ describe Mongo::URI do
             'readPreference=secondary&maxStalenessSeconds=89'
           end
 
-          it 'does not raise an exception until the read preference is used' do
-            expect(Mongo::Client.new(string).read_preference).to be_a(Mongo::ServerSelector::Secondary)
+          it 'does not raise an exception and drops the option' do
+            client = new_local_client_nmio(string)
+            expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary))
           end
         end
       end
     end
 
     context 'replica set option provided' do
-      let(:rs_name) { TEST_SET }
+      let(:rs_name) { 'dummy_rs' }
       let(:options) { "replicaSet=#{rs_name}" }
 
       it 'sets the replica set option' do
@@ -593,12 +747,17 @@ describe Mongo::URI do
       end
 
       it 'sets the options on a client created with the uri' do
-        expect(Mongo::Client.new(string).options[:replica_set]).to eq(rs_name)
+        client = new_local_client_nmio(string)
+        expect(client.options[:replica_set]).to eq(rs_name)
       end
     end
 
     context 'auth mechanism provided' do
-      let(:options) { "authMechanism=#{mechanism}" }
+      let(:string)      { "#{scheme}#{credentials}@#{servers}/?#{options}" }
+      let(:user)        { 'tyler' }
+      let(:password)    { 's3kr4t' }
+      let(:credentials) { "#{user}:#{password}" }
+      let(:options)     { "authMechanism=#{mechanism}" }
 
       context 'plain' do
         let(:mechanism) { 'PLAIN' }
@@ -609,11 +768,23 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string.downcase)
+          expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
         end
       end
 
@@ -626,28 +797,78 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string.downcase)
+          expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
         end
       end
 
       context 'gssapi' do
+        require_mongo_kerberos
+
         let(:mechanism) { 'GSSAPI' }
         let(:expected) { :gssapi }
+        let(:client) { new_local_client_nmio(string) }
 
         it 'sets the auth mechanism to :gssapi' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string.downcase)
+          expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when auth source is invalid' do
+          let(:options) { "authMechanism=#{mechanism}&authSource=foo" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              client
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+          end
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true" }
+
+          it 'sets the options on a client created with the uri' do
+            expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => true, 'service_name' => 'other' })
+          end
+
+          context 'when a mapping value is missing' do
+            let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:,CANONICALIZE_HOST_NAME:" }
+
+            it 'sets the options to defaults' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
+            end
+          end
+
+          context 'when a mapping value is missing but another is present' do
+            let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:foo,CANONICALIZE_HOST_NAME:" }
+
+            it 'only sets the present value' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'foo' })
+            end
+          end
         end
       end
 
@@ -660,36 +881,118 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string.downcase)
+          expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
         end
       end
 
       context 'mongodb-x509' do
         let(:mechanism) { 'MONGODB-X509' }
-        let(:expected) { :mongodb_x509 }
+        let(:expected)  { :mongodb_x509 }
+        let(:credentials)  { user }
 
         it 'sets the auth mechanism to :mongodb_x509' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+          client = new_local_client_nmio(string.downcase)
+          expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when auth source is invalid' do
+          let(:options) { "authMechanism=#{mechanism}&authSource=foo" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+          end
         end
 
         context 'when a username is not provided' do
+          let(:string) { "#{scheme}#{servers}/?#{options}" }
 
           it 'recognizes the mechanism with no username' do
-            expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
-            expect(Mongo::Client.new(string.downcase).options[:user]).to be_nil
+            client = new_local_client_nmio(string.downcase)
+            expect(client.options[:auth_mech]).to eq(expected)
+            expect(client.options[:user]).to be_nil
           end
+        end
+
+        context 'when a password is provided' do
+          let(:credentials) { "#{user}:#{password}"}
+          let(:password) { 's3kr4t' }
+
+          it 'does not allow a client to be created' do
+            expect do
+              new_local_client_nmio(string)
+            end.to raise_error(Mongo::Auth::InvalidConfiguration, /Password is not supported/)
+          end
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
+        end
+      end
+    end
+
+    context 'auth mechanism is not provided' do
+      let(:string) { "#{scheme}#{credentials}@#{servers}/" }
+
+      context 'with no credentials' do
+        let(:string) { "#{scheme}#{servers}/" }
+
+        it 'sets user and password as nil' do
+          expect(uri.credentials[:user]).to be_nil
+          expect(uri.credentials[:password]).to be_nil
+        end
+
+        it 'sets the options on a client created with the uri' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:user]).to be_nil
+          expect(client.options[:password]).to be_nil
+        end
+      end
+
+      context 'with empty credentials' do
+        let(:credentials) { '' }
+
+        it 'sets user as an empty string and password as nil' do
+          expect(uri.credentials[:user]).to eq('')
+          expect(uri.credentials[:password]).to be_nil
+        end
+
+        it 'does not allow a client to be created with default auth mechanism' do
+          expect do
+            new_local_client_nmio(string)
+          end.to raise_error(Mongo::Auth::InvalidConfiguration, /Empty username is not supported/)
         end
       end
     end
@@ -705,101 +1008,119 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_source]).to eq(source)
-        end
-      end
-
-      context '$external' do
-        let(:source) { '$external' }
-        let(:expected) { :external }
-
-        it 'sets the auth source to :external' do
-          expect(uri.uri_options[:auth_source]).to eq(expected)
-        end
-
-        it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_source]).to eq(expected)
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_source]).to eq(source)
         end
       end
     end
 
     context 'auth mechanism properties provided' do
 
+      shared_examples 'sets options in the expected manner' do
+        it 'preserves case in auth mechanism properties returned from URI' do
+          expect(uri.uri_options[:auth_mech_properties]).to eq(expected_uri_options)
+        end
+
+        it 'downcases auth mechanism properties keys in client options' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_mech_properties]).to eq(expected_client_options)
+        end
+      end
+
       context 'service_name' do
         let(:options) do
-          "authMechanismProperties=SERVICE_NAME:#{service_name}"
+          "authMechanismProperties=SERVICE_name:#{service_name}"
         end
 
         let(:service_name) { 'foo' }
-        let(:expected) { Mongo::Options::Redacted.new({ service_name: service_name }) }
 
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            SERVICE_name: service_name,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            service_name: service_name,
+          )
         end
+
+        include_examples 'sets options in the expected manner'
       end
 
       context 'canonicalize_host_name' do
         let(:options) do
-          "authMechanismProperties=CANONICALIZE_HOST_NAME:#{canonicalize_host_name}"
+          "authMechanismProperties=CANONICALIZE_HOST_name:#{canonicalize_host_name}"
         end
+
         let(:canonicalize_host_name) { 'true' }
-        let(:expected) { Mongo::Options::Redacted.new({ canonicalize_host_name: true }) }
 
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            CANONICALIZE_HOST_name: true,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            canonicalize_host_name: true,
+          )
         end
+
+        include_examples 'sets options in the expected manner'
       end
 
       context 'service_realm' do
         let(:options) do
-          "authMechanismProperties=SERVICE_REALM:#{service_realm}"
+          "authMechanismProperties=SERVICE_realm:#{service_realm}"
         end
 
         let(:service_realm) { 'dumdum' }
-        let(:expected) { Mongo::Options::Redacted.new({ service_realm: service_realm }) }
 
-
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            SERVICE_realm: service_realm,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            service_realm: service_realm,
+          )
         end
+
+        include_examples 'sets options in the expected manner'
       end
 
       context 'multiple properties' do
         let(:options) do
-          "authMechanismProperties=SERVICE_REALM:#{service_realm}," +
-            "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
-            "SERVICE_NAME:#{service_name}"
+          "authMechanismProperties=SERVICE_realm:#{service_realm}," +
+            "CANONICALIZE_HOST_name:#{canonicalize_host_name}," +
+            "SERVICE_name:#{service_name}"
         end
 
         let(:service_name) { 'foo' }
         let(:canonicalize_host_name) { 'true' }
         let(:service_realm) { 'dumdum' }
 
-        let(:expected) do
-          Mongo::Options::Redacted.new({ service_name: service_name,
-                                         canonicalize_host_name: true,
-                                         service_realm: service_realm })
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            SERVICE_name: service_name,
+            CANONICALIZE_HOST_name: true,
+            SERVICE_realm: service_realm,
+          )
         end
 
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            service_name: service_name,
+            canonicalize_host_name: true,
+            service_realm: service_realm,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
-        end
+        include_examples 'sets options in the expected manner'
       end
     end
 
@@ -923,10 +1244,42 @@ describe Mongo::URI do
     end
 
     context 'when an app name option is provided' do
-      let(:options) { "appname=reports" }
+      let(:options) { "appname=uri_test" }
 
       it 'sets the app name on the client' do
-        expect(Mongo::Client.new(string).options[:app_name]).to eq(:reports)
+        client = new_local_client_nmio(string)
+        expect(client.options[:app_name]).to eq('uri_test')
+      end
+    end
+
+    context 'when a supported compressors option is provided' do
+      let(:options) { "compressors=zlib" }
+
+      it 'sets the compressors as an array on the client' do
+        client = new_local_client_nmio(string)
+        expect(client.options[:compressors]).to eq(['zlib'])
+      end
+    end
+
+    context 'when a non-supported compressors option is provided' do
+      let(:options) { "compressors=snoopy" }
+
+      let(:client) do
+        client = new_local_client_nmio(string)
+      end
+
+      it 'sets no compressors on the client and warns' do
+        expect(Mongo::Logger.logger).to receive(:warn)
+        expect(client.options[:compressors]).to be_nil
+      end
+    end
+
+    context 'when a zlibCompressionLevel option is provided' do
+      let(:options) { "zlibCompressionLevel=6" }
+
+      it 'sets the zlib compression level on the client' do
+        client = new_local_client_nmio(string)
+        expect(client.options[:zlib_compression_level]).to eq(6)
       end
     end
   end

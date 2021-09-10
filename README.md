@@ -1,69 +1,100 @@
-MongoDB Ruby Driver [![Code Climate][codeclimate-img]][codeclimate-url] [![Gem Version][rubygems-img]][rubygems-url]
------
-The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
+MongoDB Ruby Driver
+[![Gem Version][rubygems-img]][rubygems-url]
+[![Inline docs][inch-img]][inch-url]
+================================================================
+
+The officially supported Ruby driver for [MongoDB](https://www.mongodb.org/).
+
+The Ruby driver supports Ruby 2.4-3.0 and JRuby 9.2.
 
 Documentation
------
+-------------
 
-Documentation is located [here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
+High level documentation and usage examples are located
+[here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
 
-API docs can be found [here](http://api.mongodb.org/ruby/).
+API documentation for the most recent release can be found
+[here](https://docs.mongodb.com/ruby-driver/current/api/).
+To build API documentation for the master branch, check out the
+repository locally and run `rake docs`.
 
-Support & Feedback
------
 
-For issues, questions or feedback related to the Ruby driver, please look into
-our [support channels](http://www.mongodb.org/about/support). Please
-do not email any of the Ruby developers directly with issues or
-questions - you're more likely to get an answer quickly on the [mongodb-user list](http://groups.google.com/group/mongodb-user) on Google Groups.
+Support
+-------
+
+Commercial support for the driver is available through the
+[MongoDB Support Portal](https://support.mongodb.com/).
+
+For questions, discussions or general technical support, please visit the
+[MongoDB Community Forum](https://developer.mongodb.com/community/forums/tags/c/drivers-odms-connectors/7/ruby-driver).
+
+Please see [Technical Support](https://docs.mongodb.com/manual/support/) page
+in the documentation for other support resources.
+
 
 Bugs & Feature Requests
------
+-----------------------
 
-Do you have a bug to report or a feature request to make?
+To report a bug in the driver or request a feature specific to the Ruby driver:
 
-1. Visit [our issue tracker](https://jira.mongodb.org) and login (or create an account if necessary).
-2. Navigate to the [RUBY](https://jira.mongodb.org/browse/RUBY) project.
-3. Click 'Create Issue' and fill out all the applicable form fields.
+1. Visit [our issue tracker](https://jira.mongodb.org/) and login
+(or create an account if you do not have one already).
+2. Navigate to the [RUBY project](https://jira.mongodb.org/browse/RUBY).
+3. Click 'Create Issue' and fill out all of the applicable form fields.
 
-When reporting an issue, please keep in mind that all information in JIRA for all driver projects (ex. RUBY, CSHARP, JAVA) and the Core Server (ex. SERVER) project is **PUBLICLY** visible.
+When creating an issue, please keep in mind that all information in JIRA
+for the RUBY project, as well as the core server (the SERVER project),
+is publicly visible.
 
-**PLEASE DO**
+**PLEASE DO:**
 
-* Provide as much information as possible about the issue.
-* Provide detailed steps for reproducing the issue.
-* Provide any applicable code snippets, stack traces and log data.
-* Specify version information for the driver and MongoDB.
+- Provide as much information as possible about the issue.
+- Provide detailed steps for reproducing the issue.
+- Provide any applicable code snippets, stack traces and log data.
+  Do not include any sensitive data or server logs.
+- Specify version numbers of the driver and MongoDB server.
 
-**PLEASE DO NOT**
+**PLEASE DO NOT:**
 
-* Provide any sensitive data or server logs.
-* Report potential security issues publicly (see 'Security Issues').
+- Provide any sensitive data or server logs.
+- Report potential security issues publicly (see 'Security Issues' below).
 
-Running Tests
------
-
-The driver uses RSpec as it's primary testing tool. To run all tests simple run `rspec`.
-
-To run a test at a specific location (where `42` is the line number), use:
-
-    rspec path/to/spec.rb:42
 
 Security Issues
------
+---------------
 
-If you’ve identified a potential security related issue in a driver or any other
-MongoDB project, please report it by following the [instructions here](http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
+If you have identified a potential security-related issue in the Ruby driver
+(or any other MongoDB product), please report it by following the
+[instructions here](http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
+
+
+Product Feature Requests
+------------------------
+
+To request a feature which is not specific to the Ruby driver, or which
+affects more than the driver alone (for example, a feature which requires
+MongoDB server support), please submit your idea through the
+[MongoDB Feedback Forum](https://feedback.mongodb.com/forums/924286-drivers).
+
+
+Running Tests
+-------------
+
+Please refer to [spec/README.md](spec/README.md) for instructions on how
+to run the driver's test suite.
+
 
 Release History
------
+---------------
 
-Full release notes and release history are available [here](https://github.com/mongodb/mongo-ruby-driver/releases).
+Full release notes and release history are available [on the GitHub releases
+page](https://github.com/mongodb/mongo-ruby-driver/releases).
+
 
 License
------
+-------
 
- Copyright (C) 2009-2016 MongoDB, Inc.
+ Copyright (C) 2009-2020 MongoDB, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -77,7 +108,7 @@ License
    See the License for the specific language governing permissions and
    limitations under the License.
 
-[rubygems-img]: https://badge.fury.io/rb/mongo.png
+[rubygems-img]: https://badge.fury.io/rb/mongo.svg
 [rubygems-url]: http://badge.fury.io/rb/mongo
-[codeclimate-img]: https://codeclimate.com/github/mongodb/mongo-ruby-driver.png?branch=master
-[codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver?branch=master
+[inch-img]: http://inch-ci.org/github/mongodb/mongo-ruby-driver.svg?branch=master
+[inch-url]: http://inch-ci.org/github/mongodb/mongo-ruby-driver

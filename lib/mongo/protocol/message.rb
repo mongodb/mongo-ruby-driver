@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,6 +43,7 @@ module Mongo
     # @abstract
     # @api semiprivate
     class Message
+      include Id
       include Serializers
 
       # The batch size constant.
@@ -72,14 +76,14 @@ module Mongo
       # @since 2.2.1
       MAX_MESSAGE_SIZE = 50331648.freeze
 
+      def initialize(*args) # :nodoc:
+        set_request_id
+      end
+
       # Returns the request id for the message
       #
       # @return [Fixnum] The request id for this message
       attr_reader :request_id
-
-      def initialize(*args) # :nodoc:
-        @request_id = nil
-      end
 
       # The default for messages is not to require a reply after sending a
       # message to the server.
@@ -94,27 +98,164 @@ module Mongo
         false
       end
 
+      # Compress the message, if supported by the wire protocol used and if
+      # the command being sent permits compression. Otherwise returns self.
+      #
+      # @param [ String, Symbol ] compressor The compressor to use.
+      # @param [ Integer ] zlib_compression_level The zlib compression level to use.
+      #
+      # @return [ self ] Always returns self. Other message types should
+      #   override this method.
+      #
+      # @since 2.5.0
+      # @api private
+      def maybe_compress(compressor, zlib_compression_level = nil)
+        self
+      end
+
+      # Compress the message, if the command being sent permits compression.
+      # Otherwise returns self.
+      #
+      # @param [ String ] command_name Command name extracted from the message.
+      # @param [ String | Symbol ] compressor The compressor to use.
+      # @param [ Integer ] zlib_compression_level Zlib compression level to use.
+      #
+      # @return [ Message ] A Protocol::Compressed message or self,
+      #  depending on whether this message can be compressed.
+      #
+      # @since 2.5.0
+      private def compress_if_possible(command_name, compressor, zlib_compression_level)
+        if compressor && compression_allowed?(command_name)
+          Compressed.new(self, compressor, zlib_compression_level)
+        else
+          self
+        end
+      end
+
+      # Inflate a message if it is compressed.
+      #
+      # @return [ Protocol::Message ] Always returns self. Subclasses should
+      #   override this method as necessary.
+      #
+      # @since 2.5.0
+      # @api private
+      def maybe_inflate
+        self
+      end
+
+      # Possibly decrypt this message with libmongocrypt.
+      #
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      #
+      # @return [ Mongo::Protocol::Msg ] The decrypted message, or the original
+      #   message if decryption was not possible or necessary.
+      def maybe_decrypt(context)
+        # TODO determine if we should be decrypting data coming from pre-4.2
+        # servers, potentially using legacy wire protocols. If so we need
+        # to implement decryption for those wire protocols as our current
+        # encryption/decryption code is OP_MSG-specific.
+        self
+      end
+
+      # Possibly encrypt this message with libmongocrypt.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      #
+      # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
+      #   message if encryption was not possible or necessary.
+      def maybe_encrypt(connection, context)
+        # Do nothing if the Message subclass has not implemented this method
+        self
+      end
+
+      def maybe_add_server_api(server_api)
+        raise Error::ServerApiNotSupported, "Server API parameters cannot be sent to pre-3.6 MongoDB servers. Please remove the :server_api parameter from Client options or use MongoDB 3.6 or newer"
+      end
+
+      private def merge_sections
+        cmd = if @sections.length > 1
+          cmd = @sections.detect { |section| section[:type] == 0 }[:payload]
+          identifier = @sections.detect { |section| section[:type] == 1}[:payload][:identifier]
+          cmd.merge(identifier.to_sym =>
+            @sections.select { |section| section[:type] == 1 }.
+              map { |section| section[:payload][:sequence] }.
+              inject([]) { |arr, documents| arr + documents }
+          )
+        elsif @sections.first[:payload]
+          @sections.first[:payload]
+        else
+          @sections.first
+        end
+        if cmd.nil?
+          raise "The command should never be nil here"
+        end
+        cmd
+      end
+
       # Serializes message into bytes that can be sent on the wire
       #
       # @param buffer [String] buffer where the message should be inserted
       # @return [String] buffer containing the serialized message
-      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
+        max_size =
+          if max_bson_size && bson_overhead
+            max_bson_size + bson_overhead
+          elsif max_bson_size
+            max_bson_size
+          else
+            nil
+          end
+
         start = buffer.length
         serialize_header(buffer)
-        serialize_fields(buffer, max_bson_size)
+        serialize_fields(buffer, max_size)
         buffer.replace_int32(start, buffer.length - start)
       end
 
       alias_method :to_s, :serialize
 
-      # Deserializes messages from an IO stream
+      # Deserializes messages from an IO stream.
+      #
+      # This method returns decompressed messages (i.e. if the message on the
+      # wire was OP_COMPRESSED, this method would typically return the OP_MSG
+      # message that is the result of decompression).
       #
       # @param [ Integer ] max_message_size The max message size.
       # @param [ IO ] io Stream containing a message
+      # @param [ Hash ] options
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this message using BSON types instead of native Ruby types wherever
+      #   possible.
+      # @option options [ Numeric ] :socket_timeout The timeout to use for
+      #   each read operation.
       #
       # @return [ Message ] Instance of a Message class
-      def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil)
-        length, _request_id, response_to, _op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
+      #
+      # @api private
+      def self.deserialize(io,
+        max_message_size = MAX_MESSAGE_SIZE,
+        expected_response_to = nil,
+        options = {}
+      )
+        # io is usually a Mongo::Socket instance, which supports the
+        # timeout option. For compatibility with whoever might call this
+        # method with some other IO-like object, pass options only when they
+        # are not empty.
+        read_options = {}
+        if timeout = options[:socket_timeout]
+          read_options[:timeout] = timeout
+        end
+
+        if read_options.empty?
+          chunk = io.read(16)
+        else
+          chunk = io.read(16, **read_options)
+        end
+        buf = BSON::ByteBuffer.new(chunk)
+        length, _request_id, response_to, _op_code = deserialize_header(buf)
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
@@ -128,17 +269,25 @@ module Mongo
           raise Error::UnexpectedResponse.new(expected_response_to, response_to)
         end
 
-        buffer = BSON::ByteBuffer.new(io.read(length - 16))
-        message = allocate
+        if read_options.empty?
+          chunk = io.read(length - 16)
+        else
+          chunk = io.read(length - 16, **read_options)
+        end
+        buf = BSON::ByteBuffer.new(chunk)
 
-        fields.each do |field|
+        message = Registry.get(_op_code).allocate
+        message.send(:fields).each do |field|
           if field[:multi]
-            deserialize_array(message, buffer, field)
+            deserialize_array(message, buf, field, options)
           else
-            deserialize_field(message, buffer, field)
+            deserialize_field(message, buf, field, options)
           end
         end
-        message
+        if message.is_a?(Msg)
+          message.fix_after_deserialization
+        end
+        message.maybe_inflate
       end
 
       # Tests for equality between two wire protocol messages
@@ -169,15 +318,17 @@ module Mongo
       #   server. The server will put this id in the response_to field of
       #   a reply.
       def set_request_id
-        @@id_lock.synchronize do
-          @request_id = @@request_id += 1
-        end
+        @request_id = self.class.next_id
       end
 
-      private
+      # Default number returned value for protocol messages.
+      #
+      # @return [ 0 ] This method must be overridden, otherwise, always returns 0.
+      #
+      # @since 2.5.0
+      def number_returned; 0; end
 
-      @@request_id = 0
-      @@id_lock = Mutex.new
+      private
 
       # A method for getting the fields for a message class
       #
@@ -230,7 +381,6 @@ module Mongo
       # @param buffer [String] Buffer to receive the header
       # @return [String] Serialized header
       def serialize_header(buffer)
-        set_request_id unless @request_id
         Header.serialize(buffer, [0, request_id, 0, op_code])
       end
 
@@ -276,11 +426,16 @@ module Mongo
       # @param message [Message] Message to contain the deserialized array.
       # @param io [IO] Stream containing the array to deserialize.
       # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   each of the elements in this array using BSON types wherever possible.
+      #
       # @return [Message] Message with deserialized array.
-      def self.deserialize_array(message, io, field)
+      def self.deserialize_array(message, io, field, options = {})
         elements = []
         count = message.instance_variable_get(field[:multi])
-        count.times { elements << field[:type].deserialize(io) }
+        count.times { elements << field[:type].deserialize(io, options) }
         message.instance_variable_set(field[:name], elements)
       end
 
@@ -289,11 +444,16 @@ module Mongo
       # @param message [Message] Message to contain the deserialized field.
       # @param io [IO] Stream containing the field to deserialize.
       # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this field using BSON types wherever possible.
+      #
       # @return [Message] Message with deserialized field.
-      def self.deserialize_field(message, io, field)
+      def self.deserialize_field(message, io, field, options = {})
         message.instance_variable_set(
           field[:name],
-          field[:type].deserialize(io)
+          field[:type].deserialize(io, options)
         )
       end
 

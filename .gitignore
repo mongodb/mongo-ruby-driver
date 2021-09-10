@@ -12,7 +12,6 @@
 .idea/*
 .yardoc
 coverage
-data
 yard-docs
 Gemfile.lock
 .ruby-gemset
@@ -21,3 +20,7 @@ gem-private_key.pem
 nbproject
 tmp
 sandbox/*
+.byebug_history
+gemfiles/*.gemfile.lock
+.env.private*
+.env

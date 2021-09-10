@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,16 +47,16 @@ module Mongo
       # @example Return the event payload.
       #   message.payload
       #
-      # @return [ Hash ] The event payload.
+      # @return [ BSON::Document ] The event payload.
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'killCursors',
           database_name: @database,
           command: upconverter.command,
-          request_id: request_id
-        }
+          request_id: request_id,
+        )
       end
 
       protected
@@ -64,9 +67,9 @@ module Mongo
 
       # The operation code required to specify +KillCursors+ message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2007
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2007
 
       # Field representing Zero encoded as an Int32.
       field :zero, Zero
@@ -84,16 +87,6 @@ module Mongo
       #
       # @since 2.1.0
       class Upconverter
-
-        # The kill cursors constant.
-        #
-        # @since 2.2.0
-        KILL_CURSORS = 'killCursors'.freeze
-
-        # The cursors constant.
-        #
-        # @since 2.2.0
-        CURSORS = 'cursors'.freeze
 
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
@@ -125,11 +118,16 @@ module Mongo
         # @since 2.1.0
         def command
           document = BSON::Document.new
-          document.store(KILL_CURSORS, collection)
-          document.store(CURSORS, cursor_ids)
+          document.store('killCursors', collection)
+          store_ids = cursor_ids.map do |cursor_id|
+            BSON::Int64.new(cursor_id)
+          end
+          document.store('cursors', store_ids)
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

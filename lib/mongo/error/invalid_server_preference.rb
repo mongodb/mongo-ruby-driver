@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,9 +33,15 @@ module Mongo
       # @since 2.4.0
       NO_MAX_STALENESS_SUPPORT = 'max_staleness cannot be set for this read preference.'.freeze
 
+      # Error message when hedge is specified for a read preference that does not support it.
+      #
+      # @api private
+      NO_HEDGE_SUPPORT = 'The hedge option cannot be set for this read preference'.freeze
+
       # Error message for when the max staleness is not at least twice the heartbeat frequency.
       #
       # @since 2.4.0
+      # @deprecated
       INVALID_MAX_STALENESS = "`max_staleness` value is too small. It must be at least " +
         "`ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` and (the cluster's heartbeat_frequency " +
           "setting + `Cluster::IDLE_WRITE_PERIOD_SECONDS`).".freeze

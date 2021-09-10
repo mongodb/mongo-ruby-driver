@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,14 +53,18 @@ module Mongo
           # @param [ FSBucket ] fs The GridFS bucket object.
           # @param [ Hash ] options The write stream options.
           #
-          # @option opts [ Object ] :file_id The file id. An ObjectId is generated otherwise.
+          # @option options [ Object ] :file_id The file id. An ObjectId
+          #   is generated if the file id is not provided.
           # @option opts [ Integer ] :chunk_size Override the default chunk size.
-          # @option opts [ Hash ] :write The write concern.
           # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
           # @option opts [ String ] :content_type The content type of the file.
           #   Deprecated, please use the metadata document instead.
           # @option opts [ Array<String> ] :aliases A list of aliases.
           #   Deprecated, please use the metadata document instead.
+          # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+          #   option.
+          # @option options [ Hash ] :write_concern The write concern options.
+          #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
           #
           # @since 2.1.0
           def initialize(fs, options)
@@ -65,17 +72,25 @@ module Mongo
             @length = 0
             @n = 0
             @file_id = options[:file_id] || BSON::ObjectId.new
-            @options = options
+            @options = options.dup
+=begin WriteConcern object support
+            if @options[:write_concern].is_a?(WriteConcern::Base)
+              # Cache the instance so that we do not needlessly reconstruct it.
+              @write_concern = @options[:write_concern]
+              @options[:write_concern] = @write_concern.options
+            end
+=end
+            @options.freeze
             @filename = @options[:filename]
             @open = true
           end
 
-          # Write to the GridFS bucket from the source stream.
+          # Write to the GridFS bucket from the source stream or a string.
           #
           # @example Write to GridFS.
           #   stream.write(io)
           #
-          # @param [ IO ] io The source io stream to upload from.
+          # @param [ String | IO ] io The string or IO object to upload from.
           #
           # @return [ Stream::Write ] self The write stream itself.
           #
@@ -83,7 +98,13 @@ module Mongo
           def write(io)
             ensure_open!
             @indexes ||= ensure_indexes!
-            @length += io.size
+            @length += if io.respond_to?(:bytesize)
+              # String objects
+              io.bytesize
+            else
+              # IO objects
+              io.size
+            end
             chunks = File::Chunk.split(io, file_info, @n)
             @n += chunks.size
             chunks_collection.insert_many(chunks) unless chunks.empty?
@@ -103,7 +124,7 @@ module Mongo
           def close
             ensure_open!
             update_length
-            files_collection.insert_one(file_info)
+            files_collection.insert_one(file_info, @options)
             @open = false
             file_id
           end
@@ -117,8 +138,11 @@ module Mongo
           #
           # @since 2.1.0
           def write_concern
-            @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
+            @write_concern ||= if wco = @options[:write_concern] || @options[:write]
+              WriteConcern.get(wco)
+            else
               fs.write_concern
+            end
           end
 
           # Is the stream closed.
@@ -142,8 +166,8 @@ module Mongo
           #
           # @since 2.1.0
           def abort
-            fs.chunks_collection.find(:files_id => file_id).delete_many
-            @open = false || true
+            fs.chunks_collection.find({ :files_id => file_id }, @options).delete_many
+            (@open = false) || true
           end
 
           private
@@ -158,7 +182,8 @@ module Mongo
 
           def with_write_concern(collection)
             if write_concern.nil? || (collection.write_concern &&
-                collection.write_concern.options == write_concern.options)
+              collection.write_concern.options == write_concern.options)
+            then
               collection
             else
               collection.with(write: write_concern.options)

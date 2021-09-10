@@ -1,6 +1,10 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::MapReduce do
+  clean_slate_on_evergreen
 
   let(:map) do
   %Q{
@@ -43,16 +47,55 @@ describe Mongo::Collection::View::MapReduce do
     {}
   end
 
-  before do
-    authorized_collection.insert_many(documents)
+  let(:map_reduce_spec) do
+    map_reduce.send(:map_reduce_spec, double('session'))
   end
 
-  after do
+  before do
     authorized_collection.delete_many
+    authorized_collection.insert_many(documents)
   end
 
   let(:map_reduce) do
     described_class.new(view, map, reduce, options)
+  end
+
+  describe '#map_function' do
+
+    it 'returns the map function' do
+      expect(map_reduce.map_function).to eq(map)
+    end
+  end
+
+  describe '#reduce_function' do
+
+    it 'returns the reduce function' do
+      expect(map_reduce.reduce_function).to eq(reduce)
+    end
+  end
+
+  describe '#map' do
+
+    let(:results) do
+      map_reduce.map do |document|
+        document
+      end
+    end
+
+    it 'calls the Enumerable method' do
+      expect(results.sort_by { |d| d['_id'] }).to eq(map_reduce.to_a.sort_by { |d| d['_id'] })
+    end
+  end
+
+  describe '#reduce' do
+
+    let(:results) do
+      map_reduce.reduce(0) { |sum, doc| sum + doc['value']['population'] }
+    end
+
+    it 'calls the Enumerable method' do
+      expect(results).to eq(12000000)
+    end
   end
 
   describe '#each' do
@@ -66,9 +109,26 @@ describe Mongo::Collection::View::MapReduce do
       end
     end
 
+    context 'when provided a session' do
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        map_reduce.to_a
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+    end
+
     context 'when out is in the options' do
 
-      after do
+      before do
         authorized_client['output_collection'].delete_many
       end
 
@@ -114,8 +174,23 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when out is a collection' do
 
-      after do
+      before do
         authorized_client['output_collection'].delete_many
+      end
+
+      context 'when #each is called without a block' do
+
+        let(:new_map_reduce) do
+          map_reduce.out(replace: 'output_collection')
+        end
+
+        before do
+          new_map_reduce.each
+        end
+
+        it 'executes the map reduce' do
+          expect(new_map_reduce.to_a.sort_by { |d| d['_id'] }).to eq(map_reduce.to_a.sort_by { |d| d['_id'] })
+        end
       end
 
       context 'when the option is to replace' do
@@ -134,7 +209,66 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
+        context 'when provided a session' do
+
+          let(:options) do
+            { session: session }
+          end
+
+          let(:operation) do
+            new_map_reduce.to_a
+          end
+
+          let(:client) do
+            authorized_client
+          end
+
+          it_behaves_like 'an operation using a session'
+        end
+
+        context 'when the output collection is iterated' do
+          min_server_fcv '3.6'
+          require_topology :replica_set, :sharded
+
+          let(:options) do
+            { session: session }
+          end
+
+          let(:session) do
+            client.start_session
+          end
+
+          let(:view) do
+            Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
+          end
+
+          let(:subscriber) { Mrss::EventSubscriber.new }
+
+          let(:client) do
+            authorized_client.tap do |client|
+              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+            end
+          end
+
+          let(:find_command) do
+            subscriber.started_events[-1].command
+          end
+
+          before do
+            begin; client[TEST_COLL].create; rescue; end
+            begin; client.use('another-db')[TEST_COLL].create; rescue; end
+          end
+
+          it 'uses the session when iterating over the output collection' do
+            new_map_reduce.to_a
+            expect(find_command["lsid"]).to eq(BSON::Document.new(session.session_id))
+          end
+        end
+
+        context 'when another db is specified' do
+          min_server_fcv '3.6'
+          require_topology :single, :replica_set
+          require_no_auth
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', replace: 'output_collection')
@@ -146,7 +280,7 @@ describe Mongo::Collection::View::MapReduce do
             end
           end
 
-          it 'fetches the results from the collection' do
+          it 'fetches the results from the collection'  do
             expect(new_map_reduce.count).to eq(2)
           end
         end
@@ -168,7 +302,10 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
+        context 'when another db is specified' do
+          min_server_fcv '3.0'
+          require_topology :single, :replica_set
+          require_no_auth
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', merge: 'output_collection')
@@ -202,7 +339,10 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
+        context 'when another db is specified' do
+          min_server_fcv '3.0'
+          require_topology :single, :replica_set
+          require_no_auth
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', reduce: 'output_collection')
@@ -247,7 +387,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector)
+          expect(map_reduce_spec[:selector][:query]).to eq(selector)
         end
       end
 
@@ -264,7 +404,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector[:$query])
+          expect(map_reduce_spec[:selector][:query]).to eq(selector[:$query])
         end
       end
     end
@@ -280,6 +420,69 @@ describe Mongo::Collection::View::MapReduce do
           expect(document[:_id]).to eq('Berlin')
         end
       end
+    end
+  end
+
+  describe '#execute' do
+
+    context 'when output is to a collection' do
+
+      let(:options) do
+        { out: 'output_collection' }
+      end
+
+      let!(:result) do
+        map_reduce.execute
+      end
+
+      it 'executes the map reduce' do
+        expect(authorized_client['output_collection'].count).to eq(2)
+      end
+
+      it 'returns a result object' do
+        expect(result).to be_a(Mongo::Operation::Result)
+      end
+    end
+
+    context 'when there is no output' do
+
+      let(:result) do
+        map_reduce.execute
+      end
+
+      it 'executes the map reduce' do
+        expect(result.documents.size).to eq(2)
+      end
+
+      it 'returns a result object' do
+        expect(result).to be_a(Mongo::Operation::Result)
+      end
+    end
+
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        map_reduce.execute
+      end
+
+      let(:failed_operation) do
+        described_class.new(view, '$invalid', reduce, options).execute
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
   end
 
@@ -302,7 +505,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the finalize function in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:finalize]).to eq(finalize)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:finalize]).to eq(finalize)
     end
   end
 
@@ -317,7 +520,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the js mode value in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:jsMode]).to be(true)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:jsMode]).to be(true)
     end
   end
 
@@ -336,13 +539,13 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the out value in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(location)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:out]).to eq(location)
     end
 
     context 'when out is not defined' do
 
       it 'defaults to inline' do
-        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq('inline' => 1)
+        expect(map_reduce_spec[:selector][:out]).to eq('inline' => 1)
       end
     end
 
@@ -361,7 +564,7 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       it 'includes the out value in the operation spec' do
-        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(location)
+        expect(map_reduce_spec[:selector][:out]).to eq(location)
       end
     end
 
@@ -379,12 +582,22 @@ describe Mongo::Collection::View::MapReduce do
         expect(map_reduce.send(:secondary_ok?)).to be false
       end
 
-      context 'when the server is not a valid for writing' do
+      context 'when the server is not valid for writing' do
+        clean_slate
+        require_warning_clean
+
+        before do
+          stop_monitoring(authorized_client)
+        end
 
         it 'reroutes the operation to a primary' do
-          allow(map_reduce).to receive(:valid_server?).and_return(false)
-          expect(Mongo::Logger.logger).to receive(:warn?).and_call_original
-          map_reduce.to_a
+          RSpec::Mocks.with_temporary_scope do
+            allow(map_reduce).to receive(:valid_server?).and_return(false)
+            expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
+              expect(msg).to include('Rerouting the MapReduce operation to the primary server')
+            end
+            map_reduce.to_a
+          end
         end
 
         context 'when the view has a write concern' do
@@ -399,7 +612,9 @@ describe Mongo::Collection::View::MapReduce do
 
           shared_examples_for 'map reduce that writes accepting write concern' do
 
-            context 'when the server supports write concern on the mapReduce command', if: (collation_enabled? && standalone?) do
+            context 'when the server supports write concern on the mapReduce command' do
+              min_server_fcv '3.4'
+              require_topology :single
 
               it 'uses the write concern' do
                 expect {
@@ -408,7 +623,8 @@ describe Mongo::Collection::View::MapReduce do
               end
             end
 
-            context 'when the server does not support write concern on the mapReduce command', unless: collation_enabled? do
+            context 'when the server does not support write concern on the mapReduce command' do
+              max_server_version '3.2'
 
               it 'does not apply the write concern' do
                 expect(map_reduce.to_a.size).to eq(2)
@@ -448,9 +664,15 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the server is a valid for writing' do
+        clean_slate
+        require_warning_clean
+
+        before do
+          stop_monitoring(authorized_client)
+        end
 
         it 'does not reroute the operation to a primary' do
-          expect(Mongo::Logger.logger).not_to receive(:warn?)
+          expect(Mongo::Logger.logger).not_to receive(:warn)
           map_reduce.to_a
         end
       end
@@ -472,7 +694,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the scope object in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:scope]).to eq(object)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:scope]).to eq(object)
     end
   end
 
@@ -491,7 +713,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the verbose option in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:verbose]).to eq(verbose)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:verbose]).to eq(verbose)
     end
   end
 
@@ -506,7 +728,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the limit in the operation spec' do
-      expect(map_reduce.send(:map_reduce_spec)[:selector][:limit]).to be(limit)
+      expect(map_reduce_spec[:selector][:limit]).to be(limit)
     end
   end
 
@@ -521,19 +743,19 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the sort object in the operation spec' do
-      expect(map_reduce.send(:map_reduce_spec)[:selector][:sort][:name]).to eq(sort[:name])
+      expect(map_reduce_spec[:selector][:sort][:name]).to eq(sort[:name])
     end
   end
 
   context 'when the collection has a read preference' do
 
     let(:read_preference) do
-      Mongo::ServerSelector.get(mode: :secondary)
+      {mode: :secondary}
     end
 
     it 'includes the read preference in the spec' do
       allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
-      expect(map_reduce.send(:map_reduce_spec)[:read]).to eq(read_preference)
+      expect(map_reduce_spec[:read]).to eq(read_preference)
     end
   end
 
@@ -561,7 +783,8 @@ describe Mongo::Collection::View::MapReduce do
       { name: 'BANG' }
     end
 
-    context 'when the server selected supports collations', if: collation_enabled? do
+    context 'when the server selected supports collations' do
+      min_server_fcv '3.4'
 
       context 'when the collation key is a String' do
 
@@ -586,7 +809,8 @@ describe Mongo::Collection::View::MapReduce do
       end
     end
 
-    context 'when the server selected does not support collations', unless: collation_enabled? do
+    context 'when the server selected does not support collations' do
+      max_server_version '3.2'
 
       context 'when the map reduce has collation specified in its options' do
 

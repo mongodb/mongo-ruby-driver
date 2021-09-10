@@ -1,6 +1,18 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Grid::FSBucket::Stream::Read do
+
+  let(:support_fs) do
+    authorized_client.database.fs(fs_options)
+  end
+
+  before do
+    support_fs.files_collection.drop rescue nil
+    support_fs.chunks_collection.drop rescue nil
+  end
 
   let(:fs_options) do
     { }
@@ -20,11 +32,6 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
   let!(:file_id) do
     fs.upload_from_stream(filename, File.open(__FILE__))
-  end
-
-  after do
-    fs.files_collection.delete_many
-    fs.chunks_collection.delete_many
   end
 
   let(:stream) do
@@ -60,19 +67,39 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
       context 'when provided read preference' do
 
-        let(:options) do
-          {
+        context 'when given as a hash with symbol keys' do
+          let(:options) do
+            {
+                file_id: file_id,
+                read: { mode: :primary_preferred },
+            }
+          end
+
+          it 'sets the read preference as a BSON::Document' do
+            expect(stream.read_preference).to be_a(BSON::Document)
+            expect(stream.read_preference).to eq('mode' => :primary_preferred)
+          end
+
+          it 'sets the read preference on the view' do
+            expect(stream.send(:view).read).to eq(BSON::Document.new(options[:read]))
+          end
+        end
+
+        context 'when given as a BSON::Document' do
+          let(:options) do
+            BSON::Document.new(
               file_id: file_id,
-              read: { mode: :primary_preferred }
-          }
-        end
+              read: { mode: :primary_preferred },
+            )
+          end
 
-        it 'sets the read preference' do
-          expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
-        end
+          it 'sets the read preference' do
+            expect(stream.read_preference).to eq(options[:read])
+          end
 
-        it 'sets the read preference on the view' do
-          expect(stream.send(:view).read).to eq(Mongo::ServerSelector.get(options[:read]))
+          it 'sets the read preference on the view' do
+            expect(stream.send(:view).read).to eq(options[:read])
+          end
         end
       end
 
@@ -93,11 +120,6 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
     let!(:file_id) do
       fs.upload_from_stream(filename, File.open(__FILE__))
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     let(:fs_options) do
@@ -195,11 +217,6 @@ describe Mongo::Grid::FSBucket::Stream::Read do
       fs.upload_from_stream(filename, file)
     end
 
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
-    end
-
     it 'returns a string of all data' do
       expect(stream.read.size).to eq(file.size)
     end
@@ -244,10 +261,10 @@ describe Mongo::Grid::FSBucket::Stream::Read do
         stream.close
       end
 
-      it 'raises an exception' do
+      it 'does not raise an exception' do
         expect {
           stream.close
-        }.to raise_error(Mongo::Error::ClosedStream)
+        }.not_to raise_error
       end
     end
   end

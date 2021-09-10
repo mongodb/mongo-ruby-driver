@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View do
@@ -14,7 +17,7 @@ describe Mongo::Collection::View do
     described_class.new(authorized_collection, filter, options)
   end
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 
@@ -112,11 +115,8 @@ describe Mongo::Collection::View do
     end
 
     before do
-      authorized_collection.insert_many(documents)
-    end
-
-    after do
       authorized_collection.delete_many
+      authorized_collection.insert_many(documents)
     end
 
     context 'when a block is not provided' do
@@ -144,11 +144,13 @@ describe Mongo::Collection::View do
 
       before do
         view.to_enum.next
-        cursor.instance_variable_set(:@cursor_id, 1) unless find_command_enabled?
+        if ClusterConfig.instance.fcv_ish < '3.2'
+          cursor.instance_variable_set(:@cursor_id, 1)
+        end
       end
 
       it 'sends a kill cursors command for the cursor' do
-        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(cursor).to receive(:close).and_call_original
         view.close_query
       end
     end
@@ -173,14 +175,16 @@ describe Mongo::Collection::View do
           view.limit(-1).first
         end
 
-        context 'when the server selected supports collations', if: collation_enabled? do
+        context 'when the server selected supports collations' do
+          min_server_fcv '3.4'
 
           it 'applies the collation' do
             expect(result['name']).to eq('bang')
           end
         end
 
-        context 'when the server selected does not support collations', unless: collation_enabled? do
+        context 'when the server selected does not support collations' do
+          max_server_version '3.2'
 
           it 'raises an exception' do
             expect {

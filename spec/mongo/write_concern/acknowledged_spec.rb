@@ -1,6 +1,20 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::WriteConcern::Acknowledged do
+
+  describe '#acknowledged?' do
+
+    let(:concern) do
+      described_class.new(:w => :majority)
+    end
+
+    it 'returns true' do
+      expect(concern.acknowledged?).to be(true)
+    end
+  end
 
   describe '#get_last_error' do
 

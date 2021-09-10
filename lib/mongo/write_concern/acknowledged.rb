@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,9 +22,7 @@ module Mongo
     # appropriate options on each write operation.
     #
     # @since 2.0.0
-    class Acknowledged
-      include Normalizable
-
+    class Acknowledged < Base
       # Get the get last error command for the concern.
       #
       # @example Get the gle command.
@@ -34,6 +35,18 @@ module Mongo
         @get_last_error ||= { GET_LAST_ERROR => 1 }.merge(
           Options::Mapper.transform_values_to_strings(options)
         )
+      end
+
+      # Is this write concern acknowledged.
+      #
+      # @example Whether this write concern object is acknowledged.
+      #   write_concern.acknowledged?
+      #
+      # @return [ true, false ] Whether this write concern is acknowledged.
+      #
+      # @since 2.5.0
+      def acknowledged?
+        true
       end
 
       # Get a human-readable string representation of an acknowledged write concern.

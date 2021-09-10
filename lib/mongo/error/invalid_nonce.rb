@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +19,7 @@ module Mongo
   class Error
 
     # This exception is raised when the server nonce returned does not
-    # match the client nonce sent to it.
+    # start with the client nonce sent to it.
     #
     # @since 2.0.0
     class InvalidNonce < Error

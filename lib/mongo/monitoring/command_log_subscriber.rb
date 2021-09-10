@@ -1,4 +1,7 @@
-# Copyright (C) 2015 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -54,7 +57,12 @@ module Mongo
       # @since 2.1.0
       def started(event)
         if logger.debug?
-          log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
+          _prefix = prefix(event,
+            connection_generation: event.connection_generation,
+            connection_id: event.connection_id,
+            server_connection_id: event.server_connection_id,
+          )
+          log_debug("#{_prefix} | STARTED | #{format_command(event.command)}")
         end
       end
 
@@ -68,7 +76,7 @@ module Mongo
       # @since 2.1.0
       def succeeded(event)
         if logger.debug?
-          log_debug("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
+          log_debug("#{prefix(event)} | SUCCEEDED | #{'%.3f' % event.duration}s")
         end
       end
 
@@ -96,8 +104,20 @@ module Mongo
         end
       end
 
-      def prefix(event)
-        "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
+      def prefix(event, connection_generation: nil, connection_id: nil,
+        server_connection_id: nil
+      )
+        extra = [connection_generation, connection_id].compact.join(':')
+        if extra == ''
+          extra = nil
+        else
+          extra = "conn:#{extra}"
+        end
+        if server_connection_id
+          extra += " sconn:#{server_connection_id}"
+        end
+        "#{event.address.to_s} req:#{event.request_id}#{extra && " #{extra}"} | " +
+          "#{event.database_name}.#{event.command_name}"
       end
 
       def truncate(command)

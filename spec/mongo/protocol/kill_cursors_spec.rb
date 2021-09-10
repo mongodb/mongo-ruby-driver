@@ -1,14 +1,18 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::KillCursors do
 
   let(:opcode)     { 2007 }
   let(:cursor_ids) { [123, 456, 789] }
   let(:id_count)   { cursor_ids.size }
-  let(:collection) { TEST_COLL }
-  let(:database)   { TEST_DB }
+  let(:collection_name) { 'protocol-test' }
+  let(:database)   { SpecConfig.instance.test_db }
   let(:message) do
-    described_class.new(collection, database, cursor_ids)
+    described_class.new(collection_name, database, cursor_ids)
   end
 
   describe '#initialize' do
@@ -28,7 +32,7 @@ describe Mongo::Protocol::KillCursors do
 
       context 'when the cursor ids are equal' do
         let(:other) do
-          described_class.new(collection, database, cursor_ids)
+          described_class.new(collection_name, database, cursor_ids)
         end
 
         it 'returns true' do
@@ -38,7 +42,7 @@ describe Mongo::Protocol::KillCursors do
 
       context 'when the cursor ids are not equal' do
         let(:other) do
-          described_class.new(collection, database, [123, 456])
+          described_class.new(collection_name, database, [123, 456])
         end
 
         it 'returns false' do
@@ -97,6 +101,20 @@ describe Mongo::Protocol::KillCursors do
       let(:field) { bytes.to_s[24..-1] }
       it 'serializes the selector' do
         expect(field).to be_int64_sequence(cursor_ids)
+      end
+    end
+  end
+
+  describe '#registry' do
+
+    context 'when the class is loaded' do
+
+      it 'registers the op code in the Protocol Registry' do
+        expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
+      end
+
+      it 'creates an #op_code instance method' do
+        expect(message.op_code).to eq(described_class::OP_CODE)
       end
     end
   end

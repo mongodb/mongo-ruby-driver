@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Address::IPv4 do
@@ -65,14 +68,16 @@ describe Mongo::Address::IPv4 do
     context 'when ssl options are provided' do
 
       let(:socket) do
-        resolver.socket(5, :ssl => true)
+        resolver.socket(5, ssl: true)
       end
 
       it 'returns an ssl socket' do
+        allow_any_instance_of(Mongo::Socket::SSL).to receive(:connect!)
         expect(socket).to be_a(Mongo::Socket::SSL)
       end
 
       it 'sets the family as ipv4' do
+        allow_any_instance_of(Mongo::Socket::SSL).to receive(:connect!)
         expect(socket.family).to eq(Socket::PF_INET)
       end
     end
@@ -84,10 +89,12 @@ describe Mongo::Address::IPv4 do
       end
 
       it 'returns a tcp socket' do
+        allow_any_instance_of(Mongo::Socket::TCP).to receive(:connect!)
         expect(socket).to be_a(Mongo::Socket::TCP)
       end
 
       it 'sets the family a ipv4' do
+        allow_any_instance_of(Mongo::Socket::TCP).to receive(:connect!)
         expect(socket.family).to eq(Socket::PF_INET)
       end
     end

@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
-describe Mongo::Operation::KillCursors do
+describe Mongo::Operation::KillCursors::Legacy do
 
   let(:spec) do
     { coll_name: TEST_COLL,
-      db_name: TEST_DB,
+      db_name: SpecConfig.instance.test_db,
       :cursor_ids => [1,2]
     }
   end
@@ -32,10 +35,13 @@ describe Mongo::Operation::KillCursors do
   end
 
   describe '#message' do
+    let(:expected_cursor_ids) do
+      spec[:cursor_ids].map { |v| BSON::Int64.new(v) }
+    end
 
     it 'creates a kill cursors wire protocol message with correct specs' do
-      expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, TEST_DB, spec[:cursor_ids])
-      op.send(:message, authorized_primary)
+      expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, SpecConfig.instance.test_db, expected_cursor_ids)
+      op.send(:message, double('server'))
     end
   end
 end

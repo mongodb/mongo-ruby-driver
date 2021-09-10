@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::Immutable do
@@ -14,7 +17,7 @@ describe Mongo::Collection::View::Immutable do
     Mongo::Collection::View.new(authorized_collection, selector, options)
   end
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 

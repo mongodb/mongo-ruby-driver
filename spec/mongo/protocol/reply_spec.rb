@@ -1,4 +1,7 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
 
 describe Mongo::Protocol::Reply do
 
@@ -175,6 +178,20 @@ describe Mongo::Protocol::Reply do
     describe 'documents' do
       it 'sets the documents attribute' do
         expect(reply.documents).to eq(documents)
+      end
+    end
+  end
+
+  describe '#registry' do
+
+    context 'when the class is loaded' do
+
+      it 'registers the op code in the Protocol Registry' do
+        expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
+      end
+
+      it 'creates an #op_code instance method' do
+        expect(reply.op_code).to eq(described_class::OP_CODE)
       end
     end
   end

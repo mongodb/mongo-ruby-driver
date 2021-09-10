@@ -1,57 +1,44 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
+require 'support/shared/auth_context'
 
 describe Mongo::Auth::LDAP do
 
-  let(:address) do
-    default_address
-  end
-
-  let(:monitoring) do
-    Mongo::Monitoring.new(monitoring: false)
-  end
-
-  let(:listeners) do
-    Mongo::Event::Listeners.new
-  end
-
-  let(:cluster) do
-    double('cluster').tap do |cl|
-      allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(app_metadata)
-    end
-  end
-
-  let(:topology) do
-    double('topology')
-  end
-
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    authorized_client.cluster.next_primary
   end
 
-  let(:connection) do
-    Mongo::Server::Connection.new(server, TEST_OPTIONS)
-  end
+  include_context 'auth unit tests'
 
   let(:user) do
-    Mongo::Auth::User.new(database: TEST_DB, user: 'driver', password: 'password')
+    Mongo::Auth::User.new(
+      database: '$external',
+      user: 'driver',
+      password: 'password',
+    )
   end
 
   describe '#login' do
 
+    before do
+      connection.connect!
+    end
+
     context 'when the user is not authorized for the database' do
 
       let(:cr) do
-        described_class.new(user)
+        described_class.new(user, connection)
       end
 
       let(:login) do
-        cr.login(connection).documents[0]
+        cr.login.documents[0]
       end
 
-      it 'logs the user into the connection' do
+      it 'attempts to log the user into the connection' do
         expect {
-          cr.login(connection)
+          cr.login
         }.to raise_error(Mongo::Auth::Unauthorized)
       end
     end

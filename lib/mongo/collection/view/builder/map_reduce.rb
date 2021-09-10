@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +36,7 @@ module Mongo
             scope: 'scope',
             verbose: 'verbose',
             bypass_document_validation: 'bypassDocumentValidation',
-            collation: 'collation'
+            collation: 'collation',
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :read, :write_concern
@@ -68,35 +71,6 @@ module Mongo
             @options = options
           end
 
-          # Get the specification for issuing a find command on the map/reduce
-          # results.
-          #
-          # @example Get the command specification.
-          #   builder.command_specification
-          #
-          # @return [ Hash ] The specification.
-          #
-          # @since 2.2.0
-          def command_specification
-            {
-              selector: find_command,
-              db_name: query_database,
-              read: read
-            }
-          end
-
-          # Get the specification for the document query after a map/reduce.
-          #
-          # @example Get the query specification.
-          #   builder.query_specification
-          #
-          # @return [ Hash ] The specification.
-          #
-          # @since 2.2.0
-          def query_specification
-            { selector: {}, options: {}, db_name: query_database, coll_name: query_collection }
-          end
-
           # Get the specification to pass to the map/reduce operation.
           #
           # @example Get the specification.
@@ -109,14 +83,15 @@ module Mongo
             spec = {
               selector: map_reduce_command,
               db_name: database.name,
-              read: read
+              # Note that selector just above may also have a read preference
+              # specified, per the #map_reduce_command method below.
+              read: read,
+              session: options[:session]
             }
             write?(spec) ? spec.merge!(write_concern: write_concern) : spec
           end
 
           private
-
-          OUT_ACTIONS = [ :replace, :merge, :reduce ].freeze
 
           def write?(spec)
             if out = spec[:selector][:out]
@@ -125,32 +100,34 @@ module Mongo
             end
           end
 
-          def find_command
-            BSON::Document.new('find' => query_collection, 'filter' => {})
-          end
-
           def map_reduce_command
             command = BSON::Document.new(
-              :mapreduce => collection.name,
+              :mapReduce => collection.name,
               :map => map,
               :reduce => reduce,
               :query => filter,
-              :out => { inline: 1 }
+              :out => { inline: 1 },
             )
-            command[:readConcern] = collection.read_concern if collection.read_concern
-            command.merge!(view.options)
+            # Shouldn't this use self.read ?
+            if collection.read_concern
+              command[:readConcern] = Options::Mapper.transform_values_to_strings(
+                collection.read_concern)
+            end
+            command.update(view_options)
+            command.update(Utils.slice_hash(options, :collation))
+            # Read preference isn't simply passed in the command payload
+            # (it may need to be converted to wire protocol flags)
+            # so remove it here and hopefully it's handled elsewhere.
+            # If not, RUBY-2706.
+            command.delete(:read)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
 
-          def query_database
-            options[:out].respond_to?(:keys) && options[:out][:db] ? options[:out][:db] : database.name
-          end
-
-          def query_collection
-            if options[:out].respond_to?(:keys)
-              options[:out][OUT_ACTIONS.find { |action| options[:out][action] }]
-            end || options[:out]
+          def view_options
+            @view_options ||= (opts = view.options.dup
+                               opts.delete(:session)
+                               opts)
           end
         end
       end

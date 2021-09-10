@@ -1,9 +1,19 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Result do
 
+  let(:description) do
+    Mongo::Server::Description.new(
+      double('description address'),
+      { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+    )
+  end
+
   let(:result) do
-    described_class.new(reply)
+    described_class.new(reply, description)
   end
 
   let(:cursor_id) { 0 }
@@ -26,7 +36,7 @@ describe Mongo::Operation::Result do
     context 'when the reply is for a read command' do
 
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [{ 'isWritablePrimary' => true, 'ok' => 1.0 }]
       end
 
       it 'returns true' do
@@ -140,7 +150,7 @@ describe Mongo::Operation::Result do
     context 'when the reply is for a read command' do
 
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [{ 'hello' => true, 'ok' => 1.0 }]
       end
 
       it 'returns the number returned' do
@@ -261,6 +271,17 @@ describe Mongo::Operation::Result do
         end
       end
     end
+
+    context 'when there is a write concern error' do
+      let(:documents) do
+        [{'ok' => 1.0, 'writeConcernError' => {
+          'code' => 91, 'errmsg' => 'Replication is being shut down'}}]
+      end
+
+      it 'is false' do
+        expect(result).not_to be_successful
+      end
+    end
   end
 
   describe '#written_count' do
@@ -289,21 +310,40 @@ describe Mongo::Operation::Result do
   end
 
   context 'when there is a top-level Result class defined' do
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options)
+    end
 
     before do
       class Result
-        def get_result(address)
-          Mongo::Client.new([address], TEST_OPTIONS).database.command(:ping => 1)
+        def get_result(client)
+          client.database.command(:ping => 1)
         end
       end
     end
 
     let(:result) do
-      Result.new.get_result(default_address.to_s)
+      Result.new.get_result(client)
     end
 
     it 'uses the Result class of the operation' do
       expect(result).to be_a(Mongo::Operation::Result)
+    end
+  end
+
+  describe '#validate!' do
+
+    context 'when there is a write concern error' do
+      let(:documents) do
+        [{'ok' => 1.0, 'writeConcernError' => {
+          'code' => 91, 'errmsg' => 'Replication is being shut down'}}]
+      end
+
+      it 'raises OperationFailure' do
+        expect do
+          result.validate!
+        end.to raise_error(Mongo::Error::OperationFailure, /\[91\]: Replication is being shut down/)
+      end
     end
   end
 end

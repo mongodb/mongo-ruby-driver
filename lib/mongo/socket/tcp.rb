@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,14 +23,47 @@ module Mongo
     # @since 2.0.0
     class TCP < Socket
 
+      # Initializes a new TCP socket.
+      #
+      # @example Create the TCP socket.
+      #   TCP.new('::1', 27017, 30, Socket::PF_INET)
+      #   TCP.new('127.0.0.1', 27017, 30, Socket::PF_INET)
+      #
+      # @param [ String ] host The hostname or IP address.
+      # @param [ Integer ] port The port number.
+      # @param [ Float ] timeout The socket timeout value.
+      # @param [ Integer ] family The socket family.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ Address ] :connection_address Address of the
+      #   connection that created this socket.
+      # @option options [ Integer ] :connection_generation Generation of the
+      #   connection (for non-monitoring connections) that created this socket.
+      # @option options [ true | false ] :monitor Whether this socket was
+      #   created by a monitoring connection.
+      #
+      # @since 2.0.0
+      # @api private
+      def initialize(host, port, timeout, family, options = {})
+        super(timeout, options)
+        @host, @port = host, port
+        @family = family
+        @socket = ::Socket.new(family, SOCK_STREAM, 0)
+        begin
+          set_socket_options(@socket)
+          connect!
+        rescue
+          @socket.close
+          raise
+        end
+      end
+
       # @return [ String ] host The host to connect to.
       attr_reader :host
 
       # @return [ Integer ] port The port to connect to.
       attr_reader :port
-
-      # @return [ Float ] timeout The connection timeout.
-      attr_reader :timeout
 
       # Establishes a socket connection.
       #
@@ -41,40 +77,20 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        Timeout.timeout(timeout, Error::SocketTimeoutError) do
+        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          handle_errors { socket.connect(::Socket.pack_sockaddr_in(port, host)) }
+          map_exceptions do
+            socket.connect(::Socket.pack_sockaddr_in(port, host))
+          end
           self
         end
       end
+      private :connect!
 
-      # Initializes a new TCP socket.
-      #
-      # @example Create the TCP socket.
-      #   TCP.new('::1', 27017, 30, Socket::PF_INET)
-      #   TCP.new('127.0.0.1', 27017, 30, Socket::PF_INET)
-      #
-      # @param [ String ] host The hostname or IP address.
-      # @param [ Integer ] port The port number.
-      # @param [ Float ] timeout The socket timeout value.
-      # @param [ Integer ] family The socket family.
-      #
-      # @since 2.0.0
-      def initialize(host, port, timeout, family)
-        @host, @port, @timeout = host, port, timeout
-        super(family)
-      end
+      private
 
-      # This object does not wrap another socket so it's always connectable.
-      #
-      # @example Is the socket connectable?
-      #   socket.connectable?
-      #
-      # @return [ true, false ] If the socket is connectable.
-      #
-      # @since 2.2.5
-      def connectable?
-        true
+      def human_address
+        "#{host}:#{port} (no TLS)"
       end
     end
   end

@@ -1,23 +1,40 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
 
-describe Mongo::Auth::SCRAM::Conversation do
+require 'lite_spec_helper'
+require 'support/shared/scram_conversation'
+
+describe Mongo::Auth::Scram::Conversation do
+  # Test uses global assertions
+  clean_slate_for_all_if_possible
+
+  include_context 'scram conversation context'
+
+  let(:conversation) do
+    described_class.new(user, double('connection'))
+  end
+
+  it_behaves_like 'scram conversation'
 
   let(:user) do
     Mongo::Auth::User.new(
       database: Mongo::Database::ADMIN,
       user: 'user',
-      password: 'pencil'
+      password: 'pencil',
+      # We specify SCRAM-SHA-1 so that we don't accidentally use
+      # SCRAM-SHA-256 on newer server versions.
+      auth_mech: :scram,
     )
   end
 
-  let(:conversation) do
-    described_class.new(user)
+  let(:mechanism) do
+    :scram
   end
 
   describe '#start' do
 
     let(:query) do
-      conversation.start
+      conversation.start(nil)
     end
 
     before do
@@ -46,35 +63,22 @@ describe Mongo::Auth::SCRAM::Conversation do
   end
 
   describe '#continue' do
-
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
+    include_context 'scram continue and finalize replies'
 
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
-      reply.instance_variable_set(:@documents, documents)
     end
 
     context 'when the server rnonce starts with the nonce' do
 
-      let(:payload) do
+      let(:continue_payload) do
         BSON::Binary.new(
           'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
         )
       end
 
       let(:query) do
-        conversation.continue(reply)
+        conversation.continue(continue_document, connection)
       end
 
       let(:selector) do
@@ -98,7 +102,7 @@ describe Mongo::Auth::SCRAM::Conversation do
 
     context 'when the server nonce does not start with the nonce' do
 
-      let(:payload) do
+      let(:continue_payload) do
         BSON::Binary.new(
           'r=NDA2NzU4MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
         )
@@ -106,26 +110,14 @@ describe Mongo::Auth::SCRAM::Conversation do
 
       it 'raises an error' do
         expect {
-          conversation.continue(reply)
+          conversation.continue(continue_document, connection)
         }.to raise_error(Mongo::Error::InvalidNonce)
       end
     end
   end
 
   describe '#finalize' do
-
-    let(:continue_reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:continue_documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => continue_payload,
-        'ok' => 1.0
-      }]
-    end
+    include_context 'scram continue and finalize replies'
 
     let(:continue_payload) do
       BSON::Binary.new(
@@ -133,34 +125,20 @@ describe Mongo::Auth::SCRAM::Conversation do
       )
     end
 
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
-
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
-      continue_reply.instance_variable_set(:@documents, continue_documents)
-      reply.instance_variable_set(:@documents, documents)
     end
 
     context 'when the verifier matches the server signature' do
 
-      let(:payload) do
+      let(:finalize_payload) do
         BSON::Binary.new('v=gwo9E8+uifshm7ixj441GvIfuUY=')
       end
 
       let(:query) do
-        conversation.continue(continue_reply)
-        conversation.finalize(reply)
+        conversation.continue(continue_document, connection)
+        conversation.process_continue_response(finalize_document)
+        conversation.finalize(connection)
       end
 
       let(:selector) do
@@ -182,15 +160,45 @@ describe Mongo::Auth::SCRAM::Conversation do
 
     context 'when the verifier does not match the server signature' do
 
-      let(:payload) do
+      let(:finalize_payload) do
         BSON::Binary.new('v=LQ+8yhQeVL2a3Dh+TDJ7xHz4Srk=')
       end
 
       it 'raises an error' do
         expect {
-          conversation.continue(continue_reply)
-          conversation.finalize(reply)
+          conversation.continue(continue_document, connection)
+          conversation.process_continue_response(finalize_document)
+          conversation.finalize(connection)
         }.to raise_error(Mongo::Error::InvalidSignature)
+      end
+    end
+
+    context 'when server signature is empty' do
+
+      let(:finalize_payload) do
+        BSON::Binary.new('v=')
+      end
+
+      it 'raises an error' do
+        expect {
+          conversation.continue(continue_document, connection)
+          conversation.process_continue_response(finalize_document)
+          conversation.finalize(connection)
+        }.to raise_error(Mongo::Error::InvalidSignature)
+      end
+    end
+
+    context 'when server signature is not provided' do
+
+      let(:finalize_payload) do
+        BSON::Binary.new('ok=absolutely')
+      end
+
+      it 'succeeds but does not mark conversation server verified' do
+        conversation.continue(continue_document, connection)
+        conversation.process_continue_response(finalize_document)
+        conversation.finalize(connection)
+        conversation.server_verified?.should be false
       end
     end
   end

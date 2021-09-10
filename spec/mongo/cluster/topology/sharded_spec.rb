@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Sharded do
@@ -6,8 +9,16 @@ describe Mongo::Cluster::Topology::Sharded do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
+  # Cluster needs a topology and topology needs a cluster...
+  # This temporary cluster is used for topology construction.
+  let(:temp_cluster) do
+    double('temp cluster').tap do |cluster|
+      allow(cluster).to receive(:servers_list).and_return([])
+    end
+  end
+
   let(:topology) do
-    described_class.new({}, monitoring)
+    described_class.new({}, monitoring, temp_cluster)
   end
 
   let(:monitoring) do
@@ -22,40 +33,65 @@ describe Mongo::Cluster::Topology::Sharded do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
+      allow(cl).to receive(:options).and_return({})
     end
   end
 
   let(:mongos) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options.merge(monitoring_io: false)
+    ).tap do |server|
+      allow(server).to receive(:description).and_return(mongos_description)
+    end
   end
 
   let(:standalone) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options.merge(monitoring_io: false)
+    ).tap do |server|
+      allow(server).to receive(:description).and_return(standalone_description)
+    end
   end
 
   let(:replica_set) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options.merge(monitoring_io: false)
+    ).tap do |server|
+      allow(server).to receive(:description).and_return(replica_set_description)
+    end
   end
 
   let(:mongos_description) do
-    Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
+    Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid',
+      'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
   end
 
   let(:standalone_description) do
-    Mongo::Server::Description.new(address, { 'ismaster' => true })
+    Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
+    'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
   end
 
   let(:replica_set_description) do
-    Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
+    Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
+      'minWireVersion' => 2, 'maxWireVersion' => 8,
+      'setName' => 'testing', 'ok' => 1 })
+  end
+
+  describe '#initialize' do
+    let(:topology) do
+      Mongo::Cluster::Topology::Sharded.new(
+        {replica_set_name: 'foo'},
+        monitoring, temp_cluster)
+    end
+
+    it 'does not accept RS name' do
+      expect do
+        topology
+      end.to raise_error(ArgumentError, 'Topology Mongo::Cluster::Topology::Sharded cannot have the :replica_set_name option set')
+    end
   end
 
   describe '.servers' do
-
-    before do
-      mongos.monitor.instance_variable_set(:@description, mongos_description)
-      standalone.monitor.instance_variable_set(:@description, standalone_description)
-      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
-    end
 
     let(:servers) do
       topology.servers([ mongos, standalone, replica_set ])
@@ -101,54 +137,22 @@ describe Mongo::Cluster::Topology::Sharded do
     end
   end
 
-  describe '#add_hosts?' do
+  describe '#summary' do
+    require_no_linting
 
-    it 'returns false' do
-      expect(topology.add_hosts?(double('description'), [])).to eq(false)
-    end
-  end
-
-  describe '#remove_hosts?' do
-
-    it 'returns true' do
-      expect(topology.remove_hosts?(double('description'))).to eq(true)
-    end
-  end
-
-  describe '#remove_server?' do
-
-    before do
-      mongos.monitor.instance_variable_set(:@description, mongos_description)
-      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
+    let(:desc1) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))
     end
 
-    context 'when the server itself should be removed' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:mongos?).and_return(false)
-          allow(d).to receive(:unknown?).and_return(false)
-          allow(d).to receive(:is_server?).and_return(true)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_server?(description, mongos)).to eq(true)
-      end
+    let(:desc2) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27027'))
     end
 
-    context 'when the server is neither a mongos nor an unknown' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:mongos?).and_return(true)
-          allow(d).to receive(:is_server?).and_return(false)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_server?(description, replica_set)).to eq(true)
-      end
+    it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return({
+        desc1.address.to_s => desc1, desc2.address.to_s => desc2,
+      })
+      expect(topology.summary).to eq('Sharded[127.0.0.2:27017,127.0.0.2:27027]')
     end
   end
 end

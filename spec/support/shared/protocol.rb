@@ -1,4 +1,9 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 shared_examples 'message with a header' do
+  let(:collection_name) { 'test' }
+
   describe 'header' do
     describe 'length' do
       let(:field) { bytes.to_s[0..3] }

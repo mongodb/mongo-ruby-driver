@@ -1,3 +1,9 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
+# TODO convert, move or delete these tests as part of RUBY-2706.
+
+=begin
 require 'spec_helper'
 
 describe Mongo::Cursor::Builder::OpGetMore do
@@ -5,11 +11,20 @@ describe Mongo::Cursor::Builder::OpGetMore do
   describe '#specification' do
 
     let(:reply) do
-      Mongo::Protocol::Reply.allocate
+      Mongo::Protocol::Reply.allocate.tap do |reply|
+        allow(reply).to receive(:cursor_id).and_return(8000)
+      end
+    end
+
+    let(:description) do
+      Mongo::Server::Description.new(
+        double('description address'),
+        { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+      )
     end
 
     let(:result) do
-      Mongo::Operation::Result.new(reply)
+      Mongo::Operation::Result.new(reply, description)
     end
 
     let(:view) do
@@ -38,11 +53,11 @@ describe Mongo::Cursor::Builder::OpGetMore do
     end
 
     it 'includes the cursor id' do
-      expect(specification[:cursor_id]).to eq(cursor.id)
+      expect(specification[:cursor_id]).to eq(BSON::Int64.new(8000))
     end
 
     it 'includes the database name' do
-      expect(specification[:db_name]).to eq(TEST_DB)
+      expect(specification[:db_name]).to eq(SpecConfig.instance.test_db)
     end
 
     it 'includes the collection name' do
@@ -50,3 +65,4 @@ describe Mongo::Cursor::Builder::OpGetMore do
     end
   end
 end
+=end

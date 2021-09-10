@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+
+$: << File.join(File.dirname(__FILE__), '../spec')
+
+require 'support/aws_utils'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: aws [options] command ..."
+
+  opts.on("-a", "--access-key-id=ID", "AWS access key ID") do |v|
+    options[:access_key_id] = v
+  end
+
+  opts.on("-s", "--secret-access-key=SECRET", "AWS secret access key") do |v|
+    options[:secret_access_key] = v
+  end
+
+  opts.on("-r", "--region=REGION", "AWS region") do |v|
+    options[:region] = v
+  end
+
+  # launch-ecs options
+  opts.on('--ec2', 'Use EC2 launch type instead of Fargate') do |v|
+    options[:ec2] = true
+  end
+end.parse!
+
+case cmd = ARGV.shift
+when 'setup-resources'
+  AwsUtils::Provisioner.new.setup_aws_auth_resources
+when 'reset-keys'
+  AwsUtils::Provisioner.new.reset_keys
+when 'assume-role'
+  arn = ARGV.shift
+
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  if arn.nil?
+    arn = AwsUtils::Inspector.new(**options).assume_role_arn
+  end
+  credentials = orchestrator.assume_role(arn)
+  puts "AWS_ACCESS_KEY_ID=#{credentials.access_key_id}"
+  puts "AWS_SECRET_ACCESS_KEY=#{credentials.secret_access_key}"
+  puts "AWS_SESSION_TOKEN=#{credentials.session_token}"
+  #puts "EXPIRATION=#{credentials.expiration.utc.strftime('%Y%m%dT%H%M%SZ')}"
+  puts
+when 'set-instance-profile'
+  instance_id = ARGV.shift
+  unless instance_id
+    raise 'Instance id is required'
+  end
+
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.set_instance_profile(instance_id)
+when 'clear-instance-profile'
+  instance_id = ARGV.shift
+  unless instance_id
+    raise 'Instance id is required'
+  end
+
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.clear_instance_profile(instance_id)
+when 'key-pairs'
+  AwsUtils::Inspector.new(**options).list_key_pairs
+when 'launch-ec2'
+  public_key_path, = ARGV
+  unless public_key_path
+    raise "Public key path must be given"
+  end
+
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.provision_auth_ec2_instance(public_key_path: public_key_path)
+when 'stop-ec2'
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.terminate_auth_ec2_instance
+when 'launch-ecs'
+  public_key_path, = ARGV
+  unless public_key_path
+    raise "Public key path must be given"
+  end
+
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.provision_auth_ecs_task(
+    public_key_path: public_key_path,
+  )
+when 'stop-ecs'
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.terminate_auth_ecs_task
+when 'ecs-status'
+  AwsUtils::Inspector.new(**options).ecs_status
+when nil
+  raise "Command must be given"
+else
+  raise "Bogus command #{cmd}"
+end

@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +25,7 @@ module Mongo
   # @since 2.0.0
   class Database
     extend Forwardable
+    include Retryable
 
     # The admin database name.
     #
@@ -41,6 +45,7 @@ module Mongo
     # Database name field constant.
     #
     # @since 2.1.0
+    # @deprecated
     NAME = 'name'.freeze
 
     # Databases constant.
@@ -66,6 +71,8 @@ module Mongo
     def_delegators :@client,
                    :cluster,
                    :read_preference,
+                   :server_selector,
+                   :read_concern,
                    :write_concern
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.
@@ -100,65 +107,160 @@ module Mongo
     #
     # @since 2.0.0
     def [](collection_name, options = {})
+      if options[:server_api]
+        raise ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level'
+      end
       Collection.new(self, collection_name, options)
     end
     alias_method :collection, :[]
 
-    # Get all the names of the non system collections in the database.
+    # Get all the names of the non-system collections in the database.
     #
-    # @example Get the collection names.
-    #   database.collection_names
+    # @note The set of returned collection names depends on the version of
+    #   MongoDB server that fulfills the request.
     #
-    # @return [ Array<String> ] The names of all non-system collections.
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
+    #
+    # @return [ Array<String> ] Names of the collections.
     #
     # @since 2.0.0
     def collection_names(options = {})
       View.new(self).collection_names(options)
     end
 
-    # Get info on all the collections in the database.
+    # Get info on all the non-system collections in the database.
     #
-    # @example Get info on each collection.
-    #   database.list_collections
+    # @note The set of collections returned, and the schema of the
+    #   information hash per collection, depends on the MongoDB server
+    #   version that fulfills the request.
     #
-    # @return [ Array<Hash> ] Info for each collection in the database.
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :name_only Indicates whether command
+    #   should return just collection/view names and type or return both the
+    #   name and other information
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
+    #
+    # @return [ Array<Hash> ] Array of information hashes, one for each
+    #   collection in the database.
     #
     # @since 2.0.5
-    def list_collections
-      View.new(self).list_collections
+    def list_collections(options = {})
+      View.new(self).list_collections(options)
     end
 
-    # Get all the collections that belong to this database.
+    # Get all the non-system collections that belong to this database.
     #
-    # @example Get all the collections.
-    #   database.collections
+    # @note The set of returned collections depends on the version of
+    #   MongoDB server that fulfills the request.
     #
-    # @return [ Array<Mongo::Collection> ] All the collections.
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with name_only: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
+    #
+    # @return [ Array<Mongo::Collection> ] The collections.
     #
     # @since 2.0.0
-    def collections
-      collection_names.map { |name| collection(name) }
+    def collections(options = {})
+      collection_names(options).map { |name| collection(name) }
     end
 
     # Execute a command on the database.
     #
     # @example Execute a command.
-    #   database.command(:ismaster => 1)
+    #   database.command(:hello => 1)
     #
     # @param [ Hash ] operation The command to execute.
     # @param [ Hash ] opts The command options.
     #
     # @option opts :read [ Hash ] The read preference for this command.
+    # @option opts :session [ Session ] The session to use for this command.
+    # @option opts :execution_options [ Hash ] Options to pass to the code that
+    #   executes this command. This is an internal option and is subject to
+    #   change.
+    #   - :deserialize_as_bson [ Boolean ] Whether to deserialize the response
+    #     to this command using BSON types intead of native Ruby types wherever
+    #     possible.
+    #
+    # @return [ Mongo::Operation::Result ] The result of the command execution.
+    def command(operation, opts = {})
+      opts = opts.dup
+      execution_opts = opts.delete(:execution_options) || {}
+
+      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
+        opts[:session].txn_read_preference
+      else
+        nil
+      end
+      txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
+      Lint.validate_underscore_read_preference(txn_read_pref)
+      selector = ServerSelector.get(txn_read_pref)
+
+      client.send(:with_session, opts) do |session|
+        server = selector.select_server(cluster, nil, session)
+        op = Operation::Command.new(
+          :selector => operation.dup,
+          :db_name => name,
+          :read => selector,
+          :session => session
+        )
+
+        op.execute(server,
+          context: Operation::Context.new(client: client, session: session),
+          options: execution_opts)
+      end
+    end
+
+    # Execute a read command on the database, retrying the read if necessary.
+    #
+    # @param [ Hash ] operation The command to execute.
+    # @param [ Hash ] opts The command options.
+    #
+    # @option opts :read [ Hash ] The read preference for this command.
+    # @option opts :session [ Session ] The session to use for this command.
     #
     # @return [ Hash ] The result of the command execution.
-    def command(operation, opts = {})
-      preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
-      server = preference.select_server(cluster)
-      Operation::Commands::Command.new({
-        :selector => operation,
-        :db_name => name,
-        :read => preference
-      }).execute(server)
+    # @api private
+    def read_command(operation, opts = {})
+      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
+        opts[:session].txn_read_preference
+      else
+        nil
+      end
+      txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
+      Lint.validate_underscore_read_preference(txn_read_pref)
+      preference = ServerSelector.get(txn_read_pref)
+
+      client.send(:with_session, opts) do |session|
+        read_with_retry(session, preference) do |server|
+          Operation::Command.new({
+            :selector => operation.dup,
+            :db_name => name,
+            :read => preference,
+            :session => session
+          }).execute(server, context: Operation::Context.new(client: client, session: session))
+        end
+      end
     end
 
     # Drop the database and all its associated information.
@@ -166,16 +268,29 @@ module Mongo
     # @example Drop the database.
     #   database.drop
     #
+    # @param [ Hash ] options The options for the operation.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
+    #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
-    def drop
+    def drop(options = {})
       operation = { :dropDatabase => 1 }
-      Operation::Commands::DropDatabase.new({
-                                             selector: operation,
-                                             db_name: name,
-                                             write_concern: write_concern
-                                            }).execute(next_primary)
+      client.send(:with_session, options) do |session|
+        write_concern = if options[:write_concern]
+          WriteConcern.get(options[:write_concern])
+        else
+          self.write_concern
+        end
+        Operation::DropDatabase.new({
+          selector: operation,
+          db_name: name,
+          write_concern: write_concern,
+          session: session
+        }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+      end
     end
 
     # Instantiate a new database object.
@@ -192,6 +307,9 @@ module Mongo
     # @since 2.0.0
     def initialize(client, name, options = {})
       raise Error::InvalidDatabaseName.new unless name
+      if Lint.enabled? && !(name.is_a?(String) || name.is_a?(Symbol))
+        raise "Database name must be a string or a symbol: #{name}"
+      end
       @client = client
       @name = name.to_s.freeze
       @options = options.freeze
@@ -211,8 +329,20 @@ module Mongo
 
     # Get the Grid "filesystem" for this database.
     #
-    # @example Get the GridFS.
-    #   database.fs
+    # @param [ Hash ] options The GridFS options.
+    #
+    # @option options [ String ] :bucket_name The prefix for the files and chunks
+    #   collections.
+    # @option options [ Integer ] :chunk_size Override the default chunk
+    #   size.
+    # @option options [ String ] :fs_name The prefix for the files and chunks
+    #   collections.
+    # @option options [ String ] :read The read preference.
+    # @option options [ Session ] :session The session to use.
+    # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
     # @return [ Grid::FSBucket ] The GridFS for the database.
     #
@@ -231,6 +361,79 @@ module Mongo
     # @since 2.0.0
     def users
       Auth::User::View.new(self)
+    end
+
+    # Perform an aggregation on the database.
+    #
+    # @example Perform an aggregation.
+    #   collection.aggregate([ { "$listLocalSessions" => {} } ])
+    #
+    # @param [ Array<Hash> ] pipeline The aggregation pipeline.
+    # @param [ Hash ] options The aggregation options.
+    #
+    # @option options [ true, false ] :allow_disk_use Set to true if disk
+    #   usage is allowed during the aggregation.
+    # @option options [ Integer ] :batch_size The number of documents to return
+    #   per batch.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
+    # @option options [ Hash ] :collation The collation to use.
+    # @option options [ String ] :comment Associate a comment with the aggregation.
+    # @option options [ String ] :hint The index to use for the aggregation.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time in
+    #   milliseconds to allow the aggregation to run.
+    # @option options [ true, false ] :use_cursor Indicates whether the command
+    #   will request that the server provide results using a cursor. Note that
+    #   as of server version 3.6, aggregations always provide results using a
+    #   cursor and this option is therefore not valid.
+    # @option options [ Session ] :session The session to use.
+    #
+    # @return [ Aggregation ] The aggregation object.
+    #
+    # @since 2.10.0
+    def aggregate(pipeline, options = {})
+      View.new(self).aggregate(pipeline, options)
+    end
+
+    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
+    # in the aggregation framework. As of version 4.0, this stage allows users to request that
+    # notifications are sent for all changes that occur in the client's database.
+    #
+    # @example Get change notifications for a given database..
+    #  database.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])
+    #
+    # @param [ Array<Hash> ] pipeline Optional additional filter operators.
+    # @param [ Hash ] options The change stream options.
+    #
+    # @option options [ String ] :full_document Allowed values: 'default', 'updateLookup'.
+    #   Defaults to 'default'. When set to 'updateLookup', the change notification for partial
+    #   updates will include both a delta describing the changes to the document, as well as a copy
+    #   of the entire document that was changed from some time after the change occurred.
+    # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point
+    #   for the new change stream.
+    # @option options [ Integer ] :max_await_time_ms The maximum amount of time for the server to
+    #   wait on new documents to satisfy a change stream query.
+    # @option options [ Integer ] :batch_size The number of documents to return per batch.
+    # @option options [ BSON::Document, Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
+    # @option options [ BSON::Timestamp ] :start_at_operation_time Only return
+    #   changes that occurred after the specified timestamp. Any command run
+    #   against the server will return a cluster time that can be used here.
+    #   Only recognized by server versions 4.0+.
+    #
+    # @note A change stream only allows 'majority' read concern.
+    # @note This helper method is preferable to running a raw aggregation with a $changeStream
+    #   stage, for the purpose of supporting resumability.
+    #
+    # @return [ ChangeStream ] The change stream object.
+    #
+    # @since 2.6.0
+    def watch(pipeline = [], options = {})
+      Mongo::Collection::View::ChangeStream.new(
+        Mongo::Collection::View.new(collection("#{COMMAND}.aggregate")),
+        pipeline,
+        Mongo::Collection::View::ChangeStream::DATABASE,
+        options)
     end
 
     # Create a database for the provided client, for use when we don't want the

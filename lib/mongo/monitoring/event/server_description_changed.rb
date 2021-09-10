@@ -1,4 +1,7 @@
-# Copyright (C) 2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,7 +22,7 @@ module Mongo
       # Event fired when a server's description changes.
       #
       # @since 2.4.0
-      class ServerDescriptionChanged
+      class ServerDescriptionChanged < Mongo::Event::Base
 
         # @return [ Address ] address The server address.
         attr_reader :address
@@ -35,6 +38,13 @@ module Mongo
         #   description.
         attr_reader :new_description
 
+        # @return [ true | false ] Whether the heartbeat was awaited.
+        #
+        # @api experimental
+        def awaited?
+          @awaited
+        end
+
         # Create the event.
         #
         # @example Create the event.
@@ -44,13 +54,44 @@ module Mongo
         # @param [ Integer ] topology The topology.
         # @param [ Server::Description ] previous_description The previous description.
         # @param [ Server::Description ] new_description The new description.
+        # @param [ true | false ] awaited Whether the server description was
+        #   a result of processing an awaited hello response.
         #
         # @since 2.4.0
-        def initialize(address, topology, previous_description, new_description)
+        # @api private
+        def initialize(address, topology, previous_description, new_description,
+          awaited: false
+        )
           @address = address
           @topology = topology
           @previous_description = previous_description
           @new_description = new_description
+          @awaited = !!awaited
+        end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @since 2.7.0
+        # @api experimental
+        def summary
+          "#<#{short_class_name}" +
+          " address=#{address}" +
+          # TODO Add summaries to descriptions and use them here
+          " prev=#{previous_description.server_type.upcase} new=#{new_description.server_type.upcase}#{awaited_indicator}>"
+        end
+
+        private
+
+        def awaited_indicator
+          if awaited?
+            ' [awaited]'
+          else
+            ''
+          end
         end
       end
     end

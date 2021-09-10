@@ -1,9 +1,21 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Grid::FSBucket do
 
   let(:fs) do
-    described_class.new(authorized_client.database, options)
+    described_class.new(client.database, options)
+  end
+
+  # A different instance so that fs creates indexes correctly
+  let(:support_fs) do
+    described_class.new(client.database, options)
+  end
+
+  let(:client) do
+    authorized_client
   end
 
   let(:options) do
@@ -16,6 +28,11 @@ describe Mongo::Grid::FSBucket do
 
   let(:file) do
     File.open(__FILE__)
+  end
+
+  before do
+    support_fs.files_collection.drop rescue nil
+    support_fs.chunks_collection.drop rescue nil
   end
 
   describe '#initialize' do
@@ -50,16 +67,25 @@ describe Mongo::Grid::FSBucket do
 
       context 'when a read preference is set' do
 
-        let(:options) do
-          { read: { mode: :secondary } }
+        context 'when given as a hash with symbol keys' do
+          let(:options) do
+            { read: { mode: :secondary } }
+          end
+
+          it 'returns the read preference as a BSON::Document' do
+            expect(fs.send(:read_preference)).to be_a(BSON::Document)
+            expect(fs.send(:read_preference)).to eq('mode' => :secondary)
+          end
         end
 
-        let(:read_pref) do
-          Mongo::ServerSelector.get(Mongo::Options::Redacted.new(options[:read].merge(authorized_client.options)))
-        end
+        context 'when given as a BSON::Document' do
+          let(:options) do
+            BSON::Document.new(read: { mode: :secondary })
+          end
 
-        it 'sets the read preference' do
-          expect(fs.send(:read_preference)).to eq(read_pref)
+          it 'returns the read preference as set' do
+            expect(fs.send(:read_preference)).to eq(options[:read])
+          end
         end
       end
 
@@ -98,6 +124,38 @@ describe Mongo::Grid::FSBucket do
             expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
           end
         end
+
+        context 'when disable_md5 is not specified' do
+
+          it 'does not set the option on the write stream' do
+            expect(stream.options[:disable_md5]).to be_nil
+          end
+        end
+
+        context 'when disable_md5 is specified' do
+
+          context 'when disable_md5 is true' do
+
+            let(:options) do
+              { disable_md5: true }
+            end
+
+            it 'passes the option to the write stream' do
+              expect(stream.options[:disable_md5]).to be(true)
+            end
+          end
+
+          context 'when disable_md5 is false' do
+
+            let(:options) do
+              { disable_md5: false }
+            end
+
+            it 'passes the option to the write stream' do
+              expect(stream.options[:disable_md5]).to be(false)
+            end
+          end
+        end
       end
     end
   end
@@ -121,11 +179,6 @@ describe Mongo::Grid::FSBucket do
         files.each do |file|
           fs.insert_one(file)
         end
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       it 'returns a collection view' do
@@ -154,6 +207,24 @@ describe Mongo::Grid::FSBucket do
 
       let(:view) do
         fs.find({filename: 'test.txt'}, options)
+      end
+
+      context 'when provided allow_disk_use' do
+        context 'when allow_disk_use is true' do
+          let(:options) { { allow_disk_use: true } }
+
+          it 'sets allow_disk_use on the view' do
+            expect(view.options[:allow_disk_use]).to be true
+          end
+        end
+
+        context 'when allow_disk_use is false' do
+          let(:options) { { allow_disk_use: false } }
+
+          it 'sets allow_disk_use on the view' do
+            expect(view.options[:allow_disk_use]).to be false
+          end
+        end
       end
 
       context 'when provided batch_size' do
@@ -227,11 +298,6 @@ describe Mongo::Grid::FSBucket do
       fs.insert_one(file)
     end
 
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
-    end
-
     let(:from_db) do
       fs.find_one(:filename => 'test.txt')
     end
@@ -264,15 +330,14 @@ describe Mongo::Grid::FSBucket do
       Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
     end
 
+    let(:support_file) do
+      Mongo::Grid::File.new('Hello!', :filename => 'support_test.txt')
+    end
+
     context 'when inserting the file once' do
 
       let!(:result) do
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       let(:from_db) do
@@ -293,18 +358,14 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when the files collection is empty' do
-
       before do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
+        fs.database[fs.files_collection.name].indexes
+      end
+
+      let(:operation) do
         expect(fs.files_collection).to receive(:indexes).and_call_original
         expect(fs.chunks_collection).to receive(:indexes).and_call_original
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       let(:chunks_index) do
@@ -315,62 +376,58 @@ describe Mongo::Grid::FSBucket do
         fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
       end
 
+      it 'tries to create indexes' do
+        expect(fs).to receive(:create_index_if_missing!).twice.and_call_original
+        operation
+      end
+
       it 'creates an index on the files collection' do
+        operation
         expect(files_index[:name]).to eq('filename_1_uploadDate_1')
       end
 
       it 'creates an index on the chunks collection' do
+        operation
         expect(chunks_index[:name]).to eq('files_id_1_n_1')
       end
 
       context 'when a write operation is called more than once' do
-
-        before do
-          expect(fs).not_to receive(:ensure_indexes!)
-        end
 
         let(:file2) do
           Mongo::Grid::File.new('Goodbye!', :filename => 'test2.txt')
         end
 
         it 'only creates the indexes the first time' do
-          expect(fs.insert_one(file2)).to be_a(BSON::ObjectId)
+          RSpec::Mocks.with_temporary_scope do
+            expect(fs).to receive(:create_index_if_missing!).twice.and_call_original
+            operation
+          end
+          RSpec::Mocks.with_temporary_scope do
+            expect(fs).not_to receive(:create_index_if_missing!)
+            expect(fs.insert_one(file2)).to be_a(BSON::ObjectId)
+          end
         end
       end
     end
 
-    context 'when the index creation encounters an error', if: write_command_enabled? do
+    context 'when the index creation encounters an error' do
 
       before do
-        fs.chunks_collection.drop
         fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
-        expect(fs.chunks_collection).to receive(:indexes).and_call_original
-        expect(fs.files_collection).not_to receive(:indexes)
       end
 
-      after do
-        fs.database[fs.chunks_collection.name].indexes.drop_one('files_id_1_n_1')
-      end
-
-      it 'raises the error to the user' do
+      it 'should not raise an error to the user' do
         expect {
           fs.insert_one(file)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        }.not_to raise_error
       end
     end
 
     context 'when the files collection is not empty' do
 
       before do
-        fs.files_collection.insert_one(a: 1)
-        expect(fs.files_collection).not_to receive(:indexes)
-        expect(fs.chunks_collection).not_to receive(:indexes)
+        support_fs.insert_one(support_file)
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       let(:files_index) do
@@ -383,11 +440,6 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when inserting the file more than once' do
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
-      end
 
       it 'raises an error' do
         expect {
@@ -410,11 +462,6 @@ describe Mongo::Grid::FSBucket do
 
       before do
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       it 'successfully inserts the file' do
@@ -486,16 +533,11 @@ describe Mongo::Grid::FSBucket do
   context 'when a read stream is opened' do
 
     let(:fs) do
-      described_class.new(authorized_client.database)
+      described_class.new(authorized_client.database, options)
     end
 
     let(:io) do
       StringIO.new
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     describe '#open_download_stream' do
@@ -594,6 +636,29 @@ describe Mongo::Grid::FSBucket do
 
     describe '#download_to_stream' do
 
+      context 'sessions' do
+
+        let(:options) do
+          { session: session }
+        end
+
+        let(:file_id) do
+          fs.open_upload_stream(filename) do |stream|
+            stream.write(file)
+          end.file_id
+        end
+
+        let(:operation) do
+          fs.download_to_stream(file_id, io)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+      end
+
       context 'when the file is found' do
 
         let!(:file_id) do
@@ -678,11 +743,13 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'sets the read preference on the Stream::Read object' do
-        expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
+        expect(stream.read_preference).to be_a(BSON::Document)
+        expect(stream.read_preference).to eq(BSON::Document.new(options[:read]))
       end
     end
 
     describe '#download_to_stream_by_name' do
+
 
       let(:files) do
         [
@@ -693,75 +760,105 @@ describe Mongo::Grid::FSBucket do
         ]
       end
 
-      before do
-        files.each do |file|
-          fs.upload_from_stream('test.txt', file)
+      context ' when using a session' do
+
+        let(:options) do
+          { session: session }
         end
-      end
 
-      let(:io) do
-        StringIO.new
-      end
-
-      context 'when revision is not specified' do
-
-        let!(:result) do
+        let(:operation) do
           fs.download_to_stream_by_name('test.txt', io)
         end
 
-        it 'returns the most recent version' do
-          expect(io.string).to eq('hello 4')
+        let(:client) do
+          authorized_client
         end
+
+        before do
+          files.each do |file|
+            authorized_client.database.fs.upload_from_stream('test.txt', file)
+          end
+        end
+
+        let(:io) do
+          StringIO.new
+        end
+
+        it_behaves_like 'an operation using a session'
       end
 
-      context 'when revision is 0' do
+      context 'when not using a session' do
 
-        let!(:result) do
-          fs.download_to_stream_by_name('test.txt', io, revision: 0)
+        before do
+          files.each do |file|
+            fs.upload_from_stream('test.txt', file)
+          end
         end
 
-        it 'returns the original stored file' do
-          expect(io.string).to eq('hello 1')
-        end
-      end
-
-      context 'when revision is negative' do
-
-        let!(:result) do
-          fs.download_to_stream_by_name('test.txt', io, revision: -2)
+        let(:io) do
+          StringIO.new
         end
 
-        it 'returns that number of versions from the most recent' do
-          expect(io.string).to eq('hello 3')
+        context 'when revision is not specified' do
+
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io)
+          end
+
+          it 'returns the most recent version' do
+            expect(io.string).to eq('hello 4')
+          end
         end
-      end
 
-      context 'when revision is positive' do
+        context 'when revision is 0' do
 
-        let!(:result) do
-          fs.download_to_stream_by_name('test.txt', io, revision: 1)
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io, revision: 0)
+          end
+
+          it 'returns the original stored file' do
+            expect(io.string).to eq('hello 1')
+          end
         end
 
-        it 'returns that number revision' do
-          expect(io.string).to eq('hello 2')
+        context 'when revision is negative' do
+
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io, revision: -2)
+          end
+
+          it 'returns that number of versions from the most recent' do
+            expect(io.string).to eq('hello 3')
+          end
         end
-      end
 
-      context 'when the file revision is not found' do
+        context 'when revision is positive' do
 
-        it 'raises a FileNotFound error' do
-          expect {
-            fs.download_to_stream_by_name('test.txt', io, revision: 100)
-          }.to raise_exception(Mongo::Error::InvalidFileRevision)
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io, revision: 1)
+          end
+
+          it 'returns that number revision' do
+            expect(io.string).to eq('hello 2')
+          end
         end
-      end
 
-      context 'when the file is not found' do
+        context 'when the file revision is not found' do
 
-        it 'raises a FileNotFound error' do
-          expect {
-            fs.download_to_stream_by_name('non-existent.txt', io)
-          }.to raise_exception(Mongo::Error::FileNotFound)
+          it 'raises a FileNotFound error' do
+            expect {
+              fs.download_to_stream_by_name('test.txt', io, revision: 100)
+            }.to raise_exception(Mongo::Error::InvalidFileRevision)
+          end
+        end
+
+        context 'when the file is not found' do
+
+          it 'raises a FileNotFound error' do
+            expect {
+              fs.download_to_stream_by_name('non-existent.txt', io)
+            }.to raise_exception(Mongo::Error::FileNotFound)
+          end
         end
       end
     end
@@ -777,124 +874,154 @@ describe Mongo::Grid::FSBucket do
         ]
       end
 
-      before do
-        files.each do |file|
-          fs.upload_from_stream('test.txt', file)
-        end
-      end
-
       let(:io) do
         StringIO.new
       end
 
-      context 'when a block is provided' do
+      context ' when using a session' do
 
-        let(:stream) do
-          fs.open_download_stream_by_name('test.txt') do |stream|
-            io.write(stream.read)
+        let(:options) do
+          { session: session }
+        end
+
+        let(:operation) do
+          fs.download_to_stream_by_name('test.txt', io)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        before do
+          files.each do |file|
+            authorized_client.database.fs.upload_from_stream('test.txt', file)
           end
         end
 
-        it 'returns a Stream::Read object' do
-          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+        let(:io) do
+          StringIO.new
         end
 
-        it 'closes the stream after the block completes' do
-          expect(stream.closed?).to be(true)
+        it_behaves_like 'an operation using a session'
+      end
+
+      context 'when not using a session' do
+
+        before do
+          files.each do |file|
+            fs.upload_from_stream('test.txt', file)
+          end
         end
 
-        it 'yields the stream to the block' do
-          stream
-          expect(io.size).to eq(files[0].size)
-        end
+        context 'when a block is provided' do
 
-        context 'when revision is not specified' do
-
-          let!(:result) do
+          let(:stream) do
             fs.open_download_stream_by_name('test.txt') do |stream|
               io.write(stream.read)
             end
           end
 
-          it 'returns the most recent version' do
-            expect(io.string).to eq('hello 4')
+          it 'returns a Stream::Read object' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
           end
-        end
 
-        context 'when revision is 0' do
+          it 'closes the stream after the block completes' do
+            expect(stream.closed?).to be(true)
+          end
 
-          let!(:result) do
-            fs.open_download_stream_by_name('test.txt', revision: 0) do |stream|
-              io.write(stream.read)
+          it 'yields the stream to the block' do
+            stream
+            expect(io.size).to eq(files[0].size)
+          end
+
+          context 'when revision is not specified' do
+
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt') do |stream|
+                io.write(stream.read)
+              end
+            end
+
+            it 'returns the most recent version' do
+              expect(io.string).to eq('hello 4')
             end
           end
 
-          it 'returns the original stored file' do
-            expect(io.string).to eq('hello 1')
-          end
-        end
+          context 'when revision is 0' do
 
-        context 'when revision is negative' do
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt', revision: 0) do |stream|
+                io.write(stream.read)
+              end
+            end
 
-          let!(:result) do
-            fs.open_download_stream_by_name('test.txt', revision: -2) do |stream|
-              io.write(stream.read)
+            it 'returns the original stored file' do
+              expect(io.string).to eq('hello 1')
             end
           end
 
-          it 'returns that number of versions from the most recent' do
-            expect(io.string).to eq('hello 3')
-          end
-        end
+          context 'when revision is negative' do
 
-        context 'when revision is positive' do
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt', revision: -2) do |stream|
+                io.write(stream.read)
+              end
+            end
 
-          let!(:result) do
-            fs.open_download_stream_by_name('test.txt', revision: 1) do |stream|
-              io.write(stream.read)
+            it 'returns that number of versions from the most recent' do
+              expect(io.string).to eq('hello 3')
             end
           end
 
-          it 'returns that number revision' do
-            expect(io.string).to eq('hello 2')
+          context 'when revision is positive' do
+
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt', revision: 1) do |stream|
+                io.write(stream.read)
+              end
+            end
+
+            it 'returns that number revision' do
+              expect(io.string).to eq('hello 2')
+            end
+          end
+
+          context 'when the file revision is not found' do
+
+            it 'raises a FileNotFound error' do
+              expect {
+                fs.open_download_stream_by_name('test.txt', revision: 100)
+              }.to raise_exception(Mongo::Error::InvalidFileRevision)
+            end
+          end
+
+          context 'when the file is not found' do
+
+            it 'raises a FileNotFound error' do
+              expect {
+                fs.open_download_stream_by_name('non-existent.txt')
+              }.to raise_exception(Mongo::Error::FileNotFound)
+            end
           end
         end
 
-        context 'when the file revision is not found' do
+        context 'when a block is not provided' do
 
-          it 'raises a FileNotFound error' do
-            expect {
-              fs.open_download_stream_by_name('test.txt', revision: 100)
-            }.to raise_exception(Mongo::Error::InvalidFileRevision)
+          let!(:stream) do
+            fs.open_download_stream_by_name('test.txt')
           end
-        end
 
-        context 'when the file is not found' do
-
-          it 'raises a FileNotFound error' do
-            expect {
-              fs.open_download_stream_by_name('non-existent.txt')
-            }.to raise_exception(Mongo::Error::FileNotFound)
+          it 'returns a Stream::Read object' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
           end
-        end
-      end
 
-      context 'when a block is not provided' do
+          it 'does not close the stream' do
+            expect(stream.closed?).to be(false)
+          end
 
-        let!(:stream) do
-          fs.open_download_stream_by_name('test.txt')
-        end
-
-        it 'returns a Stream::Read object' do
-          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
-        end
-
-        it 'does not close the stream' do
-          expect(stream.closed?).to be(false)
-        end
-
-        it 'does not yield the stream to the block' do
-          expect(io.size).to eq(0)
+          it 'does not yield the stream to the block' do
+            expect(io.size).to eq(0)
+          end
         end
       end
     end
@@ -904,11 +1031,6 @@ describe Mongo::Grid::FSBucket do
 
     let(:stream) do
       fs.open_upload_stream(filename)
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     describe '#open_upload_stream' do
@@ -941,32 +1063,36 @@ describe Mongo::Grid::FSBucket do
 
       context 'when a block is provided' do
 
-        let!(:stream) do
-          fs.open_upload_stream(filename) do |stream|
-            stream.write(file)
+        context 'when a session is not used' do
+
+          let!(:stream) do
+            fs.open_upload_stream(filename) do |stream|
+              stream.write(file)
+            end
+          end
+
+          let(:result) do
+            fs.find_one(filename: filename)
+          end
+
+          it 'returns the stream' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+          end
+
+          it 'creates an ObjectId for the file' do
+            expect(stream.file_id).to be_a(BSON::ObjectId)
+          end
+
+          it 'yields the stream to the block' do
+            expect(result.data.size).to eq(file.size)
+          end
+
+          it 'closes the stream when the block completes' do
+            expect(stream.closed?).to be(true)
           end
         end
-
-        let(:result) do
-          fs.find_one(filename: filename)
-        end
-
-        it 'returns the stream' do
-          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
-        end
-
-        it 'creates an ObjectId for the file' do
-          expect(stream.file_id).to be_a(BSON::ObjectId)
-        end
-
-        it 'yields the stream to the block' do
-          expect(result.data.size).to eq(file.size)
-        end
-
-        it 'closes the stream when the block completes' do
-          expect(stream.closed?).to be(true)
-        end
       end
+
     end
 
     describe '#upload_from_stream' do
@@ -1012,6 +1138,11 @@ describe Mongo::Grid::FSBucket do
             expect {
               fs.upload_from_stream(filename, file)
             }.to raise_exception(IOError)
+          end
+
+          it 'closes the stream' do
+            begin; fs.upload_from_stream(filename, file); rescue; end
+            expect(stream.closed?).to be(true)
           end
         end
 

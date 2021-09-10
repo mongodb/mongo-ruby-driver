@@ -1,39 +1,22 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
+require 'support/shared/auth_context'
 
 describe Mongo::Auth::CR do
 
-  let(:address) do
-    default_address
-  end
-
-  let(:monitoring) do
-    Mongo::Monitoring.new(monitoring: false)
-  end
-
-  let(:listeners) do
-    Mongo::Event::Listeners.new
-  end
-
-  let(:cluster) do
-    double('cluster').tap do |cl|
-      allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(app_metadata)
-    end
-  end
-
-  let(:topology) do
-    double('topology')
-  end
-
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    authorized_client.cluster.next_primary
   end
 
-  let(:connection) do
-    Mongo::Server::Connection.new(server, TEST_OPTIONS)
-  end
+  include_context 'auth unit tests'
 
   describe '#login' do
+
+    before do
+      connection.connect!
+    end
 
     context 'when the user is not authorized' do
 
@@ -46,33 +29,50 @@ describe Mongo::Auth::CR do
       end
 
       let(:cr) do
-        described_class.new(user)
+        described_class.new(user, connection)
       end
 
       let(:login) do
-        cr.login(connection).documents[0]
+        cr.login.documents[0]
       end
 
       it 'raises an exception' do
         expect {
-          cr.login(connection)
+          cr.login
         }.to raise_error(Mongo::Auth::Unauthorized)
+      end
+
+      context 'when compression is used' do
+        require_compression
+        min_server_fcv '3.6'
+
+        it 'does not compress the message' do
+          expect(Mongo::Protocol::Compressed).not_to receive(:new)
+          expect {
+            cr.login
+          }.to raise_error(Mongo::Auth::Unauthorized)
+        end
       end
     end
   end
 
   context 'when the user is authorized for the database' do
+    max_server_fcv '2.6'
+
+    before do
+      connection.connect!
+    end
 
     let(:cr) do
-      described_class.new(root_user)
+      described_class.new(root_user, connection)
     end
 
     let(:login) do
-      cr.login(connection).documents[0]
+      cr.login
     end
 
-    it 'logs the user into the connection', unless: scram_sha_1_enabled? do
-      expect(cr.login(connection).documents[0]['ok']).to eq(1)
+    it 'logs the user into the connection' do
+      expect(login['ok']).to eq(1)
     end
   end
 end

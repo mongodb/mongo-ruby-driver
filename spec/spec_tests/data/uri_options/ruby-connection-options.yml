@@ -1,0 +1,58 @@
+tests:
+  -
+    description: directConnection=true and connect=direct
+    uri: "mongodb://example.com/?directConnection=true&connect=direct"
+    valid: true
+    warning: false
+    hosts: ~
+    auth: ~
+    options:
+      directConnection: true
+      connect: direct
+  
+  -
+    description: directConnection=false and connect=direct
+    uri: "mongodb://example.com/?directConnection=false&connect=direct"
+    valid: false
+    warning: false
+    hosts: ~
+    auth: ~
+  
+  -
+    description: directConnection=true and connect=replica_set
+    uri: "mongodb://example.com/?directConnection=true&connect=replica_set&replicaSet=foo"
+    valid: false
+    warning: false
+    hosts: ~
+    auth: ~
+  
+  -
+    description: directConnection=false and connect=replica_set
+    uri: "mongodb://example.com/?directConnection=false&connect=replica_set&replicaSet=foo"
+    valid: true
+    warning: false
+    hosts: ~
+    auth: ~
+    options:
+      directConnection: false
+      connect: replica_set
+      replicaSet: foo
+    
+  -
+    description: directConnection=true and connect=sharded
+    uri: "mongodb://example.com/?directConnection=true&connect=sharded"
+    valid: false
+    warning: false
+    hosts: ~
+    auth: ~
+  
+  -
+    description: directConnection=false and connect=replica_set
+    uri: "mongodb://example.com/?directConnection=false&connect=sharded"
+    valid: true
+    warning: false
+    hosts: ~
+    auth: ~
+    options:
+      directConnection: false
+      connect: sharded

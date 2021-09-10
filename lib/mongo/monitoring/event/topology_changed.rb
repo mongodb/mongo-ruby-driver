@@ -1,4 +1,7 @@
-# Copyright (C) 2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,7 +22,7 @@ module Mongo
       # Event fired when the topology changes.
       #
       # @since 2.4.0
-      class TopologyChanged
+      class TopologyChanged < Mongo::Event::Base
 
         # @return [ Cluster::Topology ] previous_topology The previous topology.
         attr_reader :previous_topology
@@ -39,6 +42,20 @@ module Mongo
         def initialize(previous_topology, new_topology)
           @previous_topology = previous_topology
           @new_topology = new_topology
+        end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @since 2.7.0
+        # @api experimental
+        def summary
+          "#<#{short_class_name}" +
+          " prev=#{previous_topology.summary}" +
+          " new=#{new_topology.summary}>"
         end
       end
     end

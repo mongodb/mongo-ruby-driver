@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,50 +15,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/ldap/conversation'
-
 module Mongo
   module Auth
 
-    # Defines behaviour for LDAP Proxy authentication.
+    # Defines behavior for LDAP Proxy authentication.
     #
     # @since 2.0.0
-    class LDAP
+    # @api private
+    class LDAP < Base
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'PLAIN'.freeze
 
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
-
-      # Instantiate a new authenticator.
+      # Log the user in on the current connection.
       #
-      # @example Create the authenticator.
-      #   Mongo::Auth::LDAP.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
-      end
-      # Log the user in on the given connection.
-      #
-      # @example Log the user in.
-      #   user.login(connection)
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
-      #
-      # @return [ Protocol::Reply ] The authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
-        conversation = Conversation.new(user)
-        conversation.finalize(connection.dispatch([ conversation.start ]))
+      # @return [ BSON::Document ] The document of the authentication response.
+      def login
+        converse_1_step(connection, conversation)
       end
     end
   end
 end
+
+require 'mongo/auth/ldap/conversation'

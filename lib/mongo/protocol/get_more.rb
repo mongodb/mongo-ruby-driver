@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +18,7 @@
 module Mongo
   module Protocol
 
-    # MongoDB Wire protocol GetMore message.
+    # MongoDB Wire protocol getMore message.
     #
     # This is a client request message that is sent to the server in order
     # to retrieve additional documents from a cursor that has already been
@@ -27,7 +30,7 @@ module Mongo
     # @api semipublic
     class GetMore < Message
 
-      # Creates a new GetMore message
+      # Creates a new getMore message
       #
       # @example Get 15 additional documents from cursor 123 in 'xgen.users'.
       #   GetMore.new('xgen', 'users', 15, 123)
@@ -50,16 +53,16 @@ module Mongo
       # @example Return the event payload.
       #   message.payload
       #
-      # @return [ Hash ] The event payload.
+      # @return [ BSON::Document ] The event payload.
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'getMore',
           database_name: @database,
           command: upconverter.command,
           request_id: request_id
-        }
+        )
       end
 
       # Get more messages require replies from the database.
@@ -80,28 +83,28 @@ module Mongo
 
       private
 
-      # The operation code required to specify a GetMore message.
+      # The operation code required to specify a getMore message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2005
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2005
 
       # Field representing Zero encoded as an Int32
       field :zero, Zero
 
       # @!attribute
-      # @return [String] The namespace for this GetMore message.
+      # @return [String] The namespace for this getMore message.
       field :namespace, CString
 
       # @!attribute
-      # @return [Fixnum] The number to return for this GetMore message.
+      # @return [Fixnum] The number to return for this getMore message.
       field :number_to_return, Int32
 
       # @!attribute
       # @return [Fixnum] The cursor id to get more documents from.
       field :cursor_id, Int64
 
-      # Converts legacy getmore messages to the appropriare OP_COMMAND style
+      # Converts legacy getMore messages to the appropriare OP_COMMAND style
       # message.
       #
       # @since 2.1.0
@@ -110,6 +113,7 @@ module Mongo
         # The get more constant.
         #
         # @since 2.2.0
+        # @deprecated
         GET_MORE = 'getMore'.freeze
 
         # @return [ String ] collection The name of the collection.
@@ -148,12 +152,14 @@ module Mongo
         # @since 2.1.0
         def command
           document = BSON::Document.new
-          document.store(GET_MORE, cursor_id)
+          document.store('getMore', BSON::Int64.new(cursor_id))
           document.store(Message::BATCH_SIZE, number_to_return)
           document.store(Message::COLLECTION, collection)
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

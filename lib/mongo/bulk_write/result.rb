@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -180,7 +183,7 @@ module Mongo
       #
       # @since 2.1.0
       def validate!
-        if @results[Error::WRITE_ERRORS] || @results[Error::WRITE_CONCERN_ERRORS]
+        if @results['writeErrors'] || @results['writeConcernErrors']
           raise Error::BulkWriteError.new(@results)
         else
           self

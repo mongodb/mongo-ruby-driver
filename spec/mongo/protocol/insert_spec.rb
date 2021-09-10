@@ -1,18 +1,22 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::Insert do
 
   let(:opcode) { 2002 }
-  let(:db)     { TEST_DB }
-  let(:coll)   { TEST_COLL }
-  let(:ns)     { "#{db}.#{coll}" }
+  let(:db)     { SpecConfig.instance.test_db }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)     { "#{db}.#{collection_name}" }
   let(:doc1)   { { :name => 'Tyler' } }
   let(:doc2)   { { :name => 'Brandon' } }
   let(:docs)   { [doc1, doc2] }
   let(:options)   { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, docs, options)
+    described_class.new(db, collection_name, docs, options)
   end
 
   describe '#initialize' do
@@ -43,7 +47,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, docs, options)
+          described_class.new(db, collection_name, docs, options)
         end
 
         it 'returns true' do
@@ -53,7 +57,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, docs, options)
+          described_class.new('tyler', collection_name, docs, options)
         end
 
         it 'returns false' do
@@ -73,7 +77,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the documents are not equal' do
         let(:other) do
-          described_class.new(db, coll, docs[1..1], options)
+          described_class.new(db, collection_name, docs[1..1], options)
         end
 
         it 'returns false' do
@@ -83,7 +87,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, coll, docs, :flags => [:continue_on_error])
+          described_class.new(db, collection_name, docs, :flags => [:continue_on_error])
         end
 
         it 'returns false' do
@@ -155,6 +159,20 @@ describe Mongo::Protocol::Insert do
       let(:field) { bytes.to_s[37..-1] }
       it 'serializes the documents' do
         expect(field).to be_bson_sequence(docs)
+      end
+    end
+  end
+
+  describe '#registry' do
+
+    context 'when the class is loaded' do
+
+      it 'registers the op code in the Protocol Registry' do
+        expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
+      end
+
+      it 'creates an #op_code instance method' do
+        expect(message.op_code).to eq(described_class::OP_CODE)
       end
     end
   end

@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +19,7 @@ module Mongo
   module Grid
     class File
 
-      # Encapsulates behaviour around GridFS files collection file document.
+      # Encapsulates behavior around GridFS files collection file document.
       #
       # @since 2.0.0
       #
@@ -134,8 +137,14 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(document)
+          @client_md5 = Digest::MD5.new unless document[:disable_md5] == true
+          # document contains a mix of user options and keys added
+          # internally by the driver, like session.
+          # Remove the keys that driver adds but keep user options.
+          document = document.reject do |key, value|
+            key.to_s == 'session'
+          end
           @document = default_document.merge(Options::Mapper.transform(document, MAPPINGS))
-          @client_md5 = Digest::MD5.new
         end
 
         # Get a readable inspection for the object.
@@ -184,8 +193,29 @@ module Mongo
         # @return [ String ] The md5 hash as a string.
         #
         # @since 2.0.0
+        #
+        # @deprecated as of 2.6.0
         def md5
           document[:md5] || @client_md5
+        end
+
+        # Update the md5 hash if there is one.
+        #
+        # @example Update the md5 hash.
+        #   file_info.update_md5(bytes)
+        #
+        # @note This method is transitional and is provided for backwards compatibility.
+        # It will be removed when md5 support is deprecated entirely.
+        #
+        # @param [ String ] bytes The bytes to use to update the digest.
+        #
+        # @return [ Digest::MD5 ] The md5 hash object.
+        #
+        # @since 2.6.0
+        #
+        # @deprecated as of 2.6.0
+        def update_md5(bytes)
+          md5.update(bytes) if md5
         end
 
         # Convert the file information document to BSON for storage.
@@ -203,7 +233,9 @@ module Mongo
         #
         # @since 2.0.0
         def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
-          document[:md5] ||= @client_md5.hexdigest
+          if @client_md5 && !document[:md5]
+            document[:md5] = @client_md5.hexdigest
+          end
           document.to_bson(buffer)
         end
 
@@ -225,7 +257,8 @@ module Mongo
           BSON::Document.new(
             :_id => BSON::ObjectId.new,
             :chunkSize => Chunk::DEFAULT_SIZE,
-            :uploadDate => Time.now.utc,
+            # MongoDB stores times with millisecond precision
+            :uploadDate => Time.now.utc.round(3),
             :contentType => DEFAULT_CONTENT_TYPE
           )
         end

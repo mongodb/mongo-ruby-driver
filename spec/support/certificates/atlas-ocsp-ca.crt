@@ -1,0 +1,110 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            0a:35:08:d5:5c:29:2b:01:7d:f8:ad:65:c0:0f:f7:e4
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA
+        Validity
+            Not Before: Sep 24 00:00:00 2020 GMT
+            Not After : Sep 23 23:59:59 2030 GMT
+        Subject: C = US, O = DigiCert Inc, CN = DigiCert TLS RSA SHA256 2020 CA1
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:c1:4b:b3:65:47:70:bc:dd:4f:58:db:ec:9c:ed:
+                    c3:66:e5:1f:31:13:54:ad:4a:66:46:1f:2c:0a:ec:
+                    64:07:e5:2e:dc:dc:b9:0a:20:ed:df:e3:c4:d0:9e:
+                    9a:a9:7a:1d:82:88:e5:11:56:db:1e:9f:58:c2:51:
+                    e7:2c:34:0d:2e:d2:92:e1:56:cb:f1:79:5f:b3:bb:
+                    87:ca:25:03:7b:9a:52:41:66:10:60:4f:57:13:49:
+                    f0:e8:37:67:83:df:e7:d3:4b:67:4c:22:51:a6:df:
+                    0e:99:10:ed:57:51:74:26:e2:7d:c7:ca:62:2e:13:
+                    1b:7f:23:88:25:53:6f:c1:34:58:00:8b:84:ff:f8:
+                    be:a7:58:49:22:7b:96:ad:a2:88:9b:15:bc:a0:7c:
+                    df:e9:51:a8:d5:b0:ed:37:e2:36:b4:82:4b:62:b5:
+                    49:9a:ec:c7:67:d6:e3:3e:f5:e3:d6:12:5e:44:f1:
+                    bf:71:42:7d:58:84:03:80:b1:81:01:fa:f9:ca:32:
+                    bb:b4:8e:27:87:27:c5:2b:74:d4:a8:d6:97:de:c3:
+                    64:f9:ca:ce:53:a2:56:bc:78:17:8e:49:03:29:ae:
+                    fb:49:4f:a4:15:b9:ce:f2:5c:19:57:6d:6b:79:a7:
+                    2b:a2:27:20:13:b5:d0:3d:40:d3:21:30:07:93:ea:
+                    99:f5
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                B7:6B:A2:EA:A8:AA:84:8C:79:EA:B4:DA:0F:98:B2:C5:95:76:B9:F4
+            X509v3 Authority Key Identifier: 
+                keyid:03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55
+
+            X509v3 Key Usage: critical
+                Digital Signature, Certificate Sign, CRL Sign
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Basic Constraints: critical
+                CA:TRUE, pathlen:0
+            Authority Information Access: 
+                OCSP - URI:http://ocsp.digicert.com
+                CA Issuers - URI:http://cacerts.digicert.com/DigiCertGlobalRootCA.crt
+
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://crl3.digicert.com/DigiCertGlobalRootCA.crl
+
+                Full Name:
+                  URI:http://crl4.digicert.com/DigiCertGlobalRootCA.crl
+
+            X509v3 Certificate Policies: 
+                Policy: 2.23.140.1.1
+                Policy: 2.23.140.1.2.1
+                Policy: 2.23.140.1.2.2
+                Policy: 2.23.140.1.2.3
+
+    Signature Algorithm: sha256WithRSAEncryption
+         77:ab:b7:7a:27:3d:ae:bb:f6:7f:e0:5a:56:c9:84:aa:ca:5b:
+         71:17:dd:22:47:fc:4e:9f:ee:d0:c1:a4:04:e1:a3:eb:c5:49:
+         c1:fd:d1:c9:df:8c:af:94:45:2c:46:2a:a3:63:39:20:f9:9e:
+         4a:24:94:41:c8:a9:d9:e2:9c:54:05:06:cb:5c:1c:be:00:1b:
+         0f:a8:5a:ff:19:bb:65:c7:16:af:21:56:dd:61:05:c9:e9:8f:
+         98:76:df:6b:1b:d0:72:0c:50:b9:30:29:7a:bf:60:59:10:66:
+         13:3a:2d:ac:15:11:6c:2d:23:0c:02:3e:05:3b:fe:e5:a1:9c:
+         e2:8a:db:87:d7:4a:e8:5e:e7:48:06:eb:ab:12:9a:f2:af:84:
+         c3:5b:83:4a:99:81:83:ab:00:a1:ca:0a:3c:4c:a2:25:89:2a:
+         22:a7:a4:f3:33:4c:5b:8c:2e:1a:02:97:0f:9d:8f:6d:2d:95:
+         08:fb:4f:da:f1:91:38:25:e1:9c:6e:61:18:87:6a:ce:b1:bb:
+         00:30:6a:9b:b7:af:da:f1:c5:97:fe:8a:78:24:aa:ea:93:80:
+         ba:33:65:7a:bc:a1:77:e9:7f:69:14:0b:00:3f:77:92:b1:4d:
+         5b:73:87:0a:13:d0:9c:c8:f2:4b:39:4f:52:84:49:a6:4c:90:
+         4e:1f:f7:b4
+
+-----BEGIN CERTIFICATE-----
+MIIE6jCCA9KgAwIBAgIQCjUI1VwpKwF9+K1lwA/35DANBgkqhkiG9w0BAQsFADBh
+MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
+QTAeFw0yMDA5MjQwMDAwMDBaFw0zMDA5MjMyMzU5NTlaME8xCzAJBgNVBAYTAlVT
+MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxKTAnBgNVBAMTIERpZ2lDZXJ0IFRMUyBS
+U0EgU0hBMjU2IDIwMjAgQ0ExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC
+AQEAwUuzZUdwvN1PWNvsnO3DZuUfMRNUrUpmRh8sCuxkB+Uu3Ny5CiDt3+PE0J6a
+qXodgojlEVbbHp9YwlHnLDQNLtKS4VbL8Xlfs7uHyiUDe5pSQWYQYE9XE0nw6Ddn
+g9/n00tnTCJRpt8OmRDtV1F0JuJ9x8piLhMbfyOIJVNvwTRYAIuE//i+p1hJInuW
+raKImxW8oHzf6VGo1bDtN+I2tIJLYrVJmuzHZ9bjPvXj1hJeRPG/cUJ9WIQDgLGB
+Afr5yjK7tI4nhyfFK3TUqNaX3sNk+crOU6JWvHgXjkkDKa77SU+kFbnO8lwZV21r
+eacroicgE7XQPUDTITAHk+qZ9QIDAQABo4IBrjCCAaowHQYDVR0OBBYEFLdrouqo
+qoSMeeq02g+YssWVdrn0MB8GA1UdIwQYMBaAFAPeUDVW0Uy7ZvCj4hsbw5eyPdFV
+MA4GA1UdDwEB/wQEAwIBhjAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw
+EgYDVR0TAQH/BAgwBgEB/wIBADB2BggrBgEFBQcBAQRqMGgwJAYIKwYBBQUHMAGG
+GGh0dHA6Ly9vY3NwLmRpZ2ljZXJ0LmNvbTBABggrBgEFBQcwAoY0aHR0cDovL2Nh
+Y2VydHMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0R2xvYmFsUm9vdENBLmNydDB7BgNV
+HR8EdDByMDegNaAzhjFodHRwOi8vY3JsMy5kaWdpY2VydC5jb20vRGlnaUNlcnRH
+bG9iYWxSb290Q0EuY3JsMDegNaAzhjFodHRwOi8vY3JsNC5kaWdpY2VydC5jb20v
+RGlnaUNlcnRHbG9iYWxSb290Q0EuY3JsMDAGA1UdIAQpMCcwBwYFZ4EMAQEwCAYG
+Z4EMAQIBMAgGBmeBDAECAjAIBgZngQwBAgMwDQYJKoZIhvcNAQELBQADggEBAHer
+t3onPa679n/gWlbJhKrKW3EX3SJH/E6f7tDBpATho+vFScH90cnfjK+URSxGKqNj
+OSD5nkoklEHIqdninFQFBstcHL4AGw+oWv8Zu2XHFq8hVt1hBcnpj5h232sb0HIM
+ULkwKXq/YFkQZhM6LawVEWwtIwwCPgU7/uWhnOKK24fXSuhe50gG66sSmvKvhMNb
+g0qZgYOrAKHKCjxMoiWJKiKnpPMzTFuMLhoClw+dj20tlQj7T9rxkTgl4ZxuYRiH
+as6xuwAwapu3r9rxxZf+ingkquqTgLozZXq8oXfpf2kUCwA/d5KxTVtzhwoT0JzI
+8ks5T1KESaZMkE4f97Q=
+-----END CERTIFICATE-----

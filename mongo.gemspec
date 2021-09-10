@@ -8,13 +8,20 @@ Gem::Specification.new do |s|
   s.platform          = Gem::Platform::RUBY
 
   s.authors           = ['Tyler Brock', 'Emily Stolfo', 'Durran Jordan']
-  s.email             = 'mongodb-dev@googlegroups.com'
-  s.homepage          = 'http://www.mongodb.org'
+  s.homepage          = 'https://docs.mongodb.com/ruby-driver/'
   s.summary           = 'Ruby driver for MongoDB'
   s.description       = 'A Ruby driver for MongoDB'
-  s.license           = 'Apache License Version 2.0'
+  s.license           = 'Apache-2.0'
 
-  if File.exists?('gem-private_key.pem')
+  s.metadata = {
+    'bug_tracker_uri' => 'https://jira.mongodb.org/projects/RUBY',
+    'changelog_uri' => 'https://github.com/mongodb/mongo-ruby-driver/releases',
+    'documentation_uri' => 'https://docs.mongodb.com/ruby-driver/',
+    'homepage_uri' => 'https://docs.mongodb.com/ruby-driver/',
+    'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
+  }
+
+  if File.exist?('gem-private_key.pem')
     s.signing_key     = 'gem-private_key.pem'
     s.cert_chain      = ['gem-public_cert.pem']
   else
@@ -27,8 +34,9 @@ Gem::Specification.new do |s|
 
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
-  s.has_rdoc          = 'yard'
   s.bindir            = 'bin'
 
-  s.add_dependency 'bson', '>=4.2.1', '<5.0.0'
+  s.required_ruby_version = ">= 2.4"
+
+  s.add_dependency 'bson', '>=4.8.2', '<5.0.0'
 end

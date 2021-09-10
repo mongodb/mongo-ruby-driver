@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,8 +49,10 @@ module Mongo
       # @param options [Hash] Additional options for the insertion.
       #
       # @option options :flags [Array] The flags for the insertion message.
-      #
       #   Supported flags: +:continue_on_error+
+      # @option options [ true, false ] validating_keys Whether keys should be
+      #   validated for being valid document keys (i.e. not begin with $ and
+      #   not contain dots).
       def initialize(database, collection, documents, options = {})
         @database = database
         @namespace = "#{database}.#{collection}"
@@ -63,16 +68,16 @@ module Mongo
       # @example Return the event payload.
       #   message.payload
       #
-      # @return [ Hash ] The event payload.
+      # @return [ BSON::Document ] The event payload.
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'insert',
           database_name: @database,
           command: upconverter.command,
           request_id: request_id
-        }
+        )
       end
 
       protected
@@ -87,9 +92,9 @@ module Mongo
 
       # The operation code required to specify an Insert message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2002
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2002
 
       # Available flags for an Insert message.
       FLAGS = [:continue_on_error]
@@ -169,6 +174,8 @@ module Mongo
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

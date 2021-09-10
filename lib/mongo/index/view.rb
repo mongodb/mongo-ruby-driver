@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +24,7 @@ module Mongo
     class View
       extend Forwardable
       include Enumerable
+      include Retryable
 
       # @return [ Collection ] collection The indexes collection.
       attr_reader :collection
@@ -29,7 +33,7 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
       def_delegators :cluster, :next_primary
 
       # The index key field.
@@ -119,6 +123,17 @@ module Mongo
       #   a geo index.
       # @option options [ Hash ] :partial_filter_expression  Specify a filter for a partial
       #   index.
+      # @option options [ Boolean ] :hidden When :hidden is true, this index will
+      #   exist on the collection but not be used by the query planner when
+      #   executing operations.
+      # @option options [ String | Integer ] :commit_quorum Specify how many
+      #   data-bearing members of a replica set, including the primary, must
+      #   complete the index builds successfully before the primary marks
+      #   the indexes as ready. Potential values are:
+      #   - an integer from 0 to the number of members of the replica set
+      #   - "majority" indicating that a majority of data bearing nodes must vote
+      #   - "votingMembers" which means that all voting data bearing nodes must vote
+      # @option options [ Session ] :session The session to use for the operation.
       #
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
@@ -127,7 +142,18 @@ module Mongo
       #
       # @since 2.0.0
       def create_one(keys, options = {})
-        create_many({ key: keys }.merge(options))
+        options = options.dup
+
+        create_options = {}
+        if session = @options[:session]
+          create_options[:session] = session
+        end
+        %i(commit_quorum session).each do |key|
+          if value = options.delete(key)
+            create_options[key] = value
+          end
+        end
+        create_many({ key: keys }.merge(options), create_options)
       end
 
       # Creates multiple indexes on the collection.
@@ -138,25 +164,59 @@ module Mongo
       #     { key: { age: -1 }, background: true }
       #   ])
       #
+      # @example Create multiple indexes with options.
+      #   view.create_many(
+      #     { key: { name: 1 }, unique: true },
+      #     { key: { age: -1 }, background: true },
+      #     { commit_quorum: 'majority' }
+      #   )
+      #
       # @note On MongoDB 3.0.0 and higher, the indexes will be created in
       #   parallel on the server.
       #
       # @param [ Array<Hash> ] models The index specifications. Each model MUST
-      #   include a :key option.
+      #   include a :key option, except for the last item in the Array, which
+      #   may be a Hash specifying options relevant to the createIndexes operation.
+      #   The following options are accepted:
+      #   - commit_quorum: Specify how many data-bearing members of a replica set,
+      #     including the primary, must complete the index builds successfully
+      #     before the primary marks the indexes as ready. Potential values are:
+      #     - an integer from 0 to the number of members of the replica set
+      #     - "majority" indicating that a majority of data bearing nodes must vote
+      #     - "votingMembers" which means that all voting data bearing nodes must vote
+      #   - session: The session to use.
       #
       # @return [ Result ] The result of the command.
       #
       # @since 2.0.0
       def create_many(*models)
-        server = next_primary
-        spec = {
-                indexes: normalize_models(models.flatten, server),
-                db_name: database.name,
-                coll_name: collection.name
-               }
+        models = models.flatten
+        options = {}
+        if models && !models.last.key?(:key)
+          options = models.pop
+        end
 
-        spec[:write_concern] = write_concern if server.features.collation_enabled?
-        Operation::Write::CreateIndex.new(spec).execute(server)
+        client.send(:with_session, @options.merge(options)) do |session|
+          server = next_primary(nil, session)
+
+          indexes = normalize_models(models, server)
+          indexes.each do |index|
+            if index[:bucketSize] || index['bucketSize']
+              client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
+            end
+          end
+
+          spec = {
+            indexes: indexes,
+            db_name: database.name,
+            coll_name: collection.name,
+            session: session,
+            commit_quorum: options[:commit_quorum],
+            write_concern: write_concern,
+          }
+
+          Operation::CreateIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
+        end
       end
 
       # Convenience method for getting index information by a specific name or
@@ -188,12 +248,17 @@ module Mongo
       #
       # @since 2.0.0
       def each(&block)
-        server = next_primary(false)
-        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
-        cursor.each do |doc|
-          yield doc
-        end if block_given?
-        cursor
+        session = client.send(:get_session, @options)
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
+          send_initial_query(server, session)
+        end
+        if block_given?
+          cursor.each do |doc|
+            yield doc
+          end
+        else
+          cursor.to_enum
+        end
       end
 
       # Create the new index view.
@@ -213,35 +278,41 @@ module Mongo
       def initialize(collection, options = {})
         @collection = collection
         @batch_size = options[:batch_size]
+        @options = options
       end
 
       private
 
       def drop_by_name(name)
-        spec = {
-                 db_name: database.name,
-                 coll_name: collection.name,
-                 index_name: name
-               }
-        server = next_primary
-        spec[:write_concern] = write_concern if server.features.collation_enabled?
-        Operation::Write::DropIndex.new(spec).execute(server)
+        client.send(:with_session, @options) do |session|
+          spec = {
+            db_name: database.name,
+            coll_name: collection.name,
+            index_name: name,
+            session: session,
+            write_concern: write_concern,
+          }
+          server = next_primary(nil, session)
+          Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
+        end
       end
 
       def index_name(spec)
         spec.to_a.join('_')
       end
 
-      def indexes_spec
+      def indexes_spec(session)
         { selector: {
             listIndexes: collection.name,
             cursor: batch_size ? { batchSize: batch_size } : {} },
           coll_name: collection.name,
-          db_name: database.name }
+          db_name: database.name,
+          session: session
+        }
       end
 
-      def initial_query_op
-        Operation::Commands::Indexes.new(indexes_spec)
+      def initial_query_op(session)
+        Operation::Indexes.new(indexes_spec(session))
       end
 
       def limit; -1; end
@@ -252,29 +323,16 @@ module Mongo
       end
 
       def normalize_models(models, server)
-        with_generated_names(models, server).map do |model|
-          Options::Mapper.transform(model, OPTIONS)
-        end
-      end
-
-      def send_initial_query(server)
-        initial_query_op.execute(server)
-      end
-
-      def with_generated_names(models, server)
-        models.dup.each do |model|
-          validate_collation!(model, server)
-          unless model[:name]
-            model[:name] = index_name(model[:key])
+        models.map do |model|
+          # Transform options first which gives us a mutable hash
+          Options::Mapper.transform(model, OPTIONS).tap do |model|
+            model[:name] ||= index_name(model.fetch(:key))
           end
         end
       end
 
-      def validate_collation!(model, server)
-        if (model[:collation] || model[Operation::COLLATION]) &&
-            !server.features.collation_enabled?
-          raise Error::UnsupportedCollation.new
-        end
+      def send_initial_query(server, session)
+        initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
       end
     end
   end

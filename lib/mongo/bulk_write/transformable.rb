@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +18,7 @@
 module Mongo
   class BulkWrite
 
-    # Defines behaviour around transformations.
+    # Defines behavior around transformations.
     #
     # @api private
     #
@@ -56,9 +59,12 @@ module Mongo
       #
       # @since 2.1.0
       DELETE_MANY_TRANSFORM = ->(doc){
-        { Operation::Q => doc[:filter],
-          Operation::LIMIT => 0 }.tap do |d|
+        {
+          Operation::Q => doc[:filter],
+          Operation::LIMIT => 0,
+        }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -66,9 +72,12 @@ module Mongo
       #
       # @since 2.1.0
       DELETE_ONE_TRANSFORM = ->(doc){
-        { Operation::Q => doc[:filter],
-          Operation::LIMIT => 1 }.tap do |d|
+        {
+          Operation::Q => doc[:filter],
+          Operation::LIMIT => 1,
+        }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -86,10 +95,10 @@ module Mongo
         {
           Operation::Q => doc[:filter],
           Operation::U => doc[:replacement],
-          Operation::MULTI => false,
-          Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
+          d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -101,9 +110,11 @@ module Mongo
           Operation::Q => doc[:filter],
           Operation::U => doc[:update],
           Operation::MULTI => true,
-          Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
+          d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 
@@ -114,10 +125,11 @@ module Mongo
         {
           Operation::Q => doc[:filter],
           Operation::U => doc[:update],
-          Operation::MULTI => false,
-          Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
+          d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
+          d['hint'] = doc[:hint] if doc[:hint]
         end
       }
 

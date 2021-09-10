@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Auth do
@@ -11,7 +14,7 @@ describe Mongo::Auth do
       end
 
       let(:cr) do
-        described_class.get(user)
+        described_class.get(user, double('connection'))
       end
 
       it 'returns CR' do
@@ -26,7 +29,7 @@ describe Mongo::Auth do
       end
 
       let(:x509) do
-        described_class.get(user)
+        described_class.get(user, double('connection'))
       end
 
       it 'returns X509' do
@@ -41,7 +44,7 @@ describe Mongo::Auth do
       end
 
       let(:ldap) do
-        described_class.get(user)
+        described_class.get(user, double('connection'))
       end
 
       it 'returns LDAP' do
@@ -57,7 +60,7 @@ describe Mongo::Auth do
 
       it 'raises an error' do
         expect {
-          described_class.get(user)
+          described_class.get(user, double('connection'))
         }.to raise_error(Mongo::Auth::InvalidMechanism)
       end
     end

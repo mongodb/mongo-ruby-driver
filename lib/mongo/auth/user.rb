@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +24,7 @@ module Mongo
     #
     # @since 2.0.0
     class User
-
-      # The users collection for the database.
-      #
-      # @since 2.0.0
-      COLLECTION = 'system.users'.freeze
+      include Loggable
 
       # @return [ String ] The authorization source, either a database or
       #   external name.
@@ -48,6 +47,14 @@ module Mongo
 
       # @return [ Array<String> ] roles The user roles.
       attr_reader :roles
+
+      # Loggable requires an options attribute. We don't have any options
+      # hence provide this as a stub.
+      #
+      # @api private
+      def options
+        {}
+      end
 
       # Determine if this user is equal to another.
       #
@@ -104,7 +111,7 @@ module Mongo
         [ name, database, password ].hash
       end
 
-      # Get the user's hashed password.
+      # Get the user's hashed password for SCRAM-SHA-1.
       #
       # @example Get the user's hashed password.
       #   user.hashed_password
@@ -113,7 +120,25 @@ module Mongo
       #
       # @since 2.0.0
       def hashed_password
+        unless password
+          raise Error::MissingPassword
+        end
+
         @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}").encode(BSON::UTF8)
+      end
+
+      # Get the user's stringprepped password for SCRAM-SHA-256.
+      #
+      # @api private
+      def sasl_prepped_password
+        unless password
+          raise Error::MissingPassword
+        end
+
+        @sasl_prepped_password ||= StringPrep.prepare(password,
+          StringPrep::Profiles::SASL::MAPPINGS,
+          StringPrep::Profiles::SASL::PROHIBITED,
+          normalize: true, bidi: true).encode(BSON::UTF8)
       end
 
       # Create the new user.
@@ -129,16 +154,37 @@ module Mongo
       #   authorized for.
       # @option options [ String ] :user The user name.
       # @option options [ String ] :password The user's password.
+      # @option options [ String ] :pwd Legacy option for the user's password.
+      #   If :password and :pwd are both specified, :password takes precedence.
       # @option options [ Symbol ] :auth_mech The authorization mechanism.
       # @option options [ Array<String>, Array<Hash> ] roles The user roles.
       #
       # @since 2.0.0
       def initialize(options)
         @database = options[:database] || Database::ADMIN
-        @auth_source = options[:auth_source] || @database
+        @auth_source = options[:auth_source] || self.class.default_auth_source(options)
         @name = options[:user]
         @password = options[:password] || options[:pwd]
-        @mechanism = options[:auth_mech] || :mongodb_cr
+        @mechanism = options[:auth_mech]
+        if @mechanism
+          # Since the driver must select an authentication class for
+          # the specified mechanism, mechanisms that the driver does not
+          # know about, and cannot translate to an authentication class,
+          # need to be rejected.
+          unless @mechanism.is_a?(Symbol)
+            # Although we documented auth_mech option as being a symbol, we
+            # have not enforced this; warn, reject in lint mode
+            if Lint.enabled?
+              raise Error::LintError, "Auth mechanism #{@mechanism.inspect} must be specified as a symbol"
+            else
+              log_warn("Auth mechanism #{@mechanism.inspect} should be specified as a symbol")
+              @mechanism = @mechanism.to_sym
+            end
+          end
+          unless Auth::SOURCES.key?(@mechanism)
+            raise InvalidMechanism.new(options[:auth_mech])
+          end
+        end
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
       end
@@ -152,7 +198,27 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        { pwd: hashed_password, roles: roles }
+        {roles: roles}.tap do |spec|
+          if password
+            spec[:pwd] = password
+          end
+        end
+      end
+
+      private
+
+      # Generate default auth source based on the URI and options
+      #
+      # @api private
+      def self.default_auth_source(options)
+        case options[:auth_mech]
+        when :aws, :gssapi, :mongodb_x509
+          '$external'
+        when :plain
+          options[:database] || '$external'
+        else
+          options[:database] || Database::ADMIN
+        end
       end
     end
   end

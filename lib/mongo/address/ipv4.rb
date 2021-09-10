@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -77,17 +80,47 @@ module Mongo
       # @example Get an IPv4 socket.
       #   ipv4.socket(5, :ssl => true)
       #
-      # @param [ Float ] timeout The socket timeout.
-      # @param [ Hash ] ssl_options SSL options.
+      # @param [ Float ] socket_timeout The socket timeout.
+      # @param [ Hash ] options The options.
       #
-      # @return [ Pool::Socket::SSL, Pool::Socket::TCP ] The socket.
+      # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ true | false ] :ssl Whether to use TLS.
+      # @option options [ String ] :ssl_ca_cert
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_ca_cert_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_cert
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_cert_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ OpenSSL::PKey ] :ssl_key_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key_pass_phrase
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify_certificate
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify_hostname
+      #   Same as the corresponding Client/Socket::SSL option.
+      #
+      # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP ] The socket.
       #
       # @since 2.0.0
-      def socket(timeout, ssl_options = {})
-        unless ssl_options.empty?
-          Socket::SSL.new(host, port, host_name, timeout, Socket::PF_INET, ssl_options)
+      # @api private
+      def socket(socket_timeout, options = {})
+        if options[:ssl]
+          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET, options)
         else
-          Socket::TCP.new(host, port, timeout, Socket::PF_INET)
+          Socket::TCP.new(host, port, socket_timeout, Socket::PF_INET, options)
         end
       end
     end

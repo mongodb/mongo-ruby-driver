@@ -1,2 +1,3 @@
 --tty
 --colour
+--format <%= %w(1 true yes).include?(ENV['CI']&.downcase) ? 'Rfc::Riff' : 'Fuubar'%>

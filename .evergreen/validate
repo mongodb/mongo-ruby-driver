@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# This script can be used to validate the contents of Evergreen configuration
+# and shell scripts (as much as possible) locally, prior to starting patch
+# and/or pull request builds. Invoke it with a relative or absolute path
+# like so:
+#
+# ./.evergreen/validate
+
+set -e
+
+this_dir="$(dirname "$0")"
+
+for yml in "$this_dir"/*.yml; do
+  echo "Validating $yml"
+  evergreen validate "$yml"
+done
+
+for sh in "$this_dir"/*.sh; do
+  echo "Validating $sh"
+  bash -n "$sh"
+done

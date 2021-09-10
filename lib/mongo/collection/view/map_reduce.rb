@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +19,7 @@ module Mongo
   class Collection
     class View
 
-      # Provides behaviour around a map/reduce operation on the collection
+      # Provides behavior around a map/reduce operation on the collection
       # view.
       #
       # @since 2.0.0
@@ -35,22 +38,23 @@ module Mongo
         # Reroute message.
         #
         # @since 2.1.0
+        # @deprecated
         REROUTE = 'Rerouting the MapReduce operation to the primary server.'.freeze
 
         # @return [ View ] view The collection view.
         attr_reader :view
 
         # @return [ String ] map The map function.
-        attr_reader :map
+        attr_reader :map_function
 
         # @return [ String ] reduce The reduce function.
-        attr_reader :reduce
+        attr_reader :reduce_function
 
         # Delegate necessary operations to the view.
         def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
-        def_delegators :collection, :database
+        def_delegators :collection, :database, :client
 
         # Iterate through documents returned by the map/reduce.
         #
@@ -66,15 +70,18 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          write_with_retry do
-            server = read.select_server(cluster, false)
-            result = send_initial_query(server)
-            @cursor = Cursor.new(view, result, server)
+          session = client.send(:get_session, @options)
+          server = cluster.next_primary(nil, session)
+          result = send_initial_query(server, session)
+          result = send_fetch_query(server, session) unless inline?
+          @cursor = Cursor.new(view, result, server, session: session)
+          if block_given?
+            @cursor.each do |doc|
+              yield doc
+            end
+          else
+            @cursor.to_enum
           end
-          @cursor.each do |doc|
-            yield doc
-          end if block_given?
-          @cursor.to_enum
         end
 
         # Set or get the finalize function for the operation.
@@ -105,8 +112,8 @@ module Mongo
         # @since 2.0.0
         def initialize(view, map, reduce, options = {})
           @view = view
-          @map = map.freeze
-          @reduce = reduce.freeze
+          @map_function = map.dup.freeze
+          @reduce_function = reduce.dup.freeze
           @options = BSON::Document.new(options).freeze
         end
 
@@ -149,6 +156,28 @@ module Mongo
           configure(:out, location)
         end
 
+        # Returns the collection name where the map-reduce result is written to.
+        # If the result is returned inline, returns nil.
+        def out_collection_name
+          if options[:out].respond_to?(:keys)
+            options[:out][OUT_ACTIONS.find do |action|
+              options[:out][action]
+            end]
+          end || options[:out]
+        end
+
+        # Returns the database name where the map-reduce result is written to.
+        # If the result is returned inline, returns nil.
+        def out_database_name
+          if options[:out]
+            if options[:out].respond_to?(:keys) && (db = options[:out][:db])
+              db
+            else
+              database.name
+            end
+          end
+        end
+
         # Set or get a scope on the operation.
         #
         # @example Set the scope value.
@@ -180,66 +209,93 @@ module Mongo
           configure(:verbose, value)
         end
 
+        # Execute the map reduce, without doing a fetch query to retrieve the results
+        #   if outputted to a collection.
+        #
+        # @example Execute the map reduce and get the raw result.
+        #   map_reduce.execute
+        #
+        # @return [ Mongo::Operation::Result ] The raw map reduce result
+        #
+        # @since 2.5.0
+        def execute
+          view.send(:with_session, @options) do |session|
+            write_concern = view.write_concern_with_session(session)
+            nro_write_with_retry(session, write_concern) do |server|
+              send_initial_query(server, session)
+            end
+          end
+        end
+
         private
+
+        OUT_ACTIONS = [ :replace, :merge, :reduce ].freeze
+
+        def server_selector
+          @view.send(:server_selector)
+        end
 
         def inline?
           out.nil? || out == { inline: 1 } || out == { INLINE => 1 }
         end
 
-        def map_reduce_spec
-          Builder::MapReduce.new(map, reduce, view, options).specification
+        def map_reduce_spec(session = nil)
+          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).specification
         end
 
         def new(options)
-          MapReduce.new(view, map, reduce, options)
+          MapReduce.new(view, map_function, reduce_function, options)
         end
 
-        def initial_query_op
-          Operation::Commands::MapReduce.new(map_reduce_spec)
+        def initial_query_op(session)
+          Operation::MapReduce.new(map_reduce_spec(session))
         end
 
         def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+          if secondary_ok?
+            true
+          else
+            description = server.description
+            description.standalone? || description.mongos? || description.primary? || description.load_balancer?
+          end
         end
 
         def secondary_ok?
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server)
+        def send_initial_query(server, session)
           unless valid_server?(server)
-            log_warn(REROUTE)
-            server = cluster.next_primary(false)
+            msg = "Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable"
+            log_warn(msg)
+            server = cluster.next_primary(nil, session)
           end
-          validate_collation!(server)
-          result = initial_query_op.execute(server)
-          inline? ? result : send_fetch_query(server)
+          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
         def fetch_query_spec
-          Builder::MapReduce.new(map, reduce, view, options).query_specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options).query_specification
         end
 
-        def find_command_spec
-          Builder::MapReduce.new(map, reduce, view, options).command_specification
+        def find_command_spec(session)
+          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(server)
-          if server.features.find_command_enabled?
-            Operation::Commands::Find.new(find_command_spec)
-          else
-            Operation::Read::Query.new(fetch_query_spec)
-          end
+        def fetch_query_op(server, session)
+          spec = {
+            coll_name: out_collection_name,
+            db_name: out_database_name,
+            filter: {},
+            session: session,
+            read: read,
+            read_concern: options[:read_concern] || collection.read_concern,
+            collation: options[:collation] || view.options[:collation],
+          }
+          Operation::Find.new(spec)
         end
 
-        def send_fetch_query(server)
-          fetch_query_op(server).execute(server)
-        end
-
-        def validate_collation!(server)
-          if (view.options[:collation] || options[:collation]) && !server.features.collation_enabled?
-            raise Error::UnsupportedCollation.new
-          end
+        def send_fetch_query(server, session)
+          fetch_query_op(server, session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
     end

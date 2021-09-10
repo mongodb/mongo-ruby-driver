@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -62,14 +65,17 @@ module Mongo
       # @example Get a Unix socket.
       #   address.socket(5)
       #
-      # @param [ Float ] timeout The socket timeout.
-      # @param [ Hash ] ssl_options SSL options - ignored.
+      # @param [ Float ] socket_timeout The socket timeout.
+      # @param [ Hash ] options The options.
       #
-      # @return [ Pool::Socket::Unix ] The socket.
+      # @option options [ Float ] :connect_timeout Connect timeout.
+      #
+      # @return [ Mongo::Socket::Unix ] The socket.
       #
       # @since 2.0.0
-      def socket(timeout, ssl_options = {})
-        Socket::Unix.new(host, timeout)
+      # @api private
+      def socket(socket_timeout, options = {})
+        Socket::Unix.new(host, socket_timeout, options)
       end
     end
   end

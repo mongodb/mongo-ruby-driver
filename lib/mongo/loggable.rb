@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,7 +102,11 @@ module Mongo
     private
 
     def format_message(message)
-      format("%s | %s".freeze, PREFIX, message)
+      format("%s | %s".freeze, _mongo_log_prefix, message)
+    end
+
+    def _mongo_log_prefix
+      (options && options[:log_prefix]) || PREFIX
     end
   end
 end

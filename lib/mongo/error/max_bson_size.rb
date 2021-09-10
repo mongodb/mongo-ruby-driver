@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,16 +27,27 @@ module Mongo
       # The message is constant.
       #
       # @since 2.0.0
-      MESSAGE = "Document exceeds allowed max BSON size.".freeze
+      MESSAGE = "The document exceeds maximum allowed BSON size".freeze
 
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
       #   Mongo::Error::MaxBSONSize.new(max)
       #
+      # @param [ String | Numeric ] max_size_or_msg The message to use or
+      #   the maximum size to insert into the predefined message. The
+      #   Numeric argument type is deprecated.
+      #
       # @since 2.0.0
-      def initialize(max_size = nil)
-        super(max_size ?  MESSAGE + " The max is #{max_size}." : MESSAGE)
+      def initialize(max_size_or_msg = nil)
+        if max_size_or_msg.is_a?(Numeric)
+          msg = "#{MESSAGE}. The maximum allowed size is #{max_size_or_msg}"
+        elsif max_size_or_msg
+          msg = max_size_or_msg
+        else
+          msg = MESSAGE
+        end
+        super(msg)
       end
     end
   end

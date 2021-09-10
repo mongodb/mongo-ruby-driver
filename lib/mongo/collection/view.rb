@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +20,7 @@ require 'mongo/collection/view/immutable'
 require 'mongo/collection/view/iterable'
 require 'mongo/collection/view/explainable'
 require 'mongo/collection/view/aggregation'
+require 'mongo/collection/view/change_stream'
 require 'mongo/collection/view/map_reduce'
 require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
@@ -45,7 +49,6 @@ module Mongo
       include Immutable
       include Iterable
       include Readable
-      include Retryable
       include Explainable
       include Writable
 
@@ -60,7 +63,11 @@ module Mongo
                      :client,
                      :cluster,
                      :database,
-                     :read_preference
+                     :read_with_retry,
+                     :read_with_retry_cursor,
+                     :write_with_retry,
+                     :nro_write_with_retry,
+                     :write_concern_with_session
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
@@ -112,32 +119,55 @@ module Mongo
       # @param [ Hash ] filter The query filter.
       # @param [ Hash ] options The additional query options.
       #
-      # @option options :comment [ String ] Associate a comment with the query.
-      # @option options :batch_size [ Integer ] The number of docs to return in
-      #   each response from MongoDB.
-      # @option options :fields [ Hash ] The fields to include or exclude in
-      #   returned docs.
-      # @option options :hint [ Hash ] Override default index selection and force
-      #   MongoDB to use a specific index for the query.
-      # @option options :limit [ Integer ] Max number of docs to return.
-      # @option options :max_scan [ Integer ] Constrain the query to only scan the
-      #   specified number of docs. Use to prevent queries from running too long.
-      # @option options :read [ Symbol ] The read preference to use for the query.
-      #   If none is provided, the collection's default read preference is used.
-      # @option options :show_disk_loc [ true, false ] Return disk location info as
-      #   a field in each doc.
-      # @option options :skip [ Integer ] The number of documents to skip.
-      # @option options :snapshot [ true, false ] Prevents returning a doc more than
-      #   once.
-      # @option options :sort [ Hash ] The key and direction pairs used to sort the
-      #   results.
+      # @option options [ true, false ] :allow_disk_use When set to true, the
+      #   server can write temporary data to disk while executing the find
+      #   operation. This option is only available on MongoDB server versions
+      #   4.4 and newer.
+      # @option options [ Integer ] :batch_size The number of documents to
+      #   return in each response from MongoDB.
       # @option options [ Hash ] :collation The collation to use.
+      # @option options [ String ] :comment Associate a comment with the query.
+      # @option options [ Hash ] :explain Execute an explain with the provided
+      #   explain options (known options are :verbose and :verbosity) rather
+      #   than a find.
+      # @option options [ Hash ] :hint Override the default index selection and
+      #   force MongoDB to use a specific index for the query.
+      # @option options [ Integer ] :limit Max number of documents to return.
+      # @option options [ Integer ] :max_scan Constrain the query to only scan
+      #   the specified number of documents. Use to prevent queries from
+      #   running for too long. Deprecated as of MongoDB server version 4.0.
+      # @option options [ Hash ] :projection The fields to include or exclude
+      #   in the returned documents.
+      # @option options [ Hash ] :read The read preference to use for the
+      #   query. If none is provided, the collection's default read preference
+      #   is used.
+      # @option options [ Hash ] :read_concern The read concern to use for
+      #   the query.
+      # @option options [ true | false ] :show_disk_loc Return disk location
+      #   info as a field in each doc.
+      # @option options [ Integer ] :skip The number of documents to skip.
+      # @option options [ true | false ] :snapshot Prevents returning a
+      #   document more than once. Deprecated as of MongoDB server version 4.0.
+      # @option options [ Hash ] :sort The key and direction pairs used to sort
+      #   the results.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
         @collection = collection
-        parse_parameters!(BSON::Document.new(filter), BSON::Document.new(options))
+
+        filter = BSON::Document.new(filter)
+        options = BSON::Document.new(options)
+
+        # This is when users pass $query in filter and other modifiers
+        # alongside?
+        query = filter.delete(:$query)
+        # This makes modifiers contain the filter if filter wasn't
+        # given via $query but as top-level keys, presumably
+        # downstream code ignores non-modifier keys in the modifiers?
+        modifiers = filter.merge(options.delete(:modifiers) || {})
+        @filter = (query || filter).freeze
+        @options = Operation::Find::Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
       end
 
       # Get a human-readable string representation of +View+.
@@ -162,7 +192,7 @@ module Mongo
       #
       # @since 2.0.0
       def write_concern
-        WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
+        WriteConcern.get(options[:write_concern] || options[:write] || collection.write_concern)
       end
 
       private
@@ -173,31 +203,15 @@ module Mongo
         @filter = other.filter.dup
       end
 
-      def parse_parameters!(filter, options)
-        query = filter.delete(QUERY)
-        modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
-        @filter = (query || filter).freeze
-        @options = Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
-      end
-
       def new(options)
         View.new(collection, filter, options)
       end
 
-      def apply_collation!(doc, server, opts = {})
-        if coll = opts[:collation] || opts['collation'] || collation
-          validate_collation!(server, coll)
-          doc[:collation] = coll
-        end
-      end
-
-      def validate_collation!(server, coll)
-        if coll &&!server.features.collation_enabled?
-          raise Error::UnsupportedCollation.new
-        end
-      end
-
       def view; self; end
+
+      def with_session(opts = {}, &block)
+        client.send(:with_session, @options.merge(opts), &block)
+      end
     end
   end
 end

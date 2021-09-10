@@ -1,16 +1,20 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::GetMore do
 
   let(:opcode)    { 2005 }
-  let(:db)        { TEST_DB }
-  let(:coll)      { TEST_COLL }
-  let(:ns)        { "#{db}.#{coll}" }
+  let(:db)        { SpecConfig.instance.test_db }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)        { "#{db}.#{collection_name}" }
   let(:limit)     { 25 }
   let(:cursor_id) { 12345 }
 
   let(:message) do
-    described_class.new(db, coll, limit, cursor_id)
+    described_class.new(db, collection_name, limit, cursor_id)
   end
 
   describe '#initialize' do
@@ -30,11 +34,11 @@ describe Mongo::Protocol::GetMore do
 
   describe '#==' do
 
-    context 'when the other is a getmore' do
+    context 'when the other is a getMore' do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, limit, cursor_id)
+          described_class.new(db, collection_name, limit, cursor_id)
         end
 
         it 'returns true' do
@@ -44,7 +48,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, limit, cursor_id)
+          described_class.new('tyler', collection_name, limit, cursor_id)
         end
 
         it 'returns false' do
@@ -64,7 +68,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the limit is not equal' do
         let(:other) do
-          described_class.new(db, coll, 123, cursor_id)
+          described_class.new(db, collection_name, 123, cursor_id)
         end
 
         it 'returns false' do
@@ -74,7 +78,7 @@ describe Mongo::Protocol::GetMore do
 
       context 'when the cursor id is not equal' do
         let(:other) do
-          described_class.new(db, coll, limit, 7777)
+          described_class.new(db, collection_name, limit, 7777)
         end
 
         it 'returns false' do
@@ -83,7 +87,7 @@ describe Mongo::Protocol::GetMore do
       end
     end
 
-    context 'when the other is not a getmore' do
+    context 'when the other is not a getMore' do
       let(:other) do
         expect(message).not_to eq('test')
       end
@@ -140,6 +144,20 @@ describe Mongo::Protocol::GetMore do
       let(:field) { bytes.to_s[41..48] }
       it 'serializes the cursor id' do
         expect(field).to be_int64(cursor_id)
+      end
+    end
+  end
+
+  describe '#registry' do
+
+    context 'when the class is loaded' do
+
+      it 'registers the op code in the Protocol Registry' do
+        expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
+      end
+
+      it 'creates an #op_code instance method' do
+        expect(message.op_code).to eq(described_class::OP_CODE)
       end
     end
   end

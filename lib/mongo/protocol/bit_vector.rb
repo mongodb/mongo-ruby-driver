@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +31,7 @@ module Mongo
         def initialize(layout)
           @masks = {}
           layout.each_with_index do |field, index|
-            @masks[field] = 2**index
+            @masks[field] = 2**index if field
           end
         end
 
@@ -40,16 +43,17 @@ module Mongo
         # @return [ String ] Buffer that received the serialized vector
         def serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
           bits = 0
-          value.each { |flag| bits |= @masks[flag] }
+          value.each { |flag| bits |= (@masks[flag] || 0) }
           buffer.put_int32(bits)
         end
 
         # Deserializes vector by decoding the symbol according to its mask
         #
         # @param [ String ] buffer Buffer containing the vector to be deserialized.
+        # @param [ Hash ] options This method does not currently accept any options.
         #
         # @return [ Array<Symbol> ] Flags contained in the vector
-        def deserialize(buffer)
+        def deserialize(buffer, options = {})
           vector = buffer.get_int32
           flags = []
           @masks.each do |flag, mask|

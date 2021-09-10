@@ -1,4 +1,7 @@
-# Copyright (C) 2014 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,77 +19,50 @@ module Mongo
   module Auth
     class X509
 
-      # Defines behaviour around a single x.509 conversation between the
+      # Defines behavior around a single X.509 conversation between the
       # client and server.
       #
       # @since 2.0.0
-      class Conversation
+      # @api private
+      class Conversation < ConversationBase
 
         # The login message.
         #
         # @since 2.0.0
-        LOGIN = { authenticate: 1 }.freeze
+        LOGIN = { authenticate: 1, mechanism: X509::MECHANISM }.freeze
 
-        # @return [ Protocol::Reply ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
-
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
-
-        # Finalize the x.509 conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
+        # Start the X.509 conversation. This returns the first message that
+        # needs to be sent to the server.
         #
-        # @example Finalize the conversation.
-        #   conversation.finalize(reply)
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
         #
-        # @param [ Protocol::Reply ] reply The reply of the previous
-        #   message.
-        #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Message ] The first X.509 conversation message.
         #
         # @since 2.0.0
-        def finalize(reply)
-          validate!(reply)
+        def start(connection)
+          validate_external_auth_source
+          selector = client_first_document
+          build_message(connection, '$external', selector)
         end
 
-        # Start the x.509 conversation. This returns the first message that
-        # needs to be send to the server.
+        # Returns the hash to provide to the server in the handshake
+        # as value of the speculativeAuthenticate key.
         #
-        # @example Start the conversation.
-        #   conversation.start
+        # If the auth mechanism does not support speculative authentication,
+        # this method returns nil.
         #
-        # @return [ Protocol::Query ] The first x.509 conversation message.
-        #
-        # @since 2.0.0
-        def start
-          login = LOGIN.merge(mechanism: X509::MECHANISM)
-          login[:user] = user.name if user.name
-          Protocol::Query.new(
-            Auth::EXTERNAL,
-            Database::COMMAND,
-            login,
-            limit: -1
-          )
-        end
-
-        # Create the new conversation.
-        #
-        # @example Create the new conversation.
-        #   Conversation.new(user, "admin")
-        #
-        # @param [ Auth::User ] user The user to converse about.
-        #
-        # @since 2.0.0
-        def initialize(user)
-          @user = user
+        # @return [ Hash | nil ] Speculative authentication document.
+        def speculative_auth_document
+          client_first_document
         end
 
         private
 
-        def validate!(reply)
-          raise Unauthorized.new(user) if reply.documents[0][Operation::Result::OK] != 1
-          @reply = reply
+        def client_first_document
+          LOGIN.dup.tap do |payload|
+            payload[:user] = user.name if user.name
+          end
         end
       end
     end

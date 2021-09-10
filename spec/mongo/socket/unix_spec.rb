@@ -1,16 +1,24 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Socket::Unix do
+  require_unix_socket
+
+  let(:path) { "/tmp/mongodb-#{SpecConfig.instance.any_port}.sock" }
 
   let(:socket) do
-    described_class.new("/tmp/mongodb-27017.sock", 5)
+    described_class.new(path, 5)
+  end
+
+  describe '#human_address' do
+    it 'returns the path' do
+      expect(socket.send(:human_address)).to eq(path)
+    end
   end
 
   describe '#connect!' do
-
-    before do
-      socket.connect!
-    end
 
     after do
       socket.close
@@ -24,10 +32,6 @@ describe Mongo::Socket::Unix do
   describe '#alive?' do
 
     context 'when the socket is connected' do
-
-      before do
-        socket.connect!
-      end
 
       after do
         socket.close

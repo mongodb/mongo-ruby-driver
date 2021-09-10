@@ -1,4 +1,8 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/server_selector'
 
 describe Mongo::ServerSelector do
 
@@ -30,6 +34,17 @@ describe Mongo::ServerSelector do
       it 'returns a read preference of class Primary' do
         expect(selector).to be_a(Mongo::ServerSelector::Primary)
       end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'primary'
+        end
+
+        it 'returns a read preference of class Primary' do
+          expect(selector).to be_a(Mongo::ServerSelector::Primary)
+        end
+      end
     end
 
     context 'when the mode is primary_preferred' do
@@ -39,6 +54,17 @@ describe Mongo::ServerSelector do
 
       it 'returns a read preference of class PrimaryPreferred' do
         expect(selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+      end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'primary_preferred'
+        end
+
+        it 'returns a read preference of class PrimaryPreferred' do
+          expect(selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+        end
       end
     end
 
@@ -50,6 +76,17 @@ describe Mongo::ServerSelector do
       it 'returns a read preference of class Secondary' do
         expect(selector).to be_a(Mongo::ServerSelector::Secondary)
       end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'secondary'
+        end
+
+        it 'returns a read preference of class Secondary' do
+          expect(selector).to be_a(Mongo::ServerSelector::Secondary)
+        end
+      end
     end
 
     context 'when the mode is secondary_preferred' do
@@ -60,6 +97,17 @@ describe Mongo::ServerSelector do
       it 'returns a read preference of class SecondaryPreferred' do
         expect(selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'secondary_preferred'
+        end
+
+        it 'returns a read preference of class SecondaryPreferred' do
+          expect(selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
+        end
+      end
     end
 
     context 'when the mode is nearest' do
@@ -69,6 +117,17 @@ describe Mongo::ServerSelector do
 
       it 'returns a read preference of class Nearest' do
         expect(selector).to be_a(Mongo::ServerSelector::Nearest)
+      end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'nearest'
+        end
+
+        it 'returns a read preference of class Nearest' do
+          expect(selector).to be_a(Mongo::ServerSelector::Nearest)
+        end
       end
     end
 
@@ -141,8 +200,9 @@ describe Mongo::ServerSelector do
   end
 
   describe "#select_server" do
+    require_no_linting
 
-    context 'when #select returns a list of nils' do
+    context 'when #select_in_replica_set returns a list of nils' do
 
       let(:servers) do
         [ make_server(:primary) ]
@@ -150,19 +210,25 @@ describe Mongo::ServerSelector do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
+          allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
           allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:servers_list).and_return(servers)
+          allow(c).to receive(:addresses).and_return(servers.map(&:address))
+          allow(c).to receive(:replica_set?).and_return(true)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
           allow(c).to receive(:unknown?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
+          allow(c).to receive(:server_selection_semaphore).and_return(nil)
         end
       end
 
       let(:read_pref) do
         described_class.get(mode: :primary).tap do |pref|
-          allow(pref).to receive(:select).and_return([ nil, nil ])
+          allow(pref).to receive(:select_in_replica_set).and_return([ nil, nil ])
         end
       end
 
@@ -181,8 +247,13 @@ describe Mongo::ServerSelector do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
+          allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
           allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:servers_list).and_return(servers)
+          allow(c).to receive(:addresses).and_return(servers.map(&:address))
+          allow(c).to receive(:replica_set?).and_return(true)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
           allow(c).to receive(:unknown?).and_return(false)
@@ -208,6 +279,7 @@ describe Mongo::ServerSelector do
         make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
           allow(s).to receive(:average_round_trip_time).and_return(100)
+          allow(s).to receive(:check_driver_support!).and_return(true)
         end
       end
 
@@ -215,6 +287,7 @@ describe Mongo::ServerSelector do
         make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
           allow(s).to receive(:average_round_trip_time).and_return(200)
+          allow(s).to receive(:check_driver_support!).and_return(true)
         end
       end
 
@@ -224,8 +297,12 @@ describe Mongo::ServerSelector do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
+          allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
           allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:addresses).and_return(servers.map(&:address))
+          allow(c).to receive(:replica_set?).and_return(true)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
           allow(c).to receive(:unknown?).and_return(false)
@@ -239,7 +316,74 @@ describe Mongo::ServerSelector do
       end
 
       it 'uses the local_threshold of the cluster' do
+        expect(topology).to receive(:compatible?).and_return(true)
         expect(read_pref.select_server(cluster)).to eq(near_server)
+      end
+    end
+
+    context 'when topology is incompatible' do
+      let(:server) { make_server(:primary) }
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
+          allow(c).to receive(:summary)
+          allow(c).to receive(:topology).and_return(topology)
+          allow(c).to receive(:servers).and_return([server])
+          allow(c).to receive(:addresses).and_return([server.address])
+          allow(c).to receive(:replica_set?).and_return(true)
+          allow(c).to receive(:single?).and_return(false)
+          allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:unknown?).and_return(false)
+          allow(c).to receive(:scan!).and_return(true)
+          allow(c).to receive(:options).and_return(local_threshold: 0.050)
+        end
+      end
+
+      let(:compatibility_error) do
+        Mongo::Error::UnsupportedFeatures.new('Test UnsupportedFeatures')
+      end
+
+      let(:selector) { described_class.primary }
+
+      it 'raises Error::UnsupportedFeatures' do
+        expect(topology).to receive(:compatible?).and_return(false)
+        expect(topology).to receive(:compatibility_error).and_return(compatibility_error)
+        expect do
+          selector.select_server(cluster)
+        end.to raise_error(Mongo::Error::UnsupportedFeatures, 'Test UnsupportedFeatures')
+      end
+    end
+
+    context 'sharded topology' do
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
+          allow(c).to receive(:summary)
+          allow(c).to receive(:topology).and_return(topology)
+          allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:addresses).and_return(servers.map(&:address))
+          allow(c).to receive(:replica_set?).and_return(false)
+          allow(c).to receive(:single?).and_return(false)
+          allow(c).to receive(:sharded?).and_return(true)
+          allow(c).to receive(:unknown?).and_return(false)
+          allow(c).to receive(:scan!)
+          allow(c).to receive(:options).and_return(local_threshold: 0.050)
+          allow(topology).to receive(:compatible?).and_return(true)
+          allow(topology).to receive(:single?).and_return(false)
+        end
+      end
+
+      context 'unknown and mongos' do
+        let(:mongos) { make_server(:mongos, address: Mongo::Address.new('localhost')) }
+        let(:unknown) { make_server(:unknown, address: Mongo::Address.new('localhost')) }
+        let(:servers) { [unknown, mongos] }
+        let(:selector) { described_class.primary }
+
+        it 'returns the mongos' do
+          expect(selector.select_server(cluster)).to eq(mongos)
+        end
       end
     end
   end
@@ -254,8 +398,12 @@ describe Mongo::ServerSelector do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
+          allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
           allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:addresses).and_return([])
+          allow(c).to receive(:replica_set?).and_return(!single && !sharded)
           allow(c).to receive(:single?).and_return(single)
           allow(c).to receive(:sharded?).and_return(sharded)
           allow(c).to receive(:unknown?).and_return(false)
@@ -265,7 +413,7 @@ describe Mongo::ServerSelector do
       end
 
       let(:read_pref) do
-        described_class.get(mode: :primary)
+        described_class.primary
       end
 
       it 'raises a NoServerAvailable error' do
@@ -346,9 +494,121 @@ describe Mongo::ServerSelector do
         { max_staleness: 123 }
       end
 
-      it 'includes the tag sets in the inspect string' do
+      it 'includes staleness in the inspect string' do
         expect(read_pref.inspect).to match(/max_staleness/i)
         expect(read_pref.inspect).to match(/123/)
+      end
+    end
+  end
+
+  describe '#filter_stale_servers' do
+    require_no_linting
+
+    include_context 'server selector'
+    let(:name) do
+      :secondary
+    end
+    let(:selector) { Mongo::ServerSelector::Secondary.new(
+      mode: name, max_staleness: max_staleness) }
+
+    def make_server_with_staleness(last_write_date)
+      make_server(:secondary).tap do |server|
+        allow(server.description.features).to receive(:max_staleness_enabled?).and_return(true)
+        allow(server).to receive(:last_scan).and_return(Time.now)
+        allow(server).to receive(:last_write_date).and_return(last_write_date)
+      end
+    end
+
+    shared_context 'staleness filter' do
+      let(:servers) do
+        [recent_server, stale_server]
+      end
+
+      context 'when max staleness is not set' do
+        let(:max_staleness) { nil }
+
+        it 'filters correctly' do
+          result = selector.send(:filter_stale_servers, servers, primary)
+          expect(result).to eq([recent_server, stale_server])
+        end
+      end
+
+      context 'when max staleness is set' do
+        let(:max_staleness) { 100 }
+
+        it 'filters correctly' do
+          result = selector.send(:filter_stale_servers, servers, primary)
+          expect(result).to eq([recent_server])
+        end
+      end
+    end
+
+    context 'primary is given' do
+      let(:primary) do
+        make_server(:primary).tap do |server|
+          allow(server).to receive(:last_scan).and_return(Time.now)
+          allow(server).to receive(:last_write_date).and_return(Time.now-100)
+        end
+      end
+
+      # staleness is relative to primary, which itself is 100 seconds stale
+      let(:recent_server) { make_server_with_staleness(Time.now-110) }
+      let(:stale_server) { make_server_with_staleness(Time.now-210) }
+
+      it_behaves_like 'staleness filter'
+    end
+
+    context 'primary is not given' do
+      let(:primary) { nil }
+
+      let(:recent_server) { make_server_with_staleness(Time.now-1) }
+      let(:stale_server) { make_server_with_staleness(Time.now-110) }
+
+      it_behaves_like 'staleness filter'
+    end
+  end
+
+  describe '#suitable_servers' do
+    let(:selector) { Mongo::ServerSelector::Primary.new(options) }
+
+    let(:cluster) { double('cluster') }
+
+    let(:options) { {} }
+
+    context 'sharded' do
+      let(:servers) do
+        [make_server(:mongos)]
+      end
+
+      before do
+        allow(cluster).to receive(:single?).and_return(false)
+        allow(cluster).to receive(:sharded?).and_return(true)
+        allow(cluster).to receive(:options).and_return({})
+        allow(cluster).to receive(:servers).and_return(servers)
+      end
+
+      it 'returns the servers' do
+        expect(selector.candidates(cluster)).to eq(servers)
+      end
+
+      context 'with local threshold' do
+        let(:options) do
+          {local_threshold: 1}
+        end
+
+        it 'returns the servers' do
+          expect(selector.candidates(cluster)).to eq(servers)
+        end
+
+        context 'when servers become unknown' do
+          let(:servers) do
+            [make_server(:unknown)]
+          end
+
+          it 'returns an empty list' do
+            expect(selector.suitable_servers(cluster)).to eq([])
+          end
+        end
       end
     end
   end

@@ -1,9 +1,27 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Index::View do
 
   let(:view) do
-    described_class.new(authorized_collection)
+    described_class.new(authorized_collection, options)
+  end
+
+  let(:options) do
+    {}
+  end
+
+  before do
+    begin
+      authorized_collection.delete_many
+    rescue Mongo::Error::OperationFailure
+    end
+    begin
+      authorized_collection.indexes.drop_all
+    rescue Mongo::Error::OperationFailure
+    end
   end
 
   describe '#drop_one' do
@@ -16,8 +34,26 @@ describe Mongo::Index::View do
       view.create_one(spec, unique: true)
     end
 
-    after do
-      begin; view.drop_one('another_-1'); rescue; end
+    context 'when provided a session' do
+
+      let(:view_with_session) do
+        described_class.new(authorized_collection, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      let(:operation) do
+        view_with_session.drop_one('another_-1')
+      end
+
+      let(:failed_operation) do
+        view_with_session.drop_one('_another_-1')
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when the index exists' do
@@ -54,7 +90,8 @@ describe Mongo::Index::View do
         view_with_write_concern.drop_one('another_-1')
       end
 
-      context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+      context 'when the server accepts writeConcern for the dropIndexes operation' do
+        min_server_fcv '3.4'
 
         it 'applies the write concern' do
           expect {
@@ -63,7 +100,8 @@ describe Mongo::Index::View do
         end
       end
 
-      context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+      context 'when the server does not accept writeConcern for the dropIndexes operation' do
+        max_server_version '3.2'
 
         it 'does not apply the write concern' do
           expect(result).to be_successful
@@ -71,7 +109,8 @@ describe Mongo::Index::View do
       end
     end
 
-    context 'when there are multiple indexes with the same key pattern', if: collation_enabled? do
+    context 'when there are multiple indexes with the same key pattern' do
+      min_server_fcv '3.4'
 
       before do
         view.create_one({ random: 1 }, unique: true)
@@ -123,6 +162,23 @@ describe Mongo::Index::View do
         expect(result).to be_successful
       end
 
+      context 'when provided a session' do
+
+        let(:view_with_session) do
+          described_class.new(authorized_collection, session: session)
+        end
+
+        let(:operation) do
+          view_with_session.drop_all
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+      end
+
       context 'when the collection has a write concern' do
 
         let(:collection) do
@@ -137,11 +193,8 @@ describe Mongo::Index::View do
           view_with_write_concern.drop_all
         end
 
-        after do
-          view.drop_all
-        end
-
-        context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+        context 'when the server accepts writeConcern for the dropIndexes operation' do
+          min_server_fcv '3.4'
 
           it 'applies the write concern' do
             expect {
@@ -150,7 +203,8 @@ describe Mongo::Index::View do
           end
         end
 
-        context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+        context 'when the server does not accept writeConcern for the dropIndexes operation' do
+          max_server_version '3.2'
 
           it 'does not apply the write concern' do
             expect(result).to be_successful
@@ -175,17 +229,183 @@ describe Mongo::Index::View do
             )
           end
 
-          after do
-            view.drop_one('random_1')
-            view.drop_one('testing_-1')
-          end
-
           it 'returns ok' do
             expect(result).to be_successful
           end
+
+          context 'when provided a session' do
+
+            let(:view_with_session) do
+              described_class.new(authorized_collection, session: session)
+            end
+
+            let(:operation) do
+              view_with_session.create_many(
+                  { key: { random: 1 }, unique: true },
+                  { key: { testing: -1 }, unique: true }
+              )
+            end
+
+            let(:client) do
+              authorized_client
+            end
+
+            let(:failed_operation) do
+              view_with_session.create_many(
+                  { key: { random: 1 }, invalid: true }
+              )
+            end
+
+            it_behaves_like 'an operation using a session'
+            it_behaves_like 'a failed operation using a session'
+          end
         end
 
-        context 'when collation is specified', if: collation_enabled? do
+        context 'when commit quorum options are specified' do
+          require_topology :replica_set, :sharded
+          context 'on server versions >= 4.4' do
+            min_server_fcv '4.4'
+
+            let(:subscriber) { Mrss::EventSubscriber.new }
+
+            let(:client) do
+              authorized_client.tap do |client|
+                client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              end
+            end
+
+            let(:authorized_collection) { client['view-subscribed'] }
+
+            context 'when commit_quorum value is supported' do
+              let!(:result) do
+                view.create_many(
+                  { key: { random: 1 }, unique: true },
+                  { key: { testing: -1 }, unique: true },
+                  { commit_quorum: 'majority' }
+                )
+              end
+
+              let(:events) do
+                subscriber.command_started_events('createIndexes')
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'passes the commit_quorum option to the server' do
+                expect(events.length).to eq(1)
+                command = events.first.command
+                expect(command['commitQuorum']).to eq('majority')
+              end
+            end
+
+            context 'when commit_quorum value is not supported' do
+              it 'raises an exception' do
+                expect do
+                  view.create_many(
+                    { key: { random: 1 }, unique: true },
+                    { key: { testing: -1 }, unique: true },
+                    { commit_quorum: 'unsupported-value' }
+                  )
+                # 4.4.4 changed the text of the error message
+                end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
+              end
+            end
+          end
+
+          context 'on server versions < 4.4' do
+            max_server_fcv '4.2'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many(
+                  { key: { random: 1 }, unique: true },
+                  { key: { testing: -1 }, unique: true },
+                  { commit_quorum: 'majority' }
+                )
+              end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the commit_quorum option/)
+            end
+          end
+        end
+
+        context 'when hidden is specified' do
+          let(:index) { view.get('with_hidden_1') }
+
+          context 'on server versions <= 3.2' do
+            # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+            # checking on index creation. The server will allow the user to create
+            # the index with the hidden option, but the server does not support this
+            # option and will not use it.
+            max_server_fcv '3.2'
+
+            let!(:result) do
+              view.create_many({ key: { with_hidden: 1 }, hidden: true })
+            end
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'creates an index' do
+              expect(index).to_not be_nil
+            end
+          end
+
+          context 'on server versions between 3.4 and 4.2' do
+            max_server_fcv '4.2'
+            min_server_fcv '3.4'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+            end
+          end
+
+          context 'on server versions >= 4.4' do
+            min_server_fcv '4.4'
+
+            context 'when hidden is true' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'applies the hidden option to the index' do
+                expect(index['hidden']).to be true
+              end
+            end
+
+            context 'when hidden is false' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: false })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'does not apply the hidden option to the index' do
+                expect(index['hidden']).to be_nil
+              end
+            end
+          end
+        end
+
+        context 'when collation is specified' do
+          min_server_fcv '3.4'
 
           let(:result) do
             view.create_many(
@@ -195,15 +415,12 @@ describe Mongo::Index::View do
             )
           end
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-          end
-
           let(:index_info) do
             view.get('random_1')
           end
 
-          context 'when the server supports collations', if: collation_enabled? do
+          context 'when the server supports collations' do
+            min_server_fcv '3.4'
 
             it 'returns ok' do
               expect(result).to be_successful
@@ -217,7 +434,8 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not support collations', unless: collation_enabled? do
+          context 'when the server does not support collations' do
+            max_server_version '3.2'
 
             it 'raises an exception' do
               expect {
@@ -246,11 +464,6 @@ describe Mongo::Index::View do
 
         context 'when the collection has a write concern' do
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-            begin; view.drop_one('testing_-1'); rescue; end
-          end
-
           let(:collection) do
             authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
@@ -266,7 +479,8 @@ describe Mongo::Index::View do
             )
           end
 
-          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+          context 'when the server accepts writeConcern for the createIndexes operation' do
+            min_server_fcv '3.4'
 
             it 'applies the write concern' do
               expect {
@@ -275,20 +489,11 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+          context 'when the server does not accept writeConcern for the createIndexes operation' do
+            max_server_version '3.2'
 
-            context 'when the server supports the createIndexes command', if: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
-            end
-
-            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
             end
           end
         end
@@ -305,13 +510,33 @@ describe Mongo::Index::View do
                              ])
           end
 
-          after do
-            view.drop_one('random_1')
-            view.drop_one('testing_-1')
-          end
-
           it 'returns ok' do
             expect(result).to be_successful
+          end
+
+          context 'when provided a session' do
+
+            let(:view_with_session) do
+              described_class.new(authorized_collection, session: session)
+            end
+
+            let(:operation) do
+              view_with_session.create_many([
+                                             { key: { random: 1 }, unique: true },
+                                             { key: { testing: -1 }, unique: true }
+                                            ])
+            end
+
+            let(:failed_operation) do
+              view_with_session.create_many([ { key: { random: 1 }, invalid: true }])
+            end
+
+            let(:client) do
+              authorized_client
+            end
+
+            it_behaves_like 'an operation using a session'
+            it_behaves_like 'a failed operation using a session'
           end
         end
 
@@ -329,11 +554,8 @@ describe Mongo::Index::View do
             view.get('random_1')
           end
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-          end
-
-          context 'when the server supports collations', if: collation_enabled? do
+          context 'when the server supports collations' do
+            min_server_fcv '3.4'
 
             it 'returns ok' do
               expect(result).to be_successful
@@ -347,7 +569,8 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not support collations', unless: collation_enabled? do
+          context 'when the server does not support collations' do
+            max_server_version '3.2'
 
             it 'raises an exception' do
               expect {
@@ -376,11 +599,6 @@ describe Mongo::Index::View do
 
         context 'when the collection has a write concern' do
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-            begin; view.drop_one('testing_-1'); rescue; end
-          end
-
           let(:collection) do
             authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
@@ -396,7 +614,8 @@ describe Mongo::Index::View do
                              ])
           end
 
-          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+          context 'when the server accepts writeConcern for the createIndexes operation' do
+            min_server_fcv '3.4'
 
             it 'applies the write concern' do
               expect {
@@ -405,20 +624,11 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+          context 'when the server does not accept writeConcern for the createIndexes operation' do
+            max_server_version '3.2'
 
-            context 'when the server accepts the createIndexes command', if: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
-            end
-
-            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
             end
           end
         end
@@ -434,18 +644,31 @@ describe Mongo::Index::View do
           view.create_one(spec, unique: true)
         end
 
-        after do
-          view.drop_one('name_1')
-        end
-
-        it 'raises an exception', if: write_command_enabled? do
+        it 'raises an exception' do
           expect {
             view.create_many([{ key: { name: 1 }, unique: false }])
           }.to raise_error(Mongo::Error::OperationFailure)
         end
+      end
+    end
 
-        it 'does not raise an exception', unless: write_command_enabled? do
-          expect(view.create_many([{ key: { name: 1 }, unique: false }])).to be_successful
+    context 'when using bucket option' do
+      # Option is removed in 4.9
+      max_server_version '4.7'
+
+      let(:spec) do
+        { 'any' => 1 }
+      end
+
+      let(:result) do
+        view.create_many([key: spec, bucket_size: 1])
+      end
+
+      it 'warns of deprecation' do
+        RSpec::Mocks.with_temporary_scope do
+          view.client.should receive(:log_warn).and_call_original
+
+          result
         end
       end
     end
@@ -463,12 +686,30 @@ describe Mongo::Index::View do
         view.create_one(spec, unique: true)
       end
 
-      after do
-        begin; view.drop_one('random_1'); rescue; end
-      end
-
       it 'returns ok' do
         expect(result).to be_successful
+      end
+
+      context 'when provided a session' do
+
+        let(:view_with_session) do
+          described_class.new(authorized_collection, session: session)
+        end
+
+        let(:operation) do
+          view_with_session.create_one(spec, unique: true)
+        end
+
+        let(:failed_operation) do
+          view_with_session.create_one(spec, invalid: true)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when the collection has a write concern' do
@@ -485,7 +726,8 @@ describe Mongo::Index::View do
           view_with_write_concern.create_one(spec, unique: true)
         end
 
-        context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+        context 'when the server accepts writeConcern for the createIndexes operation' do
+          min_server_fcv '3.4'
 
           it 'applies the write concern' do
             expect {
@@ -494,20 +736,11 @@ describe Mongo::Index::View do
           end
         end
 
-        context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+        context 'when the server does not accept writeConcern for the createIndexes operation' do
+          max_server_version '3.2'
 
-          context 'when the server supports the createIndexes command', if: write_command_enabled? do
-
-            it 'does not apply the write concern' do
-              expect(result).to be_successful
-            end
-          end
-
-          context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
-
-            it 'does not apply the write concern' do
-              expect(result).to be_successful
-            end
+          it 'does not apply the write concern' do
+            expect(result).to be_successful
           end
         end
       end
@@ -522,12 +755,29 @@ describe Mongo::Index::View do
           view.create_one(spec, unique: true)
         end
 
-        after do
-          begin; view.drop_one('sub_document.random_1'); rescue; end
-        end
-
         it 'returns ok' do
           expect(result).to be_successful
+        end
+      end
+
+      context 'when using bucket option' do
+        # Option is removed in 4.9
+        max_server_version '4.7'
+
+        let(:spec) do
+          { 'any' => 1 }
+        end
+
+        let(:result) do
+          view.create_one(spec, bucket_size: 1)
+        end
+
+        it 'warns of deprecation' do
+          RSpec::Mocks.with_temporary_scope do
+            view.client.should receive(:log_warn).and_call_original
+
+            result
+          end
         end
       end
     end
@@ -542,18 +792,10 @@ describe Mongo::Index::View do
         view.create_one(spec, unique: true)
       end
 
-      after do
-        view.drop_one('name_1')
-      end
-
-      it 'raises an exception', if: write_command_enabled? do
+      it 'raises an exception' do
         expect {
           view.create_one(spec, unique: false)
         }.to raise_error(Mongo::Error::OperationFailure)
-      end
-
-      it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.create_one(spec, unique: false)).to be_successful
       end
     end
 
@@ -567,10 +809,6 @@ describe Mongo::Index::View do
         view.create_one(spec, unique: true, name: 'random_name')
       end
 
-      after do
-        view.drop_one('random_name')
-      end
-
       it 'returns ok' do
         expect(result).to be_successful
       end
@@ -580,7 +818,8 @@ describe Mongo::Index::View do
       end
     end
 
-    context 'when providing an invalid partial index filter', if: find_command_enabled? do
+    context 'when providing an invalid partial index filter' do
+      min_server_fcv '3.2'
 
       it 'raises an exception' do
         expect {
@@ -589,7 +828,8 @@ describe Mongo::Index::View do
       end
     end
 
-    context 'when providing a valid partial index filter', if: find_command_enabled? do
+    context 'when providing a valid partial index filter' do
+      min_server_fcv '3.2'
 
       let(:expression) do
         {'a' => {'$lte' => 1.5}}
@@ -601,10 +841,6 @@ describe Mongo::Index::View do
 
       let(:indexes) do
         authorized_collection.indexes.get('x_1')
-      end
-
-      after do
-        view.drop_one('x_1')
       end
 
       it 'returns ok' do
@@ -619,6 +855,139 @@ describe Mongo::Index::View do
         expect(indexes[:partialFilterExpression]).to eq(expression)
       end
     end
+
+    context 'when providing hidden option' do
+      let(:index) { view.get('with_hidden_1') }
+
+      context 'on server versions <= 3.2' do
+        # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+        # checking on index creation. The server will allow the user to create
+        # the index with the hidden option, but the server does not support this
+        # option and will not use it.
+        max_server_fcv '3.2'
+
+        let!(:result) do
+          view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+
+        it 'creates an index' do
+          expect(index).to_not be_nil
+        end
+      end
+
+      context 'on server versions between 3.4 and 4.2' do
+        max_server_fcv '4.2'
+        min_server_fcv '3.4'
+
+        it 'raises an exception' do
+          expect do
+            view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+          end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+        end
+      end
+
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.4'
+
+        context 'when hidden is true' do
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: true }) }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(index).to_not be_nil
+          end
+
+          it 'applies the hidden option to the index' do
+            expect(index['hidden']).to be true
+          end
+        end
+
+        context 'when hidden is false' do
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: false }) }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(index).to_not be_nil
+          end
+
+          it 'does not apply the hidden option to the index' do
+            expect(index['hidden']).to be_nil
+          end
+        end
+      end
+    end
+
+    context 'when providing commit_quorum option' do
+      require_topology :replica_set, :sharded
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.4'
+
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        let(:authorized_collection) { client['view-subscribed'] }
+
+        let(:indexes) do
+          authorized_collection.indexes.get('x_1')
+        end
+
+        context 'when commit_quorum value is supported' do
+          let!(:result) { view.create_one({ 'x' => 1 }, commit_quorum: 'majority') }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(indexes).to_not be_nil
+          end
+
+          let(:events) do
+            subscriber.command_started_events('createIndexes')
+          end
+
+          it 'passes the commit_quorum option to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['commitQuorum']).to eq('majority')
+          end
+        end
+
+        context 'when commit_quorum value is not supported' do
+          it 'raises an exception' do
+            expect do
+              view.create_one({ 'x' => 1 }, commit_quorum: 'unsupported-value')
+            # 4.4.4 changed the text of the error message
+            end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
+          end
+        end
+      end
+
+      context 'on server versions < 4.4' do
+        max_server_fcv '4.2'
+
+        it 'raises an exception' do
+          expect do
+            view.create_one({ 'x' => 1 }, commit_quorum: 'majority')
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the commit_quorum option/)
+        end
+      end
+    end
   end
 
   describe '#get' do
@@ -629,10 +998,6 @@ describe Mongo::Index::View do
 
     let!(:result) do
       view.create_one(spec, unique: true, name: 'random_name')
-    end
-
-    after do
-      view.drop_one('random_name')
     end
 
     context 'when providing a name' do
@@ -657,6 +1022,23 @@ describe Mongo::Index::View do
       end
     end
 
+    context 'when provided a session' do
+
+      let(:view_with_session) do
+        described_class.new(authorized_collection, session: session)
+      end
+
+      let(:operation) do
+        view_with_session.get(random: 1)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+    end
+
     context 'when the index does not exist' do
 
       it 'returns nil' do
@@ -677,10 +1059,6 @@ describe Mongo::Index::View do
         view.create_one(spec, unique: true)
       end
 
-      after do
-        view.drop_one('name_1')
-      end
-
       let(:indexes) do
         view.each
       end
@@ -691,18 +1069,19 @@ describe Mongo::Index::View do
     end
 
     context 'when the collection does not exist' do
+      min_server_fcv '3.0'
 
-      let(:nonexistant_collection) do
+      let(:nonexistent_collection) do
         authorized_client[:not_a_collection]
       end
 
-      let(:nonexistant_view) do
-        described_class.new(nonexistant_collection)
+      let(:nonexistent_view) do
+        described_class.new(nonexistent_collection)
       end
 
-      it 'raises a nonexistant collection error', if: list_command_enabled? do
+      it 'raises a nonexistent collection error' do
         expect {
-          nonexistant_view.each.to_a
+          nonexistent_view.each.to_a
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
@@ -768,7 +1147,8 @@ describe Mongo::Index::View do
         end
       end
 
-      context 'when the server supports collations', if: collation_enabled? do
+      context 'when the server supports collations' do
+        min_server_fcv '3.4'
 
         let(:extended_options) do
           options.merge(:collation => { locale: 'en_US' } )

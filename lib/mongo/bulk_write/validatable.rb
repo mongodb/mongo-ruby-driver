@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +18,7 @@
 module Mongo
   class BulkWrite
 
-    # Defines behaviour around validations.
+    # Defines behavior around validations.
     #
     # @api private
     #
@@ -42,6 +45,14 @@ module Mongo
         validate_document(name, document)
         if document.respond_to?(:keys) && (document[:collation] || document[Operation::COLLATION])
           @has_collation = true
+        end
+
+        if document.respond_to?(:keys) && document[:array_filters]
+          @has_array_filters = true
+        end
+
+        if document.respond_to?(:keys) && document[:hint]
+          @has_hint = true
         end
       end
 

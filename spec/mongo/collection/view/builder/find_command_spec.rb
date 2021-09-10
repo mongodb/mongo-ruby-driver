@@ -1,15 +1,27 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+# TODO convert, move or delete these tests as part of RUBY-2706.
+
+=begin
+require 'lite_spec_helper'
 
 describe Mongo::Collection::View::Builder::FindCommand do
+
+  let(:client) do
+    new_local_client_nmio(['127.0.0.1:27017'])
+  end
+
+  let(:base_collection) { client['find-command-spec'] }
 
   describe '#specification' do
 
     let(:view) do
-      Mongo::Collection::View.new(authorized_collection, filter, options)
+      Mongo::Collection::View.new(base_collection, filter, options)
     end
 
     let(:builder) do
-      described_class.new(view)
+      described_class.new(view, nil)
     end
 
     let(:specification) do
@@ -48,13 +60,27 @@ describe Mongo::Collection::View::Builder::FindCommand do
           no_cursor_timeout: true,
           await_data: true,
           allow_partial_results: true,
-          read_concern: { level: 'local' },
           collation: { locale: 'en_US' }
         }
       end
 
+      context 'when the operation has a session' do
+
+        let(:session) do
+          double('session')
+        end
+
+        let(:builder) do
+          described_class.new(view, session)
+        end
+
+        it 'adds the session to the specification' do
+          expect(builder.specification[:session]).to be(session)
+        end
+      end
+
       it 'maps the collection name' do
-        expect(selector['find']).to eq(authorized_collection.name)
+        expect(selector['find']).to eq(base_collection.name)
       end
 
       it 'maps the filter' do
@@ -109,10 +135,6 @@ describe Mongo::Collection::View::Builder::FindCommand do
         expect(selector['min']).to eq('name' => 'albert')
       end
 
-      it 'maps read concern' do
-        expect(selector['readConcern']).to eq('level' => 'local')
-      end
-
       it 'maps return key' do
         expect(selector['returnKey']).to be true
       end
@@ -129,8 +151,13 @@ describe Mongo::Collection::View::Builder::FindCommand do
         expect(selector['tailable']).to be true
       end
 
-      it 'maps oplog replay' do
+      it 'maps oplog_replay' do
         expect(selector['oplogReplay']).to be true
+      end
+
+      it 'warns when using oplog_replay' do
+        client.should receive(:log_warn).with('oplogReplay is deprecated and ignored by MongoDB 4.4 and later')
+        selector
       end
 
       it 'maps no cursor timeout' do
@@ -451,5 +478,51 @@ describe Mongo::Collection::View::Builder::FindCommand do
         end
       end
     end
+
+    context 'when the collection has a read concern defined' do
+
+      let(:collection) do
+        base_collection.with(read_concern: { level: 'invalid' })
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, {})
+      end
+
+      it 'applies the read concern of the collection' do
+        expect(selector['readConcern']).to eq(BSON::Document.new(level: 'invalid'))
+      end
+
+      context 'when explain is called for the find' do
+
+        let(:collection) do
+          base_collection.with(read_concern: { level: 'invalid' })
+        end
+
+        let(:view) do
+          Mongo::Collection::View.new(collection, {})
+        end
+
+        it 'applies the read concern of the collection' do
+          expect( builder.explain_specification[:selector][:explain][:readConcern]).to eq(BSON::Document.new(level: 'invalid'))
+        end
+      end
+    end
+
+    context 'when the collection does not have a read concern defined' do
+
+      let(:filter) do
+        {}
+      end
+
+      let(:options) do
+        {}
+      end
+
+      it 'does not apply a read concern' do
+        expect(selector['readConcern']).to be_nil
+      end
+    end
   end
 end
+=end

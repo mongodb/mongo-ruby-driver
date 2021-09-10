@@ -1,6 +1,18 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Grid::FSBucket::Stream::Write do
+
+  let(:support_fs) do
+    authorized_client.database.fs(fs_options)
+  end
+
+  before do
+    support_fs.files_collection.drop rescue nil
+    support_fs.chunks_collection.drop rescue nil
+  end
 
   let(:file) do
     File.open(__FILE__)
@@ -27,12 +39,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
   end
 
   let(:options) do
-    { filename: filename }.merge(extra_options)
-  end
-
-  after do
-    fs.files_collection.delete_many
-    fs.chunks_collection.delete_many
+    { filename: filename }.merge(extra_options).merge(fs.options)
   end
 
   let(:stream) do
@@ -53,7 +60,47 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       expect(stream.close).to be_a(BSON::ObjectId)
     end
 
-    context 'when the fs has a write concern', if: standalone? do
+    context 'when the fs does not have disable_md5 specified' do
+
+      it 'sets an md5 for the file' do
+        stream.send(:file_info).to_bson
+        expect(stream.send(:file_info).document[:md5].size).to eq(32)
+      end
+    end
+
+    context 'when the fs has disable_md5 specified' do
+
+      before do
+        stream.send(:file_info).to_bson
+      end
+
+      context 'when disable_md5 is true' do
+
+        let(:fs_options) do
+          { disable_md5: true }
+        end
+
+        it 'does not set an md5 for the file' do
+          expect(stream.send(:file_info).document.has_key?(:md5)). to be(false)
+          expect(stream.send(:file_info).document[:md5]). to be_nil
+        end
+      end
+
+      context 'when disabled_md5 is false' do
+
+        let(:fs_options) do
+          { disable_md5: false }
+        end
+
+        it 'sets an md5 for the file' do
+          stream.send(:file_info).to_bson
+          expect(stream.send(:file_info).document[:md5].size).to eq(32)
+        end
+      end
+    end
+
+    context 'when the fs has a write concern' do
+      require_topology :single
 
       let(:fs_options) do
         { write: INVALID_WRITE_CONCERN }
@@ -192,11 +239,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
   describe '#write' do
 
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
-    end
-
     let(:file_from_db) do
       fs.find_one(filename: filename)
     end
@@ -217,10 +259,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       context 'when the files collection is empty' do
 
         before do
-          fs.files_collection.delete_many
-          fs.chunks_collection.delete_many
-          expect(fs.files_collection).to receive(:indexes).and_call_original
-          expect(fs.chunks_collection).to receive(:indexes).and_call_original
           stream.write(file)
         end
 
@@ -252,18 +290,44 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
       end
 
+      context 'when the files collection is empty but indexes already exist with double values' do
+        before do
+          fs.files_collection.indexes.create_one(
+            { filename: 1.0, uploadDate: 1.0 },
+            name: 'filename_1_uploadDate_1'
+          )
+
+          fs.chunks_collection.indexes.create_one(
+            { files_id: 1.0, n: 1.0 },
+            name: 'files_id_1_n_1',
+            unique: true
+          )
+        end
+
+        it 'does not raise an exception' do
+          expect do
+            stream.write(file)
+          end.not_to raise_error
+        end
+
+        it 'does not create new indexes' do
+          stream.write(file)
+
+          files_indexes = fs.files_collection.indexes.map { |index| index['key'] }
+          chunks_indexes = fs.chunks_collection.indexes.map { |index| index['key'] }
+
+          # Ruby parses the index keys with integer values
+          expect(files_indexes).to eq([{ '_id' => 1 }, { 'filename' => 1, 'uploadDate' => 1 }])
+          expect(chunks_indexes).to eq([{ '_id' => 1 }, { 'files_id' => 1, 'n' => 1 }])
+        end
+      end
+
       context 'when the files collection is not empty' do
 
         before do
-          fs.files_collection.insert_one(a: 1)
-          expect(fs.files_collection).not_to receive(:indexes)
-          expect(fs.chunks_collection).not_to receive(:indexes)
+          support_fs.send(:ensure_indexes!)
+          support_fs.files_collection.insert_one(a: 1)
           stream.write(file)
-        end
-
-        after do
-          fs.files_collection.delete_many
-          fs.chunks_collection.delete_many
         end
 
         let(:files_index) do
@@ -275,23 +339,16 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
       end
 
-      context 'when the index creation encounters an error', if: write_command_enabled? do
+      context 'when the index creation is done explicitely' do
 
         before do
-          fs.chunks_collection.drop
           fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
-          expect(fs.chunks_collection).to receive(:indexes).and_call_original
-          expect(fs.files_collection).not_to receive(:indexes)
         end
 
-        after do
-          fs.database[fs.chunks_collection.name].indexes.drop_one('files_id_1_n_1')
-        end
-
-        it 'raises the error to the user' do
+        it 'should not raise an error to the user' do
           expect {
             stream.write(file)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          }.not_to raise_error
         end
       end
     end

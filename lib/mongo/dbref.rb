@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -100,8 +103,15 @@ module Mongo
       # @see http://bsonspec.org/#/specification
       #
       # @since 2.0.0
-      def from_bson(buffer)
-        decoded = super
+      def from_bson(buffer, **options)
+        # bson-ruby 4.8.0 changes #from_bson API to take **options.
+        # However older bsons fail if invoked with a plain super here,
+        # even if options are empty.
+        decoded = if options.empty?
+          super(buffer)
+        else
+          super
+        end
         if ref = decoded[COLLECTION]
           decoded = DBRef.new(ref, decoded[ID], decoded[DATABASE])
         end

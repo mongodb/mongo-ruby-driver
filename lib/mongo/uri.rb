@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -12,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'uri'
-
 module Mongo
 
   # The URI class provides a way for users to parse the MongoDB uri as
@@ -22,21 +23,22 @@ module Mongo
   # http://docs.mongodb.org/manual/reference/connection-string/
   #
   # @example Use the uri string to make a client connection.
-  #   uri = URI.new('mongodb://localhost:27017')
-  #   client = Client.new(uri.server, uri.options)
+  #   uri = Mongo::URI.new('mongodb://localhost:27017')
+  #   client = Mongo::Client.new(uri.servers, uri.options)
   #   client.login(uri.credentials)
   #   client[uri.database]
   #
   # @since 2.0.0
   class URI
     include Loggable
+    include Address::Validator
 
     # The uri parser object options.
     #
     # @since 2.0.0
     attr_reader :options
 
-    # The options specified in the uri.
+    # Mongo::Options::Redacted of the options specified in the uri.
     #
     # @since 2.1.0
     attr_reader :uri_options
@@ -46,20 +48,54 @@ module Mongo
     # @since 2.0.0
     attr_reader :servers
 
+    # The mongodb connection string scheme.
+    #
+    # @deprecated Will be removed in 3.0.
+    #
+    # @since 2.0.0
+    SCHEME = 'mongodb://'.freeze
+
+    # The mongodb connection string scheme root.
+    #
+    # @since 2.5.0
+    MONGODB_SCHEME = 'mongodb'.freeze
+
+    # The mongodb srv protocol connection string scheme root.
+    #
+    # @since 2.5.0
+    MONGODB_SRV_SCHEME = 'mongodb+srv'.freeze
+
+    # Error details for an invalid scheme.
+    #
+    # @since 2.1.0
+    # @deprecated
+    INVALID_SCHEME = "Invalid scheme. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'".freeze
+
+    # MongoDB URI format specification.
+    #
+    # @since 2.0.0
+    FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
+        ',...[,hostN[:portN]]][/[database][?options]]'.freeze
+
+    # MongoDB URI (connection string) documentation url
+    #
+    # @since 2.0.0
+    HELP = 'http://docs.mongodb.org/manual/reference/connection-string/'.freeze
+
     # Unsafe characters that must be urlencoded.
     #
     # @since 2.1.0
-    UNSAFE = /[\:\/\+\@]/
+    UNSAFE = /[\:\/\@]/
+
+    # Percent sign that must be encoded in user creds.
+    #
+    # @since 2.5.1
+    PERCENT_CHAR = /\%/
 
     # Unix socket suffix.
     #
     # @since 2.1.0
     UNIX_SOCKET = /.sock/
-
-    # The mongodb connection string scheme.
-    #
-    # @since 2.0.0
-    SCHEME = 'mongodb://'.freeze
 
     # The character delimiting hosts.
     #
@@ -84,6 +120,7 @@ module Mongo
     # The character delimiting multiple options.
     #
     # @since 2.1.0
+    # @deprecated
     INDIV_URI_OPTS_DELIM = '&'.freeze
 
     # The character delimiting an option and its value.
@@ -101,10 +138,10 @@ module Mongo
     # @since 2.1.0
     AUTH_DELIM = '@'.freeze
 
-    # Error details for an invalid scheme.
+    # Scheme delimiter.
     #
-    # @since 2.1.0
-    INVALID_SCHEME = "Invalid scheme. Scheme must be '#{SCHEME}'".freeze
+    # @since 2.5.0
+    SCHEME_DELIM = '://'.freeze
 
     # Error details for an invalid options format.
     #
@@ -122,7 +159,7 @@ module Mongo
     # @since 2.1.0
     UNESCAPED_UNIX_SOCKET = "UNIX domain sockets must be urlencoded.".freeze
 
-    # Error details for a non-urlencoded auth databsae name.
+    # Error details for a non-urlencoded auth database name.
     #
     # @since 2.1.0
     UNESCAPED_DATABASE = "Auth database must be urlencoded.".freeze
@@ -142,18 +179,7 @@ module Mongo
     # @since 2.1.0
     INVALID_PORT = "Invalid port. Port must be an integer greater than 0 and less than 65536".freeze
 
-    # MongoDB URI format specification.
-    #
-    # @since 2.0.0
-    FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
-      ',...[,hostN[:portN]]][/[database][?options]]'.freeze
-
-    # MongoDB URI (connection string) documentation url
-    #
-    # @since 2.0.0
-    HELP = 'http://docs.mongodb.org/manual/reference/connection-string/'.freeze
-
-    # Map of URI read preference modes to ruby driver read preference modes
+    # Map of URI read preference modes to Ruby driver read preference modes
     #
     # @since 2.0.0
     READ_MODE_MAP = {
@@ -164,39 +190,60 @@ module Mongo
       'nearest'            => :nearest
     }.freeze
 
-    # Map of URI authentication mechanisms to ruby driver mechanisms
+    # Map of URI authentication mechanisms to Ruby driver mechanisms
     #
     # @since 2.0.0
     AUTH_MECH_MAP = {
-      'PLAIN'        => :plain,
-      'MONGODB-CR'   => :mongodb_cr,
       'GSSAPI'       => :gssapi,
+      'MONGODB-AWS'  => :aws,
+      # MONGODB-CR is deprecated and will be removed in driver version 3.0
+      'MONGODB-CR'   => :mongodb_cr,
       'MONGODB-X509' => :mongodb_x509,
-      'SCRAM-SHA-1'  => :scram
+      'PLAIN'        => :plain,
+      'SCRAM-SHA-1'  => :scram,
+      'SCRAM-SHA-256' => :scram256,
     }.freeze
 
     # Options that are allowed to appear more than once in the uri.
     #
+    # In order to follow the URI options spec requirement that all instances
+    # of 'tls' and 'ssl' have the same value, we need to keep track of all
+    # of the values passed in for those options. Assuming they don't conflict,
+    # they will be condensed to a single value immediately after parsing the URI.
+    #
     # @since 2.1.0
-    REPEATABLE_OPTIONS = [ :tag_sets ]
+    REPEATABLE_OPTIONS = [ :tag_sets, :ssl ]
 
-    # Create the new uri from the provided string.
+    # Get either a URI object or a SRVProtocol URI object.
     #
-    # @example Create the new URI.
-    #   URI.new('mongodb://localhost:27017')
+    # @example Get the uri object.
+    #   URI.get(string)
     #
-    # @param [ String ] string The uri string.
-    # @param [ Hash ] options The options.
+    # @param [ String ] string The URI to parse.
+    # @param [ Hash ] opts The options.
     #
-    # @raise [ Error::InvalidURI ] If the uri does not match the spec.
+    # @option options [ Logger ] :logger A custom logger to use.
     #
-    # @since 2.0.0
-    def initialize(string, options = {})
-      @string = string
-      @options = options
-      _, scheme, remaining = @string.partition(SCHEME)
-      raise_invalid_error!(INVALID_SCHEME) unless scheme == SCHEME
-      setup!(remaining)
+    # @return [URI, URI::SRVProtocol] The uri object.
+    #
+    # @since 2.5.0
+    def self.get(string, opts = {})
+      unless string
+        raise Error::InvalidURI.new(string, 'URI must be a string, not nil.')
+      end
+      if string.empty?
+        raise Error::InvalidURI.new(string, 'Cannot parse an empty URI.')
+      end
+
+      scheme, _, remaining = string.partition(SCHEME_DELIM)
+      case scheme
+        when MONGODB_SCHEME
+          URI.new(string, opts)
+        when MONGODB_SRV_SCHEME
+          SRVProtocol.new(string, opts)
+        else
+          raise Error::InvalidURI.new(string, "Invalid scheme '#{scheme}'. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'")
+      end
     end
 
     # Gets the options hash that needs to be passed to a Mongo::Client on
@@ -206,12 +253,53 @@ module Mongo
     # @example Get the client options.
     #   uri.client_options
     #
-    # @return [ Hash ] The options passed to the Mongo::Client
+    # @return [ Mongo::Options::Redacted ] The options passed to the Mongo::Client
     #
     # @since 2.0.0
     def client_options
-      opts = uri_options.merge(:database => database)
+      opts = uri_options.tap do |opts|
+        opts[:database] = @database if @database
+      end
+
       @user ? opts.merge(credentials) : opts
+    end
+
+    def srv_records
+      nil
+    end
+
+    # Create the new uri from the provided string.
+    #
+    # @example Create the new URI.
+    #   URI.new('mongodb://localhost:27017')
+    #
+    # @param [ String ] string The URI to parse.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Logger ] :logger A custom logger to use.
+    #
+    # @raise [ Error::InvalidURI ] If the uri does not match the spec.
+    #
+    # @since 2.0.0
+    def initialize(string, options = {})
+      unless string
+        raise Error::InvalidURI.new(string, 'URI must be a string, not nil.')
+      end
+      if string.empty?
+        raise Error::InvalidURI.new(string, 'Cannot parse an empty URI.')
+      end
+
+      @string = string
+      @options = options
+      parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
+      unless parsed_scheme == scheme
+        raise_invalid_error!("Invalid scheme '#{parsed_scheme}'. Scheme must be '#{MONGODB_SCHEME}'. Use URI#get to parse SRV URIs.")
+      end
+      if remaining.empty?
+        raise_invalid_error!('No hosts in the URI')
+      end
+      parse!(remaining)
+      validate_uri_options!
     end
 
     # Get the credentials provided in the URI.
@@ -242,10 +330,56 @@ module Mongo
 
     private
 
-    def setup!(remaining)
-      creds_hosts, db_opts = extract_db_opts!(remaining)
-      parse_creds_hosts!(creds_hosts)
-      parse_db_opts!(db_opts)
+    def scheme
+      MONGODB_SCHEME
+    end
+
+    def parse!(remaining)
+      hosts_and_db, options = remaining.split('?', 2)
+      if options && options.index('?')
+        raise_invalid_error!("Options contain an unescaped question mark (?), or the database name contains a question mark and was not escaped")
+      end
+
+      if options && !hosts_and_db.index('/')
+        raise_invalid_error!("MongoDB URI must have a slash (/) after the hosts if options are given")
+      end
+
+      hosts, db = hosts_and_db.split('/', 2)
+      if db && db.index('/')
+        raise_invalid_error!("Database name contains an unescaped slash (/): #{db}")
+      end
+
+      if hosts.index('@')
+        creds, hosts = hosts.split('@', 2)
+        if hosts.empty?
+          raise_invalid_error!("Empty hosts list")
+        end
+        if hosts.index('@')
+          raise_invalid_error!("Unescaped @ in auth info")
+        end
+      end
+
+      unless hosts.length > 0
+        raise_invalid_error!("Missing host; at least one must be provided")
+      end
+
+      @servers = hosts.split(',').map do |host|
+        if host.empty?
+          raise_invalid_error!('Empty host given in the host list')
+        end
+        decode(host).tap do |host|
+          validate_address_str!(host)
+        end
+      end
+
+      @user = parse_user!(creds)
+      @password = parse_password!(creds)
+      @uri_options = Options::Redacted.new(parse_uri_options!(options))
+      if db
+        @database = parse_database!(db)
+      end
+    rescue Error::InvalidAddress => e
+      raise_invalid_error!(e.message)
     end
 
     def extract_db_opts!(string)
@@ -257,51 +391,53 @@ module Mongo
       [ creds_hosts, db_opts ].map { |s| s.reverse }
     end
 
-    def parse_creds_hosts!(string)
-      hosts, creds = split_creds_hosts(string)
-      @servers = parse_servers!(hosts)
-      @user = parse_user!(creds)
-      @password = parse_password!(creds)
-    end
-
-    def split_creds_hosts(string)
-      hosts, _, creds = string.reverse.partition(AUTH_DELIM)
-      hosts, creds = creds, hosts if hosts.empty?
-      [ hosts, creds ].map { |s| s.reverse }
-    end
-
-    def parse_db_opts!(string)
-      auth_db, _, uri_opts = string.partition(URI_OPTS_DELIM)
-      @uri_options = Options::Redacted.new(parse_uri_options!(uri_opts))
-      @database = parse_database!(auth_db)
+    def options_mapper
+      @options_mapper ||= OptionsMapper.new(
+        logger: @options[:logger],
+      )
     end
 
     def parse_uri_options!(string)
-      return {} unless string
-      string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
-        raise_invalid_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
-        key, value = opt.split(URI_OPTS_VALUE_DELIM)
-        strategy = URI_OPTION_MAP[key.downcase]
-        if strategy.nil?
-          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
-        else
-          add_uri_option(strategy, value, uri_options)
-        end
-        uri_options
+      uri_options = {}
+      unless string
+        return uri_options
       end
+      string.split('&').each do |option_str|
+        if option_str.empty?
+          next
+        end
+        key, value = option_str.split('=', 2)
+        if value.nil?
+          raise_invalid_error!("Option #{key} has no value")
+        end
+        key = decode(key)
+        value = decode(value)
+        options_mapper.add_uri_option(key, value, uri_options)
+      end
+      uri_options
     end
 
     def parse_user!(string)
       if (string && user = string.partition(AUTH_USER_PWD_DELIM)[0])
         raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
-        decode(user) if user.length > 0
+        user_decoded = decode(user)
+        if user_decoded =~ PERCENT_CHAR && encode(user_decoded) != user
+          raise_invalid_error!(UNESCAPED_USER_PWD)
+        end
+        user_decoded
       end
     end
 
     def parse_password!(string)
       if (string && pwd = string.partition(AUTH_USER_PWD_DELIM)[2])
-        raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
-        decode(pwd) if pwd.length > 0
+        if pwd.length > 0
+          raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+          pwd_decoded = decode(pwd)
+          if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
+            raise_invalid_error!(UNESCAPED_USER_PWD)
+          end
+          pwd_decoded
+        end
       end
     end
 
@@ -310,32 +446,11 @@ module Mongo
       decode(string) if string.length > 0
     end
 
-    def validate_port_string!(port)
-      unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)
-        raise_invalid_error!(INVALID_PORT)
-      end
-    end
-
-    def parse_servers!(string)
-      raise_invalid_error!(INVALID_HOST) unless string.size > 0
-      string.split(HOST_DELIM).reduce([]) do |servers, host|
-        if host[0] == '['
-          if host.index(']:')
-            h, p = host.split(']:')
-            validate_port_string!(p)
-          end
-        elsif host.index(HOST_PORT_DELIM)
-          h, _, p = host.partition(HOST_PORT_DELIM)
-          raise_invalid_error!(INVALID_HOST) unless h.size > 0
-          validate_port_string!(p)
-        elsif host =~ UNIX_SOCKET
-          raise_invalid_error!(UNESCAPED_UNIX_SOCKET) if host =~ UNSAFE
-        end
-        servers << host
-      end
-    end
-
     def raise_invalid_error!(details)
+      raise Error::InvalidURI.new(@string, details, FORMAT)
+    end
+
+    def raise_invalid_error_no_fmt!(details)
       raise Error::InvalidURI.new(@string, details)
     end
 
@@ -343,234 +458,89 @@ module Mongo
       ::URI::DEFAULT_PARSER.unescape(value)
     end
 
-    # Hash for storing map of URI option parameters to conversion strategies
-    URI_OPTION_MAP = {}
-
-    # Simple internal dsl to register a MongoDB URI option in the URI_OPTION_MAP.
-    #
-    # @param uri_key [String] The MongoDB URI option to register.
-    # @param name [Symbol] The name of the option in the driver.
-    # @param extra [Hash] Extra options.
-    #   * :group [Symbol] Nested hash where option will go.
-    #   * :type [Symbol] Name of function to transform value.
-    def self.uri_option(uri_key, name, extra = {})
-      URI_OPTION_MAP[uri_key] = { :name => name }.merge(extra)
+    def encode(value)
+      CGI.escape(value).gsub('+', '%20')
     end
 
-    # Replica Set Options
-    uri_option 'replicaset', :replica_set, :type => :replica_set
-
-    # Timeout Options
-    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
-    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
-    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
-    uri_option 'localthresholdms', :local_threshold, :type => :ms_convert
-
-    # Write Options
-    uri_option 'w', :w, :group => :write
-    uri_option 'journal', :j, :group => :write
-    uri_option 'fsync', :fsync, :group => :write
-    uri_option 'wtimeoutms', :timeout, :group => :write
-
-    # Read Options
-    uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
-    uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
-    uri_option 'maxstalenessseconds', :max_staleness, :group => :read
-
-    # Pool options
-    uri_option 'minpoolsize', :min_pool_size
-    uri_option 'maxpoolsize', :max_pool_size
-    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
-
-    # Security Options
-    uri_option 'ssl', :ssl
-
-    # Topology options
-    uri_option 'connect', :connect
-
-    # Auth Options
-    uri_option 'authsource', :auth_source, :type => :auth_source
-    uri_option 'authmechanism', :auth_mech, :type => :auth_mech
-    uri_option 'authmechanismproperties', :auth_mech_properties, :type => :auth_mech_props
-
-    # Client Options
-    uri_option 'appname', :app_name
-
-    # Casts option values that do not have a specifically provided
-    # transformation to the appropriate type.
-    #
-    # @param value [String] The value to be cast.
-    #
-    # @return [true, false, Fixnum, Symbol] The cast value.
-    def cast(value)
-      if value == 'true'
-        true
-      elsif value == 'false'
-        false
-      elsif value =~ /[\d]/
-        value.to_i
-      else
-        decode(value).to_sym
-      end
-    end
-
-    # Applies URI value transformation by either using the default cast
-    # or a transformation appropriate for the given type.
-    #
-    # @param value [String] The value to be transformed.
-    # @param type [Symbol] The transform method.
-    def apply_transform(value, type = nil)
-      if type
-        send(type, value)
-      else
-        cast(value)
-      end
-    end
-
-    # Selects the output destination for an option.
-    #
-    # @param [Hash] uri_options The base target.
-    # @param [Symbol] group Group subtarget.
-    #
-    # @return [Hash] The target for the option.
-    def select_target(uri_options, group = nil)
-      if group
-        uri_options[group] ||= {}
-      else
-        uri_options
-      end
-    end
-
-    # Merges a new option into the target.
-    #
-    # If the option exists at the target destination the merge will
-    # be an addition.
-    #
-    # Specifically required to append an additional tag set
-    # to the array of tag sets without overwriting the original.
-    #
-    # @param target [Hash] The destination.
-    # @param value [Object] The value to be merged.
-    # @param name [Symbol] The name of the option.
-    def merge_uri_option(target, value, name)
-      if target.key?(name)
-        if REPEATABLE_OPTIONS.include?(name)
-          target[name] += value
-        else
-          log_warn("Repeated option key: #{name}.")
+    def validate_uri_options!
+      # The URI options spec requires that we raise an error if there are conflicting values of
+      # 'tls' and 'ssl'. In order to fulfill this, we parse the values of each instance into an
+      # array; assuming all values in the array are the same, we replace the array with that value.
+      unless uri_options[:ssl].nil? || uri_options[:ssl].empty?
+        unless uri_options[:ssl].uniq.length == 1
+          raise_invalid_error_no_fmt!("all instances of 'tls' and 'ssl' must have the same value")
         end
-      else
-        target.merge!(name => value)
+
+        uri_options[:ssl] = uri_options[:ssl].first
       end
-    end
 
-    # Adds an option to the uri options hash via the supplied strategy.
-    #
-    #   Acquires a target for the option based on group.
-    #   Transforms the value.
-    #   Merges the option into the target.
-    #
-    # @param strategy [Symbol] The strategy for this option.
-    # @param value [String] The value of the option.
-    # @param uri_options [Hash] The base option target.
-    def add_uri_option(strategy, value, uri_options)
-      target = select_target(uri_options, strategy[:group])
-      value = apply_transform(value, strategy[:type])
-      merge_uri_option(target, value, strategy[:name])
-    end
+      # Check for conflicting TLS insecure options.
+      unless uri_options[:ssl_verify].nil?
+        unless uri_options[:ssl_verify_certificate].nil?
+          raise_invalid_error_no_fmt!("'tlsInsecure' and 'tlsAllowInvalidCertificates' cannot both be specified")
+        end
 
-    # Replica set transformation, avoid converting to Symbol.
-    #
-    # @param value [String] Replica set name.
-    #
-    # @return [String] Same value to avoid cast to Symbol.
-    def replica_set(value)
-      decode(value)
-    end
+        unless uri_options[:ssl_verify_hostname].nil?
+          raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
+        end
 
-    # Auth source transformation, either db string or :external.
-    #
-    # @param value [String] Authentication source.
-    #
-    # @return [String] If auth source is database name.
-    # @return [:external] If auth source is external authentication.
-    def auth_source(value)
-      value == '$external' ? :external : decode(value)
-    end
-
-    # Authentication mechanism transformation.
-    #
-    # @param value [String] The authentication mechanism.
-    #
-    # @return [Symbol] The transformed authentication mechanism.
-    def auth_mech(value)
-      AUTH_MECH_MAP[value.upcase]
-    end
-
-    # Read preference mode transformation.
-    #
-    # @param value [String] The read mode string value.
-    #
-    # @return [Symbol] The read mode symbol.
-    def read_mode(value)
-      READ_MODE_MAP[value.downcase]
-    end
-
-    # Read preference tags transformation.
-    #
-    # @param value [String] The string representing tag set.
-    #
-    # @return [Array<Hash>] Array with tag set.
-    def read_tags(value)
-      [read_set(value)]
-    end
-
-    # Read preference tag set extractor.
-    #
-    # @param value [String] The tag set string.
-    #
-    # @return [Hash] The tag set hash.
-    def read_set(value)
-      hash_extractor(value)
-    end
-
-    # Auth mechanism properties extractor.
-    #
-    # @param value [ String ] The auth mechanism properties string.
-    #
-    # @return [ Hash ] The auth mechanism properties hash.
-    def auth_mech_props(value)
-      properties = hash_extractor(value)
-      if properties[:canonicalize_host_name]
-        properties.merge!(canonicalize_host_name:
-                            properties[:canonicalize_host_name] == 'true')
+        unless uri_options[:ssl_verify_ocsp_endpoint].nil?
+          raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsDisableOCSPEndpointCheck' cannot both be specified")
+        end
       end
-      properties
-    end
 
-    # Ruby's convention is to provide timeouts in seconds, not milliseconds and
-    # to use fractions where more precision is necessary. The connection string
-    # options are always in MS so we provide an easy conversion type.
-    #
-    # @param [ Integer ] value The millisecond value.
-    #
-    # @return [ Float ] The seconds value.
-    #
-    # @since 2.0.0
-    def ms_convert(value)
-      value.to_f / 1000
-    end
+      unless uri_options[:ssl_verify_certificate].nil?
+        unless uri_options[:ssl_verify_ocsp_endpoint].nil?
+          raise_invalid_error_no_fmt!("tlsAllowInvalidCertificates' and 'tlsDisableOCSPEndpointCheck' cannot both be specified")
+        end
+      end
 
-    # Extract values from the string and put them into a nested hash.
-    #
-    # @param value [ String ] The string to build a hash from.
-    #
-    # @return [ Hash ] The hash built from the string.
-    def hash_extractor(value)
-      value.split(',').reduce({}) do |set, tag|
-        k, v = tag.split(':')
-        set.merge(decode(k).downcase.to_sym => decode(v))
+      # Since we know that the only URI option that sets :ssl_cert is
+      # "tlsCertificateKeyFile", any value set for :ssl_cert must also be set
+      # for :ssl_key.
+      if uri_options[:ssl_cert]
+        uri_options[:ssl_key] = uri_options[:ssl_cert]
+      end
+
+      if uri_options[:write_concern] && !uri_options[:write_concern].empty?
+        begin
+          WriteConcern.get(uri_options[:write_concern])
+        rescue Error::InvalidWriteConcern => e
+          raise_invalid_error_no_fmt!("#{e.class}: #{e}")
+        end
+      end
+
+      if uri_options[:direct_connection]
+        if uri_options[:connect] && uri_options[:connect].to_s != 'direct'
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with connect=#{uri_options[:connect]}")
+        end
+        if servers.length > 1
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with multiple seeds")
+        end
+      elsif uri_options[:direct_connection] == false && uri_options[:connect].to_s == 'direct'
+        raise_invalid_error_no_fmt!("directConnection=false cannot be used with connect=direct")
+      end
+
+      if uri_options[:load_balanced]
+        if servers.length > 1
+          raise_invalid_error_no_fmt!("loadBalanced=true cannot be used with multiple seeds")
+        end
+
+        if uri_options[:direct_connection]
+          raise_invalid_error_no_fmt!("directConnection=true cannot be used with loadBalanced=true")
+        end
+
+        if uri_options[:connect] && uri_options[:connect].to_sym == :direct
+          raise_invalid_error_no_fmt!("connect=direct cannot be used with loadBalanced=true")
+        end
+
+        if uri_options[:replica_set]
+          raise_invalid_error_no_fmt!("loadBalanced=true cannot be used with replicaSet option")
+        end
       end
     end
   end
 end
+
+require 'mongo/uri/options_mapper'
+require 'mongo/uri/srv_protocol'

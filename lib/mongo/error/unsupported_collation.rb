@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +22,12 @@ module Mongo
     # support collations.
     #
     # @since 2.4.0
-    class UnsupportedCollation < Error
+    #
+    # @deprecated RUBY-2260 In driver version 3.0, this error class will be 
+    #   replaced with UnsupportedOption. To handle this error, catch
+    #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
+    #   in your application when upgrading to version 3.0 of the driver.
+    class UnsupportedCollation < UnsupportedOption
 
       # The default error message describing that collations is not supported.
       #

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Address::Unix do
@@ -25,9 +28,10 @@ describe Mongo::Address::Unix do
   end
 
   describe '#socket' do
+    require_unix_socket
 
     let(:address) do
-      '/tmp/mongodb-27017.sock'
+      "/tmp/mongodb-#{SpecConfig.instance.any_port}.sock"
     end
 
     let(:socket) do

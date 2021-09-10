@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,16 +70,16 @@ module Mongo
       # @example Return the event payload.
       #   message.payload
       #
-      # @return [ Hash ] The event payload.
+      # @return [ BSON::Document ] The event payload.
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'update',
           database_name: @database,
           command: upconverter.command,
           request_id: request_id
-        }
+        )
       end
 
       protected
@@ -87,9 +90,9 @@ module Mongo
 
       # The operation code required to specify an Update message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2001
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2001
 
       # Available flags for an Update message.
       FLAGS = [:upsert, :multi_update]
@@ -192,14 +195,20 @@ module Mongo
           updates = BSON::Document.new
           updates.store(Message::Q, filter)
           updates.store(U, update)
-          updates.store(MULTI, flags.include?(:multi_update))
-          updates.store(UPSERT, flags.include?(:upsert))
+          if flags.include?(:multi_update)
+            updates.store(MULTI, true)
+          end
+          if flags.include?(:upsert)
+            updates.store(UPSERT, true)
+          end
           document.store(UPDATE, collection)
           document.store(Message::ORDERED, true)
           document.store(UPDATES, [ updates ])
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

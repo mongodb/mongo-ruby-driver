@@ -1,0 +1,78 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 148609 (0x24481)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN = Ruby Driver CA, OU = Drivers, O = MongoDB, L = New York City, ST = New York, C = US
+        Validity
+            Not Before: May 30 22:24:53 2019 GMT
+            Not After : May 30 22:24:53 2039 GMT
+        Subject: CN = intermediate-server, OU = Ruby Driver, O = MongoDB, L = New York City, ST = New York, C = US
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:c8:87:6c:b9:22:f7:2c:3c:e5:3f:be:ef:64:e3:
+                    20:19:63:36:ea:89:a9:85:ee:c2:32:7b:13:64:86:
+                    92:7c:8c:c0:2c:dd:a2:32:0b:f2:90:7f:2f:67:9f:
+                    62:fd:ae:aa:82:4c:24:0d:6d:81:2b:8f:98:e5:4b:
+                    9b:f5:58:43:52:1b:69:78:7c:5b:07:1b:fc:b6:04:
+                    fa:4f:21:5b:32:bc:d7:f9:9f:e4:e3:4a:82:5c:6a:
+                    b7:a4:e2:d3:be:51:64:70:3e:ec:0d:5a:27:d0:d0:
+                    a4:d0:d8:a1:17:a3:b7:a6:50:2b:8d:79:9c:20:7a:
+                    e8:25:c5:0b:77:78:e6:f1:77:ee:2f:f4:40:19:7e:
+                    bb:94:7c:7d:e0:46:8d:4f:3d:27:9e:39:20:a1:61:
+                    9a:72:cb:31:ee:6d:c1:64:e8:8d:19:0a:95:fa:97:
+                    1b:86:bb:7e:6d:5c:7f:a5:66:98:6d:1a:8a:ee:46:
+                    f4:df:2d:8f:9d:61:a4:39:f0:19:a8:21:de:be:9d:
+                    e1:4d:ca:8d:5f:a4:62:59:dd:9d:aa:08:3f:cf:6f:
+                    29:f9:cc:55:2a:57:28:e1:9e:e1:21:b4:70:12:7e:
+                    c1:43:6a:82:b8:46:76:f5:f9:b6:62:8b:b7:93:7e:
+                    87:36:9f:ba:34:0f:20:d0:d5:83:a8:1b:7e:4b:c6:
+                    e2:cf
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:TRUE
+            X509v3 Key Usage: 
+                Certificate Sign
+            X509v3 Subject Alternative Name: 
+                DNS:localhost, IP Address:127.0.0.1
+    Signature Algorithm: sha256WithRSAEncryption
+         41:bc:d9:0c:1b:5f:0e:33:c5:f6:9a:6d:4f:f6:91:17:d7:74:
+         79:a4:5a:d9:ed:ee:22:35:1f:59:b5:ac:c0:8c:57:92:39:2d:
+         f2:25:62:60:3b:3b:68:10:15:e0:3f:82:55:8f:c7:20:d9:0a:
+         23:b7:51:a0:17:d7:45:79:f8:19:85:4f:fc:04:c1:73:3c:1b:
+         36:fc:0e:51:fa:72:94:d6:15:c3:0c:7b:aa:fb:1e:ce:25:25:
+         05:b9:96:e1:40:61:e3:13:97:a5:d2:1e:1b:d0:f0:ee:ca:bb:
+         a0:41:ad:56:e4:3a:e8:3d:65:ae:6a:73:3b:6a:be:94:a8:b4:
+         a6:66:96:27:5c:22:ea:4d:cf:b8:04:1d:b9:dc:b6:db:f9:f6:
+         3f:86:ea:5a:bd:ff:0a:04:be:20:71:16:8a:1e:b6:ab:ce:04:
+         1a:dd:30:6c:46:0a:0f:51:f8:71:7c:5f:ea:5e:3b:20:0b:11:
+         56:96:1e:e3:2f:99:ed:0a:7e:75:95:55:c6:46:4a:21:86:f5:
+         8d:b0:38:4d:c0:e1:b5:c3:aa:05:83:89:4a:b3:35:94:c7:c9:
+         a3:ee:f1:02:72:fd:36:b2:75:32:75:ab:ec:b5:d4:a3:88:1e:
+         0e:3c:76:65:4e:a6:41:7d:c8:b1:cd:42:14:12:64:41:16:d6:
+         18:6d:10:91
+-----BEGIN CERTIFICATE-----
+MIIDqTCCApGgAwIBAgIDAkSBMA0GCSqGSIb3DQEBCwUAMHUxFzAVBgNVBAMTDlJ1
+YnkgRHJpdmVyIENBMRAwDgYDVQQLEwdEcml2ZXJzMRAwDgYDVQQKEwdNb25nb0RC
+MRYwFAYDVQQHEw1OZXcgWW9yayBDaXR5MREwDwYDVQQIEwhOZXcgWW9yazELMAkG
+A1UEBhMCVVMwHhcNMTkwNTMwMjIyNDUzWhcNMzkwNTMwMjIyNDUzWjB+MRwwGgYD
+VQQDExNpbnRlcm1lZGlhdGUtc2VydmVyMRQwEgYDVQQLEwtSdWJ5IERyaXZlcjEQ
+MA4GA1UEChMHTW9uZ29EQjEWMBQGA1UEBxMNTmV3IFlvcmsgQ2l0eTERMA8GA1UE
+CBMITmV3IFlvcmsxCzAJBgNVBAYTAlVTMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
+MIIBCgKCAQEAyIdsuSL3LDzlP77vZOMgGWM26omphe7CMnsTZIaSfIzALN2iMgvy
+kH8vZ59i/a6qgkwkDW2BK4+Y5Uub9VhDUhtpeHxbBxv8tgT6TyFbMrzX+Z/k40qC
+XGq3pOLTvlFkcD7sDVon0NCk0NihF6O3plArjXmcIHroJcULd3jm8XfuL/RAGX67
+lHx94EaNTz0nnjkgoWGacssx7m3BZOiNGQqV+pcbhrt+bVx/pWaYbRqK7kb03y2P
+nWGkOfAZqCHevp3hTcqNX6RiWd2dqgg/z28p+cxVKlco4Z7hIbRwEn7BQ2qCuEZ2
+9fm2You3k36HNp+6NA8g0NWDqBt+S8bizwIDAQABozkwNzAMBgNVHRMEBTADAQH/
+MAsGA1UdDwQEAwICBDAaBgNVHREEEzARgglsb2NhbGhvc3SHBH8AAAEwDQYJKoZI
+hvcNAQELBQADggEBAEG82QwbXw4zxfaabU/2kRfXdHmkWtnt7iI1H1m1rMCMV5I5
+LfIlYmA7O2gQFeA/glWPxyDZCiO3UaAX10V5+BmFT/wEwXM8Gzb8DlH6cpTWFcMM
+e6r7Hs4lJQW5luFAYeMTl6XSHhvQ8O7Ku6BBrVbkOug9Za5qcztqvpSotKZmlidc
+IupNz7gEHbncttv59j+G6lq9/woEviBxFooetqvOBBrdMGxGCg9R+HF8X+peOyAL
+EVaWHuMvme0KfnWVVcZGSiGG9Y2wOE3A4bXDqgWDiUqzNZTHyaPu8QJy/TaydTJ1
+q+y11KOIHg48dmVOpkF9yLHNQhQSZEEW1hhtEJE=
+-----END CERTIFICATE-----

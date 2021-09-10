@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Unknown do
@@ -6,8 +9,30 @@ describe Mongo::Cluster::Topology::Unknown do
     Mongo::Monitoring.new(monitoring: false)
   end
 
+  # Cluster needs a topology and topology needs a cluster...
+  # This temporary cluster is used for topology construction.
+  let(:temp_cluster) do
+    double('temp cluster').tap do |cluster|
+      allow(cluster).to receive(:servers_list).and_return([])
+    end
+  end
+
   let(:topology) do
-    described_class.new({}, monitoring)
+    described_class.new({}, monitoring, temp_cluster)
+  end
+
+  describe '#initialize' do
+    let(:topology) do
+      Mongo::Cluster::Topology::Unknown.new(
+        {replica_set_name: 'foo'},
+        monitoring, temp_cluster)
+    end
+
+    it 'does not accept RS name' do
+      expect do
+        topology
+      end.to raise_error(ArgumentError, 'Topology Mongo::Cluster::Topology::Unknown cannot have the :replica_set_name option set')
+    end
   end
 
   describe '.servers' do
@@ -63,123 +88,16 @@ describe Mongo::Cluster::Topology::Unknown do
     end
   end
 
-  describe '#add_hosts?' do
+  describe '#summary' do
+    require_no_linting
 
-    context 'when the description is from an unknown server' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:unknown?).and_return(true)
-        end
-      end
-
-      it 'returns false' do
-        expect(topology.add_hosts?(description, [])).to be(false)
-      end
+    let(:desc) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))
     end
 
-    context 'when the description is from a ghost server' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:unknown?).and_return(false)
-          allow(d).to receive(:ghost?).and_return(true)
-        end
-      end
-
-      it 'returns false' do
-        expect(topology.add_hosts?(description, [])).to be(false)
-      end
-    end
-
-    context 'when the description is not from an unknown or ghost' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:unknown?).and_return(false)
-          allow(d).to receive(:ghost?).and_return(false)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.add_hosts?(description, [])).to be(true)
-      end
-    end
-  end
-
-  describe '#remove_hosts?' do
-
-    context 'when the description is from a standalone' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:standalone?).and_return(true)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_hosts?(description)).to be(true)
-      end
-    end
-
-    context 'when the description is not from a standalone' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:standalone?).and_return(false)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_hosts?(description)).to be(false)
-      end
-    end
-  end
-
-  describe '#remove_server?' do
-
-     context 'when the description is from a standalone' do
-
-       let(:description) do
-         double('description').tap do |d|
-           allow(d).to receive(:standalone?).and_return(true)
-           allow(d).to receive(:is_server?).and_return(true)
-         end
-       end
-
-       context 'when the description is from the server in question' do
-
-         it 'returns true' do
-           expect(topology.remove_server?(description, double('server'))).to be(true)
-         end
-       end
-
-       context 'when the description is not from the server in question' do
-
-         let(:description) do
-           double('description').tap do |d|
-             allow(d).to receive(:standalone?).and_return(true)
-             allow(d).to receive(:is_server?).and_return(false)
-           end
-         end
-
-         it 'returns false' do
-           expect(topology.remove_server?(description, double('server'))).to be(false)
-         end
-       end
-     end
-
-    context 'when the description is not from a standalone' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:standalone?).and_return(false)
-        end
-      end
-
-      it 'returns false' do
-        expect(topology.remove_server?(description, double('server'))).to be(false)
-      end
+    it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return({desc.address.to_s => desc})
+      expect(topology.summary).to eq('Unknown[127.0.0.2:27017]')
     end
   end
 end

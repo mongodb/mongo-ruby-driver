@@ -1,3 +1,9 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
+# TODO convert, move or delete these tests as part of RUBY-2706.
+
+=begin
 require 'spec_helper'
 
 describe Mongo::Cursor::Builder::GetMoreCommand do
@@ -5,11 +11,20 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
   describe '#specification' do
 
     let(:reply) do
-      Mongo::Protocol::Reply.allocate
+      Mongo::Protocol::Reply.allocate.tap do |reply|
+        allow(reply).to receive(:cursor_id).and_return(8000)
+      end
+    end
+
+    let(:description) do
+      Mongo::Server::Description.new(
+        double('description address'),
+        { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+      )
     end
 
     let(:result) do
-      Mongo::Operation::Result.new(reply)
+      Mongo::Operation::Result.new(reply, description)
     end
 
     let(:cursor) do
@@ -28,14 +43,33 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
       specification[:selector]
     end
 
-    shared_examples_for 'a getmore command builder' do
+    context 'when the operation has a session' do
 
-      it 'includes the database name' do
-        expect(specification[:db_name]).to eq(TEST_DB)
+      let(:view) do
+        Mongo::Collection::View.new(authorized_collection)
       end
 
-      it 'includes getmore with cursor id' do
-        expect(selector[:getMore]).to eq(cursor.id)
+      let(:session) do
+        double('session')
+      end
+
+      let(:builder) do
+        described_class.new(cursor, session)
+      end
+
+      it 'adds the session to the specification' do
+        expect(builder.specification[:session]).to be(session)
+      end
+    end
+
+    shared_examples_for 'a getMore command builder' do
+
+      it 'includes the database name' do
+        expect(specification[:db_name]).to eq(SpecConfig.instance.test_db)
+      end
+
+      it 'includes getMore with cursor id' do
+        expect(selector[:getMore]).to eq(BSON::Int64.new(8000))
       end
 
       it 'includes the collection name' do
@@ -49,7 +83,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
         Mongo::Collection::View.new(authorized_collection)
       end
 
-      it_behaves_like 'a getmore command builder'
+      it_behaves_like 'a getMore command builder'
 
       it 'does not include max time' do
         expect(selector[:maxTimeMS]).to be_nil
@@ -66,7 +100,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 10)
       end
 
-      it_behaves_like 'a getmore command builder'
+      it_behaves_like 'a getMore command builder'
 
       it 'does not include max time' do
         expect(selector[:maxTimeMS]).to be_nil
@@ -85,7 +119,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
           Mongo::Collection::View.new(authorized_collection, {}, max_await_time_ms: 100)
         end
 
-        it_behaves_like 'a getmore command builder'
+        it_behaves_like 'a getMore command builder'
 
         it 'does not include max time' do
           expect(selector[:maxTimeMS]).to be_nil
@@ -114,7 +148,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
             )
           end
 
-          it_behaves_like 'a getmore command builder'
+          it_behaves_like 'a getMore command builder'
 
           it 'includes max time' do
             expect(selector[:maxTimeMS]).to eq(100)
@@ -140,7 +174,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
             )
           end
 
-          it_behaves_like 'a getmore command builder'
+          it_behaves_like 'a getMore command builder'
 
           it 'does not include max time' do
             expect(selector[:maxTimeMS]).to be_nil
@@ -158,3 +192,4 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
     end
   end
 end
+=end

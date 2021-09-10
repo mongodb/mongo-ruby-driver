@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +29,8 @@ module Mongo
       #   Mongo::Error::InvalidWriteConcern.new
       #
       # @since 2.2.0
-      def initialize
-        super('Invalid write concern options. If w is an Integer, it must be greater than or equal to 0. ' +
+      def initialize(msg = nil)
+        super(msg || 'Invalid write concern options. If w is an Integer, it must be greater than or equal to 0. ' +
               'If w is 0, it cannot be combined with a true value for fsync or j (journal).')
       end
     end

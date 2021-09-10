@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,6 +107,11 @@ module Mongo
       #   chunk objects and assemble the data. If we have an IO object, then
       #   it's the original file data and we must split it into chunks and set
       #   the original data itself.
+      #
+      # @param [ IO, String, Array<BSON::Document> ] value The file object,
+      #   file contents or chunk documents.
+      #
+      # @return [ Array<Grid::File::Chunk> ] Array of chunks.
       def initialize_chunks!(value)
         if value.is_a?(Array)
           @chunks = value.map{ |doc| Chunk.new(doc) }

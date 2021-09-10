@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +19,7 @@ module Mongo
   module Auth
     class User
 
-      # Defines behaviour for user related operation on databases.
+      # Defines behavior for user related operation on databases.
       #
       # @since 2.0.0
       class View
@@ -25,7 +28,7 @@ module Mongo
         # @return [ Database ] database The view's database.
         attr_reader :database
 
-        def_delegators :database, :cluster, :read_preference
+        def_delegators :database, :cluster, :read_preference, :client
         def_delegators :cluster, :next_primary
 
         # Create a new user in the database.
@@ -36,15 +39,22 @@ module Mongo
         # @param [ Auth::User, String ] user_or_name The user object or user name.
         # @param [ Hash ] options The user options.
         #
+        # @option options [ Session ] :session The session to use for the operation.
+        # @option options [ Hash ] :write_concern The write concern options.
+        #
         # @return [ Result ] The command response.
         #
         # @since 2.0.0
         def create(user_or_name, options = {})
           user = generate(user_or_name, options)
-          Operation::Write::CreateUser.new(
-            user: user,
-            db_name: database.name
-          ).execute(next_primary)
+          execute_operation(options) do |session|
+            Operation::CreateUser.new(
+              user: user,
+              db_name: database.name,
+              session: session,
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+            )
+          end
         end
 
         # Initialize the new user view.
@@ -65,15 +75,23 @@ module Mongo
         #   view.remove('user')
         #
         # @param [ String ] name The user name.
+        # @param [ Hash ] options The options for the remove operation.
+        #
+        # @option options [ Session ] :session The session to use for the operation.
+        # @option options [ Hash ] :write_concern The write concern options.
         #
         # @return [ Result ] The command response.
         #
         # @since 2.0.0
-        def remove(name)
-          Operation::Write::RemoveUser.new(
-            user_name: name,
-            db_name: database.name
-          ).execute(next_primary)
+        def remove(name, options = {})
+          execute_operation(options) do |session|
+            Operation::RemoveUser.new(
+              user_name: name,
+              db_name: database.name,
+              session: session,
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+            )
+          end
         end
 
         # Update a user in the database.
@@ -84,15 +102,22 @@ module Mongo
         # @param [ Auth::User, String ] user_or_name The user object or user name.
         # @param [ Hash ] options The user options.
         #
+        # @option options [ Session ] :session The session to use for the operation.
+        # @option options [ Hash ] :write_concern The write concern options.
+        #
         # @return [ Result ] The response.
         #
         # @since 2.0.0
         def update(user_or_name, options = {})
           user = generate(user_or_name, options)
-          Operation::Write::UpdateUser.new(
-            user: user,
-            db_name: database.name
-          ).execute(next_primary)
+          execute_operation(options) do |session|
+            Operation::UpdateUser.new(
+              user: user,
+              db_name: database.name,
+              session: session,
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+            )
+          end
         end
 
         # Get info for a particular user in the database.
@@ -101,25 +126,38 @@ module Mongo
         #   view.info('emily')
         #
         # @param [ String ] name The user name.
+        # @param [ Hash ] options The options for the info operation.
         #
-        # @return [ Hash ] A document containing information on a particular user.
+        # @option options [ Session ] :session The session to use for the operation.
+        #
+        # @return [ Array ] An array wrapping a document containing information on a particular user.
         #
         # @since 2.1.0
-        def info(name)
-          user_query(name).documents
+        def info(name, options = {})
+          user_query(name, options).documents
         end
 
         private
 
-        def user_query(name)
-          Operation::Commands::UserQuery.new(
-            user_name: name,
-            db_name: database.name
-          ).execute(next_primary)
+        def user_query(name, options = {})
+          execute_operation(options) do |session|
+            Operation::UsersInfo.new(
+              user_name: name,
+              db_name: database.name,
+              session: session
+            )
+          end
         end
 
         def generate(user, options)
           user.is_a?(String) ? Auth::User.new({ user: user }.merge(options)) : user
+        end
+
+        def execute_operation(options)
+          client.send(:with_session, options) do |session|
+            op = yield session
+            op.execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+          end
         end
       end
     end

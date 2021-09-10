@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,52 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/cr/conversation'
-
 module Mongo
   module Auth
 
-    # Defines behaviour for MongoDB-CR authentication.
+    # Defines behavior for MongoDB-CR authentication.
     #
     # @since 2.0.0
-    class CR
+    # @deprecated MONGODB-CR authentication mechanism is deprecated
+    #   as of MongoDB 3.6. Support for it in the Ruby driver will be
+    #   removed in driver version 3.0. Please use SCRAM instead.
+    # @api private
+    class CR < Base
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-CR'.freeze
 
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
-
-      # Instantiate a new authenticator.
+      # Log the user in on the current connection.
       #
-      # @example Create the authenticator.
-      #   Mongo::Auth::CR.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
-      end
-
-      # Log the user in on the given connection.
-      #
-      # @example Log the user in.
-      #   user.login(connection)
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      #
-      # @return [ Protocol::Reply ] The authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
-        conversation = Conversation.new(user)
-        reply = connection.dispatch([ conversation.start ])
-        reply = connection.dispatch([ conversation.continue(reply) ])
-        conversation.finalize(reply)
+      # @return [ BSON::Document ] The document of the authentication response.
+      def login
+        converse_2_step(connection, conversation)
       end
     end
   end
 end
+
+require 'mongo/auth/cr/conversation'

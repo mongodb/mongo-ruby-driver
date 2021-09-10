@@ -1,30 +1,12 @@
-def make_server(mode, options = {})
-  tags = options[:tags] || {}
-  average_round_trip_time = options[:average_round_trip_time] || 0
-
-  ismaster = {
-              'setName' => 'mongodb_set',
-              'ismaster' => mode == :primary,
-              'secondary' => mode != :primary,
-              'tags' => tags,
-              'ok' => 1
-              }
-
-  listeners = Mongo::Event::Listeners.new
-  monitoring = Mongo::Monitoring.new
-  address = options[:address]
-
-  server = Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
-  description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
-  server.tap do |s|
-    allow(s).to receive(:description).and_return(description)
-  end
-end
+# frozen_string_literal: true
+# encoding: utf-8
 
 shared_context 'server selector' do
 
   let(:max_staleness) { nil }
   let(:tag_sets) { [] }
+  let(:hedge) { nil }
+
   let(:tag_set) do
     { 'test' => 'tag' }
   end
@@ -33,51 +15,40 @@ shared_context 'server selector' do
   end
   let(:primary) { make_server(:primary) }
   let(:secondary) { make_server(:secondary) }
-  let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness } }
+  let(:mongos) do
+    make_server(:mongos).tap do |server|
+      expect(server.mongos?).to be true
+    end
+  end
+  let(:unknown) do
+    make_server(:unknown).tap do |server|
+      expect(server.unknown?).to be true
+    end
+  end
+  let(:server_selection_timeout_options) do
+    {
+      server_selection_timeout: 0.1,
+    }
+  end
+  let(:options) do
+    {
+      mode: name,
+      tag_sets: tag_sets,
+      max_staleness: max_staleness,
+      hedge: hedge,
+    }
+  end
   let(:selector) { described_class.new(options) }
   let(:monitoring) do
     Mongo::Monitoring.new(monitoring: false)
   end
-  let(:topology) do
-    double('topology')
-  end
+  declare_topology_double
 
-  before(:all) do
-    module Mongo
-      # We monkey-patch the server here, so the monitors do not run and no
-      # real TCP connection is attempted.
-      #
-      # @since 2.1.0
-      class Server
-
-        alias :original_initialize :initialize
-        def initialize(address, cluster, monitoring, event_listeners, options = {})
-          @address = address
-          @cluster = cluster
-          @monitoring = monitoring
-          @options = options.freeze
-          @monitor = Monitor.new(address, event_listeners, options)
-        end
-
-        alias :original_disconnect! :disconnect!
-        def disconnect!; true; end
-      end
-    end
-  end
-
-  after(:all) do
-
-    # Return the server implementation to its original for the other
-    # tests in the suite.
-    module Mongo
-      class Server
-        alias :initialize :original_initialize
-        remove_method(:original_initialize)
-
-        alias :disconnect! :original_disconnect!
-        remove_method(:original_disconnect!)
-      end
-    end
+  before do
+    # Do not run monitors and do not attempt real TCP connections
+    # in server selector tests
+    allow_any_instance_of(Mongo::Server).to receive(:start_monitoring)
+    allow_any_instance_of(Mongo::Server).to receive(:disconnect!)
   end
 end
 
@@ -90,10 +61,10 @@ shared_examples 'a server selector mode' do
     end
   end
 
-  describe '#slave_ok?' do
+  describe '#secondary_ok?' do
 
-    it 'returns whether the slave_ok bit should be set' do
-      expect(selector.slave_ok?).to eq(slave_ok)
+    it 'returns whether the secondary_ok bit should be set' do
+      expect(selector.secondary_ok?).to eq(secondary_ok)
     end
   end
 
@@ -161,6 +132,84 @@ shared_examples 'a server selector accepting tag sets' do
         it 'returns false' do
           expect(selector).not_to eq(other)
         end
+      end
+    end
+  end
+end
+
+shared_examples 'a server selector accepting hedge' do
+  describe '#initialize' do
+    context 'when hedge is not provided' do
+      it 'initializes successfully' do
+        expect do
+          selector
+        end.not_to raise_error
+      end
+    end
+
+    context 'when hedge is not a Hash' do
+      let(:hedge) { true }
+
+      it 'raises an exception' do
+        expect do
+          selector
+        end.to raise_error(Mongo::Error::InvalidServerPreference, /`hedge` value \(true\) is invalid/)
+      end
+    end
+
+    context 'when hedge is an empty Hash' do
+      let(:hedge) { {} }
+
+      it 'raises an exception' do
+        expect do
+          selector
+        end.to raise_error(Mongo::Error::InvalidServerPreference, /`hedge` value \({}\) is invalid/)
+      end
+    end
+
+    context 'when hedge is a Hash with data' do
+      let(:hedge) { { enabled: false } }
+
+      it 'initializes successfully' do
+        expect do
+          selector
+        end.not_to raise_error
+      end
+    end
+  end
+
+  describe '#hedge' do
+    context 'when hedge is not provided' do
+      it 'returns nil' do
+        expect(selector.hedge).to be_nil
+      end
+    end
+
+    context 'when hedge is a Hash with data' do
+      let(:hedge) { { enabled: false } }
+
+      it 'returns the same Hash' do
+        expect(selector.hedge).to eq({ enabled: false })
+      end
+    end
+  end
+
+  describe '#==' do
+    let(:other_selector) { described_class.new(hedge: { enabled: false }) }
+
+    context 'when hedges are the same' do
+      let(:hedge) { { enabled: false } }
+
+      it 'returns true' do
+        expect(selector).to eq(other_selector)
+      end
+    end
+
+    context 'when hedges are different' do
+      let(:hedge) { { enabled: true } }
+
+      it 'returns false' do
+        expect(selector).not_to eq(other_selector)
       end
     end
   end

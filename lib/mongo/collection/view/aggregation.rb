@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +19,7 @@ module Mongo
   class Collection
     class View
 
-      # Provides behaviour around an aggregation pipeline on a collection view.
+      # Provides behavior around an aggregation pipeline on a collection view.
       #
       # @since 2.0.0
       class Aggregation
@@ -37,11 +40,12 @@ module Mongo
         def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
-        def_delegators :collection, :database
+        def_delegators :collection, :database, :client
 
         # The reroute message.
         #
         # @since 2.1.0
+        # @deprecated
         REROUTE = 'Rerouting the Aggregation operation to the primary server.'.freeze
 
         # Set to true if disk usage is allowed during the aggregation.
@@ -88,41 +92,68 @@ module Mongo
           self.class.new(view, pipeline, options.merge(explain: true)).first
         end
 
+        # Whether this aggregation will write its result to a database collection.
+        #
+        # @return [ Boolean ] Whether the aggregation will write its result
+        #   to a collection.
+        #
+        # @api private
+        def write?
+          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
+        end
+
         private
 
-        def aggregate_spec
-          Builder::Aggregation.new(pipeline, view, options).specification
+        def server_selector
+          @view.send(:server_selector)
+        end
+
+        def aggregate_spec(session)
+          Builder::Aggregation.new(pipeline, view, options.merge(session: session)).specification
         end
 
         def new(options)
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op
-          Operation::Commands::Aggregate.new(aggregate_spec)
+        def initial_query_op(session)
+          Operation::Aggregate.new(aggregate_spec(session))
         end
 
         def valid_server?(server)
-          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+          if secondary_ok?
+            true
+          else
+            description = server.description
+            description.standalone? || description.mongos? || description.primary? || description.load_balancer?
+          end
         end
 
         def secondary_ok?
-          pipeline.none? { |op| op.key?('$out') || op.key?(:$out) }
+          !write?
         end
 
-        def send_initial_query(server)
+        def send_initial_query(server, session)
           unless valid_server?(server)
-            log_warn(REROUTE)
-            server = cluster.next_primary(false)
+            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
+            server = cluster.next_primary(nil, session)
           end
-          validate_collation!(server)
-          initial_query_op.execute(server)
+          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
-        def validate_collation!(server)
-          if options[:collation] && !server.features.collation_enabled?
-            raise Error::UnsupportedCollation.new
-          end
+        # Skip, sort, limit, projection are specified as pipeline stages
+        # rather than as options.
+        def cache_options
+          {
+            namespace: collection.namespace,
+            selector: pipeline,
+            read_concern: view.read_concern,
+            read_preference: view.read_preference,
+            collation: options[:collation],
+            # Aggregations can read documents from more than one collection,
+            # so they will be cleared on every write operation.
+            multi_collection: true,
+          }
         end
       end
     end

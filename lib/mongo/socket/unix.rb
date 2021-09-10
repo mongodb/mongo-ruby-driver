@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,27 +23,6 @@ module Mongo
     # @since 2.0.0
     class Unix < Socket
 
-      # @return [ String ] path The path to connect to.
-      attr_reader :path
-
-      # @return [ Float ] timeout The connection timeout.
-      attr_reader :timeout
-
-      # Establishes a socket connection.
-      #
-      # @example Connect the socket.
-      #   sock.connect!
-      #
-      # @note This method mutates the object by setting the socket
-      #   internally.
-      #
-      # @return [ Unix ] The connected socket instance.
-      #
-      # @since 2.0.0
-      def connect!
-        self
-      end
-
       # Initializes a new Unix socket.
       #
       # @example Create the Unix socket.
@@ -48,24 +30,32 @@ module Mongo
       #
       # @param [ String ] path The path.
       # @param [ Float ] timeout The socket timeout value.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout (unused).
+      # @option options [ Address ] :connection_address Address of the
+      #   connection that created this socket.
+      # @option options [ Integer ] :connection_generation Generation of the
+      #   connection (for non-monitoring connections) that created this socket.
+      # @option options [ true | false ] :monitor Whether this socket was
+      #   created by a monitoring connection.
       #
       # @since 2.0.0
-      def initialize(path, timeout)
-        @path, @timeout = path, timeout
+      # @api private
+      def initialize(path, timeout, options = {})
+        super(timeout, options)
+        @path = path
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
       end
 
-      # This socket can only be used if the unix socket (@socket) has been created.
-      #
-      # @example Is the socket connectable?
-      #   socket.connectable?
-      #
-      # @return [ true, false ] If the socket is connectable.
-      #
-      # @since 2.2.5
-      def connectable?
-        !!@socket
+      # @return [ String ] path The path to connect to.
+      attr_reader :path
+
+      private
+
+      def human_address
+        path
       end
     end
   end

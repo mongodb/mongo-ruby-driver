@@ -1,22 +1,25 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Auth::X509::Conversation do
 
   let(:user) do
     Mongo::Auth::User.new(
-      database: Mongo::Database::ADMIN,
+      database: '$external',
       user: 'user',
     )
   end
 
   let(:conversation) do
-    described_class.new(user)
+    described_class.new(user, double('connection'))
   end
 
   describe '#start' do
 
     let(:query) do
-      conversation.start
+      conversation.start(nil)
     end
 
     let(:selector) do
@@ -35,7 +38,7 @@ describe Mongo::Auth::X509::Conversation do
 
       let(:user) do
         Mongo::Auth::User.new(
-          database: Mongo::Database::ADMIN
+          database: '$external',
         )
       end
 
@@ -52,7 +55,7 @@ describe Mongo::Auth::X509::Conversation do
 
       let(:user) do
         Mongo::Auth::User.new(
-          database: Mongo::Database::ADMIN,
+          database: '$external',
           user: nil
         )
       end

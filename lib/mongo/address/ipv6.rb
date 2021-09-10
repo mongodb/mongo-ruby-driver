@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -38,7 +41,7 @@ module Mongo
       # Parse an IPv6 address into its host and port.
       #
       # @example Parse the address.
-      #   IPv4.parse("[::1]:28011")
+      #   IPv6.parse("[::1]:28011")
       #
       # @param [ String ] address The address to parse.
       #
@@ -46,9 +49,28 @@ module Mongo
       #
       # @since 2.0.0
       def self.parse(address)
-        parts = address.match(/\[(.+)\]:?(.+)?/)
-        host = parts[1]
-        port = (parts[2] || 27017).to_i
+        # IPAddr's parser handles IP address only, not port.
+        # Therefore we need to handle the port ourselves
+        if address =~ /[\[\]]/
+          parts = address.match(/\A\[(.+)\](?::(\d+))?\z/)
+          if parts.nil?
+            raise ArgumentError, "Invalid IPv6 address: #{address}"
+          end
+          host = parts[1]
+          port = (parts[2] || 27017).to_i
+        else
+          host = address
+          port = 27017
+        end
+        # Validate host.
+        # This will raise IPAddr::InvalidAddressError
+        # on newer rubies which is a subclass of ArgumentError
+        # if host is invalid
+        begin
+          IPAddr.new(host)
+        rescue ArgumentError
+          raise ArgumentError, "Invalid IPv6 address: #{address}"
+        end
         [ host, port ]
       end
 
@@ -72,17 +94,47 @@ module Mongo
       # @example Get an IPv6 socket.
       #   ipv4.socket(5, :ssl => true)
       #
-      # @param [ Float ] timeout The socket timeout.
-      # @param [ Hash ] ssl_options SSL options.
+      # @param [ Float ] socket_timeout The socket timeout.
+      # @param [ Hash ] options The options.
       #
-      # @return [ Pool::Socket::SSL, Pool::Socket::TCP ] The socket.
+      # @option options [ Float ] :connect_timeout Connect timeout.
+      # @option options [ true | false ] :ssl Whether to use TLS.
+      # @option options [ String ] :ssl_ca_cert
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_ca_cert_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_cert
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_cert_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ OpenSSL::PKey ] :ssl_key_object
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key_pass_phrase
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ String ] :ssl_key_string
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify_certificate
+      #   Same as the corresponding Client/Socket::SSL option.
+      # @option options [ true, false ] :ssl_verify_hostname
+      #   Same as the corresponding Client/Socket::SSL option.
+      #
+      # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP ] The socket.
       #
       # @since 2.0.0
-      def socket(timeout, ssl_options = {})
-        unless ssl_options.empty?
-          Socket::SSL.new(host, port, host_name, timeout, Socket::PF_INET6, ssl_options)
+      # @api private
+      def socket(socket_timeout, options = {})
+        if options[:ssl]
+          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET6, options)
         else
-          Socket::TCP.new(host, port, timeout, Socket::PF_INET6)
+          Socket::TCP.new(host, port, socket_timeout, Socket::PF_INET6, options)
         end
       end
     end

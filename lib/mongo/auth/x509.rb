@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,51 +15,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/x509/conversation'
-
 module Mongo
   module Auth
 
-    # Defines behaviour for x.509 authentication.
+    # Defines behavior for X.509 authentication.
     #
     # @since 2.0.0
-    class X509
+    # @api private
+    class X509 < Base
 
-      # The authentication mechinism string.
+      # The authentication mechanism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-X509'.freeze
 
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
+      # Initializes the X.509 authenticator.
+      #
+      # @param [ Auth::User ] user The user to authenticate.
+      # @param [ Mongo::Connection ] connection The connection to authenticate over.
+      def initialize(user, connection, **opts)
+        # The only valid database for X.509 authentication is $external.
+        if user.auth_source != '$external'
+          user_name_msg = if user.name
+            " #{user.name}"
+          else
+            ''
+          end
+          raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
+        end
 
-      # Instantiate a new authenticator.
-      #
-      # @example Create the authenticator.
-      #   Mongo::Auth::X509.new(user)
-      #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
+        super
       end
 
-      # Log the user in on the given connection.
+      # Log the user in on the current connection.
       #
-      # @example Log the user in.
-      #   user.login(connection)
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
-      #
-      # @return [ Protocol::Reply ] The authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
-        conversation = Conversation.new(user)
-        conversation.finalize(connection.dispatch([ conversation.start ]))
+      # @return [ BSON::Document ] The document of the authentication response.
+      def login
+        converse_1_step(connection, conversation)
       end
     end
   end
 end
+
+require 'mongo/auth/x509/conversation'

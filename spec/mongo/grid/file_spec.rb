@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Grid::File do
@@ -44,7 +47,7 @@ describe Mongo::Grid::File do
     end
 
     let(:data) do
-      'testing'
+      +'testing'
     end
 
     before do

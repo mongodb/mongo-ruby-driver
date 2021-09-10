@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::Readable do
@@ -14,13 +17,14 @@ describe Mongo::Collection::View::Readable do
     Mongo::Collection::View.new(authorized_collection, selector, options)
   end
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 
   shared_examples_for 'a read concern aware operation' do
 
-    context 'when a read concern is provided', if: find_command_enabled? do
+    context 'when a read concern is provided' do
+      min_server_fcv '3.2'
 
       let(:new_view) do
         Mongo::Collection::View.new(new_collection, selector, options)
@@ -63,6 +67,20 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'returns a new View' do
+      expect(new_view).not_to be(view)
+    end
+  end
+
+  describe '#allow_disk_use' do
+    let(:new_view) do
+      view.allow_disk_use
+    end
+
+    it 'sets the flag' do
+      expect(new_view.options[:allow_disk_use]).to be true
+    end
+
+    it 'returns the new View' do
       expect(new_view).not_to be(view)
     end
   end
@@ -179,6 +197,24 @@ describe Mongo::Collection::View::Readable do
       it_behaves_like 'a read concern aware operation'
     end
 
+    context 'when a session supporting causal consistency is used' do
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, session: session)
+      end
+
+      let(:operation) do
+        begin; view.map_reduce(map, reduce).to_a; rescue; end
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == 'mapReduce' }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads'
+    end
+
     context 'when not iterating the map/reduce' do
 
       it 'returns the map/reduce object' do
@@ -263,11 +299,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     before do
-      authorized_collection.insert_many(documents)
-    end
-
-    after do
       authorized_collection.delete_many
+      authorized_collection.insert_many(documents)
     end
 
     let(:result) do
@@ -305,11 +338,18 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    it 'takes a read preference option' do
-      expect(view.count(read: { mode: :secondary })).to eq(10)
+    context 'not sharded' do
+      require_topology :single, :replica_set
+
+      it 'takes a read preference option' do
+        # Secondary may be delayed, since this tests wants 10 documents
+        # it must query the primary
+        expect(view.count(read: { mode: :primary })).to eq(10)
+      end
     end
 
-    context 'when a read preference is set on the view', unless: sharded? do
+    context 'when a read preference is set on the view' do
+      require_topology :single, :replica_set
 
       let(:client) do
         # Set a timeout otherwise, the test will hang for 30 seconds.
@@ -344,10 +384,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when the collection has a read preference set' do
-
-      after do
-        client.close
-      end
 
       let(:client) do
         # Set a timeout in case the collection read_preference does get used.
@@ -393,7 +429,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when no read preference argument is provided', unless: sharded? do
+      context 'when no read preference argument is provided' do
+        require_topology :single, :replica_set
 
         before do
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
@@ -410,11 +447,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when the collection does not have a read preference set', unless: sharded? do
-
-        after do
-          client.close
-        end
+      context 'when the collection does not have a read preference set' do
+        require_topology :single, :replica_set
 
         let(:client) do
           authorized_client.with(server_selection_timeout: 1)
@@ -460,13 +494,13 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    it 'takes a max_time_ms option', if: write_command_enabled? do
+    it 'takes a max_time_ms option' do
       expect {
         view.count(max_time_ms: 0.1)
       }.to raise_error(Mongo::Error::OperationFailure)
     end
 
-    it 'sets the max_time_ms option on the command', if: write_command_enabled? do
+    it 'sets the max_time_ms option on the command' do
       expect(view.count(max_time_ms: 100)).to eq(10)
     end
 
@@ -488,14 +522,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the count' do
           expect(result).to eq(1)
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -536,14 +572,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the count' do
           expect(result).to eq(1)
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -563,6 +601,72 @@ describe Mongo::Collection::View::Readable do
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
         end
+      end
+    end
+  end
+
+  describe "#estimated_document_count" do
+
+    let(:result) do
+      view.estimated_document_count(options)
+    end
+
+    context 'when limit is set' do
+      it 'raises an error' do
+        expect {
+          view.limit(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+      end
+    end
+
+    context 'when skip is set' do
+      it 'raises an error' do
+        expect {
+          view.skip(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+      end
+    end
+
+    context 'when collection has documents' do
+      let(:documents) do
+        (1..10).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
+      end
+
+      context 'when a selector is provided' do
+
+        let(:selector) do
+          { field: 'test1' }
+        end
+
+        it 'raises an error' do
+          expect {
+            result
+          }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with a filter")
+        end
+      end
+
+      context 'when no selector is provided' do
+
+        it 'returns the estimated count of matching documents' do
+          expect(view.estimated_document_count).to eq(10)
+        end
+      end
+    end
+
+    context 'when collection does not exist' do
+
+      let(:view) do
+        Mongo::Collection::View.new(
+          authorized_client['nonexistent-collection-for-estimated-document-count'], selector, options)
+      end
+
+      it 'returns 0' do
+        view.estimated_document_count.should == 0
       end
     end
   end
@@ -620,8 +724,10 @@ describe Mongo::Collection::View::Readable do
           view.distinct(nil)
         end
 
-        it 'returns an empty array' do
-          expect(distinct).to be_empty
+        it 'raises ArgumentError' do
+          expect do
+            distinct
+          end.to raise_error(ArgumentError, 'Field name for distinct operation must be not nil')
         end
       end
 
@@ -675,13 +781,16 @@ describe Mongo::Collection::View::Readable do
           view.distinct(nil)
         end
 
-        it 'returns an empty array' do
-          expect(distinct).to be_empty
+        it 'raises ArgumentError' do
+          expect do
+            distinct
+          end.to raise_error(ArgumentError, 'Field name for distinct operation must be not nil')
         end
       end
     end
 
-    context 'when a read preference is set on the view', unless: sharded? do
+    context 'when a read preference is set on the view' do
+      require_topology :single, :replica_set
 
       let(:client) do
         # Set a timeout otherwise, the test will hang for 30 seconds.
@@ -725,10 +834,6 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.insert_many(documents)
       end
 
-      after do
-        client.close
-      end
-
       let(:client) do
         # Set a timeout in case the collection read_preference does get used.
         # Otherwise, the test will hang for 30 seconds.
@@ -758,7 +863,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when no read preference argument is provided', unless: sharded? do
+      context 'when no read preference argument is provided' do
+        require_topology :single, :replica_set
 
         before do
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
@@ -775,7 +881,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when the collection does not have a read preference set', unless: sharded? do
+      context 'when the collection does not have a read preference set' do
+        require_topology :single, :replica_set
 
         let(:documents) do
           (1..3).map{ |i| { field: "test#{i}" }}
@@ -784,10 +891,6 @@ describe Mongo::Collection::View::Readable do
         before do
           authorized_collection.insert_many(documents)
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
-        end
-
-        after do
-          client.close
         end
 
         let(:client) do
@@ -830,7 +933,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when a max_time_ms is specified', if: write_command_enabled? do
+    context 'when a max_time_ms is specified' do
 
       let(:documents) do
         (1..3).map{ |i| { field: "test" }}
@@ -873,14 +976,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the distinct' do
           expect(result).to eq(['bang'])
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -918,14 +1023,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the distinct' do
           expect(result).to eq(['bang'])
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -960,7 +1067,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'does not apply the collation to the distinct' do
-        expect(result).to eq(['bang', 'BANG'])
+        expect(result).to match_array(['bang', 'BANG'])
       end
     end
   end
@@ -1134,28 +1241,19 @@ describe Mongo::Collection::View::Readable do
 
   describe '#read' do
 
-    context 'when providing a hash' do
-
-      it 'converts to a read preference' do
-        expect(view.read(:mode => :primary_preferred).read).to be_a(
-          Mongo::ServerSelector::PrimaryPreferred
-        )
-      end
-    end
-
     context 'when a read pref is specified' do
 
       let(:options) do
-        { :read => Mongo::ServerSelector.get(:mode => :secondary) }
+        { :read => { :mode => :secondary } }
       end
 
       let(:new_read) do
-        Mongo::ServerSelector.get(:mode => :secondary_preferred)
+        { :mode => :secondary_preferred }
       end
 
       it 'sets the read preference' do
         new_view = view.read(new_read)
-        expect(new_view.read).to eq(new_read)
+        expect(new_view.read).to eq(BSON::Document.new(new_read))
       end
 
       it 'returns a new View' do
@@ -1166,11 +1264,11 @@ describe Mongo::Collection::View::Readable do
     context 'when a read pref is not specified' do
 
       let(:options) do
-        { :read =>  Mongo::ServerSelector.get(:mode => :secondary) }
+        { :read =>  {:mode => :secondary} }
       end
 
       it 'returns the read preference' do
-        expect(view.read).to eq(options[:read])
+        expect(view.read).to eq(BSON::Document.new(options[:read]))
       end
 
       context 'when no read pref is set on initialization' do

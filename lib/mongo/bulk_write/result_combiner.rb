@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +25,7 @@ module Mongo
     # @since 2.1.0
     class ResultCombiner
 
-      # @return [ Integer ] count The count of documents in the entire batch.
+      # @return [ Integer ] count The number of documents in the entire batch.
       attr_reader :count
 
       # @return [ Hash ] results The results hash.
@@ -41,11 +44,11 @@ module Mongo
         @count = 0
       end
 
-      # Combines a result into the overall results.
+      # Adds a result to the overall results.
       #
       # @api private
       #
-      # @example Combine the result.
+      # @example Add the result.
       #   combiner.combine!(result, count)
       #
       # @param [ Operation::Result ] result The result to combine.
@@ -53,8 +56,18 @@ module Mongo
       #
       # @since 2.1.0
       def combine!(result, count)
-        combine_counts!(result)
-        combine_ids!(result)
+        # Errors can be communicated by the server in a variety of fields:
+        # writeError, writeErrors, writeConcernError, writeConcernErrors.
+        # Currently only errors given in writeConcernErrors will cause
+        # counts not to be added, because this behavior is covered by the
+        # retryable writes tests. It is possible that some or all of the
+        # other errors should also be excluded when combining counts and
+        # ids, and it is also possible that only a subset of these error
+        # fields is actually possible in the context of bulk writes.
+        unless result.write_concern_error?
+          combine_counts!(result)
+          combine_ids!(result)
+        end
         combine_errors!(result)
         @count += count
       end
@@ -102,7 +115,7 @@ module Mongo
       def combine_write_errors!(result)
         if write_errors = result.aggregate_write_errors(count)
           results.merge!(
-            Error::WRITE_ERRORS => ((results[Error::WRITE_ERRORS] || []) << write_errors).flatten
+            'writeErrors' => ((results['writeErrors'] || []) << write_errors).flatten
           )
         else
           result.validate!
@@ -111,7 +124,7 @@ module Mongo
 
       def combine_write_concern_errors!(result)
         if write_concern_errors = result.aggregate_write_concern_errors(count)
-          results[Error::WRITE_CONCERN_ERRORS] = (results[Error::WRITE_CONCERN_ERRORS] || []) +
+          results['writeConcernErrors'] = (results['writeConcernErrors'] || []) +
                                                    write_concern_errors
         end
       end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Address::IPv6 do
@@ -15,10 +18,38 @@ describe Mongo::Address::IPv6 do
       end
     end
 
-    context 'when no port is provided' do
+    context 'when no port is provided and host is in brackets' do
 
       it 'returns the host and port' do
         expect(described_class.parse('[::1]')).to eq(['::1', 27017])
+      end
+    end
+
+    context 'when no port is provided and host is not in brackets' do
+
+      it 'returns the host and port' do
+        expect(described_class.parse('::1')).to eq(['::1', 27017])
+      end
+    end
+
+    context 'when invalid address is provided' do
+
+      it 'raises ArgumentError' do
+        expect do
+          described_class.parse('::1:27017')
+        end.to raise_error(ArgumentError, 'Invalid IPv6 address: ::1:27017')
+      end
+
+      it 'rejects extra data around the address' do
+        expect do
+          described_class.parse('[::1]:27017oh')
+        end.to raise_error(ArgumentError, 'Invalid IPv6 address: [::1]:27017oh')
+      end
+
+      it 'rejects bogus data in brackets' do
+        expect do
+          described_class.parse('[::hello]:27017')
+        end.to raise_error(ArgumentError, 'Invalid IPv6 address: [::hello]:27017')
       end
     end
   end
@@ -69,10 +100,12 @@ describe Mongo::Address::IPv6 do
       end
 
       it 'returns an ssl socket' do
+        allow_any_instance_of(Mongo::Socket::SSL).to receive(:connect!)
         expect(socket).to be_a(Mongo::Socket::SSL)
       end
 
       it 'sets the family as ipv6' do
+        allow_any_instance_of(Mongo::Socket::SSL).to receive(:connect!)
         expect(socket.family).to eq(Socket::PF_INET6)
       end
     end
@@ -84,10 +117,12 @@ describe Mongo::Address::IPv6 do
       end
 
       it 'returns a tcp socket' do
+        allow_any_instance_of(Mongo::Socket::TCP).to receive(:connect!)
         expect(socket).to be_a(Mongo::Socket::TCP)
       end
 
       it 'sets the family a ipv6' do
+        allow_any_instance_of(Mongo::Socket::TCP).to receive(:connect!)
         expect(socket.family).to eq(Socket::PF_INET6)
       end
     end

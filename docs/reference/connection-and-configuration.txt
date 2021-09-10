@@ -1,0 +1,18 @@
+.. _connection-and-configuration:
+
+**************************
+Connection & Configuration
+**************************
+
+.. default-domain:: mongodb
+
+This section describes how to create the client objects and what configuration
+options the driver provides, including authentication.
+
+.. toctree::
+  :titlesonly:
+
+  create-client
+  authentication
+  monitoring
+  user-management

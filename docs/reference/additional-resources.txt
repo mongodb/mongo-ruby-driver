@@ -1,8 +1,8 @@
 .. _ruby-external-resources:
 
-====================
+********************
 Additional Resources
-====================
+********************
 
 .. default-domain:: mongodb
 
@@ -17,7 +17,7 @@ learning about MongoDB and Ruby. A useful selection is listed below. If
 you know of others, do let us know.
 
 Screencasts
------------
+===========
 
 - `Introduction to MongoDB - Part I
   <http://teachmetocode.com/screencasts/introduction-to-mongodb-part-i>`_
@@ -46,7 +46,7 @@ Screencasts
   Ryan Bates' RailsCast introducing Mongoid.
 
 Presentations
--------------
+=============
 
 - `Introduction to MongoDB (Video) <http://pivotallabs.com/talks/85>`_
 
@@ -66,7 +66,7 @@ Presentations
   human-oriented programmers).
 
 Articles
---------
+========
 
 - `Why I Think Mongo is to Databases What Rails was to Frameworks
   <http://railstips.org/blog/archives/2009/12/18/why-i-think-mongo-is-to-databases-what-rails-was-to-frameworks/>`_
@@ -96,7 +96,7 @@ Articles
   support new database features.
 
 Projects
---------
+========
 
 - `Capistrano Mongo Sync <https://www.openlistings.com/capistrano-mongo-sync-ruby-gem>`_
 
@@ -147,7 +147,7 @@ Projects
 .. A URL-shortener written with Sinatra and the MongoDB Ruby driver.
 
 Libraries
----------
+=========
 
 - `ActiveExpando <http://github.com/hayesdavis/active-expando>`_
 

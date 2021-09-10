@@ -1,16 +1,20 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::Delete do
 
   let(:opcode)   { 2006 }
-  let(:db)       { TEST_DB }
-  let(:coll)     { TEST_COLL }
-  let(:ns)       { "#{db}.#{coll}" }
+  let(:db)       { SpecConfig.instance.test_db }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)       { "#{db}.#{collection_name}" }
   let(:selector) { { :name => 'Tyler' } }
   let(:options)     { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, options)
+    described_class.new(db, collection_name, selector, options)
   end
 
   describe '#initialize' do
@@ -41,7 +45,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, options)
+          described_class.new(db, collection_name, selector, options)
         end
 
         it 'returns true' do
@@ -51,7 +55,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, options)
+          described_class.new('tyler', collection_name, selector, options)
         end
 
         it 'returns false' do
@@ -71,7 +75,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, options)
+          described_class.new(db, collection_name, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -81,7 +85,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, :flags => [:single_remove])
+          described_class.new(db, collection_name, selector, :flags => [:single_remove])
         end
 
         it 'returns false' do
@@ -161,6 +165,20 @@ describe Mongo::Protocol::Delete do
       let(:field) { bytes.to_s[41..-1] }
       it 'serializes the selector' do
         expect(field).to be_bson(selector)
+      end
+    end
+  end
+
+  describe '#registry' do
+
+    context 'when the class is loaded' do
+
+      it 'registers the op code in the Protocol Registry' do
+        expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
+      end
+
+      it 'creates an #op_code instance method' do
+        expect(message.op_code).to eq(described_class::OP_CODE)
       end
     end
   end

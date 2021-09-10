@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +21,9 @@ module Mongo
     # Raised when a socket has an error.
     #
     # @since 2.0.0
-    class SocketError < Error; end
+    class SocketError < Error
+      include WriteRetryable
+      include ChangeStreamResumable
+    end
   end
 end

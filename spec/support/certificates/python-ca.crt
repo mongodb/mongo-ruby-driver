@@ -1,0 +1,76 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 554512 (0x87610)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: CN = Python Driver CA, OU = Drivers, O = MongoDB, L = Palo Alto, ST = California, C = US
+        Validity
+            Not Before: May 23 20:13:08 2016 GMT
+            Not After : May 23 20:13:08 2036 GMT
+        Subject: CN = Python Driver CA, OU = Drivers, O = MongoDB, L = Palo Alto, ST = California, C = US
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:8a:38:78:1f:f1:be:14:3b:aa:69:ac:33:2e:9f:
+                    6b:cb:49:12:22:f6:49:0a:c4:49:99:8c:01:f3:f2:
+                    46:5e:3c:4a:06:8c:02:5b:9c:da:bf:05:1d:59:8a:
+                    e4:d2:91:f9:41:1c:7d:26:f3:b0:b9:bd:25:a5:84:
+                    e5:db:a3:0b:7c:d5:68:3d:ed:73:2f:e6:a1:87:28:
+                    83:be:86:c9:aa:74:0e:3f:1c:6e:f3:ab:39:e9:b3:
+                    4a:f9:76:41:ec:60:50:1a:84:2b:aa:6d:b9:cb:23:
+                    83:75:10:51:6c:37:5e:32:a3:93:de:94:86:77:b2:
+                    24:15:d1:56:15:56:ec:f5:1a:36:1b:35:00:73:d4:
+                    9d:7e:80:14:dc:22:48:0f:d5:29:5b:71:9d:fe:ec:
+                    4f:22:7d:1a:fe:86:0a:3c:f6:d9:ce:f0:19:d1:05:
+                    d5:7b:88:f4:d6:78:ce:4e:7f:e2:ef:46:ed:09:ac:
+                    8d:3a:cf:fc:ba:fc:01:10:34:96:19:d1:99:04:70:
+                    3e:75:f4:da:20:6e:9c:46:73:c2:ae:11:d4:20:a5:
+                    b4:60:80:77:78:ec:b7:b1:db:b5:15:48:85:41:7c:
+                    6b:30:ba:95:bd:a5:71:c9:f0:ba:0f:5b:9b:1c:0c:
+                    2e:ac:af:6b:ca:0b:86:d9:aa:56:bf:83:83:72:4a:
+                    0b:cd
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:TRUE
+            X509v3 Subject Alternative Name: 
+                DNS:localhost, IP Address:127.0.0.1
+    Signature Algorithm: sha1WithRSAEncryption
+         5d:bb:a4:ff:e8:06:62:f2:ce:8a:c4:87:51:d7:e5:58:72:6b:
+         1b:57:74:4e:9b:e5:c5:17:6e:f2:e0:d4:3e:d1:b9:aa:aa:74:
+         6f:b2:fa:e6:35:08:ed:20:6e:e9:81:77:c1:ae:47:b3:ec:53:
+         3c:69:d9:e1:21:b9:d1:52:7a:d8:22:5c:91:a8:d5:be:b8:4d:
+         93:54:d2:d0:d9:d9:74:20:84:dc:f5:d6:4a:6f:c2:50:97:7e:
+         59:02:e6:6a:1e:62:39:d6:f8:58:e1:8c:89:7a:01:01:2c:d6:
+         79:ed:72:83:da:71:03:1a:99:6e:a7:65:53:fd:c9:93:bb:29:
+         f7:ca:71:bf:3d:c5:a9:01:ac:11:61:9e:81:55:12:9a:77:46:
+         5f:e0:eb:dd:86:dc:11:4a:e6:0f:00:19:76:78:cf:57:6d:8d:
+         e0:79:5b:1d:78:59:86:7d:18:1f:d9:0d:d3:a9:b3:b1:93:43:
+         fd:fc:70:e2:d0:a4:15:b2:c7:ea:3b:97:c8:fb:99:9d:18:fa:
+         4d:f3:7d:99:b8:0d:2c:ff:3b:91:59:d8:d5:03:a0:30:99:75:
+         bb:04:d8:40:e2:b5:4b:33:20:f7:bd:cb:1e:ed:67:2b:3c:39:
+         56:96:3e:17:58:16:66:9b:4f:ff:76:44:fa:fa:60:23:a0:a8:
+         c1:9d:cb:13
+-----BEGIN CERTIFICATE-----
+MIIDkzCCAnugAwIBAgIDCHYQMA0GCSqGSIb3DQEBBQUAMHUxGTAXBgNVBAMTEFB5
+dGhvbiBEcml2ZXIgQ0ExEDAOBgNVBAsTB0RyaXZlcnMxEDAOBgNVBAoTB01vbmdv
+REIxEjAQBgNVBAcTCVBhbG8gQWx0bzETMBEGA1UECBMKQ2FsaWZvcm5pYTELMAkG
+A1UEBhMCVVMwHhcNMTYwNTIzMjAxMzA4WhcNMzYwNTIzMjAxMzA4WjB1MRkwFwYD
+VQQDExBQeXRob24gRHJpdmVyIENBMRAwDgYDVQQLEwdEcml2ZXJzMRAwDgYDVQQK
+EwdNb25nb0RCMRIwEAYDVQQHEwlQYWxvIEFsdG8xEzARBgNVBAgTCkNhbGlmb3Ju
+aWExCzAJBgNVBAYTAlVTMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+ijh4H/G+FDuqaawzLp9ry0kSIvZJCsRJmYwB8/JGXjxKBowCW5zavwUdWYrk0pH5
+QRx9JvOwub0lpYTl26MLfNVoPe1zL+ahhyiDvobJqnQOPxxu86s56bNK+XZB7GBQ
+GoQrqm25yyODdRBRbDdeMqOT3pSGd7IkFdFWFVbs9Ro2GzUAc9SdfoAU3CJID9Up
+W3Gd/uxPIn0a/oYKPPbZzvAZ0QXVe4j01njOTn/i70btCayNOs/8uvwBEDSWGdGZ
+BHA+dfTaIG6cRnPCrhHUIKW0YIB3eOy3sdu1FUiFQXxrMLqVvaVxyfC6D1ubHAwu
+rK9ryguG2apWv4ODckoLzQIDAQABoywwKjAMBgNVHRMEBTADAQH/MBoGA1UdEQQT
+MBGCCWxvY2FsaG9zdIcEfwAAATANBgkqhkiG9w0BAQUFAAOCAQEAXbuk/+gGYvLO
+isSHUdflWHJrG1d0TpvlxRdu8uDUPtG5qqp0b7L65jUI7SBu6YF3wa5Hs+xTPGnZ
+4SG50VJ62CJckajVvrhNk1TS0NnZdCCE3PXWSm/CUJd+WQLmah5iOdb4WOGMiXoB
+ASzWee1yg9pxAxqZbqdlU/3Jk7sp98pxvz3FqQGsEWGegVUSmndGX+Dr3YbcEUrm
+DwAZdnjPV22N4HlbHXhZhn0YH9kN06mzsZND/fxw4tCkFbLH6juXyPuZnRj6TfN9
+mbgNLP87kVnY1QOgMJl1uwTYQOK1SzMg973LHu1nKzw5VpY+F1gWZptP/3ZE+vpg
+I6CowZ3LEw==
+-----END CERTIFICATE-----

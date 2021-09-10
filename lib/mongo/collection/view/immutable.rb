@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +19,7 @@ module Mongo
   class Collection
     class View
 
-      # Defines behaviour around views being configurable and immutable.
+      # Defines behavior around views being configurable and immutable.
       #
       # @since 2.0.0
       module Immutable

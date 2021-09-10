@@ -1,4 +1,7 @@
-# Copyright (C) 2014 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,56 +15,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/scram/conversation'
-
 module Mongo
   module Auth
 
-    # Defines behaviour for SCRAM-SHA1 authentication.
+    # Defines behavior for SCRAM authentication.
     #
-    # @since 2.0.0
-    class SCRAM
+    # @api private
+    class Scram < Base
 
-      # The authentication mechinism string.
-      #
-      # @since 2.0.0
+      # The authentication mechanism string.
       MECHANISM = 'SCRAM-SHA-1'.freeze
 
-      # @return [ Mongo::Auth::User ] The user to authenticate.
-      attr_reader :user
-
-      # Instantiate a new authenticator.
+      # Initializes the Scram authenticator.
       #
-      # @example Create the authenticator.
-      #   Mongo::Auth::SCRAM.new(user)
+      # @param [ Auth::User ] user The user to authenticate.
+      # @param [ Mongo::Connection ] connection The connection to authenticate over.
       #
-      # @param [ Mongo::Auth::User ] user The user to authenticate.
-      #
-      # @since 2.0.0
-      def initialize(user)
-        @user = user
+      # @option opts [ String | nil ] speculative_auth_client_nonce The client
+      #   nonce used in speculative auth on the specified connection that
+      #   produced the specified speculative auth result.
+      # @option opts [ BSON::Document | nil ] speculative_auth_result The
+      #   value of speculativeAuthenticate field of hello response of
+      #   the handshake on the specified connection.
+      def initialize(user, connection, **opts)
+        super
+        @speculative_auth_client_nonce = opts[:speculative_auth_client_nonce]
+        @speculative_auth_result = opts[:speculative_auth_result]
       end
 
-      # Log the user in on the given connection.
+      # @return [ String | nil ] The client nonce used in speculative auth on
+      #   the current connection.
+      attr_reader :speculative_auth_client_nonce
+
+      # @return [ BSON::Document | nil ] The value of speculativeAuthenticate
+      #   field of hello response of the handshake on the current connection.
+      attr_reader :speculative_auth_result
+
+      def conversation
+        @conversation ||= self.class.const_get(:Conversation).new(
+          user, connection, client_nonce: speculative_auth_client_nonce)
+      end
+
+      # Log the user in on the current connection.
       #
-      # @example Log the user in.
-      #   user.login(connection)
-      #
-      # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
-      #
-      # @return [ Protocol::Reply ] The authentication response.
-      #
-      # @since 2.0.0
-      def login(connection)
-        conversation = Conversation.new(user)
-        reply = connection.dispatch([ conversation.start ])
-        reply = connection.dispatch([ conversation.continue(reply) ])
-        until reply.documents[0][Conversation::DONE]
-          reply = connection.dispatch([ conversation.finalize(reply) ])
+      # @return [ BSON::Document ] The document of the authentication response.
+      def login
+        converse_multi_step(connection, conversation,
+          speculative_auth_result: speculative_auth_result,
+        ).tap do
+          unless conversation.server_verified?
+            raise Error::MissingScramServerSignature
+          end
         end
-        reply
       end
     end
   end
 end
+
+require 'mongo/auth/scram/conversation'

@@ -1,4 +1,7 @@
-# Copyright (C) 2014 MongoDB Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,20 +19,20 @@ module Mongo
   module Auth
     class CR
 
-      # Defines behaviour around a single MONGODB-CR conversation between the
+      # Defines behavior around a single MONGODB-CR conversation between the
       # client and server.
       #
       # @since 2.0.0
-      class Conversation
+      # @deprecated MONGODB-CR authentication mechanism is deprecated
+      #   as of MongoDB 3.6. Support for it in the Ruby driver will be
+      #   removed in driver version 3.0. Please use SCRAM instead.
+      # @api private
+      class Conversation < ConversationBase
 
         # The login message base.
         #
         # @since 2.0.0
         LOGIN = { authenticate: 1 }.freeze
-
-        # @return [ Protocol::Reply ] reply The current reply in the
-        #   conversation.
-        attr_reader :reply
 
         # @return [ String ] database The database to authenticate against.
         attr_reader :database
@@ -37,83 +40,36 @@ module Mongo
         # @return [ String ] nonce The initial auth nonce.
         attr_reader :nonce
 
-        # @return [ User ] user The user for the conversation.
-        attr_reader :user
+        # Start the CR conversation. This returns the first message that
+        # needs to be sent to the server.
+        #
+        # @param [ Server::Connection ] connection The connection being
+        #   authenticated.
+        #
+        # @return [ Protocol::Message ] The first CR conversation message.
+        #
+        # @since 2.0.0
+        def start(connection)
+          selector = Auth::GET_NONCE
+          build_message(connection, user.auth_source, selector)
+        end
 
         # Continue the CR conversation. This sends the client final message
         # to the server after setting the reply from the previous server
         # communication.
         #
-        # @example Continue the conversation.
-        #   conversation.continue(reply)
+        # @param [ BSON::Document ] reply_document The reply document of the
+        #   previous message.
+        # @param [ Mongo::Server::Connection ] connection The connection being
+        #   authenticated.
         #
-        # @param [ Protocol::Reply ] reply The reply of the previous
-        #   message.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def continue(reply)
-          validate!(reply)
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
-            limit: -1
-          )
-        end
-
-        # Finalize the CR conversation. This is meant to be iterated until
-        # the provided reply indicates the conversation is finished.
-        #
-        # @example Finalize the conversation.
-        #   conversation.finalize(reply)
-        #
-        # @param [ Protocol::Reply ] reply The reply of the previous
-        #   message.
-        #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Message ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply)
-          validate!(reply)
-        end
-
-        # Start the CR conversation. This returns the first message that
-        # needs to be send to the server.
-        #
-        # @example Start the conversation.
-        #   conversation.start
-        #
-        # @return [ Protocol::Query ] The first CR conversation message.
-        #
-        # @since 2.0.0
-        def start
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            Auth::GET_NONCE,
-            limit: -1)
-        end
-
-        # Create the new conversation.
-        #
-        # @example Create the new conversation.
-        #   Conversation.new(user, "admin")
-        #
-        # @param [ Auth::User ] user The user to converse about.
-        #
-        # @since 2.0.0
-        def initialize(user)
-          @user = user
-        end
-
-        private
-
-        def validate!(reply)
-          raise Unauthorized.new(user) if reply.documents[0][Operation::Result::OK] != 1
-          @nonce = reply.documents[0][Auth::NONCE]
-          @reply = reply
+        def continue(reply_document, connection)
+          @nonce = reply_document[Auth::NONCE]
+          selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
+          build_message(connection, user.auth_source, selector)
         end
       end
     end

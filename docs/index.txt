@@ -2,25 +2,25 @@
 
 .. _ruby-language-center:
 
-===================
+*******************
 Ruby MongoDB Driver
-===================
+*******************
 
 .. default-domain:: mongodb
 
-The MongoDB Ruby driver is the officially supported Ruby driver for
-MongoDB. It is written in pure Ruby and is optimized for simplicity. It
-can be used on its own, but it also serves as the basis of several
+The MongoDB Ruby driver is the officially supported Ruby driver for MongoDB.
+It can be used on its own, but it also serves as the basis of several
 object mapping libraries.
 
 Get Started
------------
+===========
 
 To get started with the Ruby driver, see :doc:`/installation` and
-:doc:`/quick-start`.
+:doc:`/tutorials/quick-start`. Continue to :doc:`/tutorials`
+for high level documentation for common operations.
 
 BSON
-----
+====
 
 The Ruby BSON implementation is packaged in a separate gem with C and
 Java extensions for speed depending on the runtime enviroment.
@@ -28,7 +28,7 @@ Java extensions for speed depending on the runtime enviroment.
 For reference on the Ruby BSON gem, see :doc:`/bson-tutorials`.
 
 Object Mappers
---------------
+==============
 
 Because MongoDB is so easy to use, the basic Ruby driver can be the
 best solution for many applications. But if you need validations,
@@ -44,25 +44,25 @@ Object Document Mappers (ODM) as opposed to Object Relational Mappers
 The ODM officially supported by MongoDB is Mongoid, originally written
 by Durran Jordan.
 
-For tutorials on Mongoid, see :doc:`/mongoid`.
+For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mongoid/master>`_.
 
 .. COMMENT  For the actual build, see mongodb/docs-ruby repo which pulls the documentation source from:
-..    mongo-ruby-driver, 
-..    bson-ruby, and 
+..    mongo-ruby-driver,
+..    bson-ruby, and
 ..    mongoid repos.
 
 .. class:: hidden
 
-   .. toctree::
-      :titlesonly:
+  .. toctree::
+    :titlesonly:
 
-      whats-new
-      installation
-      quick-start
-      ruby-driver-tutorials
-      bson-tutorials
-      mongoid
-      API <http://api.mongodb.com/ruby/current/>
-      /reference/driver-compatibility
-      /reference/additional-resources
-      /contribute
+    getting-started
+    tutorials
+    reference/connection-and-configuration
+    reference/working-with-data
+    reference/schema-operations
+    bson-tutorials
+    API <https://docs.mongodb.com/ruby-driver/master/api/>
+    release-notes
+    reference/additional-resources
+    contribute

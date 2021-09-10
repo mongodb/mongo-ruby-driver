@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,9 +22,7 @@ module Mongo
     # network and connection exceptions.
     #
     # @since 2.0.0
-    class Unacknowledged
-      include Normalizable
-
+    class Unacknowledged < Base
       # The noop constant for the gle.
       #
       # @since 2.0.0
@@ -37,6 +38,18 @@ module Mongo
       # @since 2.0.0
       def get_last_error
         NOOP
+      end
+
+      # Is this write concern acknowledged.
+      #
+      # @example Whether this write concern object is acknowledged.
+      #   write_concern.acknowledged?
+      #
+      # @return [ true, false ] Whether this write concern is acknowledged.
+      #
+      # @since 2.5.0
+      def acknowledged?
+        false
       end
 
       # Get a human-readable string representation of an unacknowledged write concern.

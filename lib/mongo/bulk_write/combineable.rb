@@ -1,4 +1,7 @@
-# Copyright (C) 2015-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +18,7 @@
 module Mongo
   class BulkWrite
 
-    # Defines behaviour around combiners
+    # Defines behavior around combiners
     #
     # @api private
     #
@@ -24,9 +27,6 @@ module Mongo
 
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
-
-      # @return [ true, false ] has_collation Whether one or more operations has a collation defined.
-      attr_reader :has_collation
 
       # Create the ordered combiner.
       #
@@ -41,6 +41,26 @@ module Mongo
       def initialize(requests)
         @requests = requests
         @has_collation = false
+        @has_array_filters = false
+        @has_hint = false
+      end
+
+      # @return [ Boolean ] Whether one or more operation specifies the collation
+      #   option.
+      def has_collation?
+        @has_collation
+      end
+
+      # @return [ Boolean ] Whether one or more operation specifies the
+      #   array_filters option.
+      def has_array_filters?
+        @has_array_filters
+      end
+
+      # @return [ Boolean ] Whether one or more operation specifies the
+      #   hint option.
+      def has_hint?
+        @has_hint
       end
 
       private

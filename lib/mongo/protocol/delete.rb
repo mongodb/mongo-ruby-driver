@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,16 +57,16 @@ module Mongo
       # @example Return the event payload.
       #   message.payload
       #
-      # @return [ Hash ] The event payload.
+      # @return [ BSON::Document ] The event payload.
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'delete',
           database_name: @database,
           command: upconverter.command,
           request_id: request_id
-        }
+        )
       end
 
       protected
@@ -74,9 +77,9 @@ module Mongo
 
       # The operation code required to specify a Delete message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2006
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2006
 
       # Available flags for a Delete message.
       FLAGS = [:single_remove]
@@ -162,6 +165,8 @@ module Mongo
           end
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

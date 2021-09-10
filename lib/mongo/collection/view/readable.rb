@@ -1,4 +1,7 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# frozen_string_literal: true
+# encoding: utf-8
+
+# Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,20 +19,10 @@ module Mongo
   class Collection
     class View
 
-      # Defines read related behaviour for collection view.
+      # Defines read related behavior for collection view.
       #
       # @since 2.0.0
       module Readable
-
-        # The query modifier constant.
-        #
-        # @since 2.2.0
-        QUERY = '$query'.freeze
-
-        # The modifiers option constant.
-        #
-        # @since 2.2.0
-        MODIFIERS = 'modifiers'.freeze
 
         # Execute an aggregation on the collection view.
         #
@@ -45,7 +38,25 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate(pipeline, options = {})
-          Aggregation.new(self, pipeline, options)
+          aggregation = Aggregation.new(self, pipeline, options)
+
+          # Because the $merge and $out pipeline stages write documents to the
+          # collection, it is necessary to clear the cache when they are performed.
+          #
+          # Opt to clear the entire cache rather than one namespace because
+          # the $out and $merge stages do not have to write to the same namespace
+          # on which the aggregation is performed.
+          QueryCache.clear if aggregation.write?
+
+          aggregation
+        end
+
+        # Allows the server to write temporary data to disk while executing
+        # a find operation.
+        #
+        # @return [ View ] The new view.
+        def allow_disk_use
+          configure(:allow_disk_use, true)
         end
 
         # Allows the query to get partial results if some shards are down.
@@ -82,7 +93,7 @@ module Mongo
         # @param [ Integer ] batch_size The size of each batch of results.
         #
         # @return [ Integer, View ] Either the batch_size value or a
-        # new +View+.
+        #   new +View+.
         #
         # @since 2.0.0
         def batch_size(batch_size = nil)
@@ -112,12 +123,67 @@ module Mongo
         # @example Get the number of documents in the collection.
         #   collection_view.count
         #
-        # @param [ Hash ] opts Options for the count command.
+        # @param [ Hash ] opts Options for the operation.
         #
         # @option opts :skip [ Integer ] The number of documents to skip.
         # @option opts :hint [ Hash ] Override default index selection and force
         #   MongoDB to use a specific index for the query.
-        # @option opts :limit [ Integer ] Max number of docs to return.
+        # @option opts :limit [ Integer ] Max number of docs to count.
+        # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
+        #   command to run.
+        # @option opts [ Hash ] :read The read preference options.
+        # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Mongo::Session ] :session The session to use for the operation.
+        #
+        # @return [ Integer ] The document count.
+        #
+        # @since 2.0.0
+        #
+        # @deprecated Use #count_documents or #estimated_document_count instead. However, note that
+        #   the following operators will need to be substituted when switching to #count_documents:
+        #     * $where should be replaced with $expr (only works on 3.6+)
+        #     * $near should be replaced with $geoWithin with $center
+        #     * $nearSphere should be replaced with $geoWithin with $centerSphere
+        def count(opts = {})
+          cmd = { :count => collection.name, :query => filter }
+          cmd[:skip] = opts[:skip] if opts[:skip]
+          cmd[:hint] = opts[:hint] if opts[:hint]
+          cmd[:limit] = opts[:limit] if opts[:limit]
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
+          cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
+          Mongo::Lint.validate_underscore_read_preference(opts[:read])
+          read_pref = opts[:read] || read_preference
+          selector = ServerSelector.get(read_pref || server_selector)
+          with_session(opts) do |session|
+            read_with_retry(session, selector) do |server|
+              Operation::Count.new(
+                selector: cmd,
+                db_name: database.name,
+                options: {:limit => -1},
+                read: read_pref,
+                session: session,
+                # For some reason collation was historically accepted as a
+                # string key. Note that this isn't documented as valid usage.
+                collation: opts[:collation] || opts['collation'] || collation,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
+            end.n.to_i
+          end
+        end
+
+        # Get a count of matching documents in the collection.
+        #
+        # @example Get the number of documents in the collection.
+        #   collection_view.count
+        #
+        # @param [ Hash ] opts Options for the operation.
+        #
+        # @option opts :skip [ Integer ] The number of documents to skip.
+        # @option opts :hint [ Hash ] Override default index selection and force
+        #   MongoDB to use a specific index for the query. Requires server version 3.6+.
+        # @option opts :limit [ Integer ] Max number of docs to count.
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
@@ -125,25 +191,86 @@ module Mongo
         #
         # @return [ Integer ] The document count.
         #
-        # @since 2.0.0
-        def count(opts = {})
-          cmd = { :count => collection.name, :query => filter }
-          cmd[:skip] = opts[:skip] if opts[:skip]
-          cmd[:hint] = opts[:hint] if opts[:hint]
-          cmd[:limit] = opts[:limit] if opts[:limit]
-          cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(opts[:read] || read)
-          server = preference.select_server(cluster)
-          apply_collation!(cmd, server, opts)
-          read_with_retry do
-            Operation::Commands::Command.new({
-                                               :selector => cmd,
-                                               :db_name => database.name,
-                                               :options => { :limit => -1 },
-                                               :read => preference,
-                                             }).execute(server).n.to_i
+        # @since 2.6.0
+        def count_documents(opts = {})
+          pipeline = [:'$match' => filter]
+          pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
+          pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
+          pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
+          opts = opts.select { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
+          opts[:collation] ||= collation
+
+          first = aggregate(pipeline, opts).first
+          return 0 unless first
+          first['n'].to_i
+        end
+
+        # Gets an estimate of the count of documents in a collection using collection metadata.
+        #
+        # @example Get the number of documents in the collection.
+        #   collection_view.estimated_document_count
+        #
+        # @param [ Hash ] opts Options for the operation.
+        #
+        # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the command to
+        #   run.
+        # @option opts [ Hash ] :read The read preference options.
+        #
+        # @return [ Integer ] The document count.
+        #
+        # @since 2.6.0
+        def estimated_document_count(opts = {})
+          unless view.filter.empty?
+            raise ArgumentError, "Cannot call estimated_document_count when querying with a filter"
+          end
+
+          %i[limit skip].each do |opt|
+            if @options.key?(opt)
+              raise ArgumentError, "Cannot call estimated_document_count when querying with #{opt}"
+            end
+          end
+
+          Mongo::Lint.validate_underscore_read_preference(opts[:read])
+          read_pref = opts[:read] || read_preference
+          selector = ServerSelector.get(read_pref || server_selector)
+          with_session(opts) do |session|
+            read_with_retry(session, selector) do |server|
+              context = Operation::Context.new(client: client, session: session)
+              if server.description.server_version_gte?('5.0')
+                pipeline = [
+                  {'$collStats' => {'count' => {}}},
+                  {'$group' => {'_id' => 1, 'n' => {'$sum' => '$count'}}},
+                ]
+                spec = Builder::Aggregation.new(pipeline, self, options.merge(session: session)).specification
+                result = Operation::Aggregate.new(spec).execute(server, context: context)
+                result.documents.first.fetch('n')
+              else
+                cmd = { count: collection.name }
+                cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
+                if read_concern
+                  cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+                    read_concern)
+                end
+                result = Operation::Count.new(
+                  selector: cmd,
+                  db_name: database.name,
+                  read: read_pref,
+                  session: session,
+                ).execute(server, context: context)
+                result.n.to_i
+              end
+            end
+          end
+        rescue Error::OperationFailure => exc
+          if exc.code == 26
+            # NamespaceNotFound
+            # This should only happen with the aggregation pipeline path
+            # (server 4.9+). Previous servers should return 0 for nonexistent
+            # collections.
+            0
+          else
+            raise
           end
         end
 
@@ -164,22 +291,33 @@ module Mongo
         #
         # @since 2.0.0
         def distinct(field_name, opts = {})
+          if field_name.nil?
+            raise ArgumentError, 'Field name for distinct operation must be not nil'
+          end
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(opts[:read] || read)
-          server = preference.select_server(cluster)
-          apply_collation!(cmd, server, opts)
-          read_with_retry do
-            Operation::Commands::Command.new({
-                                               :selector => cmd,
-                                               :db_name => database.name,
-                                               :options => { :limit => -1 },
-                                               :read => preference
-                                             }).execute(server).first['values']
-
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
+          Mongo::Lint.validate_underscore_read_preference(opts[:read])
+          read_pref = opts[:read] || read_preference
+          selector = ServerSelector.get(read_pref || server_selector)
+          with_session(opts) do |session|
+            read_with_retry(session, selector) do |server|
+              Operation::Distinct.new(
+                selector: cmd,
+                db_name: database.name,
+                options: {:limit => -1},
+                read: read_pref,
+                session: session,
+                # For some reason collation was historically accepted as a
+                # string key. Note that this isn't documented as valid usage.
+                collation: opts[:collation] || opts['collation'] || collation,
+              ).execute(server, context: Operation::Context.new(client: client, session: session))
+            end.first['values']
           end
         end
 
@@ -224,7 +362,7 @@ module Mongo
         #
         # @since 2.0.0
         def map_reduce(map, reduce, options = {})
-          MapReduce.new(self, map, reduce, options)
+          MapReduce.new(self, map, reduce, @options.merge(options))
         end
 
         # Set the max number of documents to scan.
@@ -237,6 +375,9 @@ module Mongo
         # @return [ Integer, View ] The value or a new +View+.
         #
         # @since 2.0.0
+        #
+        # @deprecated This option is deprecated as of MongoDB server
+        #   version 4.0.
         def max_scan(value = nil)
           configure(:max_scan, value)
         end
@@ -313,9 +454,8 @@ module Mongo
         #
         # @since 2.0.0
         def read(value = nil)
-          return default_read if value.nil?
-          selector = ServerSelector.get(value)
-          configure(:read, selector)
+          return read_preference if value.nil?
+          configure(:read, value)
         end
 
         # Set whether to return only the indexed field or fields.
@@ -374,6 +514,9 @@ module Mongo
         # @param [ true, false ] value The snapshot value.
         #
         # @since 2.0.0
+        #
+        # @deprecated This option is deprecated as of MongoDB server
+        #   version 4.0.
         def snapshot(value = nil)
           configure(:snapshot, value)
         end
@@ -393,7 +536,11 @@ module Mongo
           configure(:sort, spec)
         end
 
-        # “meta” operators that let you modify the output or behavior of a query.
+        # If called without arguments or with a nil argument, returns
+        # the legacy (OP_QUERY) server modifiers for the current view.
+        # If called with a non-nil argument, which must be a Hash or a
+        # subclass, merges the provided modifiers into the current view.
+        # Both string and symbol keys are allowed in the input hash.
         #
         # @example Set the modifiers document.
         #   view.modifiers(:$orderby => Mongo::Index::ASCENDING)
@@ -404,8 +551,11 @@ module Mongo
         #
         # @since 2.1.0
         def modifiers(doc = nil)
-          return Builder::Modifiers.map_server_modifiers(options) if doc.nil?
-          new(options.merge(Builder::Modifiers.map_driver_options(doc)))
+          if doc.nil?
+            Operation::Find::Builder::Modifiers.map_server_modifiers(options)
+          else
+            new(options.merge(Operation::Find::Builder::Modifiers.map_driver_options(BSON::Document.new(doc))))
+          end
         end
 
         # A cumulative time limit in milliseconds for processing get more operations
@@ -451,39 +601,88 @@ module Mongo
           configure(:cursor_type, type)
         end
 
+        # @api private
+        def read_concern
+          if options[:session] && options[:session].in_transaction?
+            options[:session].send(:txn_read_concern) || collection.client.read_concern
+          else
+            collection.read_concern
+          end
+        end
+
+        # @api private
+        def read_preference
+          @read_preference ||= begin
+            # Operation read preference is always respected, and has the
+            # highest priority. If we are in a transaction, we look at
+            # transaction read preference and default to client, ignoring
+            # collection read preference. If we are not in transaction we
+            # look at collection read preference which defaults to client.
+            rp = if options[:read]
+              options[:read]
+            elsif options[:session] && options[:session].in_transaction?
+              options[:session].txn_read_preference || collection.client.read_preference
+            else
+              collection.read_preference
+            end
+            Lint.validate_underscore_read_preference(rp)
+            rp
+          end
+        end
+
         private
 
         def collation(doc = nil)
           configure(:collation, doc)
         end
 
-        def default_read
-          options[:read] || collection.read_preference
+        def server_selector
+          @server_selector ||= if options[:session] && options[:session].in_transaction?
+            ServerSelector.get(read_preference || client.server_selector)
+          else
+            ServerSelector.get(read_preference || collection.server_selector)
+          end
         end
 
         def parallel_scan(cursor_count, options = {})
-          server = read.select_server(cluster, false)
-          cmd = Operation::Commands::ParallelScan.new({
-                  :coll_name => collection.name,
-                  :db_name => database.name,
-                  :cursor_count => cursor_count,
-                  :read_concern => collection.read_concern
-                }.merge!(options))
-          cmd.execute(server).cursor_ids.map do |cursor_id|
-            result = if server.features.find_command_enabled?
-                Operation::Commands::GetMore.new({
-                  :selector => { :getMore => cursor_id, :collection => collection.name },
-                  :db_name  => database.name
-                }).execute(server)
-              else
-                Operation::Read::GetMore.new({
-                  :to_return => 0,
-                  :cursor_id => cursor_id,
-                  :db_name   => database.name,
-                  :coll_name => collection.name
-                }).execute(server)
-            end
-            Cursor.new(self, result, server)
+          if options[:session]
+            # The session would be overwritten by the one in +options+ later.
+            session = client.send(:get_session, @options)
+          else
+            session = nil
+          end
+          server = server_selector.select_server(cluster, nil, session)
+          spec = {
+            coll_name: collection.name,
+            db_name: database.name,
+            cursor_count: cursor_count,
+            read_concern: read_concern,
+            session: session,
+          }.update(options)
+          session = spec[:session]
+          op = Operation::ParallelScan.new(spec)
+          # Note that the context object shouldn't be reused for subsequent
+          # GetMore operations.
+          context = Operation::Context.new(client: client, session: session)
+          result = op.execute(server, context: context)
+          result.cursor_ids.map do |cursor_id|
+            spec = {
+              cursor_id: cursor_id,
+              coll_name: collection.name,
+              db_name: database.name,
+              session: session,
+              batch_size: batch_size,
+              to_return: 0,
+              # max_time_ms is not being passed here, I assume intentionally?
+            }
+            op = Operation::GetMore.new(spec)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              service_id: result.connection_description.service_id,
+            )
+            result = op.execute(server, context: context)
+            Cursor.new(self, result, server, session: session)
           end
         end
 

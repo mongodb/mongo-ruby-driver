@@ -1,17 +1,20 @@
-# encoding: UTF-8
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::Query do
 
   let(:opcode)   { 2004 }
-  let(:db)       { TEST_DB }
-  let(:coll)     { TEST_COLL }
-  let(:ns)       { "#{db}.#{coll}" }
+  let(:db)       { SpecConfig.instance.test_db }
+  let(:collection_name) { 'protocol-test' }
+  let(:ns)       { "#{db}.#{collection_name}" }
   let(:selector) { { :name => 'Tyler' } }
   let(:options)     { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, options)
+    described_class.new(db, collection_name, selector, options)
   end
 
   describe '#initialize' do
@@ -27,7 +30,7 @@ describe Mongo::Protocol::Query do
     context 'when options are provided' do
 
       context 'when flags are provided' do
-        let(:options) { { :flags => [:slave_ok] } }
+        let(:options) { { :flags => [:secondary_ok] } }
 
         it 'sets the flags' do
           expect(message.flags).to eq(options[:flags])
@@ -66,7 +69,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, options)
+          described_class.new(db, collection_name, selector, options)
         end
 
         it 'returns true' do
@@ -76,7 +79,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, options)
+          described_class.new('tyler', collection_name, selector, options)
         end
 
         it 'returns false' do
@@ -96,7 +99,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, options)
+          described_class.new(db, collection_name, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -106,7 +109,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, :skip => 2)
+          described_class.new(db, collection_name, selector, :skip => 2)
         end
 
         it 'returns false' do
@@ -166,7 +169,7 @@ describe Mongo::Protocol::Query do
         end
 
         context 'slave ok flag' do
-          let(:flags) { [:slave_ok] }
+          let(:flags) { [:secondary_ok] }
           it 'sets the third bit' do
             expect(field).to be_int32(4)
           end
@@ -208,7 +211,7 @@ describe Mongo::Protocol::Query do
         end
 
         context 'multiple flags' do
-          let(:flags) { [:await_data, :slave_ok] }
+          let(:flags) { [:await_data, :secondary_ok] }
           it 'sets the correct bits' do
             expect(field).to be_int32(36)
           end
@@ -225,7 +228,7 @@ describe Mongo::Protocol::Query do
       context 'when the namespace contains unicode characters' do
         let(:field) { bytes.to_s[20..40] }
 
-        let(:coll) do
+        let(:collection_name) do
           'områder'
         end
 
@@ -292,6 +295,51 @@ describe Mongo::Protocol::Query do
 
         it 'serializes the projection' do
           expect(field).to be_bson(projection)
+        end
+      end
+    end
+  end
+
+  describe '#registry' do
+
+    context 'when the class is loaded' do
+
+      it 'registers the op code in the Protocol Registry' do
+        expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
+      end
+
+      it 'creates an #op_code instance method' do
+        expect(message.op_code).to eq(described_class::OP_CODE)
+      end
+    end
+  end
+
+  describe '#compress' do
+
+    context 'when the selector represents a command that can be compressed' do
+
+      let(:selector) do
+        { ping: 1 }
+      end
+
+      it 'returns a compressed message' do
+        expect(message.maybe_compress('zlib')).to be_a(Mongo::Protocol::Compressed)
+      end
+    end
+
+    context 'when the selector represents a command for which compression is not allowed' do
+
+      Mongo::Monitoring::Event::Secure::REDACTED_COMMANDS.each do |command|
+
+        let(:selector) do
+          { command => 1 }
+        end
+
+        context "when the command is #{command}" do
+
+          it 'does not allow compression for the command' do
+            expect(message.maybe_compress('zlib')).to be(message)
+          end
         end
       end
     end

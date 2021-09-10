@@ -1,0 +1,66 @@
+tests:
+    -
+        description: "Valid read preference options are parsed correctly"
+        uri: "mongodb://example.com/?readPreference=primaryPreferred&readPreferenceTags=dc:ny,rack:1&maxStalenessSeconds=120&readPreferenceTags=dc:ny"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
+            readPreference: "primaryPreferred"
+            readPreferenceTags:
+                - 
+                    dc: "ny"
+                    rack: "1"
+                -
+                    dc: "ny"
+            maxStalenessSeconds: 120
+    -
+        description: "Case is preserved in read preference tag names and values"
+        uri: "mongodb://example.com/?readPreference=secondary&readPreferenceTags=DataCenter:NewYork"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
+            readPreference: "secondary"
+            readPreferenceTags:
+                - 
+                    DataCenter: NewYork
+    -
+        description: "Invalid readPreferenceTags causes a warning"
+        uri: "mongodb://example.com/?readPreferenceTags=invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options: {}
+    # https://jira.mongodb.org/browse/DRIVERS-1369
+    -
+        description: "Valid and invalid readPreferenceTags mix"
+        uri: "mongodb://example.com/?readPreferenceTags=a:b,invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options:
+            readPreferenceTags:
+                -
+                    a: b
+    -
+        description: "Non-numeric maxStalenessSeconds causes a warning"
+        uri: "mongodb://example.com/?maxStalenessSeconds=invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "Too low maxStalenessSeconds causes a warning"
+        uri: "mongodb://example.com/?maxStalenessSeconds=-2"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options: {}
+

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::Aggregation do
@@ -26,7 +29,11 @@ describe Mongo::Collection::View::Aggregation do
     described_class.new(view, pipeline, options)
   end
 
-  after do
+  let(:aggregation_spec) do
+    aggregation.send(:aggregate_spec, double('session'))
+  end
+
+  before do
     authorized_collection.delete_many
   end
 
@@ -61,11 +68,25 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     before do
+      authorized_collection.delete_many
       authorized_collection.insert_many(documents)
     end
 
-    after do
-      authorized_collection.delete_many
+    context 'when provided a session' do
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        aggregation.to_a
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
     end
 
     context 'when a block is provided' do
@@ -126,7 +147,8 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
-    context 'when the initial response has no results but an active cursor', if: find_command_enabled? do
+    context 'when the initial response has no results but an active cursor' do
+      min_server_fcv '3.2'
 
       let(:documents) do
         [
@@ -158,14 +180,16 @@ describe Mongo::Collection::View::Aggregation do
         Mongo::Collection::View.new(collection, selector, view_options)
       end
 
-      context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+      context 'when the server supports write concern on the aggregate command' do
+        min_server_fcv '3.4'
 
         it 'does not apply the write concern' do
           expect(aggregation.to_a.size).to eq(2)
         end
       end
 
-      context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+      context 'when the server does not support write concern on the aggregation command' do
+        max_server_version '3.2'
 
         it 'does not apply the write concern' do
           expect(aggregation.to_a.size).to eq(2)
@@ -203,6 +227,40 @@ describe Mongo::Collection::View::Aggregation do
       expect(aggregation.explain).to_not be_empty
     end
 
+    context 'session id' do
+      min_server_fcv '3.6'
+      require_topology :replica_set, :sharded
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:subscriber) { Mrss::EventSubscriber.new }
+
+      let(:client) do
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:session) do
+        client.start_session
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
+      end
+
+      let(:command) do
+        aggregation.explain
+        subscriber.started_events.find { |c| c.command_name == 'aggregate'}.command
+      end
+
+      it 'sends the session id' do
+        expect(command['lsid']).to eq(session.session_id)
+      end
+    end
+
     context 'when a collation is specified' do
 
       before do
@@ -217,32 +275,53 @@ describe Mongo::Collection::View::Aggregation do
         aggregation.explain['$cursor']['queryPlanner']['collation']['locale']
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
-        context 'when the collation key is a String' do
+        shared_examples_for 'applies the collation' do
 
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
+          context 'when the collation key is a String' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'applies the collation' do
+              expect(result).to eq('en_US')
+            end
           end
 
-          it 'applies the collation' do
-            expect(result).to eq('en_US')
+          context 'when the collation key is a Symbol' do
+
+            let(:options) do
+              { collation: { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'applies the collation' do
+              expect(result).to eq('en_US')
+            end
           end
         end
 
-        context 'when the collation key is a Symbol' do
+        context '4.0-' do
+          max_server_version '4.0'
 
-          let(:options) do
-            { collation: { locale: 'en_US', strength: 2 } }
+          it_behaves_like 'applies the collation'
+        end
+
+        context '4.2+' do
+          min_server_fcv '4.2'
+
+          let(:result) do
+            aggregation.explain['queryPlanner']['collation']['locale']
           end
 
-          it 'applies the collation' do
-            expect(result).to eq('en_US')
-          end
+          it_behaves_like 'applies the collation'
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         let(:options) do
           { collation: { locale: 'en_US', strength: 2 } }
@@ -275,12 +354,12 @@ describe Mongo::Collection::View::Aggregation do
     context 'when the collection has a read preference' do
 
       let(:read_preference) do
-        Mongo::ServerSelector.get(mode: :secondary)
+        {mode: :secondary}
       end
 
       it 'includes the read preference in the spec' do
         allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
-        expect(aggregation.send(:aggregate_spec)[:read]).to eq(read_preference)
+        expect(aggregation_spec[:read]).to eq(read_preference)
       end
     end
 
@@ -291,7 +370,7 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       it 'includes the option in the spec' do
-        expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+        expect(aggregation_spec[:selector][:allowDiskUse]).to eq(true)
       end
 
       context 'when allow_disk_use is specified as an option' do
@@ -305,7 +384,7 @@ describe Mongo::Collection::View::Aggregation do
         end
 
         it 'includes the option in the spec' do
-          expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+          expect(aggregation_spec[:selector][:allowDiskUse]).to eq(true)
         end
 
         context 'when #allow_disk_use is also called' do
@@ -319,7 +398,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'overrides the first option with the second' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(false)
+            expect(aggregation_spec[:selector][:allowDiskUse]).to eq(false)
           end
         end
       end
@@ -332,7 +411,18 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       it 'includes the option in the spec' do
-        expect(aggregation.send(:aggregate_spec)[:selector][:maxTimeMS]).to eq(options[:max_time_ms])
+        expect(aggregation_spec[:selector][:maxTimeMS]).to eq(options[:max_time_ms])
+      end
+    end
+
+    context 'when comment is an option' do
+
+      let(:options) do
+        { :comment => 'testing' }
+      end
+
+      it 'includes the option in the spec' do
+        expect(aggregation_spec[:selector][:comment]).to eq(options[:comment])
       end
     end
 
@@ -345,7 +435,7 @@ describe Mongo::Collection::View::Aggregation do
         end
 
         it 'uses the batch_size on the view' do
-          expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(view_options[:batch_size])
+          expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(view_options[:batch_size])
         end
       end
 
@@ -356,7 +446,7 @@ describe Mongo::Collection::View::Aggregation do
         end
 
         it 'includes the option in the spec' do
-          expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+          expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
         end
 
         context 'when  batch_size is also set on the view' do
@@ -366,9 +456,20 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'overrides the view batch_size with the option batch_size' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+            expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
           end
         end
+      end
+    end
+
+    context 'when a hint is specified' do
+
+      let(:options) do
+        { 'hint' => { 'y' => 1 } }
+      end
+
+      it 'includes the option in the spec' do
+        expect(aggregation_spec[:selector][:hint]).to eq(options['hint'])
       end
     end
 
@@ -385,7 +486,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'sets a batch size document in the spec' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+            expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
           end
         end
 
@@ -396,7 +497,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'sets an empty document in the spec' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to eq({})
+            expect(aggregation_spec[:selector][:cursor]).to eq({})
           end
         end
 
@@ -411,7 +512,7 @@ describe Mongo::Collection::View::Aggregation do
         context 'when batch_size is set' do
 
           it 'does not set the cursor option in the spec' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to be_nil
+            expect(aggregation_spec[:selector][:cursor]).to be_nil
           end
         end
       end
@@ -436,14 +537,16 @@ describe Mongo::Collection::View::Aggregation do
       aggregation.collect { |doc| doc['name']}
     end
 
-    context 'when the server selected supports collations', if: collation_enabled? do
+    context 'when the server selected supports collations' do
+      min_server_fcv '3.4'
 
       it 'applies the collation' do
         expect(result).to eq(['bang', 'bang'])
       end
     end
 
-    context 'when the server selected does not support collations', unless: collation_enabled? do
+    context 'when the server selected does not support collations' do
+      max_server_version '3.2'
 
       it 'raises an exception' do
         expect {
@@ -466,7 +569,7 @@ describe Mongo::Collection::View::Aggregation do
     end
   end
 
-  context 'when $out is in the pipeline', if: write_command_enabled? do
+  context 'when $out is in the pipeline' do
 
     let(:pipeline) do
       [{
@@ -481,7 +584,7 @@ describe Mongo::Collection::View::Aggregation do
       ]
     end
 
-    after do
+    before do
       authorized_client['output_collection'].delete_many
     end
 
@@ -517,7 +620,7 @@ describe Mongo::Collection::View::Aggregation do
 
      it 'reroutes the operation to a primary' do
        allow(aggregation).to receive(:valid_server?).and_return(false)
-       expect(Mongo::Logger.logger).to receive(:warn?).and_call_original
+       expect(Mongo::Logger.logger).to receive(:warn).and_call_original
        aggregation.to_a
      end
     end
@@ -525,7 +628,7 @@ describe Mongo::Collection::View::Aggregation do
     context 'when the server is a valid for writing' do
 
      it 'does not reroute the operation to a primary' do
-       expect(Mongo::Logger.logger).not_to receive(:warn?)
+       expect(Mongo::Logger.logger).not_to receive(:warn)
        aggregation.to_a
      end
 
@@ -539,7 +642,8 @@ describe Mongo::Collection::View::Aggregation do
          Mongo::Collection::View.new(collection, selector, view_options)
        end
 
-       context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+       context 'when the server supports write concern on the aggregate command' do
+        min_server_fcv '3.4'
 
          it 'uses the write concern' do
            expect {
@@ -548,7 +652,8 @@ describe Mongo::Collection::View::Aggregation do
          end
        end
 
-       context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+       context 'when the server does not support write concern on the aggregation command' do
+        max_server_version '3.2'
 
          let(:documents) do
            [
