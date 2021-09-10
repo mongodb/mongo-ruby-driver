@@ -14,7 +14,6 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-# 45 minutes is the longest we'll ever run
 exec_timeout_secs: 2700
 
 
