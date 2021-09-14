@@ -328,11 +328,11 @@ AWS Master Key
 ~~~~~~~~~~~~~~
 It is recommended that you use Amazon's Key Management Service to create and
 store your master key. To do so, follow steps 1 and 2 of the
-:manual:`"Convert to a Remote Master Key" section</ecosystem/use-cases/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
+:drivers:`"Convert to a Remote Master Key" section</security/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
 in the MongoDB Client-Side Encryption documentation.
 
 For more information about creating a master key, see the
-:manual:`Create a Master Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#a-create-a-master-key>`
+:drivers:`Create a Master Key </security/client-side-field-level-encryption-guide/#a-create-a-master-key>`
 section of the MongoDB manual.
 
 Creating a Data Key
@@ -423,7 +423,7 @@ generating a new master key on AWS and finding the information you need to
 create data keys.
 
 For more information about creating a data key, see the
-:manual:`Create a Data Encryption Key </ecosystem/use-cases/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
+:drivers:`Create a Data Encryption Key </security/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
 section of the MongoDB manual.
 
 Auto-Encryption Options
@@ -549,7 +549,7 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
 
 .. seealso::
 
-  :manual:`Specify Encrypted Fields Using JSON Schema</ecosystem/use-cases/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
+  :drivers:`Specify Encrypted Fields Using JSON Schema</security/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
   :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
 
 ``:bypass_auto_encryption``
