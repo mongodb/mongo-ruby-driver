@@ -208,6 +208,8 @@ module Unified
             else
               raise
             end
+          rescue Interrupt
+            raise
           rescue => e
             if store_errors
               STDERR.puts "Error: #{e.class}: #{e}"
