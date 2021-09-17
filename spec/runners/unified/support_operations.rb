@@ -209,11 +209,17 @@ module Unified
               raise
             end
           rescue => e
-            if store_errors
+            if store_failures
+              STDERR.puts "Error: #{e.class}: #{e} (reporting as failure)"
+              entities.get(:failure_list, store_failures) << {
+                error: "#{e.class}: #{e}",
+                time: Time.now.to_f,
+              }
+            elsif store_errors
               STDERR.puts "Error: #{e.class}: #{e}"
               entities.get(:error_list, store_errors) << {
                 error: "#{e.class}: #{e}",
-                observedAt: Time.now.to_f,
+                time: Time.now.to_f,
               }
             else
               raise
