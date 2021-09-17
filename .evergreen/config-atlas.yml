@@ -14,6 +14,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
+# 20 minutes is the longest we'll ever run
 exec_timeout_secs: 1800
 
 
@@ -404,7 +405,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SERVERLESS_URI="${MONGODB_URI}" .evergreen/run-tests-serverless.sh
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" MULTI_ATLASPROXY_SERVERLESS_URI="${MULTI_ATLASPROXY_SERVERLESS_URI}" SINGLE_ATLASPROXY_SERVERLESS_URI="${SINGLE_ATLASPROXY_SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"
@@ -818,7 +819,17 @@ buildvariants:
     tasks:
        - name: test-atlas
 
-  - matrix_name: "serverless"
+  - matrix_name: "serverless single mongos"
+    matrix_spec:
+      ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
+      single-mongos: single-mongos
+    display_name: "Atlas serverless tests ${ruby}"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-serverless
+
+  - matrix_name: "serverless multiple mongos"
     matrix_spec:
       ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
     display_name: "Atlas serverless tests ${ruby}"
