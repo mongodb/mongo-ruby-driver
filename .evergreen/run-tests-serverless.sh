@@ -18,6 +18,7 @@ if test -n "$SINGLE_MONGOS"; then
 else
     export MONGODB_URI=`echo ${MULTI_ATLASPROXY_SERVERLESS_URI} | sed -r 's/mongodb:\/\//mongodb:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
 fi
+export TOPOLOGY="load-balanced"
 
 echo "Running specs"
 

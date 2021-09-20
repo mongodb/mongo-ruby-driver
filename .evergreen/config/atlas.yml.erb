@@ -12,7 +12,7 @@ buildvariants:
     matrix_spec:
       ruby: ["ruby-2.4", "ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
       single-mongos: single-mongos
-    display_name: "Atlas serverless tests ${ruby}"
+    display_name: "Atlas serverless ${ruby} single mongos"
     run_on:
       - ubuntu1804-small
     tasks:
