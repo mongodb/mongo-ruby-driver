@@ -391,7 +391,7 @@ functions:
           ${PREPARE_SHELL}
           # This hack with PROJECT env is necessary while serverless
           # rejects creating instances with too long names.
-          PROJECT="mongo-ruby-driver" .evergreen/serverless/create-instance.sh
+          PROJECT="mongo-ruby-driver" LOADBALANCED="ON" .evergreen/serverless/create-instance.sh
           cat serverless-expansion.yml
 
     - command: expansions.update
