@@ -15,7 +15,7 @@ Query Cache
 The MongoDB Ruby driver provides a built-in query cache. When enabled, the
 query cache saves the results of previously-executed find and aggregation
 queries. When those same queries are performed again, the driver returns
-the cached reuslts to prevent unnecessary roundtrips to the database.
+the cached results to prevent unnecessary roundtrips to the database.
 
 Usage
 =====
