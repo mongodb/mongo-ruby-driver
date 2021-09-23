@@ -407,7 +407,7 @@ functions:
           ${PREPARE_SHELL}
           # This hack with PROJECT env is necessary while serverless
           # rejects creating instances with too long names.
-          PROJECT="mongo-ruby-driver" .evergreen/serverless/create-instance.sh
+          PROJECT="mongo-ruby-driver" LOADBALANCED="ON" .evergreen/serverless/create-instance.sh
           cat serverless-expansion.yml
 
     - command: expansions.update
@@ -421,7 +421,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SERVERLESS_URI="${MONGODB_URI}" .evergreen/run-tests-serverless.sh
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" MULTI_ATLASPROXY_SERVERLESS_URI="${MULTI_ATLASPROXY_SERVERLESS_URI}" SINGLE_ATLASPROXY_SERVERLESS_URI="${SINGLE_ATLASPROXY_SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"

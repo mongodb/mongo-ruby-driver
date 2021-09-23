@@ -13,7 +13,7 @@ class SpecConfig
     @uri_options = {}
     @ruby_options = {}
     if ENV['MONGODB_URI']
-      @mongodb_uri = Mongo::URI.new(ENV['MONGODB_URI'])
+      @mongodb_uri = Mongo::URI.get(ENV['MONGODB_URI'])
       @uri_options = Mongo::Options::Mapper.transform_keys_to_symbols(@mongodb_uri.uri_options)
       if ENV['TOPOLOGY'] == 'load-balanced'
         @addresses = @mongodb_uri.servers
