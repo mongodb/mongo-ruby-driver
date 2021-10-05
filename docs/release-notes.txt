@@ -23,7 +23,7 @@ its test suite.
 
 This release adds the following new feature:
 
-- Experimental load balancer support.
+- Load balancer support.
 
 The following minor improvement has been made:
 
@@ -32,7 +32,7 @@ The following minor improvement has been made:
   read permissions.
 
 This release of the Ruby driver increases the minimum required Ruby version
-to 2.4.
+to 2.4 and deprecates support for MongoDB server versions below 3.6.
 
 
 2.15
