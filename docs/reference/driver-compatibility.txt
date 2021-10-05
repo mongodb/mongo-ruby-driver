@@ -28,7 +28,9 @@ particular version of the driver will generally work with newer versions of
 the server but may not take advantage of the functionality released in the
 newer version of the server.
 
-The first column lists the driver versions.
+The first column lists the driver versions.“D” in other columns means support
+for that MongoDB version is deprecated and will be removed in a future driver
+version.
 
 .. list-table::
    :header-rows: 1
@@ -47,15 +49,15 @@ The first column lists the driver versions.
      - MongoDB 2.6
 
    * - 2.16
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
+     - D
+     - D
+     - D
+     - D
 
    * - 2.15
      -
