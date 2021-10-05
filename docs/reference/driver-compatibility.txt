@@ -29,8 +29,8 @@ the server but may not take advantage of the functionality released in the
 newer version of the server.
 
 The first column lists the driver versions.“D” in other columns means support
-for that MongoDB version is deprecated and may be removed upcoming driver
-versions.
+for that MongoDB version is deprecated and will be removed in a future driver
+version.
 
 .. list-table::
    :header-rows: 1
