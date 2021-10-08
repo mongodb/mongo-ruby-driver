@@ -501,22 +501,6 @@ axes:
         display_name: "3.6"
         variables:
           MONGODB_VERSION: "3.6"
-      - id: "3.4"
-        display_name: "3.4"
-        variables:
-          MONGODB_VERSION: "3.4"
-      - id: "3.2"
-        display_name: "3.2"
-        variables:
-          MONGODB_VERSION: "3.2"
-      - id: "3.0"
-        display_name: "3.0"
-        variables:
-          MONGODB_VERSION: "3.0"
-      - id: "2.6"
-        display_name: "2.6"
-        variables:
-          MONGODB_VERSION: "2.6"
 
   - id: fcv
     display_name: FCV
@@ -842,14 +826,6 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
-# Note that:
-# - MongoDB 2.6 and 3.0 are tested on ubuntu1604.
-#   This is because the Python that ships with ubuntu1404 is ancient and
-#   is no longer usable with the current Python infrastructure (pip, etc.).
-#   There are no ubuntu1604 builds for 2.6 and 3.0 servers however - they
-#   are only built for ubuntu1204 and ubuntu1404. We use the ubuntu1404
-#   builds on ubuntu1604 and the dependencies are satisfied.
-
 
 buildvariants:
   - matrix_name: "docker"
@@ -901,50 +877,6 @@ buildvariants:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.5"
       mongodb-version: ['3.6']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.4"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: "ruby-2.4"
-      mongodb-version: ['3.4']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.2"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: "ruby-2.4"
-      mongodb-version: ['3.2']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.0"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
-      mongodb-version: ['3.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-2.6"
-    matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: "ruby-2.6"
-      mongodb-version: ['2.6']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1034,24 +966,11 @@ buildvariants:
   - matrix_name: mmapv1
     matrix_spec:
       ruby: "ruby-2.5"
-      mongodb-version: ['3.4', '3.6', '4.0']
+      mongodb-version: ['3.6', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       storage-engine: mmapv1
       os: ubuntu1604
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  # TODO remove this configuration when 5.0 final ships and just leave
-  # the lint-5.0 one.
-  - matrix_name: "lint"
-    matrix_spec:
-      lint: on
-      ruby: "ruby-2.7"
-      mongodb-version: ["4.4"]
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1099,28 +1018,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "stress-3.0"
-    matrix_spec:
-      stress: on
-      ruby: ["ruby-3.0"]
-      mongodb-version: ["4.4"]
-      topology: replica-set
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} stress ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "stress-old"
-    matrix_spec:
-      stress: on
-      ruby: "ruby-2.5"
-      mongodb-version: ['2.6']
-      topology: replica-set
-      os: ubuntu1604
-    display_name: "${mongodb-version} ${topology} stress ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "x509-tests"
     matrix_spec:
       auth-and-ssl: "x509"
@@ -1147,7 +1044,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "jruby-9.2"
-      mongodb-version: "2.6"
+      mongodb-version: "3.6"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel62
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1218,7 +1115,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "ruby-2.4"
-      mongodb-version: ["3.6", "3.4"]
+      mongodb-version: ["3.6"]
       topology: replica-set
       compressor: 'snappy'
       os: ubuntu1604

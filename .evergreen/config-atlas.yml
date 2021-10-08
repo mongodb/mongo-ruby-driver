@@ -467,22 +467,6 @@ axes:
         display_name: "3.6"
         variables:
           MONGODB_VERSION: "3.6"
-      - id: "3.4"
-        display_name: "3.4"
-        variables:
-          MONGODB_VERSION: "3.4"
-      - id: "3.2"
-        display_name: "3.2"
-        variables:
-          MONGODB_VERSION: "3.2"
-      - id: "3.0"
-        display_name: "3.0"
-        variables:
-          MONGODB_VERSION: "3.0"
-      - id: "2.6"
-        display_name: "2.6"
-        variables:
-          MONGODB_VERSION: "2.6"
 
   - id: fcv
     display_name: FCV
