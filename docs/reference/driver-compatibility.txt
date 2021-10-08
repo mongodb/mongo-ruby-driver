@@ -48,7 +48,7 @@ version.
      - MongoDB 3.0
      - MongoDB 2.6
 
-  * - 2.17
+   * - 2.17
      - |checkmark|
      - |checkmark|
      - |checkmark|
