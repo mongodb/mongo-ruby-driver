@@ -48,6 +48,17 @@ version.
      - MongoDB 3.0
      - MongoDB 2.6
 
+   * - 2.17
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     -
+     -
+
    * - 2.16
      - |checkmark|
      - |checkmark|
@@ -266,6 +277,21 @@ for that Ruby version is deprecated.
      - JRuby 9.1
      - JRuby
 
+   * - 2.17
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     -
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+
    * - 2.16
      - |checkmark|
      - |checkmark|
@@ -280,6 +306,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      -
      -
+
    * - 2.15
      - |checkmark|
      - |checkmark|
