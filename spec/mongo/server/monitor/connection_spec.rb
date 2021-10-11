@@ -136,6 +136,28 @@ describe Mongo::Server::Monitor::Connection do
     end
   end
 
+  describe '#connect!' do
+
+    let(:options) do
+      SpecConfig.instance.test_options.merge(
+        app_metadata: monitor_app_metadata,
+      )
+    end
+
+    context 'when address resolution fails' do
+      let(:connection) { described_class.new(server.address, options) }
+
+      it 'propagates the exception' do
+        connection
+
+        expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
+        lambda do
+          connection.connect!
+        end.should raise_error(SocketError, 'Test exception')
+      end
+    end
+  end
+
   describe '#check_document' do
     context 'with API version' do
       let(:meta) do

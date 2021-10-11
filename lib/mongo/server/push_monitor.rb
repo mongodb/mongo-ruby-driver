@@ -110,7 +110,7 @@ module Mongo
         if new_description.topology_version
           @topology_version = new_description.topology_version
         end
-      rescue Mongo::Error => exc
+      rescue IOError, SocketError, SystemCallError, Mongo::Error => exc
         stop_requested = @lock.synchronize { @stop_requested }
         if stop_requested
           # Ignore the exception, see RUBY-2771.
