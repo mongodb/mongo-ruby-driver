@@ -76,6 +76,25 @@ describe Mongo::Server::PushMonitor do
           push_monitor.do_work
         end.should_not raise_error
       end
+
+      it 'throttles checks' do
+        push_monitor
+
+        start = Mongo::Utils.monotonic_time
+
+        expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
+        lambda do
+          push_monitor.do_work
+        end.should_not raise_error
+
+        expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
+        lambda do
+          push_monitor.do_work
+        end.should_not raise_error
+
+        elapsed = Mongo::Utils.monotonic_time - start
+        elapsed.should > 0.5
+      end
     end
   end
 
