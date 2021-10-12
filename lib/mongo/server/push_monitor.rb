@@ -123,6 +123,9 @@ module Mongo
           log_prefix: options[:log_prefix],
           bg_error_backtrace: options[:bg_error_backtrace],
         )
+
+        # Avoid tight looping in push monitor - see RUBY-2806.
+        sleep(0.5)
       end
 
       def check
