@@ -117,8 +117,6 @@ module Mongo
             server = server_selector.select_server(cluster, nil, session)
             result = send_initial_query(server, session)
 
-            # RUBY-2367: This will be updated to allow the query cache to
-            # cache cursors with multi-batch results.
             if use_query_cache?
               CachingCursor.new(view, result, server, session: session)
             else
