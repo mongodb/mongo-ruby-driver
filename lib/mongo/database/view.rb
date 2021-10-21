@@ -28,7 +28,7 @@ module Mongo
 
       def_delegators :@database, :cluster, :read_preference, :client
       # @api private
-      def_delegators :@database, :server_selector, :read_concern
+      def_delegators :@database, :server_selector, :read_concern, :write_concern
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
