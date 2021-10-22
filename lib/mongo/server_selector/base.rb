@@ -306,7 +306,7 @@ module Mongo
         # and we should take the first server here respecting the order
         server = if write_aggregation
             servers.detect do |server|
-              (server.max_wire_version >= 13) || server.primary?
+              server.features.merge_out_on_secondary_enabled? || server.primary?
             end
           else
             servers.first

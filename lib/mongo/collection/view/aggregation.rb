@@ -131,7 +131,7 @@ module Mongo
 
         def secondary_ok?(server)
           if write?
-            server.max_wire_version >= 13
+            server.features.merge_out_on_secondary_enabled?
           else
             true
           end

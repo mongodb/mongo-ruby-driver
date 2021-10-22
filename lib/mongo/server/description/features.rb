@@ -35,6 +35,7 @@ module Mongo
         # -  8 => 4.2
         # -  9 => 4.4
         # - 13 => 5.0
+        # - 14 => 5.1
         #
         # @since 2.0.0
         MAPPINGS = {
@@ -61,6 +62,7 @@ module Mongo
           scram_sha_1: 3,
           write_command: 2,
           users_info: 2,
+          merge_out_on_secondary: 13
         }.freeze
 
         # Error message if the server is too old for this version of the driver.

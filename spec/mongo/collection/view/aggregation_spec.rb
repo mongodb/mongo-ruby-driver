@@ -570,51 +570,56 @@ describe Mongo::Collection::View::Aggregation do
   end
 
   context 'when $out is in the pipeline' do
-
-    let(:pipeline) do
-      [{
-           "$group" => {
-               "_id" => "$city",
-               "totalpop" => { "$sum" => "$pop" }
+    [['$out', 'string'], [:$out, 'symbol']].each do |op, type|
+      context "when #{op} is a #{type}" do
+        let(:pipeline) do
+          [{
+               "$group" => {
+                   "_id" => "$city",
+                   "totalpop" => { "$sum" => "$pop" }
+               }
+           },
+           {
+               op => 'output_collection'
            }
-       },
-       {
-           '$out' => 'output_collection'
-       }
-      ]
-    end
+          ]
+        end
 
-    before do
-      authorized_client['output_collection'].delete_many
-    end
+        before do
+          authorized_client['output_collection'].delete_many
+        end
 
-    context 'when $out is a string' do
+        let(:features) do
+          double()
+        end
 
-      it 'does not allow the operation on a secondary' do
-        expect(aggregation.send(:secondary_ok?)).to be(false)
+        let(:server) do
+          double().tap do |server|
+            allow(server).to receive(:features).and_return(features)
+          end
+        end
+
+        context 'merge_out_on_secondary allowed' do
+          before do
+            expect(features).to receive(:merge_out_on_secondary_enabled?).and_return(true)
+          end
+
+          it 'allows the operation on a secondary' do
+            expect(aggregation.send(:secondary_ok?, server)).to be(true)
+          end
+        end
+
+        context 'merge_out_on_secondary not allowed' do
+          before do
+            expect(features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
+          end
+
+          it 'does not allow the operation on a secondary' do
+            expect(aggregation.send(:secondary_ok?, server)).to be(false)
+          end
+        end
       end
     end
-
-    context 'when $out is a symbol' do
-
-      let(:pipeline) do
-        [{
-             "$group" => {
-                 "_id" => "$city",
-                 "totalpop" => { "$sum" => "$pop" }
-             }
-         },
-         {
-             :$out => 'output_collection'
-         }
-        ]
-      end
-
-      it 'does not allow the operation on a secondary' do
-        expect(aggregation.send(:secondary_ok?)).to be(false)
-      end
-    end
-
 
     context 'when the server is not a valid for writing' do
 
@@ -644,6 +649,7 @@ describe Mongo::Collection::View::Aggregation do
 
        context 'when the server supports write concern on the aggregate command' do
         min_server_fcv '3.4'
+        max_server_version '4.9'
 
          it 'uses the write concern' do
            expect {
