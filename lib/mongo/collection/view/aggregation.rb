@@ -121,7 +121,7 @@ module Mongo
         end
 
         def valid_server?(server)
-          if secondary_ok?
+          if secondary_ok?(server)
             true
           else
             description = server.description
@@ -129,8 +129,12 @@ module Mongo
           end
         end
 
-        def secondary_ok?
-          !write?
+        def secondary_ok?(server)
+          if write?
+            server.max_wire_version >= 13
+          else
+            true
+          end
         end
 
         def send_initial_query(server, session)

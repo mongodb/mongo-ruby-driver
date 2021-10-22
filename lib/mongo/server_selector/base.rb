@@ -172,7 +172,7 @@ module Mongo
       #   lint mode is enabled.
       #
       # @since 2.0.0
-      def select_server(cluster, ping = nil, session = nil)
+      def select_server(cluster, ping = nil, session = nil, write_aggregation: false)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
@@ -243,7 +243,7 @@ module Mongo
 =end
 
         loop do
-          server = try_select_server(cluster)
+          server = try_select_server(cluster, write_aggregation: write_aggregation)
 
           if server
             unless cluster.topology.compatible?
@@ -297,14 +297,20 @@ module Mongo
       # @return [ Server | nil ] A suitable server, if one exists.
       #
       # @api private
-      def try_select_server(cluster)
+      def try_select_server(cluster, write_aggregation: false)
         servers = suitable_servers(cluster)
 
         # This list of servers may be ordered in a specific way
         # by the selector (e.g. for secondary preferred, the first
         # server may be a secondary and the second server may be primary)
         # and we should take the first server here respecting the order
-        server = servers.first
+        server = if write_aggregation
+            servers.detect do |server|
+              (server.max_wire_version >= 13) || server.primary?
+            end
+          else
+            servers.first
+          end
 
         if server
           if Lint.enabled?
