@@ -87,7 +87,7 @@ module Mongo
             }
             if write?
               spec.update(write_concern: write_concern)
-              if @server.features.merge_out_on_secondary_enabled?
+              if @server.features.merge_out_on_secondary_enabled? || @server.load_balancer?
                 spec.update(read: view.read_preference)
               end
             else
