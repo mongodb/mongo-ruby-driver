@@ -108,16 +108,21 @@ module Mongo
           @view.send(:server_selector)
         end
 
-        def aggregate_spec(session)
-          Builder::Aggregation.new(pipeline, view, options.merge(session: session)).specification
+        def aggregate_spec(session, server)
+          Builder::Aggregation.new(
+            pipeline,
+            view,
+            server,
+            options.merge(session: session)
+          ).specification
         end
 
         def new(options)
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op(session)
-          Operation::Aggregate.new(aggregate_spec(session))
+        def initial_query_op(session, server)
+          Operation::Aggregate.new(aggregate_spec(session, server))
         end
 
         def valid_server?(server)
@@ -142,7 +147,11 @@ module Mongo
             log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
             server = cluster.next_primary(nil, session)
           end
-          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+          initial_query_op(session, server)
+            .execute(
+              server,
+              context: Operation::Context.new(client: client, session: session)
+            )
         end
 
         # Skip, sort, limit, projection are specified as pipeline stages

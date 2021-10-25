@@ -63,9 +63,10 @@ module Mongo
           # @param [ Hash ] options The map/reduce options.
           #
           # @since 2.2.0
-          def initialize(pipeline, view, options)
+          def initialize(pipeline, view, server, options)
             @pipeline = pipeline
             @view = view
+            @server = server
             @options = options
           end
 
@@ -81,12 +82,16 @@ module Mongo
             spec = {
               selector: aggregation_command,
               db_name: database.name,
-              read: view.read_preference,
               session: @options[:session],
               collation: @options[:collation],
             }
             if write?
               spec.update(write_concern: write_concern)
+              if @server.features.merge_out_on_secondary_enabled?
+                spec.update(read: view.read_preference)
+              end
+            else
+              spec.update(read: view.read_preference)
             end
             spec
           end
