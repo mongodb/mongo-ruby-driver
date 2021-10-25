@@ -18,6 +18,13 @@ for the complete list of changes, including those internal to the driver and
 its test suite.
 
 
+2.17
+====
+
+This release of the Ruby driver increases the minimum required Ruby version
+to 2.5.
+
+
 2.16
 ====
 

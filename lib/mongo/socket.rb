@@ -362,11 +362,7 @@ module Mongo
     end
 
     def allocate_string(capacity)
-      if RUBY_VERSION >= '2.4.0'
-        String.new('', :capacity => capacity, :encoding => 'BINARY')
-      else
-        ('x'*capacity).force_encoding('BINARY')
-      end
+      String.new('', :capacity => capacity, :encoding => 'BINARY')
     end
 
     def read_buffer_size

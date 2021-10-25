@@ -5,7 +5,7 @@ MongoDB Ruby Driver
 
 The officially supported Ruby driver for [MongoDB](https://www.mongodb.org/).
 
-The Ruby driver supports Ruby 2.4-3.0 and JRuby 9.2.
+The Ruby driver supports Ruby 2.5-3.0 and JRuby 9.2.
 
 
 Documentation

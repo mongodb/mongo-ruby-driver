@@ -44,10 +44,6 @@ jobs:
             ruby: "2.5"
             mongodb: "3.6"
             topology: replica_set
-          - os: ubuntu-16.04
-            ruby: "2.4"
-            mongodb: "3.6"
-            topology: replica_set
     steps:
     - name: repo checkout
       uses: actions/checkout@v2
