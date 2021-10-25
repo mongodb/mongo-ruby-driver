@@ -619,8 +619,9 @@ Ruby Options
      -  ``{ :mode => :primary }``
 
    * - ``:read_concern``
-     - Specifies the read concern options. The only valid key is ``level``, for which the valid
-       values are ``:local``, ``:majority``, and ``:snapshot``.
+     - Specifies the read concern options. The only valid key is ``level``,
+       for which the valid values are ``:local``, ``:majority``, and
+       ``:snapshot``.
      - ``Hash``
      - none
 
