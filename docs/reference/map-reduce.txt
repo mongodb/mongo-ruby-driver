@@ -15,6 +15,7 @@ condensing large volumes of data into aggregated results.
 
 .. note::
 
+  The map-reduce operation is deprecated.
   The :ref:`aggregation framework <aggregation>` provides better performance
   and usability than map-reduce operations, and should be preferred for
   new development.
