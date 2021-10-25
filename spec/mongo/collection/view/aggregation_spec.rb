@@ -30,7 +30,7 @@ describe Mongo::Collection::View::Aggregation do
   end
 
   let(:aggregation_spec) do
-    aggregation.send(:aggregate_spec, double('session'), double('server'))
+    aggregation.send(:aggregate_spec, double('server'), double('session'))
   end
 
   before do

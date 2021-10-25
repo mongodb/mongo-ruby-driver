@@ -304,7 +304,9 @@ module Mongo
         # by the selector (e.g. for secondary preferred, the first
         # server may be a secondary and the second server may be primary)
         # and we should take the first server here respecting the order
-        server = if write_aggregation
+        server = if write_aggregation && cluster.replica_set?
+            # If secondary preferred, list of servers has is ordered in a way
+            # that secondaries go first, and the primary is the last one.
             servers.detect do |server|
               server.features.merge_out_on_secondary_enabled? || server.primary?
             end

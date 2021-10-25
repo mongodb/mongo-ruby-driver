@@ -108,7 +108,7 @@ module Mongo
           @view.send(:server_selector)
         end
 
-        def aggregate_spec(session, server)
+        def aggregate_spec(server, session)
           Builder::Aggregation.new(
             pipeline,
             view,
@@ -122,7 +122,7 @@ module Mongo
         end
 
         def initial_query_op(server, session)
-          Operation::Aggregate.new(aggregate_spec(session, server))
+          Operation::Aggregate.new(aggregate_spec(server, session))
         end
 
         def valid_server?(server)

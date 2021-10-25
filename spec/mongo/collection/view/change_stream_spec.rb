@@ -56,7 +56,7 @@ describe Mongo::Collection::View::ChangeStream do
 
   let(:command_spec) do
     change_stream.send(:instance_variable_set, '@resuming', false)
-    change_stream.send(:aggregate_spec, double('session'), double('server'))
+    change_stream.send(:aggregate_spec, double('server'), double('session'))
   end
 
   let(:cursor) do
