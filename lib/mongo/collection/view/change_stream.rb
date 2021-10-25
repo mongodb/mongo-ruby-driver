@@ -298,8 +298,8 @@ module Mongo
           [{ '$changeStream' => change_doc }] + @change_stream_filters
         end
 
-        def aggregate_spec(session)
-          super(session).tap do |spec|
+        def aggregate_spec(session, server)
+          super(session, server).tap do |spec|
             spec[:selector][:aggregate] = 1 unless for_collection?
           end
         end
