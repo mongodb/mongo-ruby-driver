@@ -121,7 +121,7 @@ module Mongo
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op(session, server)
+        def initial_query_op(server, session)
           Operation::Aggregate.new(aggregate_spec(session, server))
         end
 
@@ -147,7 +147,7 @@ module Mongo
             log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
             server = cluster.next_primary(nil, session)
           end
-          initial_query_op(session, server)
+          initial_query_op(server, session)
             .execute(
               server,
               context: Operation::Context.new(client: client, session: session)
