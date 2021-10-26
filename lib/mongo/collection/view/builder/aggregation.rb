@@ -55,11 +55,10 @@ module Mongo
 
           # Initialize the builder.
           #
-          # @example Initialize the builder.
-          #   Aggregation.new(map, reduce, view, options)
-          #
           # @param [ Array<Hash> ] pipeline The aggregation pipeline.
           # @param [ Collection::View ] view The collection view.
+          # @param [ Server ] server The server on which the pipeline
+          #   will be executed.
           # @param [ Hash ] options The map/reduce options.
           #
           # @since 2.2.0
@@ -87,6 +86,8 @@ module Mongo
             }
             if write?
               spec.update(write_concern: write_concern)
+              # We assume that there are only 5.0+ servers behind a load balancer,
+              # so they support $merge and $out on secondaries.
               if @server.features.merge_out_on_secondary_enabled? || @server.load_balancer?
                 spec.update(read: view.read_preference)
               end

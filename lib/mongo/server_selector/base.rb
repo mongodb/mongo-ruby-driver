@@ -162,6 +162,8 @@ module Mongo
       #   Deprecated and ignored.
       # @param [ Session | nil ] session Optional session to take into account
       #   for mongos pinning. Added in version 2.10.0.
+      # @param [ true | false ] write_aggregation Whether we need a server that
+      #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
       #
@@ -293,6 +295,11 @@ module Mongo
 
       # Tries to find a suitable server, returns the server if one is available
       # or nil if there isn't a suitable server.
+      #
+      # @param [ Mongo::Cluster ] cluster The cluster from which to select
+      #   an eligible server.
+      # @param [ true | false ] write_aggregation Whether we need a server that
+      #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
       #
       # @return [ Server | nil ] A suitable server, if one exists.
       #
