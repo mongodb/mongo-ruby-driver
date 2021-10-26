@@ -18,7 +18,8 @@
 module Mongo
   class Error
 
-    # Exception raised if a transaction is attempted on a snapshot session.
+    # Exception raised if an operation using a snapshot session is
+    # directed to a pre-5.0 server.
     class SnapshotSessionInvalidServerVersion < Error
 
       # Instantiate the new exception.
