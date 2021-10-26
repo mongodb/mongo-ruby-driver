@@ -7,7 +7,13 @@ module Unified
 
     def list_databases(op)
       client = entities.get(:client, op.use!('object'))
-      client.list_databases
+      use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        client.list_databases({}, false, **opts)
+      end
     end
 
     def create_collection(op)
@@ -25,6 +31,17 @@ module Unified
           collection_opts[:expire_after] = expire_after_seconds
         end
         database[args.use!('collection'), collection_opts].create(**opts)
+      end
+    end
+
+    def list_collections(op)
+      database = entities.get(:database, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        database.list_collections(**opts)
       end
     end
 
@@ -56,6 +73,17 @@ module Unified
 
     def assert_collection_not_exists(op)
       assert_collection_exists(op, false)
+    end
+
+    def list_indexes(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.indexes(**opts).to_a
+      end
     end
 
     def create_index(op)

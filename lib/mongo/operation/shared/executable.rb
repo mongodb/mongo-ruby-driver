@@ -43,6 +43,10 @@ module Mongo
                       session.pin_to_service(connection.service_id)
                     end
                   end
+
+                  if session.snapshot? && !session.snapshot_timestamp
+                    session.snapshot_timestamp = result.snapshot_timestamp
+                  end
                 end
                 process_result(result, connection)
               end

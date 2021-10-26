@@ -13,7 +13,12 @@ module Unified
 
         cmd = args.use!('command')
 
-        database.command(cmd)
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+
+        database.command(cmd, **opts)
       end
     end
 

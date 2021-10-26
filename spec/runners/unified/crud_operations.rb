@@ -29,7 +29,11 @@ module Unified
     def count_documents(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.find(args.use!('filter')).count_documents
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.find(args.use!('filter')).count_documents(**opts)
       end
     end
 
@@ -47,7 +51,11 @@ module Unified
     def distinct(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        req = collection.find(args.use!('filter')).distinct(args.use!('fieldName'))
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        req = collection.find(args.use!('filter'), **opts).distinct(args.use!('fieldName'), **opts)
         result = req.to_a
       end
     end
@@ -61,6 +69,9 @@ module Unified
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym
         end
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
         collection.find_one_and_update(filter, update, **opts)
       end
     end
@@ -70,7 +81,11 @@ module Unified
       use_arguments(op) do |args|
         filter = args.use!('filter')
         update = args.use!('replacement')
-        collection.find_one_and_replace(filter, update)
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.find_one_and_replace(filter, update, **opts)
       end
     end
 
@@ -78,7 +93,11 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         filter = args.use!('filter')
-        collection.find_one_and_delete(filter)
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.find_one_and_delete(filter, **opts)
       end
     end
 
@@ -96,18 +115,25 @@ module Unified
     def insert_many(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        options = {}
+        opts = {}
         unless (ordered = args.use('ordered')).nil?
-          options[:ordered] = ordered
+          opts[:ordered] = ordered
         end
-        collection.insert_many(args.use!('documents'), **options)
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.insert_many(args.use!('documents'), **opts)
       end
     end
 
     def update_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.update_one(args.use!('filter'), args.use!('update'))
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.update_one(args.use!('filter'), args.use!('update'), **opts)
       end
     end
 
@@ -132,7 +158,11 @@ module Unified
     def delete_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.delete_one(args.use!('filter'))
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.delete_one(args.use!('filter'), **opts)
       end
     end
 
@@ -155,6 +185,20 @@ module Unified
         end
         collection.bulk_write(requests, **opts)
       end
+    end
+
+    def aggregate(op)
+      obj = entities.get_any(op.use!('object'))
+      args = op.use!('arguments')
+      pipeline = args.use!('pipeline')
+      opts = {}
+      if session = args.use('session')
+        opts[:session] = entities.get(:session, session)
+      end
+      unless args.empty?
+        raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}"
+      end
+      obj.aggregate(pipeline, **opts).to_a
     end
 
     private
@@ -191,16 +235,6 @@ module Unified
         raise NotImplementedError, "Unhandled keys: #{spec}"
       end
       {Utils.underscore(op) =>out}
-    end
-
-    def aggregate(op)
-      obj = entities.get_any(op.use!('object'))
-      args = op.use!('arguments')
-      pipeline = args.use!('pipeline')
-      unless args.empty?
-        raise NotImplementedError, "Unhandled spec keys: #{test_spec}"
-      end
-      obj.aggregate(pipeline).to_a
     end
   end
 end
