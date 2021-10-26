@@ -386,6 +386,8 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ String ] :comment Associate a comment with the aggregation.
     # @option options [ String ] :hint The index to use for the aggregation.
+    # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
+    #   See the server documentation for details.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
     #   milliseconds to allow the aggregation to run.
     # @option options [ true, false ] :use_cursor Indicates whether the command

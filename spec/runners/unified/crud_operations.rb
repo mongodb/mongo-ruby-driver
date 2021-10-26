@@ -191,7 +191,9 @@ module Unified
       obj = entities.get_any(op.use!('object'))
       args = op.use!('arguments')
       pipeline = args.use!('pipeline')
-      opts = {}
+      opts = {
+        let: args.use('let'),
+      }
       if session = args.use('session')
         opts[:session] = entities.get(:session, session)
       end
