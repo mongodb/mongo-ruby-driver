@@ -57,15 +57,12 @@ module Mongo
           #
           # @param [ Array<Hash> ] pipeline The aggregation pipeline.
           # @param [ Collection::View ] view The collection view.
-          # @param [ Server ] server The server on which the pipeline
-          #   will be executed.
           # @param [ Hash ] options The map/reduce options.
           #
           # @since 2.2.0
-          def initialize(pipeline, view, server, options)
+          def initialize(pipeline, view, options)
             @pipeline = pipeline
             @view = view
-            @server = server
             @options = options
           end
 
@@ -81,18 +78,12 @@ module Mongo
             spec = {
               selector: aggregation_command,
               db_name: database.name,
+              read: @options[:read_preference],
               session: @options[:session],
               collation: @options[:collation],
             }
             if write?
               spec.update(write_concern: write_concern)
-              # We assume that there are only 5.0+ servers behind a load balancer,
-              # so they support $merge and $out on secondaries.
-              if @server.features.merge_out_on_secondary_enabled? || @server.load_balancer?
-                spec.update(read: view.read_preference)
-              end
-            else
-              spec.update(read: view.read_preference)
             end
             spec
           end

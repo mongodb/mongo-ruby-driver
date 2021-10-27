@@ -29,8 +29,16 @@ describe Mongo::Collection::View::Aggregation do
     described_class.new(view, pipeline, options)
   end
 
+  let(:server) do
+    double('server')
+  end
+
+  let(:session) do
+    double('session')
+  end
+
   let(:aggregation_spec) do
-    aggregation.send(:aggregate_spec, double('server'), double('session'))
+    aggregation.send(:aggregate_spec, server, session, nil)
   end
 
   before do
@@ -351,15 +359,15 @@ describe Mongo::Collection::View::Aggregation do
 
   describe '#aggregate_spec' do
 
-    context 'when the collection has a read preference' do
+    context 'when a read preference is given' do
 
       let(:read_preference) do
-        {mode: :secondary}
+        BSON::Document.new({mode: :secondary})
       end
 
       it 'includes the read preference in the spec' do
-        allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
-        expect(aggregation_spec[:read]).to eq(read_preference)
+        spec = aggregation.send(:aggregate_spec, server, session, read_preference)
+        expect(spec[:read]).to eq(read_preference)
       end
     end
 
@@ -599,83 +607,47 @@ describe Mongo::Collection::View::Aggregation do
           end
         end
 
-        context 'merge_out_on_secondary allowed' do
-          before do
-            expect(features).to receive(:merge_out_on_secondary_enabled?).and_return(true)
+        context 'when the view has a write concern' do
+
+          let(:collection) do
+            authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
 
-          it 'allows the operation on a secondary' do
-            expect(aggregation.send(:secondary_ok?, server)).to be(true)
-          end
-        end
-
-        context 'merge_out_on_secondary not allowed' do
-          before do
-            expect(features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
+          let(:view) do
+            Mongo::Collection::View.new(collection, selector, view_options)
           end
 
-          it 'does not allow the operation on a secondary' do
-            expect(aggregation.send(:secondary_ok?, server)).to be(false)
-          end
-        end
+          context 'when the server supports write concern on the aggregate command' do
+            min_server_fcv '3.4'
 
-        context 'when the server is not a valid for writing' do
-          it 'reroutes the operation to a primary' do
-            allow(aggregation).to receive(:valid_server?).and_return(false)
-            expect(Mongo::Logger.logger).to receive(:warn).and_call_original
-            aggregation.to_a
-          end
-         end
-
-         context 'when the server is a valid for writing' do
-
-          it 'does not reroute the operation to a primary' do
-            expect(Mongo::Logger.logger).not_to receive(:warn)
-            aggregation.to_a
-          end
-
-          context 'when the view has a write concern' do
-
-            let(:collection) do
-              authorized_collection.with(write: INVALID_WRITE_CONCERN)
-            end
-
-            let(:view) do
-              Mongo::Collection::View.new(collection, selector, view_options)
-            end
-
-            context 'when the server supports write concern on the aggregate command' do
-             min_server_fcv '3.4'
-
-              it 'uses the write concern' do
-                expect {
-                  aggregation.to_a
-                }.to raise_exception(Mongo::Error::OperationFailure)
-              end
-            end
-
-            context 'when the server does not support write concern on the aggregation command' do
-             max_server_version '3.2'
-
-              let(:documents) do
-                [
-                  { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
-                  { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
-                  { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
-                ]
-              end
-
-              before do
-                authorized_collection.insert_many(documents)
+            it 'uses the write concern' do
+              expect {
                 aggregation.to_a
-              end
-
-              it 'does not apply the write concern' do
-                expect(authorized_client['output_collection'].find.count).to eq(2)
-              end
+              }.to raise_exception(Mongo::Error::OperationFailure)
             end
           end
-         end
+
+          context 'when the server does not support write concern on the aggregation command' do
+            max_server_version '3.2'
+
+            let(:documents) do
+              [
+                { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+                { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+                { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+              ]
+            end
+
+            before do
+              authorized_collection.insert_many(documents)
+              aggregation.to_a
+            end
+
+            it 'does not apply the write concern' do
+              expect(authorized_client['output_collection'].find.count).to eq(2)
+            end
+          end
+        end
       end
     end
   end

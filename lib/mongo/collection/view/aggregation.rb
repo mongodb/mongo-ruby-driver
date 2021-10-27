@@ -108,12 +108,11 @@ module Mongo
           @view.send(:server_selector)
         end
 
-        def aggregate_spec(server, session)
+        def aggregate_spec(server, session, read_preference)
           Builder::Aggregation.new(
             pipeline,
             view,
-            server,
-            options.merge(session: session)
+            options.merge(session: session, read_preference: read_preference)
           ).specification
         end
 
@@ -121,33 +120,24 @@ module Mongo
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op(server, session)
-          Operation::Aggregate.new(aggregate_spec(server, session))
+        def initial_query_op(server, session, read_preference)
+          Operation::Aggregate.new(aggregate_spec(server, session, read_preference))
         end
 
-        def valid_server?(server)
-          if secondary_ok?(server)
-            true
+        def effective_read_preference(server)
+          return unless view.read_preference
+          if server.primary? && [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
+            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
+            # Default read preference is primary, this is what we need here
+            nil
           else
-            description = server.description
-            description.standalone? || description.mongos? || description.primary? || description.load_balancer?
-          end
-        end
-
-        def secondary_ok?(server)
-          if write?
-            server.features.merge_out_on_secondary_enabled?
-          else
-            true
+            view.read_preference
           end
         end
 
         def send_initial_query(server, session)
-          unless valid_server?(server)
-            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
-            server = cluster.next_primary(nil, session)
-          end
-          initial_query_op(server, session)
+          read_preference = effective_read_preference(server)
+          initial_query_op(server, session, read_preference)
             .execute(
               server,
               context: Operation::Context.new(client: client, session: session)

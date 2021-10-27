@@ -245,7 +245,6 @@ module Mongo
                 spec = Builder::Aggregation.new(
                   pipeline,
                   self,
-                  server,
                   options.merge(session: session)
                 ).specification
                 result = Operation::Aggregate.new(spec).execute(server, context: context)
