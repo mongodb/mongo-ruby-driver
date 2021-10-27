@@ -298,8 +298,8 @@ module Mongo
           [{ '$changeStream' => change_doc }] + @change_stream_filters
         end
 
-        def aggregate_spec(server, session)
-          super(server, session).tap do |spec|
+        def aggregate_spec(server, session, read_preference)
+          super(server, session, read_preference).tap do |spec|
             spec[:selector][:aggregate] = 1 unless for_collection?
           end
         end
@@ -349,7 +349,7 @@ module Mongo
         end
 
         def send_initial_query(server, session)
-          initial_query_op(server, session)
+          initial_query_op(server, session, view.read_preference)
             .execute(
               server,
               context: Operation::Context.new(client: client, session: session)
