@@ -224,6 +224,17 @@ module Mongo
         then
           sel[:recoveryToken] = session.recovery_token
         end
+
+        if session.snapshot?
+          unless connection.description.server_version_gte?('5.0')
+            raise Error::SnapshotSessionInvalidServerVersion
+          end
+
+          sel[:readConcern] = {level: 'snapshot'}
+          if session.snapshot_timestamp
+            sel[:readConcern][:atClusterTime] = session.snapshot_timestamp
+          end
+        end
       end
 
       def build_message(connection, context)

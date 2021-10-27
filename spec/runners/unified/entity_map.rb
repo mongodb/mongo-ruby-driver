@@ -3,6 +3,8 @@
 
 module Unified
   class EntityMap
+    extend Forwardable
+
     def initialize
       @map = {}
     end
@@ -35,8 +37,6 @@ module Unified
       raise Error::EntityMissing, "There is no #{id} known"
     end
 
-    def [](type)
-      @map[type]
-    end
+    def_delegators :@map, :[], :fetch
   end
 end

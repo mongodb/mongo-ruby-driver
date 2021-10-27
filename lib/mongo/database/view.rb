@@ -57,6 +57,7 @@ module Mongo
       #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/
       #   for more information and usage.
+      # @option options [ Session ] :session The session to use.
       #
       # @return [ Array<String> ] The names of all non-system collections.
       #
@@ -100,12 +101,13 @@ module Mongo
       #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/
       #   for more information and usage.
+      # @option options [ Session ] :session The session to use.
       #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
       # @since 2.0.5
       def list_collections(options = {})
-        session = client.send(:get_session)
+        session = client.send(:get_session, options)
         collections_info(session, ServerSelector.primary, options)
       end
 

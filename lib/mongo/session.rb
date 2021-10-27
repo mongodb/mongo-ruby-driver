@@ -56,10 +56,16 @@ module Mongo
     #   - *:mode* -- the read preference as a string or symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
+    # @option options [ true | false ] :snapshot Set up the session for
+    #   snapshot reads.
     #
     # @since 2.5.0
     # @api private
     def initialize(server_session, client, options = {})
+      if options[:causal_consistency] && options[:snapshot]
+        raise ArgumentError, ':causal_consistency and :snapshot options cannot be both set on a session'
+      end
+
       @server_session = server_session
       options = options.dup
 
@@ -81,6 +87,12 @@ module Mongo
 
     def cluster
       @client.cluster
+    end
+
+    # @return [ true | false ] Whether the session is configured for snapshot
+    #   reads.
+    def snapshot?
+      !!options[:snapshot]
     end
 
     # @return [ BSON::Timestamp ] The latest seen operation time for this session.
@@ -504,6 +516,10 @@ module Mongo
           )
         end
 =end
+      end
+
+      if snapshot?
+        raise Mongo::Error::SnapshotSessionTransactionProhibited
       end
 
       check_if_ended!
@@ -1023,6 +1039,9 @@ module Mongo
 
       @server_session.txn_num
     end
+
+    # @api private
+    attr_accessor :snapshot_timestamp
 
     private
 

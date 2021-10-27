@@ -253,12 +253,12 @@ module Mongo
 
       client.send(:with_session, opts) do |session|
         read_with_retry(session, preference) do |server|
-          Operation::Command.new({
-            :selector => operation.dup,
-            :db_name => name,
-            :read => preference,
-            :session => session
-          }).execute(server, context: Operation::Context.new(client: client, session: session))
+          Operation::Command.new(
+            selector: operation.dup,
+            db_name: name,
+            read: preference,
+            session: session,
+          ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
     end

@@ -887,6 +887,7 @@ module Mongo
     #
     #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
     #   for more information and usage.
+    # @option opts [ Session ] :session The session to use.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -910,6 +911,7 @@ module Mongo
     #
     #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
     #   for more information and usage.
+    # @option opts [ Session ] :session The session to use.
     #
     # @return [ Array<Hash> ] The info for each database.
     #
@@ -929,6 +931,8 @@ module Mongo
     #
     # @param [ Hash ] filter The filter criteria for getting a list of databases.
     # @param [ Hash ] opts The command options.
+    #
+    # @option opts [ Session ] :session The session to use.
     #
     # @return [ Array<Mongo::Database> ] The list of database objects.
     #

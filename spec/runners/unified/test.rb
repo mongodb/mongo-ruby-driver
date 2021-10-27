@@ -206,9 +206,8 @@ module Unified
     def set_initial_data
       @spec['initialData']&.each do |entity_spec|
         spec = UsingHash[entity_spec]
-        collection = root_authorized_client
-          .use(spec.use!('databaseName'))
-          .with(write_concern: {w: :majority})[spec.use!('collectionName')]
+        collection = root_authorized_client.with(write_concern: {w: :majority}).
+          use(spec.use!('databaseName'))[spec.use!('collectionName')]
         collection.drop
         docs = spec.use!('documents')
         if docs.any?
@@ -281,7 +280,7 @@ module Unified
         end
         if expected_error = op.use('expectError')
           begin
-            send(method_name, op)
+            public_send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.

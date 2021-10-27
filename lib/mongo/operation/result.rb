@@ -429,6 +429,12 @@ module Mongo
         !!(first_document && first_document['writeConcernError'])
       end
 
+      def snapshot_timestamp
+        if doc = reply.documents.first
+          doc['cursor']&.[]('atClusterTime') || doc['atClusterTime']
+        end
+      end
+
       private
 
       def aggregate_returned_count
