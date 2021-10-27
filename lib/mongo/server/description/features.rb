@@ -39,6 +39,7 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
+          merge_out_on_secondary: 13,
           retryable_write_error_label: 9,
           commit_quorum: 9,
           # Server versions older than 4.2 do not reliably validate options
@@ -61,8 +62,7 @@ module Mongo
           list_indexes: 3,
           scram_sha_1: 3,
           write_command: 2,
-          users_info: 2,
-          merge_out_on_secondary: 13
+          users_info: 2
         }.freeze
 
         # Error message if the server is too old for this version of the driver.

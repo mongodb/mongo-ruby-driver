@@ -124,6 +124,18 @@ module Mongo
           Operation::Aggregate.new(aggregate_spec(server, session, read_preference))
         end
 
+        # Discern effective read preference for the operation.
+        #
+        # We may want to replcase read preferences for pipelines that contain
+        # write operations (e.g. $merge/$out). The effective read preference
+        # is discernd based on server that was selected for it.
+        #
+        # See https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst#read-preferences-and-server-selection
+        #
+        # @param [ Server ] server The server on wich the operation
+        #   should be executed.
+        # @return [ Hash | nil ] read preference hash that should be sent with
+        #   this command.
         def effective_read_preference(server)
           return unless view.read_preference
           if server.primary? && [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
