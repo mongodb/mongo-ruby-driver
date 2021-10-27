@@ -217,6 +217,8 @@ module Unified
         BSON::ObjectId === object
       when 'date'
         Time === object
+      when 'double'
+        Float === object
       else
         raise NotImplementedError, "Unhandled type #{type}"
       end

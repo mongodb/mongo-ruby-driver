@@ -30,16 +30,17 @@ module Mongo
           #
           # @since 2.2.0
           MAPPINGS = BSON::Document.new(
-            :allow_disk_use => 'allowDiskUse',
-            :max_time_ms => 'maxTimeMS',
+            allow_disk_use: 'allowDiskUse',
+            bypass_document_validation: 'bypassDocumentValidation',
+            explain: 'explain',
+            collation: 'collation',
+            comment: 'comment',
+            hint: 'hint',
+            let: 'let',
             # This is intentional; max_await_time_ms is an alias for maxTimeMS
             # used on getMore commands for change streams.
-            :max_await_time_ms => 'maxTimeMS',
-            :explain => 'explain',
-            :bypass_document_validation => 'bypassDocumentValidation',
-            :collation => 'collation',
-            :hint => 'hint',
-            :comment => 'comment'
+            max_await_time_ms: 'maxTimeMS',
+            max_time_ms: 'maxTimeMS',
           ).freeze
 
           def_delegators :@view, :collection, :database, :read, :write_concern
