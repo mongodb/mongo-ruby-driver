@@ -62,7 +62,7 @@ module Mongo
           list_indexes: 3,
           scram_sha_1: 3,
           write_command: 2,
-          users_info: 2
+          users_info: 2,
         }.freeze
 
         # Error message if the server is too old for this version of the driver.

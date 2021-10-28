@@ -126,9 +126,11 @@ module Mongo
 
         # Return effective read preference for the operation.
         #
-        # We may want to replace read preferences for pipelines that contain
-        # write operations (e.g. $merge/$out). The effective read preference
-        # is determined based on server that was selected for it.
+        # If the pipeline contains $merge or $out, and read preference specified
+        # by user is secondary or secondary_preferred, and selected server is below
+        # 5.0, than this method returns primary read preference, because the
+        # aggregation will be routed to primary. Otherwise return the original
+        # read preference.
         #
         # See https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst#read-preferences-and-server-selection
         #
@@ -141,13 +143,13 @@ module Mongo
           return view.read_preference unless write?
           return view.read_preference unless [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
 
-          primary = {mode: :primary}
+          primary_read_preference = {mode: :primary}
           if server.primary?
-            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
-            primary
+            log_warn("Routing the Aggregation operation to the primary server")
+            primary_read_preference
           elsif server.mongos? && !server.features.merge_out_on_secondary_enabled?
-            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
-            primary
+            log_warn("Routing the Aggregation operation to the primary server")
+            primary_read_preference
           else
             view.read_preference
           end
