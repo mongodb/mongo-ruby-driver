@@ -200,7 +200,7 @@ module Mongo
         else
           # In replica sets, read preference is passed to the server if one
           # is specified by the application, except for primary read preferences.
-          read_doc = read&.to_doc || BSON::Document.new
+          read_doc = BSON::Document.new(read&.to_doc || {})
           if [nil, 'primary'].include?(read_doc['mode'])
             nil
           else

@@ -99,6 +99,29 @@ describe Mongo::Operation::SessionsSupported do
       end
     end
 
+    shared_examples_for 'sends read preference correctly for replica set' do
+      context "when read preference mode is primary" do
+        let(:mode) { :primary}
+
+        it_behaves_like 'does not modify selector'
+      end
+      %i(primary_preferred secondary secondary_preferred nearest).each do |_mode|
+        active_mode = _mode
+
+        context "when read preference mode is #{active_mode}" do
+          let(:mode) { active_mode }
+
+          let(:expected) do
+            selector.merge(:$readPreference => expected_read_preference)
+          end
+
+          it 'adds read preference' do
+            expect(actual).to eq(expected)
+          end
+        end
+      end
+    end
+
     shared_examples_for 'sends user-specified read preference' do
       %i(primary primary_preferred secondary secondary_preferred nearest).each do |_mode|
         active_mode = _mode
@@ -302,7 +325,7 @@ describe Mongo::Operation::SessionsSupported do
         let(:standalone?) { false }
         let(:mongos?) { false }
 
-        it_behaves_like 'sends user-specified read preference'
+        it_behaves_like 'sends read preference correctly for replica set'
       end
     end
   end
