@@ -56,12 +56,9 @@ module Mongo
 
           # Initialize the builder.
           #
-          # @example Initialize the builder.
-          #   Aggregation.new(map, reduce, view, options)
-          #
           # @param [ Array<Hash> ] pipeline The aggregation pipeline.
           # @param [ Collection::View ] view The collection view.
-          # @param [ Hash ] options The map/reduce options.
+          # @param [ Hash ] options The map/reduce and read preference options.
           #
           # @since 2.2.0
           def initialize(pipeline, view, options)
@@ -82,7 +79,7 @@ module Mongo
             spec = {
               selector: aggregation_command,
               db_name: database.name,
-              read: view.read_preference,
+              read: @options[:read_preference] || view.read_preference,
               session: @options[:session],
               collation: @options[:collation],
             }

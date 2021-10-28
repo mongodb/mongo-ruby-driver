@@ -160,13 +160,24 @@ module Unified
           end
         when 'database'
           client = entities.get(:client, spec.use!('client'))
-          client.use(spec.use!('databaseName')).database
+          opts = Utils.snakeize_hash(spec.use('databaseOptions') || {})
+            .merge(database: spec.use!('databaseName'))
+          if opts.key?(:read_preference)
+            opts[:read] = opts.delete(:read_preference)
+            if opts[:read].key?(:max_staleness_seconds)
+              opts[:read][:max_staleness] = opts[:read].delete(:max_staleness_seconds)
+            end
+          end
+          client.with(opts).database
         when 'collection'
           database = entities.get(:database, spec.use!('database'))
           # TODO verify
           opts = Utils.snakeize_hash(spec.use('collectionOptions') || {})
           if opts.key?(:read_preference)
             opts[:read] = opts.delete(:read_preference)
+            if opts[:read].key?(:max_staleness_seconds)
+              opts[:read][:max_staleness] = opts[:read].delete(:max_staleness_seconds)
+            end
           end
           database[spec.use!('collectionName'), opts]
         when 'bucket'

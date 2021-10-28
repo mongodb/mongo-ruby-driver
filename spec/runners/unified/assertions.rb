@@ -62,7 +62,7 @@ module Unified
     def assert_outcome
       return unless outcome
 
-      client = ClientRegistry.instance.global_client('authorized')
+      client = ClientRegistry.instance.global_client('root_authorized')
       outcome.each do |spec|
         spec = UsingHash[spec]
         collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]

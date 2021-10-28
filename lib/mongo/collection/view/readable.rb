@@ -261,7 +261,11 @@ module Mongo
                   {'$collStats' => {'count' => {}}},
                   {'$group' => {'_id' => 1, 'n' => {'$sum' => '$count'}}},
                 ]
-                spec = Builder::Aggregation.new(pipeline, self, options.merge(session: session)).specification
+                spec = Builder::Aggregation.new(
+                  pipeline,
+                  self,
+                  options.merge(session: session)
+                ).specification
                 result = Operation::Aggregate.new(spec).execute(server, context: context)
                 result.documents.first.fetch('n')
               else

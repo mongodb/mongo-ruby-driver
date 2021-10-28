@@ -35,9 +35,11 @@ module Mongo
         # -  8 => 4.2
         # -  9 => 4.4
         # - 13 => 5.0
+        # - 14 => 5.1
         #
         # @since 2.0.0
         MAPPINGS = {
+          merge_out_on_secondary: 13,
           retryable_write_error_label: 9,
           commit_quorum: 9,
           # Server versions older than 4.2 do not reliably validate options

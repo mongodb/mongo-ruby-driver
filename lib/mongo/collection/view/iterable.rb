@@ -114,7 +114,7 @@ module Mongo
 
         def select_cursor(session)
           if respond_to?(:write?, true) && write?
-            server = server_selector.select_server(cluster, nil, session)
+            server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
             result = send_initial_query(server, session)
 
             # RUBY-2367: This will be updated to allow the query cache to
