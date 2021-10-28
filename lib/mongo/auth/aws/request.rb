@@ -153,7 +153,6 @@ module Mongo
             'x-mongodb-gs2-cb-flag' => 'n',
             'x-mongodb-server-nonce' => Base64.encode64(server_nonce).gsub("\n", ''),
           }
-          # Hash#compact is available as of Ruby 2.4
           if session_token
             headers['x-amz-security-token'] = session_token
           end

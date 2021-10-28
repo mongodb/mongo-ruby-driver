@@ -282,7 +282,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - D
+     -
      -
      -
      -

@@ -21,8 +21,7 @@ module Mongo
     # This module caches OCSP responses for their indicated validity time.
     #
     # The key is the CertificateId used for the OCSP request.
-    # The value is the SingleResponse on Ruby 2.4+, or the OpenStruct
-    # emulation of it on Ruby 2.3.
+    # The value is the SingleResponse.
     #
     # @api private
     module OcspCache
@@ -40,7 +39,7 @@ module Mongo
       # expire by the time caller uses them. The caller should not perform
       # update time checks on the returned response.
       #
-      # @return [ OpenSSL::OCSP::SingleResponse | OpenStruct ] The previously
+      # @return [ OpenSSL::OCSP::SingleResponse ] The previously
       #   retrieved response.
       module_function def get(cert_id)
         resp = responses.detect do |resp|

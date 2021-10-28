@@ -114,7 +114,7 @@ module Mongo
                 collection.read_concern)
             end
             command.update(view_options)
-            command.update(Utils.slice_hash(options, :collation))
+            command.update(options.slice(:collation))
             # Read preference isn't simply passed in the command payload
             # (it may need to be converted to wire protocol flags)
             # so remove it here and hopefully it's handled elsewhere.

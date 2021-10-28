@@ -253,7 +253,7 @@ module Mongo
       options = Hash[self.options.reject do |key, value|
         %w(read read_preference read_concern).include?(key.to_s)
       end]
-      options.update(Utils.slice_hash(opts, *TIME_SERIES_OPTIONS.keys))
+      options.update(opts.slice(*TIME_SERIES_OPTIONS.keys))
       # Converting Ruby spelled time series options to server style.
       TIME_SERIES_OPTIONS.each do |ruby_key, server_key|
         if options.key?(ruby_key)
