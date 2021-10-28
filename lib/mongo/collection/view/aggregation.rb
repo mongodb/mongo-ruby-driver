@@ -124,33 +124,42 @@ module Mongo
           Operation::Aggregate.new(aggregate_spec(server, session, read_preference))
         end
 
-        # Discern effective read preference for the operation.
+        # Return effective read preference for the operation.
         #
-        # We may want to replcase read preferences for pipelines that contain
+        # We may want to replace read preferences for pipelines that contain
         # write operations (e.g. $merge/$out). The effective read preference
-        # is discernd based on server that was selected for it.
+        # is determined based on server that was selected for it.
         #
         # See https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst#read-preferences-and-server-selection
         #
-        # @param [ Server ] server The server on wich the operation
+        # @param [ Server ] server The server on which the operation
         #   should be executed.
         # @return [ Hash | nil ] read preference hash that should be sent with
         #   this command.
         def effective_read_preference(server)
-          return unless view.read_preference
-          if server.primary? && [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
+          primary = {mode: :primary}
+          return primary unless view.read_preference
+          return primary unless write?
+          return view.read_preference unless [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
+
+          if server.primary?
             log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
-            # Default read preference is primary, this is what we need here
-            nil
+            primary
+          elsif server.mongos? && !server.features.merge_out_on_secondary_enabled?
+            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
+            primary
           else
             view.read_preference
           end
+
         end
 
         def send_initial_query(server, session)
-          read_preference = effective_read_preference(server)
-          initial_query_op(server, session, read_preference)
-            .execute(
+          initial_query_op(
+            server,
+            session,
+            effective_read_preference(server)
+          ).execute(
               server,
               context: Operation::Context.new(client: client, session: session)
             )
