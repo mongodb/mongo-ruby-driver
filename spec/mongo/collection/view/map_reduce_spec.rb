@@ -60,6 +60,14 @@ describe Mongo::Collection::View::MapReduce do
     described_class.new(view, map, reduce, options)
   end
 
+  describe '#initialize' do
+    it 'warns of deprecation' do
+      Mongo::Logger.logger.should receive(:warn).with('MONGODB | The map_reduce operation is deprecated, please use the aggregation pipeline instead')
+
+      map_reduce
+    end
+  end
+
   describe '#map_function' do
 
     it 'returns the map function' do
@@ -672,7 +680,12 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'does not reroute the operation to a primary' do
-          expect(Mongo::Logger.logger).not_to receive(:warn)
+          # We produce a deprecation warning, but there shouldn't be
+          # the reroute warning.
+          expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
+            expect(msg).not_to include('Rerouting the MapReduce operation to the primary server')
+          end
+
           map_reduce.to_a
         end
       end

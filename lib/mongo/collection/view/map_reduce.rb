@@ -115,6 +115,8 @@ module Mongo
           @map_function = map.dup.freeze
           @reduce_function = reduce.dup.freeze
           @options = BSON::Document.new(options).freeze
+
+          client.log_warn('The map_reduce operation is deprecated, please use the aggregation pipeline instead')
         end
 
         # Set or get the jsMode flag for the operation.
