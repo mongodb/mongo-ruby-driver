@@ -137,11 +137,11 @@ module Mongo
         # @return [ Hash | nil ] read preference hash that should be sent with
         #   this command.
         def effective_read_preference(server)
-          primary = {mode: :primary}
-          return primary unless view.read_preference
-          return primary unless write?
+          return unless view.read_preference
+          return view.read_preference unless write?
           return view.read_preference unless [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
 
+          primary = {mode: :primary}
           if server.primary?
             log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
             primary

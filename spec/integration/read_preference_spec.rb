@@ -45,16 +45,6 @@ describe 'Read preference' do
     {}
   end
 
-  shared_examples_for 'sends expected read preference when reading' do
-    it 'sends expected read preference when reading' do
-      read_operation
-
-      event = subscriber.single_command_started_event('find')
-      actual_preference = event.command['$readPreference']
-      expect(actual_preference).to eq(expected_read_preference)
-    end
-  end
-
   shared_examples_for 'does not send read preference when reading' do
     it 'does not send read preference when reading' do
       read_operation
@@ -95,7 +85,17 @@ describe 'Read preference' do
       context 'server supporting OP_MSG' do
         min_server_fcv '3.6'
 
-        it_behaves_like 'sends expected read preference when reading'
+        it 'sends expected read preference when reading' do
+          read_operation
+
+          event = subscriber.single_command_started_event('find')
+          actual_preference = event.command['$readPreference']
+          if expected_read_preference&.[]("mode") == "primary"
+            expect(actual_preference).to be_nil
+          else
+            expect(actual_preference).to eq(expected_read_preference)
+          end
+        end
       end
     end
 
@@ -307,7 +307,11 @@ describe 'Read preference' do
 
           event = subscriber.single_command_started_event('find')
           actual_preference = event.command['$readPreference']
-          expect(actual_preference).to eq(expected_read_preference)
+          if expected_read_preference&.[]("mode") == "primary"
+            expect(actual_preference).to be_nil
+          else
+            expect(actual_preference).to eq(expected_read_preference)
+          end
         end
       end
     end
