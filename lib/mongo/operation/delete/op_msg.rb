@@ -37,7 +37,8 @@ module Mongo
           { delete: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
             ordered: ordered?,
-          }.tap do |selector|
+            let: spec[:let],
+          }.compact.tap do |selector|
             if hint = spec[:hint]
               validate_hint_on_update(connection, selector)
               selector[:hint] = hint
