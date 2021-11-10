@@ -1,6 +1,6 @@
 description: "deleteMany-let"
 
-schemaVersion: "1.4"
+schemaVersion: "1.0"
 
 createEntities:
   - client:
@@ -24,7 +24,7 @@ initialData: &initialData
       - { _id: 3, name: "name" }
 
 tests:
-  - description: "DeleteMany with let option"
+  - description: "deleteMany with let option"
     runOnRequirements:
       - minServerVersion: "5.0"
     operations:
@@ -55,9 +55,9 @@ tests:
         documents:
           - { _id: 1 }
 
-  - description: "DeleteMany with let option unsupported (server-side error)"
+  - description: "deleteMany with let option unsupported (server-side error)"
     runOnRequirements:
-      - minServerVersion: "2.6.0"
+      - minServerVersion: "3.6.0"
         maxServerVersion: "4.4.99"
     operations:
       - name: deleteMany
@@ -69,8 +69,6 @@ tests:
           let: &let1
             name: "name"
         expectError:
-          # Older server versions may not report an error code, but the error
-          # message is consistent between 2.6.x and 4.4.x server versions.
           errorContains: "'delete.let' is an unknown field"
           isClientError: false
     expectEvents:

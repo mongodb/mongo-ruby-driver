@@ -1,6 +1,6 @@
 description: "find-let"
 
-schemaVersion: "1.4"
+schemaVersion: "1.0"
 
 createEntities:
   - client:
@@ -23,7 +23,7 @@ initialData: &initialData
       - { _id: 2 }
 
 tests:
-  - description: "find with let option"
+  - description: "Find with let option"
     runOnRequirements:
       - minServerVersion: "5.0"
     operations:
@@ -46,9 +46,9 @@ tests:
                 filter: *filter
                 let: *let0
 
-  - description: "find with let option unsupported (server-side error)"
+  - description: "Find with let option unsupported (server-side error)"
     runOnRequirements:
-      - minServerVersion: "2.6.0"
+      - minServerVersion: "3.6.0"
         maxServerVersion: "4.4.99"
     operations:
       - name: find
@@ -59,8 +59,6 @@ tests:
           let: &let1
             x: 1
         expectError:
-          # Older server versions may not report an error code, but the error
-          # message is consistent between 2.6.x and 4.4.x server versions.
           errorContains: "Unrecognized field 'let'"
           isClientError: false
     expectEvents:

@@ -1,6 +1,6 @@
 description: "deleteOne-let"
 
-schemaVersion: "1.4"
+schemaVersion: "1.0"
 
 createEntities:
   - client:
@@ -23,7 +23,7 @@ initialData: &initialData
       - { _id: 2 }
 
 tests:
-  - description: "DeleteOne with let option"
+  - description: "deleteOne with let option"
     runOnRequirements:
       - minServerVersion: "5.0"
     operations:
@@ -54,9 +54,9 @@ tests:
         documents:
           - { _id: 2 }
 
-  - description: "DeleteOne with let option unsupported (server-side error)"
+  - description: "deleteOne with let option unsupported (server-side error)"
     runOnRequirements:
-      - minServerVersion: "2.6.0"
+      - minServerVersion: "3.6.0"
         maxServerVersion: "4.4.99"
     operations:
       - name: deleteOne
@@ -68,8 +68,6 @@ tests:
           let: &let1
             id: 1
         expectError:
-          # Older server versions may not report an error code, but the error
-          # message is consistent between 2.6.x and 4.4.x server versions.
           errorContains: "'delete.let' is an unknown field"
           isClientError: false
     expectEvents:

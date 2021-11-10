@@ -1,6 +1,6 @@
 description: "updateOne-let"
 
-schemaVersion: "1.4"
+schemaVersion: "1.0"
 
 createEntities:
   - client:
@@ -23,8 +23,6 @@ initialData: &initialData
       - { _id: 2 }
 
 tests:
-  # TODO: Once SERVER-57403 is resolved, this test can be removed in favor of
-  # the "dollar-prefixed $literal value" test below.
   - description: "UpdateOne with let option"
     runOnRequirements:
       - minServerVersion: "5.0"
@@ -36,11 +34,10 @@ tests:
             $expr:
               $eq: [ "$_id", "$$id" ]
           update: &update
-            - $set: {x: "$$x", y: "$$y" }
+            - $set: {x: "$$x" }
           let: &let0
             id: 1
             x: "foo"
-            y: { $literal: "bar" }
         expectResult:
           matchedCount: 1
           modifiedCount: 1
@@ -61,54 +58,12 @@ tests:
         collectionName: *collection0Name
         databaseName: *database0Name
         documents:
-          - { _id: 1, x: "foo", y: "bar" }
-          - { _id: 2 }
-
-  - description: "UpdateOne with let option and dollar-prefixed $literal value"
-    runOnRequirements:
-      - minServerVersion: "5.0"
-      # TODO: Remove topology restrictions once SERVER-57403 is resolved
-        topologies: ["single", "replicaset"]
-    operations:
-      - name: updateOne
-        object: *collection0
-        arguments:
-          filter: &filter
-            $expr:
-              $eq: [ "$_id", "$$id" ]
-          update: &update
-            - $set: {x: "$$x", y: "$$y" }
-          let: &let0
-            id: 1
-            x: "foo"
-            y: { $literal: "$bar" }
-            rand: { $rand: {} }
-        expectResult:
-          matchedCount: 1
-          modifiedCount: 1
-          upsertedCount: 0
-    expectEvents:
-      - client: *client0
-        events:
-          - commandStartedEvent:
-              command:
-                update: *collection0Name
-                updates:
-                  -
-                    q: *filter
-                    u: *update
-                let: *let0
-    outcome:
-      -
-        collectionName: *collection0Name
-        databaseName: *database0Name
-        documents:
-          - { _id: 1, x: "foo", y: "$bar" }
+          - { _id: 1, x: "foo" }
           - { _id: 2 }
 
   - description: "UpdateOne with let option unsupported (server-side error)"
     runOnRequirements:
-      - minServerVersion: "2.6.0"
+      - minServerVersion: "3.6.0"
         maxServerVersion: "4.4.99"
     operations:
       - name: updateOne
@@ -121,8 +76,6 @@ tests:
           let: &let1
             x: foo
         expectError:
-          # Older server versions may not report an error code, but the error
-          # message is consistent between 2.6.x and 4.4.x server versions.
           errorContains: "'update.let' is an unknown field"
           isClientError: false
     expectEvents:
