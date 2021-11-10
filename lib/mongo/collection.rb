@@ -361,6 +361,8 @@ module Mongo
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ CollectionView ] The collection view.
     #
@@ -668,6 +670,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -688,6 +692,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -736,6 +742,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -763,6 +771,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -790,6 +800,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -818,6 +830,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
@@ -856,6 +870,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -892,6 +908,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BSON::Document ] The document.
     #

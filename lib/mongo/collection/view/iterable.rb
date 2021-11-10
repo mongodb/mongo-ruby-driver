@@ -159,6 +159,7 @@ module Mongo
             collation: collation,
             sort: sort,
             skip: skip,
+            let: options[:let],
             limit: limit,
             allow_disk_use: options[:allow_disk_use],
             read: read,

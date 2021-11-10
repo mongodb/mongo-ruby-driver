@@ -48,6 +48,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ BSON::Document, nil ] The document, if found.
         #
@@ -75,6 +77,7 @@ module Mongo
               bypassDocumentValidation: opts[:bypass_document_validation],
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
+              let: opts[:let]
             }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
@@ -109,6 +112,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -142,6 +147,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -172,6 +179,7 @@ module Mongo
               bypassDocumentValidation: opts[:bypass_document_validation],
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
+              let: opts[:let],
             }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
@@ -200,6 +208,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ Result ] The response from the database.
         #
@@ -232,6 +242,7 @@ module Mongo
                 write_concern: write_concern,
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
+                let: opts[:let],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -250,6 +261,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ Result ] The response from the database.
         #
@@ -283,6 +296,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 txn_num: txn_num,
+                let: opts[:let],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -306,6 +320,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ Result ] The response from the database.
         #
@@ -343,6 +359,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 txn_num: txn_num,
+                let: opts[:let]
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -368,6 +385,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ Result ] The response from the database.
         #
@@ -405,6 +424,7 @@ module Mongo
                 write_concern: write_concern,
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
+                let: opts[:let],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -430,6 +450,8 @@ module Mongo
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
         #
         # @return [ Result ] The response from the database.
         #
@@ -467,6 +489,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 txn_num: txn_num,
+                let: opts[:let],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end

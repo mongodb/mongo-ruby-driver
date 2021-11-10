@@ -8,7 +8,9 @@ module Unified
     def find(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          let: args.use('let'),
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -65,7 +67,9 @@ module Unified
       use_arguments(op) do |args|
         filter = args.use!('filter')
         update = args.use!('update')
-        opts = {}
+        opts = {
+          let: args.use('let'),
+        }
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym
         end
@@ -81,7 +85,9 @@ module Unified
       use_arguments(op) do |args|
         filter = args.use!('filter')
         update = args.use!('replacement')
-        opts = {}
+        opts = {
+          let: args.use('let'),
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -93,7 +99,9 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         filter = args.use!('filter')
-        opts = {}
+        opts = {
+          let: args.use('let'),
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -129,7 +137,9 @@ module Unified
     def update_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          let: args.use('let'),
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -140,7 +150,10 @@ module Unified
     def update_many(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.update_many(args.use!('filter'), args.use!('update'))
+        opts = {
+          let: args.use('let'),
+        }
+        collection.update_many(args.use!('filter'), args.use!('update'), **opts)
       end
     end
 
@@ -158,7 +171,9 @@ module Unified
     def delete_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          let: args.use('let'),
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -169,7 +184,10 @@ module Unified
     def delete_many(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.delete_many(args.use!('filter'))
+        opts = {
+          let: args.use('let'),
+        }
+        collection.delete_many(args.use!('filter'), **opts)
       end
     end
 

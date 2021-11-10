@@ -236,12 +236,12 @@ when querying and their corresponding methods as examples.
        each ``GETMORE`` operation.
    * - ``comment(String)``
      - Adds a comment to the query.
-   
+
    * - ``explain(**opts)``
      - Returns the query plan for the query. Pass the :manual:`explain options
        </reference/command/explain/>` via the keyword arguments using symbol
        keys.
-     
+
        .. code-block:: ruby
 
          # All server versions - default explain behavior
@@ -251,7 +251,7 @@ when querying and their corresponding methods as examples.
          client[:artists].find.explain(verbosity: :query_planner)
          client[:artists].find.explain(verbosity: :execution_stats)
          client[:artists].find.explain(verbosity: :all_plans_execution)
-         
+
          # Alternative syntax using camel case
          client[:artists].find.explain(verbosity: "queryPlanner")
          client[:artists].find.explain(verbosity: "executionStats")
@@ -259,45 +259,48 @@ when querying and their corresponding methods as examples.
 
          # MongoDB 2.6
          client[:artists].find.explain(verbose: true)
-         
+
        The explain operation supports ``:session`` and ``:read``
        (for read preference) options. To specify these options for a single
        explain operation, they must be given to the ``find`` method as
        follows:
-     
+
        .. code-block:: ruby
 
          client[:artists].find({}, session: session).explain
 
          client[:artists].find({}, read: {mode: :secondary_preferred}).explain
-       
+
        If the read preference option is specified on the client or on the
        collection, it will be passed to the explain operation:
-     
+
        .. code-block:: ruby
 
          client[:artists, read: {mode: :secondary_preferred}].find.explain
-       
+
        Note that the session option is not accepted when creating a collection
        object.
-       
+
        The explain command does not support passing the read concern option.
        If the read concern is specifed on the client or collection level, or
        if the read concern is specified as a find option, it will NOT be passed
        by the driver to the explain command.
-       
+
        .. note::
-       
+
          The information returned by the server for the ``explain`` command
          varies with server version and deployment topology. The driver's
          ``explain`` method returns whatever the server provided.
-         
+
          **The return value of ``explain`` method is not part of the driver's
          public API and depends on the server version and deployment topology.**
-         
+
    * - ``hint(Hash)``
      - Provides the query with an
        :manual:`index hint</reference/method/cursor.hint/>` to use.
+   * - ``let(Hash)``
+     - Mapping of :manual:`variables</reference/command/find/#std-label-find-let-syntax>`
+       to use in the query.
    * - ``limit(Integer)``
      - Limits the number of returned documents to the provided value.
    * - ``max_scan(Integer)``
@@ -693,6 +696,9 @@ including ``update_one``, ``update_many``, ``replace_one``,
        ``replace_one`` commands, and on server versions 4.4 and newer for
        ``find_one_and_delete``, ``find_one_and_update``, and ``find_one_and_replace``
        commands.
+   * - ``let(Hash)``
+     - Mapping of :manual:`variables</reference/command/update/#std-label-update-let-syntax>`
+       to use for this operation.
    * - ``projection``
      - The fields to exclude or include in the operation result (only available
        on ``find_one_and_delete``, ``find_one_and_replace``, and
@@ -778,6 +784,9 @@ to ``delete_one`` and ``delete_many`` operations.
      - The index to use for this operation. May be specified as a Hash
        (e.g. { _id: 1 }) or as a String (e.g. "_id_"). Supported on MongoDB
        server versions 4.4 and newer.
+   * - ``let(Hash)``
+     - Mapping of :manual:`variables</reference/command/delete/#std-label-delete-let-syntax>`
+       to use for this operation.
    * - ``session``
      - The session to use for this operation.
 
