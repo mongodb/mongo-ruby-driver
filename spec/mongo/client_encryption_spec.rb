@@ -68,7 +68,7 @@ describe Mongo::ClientEncryption do
       it 'raises an exception' do
         expect do
           client_encryption
-        end.to raise_error(ArgumentError, /kms_providers option must have one of the following keys/)
+        end.to raise_error(ArgumentError, /KMS providers options must have one of the following keys/)
       end
     end
   end

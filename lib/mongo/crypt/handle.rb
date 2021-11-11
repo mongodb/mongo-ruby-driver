@@ -27,12 +27,10 @@ module Mongo
     #
     # @api private
     class Handle
+
       # Creates a new Handle object and initializes it with options
       #
-      # @param [ Hash ] kms_providers A hash of KMS settings. The only supported
-      #   key is currently :local. Local KMS options must be passed in the
-      #   format { local: { key: <master key> } } where the master key is a
-      #   96-byte, base64 encoded string.
+      # @param [ Crypt::KMS::Credentials ] kms_providers Credentials for KMS providers.
       # @param [ Hash ] options A hash of options
       #
       # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
@@ -55,7 +53,7 @@ module Mongo
 
         set_crypto_hooks
 
-        set_kms_providers(kms_providers)
+        Binding.setopt_kms_providers(self, kms_providers.to_bson)
         initialize_mongocrypt
       end
 
@@ -227,85 +225,6 @@ module Mongo
           @hmac_sha_256,
           @hmac_hash,
         )
-      end
-
-      # Validate the kms_providers option and use it to set the KMS provider
-      # information on the underlying mongocrypt_t object
-      def set_kms_providers(kms_providers)
-        unless kms_providers
-          raise ArgumentError.new("The kms_providers option must not be nil")
-        end
-
-        unless kms_providers.key?(:local) || kms_providers.key?(:aws)
-          raise ArgumentError.new(
-            'The kms_providers option must have one of the following keys: ' +
-            ':aws, :local'
-          )
-        end
-
-        set_kms_providers_local(kms_providers) if kms_providers.key?(:local)
-        set_kms_providers_aws(kms_providers) if kms_providers.key?(:aws)
-      end
-
-    # Validate and set the local KMS provider information on the underlying
-      # mongocrypt_t object and raise an exception if the operation fails
-      def set_kms_providers_local(kms_providers)
-        unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
-          raise ArgumentError.new(
-            "The specified local kms_providers option is invalid: " +
-            "#{kms_providers[:local]}. kms_providers with :local key must be " +
-            "in the format: { local: { key: 'MASTER-KEY' } }"
-          )
-        end
-
-        master_key = kms_providers[:local][:key]
-        Binding.setopt_kms_provider_local(self, master_key)
-      end
-
-      # Validate and set the aws KMS provider information on the underlying
-      # mongocrypt_t object and raise an exception if the operation fails
-      def set_kms_providers_aws(kms_providers)
-        unless kms_providers[:aws]
-          raise ArgumentError.new('The :aws KMS provider must not be nil')
-        end
-
-        access_key_id = kms_providers[:aws][:access_key_id]
-        secret_access_key = kms_providers[:aws][:secret_access_key]
-
-        unless kms_providers[:aws].key?(:access_key_id) && 
-            kms_providers[:aws].key?(:secret_access_key)
-          raise ArgumentError.new(
-            "The specified aws kms_providers option is invalid: #{kms_providers[:aws]}. " +
-            "kms_providers with :aws key must be in the format: " +
-            "{ aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }"
-          )
-        end
-
-        %i(access_key_id secret_access_key).each do |key|
-          value = kms_providers[:aws][key]
-          if value.nil?
-            raise ArgumentError.new(
-              "The aws #{key} option must be a String with at least one character; " \
-              "currently have nil"
-            )
-          end
-
-          unless value.is_a?(String)
-            raise ArgumentError.new(
-              "The aws #{key} option must be a String with at least one character; " \
-              "currently have #{value}"
-            )
-          end
-
-          if value.empty?
-            raise ArgumentError.new(
-              "The aws #{key} option must be a String with at least one character; " \
-              "it is currently an empty string"
-            )
-          end
-        end
-
-        Binding.setopt_kms_provider_aws(self, access_key_id, secret_access_key)
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails

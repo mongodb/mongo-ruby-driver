@@ -380,6 +380,42 @@ EOT
     ENV['MONGO_RUBY_DRIVER_AWS_ARN']
   end
 
+  def fle_azure_tenant_id
+    ENV['MONGO_RUBY_DRIVER_AZURE_TENANT_ID']
+  end
+
+  def fle_azure_client_id
+    ENV['MONGO_RUBY_DRIVER_AZURE_CLIENT_ID']
+  end
+
+  def fle_azure_client_secret
+    ENV['MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET']
+  end
+
+  def fle_azure_identity_platform_endpoint
+    ENV['MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT']
+  end
+
+  def fle_azure_key_vault_endpoint
+    ENV['MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT']
+  end
+
+  def fle_azure_key_name
+    ENV['MONGO_RUBY_DRIVER_AZURE_KEY_NAME']
+  end
+
+  def fle_gcp_email
+    ENV['MONGO_RUBY_DRIVER_GCP_EMAIL']
+  end
+
+  def fle_gcp_private_key
+    ENV['MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY']
+  end
+
+  def fle_gcp_endpoint
+    ENV['MONGO_RUBY_DRIVER_GCP_ENDPOINT']
+  end
+
   def mongocryptd_port
     if ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] &&
       !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?

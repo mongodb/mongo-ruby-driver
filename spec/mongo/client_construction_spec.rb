@@ -211,7 +211,7 @@ describe Mongo::Client do
             let(:kms_providers) { nil }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /kms_providers option must not be nil/)
+              expect { client }.to raise_error(ArgumentError, /KMS providers options must not be nil/)
             end
           end
 
@@ -219,7 +219,7 @@ describe Mongo::Client do
             let(:kms_providers) { { random_key: 'hello' } }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /kms_providers option must have one of the following keys: :aws, :local/)
+              expect { client }.to raise_error(ArgumentError, /KMS providers options must have one of the following keys: :aws, :azure, :local/)
             end
           end
 
@@ -227,7 +227,7 @@ describe Mongo::Client do
             let(:kms_providers) { { local: { wrong_key: 'hello' } } }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /kms_providers with :local key must be in the format: { local: { key: 'MASTER-KEY' } }/)
+              expect { client }.to raise_error(ArgumentError, /Local KMS provider options must be in the format: { key: 'MASTER-KEY' }/)
             end
           end
 
@@ -235,7 +235,7 @@ describe Mongo::Client do
             let(:kms_providers) { { aws: { wrong_key: 'hello' } } }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /kms_providers with :aws key must be in the format: { aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }/)
+              expect { client }.to raise_error(ArgumentError, / AWS KMS provider options must be in the format: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }/)
             end
           end
 
