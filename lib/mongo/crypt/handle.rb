@@ -242,7 +242,7 @@ module Mongo
           raise ArgumentError.new("The kms_providers option must not be nil")
         end
 
-        if (kms_providers.keys & KMS_PROVIDERS).empty?
+        if (kms_providers.keys & KMS_PROVIDERS.flat_map { |p| [p, p.to_s] }).empty?
           raise ArgumentError.new(
             'The kms_providers option must have one of the following keys: ' +
             KMS_PROVIDERS.map { |p| ":#{p}" }.join(", ")
