@@ -219,7 +219,7 @@ describe Mongo::Client do
             let(:kms_providers) { { random_key: 'hello' } }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /kms_providers option must have one of the following keys: :aws, :local/)
+              expect { client }.to raise_error(ArgumentError, /kms_providers option must have one of the following keys: :aws, :azure, :local/)
             end
           end
 
