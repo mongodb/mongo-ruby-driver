@@ -332,6 +332,44 @@ describe Mongo::Crypt::Handle do
         end
       end
 
+      context "with non-string azure identity_platform_endpoint" do
+        let(:kms_providers) {
+          {
+            azure: {
+              tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+              client_id: SpecConfig.instance.fle_azure_client_id,
+              client_secret: SpecConfig.instance.fle_azure_client_secret,
+              identity_platform_endpoint: 5
+            }
+          }
+        }
+
+        it 'raises an exception' do
+          expect do
+            handle
+          end.to raise_error(ArgumentError, /The azure identity_platform_endpoint option must be a String with at least one character; currently have 5/)
+        end
+      end
+
+      context "with empty string azure identity_platform_endpoint" do
+        let(:kms_providers) {
+          {
+            azure: {
+              tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+              client_id: SpecConfig.instance.fle_azure_client_id,
+              client_secret: SpecConfig.instance.fle_azure_client_secret,
+              identity_platform_endpoint: ''
+            }
+          }
+        }
+
+        it 'raises an exception' do
+          expect do
+            handle
+          end.to raise_error(ArgumentError, /The azure identity_platform_endpoint option must be a String with at least one character; it is currently an empty string/)
+        end
+      end
+
       context 'with valid azure kms_providers' do
         include_context 'with Azure kms_providers'
         it_behaves_like 'a functioning Mongo::Crypt::Handle'

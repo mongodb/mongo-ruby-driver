@@ -344,39 +344,47 @@ module Mongo
               "{ azure: { tenant_id: 'YOUR-TENANT-ID', client_id: 'YOUR_CLIENT_ID', client_secret: 'YOUR_CLIENT_SECRET' } }"
             )
           end
+          validate_string_param(key, kms_providers[:azure][key])
+        end
 
-          value = kms_providers[:azure][key]
-
-          if value.nil?
-            raise ArgumentError.new(
-              "The azure #{key} option must be a String with at least one character; " \
-              "currently have nil"
-            )
-          end
-
-          unless value.is_a?(String)
-            raise ArgumentError.new(
-              "The azure #{key} option must be a String with at least one character; " \
-              "currently have #{value}"
-            )
-          end
-
-          if value.empty?
-            raise ArgumentError.new(
-              "The azure #{key} option must be a String with at least one character; " \
-              "it is currently an empty string"
-            )
-          end
+        if kms_providers[:azure].key?(:identity_platform_endpoint)
+          validate_string_param(
+            :identity_platform_endpoint,
+            kms_providers[:azure][:identity_platform_endpoint]
+          )
         end
 
         kms_providers[:azure] = {
           tenantId: kms_providers[:azure][:tenant_id],
           clientId: kms_providers[:azure][:client_id],
           clientSecret: kms_providers[:azure][:client_secret],
-        }
-
+          identityPlatformEndpoint: kms_providers[:azure][:identity_platform_endpoint],
+        }.compact
 
         kms_providers
+      end
+
+      def validate_string_param(key, value)
+        if value.nil?
+          raise ArgumentError.new(
+            "The azure #{key} option must be a String with at least one character; " \
+            "currently have nil"
+          )
+        end
+
+        unless value.is_a?(String)
+          raise ArgumentError.new(
+            "The azure #{key} option must be a String with at least one character; " \
+            "currently have #{value}"
+          )
+        end
+
+        if value.empty?
+          raise ArgumentError.new(
+            "The azure #{key} option must be a String with at least one character; " \
+            "it is currently an empty string"
+          )
+        end
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails
