@@ -320,6 +320,22 @@ module Mongo
         end
       end
 
+      attach_function(
+        :mongocrypt_setopt_kms_providers,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      def self.setopt_kms_providers(handle, kms_providers)
+        validate_document(kms_providers)
+        data = kms_providers.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_status(handle) do
+            mongocrypt_setopt_kms_providers(handle.ref, data_p)
+          end
+        end
+      end
+
       # @!method self.mongocrypt_setopt_schema_map(crypt, schema_map)
       #   @api private
       #

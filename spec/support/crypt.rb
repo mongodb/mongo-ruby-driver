@@ -48,6 +48,17 @@ module Crypt
       }
     end
 
+    # Azure KMS provider options
+    let(:azure_kms_providers) do
+      {
+        azure: {
+          tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+          client_id: SpecConfig.instance.fle_azure_client_id,
+          client_secret: SpecConfig.instance.fle_azure_client_secret,
+        }
+      }
+    end
+
     # Key vault database and collection names
     let(:key_vault_db) { 'admin' }
     let(:key_vault_coll) { 'datakeys' }
@@ -117,6 +128,53 @@ module Crypt
 
     let(:kms_provider_name) { 'aws' }
     let(:kms_providers) { aws_kms_providers }
+
+    let(:data_key) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_aws.json'))
+    end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
+    end
+
+    let(:data_key_options) do
+      {
+        master_key: {
+          region: aws_region,
+          key: aws_arn,
+          endpoint: "#{aws_endpoint_host}:#{aws_endpoint_port}"
+        }
+      }
+    end
+
+    let(:aws_region) { SpecConfig.instance.fle_aws_region }
+    let(:aws_arn) { SpecConfig.instance.fle_aws_arn }
+    let(:aws_endpoint_host) { "kms.#{aws_region}.amazonaws.com" }
+    let(:aws_endpoint_port) { 443 }
+
+    let(:encrypted_ssn) do
+      "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
+      "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
+    end
+  end
+
+  shared_context 'with Azure kms_providers' do
+    before do
+      unless SpecConfig.instance.fle_azure_client_id &&
+        SpecConfig.instance.fle_azure_client_secret &&
+        SpecConfig.instance.fle_azure_tenant_id &&
+        SpecConfig.instance.fle_azure_identity_platform_endpoint
+
+        skip(
+          'This test requires the MONGO_RUBY_DRIVER_AZURE_TENANT_ID, ' +
+          'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
+          'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
+        )
+      end
+    end
+
+    let(:kms_provider_name) { 'azure' }
+    let(:kms_providers) { azure_kms_providers }
 
     let(:data_key) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_aws.json'))

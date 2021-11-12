@@ -27,6 +27,12 @@ module Mongo
     #
     # @api private
     class Handle
+
+      # List of known KMS providers.
+      #
+      # @api private
+      KMS_PROVIDERS = %i(aws azure local).freeze
+
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Hash ] kms_providers A hash of KMS settings. The only supported
@@ -236,20 +242,25 @@ module Mongo
           raise ArgumentError.new("The kms_providers option must not be nil")
         end
 
-        unless kms_providers.key?(:local) || kms_providers.key?(:aws)
+        if (kms_providers.keys & KMS_PROVIDERS).empty?
           raise ArgumentError.new(
             'The kms_providers option must have one of the following keys: ' +
-            ':aws, :local'
+            KMS_PROVIDERS.map { |p| ":#{p}" }.join(", ")
           )
         end
-
-        set_kms_providers_local(kms_providers) if kms_providers.key?(:local)
-        set_kms_providers_aws(kms_providers) if kms_providers.key?(:aws)
+        kms_providers_doc = validate_kms_providers_azure(
+          validate_kms_providers_aws(
+            validate_kms_providers_local(BSON::Document.new(kms_providers))
+          )
+        )
+        Binding.setopt_kms_providers(self, kms_providers_doc)
       end
 
-    # Validate and set the local KMS provider information on the underlying
-      # mongocrypt_t object and raise an exception if the operation fails
-      def set_kms_providers_local(kms_providers)
+      # Validate the local KMS provider information and raise an exception if not
+      # all required parameters are provided.
+      def validate_kms_providers_local(kms_providers)
+        return kms_providers unless kms_providers.key?(:local)
+
         unless kms_providers[:local][:key] && kms_providers[:local][:key].is_a?(String)
           raise ArgumentError.new(
             "The specified local kms_providers option is invalid: " +
@@ -258,31 +269,34 @@ module Mongo
           )
         end
 
-        master_key = kms_providers[:local][:key]
-        Binding.setopt_kms_provider_local(self, master_key)
+        kms_providers[:local][:key] = BSON::Binary.new(
+          kms_providers[:local][:key],
+          :generic
+        )
+
+        kms_providers
       end
 
-      # Validate and set the aws KMS provider information on the underlying
-      # mongocrypt_t object and raise an exception if the operation fails
-      def set_kms_providers_aws(kms_providers)
+      # Validate  the aws KMS provider information and raise an exception if not
+      # all required parameters are provided.
+      def validate_kms_providers_aws(kms_providers)
+        return kms_providers unless kms_providers.key?(:aws)
+
         unless kms_providers[:aws]
           raise ArgumentError.new('The :aws KMS provider must not be nil')
         end
 
-        access_key_id = kms_providers[:aws][:access_key_id]
-        secret_access_key = kms_providers[:aws][:secret_access_key]
-
-        unless kms_providers[:aws].key?(:access_key_id) && 
-            kms_providers[:aws].key?(:secret_access_key)
-          raise ArgumentError.new(
-            "The specified aws kms_providers option is invalid: #{kms_providers[:aws]}. " +
-            "kms_providers with :aws key must be in the format: " +
-            "{ aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }"
-          )
-        end
-
         %i(access_key_id secret_access_key).each do |key|
+          unless kms_providers[:aws].key?(key)
+            raise ArgumentError.new(
+              "The specified aws kms_providers option is invalid: #{kms_providers[:aws]}. " +
+              "kms_providers with :aws key must be in the format: " +
+              "{ aws: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }"
+            )
+          end
+
           value = kms_providers[:aws][key]
+
           if value.nil?
             raise ArgumentError.new(
               "The aws #{key} option must be a String with at least one character; " \
@@ -305,7 +319,64 @@ module Mongo
           end
         end
 
-        Binding.setopt_kms_provider_aws(self, access_key_id, secret_access_key)
+        kms_providers[:aws] = {
+          accessKeyId: kms_providers[:aws][:access_key_id],
+          secretAccessKey: kms_providers[:aws][:secret_access_key],
+        }
+
+        kms_providers
+      end
+
+      # Validate the Azure KMS provider information and raise an exception if not
+      # all required parameters are provided.
+      def validate_kms_providers_azure(kms_providers)
+        return kms_providers unless kms_providers.key?(:azure)
+
+        unless kms_providers[:azure]
+          raise ArgumentError.new('The :azure KMS provider must not be nil')
+        end
+
+        %i(tenant_id client_id client_secret).each do |key|
+          unless kms_providers[:azure].key?(key)
+            raise ArgumentError.new(
+              "The specified azure kms_providers option is invalid: #{kms_providers[:azure]}. " +
+              "kms_providers with :azure key must be in the format: " +
+              "{ azure: { tenant_id: 'YOUR-TENANT-ID', client_id: 'YOUR_CLIENT_ID', client_secret: 'YOUR_CLIENT_SECRET' } }"
+            )
+          end
+
+          value = kms_providers[:azure][key]
+
+          if value.nil?
+            raise ArgumentError.new(
+              "The azure #{key} option must be a String with at least one character; " \
+              "currently have nil"
+            )
+          end
+
+          unless value.is_a?(String)
+            raise ArgumentError.new(
+              "The azure #{key} option must be a String with at least one character; " \
+              "currently have #{value}"
+            )
+          end
+
+          if value.empty?
+            raise ArgumentError.new(
+              "The azure #{key} option must be a String with at least one character; " \
+              "it is currently an empty string"
+            )
+          end
+        end
+
+        kms_providers[:azure] = {
+          tenantId: kms_providers[:azure][:tenant_id],
+          clientId: kms_providers[:azure][:client_id],
+          clientSecret: kms_providers[:azure][:client_secret],
+        }
+
+
+        kms_providers
       end
 
       # Initialize the underlying mongocrypt_t object and raise an error if the operation fails

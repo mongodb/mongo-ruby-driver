@@ -41,7 +41,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) { {} }
 
       it 'raises an exception' do
-        expect { handle }.to raise_error(ArgumentError, /must have one of the following keys: :aws, :local/)
+        expect { handle }.to raise_error(ArgumentError, /must have one of the following keys: :aws, :azure, :local/)
       end
     end
 
@@ -49,7 +49,7 @@ describe Mongo::Crypt::Handle do
       let(:kms_providers) { { random_kms_provider: {} } }
 
       it 'raises an exception' do
-        expect { handle }.to raise_error(ArgumentError, /must have one of the following keys: :aws, :local/)
+        expect { handle }.to raise_error(ArgumentError, /must have one of the following keys: :aws, :azure, :local/)
       end
     end
 
@@ -239,149 +239,103 @@ describe Mongo::Crypt::Handle do
     end
 
     context 'Azure' do
-      context 'with invalid aws kms_providers' do
+      context 'with invalid azure kms_providers' do
         let(:kms_providers) { { azure: {} } }
 
         it 'raises an exception' do
-          expect { handle }.to raise_error(ArgumentError, /kms_providers with :azure key must be in the format: { azure: { tenant_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' } }/)
+          expect { handle }.to raise_error(ArgumentError, /kms_providers with :azure key must be in the format: { azure: { tenant_id: 'YOUR-TENANT-ID', client_id: 'YOUR_CLIENT_ID', client_secret: 'YOUR_CLIENT_SECRET' } }/)
         end
       end
 
-      # context 'with nil AWS kms_provider' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: nil
-      #     }
-      #   }
+      context 'with nil azure kms_provider' do
+        let(:kms_providers) {
+          {
+            azure: nil
+          }
+        }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The :aws KMS provider must not be nil/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            handle
+          end.to raise_error(ArgumentError, /The :azure KMS provider must not be nil/)
+        end
+      end
 
-      # context 'with empty AWS kms_provider' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {}
-      #     }
-      #   }
+      context 'with empty azure kms_provider' do
+        let(:kms_providers) {
+          {
+            azure: {}
+          }
+        }
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The specified aws kms_providers option is invalid/)
-      #   end
-      # end
+        it 'raises an exception' do
+          expect do
+            handle
+          end.to raise_error(ArgumentError, /The specified azure kms_providers option is invalid/)
+        end
+      end
 
-      # context 'with nil AWS access_key_id' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {
-      #         access_key_id: nil,
-      #         secret_access_key: SpecConfig.instance.fle_aws_secret
-      #       }
-      #     }
-      #   }
+      %i(tenant_id client_id client_secret).each do |param|
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; currently have nil/)
-      #   end
-      # end
+        context "with nil azure #{param}" do
+          let(:kms_providers) {
+            {
+              azure: {
+                tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+                client_id: SpecConfig.instance.fle_azure_client_id,
+                client_secret: SpecConfig.instance.fle_azure_client_secret
+              }.update(param => nil)
+            }
+          }
 
-      # context 'with non-string AWS access_key_id' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {
-      #         access_key_id: 5,
-      #         secret_access_key: SpecConfig.instance.fle_aws_secret
-      #       }
-      #     }
-      #   }
+          it 'raises an exception' do
+            expect do
+              handle
+            end.to raise_error(ArgumentError, /The azure #{param} option must be a String with at least one character; currently have nil/)
+          end
+        end
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; currently have 5/)
-      #   end
-      # end
+        context "with non-string azure #{param}" do
+          let(:kms_providers) {
+            {
+              azure: {
+                tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+                client_id: SpecConfig.instance.fle_azure_client_id,
+                client_secret: SpecConfig.instance.fle_azure_client_secret
+              }.update(param => 5)
+            }
+          }
 
-      # context 'with empty string AWS access_key_id' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {
-      #         access_key_id: '',
-      #         secret_access_key: SpecConfig.instance.fle_aws_secret
-      #       }
-      #     }
-      #   }
+          it 'raises an exception' do
+            expect do
+              handle
+            end.to raise_error(ArgumentError, /The azure #{param} option must be a String with at least one character; currently have 5/)
+          end
+        end
 
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; it is currently an empty string/)
-      #   end
-      # end
+        context "with empty string azure #{param}" do
+          let(:kms_providers) {
+            {
+              azure: {
+                tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+                client_id: SpecConfig.instance.fle_azure_client_id,
+                client_secret: SpecConfig.instance.fle_azure_client_secret
+              }.update(param => '')
+            }
+          }
 
+          it 'raises an exception' do
+            expect do
+              handle
+            end.to raise_error(ArgumentError, /The azure #{param} option must be a String with at least one character; it is currently an empty string/)
+          end
+        end
+      end
 
-      # context 'with nil AWS secret_access_key' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {
-      #         access_key_id: SpecConfig.instance.fle_aws_key,
-      #         secret_access_key: nil
-      #       }
-      #     }
-      #   }
-
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The aws secret_access_key option must be a String with at least one character; currently have nil/)
-      #   end
-      # end
-
-      # context 'with non-string AWS secret_access_key' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {
-      #         access_key_id: SpecConfig.instance.fle_aws_key,
-      #         secret_access_key: 5
-      #       }
-      #     }
-      #   }
-
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The aws secret_access_key option must be a String with at least one character; currently have 5/)
-      #   end
-      # end
-
-      # context 'with empty string AWS secret_access_key' do
-      #   let(:kms_providers) {
-      #     {
-      #       aws: {
-      #         access_key_id: SpecConfig.instance.fle_aws_key,
-      #         secret_access_key: ''
-      #       }
-      #     }
-      #   }
-
-      #   it 'raises an exception' do
-      #     expect do
-      #       handle
-      #     end.to raise_error(ArgumentError, /The aws secret_access_key option must be a String with at least one character; it is currently an empty string/)
-      #   end
-      # end
-
-      # context 'with valid AWS kms_providers' do
-      #   include_context 'with AWS kms_providers'
-      #   it_behaves_like 'a functioning Mongo::Crypt::Handle'
-      # end
+      context 'with valid azure kms_providers' do
+        include_context 'with Azure kms_providers'
+        it_behaves_like 'a functioning Mongo::Crypt::Handle'
+      end
 
     end
   end
