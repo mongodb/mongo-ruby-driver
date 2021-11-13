@@ -337,6 +337,8 @@ module Mongo
             awaited: awaited,
             started_event: started_event,
           )
+          sleep(0.5) # sleep just for a while before publishing event as it will start instantly another request
+          # and possibly cause overhead in number of threads
           failed(SERVER_HEARTBEAT, event)
         end
         raise
