@@ -177,11 +177,11 @@ module Crypt
     let(:kms_providers) { azure_kms_providers }
 
     let(:data_key) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_aws.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_azure.json'))
     end
 
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure.json'))
     end
 
     let(:data_key_options) do
