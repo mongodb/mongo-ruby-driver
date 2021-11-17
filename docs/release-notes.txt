@@ -21,9 +21,24 @@ its test suite.
 2.17
 ====
 
-This release of the Ruby driver increases the minimum required Ruby version
-to 2.5.
+This release of the Ruby driver supports MongoDB version 5.1. It also increases
+the minimum required Ruby version to 2.5, and drops support for MongoDB
+versions older than 3.6.
 
+This release includes the following new features:
+
+- Added new readConcern level "snapshot" (non-speculative) for read commands outside of transactions, including on secondaries.
+- Support $merge and $out executing on secondaries.
+- Support 'let' option for aggregate and CRUD commands.
+
+The following bugs were fixed:
+
+- Push monitor thread can exit when address resolution fails.
+
+The following non-breaking changes were made:
+
+- mapReduce command is now deprecated.
+- Avoid tight looping in push monitor
 
 2.16
 ====
