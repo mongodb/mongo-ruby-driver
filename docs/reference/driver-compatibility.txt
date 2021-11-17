@@ -38,6 +38,7 @@ version.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - MongoDB 5.1
      - MongoDB 5.0
      - MongoDB 4.4
      - MongoDB 4.2
@@ -54,12 +55,14 @@ version.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      -
      -
      -
      -
 
    * - 2.16
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -72,6 +75,7 @@ version.
 
    * - 2.15
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -83,6 +87,7 @@ version.
 
    * - 2.14
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -93,6 +98,7 @@ version.
      - |checkmark|
 
    * - 2.13
+     -
      -
      - |checkmark| [#ocsp]_
      - |checkmark|
@@ -106,6 +112,7 @@ version.
    * - 2.12
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -117,6 +124,7 @@ version.
    * - 2.11
      -
      -
+     -
      - |checkmark| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -126,6 +134,7 @@ version.
      - |checkmark|
 
    * - 2.10
+     -
      -
      -
      - |checkmark| [#srv-polling]_ [#client-side-encryption]_
@@ -140,6 +149,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -148,6 +158,7 @@ version.
      - |checkmark|
 
    * - 2.8
+     -
      -
      -
      -
@@ -162,6 +173,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -170,6 +182,7 @@ version.
      - |checkmark|
 
    * - 2.6
+     -
      -
      -
      -
@@ -185,6 +198,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -192,6 +206,7 @@ version.
      - |checkmark|
 
    * - 2.4
+     -
      -
      -
      -
@@ -209,6 +224,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -220,11 +236,13 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
 
    * - 2.0
+     -
      -
      -
      -
