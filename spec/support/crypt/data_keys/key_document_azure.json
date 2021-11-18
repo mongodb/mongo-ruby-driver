@@ -9,6 +9,7 @@
     }
   },
   "masterKey": {
+    "provider": "azure",
     "keyVaultEndpoint": "key-vault-csfle.vault.azure.net",
     "keyName": "key-name-csfle"
   },

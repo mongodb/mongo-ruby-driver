@@ -194,11 +194,6 @@ module Crypt
       }
     end
 
-    let(:aws_region) { SpecConfig.instance.fle_aws_region }
-    let(:aws_arn) { SpecConfig.instance.fle_aws_arn }
-    let(:aws_endpoint_host) { "kms.#{aws_region}.amazonaws.com" }
-    let(:aws_endpoint_port) { 443 }
-
     let(:encrypted_ssn) do
       "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
       "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
@@ -210,6 +205,14 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
+    end
+  end
+
+  shared_context 'with Azure kms_providers and key alt names' do
+    include_context 'with Azure kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure_key_alt_names.json'))
     end
   end
 end
