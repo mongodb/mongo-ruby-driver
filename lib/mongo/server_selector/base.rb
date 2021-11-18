@@ -305,15 +305,21 @@ module Mongo
       #
       # @api private
       def try_select_server(cluster, write_aggregation: false)
-        servers = suitable_servers(cluster)
-
-        if write_aggregation && cluster.replica_set?
-          # If secondary preferred, list of servers has is ordered in a way
-          # that secondaries go first, and the primary is the last one.
-          servers.select! do |server|
-            server.features.merge_out_on_secondary_enabled? || server.primary?
+        servers = if write_aggregation && cluster.replica_set?
+          # 1. Check if ALL servers in cluster support secondary writes.
+          is_write_supported = cluster.servers.reduce(true) do |res, server|
+            res && server.features.merge_out_on_secondary_enabled?
           end
-          servers = [cluster.servers.detect(&:primary?)] if servers.empty?
+
+          if is_write_supported
+            # 2. If all servers support secondary writes, we respect read preference.
+            suitable_servers(cluster)
+          else
+            # 3. Otherwise we fallback to primary for replica set.
+            [cluster.servers.detect(&:primary?)]
+          end
+        else
+          suitable_servers(cluster)
         end
 
         # This list of servers may be ordered in a specific way

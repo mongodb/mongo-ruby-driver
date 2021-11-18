@@ -35,6 +35,7 @@ module Mongo
             comment: 'comment',
             filter: 'filter',
             hint: 'hint',
+            let: 'let',
             limit: 'limit',
             max_scan: 'maxScan',
             max_time_ms: 'maxTimeMS',
