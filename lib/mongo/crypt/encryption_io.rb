@@ -264,7 +264,8 @@ module Mongo
             # tcp_socket will be closed when ssl_socket is closed
             ssl_socket.sync_close = true
             # perform SNI
-            ssl_socket.hostname = "#{host}:#{port}"
+            # FIXME: Does not work with Azure
+            # ssl_socket.hostname = "#{host}:#{port}"
 
             Timeout.timeout(
               SOCKET_TIMEOUT,

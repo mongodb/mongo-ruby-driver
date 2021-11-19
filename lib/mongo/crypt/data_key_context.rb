@@ -66,6 +66,22 @@ module Mongo
 
           set_aws_master_key(master_key_opts)
           set_aws_endpoint(master_key_opts[:endpoint]) if master_key_opts[:endpoint]
+        when 'azure'
+          unless options
+            raise ArgumentError.new(
+              'When "azure" is specified as the KMS provider, options cannot be nil'
+            )
+          end
+
+          unless options.key?(:master_key)
+            raise ArgumentError.new(
+              'When "azure" is specified as the KMS provider, the options Hash ' +
+              'must contain a key named :master_key with a Hash value in the ' +
+              '{ key_vault_endpoint: "keyVaultEndpoint", key_name: "keyName" }'
+            )
+          end
+
+          set_azure_master_key(options[:master_key])
         else
           raise ArgumentError.new(
             "#{kms_provider} is an invalid kms provider. " +
@@ -78,6 +94,57 @@ module Mongo
       end
 
       private
+
+      def set_azure_master_key(master_key_opts)
+        unless master_key_opts
+          raise ArgumentError.new('The :master_key option cannot be nil')
+        end
+
+        unless master_key_opts.is_a?(Hash)
+          raise ArgumentError.new(
+            "#{master_key_opts} is an invalid :master_key option. " +
+            "The :master_key option must be a Hash in the format " +
+            "{ key_vault_endpoint: 'keyVaultEndpoint', key_name: 'keyName' }"
+          )
+        end
+
+        key_vault_endpoint = master_key_opts[:key_vault_endpoint]
+        unless key_vault_endpoint
+          raise ArgumentError.new(
+            'The value of :key_vault_endpoint option of the :master_key options hash cannot be nil'
+          )
+        end
+
+        unless key_vault_endpoint.is_a?(String)
+          raise ArgumentError.new(
+            "#{master_key_opts[:key_vault_endpoint]} is an invalid key vault endpoint. " +
+            "The value of :key_vault_endpoint option of the :master_key options hash must be a String"
+          )
+        end
+
+        key_name = master_key_opts[:key_name]
+        unless key_name
+          raise ArgumentError.new(
+            'The value of :key_name option of the :master_key options hash cannot be nil'
+          )
+        end
+
+        unless key_name.is_a?(String)
+          raise ArgumentError.new(
+            "#{master_key_opts[:key_name]} is an invalid key name. " +
+            "The value of :key_name option of the :master_key options hash must be a String"
+          )
+        end
+
+        Binding.ctx_setopt_key_encryption_key(
+          self,
+          BSON::Document.new({
+            provider: "azure",
+            keyVaultEndpoint: key_vault_endpoint,
+            keyName: key_name,
+          })
+        )
+      end
 
       # Configure the underlying mongocrypt_ctx_t object to accept AWS
       # KMS options

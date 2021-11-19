@@ -396,6 +396,14 @@ EOT
     ENV['MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT']
   end
 
+  def fle_azure_key_vault_endpoint
+    ENV['MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT']
+  end
+
+  def fle_azure_key_name
+    ENV['MONGO_RUBY_DRIVER_AZURE_KEY_NAME']
+  end
+
   def fle_gcp_email
     ENV['MONGO_RUBY_DRIVER_GCP_EMAIL']
   end

@@ -158,6 +158,14 @@ module Crypt
     end
   end
 
+  shared_context 'with AWS kms_providers and key alt names' do
+    include_context 'with AWS kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
+    end
+  end
+
   shared_context 'with Azure kms_providers' do
     before do
       unless SpecConfig.instance.fle_azure_client_id &&
@@ -187,24 +195,14 @@ module Crypt
     let(:data_key_options) do
       {
         master_key: {
-          region: aws_region,
-          key: aws_arn,
-          endpoint: "#{aws_endpoint_host}:#{aws_endpoint_port}"
+          keyVaultEndpoint: SpecConfig.instance.fle_azure_key_vault_endpoint,
+          keyName: SpecConfig.instance.fle_azure_key_name,
         }
       }
     end
 
     let(:encrypted_ssn) do
-      "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
-      "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
-    end
-  end
-
-  shared_context 'with AWS kms_providers and key alt names' do
-    include_context 'with AWS kms_providers'
-
-    let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
+      "AQGVERAAAAAAAAAAAAAAAAACFq9wVyHGWquXjaAjjBwI3MQNuyokz/+wWSi0\n8n9iu1cKzTGI9D5uVSNs64tBulnZpywtuewBQtJIphUoEr5YpSFLglOh3bp6\nmC9hfXSyFT4="
     end
   end
 

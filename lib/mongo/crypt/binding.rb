@@ -604,6 +604,22 @@ module Mongo
         end
       end
 
+      attach_function(
+        :mongocrypt_ctx_setopt_key_encryption_key,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      def self.ctx_setopt_key_encryption_key(context, key_document)
+        validate_document(key_document)
+        data = key_document.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_setopt_key_encryption_key(context.ctx_p, data_p)
+          end
+        end
+      end
+
       # @!method self.mongocrypt_ctx_datakey_init(ctx)
       #   @api private
       #
