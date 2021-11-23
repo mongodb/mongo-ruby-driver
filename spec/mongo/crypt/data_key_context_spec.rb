@@ -9,8 +9,9 @@ describe Mongo::Crypt::DataKeyContext do
   require_libmongocrypt
   include_context 'define shared FLE helpers'
 
+  let(:credentials) { Mongo::Crypt::KMS::Credentials.new(kms_providers) }
   let(:mongocrypt) do
-    Mongo::Crypt::Handle.new(kms_providers)
+    Mongo::Crypt::Handle.new(credentials)
   end
 
   let(:io) { double("Mongo::Crypt::EncryptionIO") }

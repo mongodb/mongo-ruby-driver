@@ -8,7 +8,8 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
   require_libmongocrypt
   include_context 'define shared FLE helpers'
 
-  let(:mongocrypt) { Mongo::Crypt::Handle.new(kms_providers, logger: logger) }
+  let(:credentials) { Mongo::Crypt::KMS::Credentials.new(kms_providers) }
+  let(:mongocrypt) { Mongo::Crypt::Handle.new(credentials, logger: logger) }
   let(:context) { described_class.new(mongocrypt, io, value, options) }
 
   let(:logger) { nil }

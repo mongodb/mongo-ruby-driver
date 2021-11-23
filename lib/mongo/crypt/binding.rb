@@ -265,6 +265,8 @@ module Mongo
       #   @param [ Integer ] aws_secret_access_key_len The length of the AWS
       #     secret access key (or -1 for a null-terminated string).
       #   @return [ Boolean ] Returns whether the option was set successfully.
+      #
+      #   @deprecated Use mongocrypt_setopt_kms_providers instead.
       attach_function(
         :mongocrypt_setopt_kms_provider_aws,
         [:pointer, :string, :int, :string, :int],
@@ -278,6 +280,8 @@ module Mongo
       # @param [ String ] aws_secret_access_key The AWS secret access key
       #
       # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
+      #
+      # @deprecated Use .setopt_kms_providers instead.
       def self.setopt_kms_provider_aws(handle,
         aws_access_key, aws_secret_access_key
       )
@@ -300,6 +304,8 @@ module Mongo
       #   @param [ FFI::Pointer ] key A pointer to a mongocrypt_binary_t object
       #     that references the 96-byte local master key.
       #   @return [ Boolean ] Returns whether the option was set successfully.
+      #
+      #   @deprecated Use mongocrypt_setopt_kms_providers instead.
       attach_function(
         :mongocrypt_setopt_kms_provider_local,
         [:pointer, :pointer],
@@ -312,6 +318,8 @@ module Mongo
       # @param [ String ] master_key The 96-byte local KMS master key
       #
       # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
+      #
+      # @deprecated Use .setopt_kms_providers instead.
       def self.setopt_kms_provider_local(handle, master_key)
         Binary.wrap_string(master_key) do |master_key_p|
           check_status(handle) do
@@ -320,12 +328,30 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_setopt_kms_providers(crypt, kms_providers)
+      #   @api private
+      #
+      #   Configure KMS providers with a BSON document.
+      #   @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      #   @param [ FFI::Pointer ] kms_providers A pointer to a
+      #     mongocrypt_binary_t object that references a BSON document mapping
+      #     the KMS provider names to credentials.
+      #   @note Do not initialize ctx before calling this method.
+      #
+      #   @returns [ true | false ] Returns whether the options was set successfully.
       attach_function(
         :mongocrypt_setopt_kms_providers,
         [:pointer, :pointer],
         :bool
       )
 
+      # Set KMS providers options on the Mongo::Crypt::Handle object
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ BSON::Document ] kms_providers BSON document mapping
+      #   the KMS provider names to credentials.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
       def self.setopt_kms_providers(handle, kms_providers)
         validate_document(kms_providers)
         data = kms_providers.to_bson.to_s
@@ -524,6 +550,7 @@ module Mongo
       #   @param [ Integer ] arn_len The length of the ARN (or -1 for a
       #     null-terminated string).
       #   @return [ Boolean ] Returns whether the option was set successfully.
+      #   @deprecated Use mongocrypt_ctx_setopt_key_encryption_key instead.
       attach_function(
         :mongocrypt_ctx_setopt_masterkey_aws,
         [:pointer, :string, :int, :string, :int],
@@ -537,6 +564,7 @@ module Mongo
       # @param [ String ] arn The master key Amazon Resource Name
       #
       # @raise [ Mongo::Error::CryptError ] If the operation failed
+      # @deprecated Use .ctx_setopt_key_encryption_key instead.
       def self.ctx_setopt_master_key_aws(context, region, arn)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws(
@@ -558,6 +586,7 @@ module Mongo
       #   @param [ Integer ] endpoint_len The length of the endpoint string (or
       #     -1 for a null-terminated string).
       #   @return [ Boolean ] Returns whether the option was set successfully.
+      #   @deprecated Use mongocrypt_ctx_setopt_key_encryption_key instead.
       attach_function(
         :mongocrypt_ctx_setopt_masterkey_aws_endpoint,
         [:pointer, :string, :int],
@@ -570,6 +599,7 @@ module Mongo
       # @param [ String ] endpoint The custom AWS master key endpoint
       #
       # @raise [ Mongo::Error::CryptError ] If the operation failed
+      # @deprecated Use .ctx_setopt_key_encryption_key instead.
       def self.ctx_setopt_master_key_aws_endpoint(context, endpoint)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_aws_endpoint(
@@ -587,6 +617,7 @@ module Mongo
       #   @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
       #   @note Do not initialize ctx before calling this method.
       #   @return [ Boolean ] Whether the option was successfully set.
+      #   @deprecated Use mongocrypt_ctx_setopt_key_encryption_key instead.
       attach_function(
         :mongocrypt_ctx_setopt_masterkey_local,
         [:pointer],
@@ -598,18 +629,36 @@ module Mongo
       # @param [ Mongo::Crypt::Context ] context
       #
       # @raise [ Mongo::Error::CryptError ] If the operation failed
+      # @deprecated Use .ctx_setopt_key_encryption_key instead.
       def self.ctx_setopt_master_key_local(context)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
         end
       end
 
+      # @!method self.mongocrypt_ctx_setopt_key_encryption_key(ctx)
+      #   @api private
+      #
+      #   Set key encryption key document for creating a data key.
+      #   @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      #   @param [ FFI::Pointer ] bin A pointer to a mongocrypt_binary_t
+      #     object that references a BSON document representing the key
+      #     encryption key document with an additional "provider" field.
+      #   @note Do not initialize ctx before calling this method.
+      #   @return [ Boolean ] Whether the option was successfully set.
       attach_function(
         :mongocrypt_ctx_setopt_key_encryption_key,
         [:pointer, :pointer],
         :bool
       )
 
+      # Set key encryption key document for creating a data key.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] key_document BSON document representing the key
+      #     encryption key document with an additional "provider" field.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_key_encryption_key(context, key_document)
         validate_document(key_document)
         data = key_document.to_bson.to_s

@@ -31,13 +31,18 @@ module Mongo
     # @option options [ String ] :key_vault_namespace The name of the
     #   key vault collection in the format "database.collection".
     # @option options [ Hash ] :kms_providers A hash of key management service
-    #   configuration information. Valid hash keys are :local or :aws. There
-    #   may be more than one KMS provider specified.
+    #   configuration information.
+    #   @see Mongo::Crypt::KMS::Credentials for list of options for every
+    #   supported provider.
+    #   @note There may be more than one KMS provider specified.
+    #
+    # @raise [ ArgumentError ] If required options are missing or incorrectly
+    #   formatted.
     def initialize(key_vault_client, options={})
       @encrypter = Crypt::ExplicitEncrypter.new(
         key_vault_client,
         options[:key_vault_namespace],
-        options[:kms_providers]
+        Crypt::KMS::Credentials.from_hash(options[:kms_providers])
       )
     end
 

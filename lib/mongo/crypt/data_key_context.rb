@@ -19,7 +19,7 @@ module Mongo
   module Crypt
 
     # A Context object initialized specifically for the purpose of creating
-    # a data key in the key managemenet system.
+    # a data key in the key management system.
     #
     # @api private
     class DataKeyContext < Context
@@ -31,11 +31,11 @@ module Mongo
       # @param [ Mongo::Crypt::EncryptionIO ] io An object that performs all
       #   driver I/O on behalf of libmongocrypt
       # @param [ String ] kms_provider The KMS provider to use. Options are
-      #   "aws" and "local".
+      #   "aws", "azure" and "local".
       # @param [ Hash ] options Data key creation options.
       #
-      # @option options [ Hash ] :master_key A Hash of options related to the AWS
-      #   KMS provider option. Required if kms_provider is "aws".
+      # @option options [ Hash ] :master_key A Hash of options related to the
+      #   KMS provider option. Required if kms_provider is "aws" or "azure".
       #   - :region [ String ] The The AWS region of the master key (required).
       #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
       #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
@@ -46,7 +46,10 @@ module Mongo
 
         case kms_provider
         when 'local'
-          Binding.ctx_setopt_master_key_local(self)
+          Binding.ctx_setopt_key_encryption_key(
+            self,
+            BSON::Document.new({provider: "local"})
+          )
         when 'aws'
           unless options
             raise ArgumentError.new(
@@ -65,7 +68,6 @@ module Mongo
           master_key_opts = options[:master_key]
 
           set_aws_master_key(master_key_opts)
-          set_aws_endpoint(master_key_opts[:endpoint]) if master_key_opts[:endpoint]
         when 'azure'
           unless options
             raise ArgumentError.new(
@@ -95,6 +97,12 @@ module Mongo
 
       private
 
+      # Configure the underlying mongocrypt_ctx_t object to accept Azure
+      #
+      # @param [ Hash ] master_key_opts Master key creation options.
+      #
+      # @option master_key_opts [ String ] :key_vault_endpoint Azure key vault endpoint.
+      # @option master_key_opts [ String ] :key_name Azure key name.
       def set_azure_master_key(master_key_opts)
         unless master_key_opts
           raise ArgumentError.new('The :master_key option cannot be nil')
@@ -189,22 +197,23 @@ module Mongo
           )
         end
 
-        Binding.ctx_setopt_master_key_aws(
-          self,
-          region,
-          key,
-        )
-      end
+        doc = BSON::Document.new({
+          provider: 'aws',
+          region: region,
+          key: key
+        })
 
-      def set_aws_endpoint(endpoint)
-        unless endpoint.is_a?(String)
-          raise ArgumentError.new(
-            "#{endpoint} is an invalid AWS master_key endpoint. " +
-            "The value of :endpoint option of the :master_key options hash must be a String"
-          )
+        if master_key_opts.key?(:endpoint)
+          unless master_key_opts[:endpoint].is_a?(String)
+            raise ArgumentError.new(
+              "#{master_key_opts[:endpoint]} is an invalid AWS master_key endpoint. " +
+              "The value of :endpoint option of the :master_key options hash must be a String"
+            )
+          end
+          doc[:endpoint] = master_key_opts[:endpoint]
         end
 
-        Binding.ctx_setopt_master_key_aws_endpoint(self, endpoint)
+        Binding.ctx_setopt_key_encryption_key(self, doc)
       end
 
       # Set the alt names option on the context
