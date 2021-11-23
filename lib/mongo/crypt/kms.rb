@@ -25,15 +25,21 @@ module Mongo
 
         attr_reader :local
 
-        def initialize(opts = {})
-          if opts.key?(:aws)
-            @aws = AWS.from_hash(opts[:aws])
+        def initialize(kms_providers)
+          if kms_providers.nil?
+            raise ArgumentError.new("KMS providers options must not be nil")
           end
-          if opts.key?(:azure)
-            @azure = Azure.from_hash(opts[:azure])
+          if kms_providers.key?(:aws)
+            @aws = AWS.from_hash(kms_providers[:aws])
           end
-          if opts.key?(:local)
-            @local = Local.from_hash(opts[:local])
+          if kms_providers.key?(:azure)
+            @azure = Azure.from_hash(kms_providers[:azure])
+          end
+          if kms_providers.key?(:local)
+            @local = Local.from_hash(kms_providers[:local])
+          end
+          if @aws.nil? && @azure.nil? && @local.nil?
+            raise ArgumentError.new("KMS providers options must have one of the following keys: :aws, :azure, :local")
           end
         end
 

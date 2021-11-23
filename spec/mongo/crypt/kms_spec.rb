@@ -5,6 +5,9 @@ require 'mongo'
 require 'lite_spec_helper'
 
 describe Mongo::Crypt::KMS::Credentials do
+  require_libmongocrypt
+  include_context 'define shared FLE helpers'
+
   context 'AWS' do
     let (:params) do
       Mongo::Crypt::KMS::Credentials::AWS.from_hash(kms_provider)
