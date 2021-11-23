@@ -42,7 +42,7 @@ module Mongo
       @encrypter = Crypt::ExplicitEncrypter.new(
         key_vault_client,
         options[:key_vault_namespace],
-        Crypt::KMS::Credentials.from_hash(options[:kms_providers])
+        Crypt::KMS::Credentials.new(options[:kms_providers])
       )
     end
 

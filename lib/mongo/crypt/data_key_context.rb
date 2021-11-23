@@ -203,7 +203,7 @@ module Mongo
           key: key
         })
 
-        if master_key_opts.key?(:endpoint)
+        if master_key_opts[:endpoint]
           unless master_key_opts[:endpoint].is_a?(String)
             raise ArgumentError.new(
               "#{master_key_opts[:endpoint]} is an invalid AWS master_key endpoint. " +
