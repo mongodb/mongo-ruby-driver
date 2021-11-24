@@ -53,7 +53,7 @@ module Mongo
 
         set_crypto_hooks
 
-        Binding.setopt_kms_providers(self, kms_providers.to_bson)
+        Binding.setopt_kms_providers(self, kms_providers.to_document)
         initialize_mongocrypt
       end
 
