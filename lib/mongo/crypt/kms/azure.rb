@@ -70,6 +70,11 @@ module Mongo
                         "{ key_vault_endpoint: 'KEY_VAULT_ENDPOINT', key_name: 'KEY_NAME' }"
 
           def initialize(opts)
+            if opts.is_a?(Hash)
+              raise ArgumentError.new(
+                'Key document options must contain a key named :master_key with a Hash value'
+              )
+            end
             @key_vault_endpoint = validate_param(:key_vault_endpoint, opts, FORMAT_HINT)
             @key_name = validate_param(:key_name, opts, FORMAT_HINT)
             @key_version = validate_param(:key_version, opts, FORMAT_HINT, required: false)

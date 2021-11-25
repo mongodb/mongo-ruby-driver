@@ -27,11 +27,6 @@ module Mongo
             raise ArgumentError.new('Key document options must not be nil')
           end
           master_key = options[:master_key]
-          if master_key.nil?
-            raise ArgumentError.new(
-              'The value of :key option of the :master_key options hash cannot be nil'
-            )
-          end
           @key_document = case kms_provider.to_s
             when 'aws' then KMS::AWS::KeyDocument.new(master_key)
             when 'azure' then KMS::Azure::KeyDocument.new(master_key)

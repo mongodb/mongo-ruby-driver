@@ -33,6 +33,7 @@ module Mongo
         #   formatted.
         def validate_param(key, opts, format_hint, required: true)
           value = opts.fetch(key)
+          return nil if value.nil? && !required
           if value.nil?
             raise ArgumentError.new(
               "The #{key} option must be a String with at least one character; " \

@@ -63,6 +63,11 @@ module Mongo
                         "{ region: 'REGION', key: 'KEY' }"
 
           def initialize(opts)
+            unless opts.is_a?(Hash)
+              raise ArgumentError.new(
+                'Key document options must contain a key named :master_key with a Hash value'
+              )
+            end
             @region = validate_param(:region, opts, FORMAT_HINT)
             @key = validate_param(:key, opts, FORMAT_HINT)
             @endpoint = validate_param(:endpoint, opts, FORMAT_HINT, required: false)
