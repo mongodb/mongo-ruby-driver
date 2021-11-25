@@ -10,7 +10,7 @@ describe Mongo::Crypt::KMS::Credentials do
 
   context 'AWS' do
     let (:params) do
-      Mongo::Crypt::KMS::Credentials::AWS.from_hash(kms_provider)
+      Mongo::Crypt::KMS::AWS::Credentials.new(kms_provider)
     end
 
     context 'with empty AWS kms_provider' do
@@ -81,7 +81,7 @@ describe Mongo::Crypt::KMS::Credentials do
       end
 
       it 'returns valid libmongocrypt credentials' do
-        expect(params.to_bson).to eq(
+        expect(params.to_document).to eq(
           BSON::Document.new({
             accessKeyId: SpecConfig.instance.fle_aws_key,
             secretAccessKey: SpecConfig.instance.fle_aws_secret,
@@ -93,7 +93,7 @@ describe Mongo::Crypt::KMS::Credentials do
 
   context 'Azure' do
     let (:params) do
-      Mongo::Crypt::KMS::Credentials::Azure.from_hash(kms_provider)
+      Mongo::Crypt::KMS::Azure::Credentials.new(kms_provider)
     end
 
     context 'with empty Azure kms_provider' do
@@ -203,7 +203,7 @@ describe Mongo::Crypt::KMS::Credentials do
       end
 
       it 'returns valid libmongocrypt credentials' do
-        expect(params.to_bson).to eq(
+        expect(params.to_document).to eq(
           BSON::Document.new({
             tenantId: SpecConfig.instance.fle_azure_tenant_id,
             clientId: SpecConfig.instance.fle_azure_client_id,

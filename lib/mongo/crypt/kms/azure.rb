@@ -46,13 +46,6 @@ module Mongo
             )
           end
 
-          def initialize(tenant_id:, client_id:, client_secret:, identity_platform_endpoint: nil)
-            @tenant_id = tenant_id
-            @client_id = client_id
-            @client_secret = client_secret
-            @identity_platform_endpoint = identity_platform_endpoint
-          end
-
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({

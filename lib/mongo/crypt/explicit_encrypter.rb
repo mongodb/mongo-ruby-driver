@@ -61,12 +61,12 @@ module Mongo
       #
       # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
       #   BSON::Binary object with type :uuid.
-      def create_and_insert_data_key(kms_provider, options)
+      def create_and_insert_data_key(key_document, key_alt_names)
         data_key_document = Crypt::DataKeyContext.new(
           @crypt_handle,
           @encryption_io,
-          kms_provider,
-          options
+          key_document,
+          key_alt_names
         ).run_state_machine
 
         @encryption_io.insert_data_key(data_key_document).inserted_id

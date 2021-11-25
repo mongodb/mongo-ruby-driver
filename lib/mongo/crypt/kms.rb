@@ -68,3 +68,4 @@ module Mongo
 end
 
 require "mongo/crypt/kms/credentials.rb"
+require "mongo/crypt/kms/key_document.rb"

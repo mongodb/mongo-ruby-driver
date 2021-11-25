@@ -38,15 +38,15 @@ module Mongo
             })
           end
         end
-      end
 
-      class KeyDocument
-        def initialize(opts)
-        end
+        class KeyDocument
+          def initialize(opts)
+          end
 
-        # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
-        def to_document
-          BSON::Document.new({ provider: "local" })
+          # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
+          def to_document
+            BSON::Document.new({ provider: "local" })
+          end
         end
       end
     end
