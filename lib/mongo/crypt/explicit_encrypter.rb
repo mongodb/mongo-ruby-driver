@@ -43,29 +43,18 @@ module Mongo
       # that key in the KMS collection. The generated key is encrypted with
       # the KMS master key.
       #
-      # @param [ String ] kms_provider The KMS provider to use. Valid values are
-      #   "aws" and "local".
-      # @param [ Hash ] options
-      #
-      # @option options [ Hash ] :master_key Information about the AWS master key. Required
-      #   if kms_provider is "aws".
-      #   - :region [ String ] The The AWS region of the master key (required).
-      #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
-      #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
-      #     endpoint should be a host name with an optional port number separated
-      #     by a colon (e.g. "kms.us-east-1.amazonaws.com" or
-      #     "kms.us-east-1.amazonaws.com:443"). An endpoint in any other format
-      #     will not be properly parsed.
-      # @option options [ Array<String> ] :key_alt_names An optional array of strings specifying
+      # @param [ Mongo::Crypt::KMS::MasterKeyDocument ] master_key_document The master
+      #   key document that contains master encryption key parameters.
+      # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
       #
       # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
       #   BSON::Binary object with type :uuid.
-      def create_and_insert_data_key(key_document, key_alt_names)
+      def create_and_insert_data_key(master_key_document, key_alt_names)
         data_key_document = Crypt::DataKeyContext.new(
           @crypt_handle,
           @encryption_io,
-          key_document,
+          master_key_document,
           key_alt_names
         ).run_state_machine
 

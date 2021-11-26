@@ -18,13 +18,24 @@
 module Mongo
   module Crypt
     module KMS
+
+      # KMS Credentials object contains credentials for using KMS providers.
+      #
+      # @api private
       class Credentials
-        attr_reader :aws
 
-        attr_reader :azure
-
-        attr_reader :local
-
+        # Creates a KMS credentials object form a parameters hash.
+        #
+        # @param [ Hash ] kms_providers A hash that contains credential for
+        #   KMS providers. The hash should have KMS provider names as keys,
+        #   and required parameters for every provider as values.
+        #   Required parameters for KMS providers are described in corresponding
+        #   classes inside Mongo::Crypt::KMS module.
+        #
+        # @note There may be more than one KMS provider specified.
+        #
+        # @raise [ ArgumentError ] If required options are missing or incorrectly
+        #   formatted.
         def initialize(kms_providers)
           if kms_providers.nil?
             raise ArgumentError.new("KMS providers options must not be nil")
@@ -43,6 +54,9 @@ module Mongo
           end
         end
 
+        # Convert credentials object to a BSON document in libmongocrypt format.
+        #
+        # @return [ BSON::Document ] Credentials as BSON document.
         def to_document
           BSON::Document.new({}).tap do |bson|
             bson[:aws] = @aws.to_document if @aws
@@ -54,7 +68,3 @@ module Mongo
     end
   end
 end
-
-require 'mongo/crypt/kms/aws.rb'
-require 'mongo/crypt/kms/azure.rb'
-require 'mongo/crypt/kms/local.rb'

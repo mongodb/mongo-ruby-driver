@@ -69,7 +69,7 @@ module Mongo
     # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
     #   BSON::Binary object with type :uuid.
     def create_data_key(kms_provider, options={})
-      key_document = Crypt::KMS::KeyDocument.new(kms_provider, options)
+      key_document = Crypt::KMS::MasterKeyDocument.new(kms_provider, options)
       key_alt_names = options[:key_alt_names]
       @encrypter.create_and_insert_data_key(key_document, key_alt_names)
     end

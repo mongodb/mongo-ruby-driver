@@ -199,7 +199,7 @@ in order to perform automatic encryption.
   # => <BSON::Binary... type=ciphertext...>
 
 The example above demonstrates using automatic encryption with a local master key.
-For more information about using the AWS Key Management Service to create a
+For more information about using other key management services to create a
 master key and create data keys, see the following sections of this tutorial:
 
 - `Creating A Master Key`_
@@ -293,7 +293,7 @@ in order to perform explicit encryption.
   # => "sensitive data"
 
 The example above demonstrates using explicit encryption with a local master key.
-For more information about using the AWS Key Management Service to create a
+For more information about using other key management services to create a
 master key and create data keys, see the following sections of this tutorial:
 
 - `Creating A Master Key`_,
@@ -304,8 +304,8 @@ Creating a Master Key
 Both automatic encryption and explicit encryption require an encryption master key.
 This master key is used to encrypt data keys, which are in turn used to encrypt
 user data. The master key can be generated in one of two ways: by creating a
-local key, or by creating a key in the Amazon Web Services Key Management
-Service (AWS KMS).
+local key, or by creating a key in a key management service. Currently
+Ruby driver supports AWS Key Management Service (KMS) and Azure Key Vault.
 
 Local Master Key
 ~~~~~~~~~~~~~~~~
@@ -324,15 +324,15 @@ Run the following code to generate a local master key using Ruby:
   local_master_key = SecureRandom.random_bytes(96)
   # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..." (a binary blob)
 
-AWS Master Key
-~~~~~~~~~~~~~~
-It is recommended that you use Amazon's Key Management Service to create and
-store your master key. To do so, follow steps 1 and 2 of the
-:drivers:`"Convert to a Remote Master Key" section</security/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
+Remote Master Key
+~~~~~~~~~~~~~~~~~
+It is recommended that you use a remote Key Management Service to create and
+store your master key. To do so, follow steps of the
+:drivers:`"Set up a Remote Master Key" section</security/client-side-field-level-encryption-local-key-to-kms/#set-up-a-remote-master-key>`
 in the MongoDB Client-Side Encryption documentation.
 
 For more information about creating a master key, see the
-:drivers:`Create a Master Key </security/client-side-field-level-encryption-guide/#a-create-a-master-key>`
+:drivers:`Create a Master Key </security/client-side-field-level-encryption-guide/#a.-create-a-master-key>`
 section of the MongoDB manual.
 
 Creating a Data Key
@@ -379,13 +379,18 @@ key with the following code snippet:
 See the `Local Master Key`_ section for more information about generating a new
 local master key.
 
-Create a Data Key Using an AWS Master Key
+Create a Data Key Using a Remote Master Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have created an AWS master key, note the access key ID and the secret access
+If you have created an AWS KMS master key, note the access key ID and the secret access
 key of the IAM user that has permissions to use the key. Additionally, note
 the AWS region and the Amazon Resource Number (ARN) of your master key. You will
 use that information to generate a data key.
+
+If you have created an Azure master key, note the tenant id, the client id, and
+the client secret of the application that has permissions to use the key.
+Additionally, note the key name, key version (id any), and key vault endpoint
+for your master key. You will use that information to generate a data key.
 
 .. code-block:: ruby
 
@@ -402,11 +407,16 @@ use that information to generate a data key.
       aws: {
         access_key_id: 'IAM-ACCESS-KEY-ID',
         secret_access_key: 'IAM-SECRET-ACCESS-KEY'
+      },
+      azure: {
+        tenant_id: 'AZURE-TENANT-ID',
+        client_id: 'AZURE-CLIENT-ID',
+        client_secret: 'AZURE-CLIENT-SECRET'
       }
     }
   )
 
-  data_key_id = client_encryption.create_data_key(
+  aws_data_key_id = client_encryption.create_data_key(
     'aws',
     {
       master_key: {
@@ -418,12 +428,24 @@ use that information to generate a data key.
   )
   # => <BSON::Binary... type=ciphertext...>
 
-See the `AWS Master Key`_ section of this tutorial  for more information about
-generating a new master key on AWS and finding the information you need to
+  azure_data_key_id = client_encryption.create_data_key(
+    'azure',
+    {
+      master_key: {
+        key_vault_endpoint: 'AZURE-KEY-VAULT-ENDPOINT',
+        key_name: 'AZURE-KEY-NAME'
+      }
+
+    }
+  )
+  # => <BSON::Binary... type=ciphertext...>
+
+See the `Remote Master Key`_ section of this tutorial  for more information about
+generating a new remote master key and finding the information you need to
 create data keys.
 
 For more information about creating a data key, see the
-:drivers:`Create a Data Encryption Key </security/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
+:drivers:`Create a Data Encryption Key </security/client-side-field-level-encryption-guide/#b.-create-a-data-encryption-key>`
 section of the MongoDB manual.
 
 Auto-Encryption Options

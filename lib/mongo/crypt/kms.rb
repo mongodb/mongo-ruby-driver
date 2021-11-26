@@ -31,6 +31,8 @@ module Mongo
         #
         # @raise [ ArgumentError ] If required options are missing or incorrectly
         #   formatted.
+        #
+        # @api private
         def validate_param(key, opts, format_hint, required: true)
           value = opts.fetch(key)
           return nil if value.nil? && !required
@@ -69,4 +71,7 @@ module Mongo
 end
 
 require "mongo/crypt/kms/credentials.rb"
-require "mongo/crypt/kms/key_document.rb"
+require "mongo/crypt/kms/master_key_document.rb"
+require 'mongo/crypt/kms/aws.rb'
+require 'mongo/crypt/kms/azure.rb'
+require 'mongo/crypt/kms/local.rb'

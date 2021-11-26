@@ -512,21 +512,21 @@ describe 'Auto Encryption' do
         end
       end
 
-      # context 'with Azure KMS provider' do
-      #   include_context 'with Azure kms_providers and key alt names'
-      #   it 'encrypts the ssn field' do
-      #     expect(result).to be_ok
-      #     expect(result.inserted_ids.length).to eq(1)
+      context 'with Azure KMS provider' do
+        include_context 'with Azure kms_providers and key alt names'
+        it 'encrypts the ssn field' do
+          expect(result).to be_ok
+          expect(result.inserted_ids.length).to eq(1)
 
-      #     id = result.inserted_ids.first
+          id = result.inserted_ids.first
 
-      #     document = client['users'].find(_id: id).first
-      #     document.should_not be_nil
-      #     # Auto-encryption with key alt names only works with random encryption,
-      #     # so it will not generate the same result on every test run.
-      #     expect(document['ssn']).to be_ciphertext
-      #   end
-      # end
+          document = client['users'].find(_id: id).first
+          document.should_not be_nil
+          # Auto-encryption with key alt names only works with random encryption,
+          # so it will not generate the same result on every test run.
+          expect(document['ssn']).to be_ciphertext
+        end
+      end
 
       context 'with local KMS provider' do
         include_context 'with local kms_providers and key alt names'

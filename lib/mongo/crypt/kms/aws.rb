@@ -19,27 +19,43 @@ module Mongo
   module Crypt
     module KMS
       module AWS
+
+        # AWS KMS Credentials object contains credentials for using AWS KMS provider.
+        #
+        # @api private
         class Credentials
           include KMS::Validations
 
-          # @return [ String ] AWS access key
+          # @return [ String ] AWS access key.
           attr_reader :access_key_id
 
-          # @return [ String ] AWS secret access key
+          # @return [ String ] AWS secret access key.
           attr_reader :secret_access_key
 
-          # @return [ String | nil ] AWS session token
+          # @return [ String | nil ] AWS session token.
           attr_reader :session_token
 
           FORMAT_HINT = "AWS KMS provider options must be in the format: " +
                         "{ access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }"
 
+          # Creates an AWS KMS credentials object form a parameters hash.
+          #
+          # @param [ Hash ] opts A hash that contains credentials for
+          #   AWS KMS provider
+          # @option opts [ String ] :access_key_id AWS access key id.
+          # @option opts [ String ] :secret_access_key AWS secret access key.
+          # @option opts [ String | nil ] :session_token AWS session token, optional.
+          #
+          # @raise [ ArgumentError ] If required options are missing or incorrectly
+          #   formatted.
           def initialize(opts)
             @access_key_id = validate_param(:access_key_id, opts, FORMAT_HINT)
             @secret_access_key = validate_param(:secret_access_key, opts, FORMAT_HINT)
             @session_token = validate_param(:session_token, opts, FORMAT_HINT, required: false)
           end
 
+          # Convert credentials object to a BSON document in libmongocrypt format.
+          #
           # @return [ BSON::Document ] AWS KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({
@@ -53,15 +69,33 @@ module Mongo
           end
         end
 
-        class KeyDocument
+        # AWS KMS master key document object contains KMS master key parameters.
+        #
+        # @api private
+        class MasterKeyDocument
           include KMS::Validations
 
+          # @return [ String ] AWS region.
           attr_reader :region
+
+          # @return [ String ] AWS KMS key.
           attr_reader :key
+
+          # @return [ String | nil ] AWS KMS endpoint.
           attr_reader :endpoint
+
           FORMAT_HINT = "AWS key document  must be in the format: " +
                         "{ region: 'REGION', key: 'KEY' }"
 
+        # Creates a master key document object form a parameters hash.
+        #
+        # @param [ Hash ] opts A hash that contains master key options for
+        #   the AWS KMS provider.
+        # @option opts [ String ] :region AWS region.
+        # @option opts [ String ] :key AWS KMS key.
+        # @option opts [ String | nil ] :endpoint AWS KMS endpoint, optional.
+        #
+        # @raise [ ArgumentError ] If required options are missing or incorrectly.
           def initialize(opts)
             unless opts.is_a?(Hash)
               raise ArgumentError.new(
@@ -73,7 +107,9 @@ module Mongo
             @endpoint = validate_param(:endpoint, opts, FORMAT_HINT, required: false)
           end
 
-          # @return [ BSON::Document ] AWS KMS credentials in libmongocrypt format.
+          # Convert master key document object to a BSON document in libmongocrypt format.
+          #
+          # @return [ BSON::Document ] AWS KMS master key document in libmongocrypt format.
           def to_document
             BSON::Document.new({
               provider: 'aws',

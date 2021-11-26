@@ -19,19 +19,31 @@ module Mongo
   module Crypt
     module KMS
       module Local
+        # Local KMS Credentials object contains credentials for using local KMS provider.
+        #
+        # @api private
         class Credentials
           include KMS::Validations
 
+          # @return [ String ] Master key.
           attr_reader :key
 
           FORMAT_HINT = "Local KMS provider options must be in the format: " +
                         "{ key: 'MASTER-KEY' }"
 
+          # Creates a local KMS credentials object form a parameters hash.
+          #
+          # @param [ Hash ] opts A hash that contains credentials for
+          #   local KMS provider
+          # @option opts [ String ] :key Master key.
+          #
+          # @raise [ ArgumentError ] If required options are missing or incorrectly
+          #   formatted.
           def initialize(opts)
             @key = validate_param(:key, opts, FORMAT_HINT)
           end
 
-          # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
+          # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({
               key: BSON::Binary.new(@key, :generic),
@@ -39,10 +51,18 @@ module Mongo
           end
         end
 
-        class KeyDocument
-          def initialize(opts)
+        # Local KMS master key document object contains KMS master key parameters.
+        #
+        # @api private
+        class MasterKeyDocument
+
+          # Creates a master key document object form a parameters hash.
+          # This empty method is to keep a uniform interface for all KMS providers.
+          def initialize(_opts)
           end
 
+          # Convert master key document object to a BSON document in libmongocrypt format.
+          #
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({ provider: "local" })

@@ -30,20 +30,13 @@ module Mongo
       #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
       # @param [ Mongo::Crypt::EncryptionIO ] io An object that performs all
       #   driver I/O on behalf of libmongocrypt
-      # @param [ String ] kms_provider The KMS provider to use. Options are
-      #   "aws", "azure" and "local".
-      # @param [ Hash ] options Data key creation options.
-      #
-      # @option options [ Hash ] :master_key A Hash of options related to the
-      #   KMS provider option. Required if kms_provider is "aws" or "azure".
-      #   - :region [ String ] The The AWS region of the master key (required).
-      #   - :key [ String ] The Amazon Resource Name (ARN) of the master key (required).
-      #   - :endpoint [ String ] An alternate host to send KMS requests to (optional).
-      # @option options [ Array<String> ] :key_alt_names An optional array of strings specifying
+      # @param [ Mongo::Crypt::KMS::MasterKeyDocument ] master_key_document The master
+      #   key document that contains master encryption key parameters.
+      # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
-      def initialize(mongocrypt, io, key_document, key_alt_names = nil)
+      def initialize(mongocrypt, io, master_key_document, key_alt_names = nil)
         super(mongocrypt, io)
-        Binding.ctx_setopt_key_encryption_key(self, key_document.to_document)
+        Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)
         set_key_alt_names(key_alt_names) if key_alt_names
         initialize_ctx
       end

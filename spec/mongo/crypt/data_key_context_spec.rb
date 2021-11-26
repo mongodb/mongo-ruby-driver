@@ -77,7 +77,7 @@ describe Mongo::Crypt::DataKeyContext do
       include_context 'with AWS kms_providers'
 
       let(:key_document) do
-        Mongo::Crypt::KMS::KeyDocument.new(
+        Mongo::Crypt::KMS::MasterKeyDocument.new(
           'aws',
           { master_key: { region: 'us-east-2', key: 'arn' } }
         )
@@ -95,7 +95,7 @@ describe Mongo::Crypt::DataKeyContext do
 
       context 'with valid endpoint' do
         let(:key_document) do
-          Mongo::Crypt::KMS::KeyDocument.new(
+          Mongo::Crypt::KMS::MasterKeyDocument.new(
             'aws',
             {
               master_key: {
@@ -123,7 +123,7 @@ describe Mongo::Crypt::DataKeyContext do
       include_context 'with local kms_providers'
 
       let(:key_document) do
-        Mongo::Crypt::KMS::KeyDocument.new(
+        Mongo::Crypt::KMS::MasterKeyDocument.new(
           'local',
           {
             master_key: { key: 'MASTER-KEY' }

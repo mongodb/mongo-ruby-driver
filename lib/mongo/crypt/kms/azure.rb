@@ -19,6 +19,9 @@ module Mongo
   module Crypt
     module KMS
       module Azure
+        # Azure KMS Credentials object contains credentials for using Azure KMS provider.
+        #
+        # @api private
         class Credentials
           include KMS::Validations
 
@@ -37,6 +40,18 @@ module Mongo
           FORMAT_HINT = "Azure KMS provider options must be in the format: " +
               "{ tenant_id: 'TENANT-ID', client_id: 'TENANT_ID', client_secret: 'CLIENT_SECRET' }"
 
+          # Creates an Azure KMS credentials object form a parameters hash.
+          #
+          # @param [ Hash ] opts A hash that contains credentials for
+          #   Azure KMS provider
+          # @option opts [ String ] :tenant_id Azure tenant id.
+          # @option opts [ String ] :client_id Azure client id.
+          # @option opts [ String ] :client_secret Azure client secret.
+          # @option opts [ String | nil ] :identity_platform_endpoint Azure
+          #   identity platform endpoint, optional.
+          #
+          # @raise [ ArgumentError ] If required options are missing or incorrectly
+          #   formatted.
           def initialize(opts)
             @tenant_id = validate_param(:tenant_id, opts, FORMAT_HINT)
             @client_id = validate_param(:client_id, opts, FORMAT_HINT)
@@ -46,6 +61,8 @@ module Mongo
             )
           end
 
+          # Convert credentials object to a BSON document in libmongocrypt format.
+          #
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({
@@ -60,15 +77,33 @@ module Mongo
           end
         end
 
-        class KeyDocument
+        # Azure KMS master key document object contains KMS master key parameters.
+        #
+        # @api private
+        class MasterKeyDocument
           include KMS::Validations
 
+          # @return [ String ] Azure key vault endpoint.
           attr_reader :key_vault_endpoint
+
+          # @return [ String ] Azure KMS key name.
           attr_reader :key_name
+
+          # @return [ String | nil ] Azure KMS key version.
           attr_reader :key_version
+
           FORMAT_HINT = "Azure key document  must be in the format: " +
                         "{ key_vault_endpoint: 'KEY_VAULT_ENDPOINT', key_name: 'KEY_NAME' }"
 
+        # Creates a master key document object form a parameters hash.
+        #
+        # @param [ Hash ] opts A hash that contains master key options for
+        #   the Azure KMS provider.
+        # @option opts [ String ] :key_vault_endpoint Azure key vault endpoint.
+        # @option opts [ String ] :key_name Azure KMS key name.
+        # @option opts [ String | nil ] :key_version Azure KMS key version, optional.
+        #
+        # @raise [ ArgumentError ] If required options are missing or incorrectly.
           def initialize(opts)
             if opts.is_a?(Hash)
               raise ArgumentError.new(
@@ -80,6 +115,8 @@ module Mongo
             @key_version = validate_param(:key_version, opts, FORMAT_HINT, required: false)
           end
 
+          # Convert master key document object to a BSON document in libmongocrypt format.
+          #
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({
