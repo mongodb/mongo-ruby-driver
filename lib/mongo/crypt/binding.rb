@@ -253,69 +253,36 @@ module Mongo
         end
       end
 
-      # @!method self.mongocrypt_setopt_kms_provider_aws(crypt, aws_access_key_id, aws_access_key_id_len, aws_secret_access_key, aws_secret_access_key_len)
+      # @!method self.mongocrypt_setopt_kms_providers(crypt, kms_providers)
       #   @api private
       #
-      #   Configure mongocrypt_t object with AWS KMS provider options.
+      #   Configure KMS providers with a BSON document.
       #   @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
-      #   @param [ String ] aws_access_key_id The AWS access key id.
-      #   @param [ Integer ] aws_access_key_id_len The length of the AWS access
-      #     key string (or -1 for a null-terminated string).
-      #   @param [ String ] aws_secret_access_key The AWS secret access key.
-      #   @param [ Integer ] aws_secret_access_key_len The length of the AWS
-      #     secret access key (or -1 for a null-terminated string).
-      #   @return [ Boolean ] Returns whether the option was set successfully.
+      #   @param [ FFI::Pointer ] kms_providers A pointer to a
+      #     mongocrypt_binary_t object that references a BSON document mapping
+      #     the KMS provider names to credentials.
+      #   @note Do not initialize ctx before calling this method.
+      #
+      #   @returns [ true | false ] Returns whether the options was set successfully.
       attach_function(
-        :mongocrypt_setopt_kms_provider_aws,
-        [:pointer, :string, :int, :string, :int],
-        :bool
-      )
-
-      # Configure the Handle object with AWS KMS provider options
-      #
-      # @param [ Mongo::Crypt::Handle ] handle
-      # @param [ String ] aws_access_key The AWS access key
-      # @param [ String ] aws_secret_access_key The AWS secret access key
-      #
-      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
-      def self.setopt_kms_provider_aws(handle,
-        aws_access_key, aws_secret_access_key
-      )
-        check_status(handle) do
-          mongocrypt_setopt_kms_provider_aws(
-            handle.ref,
-            aws_access_key,
-            -1,
-            aws_secret_access_key,
-            -1
-          )
-        end
-      end
-
-      # @!method self.mongocrypt_setopt_kms_provider_local(crypt, key)
-      #   @api private
-      #
-      #   Configure mongocrypt_t object to take local KSM provider options.
-      #   @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
-      #   @param [ FFI::Pointer ] key A pointer to a mongocrypt_binary_t object
-      #     that references the 96-byte local master key.
-      #   @return [ Boolean ] Returns whether the option was set successfully.
-      attach_function(
-        :mongocrypt_setopt_kms_provider_local,
+        :mongocrypt_setopt_kms_providers,
         [:pointer, :pointer],
         :bool
       )
 
-      # Set local KMS provider options on the Mongo::Crypt::Handle object
+      # Set KMS providers options on the Mongo::Crypt::Handle object
       #
       # @param [ Mongo::Crypt::Handle ] handle
-      # @param [ String ] master_key The 96-byte local KMS master key
+      # @param [ BSON::Document ] kms_providers BSON document mapping
+      #   the KMS provider names to credentials.
       #
       # @raise [ Mongo::Error::CryptError ] If the option is not set successfully
-      def self.setopt_kms_provider_local(handle, master_key)
-        Binary.wrap_string(master_key) do |master_key_p|
+      def self.setopt_kms_providers(handle, kms_providers)
+        validate_document(kms_providers)
+        data = kms_providers.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
           check_status(handle) do
-            mongocrypt_setopt_kms_provider_local(handle.ref, master_key_p)
+            mongocrypt_setopt_kms_providers(handle.ref, data_p)
           end
         end
       end
@@ -496,95 +463,36 @@ module Mongo
         end
       end
 
-      # @!method self.mongocrypt_ctx_setopt_masterkey_aws(ctx, region, region_len, arn, arn_len)
+      # @!method self.mongocrypt_ctx_setopt_key_encryption_key(ctx)
       #   @api private
       #
-      #   Configure the ctx to take a master key from AWS.
-      #   @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_object.
-      #   @param [ String ] region The AWS region.
-      #   @param [ Integer ] region_len The length of the region string (or -1
-      #     for a null-terminated string).
-      #   @param [ String ] arn The Amazon Resource Name (ARN) of the mater key.
-      #   @param [ Integer ] arn_len The length of the ARN (or -1 for a
-      #     null-terminated string).
-      #   @return [ Boolean ] Returns whether the option was set successfully.
-      attach_function(
-        :mongocrypt_ctx_setopt_masterkey_aws,
-        [:pointer, :string, :int, :string, :int],
-        :bool
-      )
-
-      # Configure the Context object to take a master key from AWS
-      #
-      # @param [ Mongo::Crypt::Context ] context
-      # @param [ String ] region The AWS region (e.g. "us-east-2")
-      # @param [ String ] arn The master key Amazon Resource Name
-      #
-      # @raise [ Mongo::Error::CryptError ] If the operation failed
-      def self.ctx_setopt_master_key_aws(context, region, arn)
-        check_ctx_status(context) do
-          mongocrypt_ctx_setopt_masterkey_aws(
-            context.ctx_p,
-            region,
-            -1,
-            arn,
-            -1
-          )
-        end
-      end
-
-      # @!method self.mongocrypt_ctx_setopt_masterkey_aws_endpoint(ctx, endpoint, endpoint_len)
-      #   @api private
-      #
-      #   Set a custom endpoint at which to fetch the AWS master key
-      #   @param [ FFI::Pointer ] ctx
-      #   @param [ String ] endpoint The custom endpoint.
-      #   @param [ Integer ] endpoint_len The length of the endpoint string (or
-      #     -1 for a null-terminated string).
-      #   @return [ Boolean ] Returns whether the option was set successfully.
-      attach_function(
-        :mongocrypt_ctx_setopt_masterkey_aws_endpoint,
-        [:pointer, :string, :int],
-        :bool
-      )
-
-      # Configure the Context object to take a master key from AWS
-      #
-      # @param [ Mongo::Crypt::Context ] context
-      # @param [ String ] endpoint The custom AWS master key endpoint
-      #
-      # @raise [ Mongo::Error::CryptError ] If the operation failed
-      def self.ctx_setopt_master_key_aws_endpoint(context, endpoint)
-        check_ctx_status(context) do
-          mongocrypt_ctx_setopt_masterkey_aws_endpoint(
-            context.ctx_p,
-            endpoint,
-            -1,
-          )
-        end
-      end
-
-      # @!method self.mongocrypt_ctx_setopt_masterkey_local(ctx)
-      #   @api private
-      #
-      #   Set the ctx to take a local master key.
+      #   Set key encryption key document for creating a data key.
       #   @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      #   @param [ FFI::Pointer ] bin A pointer to a mongocrypt_binary_t
+      #     object that references a BSON document representing the key
+      #     encryption key document with an additional "provider" field.
       #   @note Do not initialize ctx before calling this method.
       #   @return [ Boolean ] Whether the option was successfully set.
       attach_function(
-        :mongocrypt_ctx_setopt_masterkey_local,
-        [:pointer],
+        :mongocrypt_ctx_setopt_key_encryption_key,
+        [:pointer, :pointer],
         :bool
       )
 
-      # Tell the Context object to read the master key from local KMS options
+      # Set key encryption key document for creating a data key.
       #
       # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] key_document BSON document representing the key
+      #     encryption key document with an additional "provider" field.
       #
       # @raise [ Mongo::Error::CryptError ] If the operation failed
-      def self.ctx_setopt_master_key_local(context)
-        check_ctx_status(context) do
-          mongocrypt_ctx_setopt_masterkey_local(context.ctx_p)
+      def self.ctx_setopt_key_encryption_key(context, key_document)
+        validate_document(key_document)
+        data = key_document.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_setopt_key_encryption_key(context.ctx_p, data_p)
+          end
         end
       end
 

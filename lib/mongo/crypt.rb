@@ -32,5 +32,6 @@ module Mongo
     autoload(:EncryptionIO, 'mongo/crypt/encryption_io')
     autoload(:ExplicitEncrypter, 'mongo/crypt/explicit_encrypter')
     autoload(:AutoEncrypter, 'mongo/crypt/auto_encrypter')
+    autoload(:KMS, 'mongo/crypt/kms')
   end
 end

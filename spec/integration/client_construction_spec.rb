@@ -184,7 +184,7 @@ describe 'Client construction' do
       it 'raises an exception' do
         expect do
           client
-        end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; it is currently an empty string/)
+        end.to raise_error(ArgumentError, /The access_key_id option must be a String with at least one character; it is currently an empty string/)
       end
     end
 

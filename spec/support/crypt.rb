@@ -48,6 +48,17 @@ module Crypt
       }
     end
 
+    # Azure KMS provider options
+    let(:azure_kms_providers) do
+      {
+        azure: {
+          tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+          client_id: SpecConfig.instance.fle_azure_client_id,
+          client_secret: SpecConfig.instance.fle_azure_client_secret,
+        }
+      }
+    end
+
     # Key vault database and collection names
     let(:key_vault_db) { 'admin' }
     let(:key_vault_coll) { 'datakeys' }
@@ -107,11 +118,15 @@ module Crypt
         SpecConfig.instance.fle_aws_region &&
         SpecConfig.instance.fle_aws_arn
 
-        skip(
-          'This test requires the MONGO_RUBY_DRIVER_AWS_KEY, ' +
-          'MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, ' +
-          'MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS.'
-        )
+        reason = "This test requires the MONGO_RUBY_DRIVER_AWS_KEY, " +
+                "MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, " +
+                "MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS."
+
+        if SpecConfig.instance.fle?
+          fail(reason)
+        else
+          skip(reason)
+        end
       end
     end
 
@@ -152,6 +167,58 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
+    end
+  end
+
+  shared_context 'with Azure kms_providers' do
+    before do
+      unless SpecConfig.instance.fle_azure_client_id &&
+        SpecConfig.instance.fle_azure_client_secret &&
+        SpecConfig.instance.fle_azure_tenant_id &&
+        SpecConfig.instance.fle_azure_identity_platform_endpoint
+
+        reason = 'This test requires the MONGO_RUBY_DRIVER_AZURE_TENANT_ID, ' +
+        'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
+        'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
+
+        if SpecConfig.instance.fle?Crypt
+          fail(reason)
+        else
+          skip(reason)
+        end
+      end
+    end
+
+    let(:kms_provider_name) { 'azure' }
+    let(:kms_providers) { azure_kms_providers }
+
+    let(:data_key) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_azure.json'))
+    end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure.json'))
+    end
+
+    let(:data_key_options) do
+      {
+        master_key: {
+          keyVaultEndpoint: SpecConfig.instance.fle_azure_key_vault_endpoint,
+          keyName: SpecConfig.instance.fle_azure_key_name,
+        }
+      }
+    end
+
+    let(:encrypted_ssn) do
+      "AQGVERAAAAAAAAAAAAAAAAACFq9wVyHGWquXjaAjjBwI3MQNuyokz/+wWSi0\n8n9iu1cKzTGI9D5uVSNs64tBulnZpywtuewBQtJIphUoEr5YpSFLglOh3bp6\nmC9hfXSyFT4="
+    end
+  end
+
+  shared_context 'with Azure kms_providers and key alt names' do
+    include_context 'with Azure kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure_key_alt_names.json'))
     end
   end
 end
