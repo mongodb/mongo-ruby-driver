@@ -6,17 +6,34 @@ require_relative '../helpers/mongo_crypt_spec_helper'
 
 shared_context 'initialized for data key creation' do
   let(:master_key) { "ru\xfe\x00" * 24 }
-  let(:binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(master_key)}
+
+  let(:kms_providers) do
+    BSON::Document.new({
+      local: {
+        key: BSON::Binary.new(master_key, :generic),
+      }
+    })
+  end
+
+  let(:binary) do
+    MongoCryptSpecHelper.mongocrypt_binary_t_from(kms_providers.to_bson.to_s)
+  end
+
+  let(:key_document) do
+    MongoCryptSpecHelper.mongocrypt_binary_t_from(
+      BSON::Document.new({provider: 'local'}).to_bson.to_s)
+  end
 
   before do
-    Mongo::Crypt::Binding.mongocrypt_setopt_kms_provider_local(mongocrypt, binary)
+    Mongo::Crypt::Binding.mongocrypt_setopt_kms_providers(mongocrypt, binary)
     MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
     Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
 
-    Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
+    Mongo::Crypt::Binding.mongocrypt_ctx_setopt_key_encryption_key(context, key_document)
   end
 
   after do
+    Mongo::Crypt::Binding.mongocrypt_binary_destroy(key_document)
     Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
   end
 end
@@ -81,20 +98,6 @@ describe 'Mongo::Crypt::Binding' do
           Mongo::Crypt::Binding.mongocrypt_ctx_status(context, status)
           expect(Mongo::Crypt::Binding.mongocrypt_status_type(status)).to eq(:ok)
         end
-      end
-    end
-
-    describe '#mongocrypt_ctx_setopt_masterkey_local' do
-      let(:result) do
-        Mongo::Crypt::Binding.mongocrypt_ctx_setopt_masterkey_local(context)
-      end
-
-      before do
-        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
-      end
-
-      it 'returns true' do
-        expect(result).to be true
       end
     end
 

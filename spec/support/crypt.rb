@@ -118,11 +118,15 @@ module Crypt
         SpecConfig.instance.fle_aws_region &&
         SpecConfig.instance.fle_aws_arn
 
-        skip(
-          'This test requires the MONGO_RUBY_DRIVER_AWS_KEY, ' +
-          'MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, ' +
-          'MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS.'
-        )
+        reason = "This test requires the MONGO_RUBY_DRIVER_AWS_KEY, " +
+                "MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, " +
+                "MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS."
+
+        if SpecConfig.instance.fle?
+          fail(reason)
+        else
+          skip(reason)
+        end
       end
     end
 
@@ -173,11 +177,15 @@ module Crypt
         SpecConfig.instance.fle_azure_tenant_id &&
         SpecConfig.instance.fle_azure_identity_platform_endpoint
 
-        skip(
-          'This test requires the MONGO_RUBY_DRIVER_AZURE_TENANT_ID, ' +
-          'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
-          'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
-        )
+        reason = 'This test requires the MONGO_RUBY_DRIVER_AZURE_TENANT_ID, ' +
+        'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
+        'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
+
+        if SpecConfig.instance.fle?Crypt
+          fail(reason)
+        else
+          skip(reason)
+        end
       end
     end
 

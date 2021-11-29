@@ -87,15 +87,15 @@ module Mongo
           FORMAT_HINT = "AWS key document  must be in the format: " +
                         "{ region: 'REGION', key: 'KEY' }"
 
-        # Creates a master key document object form a parameters hash.
-        #
-        # @param [ Hash ] opts A hash that contains master key options for
-        #   the AWS KMS provider.
-        # @option opts [ String ] :region AWS region.
-        # @option opts [ String ] :key AWS KMS key.
-        # @option opts [ String | nil ] :endpoint AWS KMS endpoint, optional.
-        #
-        # @raise [ ArgumentError ] If required options are missing or incorrectly.
+          # Creates a master key document object form a parameters hash.
+          #
+          # @param [ Hash ] opts A hash that contains master key options for
+          #   the AWS KMS provider.
+          # @option opts [ String ] :region AWS region.
+          # @option opts [ String ] :key AWS KMS key.
+          # @option opts [ String | nil ] :endpoint AWS KMS endpoint, optional.
+          #
+          # @raise [ ArgumentError ] If required options are missing or incorrectly.
           def initialize(opts)
             unless opts.is_a?(Hash)
               raise ArgumentError.new(

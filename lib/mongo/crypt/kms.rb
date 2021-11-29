@@ -18,6 +18,9 @@
 module Mongo
   module Crypt
     module KMS
+      # This module contains helper methods for validating KMS parameters.
+      #
+      # @api private
       module Validations
         # Validate if a KMS parameter is valid.
         #
@@ -31,8 +34,6 @@ module Mongo
         #
         # @raise [ ArgumentError ] If required options are missing or incorrectly
         #   formatted.
-        #
-        # @api private
         def validate_param(key, opts, format_hint, required: true)
           value = opts.fetch(key)
           return nil if value.nil? && !required
@@ -70,8 +71,8 @@ module Mongo
   end
 end
 
-require "mongo/crypt/kms/credentials.rb"
-require "mongo/crypt/kms/master_key_document.rb"
-require 'mongo/crypt/kms/aws.rb'
-require 'mongo/crypt/kms/azure.rb'
-require 'mongo/crypt/kms/local.rb'
+require "mongo/crypt/kms/credentials"
+require "mongo/crypt/kms/master_key_document"
+require 'mongo/crypt/kms/aws'
+require 'mongo/crypt/kms/azure'
+require 'mongo/crypt/kms/local'

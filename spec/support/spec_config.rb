@@ -360,6 +360,11 @@ EOT
     'ruby-driver'.freeze
   end
 
+  # Whether FLE tests should be enabled
+  def fle?
+    ENV['FLE']
+  end
+
   # AWS IAM user access key id
   def fle_aws_key
     ENV['MONGO_RUBY_DRIVER_AWS_KEY']
