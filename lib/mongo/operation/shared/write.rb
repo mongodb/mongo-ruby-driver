@@ -37,13 +37,7 @@ module Mongo
       def execute(server, context:)
         server.with_connection(service_id: context.service_id) do |connection|
           validate!(connection)
-          op = if connection.features.op_msg_enabled?
-              self.class::OpMsg.new(spec)
-            elsif !acknowledged_write?
-              self.class::Legacy.new(spec)
-            else
-              self.class::Command.new(spec)
-            end
+          op = self.class::OpMsg.new(spec)
 
           result = op.execute(connection, context: context)
           validate_result(result, connection, context)

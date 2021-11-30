@@ -199,35 +199,5 @@ describe Mongo::Operation::Delete do
         end
       end
     end
-
-    context 'when write concern { w: 0 } is used' do
-      max_server_version '3.4'
-
-      let(:delete) do
-        described_class.new({
-                              deletes: [ document ],
-                              db_name: SpecConfig.instance.test_db,
-                              coll_name: TEST_COLL,
-                              write_concern: Mongo::WriteConcern.get(:w => 0)
-                            })
-      end
-
-
-      let(:document) do
-        { 'q' => { field: 'test' }, 'limit' => 1 }
-      end
-
-      let(:result) do
-        delete.execute(authorized_primary, context: context)
-      end
-
-      before do
-        expect(Mongo::Operation::Delete::Legacy).to receive(:new).and_call_original
-      end
-
-      it 'uses op codes instead of write commands' do
-        expect(result.written_count).to eq(0)
-      end
-    end
   end
 end

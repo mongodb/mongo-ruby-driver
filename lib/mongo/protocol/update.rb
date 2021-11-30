@@ -55,6 +55,7 @@ module Mongo
       #
       #   Supported flags: +:upsert+, +:multi_update+
       def initialize(database, collection, selector, update, options = {})
+        # require 'byebug'; byebug
         @database    = database
         @collection  = collection
         @namespace   = "#{database}.#{collection}"
@@ -176,6 +177,8 @@ module Mongo
         #
         # @since 2.1.0
         def initialize(collection, filter, update, flags)
+          # require 'byebug'; byebug
+
           @collection = collection
           @filter = filter
           @update = update
