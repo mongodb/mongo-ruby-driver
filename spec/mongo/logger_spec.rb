@@ -1,9 +1,22 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::Logger do
 
   let(:logger) do
     described_class.logger
+  end
+
+  around do |example|
+    saved_logger = Mongo::Logger.logger
+
+    begin
+      example.run
+    ensure
+      Mongo::Logger.logger = saved_logger
+    end
   end
 
   describe '.logger' do
@@ -18,35 +31,27 @@ describe Mongo::Logger do
         Mongo::Logger.logger = nil
       end
 
-      after do
-        Mongo::Logger.logger = test_logger
-      end
-
       it 'returns the default logger' do
-        expect(logger.level).to eq(Logger::DEBUG)
+        expect(logger.level).to eq(Logger::INFO)
       end
     end
 
     context 'when a logger has been set' do
 
       let(:info) do
-        Logger.new($stdout).tap do |log|
+        Logger.new(STDOUT).tap do |log|
           log.level = Logger::INFO
         end
       end
 
       let(:debug) do
-        Logger.new($stdout).tap do |log|
+        Logger.new(STDOUT).tap do |log|
           log.level = Logger::DEBUG
         end
       end
 
       before do
         described_class.logger = debug
-      end
-
-      after do
-        described_class.logger = info
       end
 
       it 'returns the provided logger' do

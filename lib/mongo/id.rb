@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -13,9 +16,10 @@
 # limitations under the License.
 
 module Mongo
-  # This module abstracts the functionality for generating sequential unique integer IDs for
-  # instances of the class. It defines the method #next_id on the class that includes it. The
-  # implementation ensures that the IDs will be unique even when called from multiple threads.
+  # This module abstracts the functionality for generating sequential
+  # unique integer IDs for instances of the class. It defines the method
+  # #next_id on the class that includes it. The implementation ensures that
+  # the IDs will be unique even when called from multiple threads.
   #
   # @example Include the Id module.
   #   class Foo
@@ -26,8 +30,9 @@ module Mongo
   #   foo.next_id # => 1
   #   foo.next_id # => 2
   #
-  # Classes which include Id should _not_ access `@@id` or `@@id_lock` directly; instead, they
-  # should call `#next_id` in `#initialize` and save the result in the instance being created.
+  # Classes which include Id should _not_ access `@@id` or `@@id_lock`
+  # directly; instead, they should call `#next_id` in `#initialize` and save
+  # the result in the instance being created.
   #
   # @example Save the ID in the instance of the including class.
   #   class Bar

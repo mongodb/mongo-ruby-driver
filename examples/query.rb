@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Query for all documents in a collection
 
 cursor = client[:restaurants].find

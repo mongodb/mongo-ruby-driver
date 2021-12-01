@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # Create a client with all possible configurations (forcing/discovering each
@@ -10,6 +13,7 @@ describe 'Client construction' do
     ).merge(SpecConfig.instance.credentials_or_external_user(
       user: SpecConfig.instance.test_user.name,
       password: SpecConfig.instance.test_user.password,
+      auth_source: 'admin',
     ))
   end
 
@@ -180,7 +184,7 @@ describe 'Client construction' do
       it 'raises an exception' do
         expect do
           client
-        end.to raise_error(ArgumentError, /The aws access_key_id option must be a String with at least one character; it is currently an empty string/)
+        end.to raise_error(ArgumentError, /The access_key_id option must be a String with at least one character; it is currently an empty string/)
       end
     end
 
@@ -230,6 +234,60 @@ describe 'Client construction' do
 
     it 'deduplicates the addresses' do
       expect(client.cluster.addresses).to eq([Mongo::Address.new(primary_address)])
+    end
+  end
+
+  context 'when deployment is not a sharded cluster' do
+    require_topology :single, :replica_set
+
+    let(:client) do
+      ClientRegistry.instance.new_local_client(
+        [SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options.merge(options),
+      )
+    end
+
+    context 'when load-balanced topology is requested' do
+      let(:options) do
+        {connect: :load_balanced, replica_set: nil}
+      end
+
+      it 'creates the client successfully' do
+        client.should be_a(Mongo::Client)
+      end
+
+      it 'fails all operations' do
+        lambda do
+          client.command(ping: true)
+        end.should raise_error(Mongo::Error::BadLoadBalancerTarget)
+      end
+    end
+  end
+
+  context 'when in load-balanced mode' do
+    require_topology :load_balanced
+
+    let(:client) do
+      ClientRegistry.instance.new_local_client(
+        [SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options.merge(options),
+      )
+    end
+
+    context 'when load-balanced topology is requested via the URI option' do
+      let(:options) do
+        {connect: nil, load_balanced: true}
+      end
+
+      it 'creates the client successfully' do
+        client.should be_a(Mongo::Client)
+      end
+
+      it 'fails all operations' do
+        lambda do
+          client.command(ping: true)
+        end.should raise_error(Mongo::Error::MissingServiceId)
+      end
     end
   end
 end

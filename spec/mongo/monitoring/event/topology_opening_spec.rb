@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::TopologyOpening do
@@ -24,7 +27,7 @@ describe Mongo::Monitoring::Event::TopologyOpening do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     it 'renders correctly' do
       expect(topology).to receive(:server_descriptions).and_return({

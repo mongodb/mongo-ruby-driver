@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,20 +87,6 @@ RSpec::Matchers.define :match_auth do |test|
   end
 end
 
-RSpec::Matchers.define :match_options do |test|
-
-  match do |client|
-    options = test.options
-    return true unless options
-    options.match?(client.options)
-  end
-
-  failure_message do |client|
-    "With URI: #{test.uri_string}\n" +
-      "Expected that test options: #{test.options.options} would match client options: #{client.options}"
-  end
-end
-
 module Mongo
   module ConnectionString
 
@@ -158,8 +147,12 @@ module Mongo
         end
       end
 
-      def options
-        @options ||= Options.new(@spec['options']) if @spec['options']
+      def expected_options
+        @spec['options']
+      end
+
+      def non_uri_options
+        @spec['parsed_options']
       end
 
       def client
@@ -239,115 +232,27 @@ module Mongo
       end
     end
 
-    class Options
-
-      MAPPINGS = {
-        # Connection and Replica Set Options
-        'replicaset' => :replica_set,
-        'directconnection' => :direct_connection,
-
-        # Timeout Options
-        'connecttimeoutms' => :connect_timeout,
-        'sockettimeoutms' => :socket_timeout,
-        'serverselectiontimeoutms' => :server_selection_timeout,
-        'localthresholdms' => :local_threshold,
-        'heartbeatfrequencyms' => :heartbeat_frequency,
-        'maxidletimems' => :max_idle_time,
-
-         # Write  Options
-        'journal' => [:write_concern, 'j'],
-        'w' => [:write_concern, 'w'],
-        'wtimeoutms' => [:write_concern, 'wtimeout'],
-
-        # Read Options
-        'readpreference' => ['read', 'mode'],
-        'readpreferencetags' => ['read', 'tag_sets'],
-        'maxstalenessseconds' => ['read', 'max_staleness'],
-
-        # Pool Options
-        'minpoolsize' => :min_pool_size,
-        'maxpoolsize' => :max_pool_size,
-
-        # Security Options
-        'tls' => :ssl,
-        'tlsallowinvalidcertificates' => :ssl_verify_certificate,
-        'tlsallowinvalidhostnames' => :ssl_verify_hostname,
-        'tlscafile' => :ssl_ca_cert,
-        'tlscertificatekeyfile' => :ssl_cert,
-        'tlscertificatekeyfilepassword' => :ssl_key_pass_phrase,
-        'tlsinsecure' => :ssl_verify,
-
-        # Auth Options
-        'authsource' => :auth_source,
-        'authmechanism' => :auth_mech,
-        'authmechanismproperties' => :auth_mech_properties,
-
-        # Client Options
-        'appname' => :app_name,
-        'readconcernlevel' => [:read_concern, 'level'],
-        'retrywrites' => :retry_writes,
-        'zlibcompressionlevel' => :zlib_compression_level,
-      }
-
-      attr_reader :options
-
-      def initialize(options)
-        @options = options
-      end
-
-      def match?(opts)
-        @options.all? do |k, v|
-          k = k.downcase
-
-          expected =
-            case k
-            when 'authmechanism'
-              Mongo::URI::AUTH_MECH_MAP[v].downcase.to_s
-            when 'authmechanismproperties'
-              v.reduce({}) do |new_v, prop|
-                prop_key = prop.first.downcase
-                prop_val = prop.last == 'true' ? true : prop.last
-                new_v[prop_key] = prop_val
-
-                new_v
-              end
-            when 'compressors'
-              v.dup.tap do |compressors|
-                # The Ruby driver doesn't support snappy
-                compressors.delete('snappy')
-              end
-            when 'readpreference'
-              Mongo::URI::READ_MODE_MAP[v.downcase].to_s
-            when 'tlsallowinvalidcertificates', 'tlsallowinvalidhostnames', 'tlsinsecure'
-              !v
-            else
-              if k.end_with?('ms') && k != 'wtimeoutms'
-                v / 1000.0
-              elsif v.is_a?(String)
-                v.downcase
-              else
-                v
-              end
-            end
-
-          actual =
-            case MAPPINGS[k]
-            when nil
-              opts[k]
-            when Array
-              opts[MAPPINGS[k].first][MAPPINGS[k].last]
-            else
-              opts[MAPPINGS[k]]
-            end
-
-          if actual.is_a?(Symbol)
-            actual = actual.to_s
+    module_function def adjust_expected_mongo_client_options(options)
+      expected = options.dup.tap do |expected|
+        expected.each do |k, v|
+          # Ruby driver downcases auth mechanism properties when
+          # constructing the client.
+          #
+          # Some tests give options in all lower case.
+          if k.downcase == 'authmechanismproperties'
+            expected[k] = ::Utils.downcase_keys(v)
           end
-          if actual.is_a?(String)
-            actual = actual.downcase
+        end
+        # We omit retryReads/retryWrites=true because some tests do not
+        # provide those.
+        %w(retryReads retryWrites).each do |k, v|
+          if expected[k] == true
+            expected.delete(k)
           end
-
-          expected == actual
+        end
+        # Fix appName case.
+        if expected.key?('appname') && !expected.key?('appName')
+          expected['appName'] = expected.delete('appname')
         end
       end
     end
@@ -406,8 +311,17 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
               expect(test.client).to match_auth(test)
             end
 
-            it 'creates a client with the correct options' do
-              expect(test.client).to match_options(test)
+            if test.expected_options
+              it 'creates a client with the correct options' do
+                mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
+                # Connection string spec tests do not use canonical URI option names
+                actual = Utils.downcase_keys(mapped)
+                actual.delete('authsource')
+                expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
+                  test.expected_options,
+                )
+                actual.should == expected
+              end
             end
 
             if test.read_concern_expectation

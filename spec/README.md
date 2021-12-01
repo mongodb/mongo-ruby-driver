@@ -2,6 +2,13 @@
 
 ## Quick Start
 
+The test suite requires shared tooling that is stored in a separate repository
+and is referenced as a submodule. After checking out the desired driver
+branch, check out the matching submodules:
+
+    git submodule init
+    git submodule update
+
 To run the test suite against a local MongoDB deployment listening on port
 27017, run:
 
@@ -107,7 +114,7 @@ other tests require a sharded cluster with more than one shard. Tests requiring
 a single shard can be run against a deployment with multiple shards by
 specifying only one mongos address in MONGODB_URI.
 
-## Note Regarding SSL/TLS Arguments
+## Note Regarding TLS/SSL Arguments
 
 MongoDB 4.2 (server and shell) added new command line options for setting TLS
 parameters. These options follow the naming of URI options used by both the
@@ -184,6 +191,51 @@ verification, run:
 
 Note that there are tests in the test suite that cover TLS verification, and
 they may fail if the test suite is run in this way.
+
+## OCSP
+
+There are several types of OCSP tests implemented in the test suite.
+
+OCSP unit tests are in `spec/integration/ocsp_verifier_spec.rb`. To run
+these, set `OCSP_VERIFIER=1` in the environment. There must NOT be a process
+running on the host port 8100 as that port will be used by the OCSP responder
+launched by the tests.
+
+For the remaining OCSP tests, the following environment variables must be set
+to the possible values indicated below:
+
+    OCSP_ALGORITHM=rsa|ecdsa
+    OCSP_STATUS=valid|revoked|unknown
+    OCSP_DELEGATE=0|1
+    OCSP_MUST_STAPLE=0|1
+
+These tests also require the mock OCSP responder running on the host machine
+on port 8100 with the configuration that matches the environment variables
+just described. Please refer to the Docker and Evergreen scripts in the
+driver repository for further details.
+
+Additionally, the server must be configured to use the appropriate server
+certificate and CA certificate from the respective subdirectory of
+`spec/support/ocsp`. This is easiest to achieve by using the Docker tooling
+described in `.evergreen/README.md`.
+
+OCSP connectivity tests are in `spec/integration/ocsp_connectivity.rb`.
+These test the combinations described
+[here](https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.rst#integration-tests-permutations-to-be-tested).
+To run these tests, set `OCSP_CONNECTIVITY=pass` environment variable if
+the tests are expected to connect successfully or `OCSP_CONNECTIVITY=fail` if
+the tests are expected to not connect.
+Note that some of these configurations require OCSP responder to return
+the failure response; in such configurations, ONLY the OCSP connectivity tests
+may pass (since the driver may reject connections to servers when OCSP
+responder returns the failure response, or OCSP verification otherwise
+definitively fails).
+
+When not running either OCSP verifier tests or OCSP connectivity tests but
+when OCSP algorithm is configured, the test suite will execute normally
+using the provided `MONGO_URI`. This configuration may be used to exercise
+OCSP while running the full test suite. In this case, setting `OCSP_STATUS`
+to `revoked` will generally cause the test suite to fail.
 
 ## Authentication
 
@@ -460,12 +512,35 @@ To test compression, set the `compressors` URI option:
 
     MONGODB_URI="mongodb://localhost:27017/?compressors=zlib" rake
 
-Note that as of this writing, the driver only supports zlib compression.
+Note that as of this writing, the driver supports
+[ztsd](https://docs.mongodb.com/manual/reference/glossary/#term-zstd),
+[snappy](https://docs.mongodb.com/manual/reference/glossary/#term-snappy)
+and [zlib](https://docs.mongodb.com/manual/reference/glossary/#term-zlib)
+compression.
+
 Servers 4.2+ enable zlib by default; to test older servers, explicitly enable
 zlib compression when launching the server:
 
     mongod --dbpath /tmp/mdb --setParameter enableTestCommands=1 \
       --networkMessageCompressors snappy,zlib
+
+## Server API
+
+To specify server API parameters, use the `SERVER_API` environment variable.
+The server API parameters cannot be specified via URI options.
+
+Both YAML and JSON syntaxes are accepted:
+    
+    SERVER_API='{version: "1", strict: true}' rake
+
+    SERVER_API='{"version":"1","strict":true}' rake
+
+Note that the input must be valid YAML or JSON and the version number must
+be a string, therefore all of the following specifications are invalid:
+
+    SERVER_API='{version:"1",strict:true}' rake
+    SERVER_API='{version: 1}' rake
+    SERVER_API='{"version":1,"strict":true}' rake
 
 ## Other Options
 
@@ -510,6 +585,16 @@ involved. These tests are skipped by default and can be run by setting the
 following environment variable:
 
     FORK=1
+
+OCSP tests require Python 3 with asn1crypto, oscrypto and flask packages
+installed, and they require the drivers-evergreen-tools submodule to be
+checked out. To run these tests, set the following environment variable:
+
+    OCSP=1
+
+To check out the submodule, run:
+
+    git submodule update --init --recursive
 
 ## Debug Logging
 

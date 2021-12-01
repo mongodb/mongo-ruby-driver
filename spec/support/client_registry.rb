@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'singleton'
 
 module Mongo
@@ -85,7 +88,7 @@ class ClientRegistry
 
   def new_global_client(name)
     case name
-    # Provides a basic scanned client to do an ismaster check.
+    # Provides a basic scanned client to do a hello check.
     when 'basic'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
@@ -105,6 +108,7 @@ class ClientRegistry
       }.update(SpecConfig.instance.credentials_or_external_user(
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
+        auth_source: 'admin',
       ))
 
       Mongo::Client.new(
@@ -187,10 +191,14 @@ class ClientRegistry
   end
   private :new_global_client
 
-  def new_local_client(*args)
-    Mongo::Client.new(*args).tap do |client|
-      @lock.synchronize do
-        @local_clients << client
+  def new_local_client(*args, &block)
+    if block_given?
+      Mongo::Client.new(*args, &block)
+    else
+      Mongo::Client.new(*args).tap do |client|
+        @lock.synchronize do
+          @local_clients << client
+        end
       end
     end
   end

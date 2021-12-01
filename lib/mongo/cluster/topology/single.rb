@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,7 +99,7 @@ module Mongo
         #
         # @since 2.0.0
         def servers(servers, name = nil)
-          [ servers.detect { |server| !server.unknown? } ]
+          servers.reject { |server| server.unknown? }
         end
 
         # A single topology is not sharded.
@@ -133,7 +136,7 @@ module Mongo
 
         def validate_options(options, cluster)
           if cluster.servers_list.length > 1
-            raise ArgumentError, 'Cannot instantiate a single topology with more than one server in the cluster'
+            raise ArgumentError, "Cannot instantiate a single topology with more than one server in the cluster: #{cluster.servers_list.map(&:address).map(&:seed).join(', ')}"
           end
 
           super(options, cluster)

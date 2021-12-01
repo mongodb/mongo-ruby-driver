@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'BSON & command size limits' do
@@ -36,7 +39,7 @@ describe 'BSON & command size limits' do
     end
 
     authorized_collection.insert_many(documents)
-    authorized_collection.count_documents({}).should == 8
+    authorized_collection.count_documents.should == 8
   end
 
   # This test ensures that document which are too big definitely fail insertion.
@@ -49,7 +52,7 @@ describe 'BSON & command size limits' do
     lambda do
       authorized_collection.insert_many(documents)
     end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
-    authorized_collection.count_documents({}).should == 0
+    authorized_collection.count_documents.should == 0
   end
 
   it 'allows user-provided documents to be exactly 16MiB' do
@@ -62,13 +65,31 @@ describe 'BSON & command size limits' do
     authorized_collection.insert_one(document)
   end
 
-  it 'fails on the server when a document larger than 16MiB is inserted' do
+  it 'fails on the driver when a document larger than 16MiB is inserted' do
     document = { key: 'a' * (max_document_size - 27), _id: 'foo' }
     expect(document.to_bson.length).to eq(max_document_size+1)
 
     lambda do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::OperationFailure, /object to insert too large/)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+  end
+
+  it 'fails on the driver when an update larger than 16MiB is performed' do
+    document = { key: 'a' * (max_document_size - 14) }
+    expect(document.to_bson.length).to eq(max_document_size+1)
+
+    lambda do
+      authorized_collection.update_one({ _id: 'foo' }, document)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+  end
+
+  it 'fails on the driver when an delete larger than 16MiB is performed' do
+    document = { key: 'a' * (max_document_size - 14) }
+    expect(document.to_bson.length).to eq(max_document_size+1)
+
+    lambda do
+      authorized_collection.delete_one(document)
+    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
   end
 
   it 'fails in the driver when a document larger than 16MiB+16KiB is inserted' do
@@ -89,6 +110,6 @@ describe 'BSON & command size limits' do
     end
 
     authorized_collection.insert_many(documents)
-    authorized_collection.count_documents({}).should == 3
+    authorized_collection.count_documents.should == 3
   end
 end

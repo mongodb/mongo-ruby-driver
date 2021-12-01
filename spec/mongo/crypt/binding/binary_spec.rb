@@ -1,9 +1,7 @@
-require 'mongo'
-require 'support/lite_constraints'
+# frozen_string_literal: true
+# encoding: utf-8
 
-RSpec.configure do |config|
-  config.extend(LiteConstraints)
-end
+require 'lite_spec_helper'
 
 describe 'Mongo::Crypt::Binding' do
   describe 'binary_t bindings' do

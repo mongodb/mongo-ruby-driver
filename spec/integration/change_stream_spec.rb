@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Change stream integration', retry: 4 do
-  only_mri
+  require_mri
   max_example_run_time 7
   min_server_fcv '3.6'
   require_topology :replica_set
@@ -50,7 +53,7 @@ describe 'Change stream integration', retry: 4 do
       it 'raises an exception and does not attempt to resume' do
         change_stream
 
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
         authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
 
         expect do
@@ -98,7 +101,7 @@ describe 'Change stream integration', retry: 4 do
       it 'watch raises error' do
         expect do
           client['change-stream'].watch
-        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(10107\)/)
+        end.to raise_error(Mongo::Error::OperationFailure, /10107\b.*Failing command due to 'failCommand' failpoint/)
       end
     end
 
@@ -283,7 +286,7 @@ describe 'Change stream integration', retry: 4 do
 
         expect do
           enum.next
-        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(101\)/)
+        end.to raise_error(Mongo::Error::OperationFailure, /101\b.*Failing command due to 'failCommand' failpoint/)
       end
     end
   end
@@ -414,7 +417,7 @@ describe 'Change stream integration', retry: 4 do
 
           expect do
             enum.try_next
-          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(10107\)/)
+          end.to raise_error(Mongo::Error::OperationFailure, /10107\b.*Failing command due to 'failCommand' failpoint/)
         end
       end
 
@@ -441,7 +444,7 @@ describe 'Change stream integration', retry: 4 do
 
           expect do
             enum.try_next
-          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(10107\)/)
+          end.to raise_error(Mongo::Error::OperationFailure, /10107\b.*Failing command due to 'failCommand' failpoint/)
         end
       end
     end
@@ -520,7 +523,7 @@ describe 'Change stream integration', retry: 4 do
     let(:events) do
       start_after
 
-      subscriber = EventSubscriber.new
+      subscriber = Mrss::EventSubscriber.new
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       use_stream
 
@@ -579,7 +582,7 @@ describe 'Change stream integration', retry: 4 do
     let(:stream) { authorized_collection.watch }
 
     let(:events) do
-      subscriber = EventSubscriber.new
+      subscriber = Mrss::EventSubscriber.new
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       use_stream
       subscriber.succeeded_events.select { |e|

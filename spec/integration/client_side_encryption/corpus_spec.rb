@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Client-Side Encryption' do
@@ -20,6 +23,7 @@ describe 'Client-Side Encryption' do
     let(:test_schema_map) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-schema.json')) }
     let(:local_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-local.json')) }
     let(:aws_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-aws.json')) }
+    let(:azure_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-azure.json')) }
 
     let(:client_encrypted) do
       new_local_client(
@@ -32,6 +36,11 @@ describe 'Client-Side Encryption' do
                 access_key_id: SpecConfig.instance.fle_aws_key,
                 secret_access_key: SpecConfig.instance.fle_aws_secret,
               },
+              azure: {
+                tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+                client_id: SpecConfig.instance.fle_azure_client_id,
+                client_secret: SpecConfig.instance.fle_azure_client_secret,
+              }
             },
             key_vault_namespace: 'admin.datakeys',
             schema_map: local_schema_map,
@@ -52,6 +61,11 @@ describe 'Client-Side Encryption' do
             aws: {
               access_key_id: SpecConfig.instance.fle_aws_key,
               secret_access_key: SpecConfig.instance.fle_aws_secret,
+            },
+            azure: {
+              tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+              client_id: SpecConfig.instance.fle_azure_client_id,
+              client_secret: SpecConfig.instance.fle_azure_client_secret,
             }
           },
           key_vault_namespace: 'admin.datakeys',
@@ -75,7 +89,7 @@ describe 'Client-Side Encryption' do
       # to encrypt that value.
       corpus_copied = BSON::Document.new
       corpus.each do |key, doc|
-        if ['_id', 'altname_aws', 'altname_local'].include?(key)
+        if ['_id', 'altname_aws', 'altname_azure', 'altname_local'].include?(key)
           corpus_copied[key] = doc
           next
         end
@@ -86,7 +100,11 @@ describe 'Client-Side Encryption' do
           options = if doc['identifier'] == 'id'
             key_id = if doc['kms'] == 'local'
               'LOCALAAAAAAAAAAAAAAAAA=='
-            else
+            elsif doc['kms'] == 'azure'
+              'AZUREAAAAAAAAAAAAAAAAA=='
+            elsif doc['kms'] == 'gcp'
+              'GCPAAAAAAAAAAAAAAAAAAA=='
+            elsif doc['kms'] == 'aws'
               'AWSAAAAAAAAAAAAAAAAAAA=='
             end
 
@@ -133,6 +151,7 @@ describe 'Client-Side Encryption' do
       key_vault_collection.drop
       key_vault_collection.insert_one(local_data_key)
       key_vault_collection.insert_one(aws_data_key)
+      key_vault_collection.insert_one(azure_data_key)
     end
 
     shared_context 'with jsonSchema collection validator' do
@@ -218,6 +237,20 @@ describe 'Client-Side Encryption' do
 
     context 'with AWS KMS provider' do
       include_context 'with AWS kms_providers'
+
+      context 'with collection validator' do
+        include_context 'with jsonSchema collection validator'
+        it_behaves_like 'a functioning encrypter'
+      end
+
+      context 'with schema map' do
+        include_context 'with local schema map'
+        it_behaves_like 'a functioning encrypter'
+      end
+    end
+
+    context 'with Azure KMS provider' do
+      include_context 'with Azure kms_providers'
 
       context 'with collection validator' do
         include_context 'with jsonSchema collection validator'

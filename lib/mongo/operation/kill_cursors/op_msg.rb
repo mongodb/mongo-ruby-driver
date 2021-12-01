@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +26,16 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include ExecutableTransactionLabel
+        include CommandBuilder
+
+        private
+
+        def selector(connection)
+          {
+            killCursors: coll_name,
+            cursors: int64_cursor_ids,
+          }
+        end
       end
     end
   end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +28,7 @@ module Mongo
 
       def_delegators :@database, :cluster, :read_preference, :client
       # @api private
-      def_delegators :@database, :server_selector, :read_concern
+      def_delegators :@database, :server_selector, :read_concern, :write_concern
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
@@ -47,6 +50,14 @@ module Mongo
       #
       # @option options [ Integer ] :batch_size  The batch size for results
       #   returned from the listCollections command.
+      # @option options [ Hash ] :filter A filter on the collections returned.
+      # @option options [ true, false ] :authorized_collections A flag, when
+      #   set to true, that allows a user without the required privilege
+      #   to run the command when access control is enforced
+      #
+      #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+      #   for more information and usage.
+      # @option options [ Session ] :session The session to use.
       #
       # @return [ Array<String> ] The names of all non-system collections.
       #
@@ -55,10 +66,10 @@ module Mongo
         @batch_size = options[:batch_size]
         session = client.send(:get_session, options)
         cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session, name_only: true)
+          send_initial_query(server, session, options.merge(name_only: true))
         end
         cursor.map do |info|
-          if cursor.server.with_connection { |connection| connection.features }.list_collections_enabled?
+          if cursor.initial_result.connection_description.features.list_collections_enabled?
             info['name']
           else
             (info['name'] &&
@@ -81,15 +92,23 @@ module Mongo
       # @param [ Hash ] options
       #
       # @option options [ Hash ] :filter A filter on the collections returned.
+      # @option options [ true, false ] :name_only Indicates whether command
+      #   should return just collection/view names and type or return both the
+      #   name and other information
+      # @option options [ true, false ] :authorized_collections A flag, when
+      #   set to true and used with nameOnly: true, that allows a user without the
+      #   required privilege to run the command when access control is enforced
+      #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/
       #   for more information and usage.
+      # @option options [ Session ] :session The session to use.
       #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
       # @since 2.0.5
-      def list_collections(**options)
-        session = client.send(:get_session)
-        collections_info(session, ServerSelector.primary, **options)
+      def list_collections(options = {})
+        session = client.send(:get_session, options)
+        collections_info(session, ServerSelector.primary, options)
       end
 
       # Create the new database view.
@@ -166,6 +185,7 @@ module Mongo
         }.tap do |spec|
           spec[:selector][:nameOnly] = true if options[:name_only]
           spec[:selector][:filter] = options[:filter] if options[:filter]
+          spec[:selector][:authorizedCollections] = true if options[:authorized_collections]
         end
       end
 
@@ -174,7 +194,7 @@ module Mongo
       end
 
       def send_initial_query(server, session, options = {})
-        initial_query_op(session, options).execute(server, client: client)
+        initial_query_op(session, options).execute(server, context: Operation::Context.new(client: client, session: session))
       end
     end
   end

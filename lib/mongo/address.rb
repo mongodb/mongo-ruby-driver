@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -286,7 +289,7 @@ module Mongo
       rescue IOError, SystemCallError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{self}) (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
       end
     end
   end

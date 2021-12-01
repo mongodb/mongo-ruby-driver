@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,68 +66,98 @@ module Mongo
         end
 
         result = handshake!(speculative_auth_doc: speculative_auth_doc)
-        if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
-          unless description.features.scram_sha_1_enabled?
-            raise Error::InvalidServerAuthResponse, "Speculative auth succeeded on a pre-3.0 server"
+
+        if description.unknown?
+          raise Error::InternalDriverError, "Connection description cannot be unknown after successful handshake: #{description.inspect}"
+        end
+
+        begin
+          if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
+            unless description.features.scram_sha_1_enabled?
+              raise Error::InvalidServerAuthResponse, "Speculative auth succeeded on a pre-3.0 server"
+            end
+            case speculative_auth_user.mechanism
+            when :mongodb_x509
+              # Done
+            # We default auth mechanism to scram256, but if user specified
+            # scram explicitly we may be able to authenticate speculatively
+            # with scram.
+            when :scram, :scram256
+              authenticate!(
+                speculative_auth_client_nonce: speculative_auth.conversation.client_nonce,
+                speculative_auth_mech: speculative_auth_user.mechanism,
+                speculative_auth_result: speculative_auth_result,
+              )
+            else
+              raise Error::InternalDriverError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
+            end
+          elsif !description.arbiter?
+            authenticate!
           end
-          case speculative_auth_user.mechanism
-          when :mongodb_x509
-            # Done
-          # We default auth mechanism to scram256, but if user specified
-          # scram explicitly we may be able to authenticate speculatively
-          # with scram.
-          when :scram, :scram256
-            authenticate!(
-              speculative_auth_client_nonce: speculative_auth.conversation.client_nonce,
-              speculative_auth_mech: speculative_auth_user.mechanism,
-              speculative_auth_result: speculative_auth_result,
-            )
-          else
-            raise NotImplementedError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
-          end
-        elsif !description.arbiter?
-          authenticate!
+        rescue Mongo::Error, Mongo::Error::AuthError => exc
+          exc.service_id = service_id
+          raise
+        end
+
+        if description.unknown?
+          raise Error::InternalDriverError, "Connection description cannot be unknown after successful authentication: #{description.inspect}"
+        end
+
+        if server.load_balancer? && !description.mongos?
+          raise Error::BadLoadBalancerTarget, "Load-balanced operation requires being connected a mongos, but the server at #{address.seed} reported itself as #{description.server_type.to_s.gsub('_', ' ')}"
         end
       end
 
       private
 
       # @param [ BSON::Document | nil ] speculative_auth_doc The document to
-      #   provide in speculativeAuthenticate field of ismaster command.
+      #   provide in speculativeAuthenticate field of handshake command.
       #
-      # @return [ BSON::Document ] The document of the ismaster response for
+      # @return [ BSON::Document ] The document of the handshake response for
       #   this particular connection.
       def handshake!(speculative_auth_doc: nil)
         unless socket
-          raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
+          raise Error::InternalDriverError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
-        ismaster_doc = app_metadata.validated_document
-        if speculative_auth_doc
-          ismaster_doc = ismaster_doc.merge(speculativeAuthenticate: speculative_auth_doc)
-        end
-
-        ismaster_command = Protocol::Query.new(Database::ADMIN, Database::COMMAND,
-          ismaster_doc, :limit => -1)
-
-        response = nil
+        hello_command = handshake_command(
+          handshake_document(
+            app_metadata,
+            speculative_auth_doc: speculative_auth_doc,
+            load_balancer: server.load_balancer?,
+            server_api: options[:server_api]
+          )
+        )
+        doc = nil
         @server.handle_handshake_failure! do
           begin
             response = @server.round_trip_time_averager.measure do
               add_server_diagnostics do
-                socket.write(ismaster_command.serialize.to_s)
-                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE).documents.first
+                socket.write(hello_command.serialize.to_s)
+                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
               end
             end
-          rescue => e
-            log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+            result = Operation::Result.new([response])
+            result.validate!
+            doc = result.documents.first
+          rescue => exc
+            msg = "Failed to handshake with #{address}"
+            Utils.warn_bg_exception(msg, exc,
+              logger: options[:logger],
+              log_prefix: options[:log_prefix],
+              bg_error_backtrace: options[:bg_error_backtrace],
+            )
             raise
           end
         end
 
-        post_handshake(response, @server.round_trip_time_averager.average_round_trip_time)
+        if @server.force_load_balancer?
+          doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
+        end
 
-        response
+        post_handshake(doc, @server.round_trip_time_averager.average_round_trip_time)
+
+        doc
       end
 
       # @param [ String | nil ] speculative_auth_client_nonce The client
@@ -134,7 +167,7 @@ module Mongo
       #   for speculative auth, if speculative auth succeeded. If speculative
       #   auth was not performed or it failed, this must be nil.
       # @param [ BSON::Document | nil ] speculative_auth_result The
-      #   value of speculativeAuthenticate field of ismaster response of
+      #   value of speculativeAuthenticate field of hello response of
       #   the handshake on this connection.
       def authenticate!(
         speculative_auth_client_nonce: nil,
@@ -151,8 +184,13 @@ module Mongo
                 speculative_auth_result: speculative_auth_result,
               )
               auth.login
-            rescue => e
-              log_warn("Failed to authenticate to #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+            rescue => exc
+              msg = "Failed to authenticate to #{address}"
+              Utils.warn_bg_exception(msg, exc,
+                logger: options[:logger],
+                log_prefix: options[:log_prefix],
+                bg_error_backtrace: options[:bg_error_backtrace],
+              )
               raise
             end
           end
@@ -166,12 +204,12 @@ module Mongo
       # This is a separate method to keep the nesting level down.
       #
       # @return [ Server::Description ] The server description calculated from
-      #   ismaster response for this particular connection.
+      #   the handshake response for this particular connection.
       def post_handshake(response, average_rtt)
         if response["ok"] == 1
           # Auth mechanism is entirely dependent on the contents of
-          # ismaster response *for this connection*.
-          # Ismaster received by the monitoring connection should advertise
+          # hello response *for this connection*.
+          # Hello received by the monitoring connection should advertise
           # the same wire protocol, but if it doesn't, we use whatever
           # the monitoring connection advertised for filling out the
           # server description and whatever the non-monitoring connection
@@ -183,7 +221,12 @@ module Mongo
           @sasl_supported_mechanisms = nil
         end
 
-        @description = Description.new(address, response, average_rtt).tap do |new_description|
+        @description = Description.new(
+          address, response,
+          average_round_trip_time: average_rtt,
+          load_balancer: server.load_balancer?,
+          force_load_balancer: options[:connect] == :load_balanced,
+        ).tap do |new_description|
           @server.cluster.run_sdam_flow(@server.description, new_description)
         end
       end
@@ -205,7 +248,7 @@ module Mongo
           user_options = Options::Redacted.new(
             # When speculative auth is performed, we always use SCRAM-SHA-256.
             # At the same time we perform SCRAM mechanism negotiation in the
-            # ismaster request.
+            # hello request.
             # If the credentials we are trying to authenticate with do not
             # map to an existing user, SCRAM mechanism negotiation will not
             # return anything which would cause the driver to use

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::GetMore::Legacy do
@@ -18,6 +21,8 @@ describe Mongo::Operation::GetMore::Legacy do
   end
 
   let(:op) { described_class.new(spec) }
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#initialize' do
 
@@ -49,7 +54,7 @@ describe Mongo::Operation::GetMore::Legacy do
       expect(Mongo::Protocol::GetMore).to receive(:new).with(SpecConfig.instance.test_db, TEST_COLL, to_return, cursor_id).and_call_original
       begin
         authorized_primary.with_connection do |connection|
-          op.execute(connection, client: nil)
+          op.execute(connection, context: context)
         end
       rescue
       end

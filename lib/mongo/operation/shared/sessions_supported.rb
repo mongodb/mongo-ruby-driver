@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +21,7 @@ module Mongo
     # Shared behavior of operations that support a session.
     #
     # @since 2.5.2
+    # @api private
     module SessionsSupported
 
       private
@@ -129,7 +133,7 @@ module Mongo
           end
         end
 
-        sel = selector(connection).dup
+        sel = BSON::Document.new(selector(connection))
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
 
@@ -165,20 +169,19 @@ module Mongo
         Lint.assert_type(connection, Server::Connection)
 
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
-        if connection.description.standalone?
+        read_doc = if connection.description.standalone?
           # Read preference is never sent to standalones.
+          nil
+        elsif connection.server.load_balancer?
+          read&.to_mongos
         elsif connection.description.mongos?
           # When server is a mongos:
           # - $readPreference is never sent when mode is 'primary'
-          # - When mode is 'secondaryPreferred' $readPreference is only sent
-          #   when a non-mode field (i.e. tag_sets) is present
           # - Otherwise $readPreference is sent
-          if read
-            doc = read.to_mongos
-            if doc
-              sel['$readPreference'] = doc
-            end
-          end
+          # When mode is 'secondaryPreferred' $readPreference is currently
+          # required to only be sent when a non-mode field (i.e. tag_sets)
+          # is present, but this causes wrong behavior (DRIVERS-1642).
+          read&.to_mongos
         elsif connection.server.cluster.single?
           # In Single topology:
           # - If no read preference is specified by the application, the driver
@@ -193,13 +196,20 @@ module Mongo
           if [nil, 'primary'].include?(read_doc['mode'])
             read_doc['mode'] = 'primaryPreferred'
           end
-          sel['$readPreference'] = read_doc
+          read_doc
         else
           # In replica sets, read preference is passed to the server if one
-          # is specified by the application, and there is no default.
-          if read
-            sel['$readPreference'] = read.to_doc
+          # is specified by the application, except for primary read preferences.
+          read_doc = BSON::Document.new(read&.to_doc || {})
+          if [nil, 'primary'].include?(read_doc['mode'])
+            nil
+          else
+            read_doc
           end
+        end
+
+        if read_doc
+          sel['$readPreference'] = read_doc
         end
       end
 
@@ -219,11 +229,33 @@ module Mongo
         then
           sel[:recoveryToken] = session.recovery_token
         end
+
+        if session.snapshot?
+          unless connection.description.server_version_gte?('5.0')
+            raise Error::SnapshotSessionInvalidServerVersion
+          end
+
+          sel[:readConcern] = {level: 'snapshot'}
+          if session.snapshot_timestamp
+            sel[:readConcern][:atClusterTime] = session.snapshot_timestamp
+          end
+        end
       end
 
-      def build_message(connection)
+      def build_message(connection, context)
+        if self.session != context.session
+          if self.session
+            raise Error::InternalDriverError, "Operation session #{self.session.inspect} does not match context session #{context.session.inspect}"
+          else
+            # Some operations are not constructed with sessions but are
+            # executed in a context where a session is available.
+            # This could be OK or a driver issue.
+            # TODO investigate.
+          end
+        end
+
         super.tap do |message|
-          if session
+          if session = context.session
             # Serialize the message to detect client-side problems,
             # such as invalid BSON keys. The message will be serialized again
             # later prior to being sent to the connection.

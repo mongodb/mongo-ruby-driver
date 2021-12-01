@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # The only allowed read preference in transaction is primary.
@@ -13,7 +16,7 @@ describe 'Read preference' do
     authorized_client.with(client_options)
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   before do
     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -40,16 +43,6 @@ describe 'Read preference' do
 
   let(:find_options) do
     {}
-  end
-
-  shared_examples_for 'sends expected read preference when reading' do
-    it 'sends expected read preference when reading' do
-      read_operation
-
-      event = subscriber.single_command_started_event('find')
-      actual_preference = event.command['$readPreference']
-      expect(actual_preference).to eq(expected_read_preference)
-    end
   end
 
   shared_examples_for 'does not send read preference when reading' do
@@ -92,7 +85,17 @@ describe 'Read preference' do
       context 'server supporting OP_MSG' do
         min_server_fcv '3.6'
 
-        it_behaves_like 'sends expected read preference when reading'
+        it 'sends expected read preference when reading' do
+          read_operation
+
+          event = subscriber.single_command_started_event('find')
+          actual_preference = event.command['$readPreference']
+          if expected_read_preference&.[]("mode") == "primary"
+            expect(actual_preference).to be_nil
+          else
+            expect(actual_preference).to eq(expected_read_preference)
+          end
+        end
       end
     end
 
@@ -304,7 +307,11 @@ describe 'Read preference' do
 
           event = subscriber.single_command_started_event('find')
           actual_preference = event.command['$readPreference']
-          expect(actual_preference).to eq(expected_read_preference)
+          if expected_read_preference&.[]("mode") == "primary"
+            expect(actual_preference).to be_nil
+          else
+            expect(actual_preference).to eq(expected_read_preference)
+          end
         end
       end
     end

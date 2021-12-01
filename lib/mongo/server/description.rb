@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -12,13 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/description/features'
-
 module Mongo
   class Server
 
     # Represents a description of the server, populated by the result of the
-    # ismaster command.
+    # hello command.
     #
     # Note: Unknown servers do not have wire versions, but for legacy reasons
     # we return 0 for min_wire_version and max_wire_version of any server that does
@@ -182,32 +183,91 @@ module Mongo
       # @since 2.5.0
       LOGICAL_SESSION_TIMEOUT_MINUTES = 'logicalSessionTimeoutMinutes'.freeze
 
+      # Constant for reading connectionId info from config.
+      #
+      # @api private
+      CONNECTION_ID = 'connectionId'.freeze
+
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
       EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME,
                                  LAST_WRITE,
                                  OPERATION_TIME,
-                                 Operation::CLUSTER_TIME ].freeze
+                                 Operation::CLUSTER_TIME,
+                                 CONNECTION_ID,
+                               ].freeze
 
-      # Instantiate the new server description from the result of the ismaster
-      # command.
+      # Instantiate the new server description from the result of the hello
+      # command or fabricate a placeholder description for Unknown and
+      # LoadBalancer servers.
       #
       # @example Instantiate the new description.
-      #   Description.new(address, { 'ismaster' => true }, 0.5)
+      #   Description.new(address, { 'isWritablePrimary' => true }, 0.5)
       #
       # @param [ Address ] address The server address.
-      # @param [ Hash ] config The result of the ismaster command.
-      # @param [ Float ] average_round_trip_time The moving average time (sec) the ismaster
-      #   call took to complete.
+      # @param [ Hash ] config The result of the hello command.
+      # @param [ Float ] average_round_trip_time The moving average time (sec) the hello
+      #   command took to complete.
+      # @param [ Float ] average_round_trip_time The moving average time (sec)
+      #   the ismaster call took to complete.
+      # @param [ true | false ] load_balancer Whether the server is treated as
+      #   a load balancer.
+      # @param [ true | false ] force_load_balancer Whether the server is
+      #   forced to be a load balancer.
       #
-      # @since 2.0.0
-      def initialize(address, config = {}, average_round_trip_time = nil)
+      # @api private
+      def initialize(address, config = {}, average_round_trip_time: nil,
+        load_balancer: false, force_load_balancer: false
+      )
         @address = address
         @config = config
+        @load_balancer = !!load_balancer
+        @force_load_balancer = !!force_load_balancer
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
-        @last_update_time = Time.now.dup.freeze
+        @last_update_time = Time.now.freeze
+        @last_update_monotime = Utils.monotonic_time
+
+        if load_balancer
+          # When loadBalanced=true URI option is set, the driver will refuse
+          # to work if the server it communicates with does not set serviceId
+          # in ismaster/hello response.
+          #
+          # In practice, there are currently no server version that actually
+          # sets this field.
+          #
+          # Therefore, when connect=:load_balanced Ruby option is used instead
+          # of the loadBalanced=true URI option, if serviceId is not set in
+          # ismaster/hello response, the driver fabricates a serviceId and
+          # proceeds to treat a server that does not report itself as being
+          # behind a load balancer as a server that is behind a load balancer.
+          #
+          # 5.0+ servers should provide topologyVersion.processId which
+          # is specific to the particular process instance. We can use that
+          # field as a proxy for serviceId.
+          #
+          # If the topologyVersion isn't provided for whatever reason, we
+          # fabricate a serviceId locally.
+          #
+          # In either case, a serviceId provided by an actual server behind
+          # a load balancer is supposed to be a BSON::ObjectId. The fabricated
+          # service ids are strings, to distinguish them from the real ones.
+          # In particular processId is also a BSON::ObjectId, but will be
+          # mapped to a string for clarity that this is a fake service id.
+          if ok? && !service_id
+            unless force_load_balancer
+              raise Error::MissingServiceId, "The server at #{address.seed} did not provide a service id in handshake response"
+            end
+
+            fake_service_id = if process_id = topology_version && topology_version['processId']
+              "process:#{process_id}"
+            else
+              "fake:#{rand(2**32-1)+1}"
+            end
+            @config = @config.merge('serviceId' => fake_service_id)
+          end
+        end
 
         if Mongo::Lint.enabled?
           # prepopulate cache instance variables
@@ -223,15 +283,27 @@ module Mongo
       # @return [ Address ] address The server's address.
       attr_reader :address
 
-      # @return [ Hash ] The actual result from the ismaster command.
+      # @return [ Hash ] The actual result from the hello command.
       attr_reader :config
+
+      # Returns whether this server is a load balancer.
+      #
+      # @return [ true | false ] Whether this server is a load balancer.
+      def load_balancer?
+        @load_balancer
+      end
 
       # @return [ Features ] features The features for the server.
       def features
         @features
       end
 
-      # @return [ Float ] The moving average time the ismaster call took to complete.
+      # @return [ nil | Object ] The service id, if any.
+      def service_id
+        config['serviceId']
+      end
+
+      # @return [ Float ] The moving average time the hello call took to complete.
       attr_reader :average_round_trip_time
 
       # Returns whether this server is an arbiter, per the SDAM spec.
@@ -562,7 +634,7 @@ module Mongo
       # @since 2.0.0
       def primary?
         ok? &&
-        config['ismaster'] == true &&
+          (config['ismaster'] == true || config['isWritablePrimary'] == true ) &&
         !!config['setName']
       end
 
@@ -614,6 +686,7 @@ module Mongo
       #
       # @since 2.4.0
       def server_type
+        return :load_balancer if load_balancer?
         return :arbiter if arbiter?
         return :ghost if ghost?
         return :sharded if mongos?
@@ -648,6 +721,7 @@ module Mongo
       #
       # @since 2.0.0
       def unknown?
+        return false if load_balancer?
         config.empty? || config.keys == %w(topologyVersion) || !ok?
       end
 
@@ -732,7 +806,7 @@ module Mongo
         !!(address.to_s.downcase != me.downcase if me)
       end
 
-      # opTime in lastWrite subdocument of the ismaster response.
+      # opTime in lastWrite subdocument of the hello response.
       #
       # @return [ BSON::Timestamp ] The timestamp.
       #
@@ -754,6 +828,25 @@ module Mongo
       #
       # @since 2.7.0
       attr_reader :last_update_time
+
+      # Time when this server description was created according to monotonic clock.
+      #
+      # @see Description::last_updated_time for more detail
+      #
+      # @return [ Float ] Server description creation monotonic time.
+      #
+      # @api private
+      attr_reader :last_update_monotime
+
+      # @api experimental
+      def server_connection_id
+        config['connectionId']
+      end
+
+      # @api experimental
+      def service_id
+        config['serviceId']
+      end
 
       # Check equality of two descriptions.
       #
@@ -778,6 +871,10 @@ module Mongo
       # @api private
       def server_version_gte?(version)
         required_wv = case version
+          when '5.0'
+            12
+          when '4.4'
+            9
           when '4.2'
             8
           when '4.0'
@@ -796,8 +893,19 @@ module Mongo
             raise ArgumentError, "Bogus required version #{version}"
           end
 
+        if load_balancer?
+          # If we are talking to a load balancer, there is no monitoring
+          # and we don't know what server is behind the load balancer.
+          # Assume everything is supported.
+          # TODO remove this when RUBY-2220 is implemented.
+          return true
+        end
+
         required_wv >= min_wire_version && required_wv <= max_wire_version
       end
     end
   end
 end
+
+require 'mongo/server/description/features'
+require 'mongo/server/description/load_balancer'

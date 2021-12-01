@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +16,6 @@
 # limitations under the License.
 
 require 'mongo/server_selector/base'
-require 'mongo/server_selector/selectable'
 require 'mongo/server_selector/nearest'
 require 'mongo/server_selector/primary'
 require 'mongo/server_selector/primary_preferred'

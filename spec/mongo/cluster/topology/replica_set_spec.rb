@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
@@ -70,18 +73,18 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8,
         'setName' => 'testing', 'ok' => 1 })
     end
 
     let(:replica_set_two_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8,
         'setName' => 'test', 'ok' => 1 })
     end
@@ -150,7 +153,13 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:cluster) do
-      double('cluster', servers: servers, single?: false, sharded?: false, unknown?: false)
+      double('cluster',
+        servers: servers,
+        single?: false,
+        replica_set?: true,
+        sharded?: false,
+        unknown?: false,
+      )
     end
 
     context 'when the read preference is primary' do
@@ -162,7 +171,11 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true) ]
+          [ double('server',
+            primary?: true,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -191,7 +204,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true, secondary?: false) ]
+          [ double('server',
+            primary?: true,
+            secondary?: false,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -260,7 +278,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a secondary does not exist' do
 
         let(:servers) do
-          [ double('server', secondary?: false, primary?: true) ]
+          [ double('server',
+            secondary?: false,
+            primary?: true,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -289,7 +312,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true, secondary?: false) ]
+          [ double('server',
+            primary?: true,
+            secondary?: false,
+            # for runs with linting enabled
+            average_round_trip_time: 42,
+          ) ]
         end
 
         it 'returns true' do
@@ -319,15 +347,28 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     context 'when a primary server exists' do
 
       let(:primary) do
-        double('server', :primary? => true)
+        double('server',
+          :primary? => true,
+          # for runs with linting enabled
+          average_round_trip_time: 42,
+        )
       end
 
       let(:secondary) do
-        double('server', :primary? => false)
+        double('server',
+          :primary? => false,
+          # for runs with linting enabled
+          average_round_trip_time: 42,
+        )
       end
 
       let(:cluster) do
-        double('cluster', servers: [ primary, secondary ])
+        double('cluster',
+          single?: false,
+          replica_set?: true,
+          sharded?: false,
+          servers: [ primary, secondary ],
+        )
       end
 
       it 'returns true' do
@@ -342,7 +383,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       end
 
       let(:cluster) do
-        double('cluster', servers: [ server ])
+        double('cluster',
+          single?: false,
+          replica_set?: true,
+          sharded?: false,
+          servers: [ server ],
+        )
       end
 
       it 'returns false' do
@@ -361,7 +407,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       context 'description with non-nil max set version' do
         let(:description) do
-          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+          Mongo::Server::Description.new('a', { 'setVersion' => 5 }).tap do |description|
             expect(description.set_version).to eq(5)
           end
         end
@@ -395,7 +441,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       context 'description with a higher max set version' do
         let(:description) do
-          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+          Mongo::Server::Description.new('a', { 'setVersion' => 5 }).tap do |description|
             expect(description.set_version).to eq(5)
           end
         end
@@ -407,7 +453,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       context 'description with a lower max set version' do
         let(:description) do
-          Mongo::Server::Description.new('a', 'setVersion' => 3).tap do |description|
+          Mongo::Server::Description.new('a', { 'setVersion' => 3 }).tap do |description|
             expect(description.set_version).to eq(3)
           end
         end
@@ -445,7 +491,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         let(:new_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004f') }
 
         let(:description) do
-          Mongo::Server::Description.new('a', 'electionId' => new_election_id).tap do |description|
+          Mongo::Server::Description.new('a', { 'electionId' => new_election_id }).tap do |description|
             expect(description.election_id).to be new_election_id
           end
         end
@@ -483,7 +529,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         let(:new_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004f') }
 
         let(:description) do
-          Mongo::Server::Description.new('a', 'electionId' => new_election_id).tap do |description|
+          Mongo::Server::Description.new('a', { 'electionId' => new_election_id }).tap do |description|
             expect(description.election_id).to be new_election_id
           end
         end
@@ -497,7 +543,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         let(:low_election_id) { BSON::ObjectId.from_string('7fffffff0000000000000042') }
 
         let(:description) do
-          Mongo::Server::Description.new('a', 'electionId' => low_election_id).tap do |description|
+          Mongo::Server::Description.new('a', { 'electionId' => low_election_id }).tap do |description|
             expect(description.election_id).to be low_election_id
           end
         end
@@ -522,7 +568,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     let(:desc) do
       Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))

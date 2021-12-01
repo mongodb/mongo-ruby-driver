@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Index::View do
@@ -261,9 +264,9 @@ describe Mongo::Index::View do
         context 'when commit quorum options are specified' do
           require_topology :replica_set, :sharded
           context 'on server versions >= 4.4' do
-            min_server_fcv '4.3'
+            min_server_fcv '4.4'
 
-            let(:subscriber) { EventSubscriber.new }
+            let(:subscriber) { Mrss::EventSubscriber.new }
 
             let(:client) do
               authorized_client.tap do |client|
@@ -305,7 +308,8 @@ describe Mongo::Index::View do
                     { key: { testing: -1 }, unique: true },
                     { commit_quorum: 'unsupported-value' }
                   )
-                end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration/)
+                # 4.4.4 changed the text of the error message
+                end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
               end
             end
           end
@@ -321,6 +325,81 @@ describe Mongo::Index::View do
                   { commit_quorum: 'majority' }
                 )
               end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the commit_quorum option/)
+            end
+          end
+        end
+
+        context 'when hidden is specified' do
+          let(:index) { view.get('with_hidden_1') }
+
+          context 'on server versions <= 3.2' do
+            # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+            # checking on index creation. The server will allow the user to create
+            # the index with the hidden option, but the server does not support this
+            # option and will not use it.
+            max_server_fcv '3.2'
+
+            let!(:result) do
+              view.create_many({ key: { with_hidden: 1 }, hidden: true })
+            end
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'creates an index' do
+              expect(index).to_not be_nil
+            end
+          end
+
+          context 'on server versions between 3.4 and 4.2' do
+            max_server_fcv '4.2'
+            min_server_fcv '3.4'
+
+            it 'raises an exception' do
+              expect do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+            end
+          end
+
+          context 'on server versions >= 4.4' do
+            min_server_fcv '4.4'
+
+            context 'when hidden is true' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: true })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'applies the hidden option to the index' do
+                expect(index['hidden']).to be true
+              end
+            end
+
+            context 'when hidden is false' do
+              let!(:result) do
+                view.create_many({ key: { with_hidden: 1 }, hidden: false })
+              end
+
+              it 'returns ok' do
+                expect(result).to be_successful
+              end
+
+              it 'creates an index' do
+                expect(index).to_not be_nil
+              end
+
+              it 'does not apply the hidden option to the index' do
+                expect(index['hidden']).to be_nil
+              end
             end
           end
         end
@@ -574,6 +653,8 @@ describe Mongo::Index::View do
     end
 
     context 'when using bucket option' do
+      # Option is removed in 4.9
+      max_server_version '4.7'
 
       let(:spec) do
         { 'any' => 1 }
@@ -680,6 +761,8 @@ describe Mongo::Index::View do
       end
 
       context 'when using bucket option' do
+        # Option is removed in 4.9
+        max_server_version '4.7'
 
         let(:spec) do
           { 'any' => 1 }
@@ -773,12 +856,83 @@ describe Mongo::Index::View do
       end
     end
 
+    context 'when providing hidden option' do
+      let(:index) { view.get('with_hidden_1') }
+
+      context 'on server versions <= 3.2' do
+        # DRIVERS-1220 Server versions 3.2 and older do not perform any option
+        # checking on index creation. The server will allow the user to create
+        # the index with the hidden option, but the server does not support this
+        # option and will not use it.
+        max_server_fcv '3.2'
+
+        let!(:result) do
+          view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+
+        it 'creates an index' do
+          expect(index).to_not be_nil
+        end
+      end
+
+      context 'on server versions between 3.4 and 4.2' do
+        max_server_fcv '4.2'
+        min_server_fcv '3.4'
+
+        it 'raises an exception' do
+          expect do
+            view.create_one({ 'with_hidden' => 1 }, { hidden: true })
+          end.to raise_error(/The field 'hidden' is not valid for an index specification/)
+        end
+      end
+
+      context 'on server versions >= 4.4' do
+        min_server_fcv '4.4'
+
+        context 'when hidden is true' do
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: true }) }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(index).to_not be_nil
+          end
+
+          it 'applies the hidden option to the index' do
+            expect(index['hidden']).to be true
+          end
+        end
+
+        context 'when hidden is false' do
+          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: false }) }
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
+
+          it 'creates an index' do
+            expect(index).to_not be_nil
+          end
+
+          it 'does not apply the hidden option to the index' do
+            expect(index['hidden']).to be_nil
+          end
+        end
+      end
+    end
+
     context 'when providing commit_quorum option' do
       require_topology :replica_set, :sharded
       context 'on server versions >= 4.4' do
-        min_server_fcv '4.3'
+        min_server_fcv '4.4'
 
-        let(:subscriber) { EventSubscriber.new }
+        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
           authorized_client.tap do |client|
@@ -818,7 +972,8 @@ describe Mongo::Index::View do
           it 'raises an exception' do
             expect do
               view.create_one({ 'x' => 1 }, commit_quorum: 'unsupported-value')
-            end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration/)
+            # 4.4.4 changed the text of the error message
+            end.to raise_error(Mongo::Error::OperationFailure, /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
           end
         end
       end

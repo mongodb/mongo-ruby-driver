@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +61,11 @@ module Mongo
       #   auto-encryption. Default is false.
       # @option options [ Hash | nil ] :extra_options Options related to spawning
       #   mongocryptd. These are set to default values if no option is passed in.
+      # @option options [ Hash ] :kms_providers A hash of key management service
+      #   configuration information.
+      #   @see Mongo::Crypt::KMS::Credentials for list of options for every
+      #   supported provider.
+      #   @note There may be more than one KMS provider specified.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
@@ -65,7 +73,7 @@ module Mongo
         @options = set_default_options(options).freeze
 
         @crypt_handle = Crypt::Handle.new(
-          @options[:kms_providers],
+          Crypt::KMS::Credentials.new(@options[:kms_providers]),
           schema_map: @options[:schema_map]
         )
 
@@ -76,7 +84,7 @@ module Mongo
         @mongocryptd_client = Client.new(
           @options[:extra_options][:mongocryptd_uri],
           monitoring_io: @options[:client].options[:monitoring_io],
-          server_selection_timeout: 1,
+          server_selection_timeout: 10,
         )
 
         begin
@@ -91,7 +99,7 @@ module Mongo
           begin
             @mongocryptd_client.close
           rescue => e
-            log_warn("Eror closing mongocryptd client in auto encrypter's constructor: #{e.class}: #{e}")
+            log_warn("Error closing mongocryptd client in auto encrypter's constructor: #{e.class}: #{e}")
             # Drop this exception so that the original exception is raised
           end
           raise

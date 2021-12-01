@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Auth' do
@@ -10,8 +13,12 @@ describe 'Auth' do
       authorized_client.cluster.next_primary
     end
 
+    let(:base_options) do
+      SpecConfig.instance.monitoring_options.merge(connect: SpecConfig.instance.test_options[:connect])
+    end
+
     let(:connection) do
-      Mongo::Server::Connection.new(server, options)
+      Mongo::Server::Connection.new(server, base_options.merge(options))
     end
 
     before(:all) do
@@ -31,8 +38,9 @@ describe 'Auth' do
     context 'user mechanism not provided' do
 
       context 'user does not exist' do
-        let(:options) { SpecConfig.instance.ssl_options.merge(
-          user: 'nonexistent_user') }
+        let(:options) do
+          {user: 'nonexistent_user' }
+        end
 
         before do
           expect(connection.app_metadata.send(:document)[:saslSupportedMechs]).to eq('admin.nonexistent_user')
@@ -63,8 +71,9 @@ describe 'Auth' do
       end
 
       context 'user exists' do
-        let(:options) { SpecConfig.instance.ssl_options.merge(
-          user: 'existing_user', password: 'bogus') }
+        let(:options) do
+          {user: 'existing_user', password: 'bogus'}
+        end
 
         before do
           expect(connection.app_metadata.send(:document)[:saslSupportedMechs]).to eq("admin.existing_user")
@@ -99,8 +108,9 @@ describe 'Auth' do
       min_server_fcv '3.0'
 
       context 'scram-sha-1 requested' do
-        let(:options) { SpecConfig.instance.ssl_options.merge(
-          user: 'nonexistent_user', auth_mech: :scram) }
+        let(:options) do
+          {user: 'nonexistent_user', auth_mech: :scram}
+        end
 
         it 'indicates scram-sha-1 was requested and used' do
           expect do
@@ -112,8 +122,9 @@ describe 'Auth' do
       context 'scram-sha-256 requested' do
         min_server_fcv '4.0'
 
-        let(:options) { SpecConfig.instance.ssl_options.merge(
-          user: 'nonexistent_user', auth_mech: :scram256) }
+        let(:options) do
+          {user: 'nonexistent_user', auth_mech: :scram256}
+        end
 
         it 'indicates scram-sha-256 was requested and used' do
           expect do
@@ -124,8 +135,9 @@ describe 'Auth' do
     end
 
     context 'when authentication fails' do
-      let(:options) { SpecConfig.instance.ssl_options.merge(
-        user: 'nonexistent_user', password: 'foo') }
+      let(:options) do
+        {user: 'nonexistent_user', password: 'foo'}
+      end
 
       it 'reports which server authentication was attempted against' do
         expect do
@@ -142,8 +154,9 @@ describe 'Auth' do
       end
 
       context 'with custom auth source' do
-        let(:options) { SpecConfig.instance.ssl_options.merge(
-          user: 'nonexistent_user', password: 'foo', auth_source: 'authdb') }
+        let(:options) do
+          {user: 'nonexistent_user', password: 'foo', auth_source: 'authdb'}
+        end
 
         it 'reports auth source used' do
           expect do
@@ -240,7 +253,7 @@ describe 'Auth' do
     require_no_auth
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.ssl_options.merge(
+      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.monitoring_options.merge(
         auth_source: 'foo'))
     end
 
@@ -254,13 +267,43 @@ describe 'Auth' do
     require_x509_auth
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.ssl_options.merge(
+      new_local_client(SpecConfig.instance.addresses, base_options.merge(
         auth_mech: :mongodb_x509))
     end
 
     it 'authenticates' do
       expect(Mongo::Auth::User).to receive(:new).and_call_original
       client.database.command(ping: 1)
+    end
+  end
+
+  context 'in lb topology' do
+    require_topology :load_balanced
+
+    context 'when authentication fails with network error' do
+      let(:server) do
+        authorized_client.cluster.next_primary
+      end
+
+      let(:base_options) do
+        SpecConfig.instance.monitoring_options.merge(connect: SpecConfig.instance.test_options[:connect])
+      end
+
+      let(:connection) do
+        Mongo::Server::Connection.new(server, base_options)
+      end
+
+      it 'includes service id in exception' do
+        expect_any_instance_of(Mongo::Server::PendingConnection).to receive(:authenticate!).and_raise(Mongo::Error::SocketError)
+
+        begin
+          connection.connect!
+        rescue Mongo::Error::SocketError => exc
+          exc.service_id.should_not be nil
+        else
+          fail 'Expected the SocketError to be raised'
+        end
+      end
     end
   end
 end

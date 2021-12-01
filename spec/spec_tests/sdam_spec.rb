@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 require 'runners/sdam'
@@ -88,14 +91,14 @@ describe 'Server Discovery and Monitoring' do
                 )
               end
               monitor = server.instance_variable_get(:@monitor)
-              result = response.ismaster
+              result = response.hello
               # Spec tests do not always specify wire versions, but the
               # driver requires them. Set them to zero which was
               # the legacy default in the driver.
               result['minWireVersion'] ||= 0
               result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
-                server.description.address, result, 0.5)
+                server.description.address, result, average_round_trip_time: 0.5)
               @client.cluster.run_sdam_flow(server.description, new_description)
             end
 

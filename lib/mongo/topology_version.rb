@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +17,7 @@
 
 module Mongo
   # TopologyVersion encapsulates the topologyVersion document obtained from
-  # ismaster responses and not master-like OperationFailure errors.
+  # hello responses and not master-like OperationFailure errors.
   #
   # @api private
   class TopologyVersion < BSON::Document
@@ -75,6 +78,15 @@ module Mongo
       else
         counter >= other.counter
       end
+    end
+
+    # Converts the object to a document suitable for being sent to the server.
+    #
+    # @return [ BSON::Document ] The document.
+    #
+    # @api private
+    def to_doc
+      BSON::Document.new(self).merge(counter: BSON::Int64.new(counter))
     end
   end
 end

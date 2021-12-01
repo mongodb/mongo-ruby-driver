@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +21,33 @@ module Mongo
     # Shared executable behavior of operations.
     #
     # @since 2.5.2
+    # @api private
     module Executable
 
       include ResponseHandling
 
-      def do_execute(connection, client, options = {})
+      def do_execute(connection, context, options = {})
         unpin_maybe(session) do
-          add_error_labels(client, connection, session) do
+          add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
-              get_result(connection, client, options).tap do |result|
+              get_result(connection, context, options).tap do |result|
+                if session
+                  if session.in_transaction? &&
+                    connection.description.load_balancer?
+                  then
+                    if session.pinned_service_id
+                      unless session.pinned_service_id == connection.service_id
+                        raise Error::InternalDriverError, "Expected operation to use service #{session.pinned_session_id} but it used #{connection.service_id}"
+                      end
+                    else
+                      session.pin_to_service(connection.service_id)
+                    end
+                  end
+
+                  if session.snapshot? && !session.snapshot_timestamp
+                    session.snapshot_timestamp = result.snapshot_timestamp
+                  end
+                end
                 process_result(result, connection)
               end
             end
@@ -34,15 +55,15 @@ module Mongo
         end
       end
 
-      def execute(connection, client:, options: {})
+      def execute(connection, context:, options: {})
         if Lint.enabled?
           unless connection.is_a?(Mongo::Server::Connection)
             raise Error::LintError, "Connection argument is of wrong type: #{connection}"
           end
         end
 
-        do_execute(connection, client, options).tap do |result|
-          validate_result(result, client, connection)
+        do_execute(connection, context, options).tap do |result|
+          validate_result(result, connection, context)
         end
       end
 
@@ -52,20 +73,27 @@ module Mongo
         Result
       end
 
-      def get_result(connection, client, options = {})
-        result_class.new(*dispatch_message(connection, client, options))
+      def get_result(connection, context, options = {})
+        result_class.new(*dispatch_message(connection, context, options))
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(connection, client, options = {})
-        message = build_message(connection)
-        message = message.maybe_encrypt(connection, client)
-        reply = connection.dispatch([ message ], operation_id, client, options)
+      def dispatch_message(connection, context, options = {})
+        message = build_message(connection, context)
+        message = message.maybe_encrypt(connection, context)
+        reply = connection.dispatch([ message ], context, options)
         [reply, connection.description]
       end
 
-      def build_message(connection)
-        message(connection)
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      def build_message(connection, context)
+        msg = message(connection)
+        if server_api = context.server_api
+          msg = msg.maybe_add_server_api(server_api)
+        end
+        msg
       end
 
       def process_result(result, connection)
@@ -82,7 +110,7 @@ module Mongo
 
       def process_result_for_sdam(result, connection)
         if (result.not_master? || result.node_recovering?) &&
-          connection.generation >= connection.server.pool.generation
+          connection.generation >= connection.server.pool.generation(service_id: connection.service_id)
         then
           if result.node_shutting_down?
             keep_pool = false
@@ -94,6 +122,7 @@ module Mongo
           connection.server.unknown!(
             keep_connection_pool: keep_pool,
             generation: connection.generation,
+            service_id: connection.service_id,
             topology_version: result.topology_version,
           )
 

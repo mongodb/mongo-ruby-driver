@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'read concern' do
   min_server_version '3.2'
 
   let(:subscriber) do
-    EventSubscriber.new
+    Mrss::EventSubscriber.new
   end
 
   let(:specified_read_concern) do
@@ -17,7 +20,7 @@ describe 'read concern' do
 
   let(:sent_read_concern) do
     subscriber.clear_events!
-    collection.count_documents({})
+    collection.count_documents
     subscriber.started_events.find { |c| c.command_name == 'aggregate' }.command[:readConcern]
   end
 

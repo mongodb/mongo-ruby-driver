@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,10 +30,23 @@ module Mongo
         private
 
         def selector(connection)
-          selector = { :createIndexes => coll_name, :indexes => indexes }
-          selector[:commitQuorum] = commit_quorum if commit_quorum
-
-          selector
+          {
+            createIndexes: coll_name,
+            indexes: indexes,
+          }.tap do |selector|
+            if commit_quorum = spec[:commit_quorum]
+              # While server versions 3.4 and newer generally perform option
+              # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
+              # the server would accept the commitQuorum option and use it internally
+              # (see SERVER-47193). As a result, the drivers specifications require
+              # drivers to perform validation and raise an error when the commitQuorum
+              # option is passed to servers that don't support it.
+              unless connection.features.commit_quorum_enabled?
+                raise Error::UnsupportedOption.commit_quorum_error
+              end
+              selector[:commitQuorum] = commit_quorum
+            end
+          end
         end
       end
     end

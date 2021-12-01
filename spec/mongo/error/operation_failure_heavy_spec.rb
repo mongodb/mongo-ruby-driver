@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Error::OperationFailure do
@@ -6,7 +9,7 @@ describe Mongo::Error::OperationFailure do
     # Fail point will work on 4.0 mongod but requires 4.2 for mongos
     min_server_fcv '4.2'
     # Fail point must be set on the same server to which the query is sent
-    require_no_multi_shard
+    require_no_multi_mongos
 
     # https://github.com/mongodb/specifications/commit/7745234f93039a83ae42589a6c0cdbefcffa32fa
     let(:fail_point_command) do

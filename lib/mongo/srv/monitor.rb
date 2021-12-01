@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,24 +37,18 @@ module Mongo
       # Creates the SRV monitor.
       #
       # @param [ Cluster ] cluster The cluster.
-      # @param [ Hash ] options The cluster options.
       #
-      # @option options [ Float ] :timeout The timeout to use for DNS lookups.
-      # @option options [ URI::SRVProtocol ] :srv_uri The SRV URI to monitor.
-      # @option options [ Hash ] :resolv_options For internal driver use only.
+      # @option opts [ Float ] :timeout The timeout to use for DNS lookups.
+      # @option opts [ URI::SRVProtocol ] :srv_uri The SRV URI to monitor.
+      # @option opts [ Hash ] :resolv_options For internal driver use only.
       #   Options to pass through to Resolv::DNS constructor for SRV lookups.
-      def initialize(cluster, options = nil)
-        options = if options
-          options.dup
-        else
-          {}
-        end
+      def initialize(cluster, **opts)
         @cluster = cluster
-        @resolver = Srv::Resolver.new(options)
-        unless @srv_uri = options.delete(:srv_uri)
+        unless @srv_uri = opts.delete(:srv_uri)
           raise ArgumentError, 'SRV URI is required'
         end
-        @options = options.freeze
+        @options = opts.freeze
+        @resolver = Srv::Resolver.new(**opts)
         @last_result = @srv_uri.srv_result
         @stop_semaphore = Semaphore.new
       end
@@ -64,11 +61,6 @@ module Mongo
       #   determining intervals between SRV lookups, which depend on SRV DNS
       #   records' TTL values.
       attr_reader :last_result
-
-      def start!
-        super
-        ObjectSpace.define_finalizer(self, self.class.finalize(@thread))
-      end
 
       private
 
@@ -101,12 +93,6 @@ module Mongo
         end
 
         @cluster.set_server_list(last_result.address_strs)
-      end
-
-      def self.finalize(thread)
-        Proc.new do
-          thread.kill
-        end
       end
 
       def scan_interval

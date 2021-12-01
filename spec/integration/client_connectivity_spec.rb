@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # This test is for checking connectivity of the test client to the
@@ -20,7 +23,7 @@ describe 'Client connectivity' do
     it_behaves_like 'is correctly configured'
 
     it 'connects and is usable' do
-      resp = client.database.command(ismaster: 1)
+      resp = client.database.command(ping: 1)
       expect(resp).to be_a(Mongo::Operation::Result)
     end
   end

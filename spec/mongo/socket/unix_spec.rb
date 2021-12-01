@@ -1,6 +1,10 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Socket::Unix do
+  require_unix_socket
 
   let(:path) { "/tmp/mongodb-#{SpecConfig.instance.any_port}.sock" }
 

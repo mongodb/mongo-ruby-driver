@@ -61,7 +61,7 @@ names must be uppercased.
 For example, to execute Kerberos integration tests which require private
 variables pertanining to the test Kerberos server, you could run:
 
-    ./.evergreen/test-on-docker -d rhel70 RVM_RUBY=ruby-2.3 \
+    ./.evergreen/test-on-docker -d rhel70 RVM_RUBY=ruby-2.5 \
       -s .evergreen/run-tests-kerberos-integration.sh -pa .env.private
 
 The `.env.private` path specifically is listed in .gitignore and .dockerignore
@@ -72,6 +72,33 @@ specified in the `docker run` invocation and are not part of the image
 created by `docker build`. Because of this, they override any environment
 variables provided as positional arguments.
 
+### Field-Level Encryption FLE
+
+The Docker testing script supports running tests with field-level encryption (FLE).
+To enable FLE, set the FLE environment variable to true.
+
+Some FLE tests require other environment variables to be set as well. You may
+specify these environment variables in a private .env file as explained in the
+[Private Environment Variables](#private-environment-variables) section.
+
+The following is a list of required environment variables:
+- MONGO_RUBY_DRIVER_AWS_KEY
+- MONGO_RUBY_DRIVER_AWS_SECRET
+- MONGO_RUBY_DRIVER_AWS_REGION
+- MONGO_RUBY_DRIVER_AWS_ARN
+- MONGO_RUBY_DRIVER_AZURE_TENANT_ID
+- MONGO_RUBY_DRIVER_AZURE_CLIENT_ID
+- MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET
+- MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT
+- MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT
+- MONGO_RUBY_DRIVER_AZURE_KEY_NAME
+- MONGO_RUBY_DRIVER_GCP_EMAIL
+- MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY
+
+Here's an example of how to run FLE tests in Docker:
+
+  ./.evergreen/test-on-docker FLE=true -pa .env.private
+
 ### rhel62
 
 To run rhel62 distro in docker, host system must be configured to [emulate
@@ -80,7 +107,7 @@ Note that this defeats one of the patches for the Spectre set of processor
 vulnerabilities.
 
 
-## Running Deployment In Docker
+## Running MongoDB Server In Docker
 
 It is possible to use the Docker infrastructure provided by the test suite
 to provision a MongoDB server deployment in Docker and expose it to the host.
@@ -103,6 +130,10 @@ To run a replica set deployment with authentication and expose its members
 on ports 30000 through 30002:
 
     ./.evergreen/test-on-docker -pm 30000 -d debian92 TOPOLOGY=replica-set AUTH=auth
+
+When OCSP is enabled, the test OCSP responder will be launched on port 8100
+and this port will be exposed to the host OS. There must not be another service
+using this port on the host OS.
 
 
 ## Testing in AWS
@@ -158,7 +189,7 @@ Debian instances is `admin` and the username for Ubuntu instances is `ubuntu`:
 
     # Configure a Debian instance to run the test suite via Docker
     ./.evergreen/provision-remote admin@12.34.56.78 docker
-    
+
     # Configure an Ubuntu instance to run the test suite without Docker
     ./.evergreen/provision-remote ubuntu@12.34.56.78 local
 

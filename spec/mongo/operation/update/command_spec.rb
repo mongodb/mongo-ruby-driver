@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Update::Command do
@@ -69,7 +72,7 @@ describe Mongo::Operation::Update::Command do
 
   describe 'write concern' do
     # https://jira.mongodb.org/browse/RUBY-2224
-    skip_if_linting
+    require_no_linting
 
     context 'when write concern is not specified' do
 
@@ -96,7 +99,7 @@ describe Mongo::Operation::Update::Command do
 
   describe '#message' do
     # https://jira.mongodb.org/browse/RUBY-2224
-    skip_if_linting
+    require_no_linting
 
     context 'when the server does not support OP_MSG' do
       max_server_version '3.4'

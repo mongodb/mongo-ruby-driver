@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cursor do
@@ -77,6 +80,8 @@ describe Mongo::Cursor do
     end
 
     context 'server is unknown' do
+      require_topology :single, :replica_set, :sharded
+
       let(:server) do
         view.send(:server_selector).select_server(authorized_client.cluster).tap do |server|
           authorized_client.cluster.disconnect!
@@ -326,8 +331,7 @@ describe Mongo::Cursor do
 
       before do
         authorized_collection.insert_many(documents)
-        cluster.schedule_kill_cursor(cursor.id,
-                                     cursor.send(:kill_cursors_op_spec),
+        cluster.schedule_kill_cursor(cursor.kill_spec,
                                      cursor.instance_variable_get(:@server))
       end
 
@@ -426,7 +430,7 @@ describe Mongo::Cursor do
 
       it 'removes the cursor id from the active cursors tracked by the cluster cursor manager' do
         enum.next
-        expect(cursor_reaper.instance_variable_get(:@active_cursors)).not_to include(cursor_id)
+        expect(cursor_reaper.instance_variable_get(:@active_cursor_ids)).not_to include(cursor_id)
       end
     end
   end
@@ -434,7 +438,7 @@ describe Mongo::Cursor do
   context 'when an implicit session is used' do
     min_server_fcv '3.6'
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:subscribed_client) do
       authorized_client.tap do |client|
@@ -447,6 +451,7 @@ describe Mongo::Cursor do
     end
 
     before do
+      collection.delete_many
       collection.insert_many(documents)
     end
 
@@ -497,19 +502,42 @@ describe Mongo::Cursor do
       end
 
 
-      context 'when not all documents are iterated' do
+      context 'when result set is not iterated fully but the known # of documents is retrieved' do
+        # These tests set up a collection with 4 documents and find all
+        # of them but, instead of iterating the result set to completion,
+        # manually retrieve the 4 documents that are expected to exist.
+        # On 4.9 and lower servers, the server closes the cursor after
+        # retrieving the 4 documents.
+        # On 5.0, the server does not close the cursor after the 4 documents
+        # have been retrieved, and the client must attempt to retrieve the
+        # next batch (which would be empty) for the server to realize that
+        # the result set is fully iterated and close the cursor.
+        max_server_version '4.9'
 
-        it 'returns the session to the cluster session pool' do
-          3.times { enum.next }
-          expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
-          expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+        context 'when not all documents are iterated' do
+
+          it 'returns the session to the cluster session pool' do
+            3.times { enum.next }
+            expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+            expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+          end
+        end
+
+        context 'when the same number of documents is iterated as # in the collection' do
+
+          it 'returns the session to the cluster session pool' do
+            4.times { enum.next }
+            expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+            expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+          end
         end
       end
 
-      context 'when all documents are iterated' do
+      context 'when result set is iterated fully' do
 
         it 'returns the session to the cluster session pool' do
-          4.times { enum.next }
+          # Iterate fully and assert that there are 4 documents total
+          enum.to_a.length.should == 4
           expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
           expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
         end
@@ -528,8 +556,17 @@ describe Mongo::Cursor do
         db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL }
     end
 
+    let(:conn_desc) do
+      double('connection description').tap do |cd|
+        allow(cd).to receive(:service_id).and_return(nil)
+      end
+    end
+
     let(:reply) do
-      Mongo::Operation::Find.new(query_spec).tap do |reply|
+      double('reply').tap do |reply|
+        allow(reply).to receive(:is_a?).with(Mongo::Operation::Result).and_return(true)
+        allow(reply).to receive(:namespace)
+        allow(reply).to receive(:connection_description).and_return(conn_desc)
         allow(reply).to receive(:cursor_id).and_return(42)
       end
     end
@@ -617,6 +654,46 @@ describe Mongo::Cursor do
             cursor.to_a
           end.to raise_error(Mongo::Error::InvalidCursorOperation, 'Cannot restart iteration of a cursor which issued a getMore')
         end
+      end
+    end
+  end
+
+  describe '#close' do
+    let(:view) do
+      Mongo::Collection::View.new(authorized_collection)
+    end
+
+    let(:server) do
+      view.send(:server_selector).select_server(authorized_client.cluster)
+    end
+
+    let(:reply) do
+      view.send(:send_initial_query, server)
+    end
+
+    let(:cursor) do
+      described_class.new(view, reply, server)
+    end
+
+    it 'closes' do
+      cursor.close
+      expect(cursor).to be_closed
+    end
+
+    context 'when there is a socket error during close' do
+      clean_slate
+
+      before do
+        server.with_connection do |conn|
+          expect(conn).to receive(:deliver)
+            .and_raise(Mongo::Error::SocketError, "test error")
+        end
+      end
+
+      it 'raises an error' do
+        expect do
+          cursor.close
+        end.to raise_error(Mongo::Error::SocketError, "test error")
       end
     end
   end

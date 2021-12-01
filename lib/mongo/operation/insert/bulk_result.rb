@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +22,14 @@ module Mongo
       # Defines custom behavior of results for an insert when sent as part of a bulk write.
       #
       # @since 2.0.0
+      # @api semiprivate
       class BulkResult < Operation::Result
         include Aggregatable
 
         # Get the ids of the inserted documents.
         #
         # @since 2.0.0
+        # @api public
         attr_reader :inserted_ids
 
         # Initialize a new result.
@@ -39,6 +44,7 @@ module Mongo
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0
+        # @api private
         def initialize(replies, connection_description, ids)
           @replies = [*replies] if replies
           @connection_description = connection_description
@@ -83,6 +89,7 @@ module Mongo
         # @return [ Integer ] The number of documents inserted.
         #
         # @since 2.0.0
+        # @api public
         def n_inserted
           written_count
         end
@@ -95,6 +102,7 @@ module Mongo
         # @return [ Object ] The id of the document inserted.
         #
         # @since 2.0.0
+        # @api public
         def inserted_id
           inserted_ids.first
         end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Sharded do
@@ -64,12 +67,12 @@ describe Mongo::Cluster::Topology::Sharded do
   end
 
   let(:standalone_description) do
-    Mongo::Server::Description.new(address, { 'ismaster' => true,
+    Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
     'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
   end
 
   let(:replica_set_description) do
-    Mongo::Server::Description.new(address, { 'ismaster' => true,
+    Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
       'minWireVersion' => 2, 'maxWireVersion' => 8,
       'setName' => 'testing', 'ok' => 1 })
   end
@@ -135,7 +138,7 @@ describe Mongo::Cluster::Topology::Sharded do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     let(:desc1) do
       Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Server::Monitor do
@@ -17,6 +20,12 @@ describe Mongo::Server::Monitor do
     {}
   end
 
+  let(:monitor_app_metadata) do
+    Mongo::Server::Monitor::AppMetadata.new(
+      server_api: SpecConfig.instance.ruby_options[:server_api],
+    )
+  end
+
   let(:cluster) do
     double('cluster').tap do |cluster|
       allow(cluster).to receive(:run_sdam_flow)
@@ -32,7 +41,9 @@ describe Mongo::Server::Monitor do
   let(:monitor) do
     register_background_thread_object(
       described_class.new(server, listeners, Mongo::Monitoring.new,
-        SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options))
+        SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options).update(
+          app_metadata: monitor_app_metadata,
+          push_monitor_app_metadata: monitor_app_metadata))
     )
   end
 
@@ -48,20 +59,20 @@ describe Mongo::Server::Monitor do
       end
     end
 
-    context 'when the ismaster fails the first time' do
+    context 'when the hello fails the first time' do
 
       let(:monitor_options) do
         {monitoring_io: false}
       end
 
       it 'runs sdam flow on unknown description' do
-        expect(monitor).to receive(:ismaster).once.and_raise(Mongo::Error::SocketError)
+        expect(monitor).to receive(:check).once.and_raise(Mongo::Error::SocketError)
         expect(cluster).to receive(:run_sdam_flow)
         monitor.scan!
       end
     end
 
-    context 'when the ismaster command succeeds' do
+    context 'when the hello command succeeds' do
 
       it 'invokes sdam flow' do
         server.unknown!
@@ -77,7 +88,7 @@ describe Mongo::Server::Monitor do
       end
     end
 
-    context 'when the ismaster command fails' do
+    context 'when the hello command fails' do
 
       context 'when no server is running on the address' do
 
@@ -105,7 +116,7 @@ describe Mongo::Server::Monitor do
         before do
           server.unknown!
           expect(server.description).to be_unknown
-          expect(monitor).to receive(:ismaster).and_raise(Mongo::Error::SocketError)
+          expect(monitor).to receive(:check).and_raise(Mongo::Error::SocketError)
           monitor.scan!
         end
 
@@ -175,16 +186,17 @@ describe Mongo::Server::Monitor do
     context 'when running after a stop' do
       it 'starts the thread' do
         ClientRegistry.instance.close_all_clients
+        sleep 1
         thread
-        sleep 0.5
+        sleep 1
 
         RSpec::Mocks.with_temporary_scope do
           expect(monitor.connection).to receive(:disconnect!).and_call_original
           monitor.stop!
-          sleep 0.5
+          sleep 1
           expect(thread.alive?).to be false
           new_thread = monitor.run!
-          sleep 0.5
+          sleep 1
           expect(new_thread.alive?).to be(true)
         end
       end
@@ -254,9 +266,9 @@ describe Mongo::Server::Monitor do
       expect(result['ok']).to eq(1.0)
     end
 
-    context 'network error during ismaster' do
+    context 'network error during check' do
       let(:result) do
-        expect(monitor).to receive(:ismaster).and_raise(IOError)
+        expect(monitor).to receive(:check).and_raise(IOError)
         # The retry is done on a new socket instance.
         #expect(socket).to receive(:write).and_call_original
 
@@ -267,7 +279,7 @@ describe Mongo::Server::Monitor do
         expect(Mongo::Logger.logger).to receive(:warn) do |msg|
           # The "on <address>" and "for <address>" bits are in different parts
           # of the message.
-          expect(msg).to match(/on #{server.address}/)
+          expect(msg).to match(/#{server.address}/)
         end
         expect(result).to be_a(Hash)
       end
@@ -305,8 +317,8 @@ describe Mongo::Server::Monitor do
         expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
 
         expect do
-          monitor.send(:ismaster)
-        end.to raise_error(Mongo::Error::SocketError, /on #{server.address}/)
+          monitor.send(:check)
+        end.to raise_error(Mongo::Error::SocketError, /#{server.address}/)
       end
     end
   end

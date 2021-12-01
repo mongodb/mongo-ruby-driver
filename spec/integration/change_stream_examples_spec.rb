@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'change streams examples in Ruby' do
@@ -174,8 +177,10 @@ describe 'change streams examples in Ruby' do
 
         # Start Changestream Example 4
 
-        pipeline = [ {'$match' => { '$or' => [{ 'fullDocument.username' => 'alice' },
-                                              { 'operationType' => 'delete' }] } }]
+        pipeline = [
+          { "$match" => { 'fullDocument.username' => 'alice' } },
+          { "$addFields" => { 'newField' => 'this is an added field!' } }
+        ];
         cursor = inventory.watch(pipeline).to_enum
         cursor.next
 
@@ -191,6 +196,8 @@ describe 'change streams examples in Ruby' do
       expect(change['fullDocument']).not_to be_nil
       expect(change['fullDocument']['_id']).not_to be_nil
       expect(change['fullDocument']['username']).to eq('alice')
+      expect(change['newField']).not_to be_nil
+      expect(change['newField']).to eq('this is an added field!')
       expect(change['ns']).not_to be_nil
       expect(change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(change['ns']['coll']).to eq(inventory.name)

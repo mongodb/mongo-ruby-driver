@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +28,16 @@ module Mongo
         include Specifiable
         include Executable
         include Limited
+        include CommandBuilder
 
         private
+
+        def selector(connection)
+          {
+            killCursors: coll_name,
+            cursors: int64_cursor_ids,
+          }
+        end
 
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, selector(connection), options(connection))

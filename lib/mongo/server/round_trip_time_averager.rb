@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +34,7 @@ module Mongo
       attr_reader :average_round_trip_time
 
       def measure
-        start = Time.now
+        start = Utils.monotonic_time
         begin
           rv = yield
         rescue Error::SocketError, Error::SocketTimeoutError
@@ -41,9 +44,9 @@ module Mongo
         rescue Error, Error::AuthError => exc
           # For other errors, RTT is valid.
         end
-        last_round_trip_time = Time.now - start
+        last_round_trip_time = Utils.monotonic_time - start
 
-        # If ismaster fails, we need to return the last round trip time
+        # If hello fails, we need to return the last round trip time
         # because it is used in the heartbeat failed SDAM event,
         # but we must not update the round trip time recorded in the server.
         unless exc

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module Mongo
   class Error
     # @note Although not_master? and node_recovering? methods of this module
@@ -12,7 +15,7 @@ module Mongo
       NOT_MASTER_CODES = [10107, 13435].freeze
 
       # @api private
-      NODE_RECOVERING_CODES = [11600, 11602, 13436, 189, 91].freeze
+      NODE_RECOVERING_CODES = [11600, 11602, 13436, 189, 91, 10058].freeze
 
       # @api private
       NODE_SHUTTING_DOWN_CODES = [11600, 91].freeze
@@ -25,10 +28,14 @@ module Mongo
       #
       # @since 2.8.0
       def not_master?
+        # Require the error to be communicated at the top level of the response
+        # for it to influence SDAM state. See DRIVERS-1376 / RUBY-2516.
+        return false if document && document['ok'] == 1
+
         if node_recovering?
           false
-        elsif code && NOT_MASTER_CODES.include?(code)
-          true
+        elsif code
+          NOT_MASTER_CODES.include?(code)
         elsif message
           message.include?('not master')
         else
@@ -44,8 +51,12 @@ module Mongo
       #
       # @since 2.8.0
       def node_recovering?
-        if code && NODE_RECOVERING_CODES.include?(code)
-          true
+        # Require the error to be communicated at the top level of the response
+        # for it to influence SDAM state. See DRIVERS-1376 / RUBY-2516.
+        return false if document && document['ok'] == 1
+
+        if code
+          NODE_RECOVERING_CODES.include?(code)
         elsif message
           message.include?('node is recovering') || message.include?('not master or secondary')
         else

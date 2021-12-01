@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Session do
@@ -304,6 +307,41 @@ describe Mongo::Session do
         expect do
           session.next_txn_num
         end.to raise_error(Mongo::Error::SessionEnded)
+      end
+    end
+  end
+
+  describe '#start_session' do
+    context 'when block doesn\'t raise an error' do 
+      it 'closes the session after the block' do 
+        block_session = nil
+        authorized_client.start_session do |session| 
+          expect(session.ended?).to be false
+          block_session = session 
+        end
+        expect(block_session.ended?).to be true
+      end
+    end
+
+    context 'when block raises an error' do
+      it 'closes the session after the block' do
+        block_session = nil
+        expect do 
+          authorized_client.start_session do |session|
+            block_session = session
+            raise 'This is an error!'
+          end
+        end.to raise_error(StandardError, 'This is an error!')
+        expect(block_session.ended?).to be true
+      end
+    end
+
+    context 'when block returns value' do
+      it 'is returned by the function' do
+        res = authorized_client.start_session do |session| 
+          4
+        end
+        expect(res).to be 4
       end
     end
   end

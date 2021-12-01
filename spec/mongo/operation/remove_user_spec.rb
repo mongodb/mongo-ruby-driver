@@ -1,6 +1,12 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::RemoveUser do
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
 
@@ -22,7 +28,7 @@ describe Mongo::Operation::RemoveUser do
     context 'when user removal was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary, client: nil)
+        operation.execute(root_authorized_primary, context: context)
       end
 
       it 'removes the user from the database' do
@@ -33,12 +39,12 @@ describe Mongo::Operation::RemoveUser do
     context 'when removal was not successful' do
 
       before do
-        operation.execute(root_authorized_primary, client: nil)
+        operation.execute(root_authorized_primary, context: context)
       end
 
       it 'raises an exception' do
         expect {
-          operation.execute(root_authorized_primary, client: nil)
+          operation.execute(root_authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

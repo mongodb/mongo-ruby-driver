@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::Cluster::Topology do
@@ -111,7 +114,7 @@ describe Mongo::Cluster::Topology do
   end
 
   describe '#logical_session_timeout' do
-    skip_if_linting
+    require_no_linting
 
     let(:listeners) do
       Mongo::Event::Listeners.new

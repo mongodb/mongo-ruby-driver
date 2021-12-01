@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,6 +107,9 @@ module Mongo
     #
     # @since 2.0.0
     def [](collection_name, options = {})
+      if options[:server_api]
+        raise ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level'
+      end
       Collection.new(self, collection_name, options)
     end
     alias_method :collection, :[]
@@ -112,6 +118,16 @@ module Mongo
     #
     # @note The set of returned collection names depends on the version of
     #   MongoDB server that fulfills the request.
+    #
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
     #
     # @return [ Array<String> ] Names of the collections.
     #
@@ -129,6 +145,13 @@ module Mongo
     # @param [ Hash ] options
     #
     # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :name_only Indicates whether command
+    #   should return just collection/view names and type or return both the
+    #   name and other information
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with nameOnly: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
     #
@@ -136,8 +159,8 @@ module Mongo
     #   collection in the database.
     #
     # @since 2.0.5
-    def list_collections(**options)
-      View.new(self).list_collections(**options)
+    def list_collections(options = {})
+      View.new(self).list_collections(options)
     end
 
     # Get all the non-system collections that belong to this database.
@@ -145,17 +168,27 @@ module Mongo
     # @note The set of returned collections depends on the version of
     #   MongoDB server that fulfills the request.
     #
+    # @param [ Hash ] options
+    #
+    # @option options [ Hash ] :filter A filter on the collections returned.
+    # @option options [ true, false ] :authorized_collections A flag, when
+    #   set to true and used with name_only: true, that allows a user without the
+    #   required privilege to run the command when access control is enforced
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   for more information and usage.
+    #
     # @return [ Array<Mongo::Collection> ] The collections.
     #
     # @since 2.0.0
-    def collections
-      collection_names.map { |name| collection(name) }
+    def collections(options = {})
+      collection_names(options).map { |name| collection(name) }
     end
 
     # Execute a command on the database.
     #
     # @example Execute a command.
-    #   database.command(:ismaster => 1)
+    #   database.command(:hello => 1)
     #
     # @param [ Hash ] operation The command to execute.
     # @param [ Hash ] opts The command options.
@@ -192,7 +225,9 @@ module Mongo
           :session => session
         )
 
-        op.execute(server, client: client, options: execution_opts)
+        op.execute(server,
+          context: Operation::Context.new(client: client, session: session),
+          options: execution_opts)
       end
     end
 
@@ -218,12 +253,12 @@ module Mongo
 
       client.send(:with_session, opts) do |session|
         read_with_retry(session, preference) do |server|
-          Operation::Command.new({
-            :selector => operation.dup,
-            :db_name => name,
-            :read => preference,
-            :session => session
-          }).execute(server, client: client)
+          Operation::Command.new(
+            selector: operation.dup,
+            db_name: name,
+            read: preference,
+            session: session,
+          ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
     end
@@ -236,6 +271,7 @@ module Mongo
     # @param [ Hash ] options The options for the operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
     #
     # @return [ Result ] The result of the command.
     #
@@ -243,12 +279,17 @@ module Mongo
     def drop(options = {})
       operation = { :dropDatabase => 1 }
       client.send(:with_session, options) do |session|
+        write_concern = if options[:write_concern]
+          WriteConcern.get(options[:write_concern])
+        else
+          self.write_concern
+        end
         Operation::DropDatabase.new({
           selector: operation,
           db_name: name,
           write_concern: write_concern,
           session: session
-        }).execute(next_primary(nil, session), client: client)
+        }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
       end
     end
 
@@ -288,8 +329,20 @@ module Mongo
 
     # Get the Grid "filesystem" for this database.
     #
-    # @example Get the GridFS.
-    #   database.fs
+    # @param [ Hash ] options The GridFS options.
+    #
+    # @option options [ String ] :bucket_name The prefix for the files and chunks
+    #   collections.
+    # @option options [ Integer ] :chunk_size Override the default chunk
+    #   size.
+    # @option options [ String ] :fs_name The prefix for the files and chunks
+    #   collections.
+    # @option options [ String ] :read The read preference.
+    # @option options [ Session ] :session The session to use.
+    # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
     # @return [ Grid::FSBucket ] The GridFS for the database.
     #

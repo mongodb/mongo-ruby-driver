@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +25,13 @@ module Mongo
       # @since 2.0.0
       module Iterable
 
+        # Returns the cursor associated with this view, if any.
+        #
+        # @return [ nil | Cursor ] The cursor, if any.
+        #
+        # @api private
+        attr_reader :cursor
+
         # Iterate through documents returned by a query with this +View+.
         #
         # @example Iterate through the result of the view.
@@ -35,19 +45,44 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
-          @cursor = nil
-          session = client.send(:get_session, @options)
-          @cursor = if respond_to?(:write?, true) && write?
-            server = server_selector.select_server(cluster, nil, session)
-            result = send_initial_query(server, session)
-            Cursor.new(view, result, server, session: session)
+          # If the caching cursor is closed and was not fully iterated,
+          # the documents we have in it are not the complete result set and
+          # we have no way of completing that iteration.
+          # Therefore, discard that cursor and start iteration again.
+          # The case of the caching cursor not being closed and not having
+          # been fully iterated isn't tested - see RUBY-2773.
+          @cursor = if use_query_cache? && cached_cursor && (
+            cached_cursor.fully_iterated? || !cached_cursor.closed?
+          )
+            cached_cursor
           else
-            read_with_retry_cursor(session, server_selector, view) do |server|
-              send_initial_query(server, session)
+            session = client.send(:get_session, @options)
+            select_cursor(session).tap do |cursor|
+              if use_query_cache?
+                # No need to store the cursor in the query cache if there is
+                # already a cached cursor stored at this key.
+                QueryCache.set(cursor, **cache_options)
+              end
             end
           end
+
+          if use_query_cache?
+            # If a query with a limit is performed, the query cache will
+            # re-use results from an earlier query with the same or larger
+            # limit, and then impose the lower limit during iteration.
+            limit_for_cached_query = respond_to?(:limit) ? limit : nil
+          end
+
           if block_given?
-            @cursor.each do |doc|
+            # Ruby versions 2.5 and older do not support arr[0..nil] syntax, so
+            # this must be a separate conditional.
+            cursor_to_iterate = if limit_for_cached_query
+              @cursor.to_a[0...limit_for_cached_query]
+            else
+              @cursor
+            end
+
+            cursor_to_iterate.each do |doc|
               yield doc
             end
           else
@@ -77,31 +112,92 @@ module Mongo
 
         private
 
-        def initial_query_op(server, session)
-          if server.with_connection { |connection| connection.features }.find_command_enabled?
-            initial_command_op(session)
+        def select_cursor(session)
+          if respond_to?(:write?, true) && write?
+            server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
+            result = send_initial_query(server, session)
+
+            if use_query_cache?
+              CachingCursor.new(view, result, server, session: session)
+            else
+              Cursor.new(view, result, server, session: session)
+            end
           else
-            # Server versions that do not have the find command feature
-            # (versions older than 3.2) do not support the allow_disk_use option
-            # but perform no validation and will not raise an error if it is
-            # specified. If the allow_disk_use option is specified, raise an error
-            # to alert the user.
-            raise Error::UnsupportedOption.allow_disk_use_error if options.key?(:allow_disk_use)
-            Operation::Find.new(Builder::OpQuery.new(self).specification)
+            read_with_retry_cursor(session, server_selector, view) do |server|
+              send_initial_query(server, session)
+            end
           end
         end
 
-        def initial_command_op(session)
+        def cached_cursor
+          QueryCache.get(**cache_options)
+        end
+
+        def cache_options
+          # NB: this hash is passed as keyword argument and must have symbol
+          # keys.
+          {
+            namespace: collection.namespace,
+            selector: selector,
+            skip: skip,
+            sort: sort,
+            limit: limit,
+            projection: projection,
+            collation: collation,
+            read_concern: read_concern,
+            read_preference: read_preference,
+          }
+        end
+
+        def initial_query_op(server, session)
+          spec = {
+            coll_name: collection.name,
+            filter: filter,
+            projection: projection,
+            db_name: database.name,
+            session: session,
+            collation: collation,
+            sort: sort,
+            skip: skip,
+            let: options[:let],
+            limit: limit,
+            allow_disk_use: options[:allow_disk_use],
+            read: read,
+            read_concern: options[:read_concern] || read_concern,
+            batch_size: batch_size,
+            hint: options[:hint],
+            max_scan: options[:max_scan],
+            max_time_ms: options[:max_time_ms],
+            max_value: options[:max_value],
+            min_value: options[:min_value],
+            return_key: options[:return_key],
+            show_disk_loc: options[:show_disk_loc],
+            comment: options[:comment],
+            oplog_replay: if (v = options[:oplog_replay]).nil?
+              collection.options[:oplog_replay]
+            else
+              v
+            end,
+          }
+
+          if spec[:oplog_replay]
+            collection.client.log_warn("The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later")
+          end
+
           if explained?
-            Operation::Explain.new(Builder::FindCommand.new(self, session).explain_specification)
+            spec[:explain] = options[:explain]
+            Operation::Explain.new(spec)
           else
-            Operation::Find.new(Builder::FindCommand.new(self, session).specification)
+            Operation::Find.new(spec)
           end
         end
 
         def send_initial_query(server, session = nil)
-          validate_collation!(server, collation)
-          initial_query_op(server, session).execute(server, client: client)
+          initial_query_op(server, session).execute(server, context: Operation::Context.new(client: client, session: session))
+        end
+
+        def use_query_cache?
+          QueryCache.enabled? && !collection.system_collection?
         end
       end
     end

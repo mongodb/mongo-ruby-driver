@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -28,15 +31,18 @@ module Mongo
           # @since 2.9.0
           attr_reader :address
 
+          # @return [ nil | Object ] The service id, if any.
+          attr_reader :service_id
+
           # Create the event.
           #
-          # @example Create the event.
-          #   PoolCleared.new(address)
+          # @param [ Address ] address
+          # @param [ Object ] service_id The service id, if any.
           #
-          # @since 2.9.0
           # @api private
-          def initialize(address)
+          def initialize(address, service_id: nil)
             @address = address
+            @service_id = service_id
           end
 
           # Returns a concise yet useful summary of the event.

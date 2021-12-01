@@ -4,6 +4,8 @@ set -e
 # IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
+. `dirname "$0"`/../spec/shared/shlib/distro.sh
+. `dirname "$0"`/../spec/shared/shlib/set_env.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-config.sh
 
@@ -11,8 +13,7 @@ show_local_instructions
 
 set_home
 set_env_vars
-
-setup_ruby
+set_env_ruby
 
 bundle install --quiet
 
@@ -26,6 +27,7 @@ eval `cat .env.private.ecs`
   env AUTH=aws-ecs \
     RVM_RUBY=$RVM_RUBY MONGODB_VERSION=$MONGODB_VERSION \
     MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="$MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN" \
+    TOPOLOGY="$TOPOLOGY" \
     TEST_CMD="$TEST_CMD" .evergreen/run-tests.sh
 
 mkdir -p tmp

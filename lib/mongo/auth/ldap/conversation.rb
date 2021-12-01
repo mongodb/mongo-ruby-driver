@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,20 +41,9 @@ module Mongo
         #
         # @since 2.0.0
         def start(connection)
-          if connection && connection.features.op_msg_enabled?
-            selector = LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM)
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = Auth::EXTERNAL
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              Auth::EXTERNAL,
-              Database::COMMAND,
-              LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM),
-              limit: -1
-            )
-          end
+          validate_external_auth_source
+          selector = LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM)
+          build_message(connection, '$external', selector)
         end
 
         private

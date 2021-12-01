@@ -1,0 +1,17 @@
+.. _getting-started:
+
+***************
+Getting Started
+***************
+
+.. default-domain:: mongodb
+
+This section describes how to install the driver, installation prerequisites
+and compatibility considerations.
+
+.. toctree::
+  :titlesonly:
+
+  installation
+  reference/driver-compatibility
+  support

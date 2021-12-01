@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,44 +26,6 @@ module Mongo
       class Connection < Server::ConnectionCommon
         include Loggable
 
-        # The command used for determining server status.
-        #
-        # The case matters here for fail points.
-        #
-        # @since 2.2.0
-        ISMASTER = { isMaster: 1 }.freeze
-
-        # The command used for determining server status formatted for an
-        # OP_MSG (server versions >= 3.6).
-        #
-        # The case matters here for fail points.
-        #
-        # @since 2.5.0
-        ISMASTER_OP_MSG = {
-          isMaster: 1,
-          '$db' => Database::ADMIN,
-        }.freeze
-
-        # The constant for the ismaster command.
-        #
-        # @since 2.2.0
-        ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
-
-        # The constant for the ismaster command as an OP_MSG (server versions >= 3.6).
-        #
-        # @since 2.5.0
-        ISMASTER_OP_MSG_MESSAGE = Protocol::Msg.new([], {}, ISMASTER_OP_MSG)
-
-        # The raw bytes for the ismaster message.
-        #
-        # @since 2.2.0
-        ISMASTER_BYTES = ISMASTER_MESSAGE.serialize.to_s.freeze
-
-        # The raw bytes for the ismaster OP_MSG message (server versions >= 3.6).
-        #
-        # @since 2.5.0
-        ISMASTER_OP_MSG_BYTES = ISMASTER_OP_MSG_MESSAGE.serialize.to_s.freeze
-
         # Creates a new connection object to the specified target address
         # with the specified options.
         #
@@ -83,7 +48,7 @@ module Mongo
         # @option options [ Array<String> ] :compressors A list of potential
         #   compressors to use, in order of preference. The driver chooses the
         #   first compressor that is also supported by the server. Currently the
-        #   driver only supports 'zlib'.
+        #   driver only supports 'zstd', 'snappy' and 'zlib'.
         # @option options [ Float ] :connect_timeout The timeout, in seconds,
         #   to use for network operations. This timeout is used for all
         #   socket operations rather than connect calls only, contrary to
@@ -93,10 +58,13 @@ module Mongo
         def initialize(address, options = {})
           @address = address
           @options = options.dup.freeze
-          @app_metadata = options[:app_metadata]
+          unless @app_metadata = options[:app_metadata]
+            raise ArgumentError, 'App metadata is required'
+          end
           @socket = nil
           @pid = Process.pid
           @compressor = nil
+          @hello_ok = false
         end
 
         # @return [ Hash ] options The passed in options.
@@ -118,9 +86,11 @@ module Mongo
           options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
 
+        attr_reader :server_connection_id
+
         # Sends a message and returns the result.
         #
-        # @param [ Protocol::Message ] The message to send.
+        # @param [ Protocol::Message ] message The message to send.
         #
         # @return [ Protocol::Message ] The result.
         def dispatch(message)
@@ -129,17 +99,45 @@ module Mongo
 
         # Sends a preserialized message and returns the result.
         #
-        # @param [ String ] The serialized message to send.
+        # @param [ String ] bytes The serialized message to send.
+        #
+        # @option opts [ Numeric ] :read_socket_timeout The timeout to use for
+        #   each read operation.
         #
         # @return [ Protocol::Message ] The result.
-        def dispatch_bytes(bytes)
+        def dispatch_bytes(bytes, **opts)
+          write_bytes(bytes)
+          read_response(
+            socket_timeout: opts[:read_socket_timeout],
+          )
+        end
+
+        def write_bytes(bytes)
           unless connected?
             raise ArgumentError, "Trying to dispatch on an unconnected connection #{self}"
           end
 
-          add_server_diagnostics do
-            socket.write(bytes)
-            Protocol::Message.deserialize(socket)
+          add_server_connection_id do
+            add_server_diagnostics do
+              socket.write(bytes)
+            end
+          end
+        end
+
+        # @option opts [ Numeric ] :socket_timeout The timeout to use for
+        #   each read operation.
+        def read_response(**opts)
+          unless connected?
+            raise ArgumentError, "Trying to read on an unconnected connection #{self}"
+          end
+
+          add_server_connection_id do
+            add_server_diagnostics do
+              Protocol::Message.deserialize(socket,
+                Protocol::Message::MAX_MESSAGE_SIZE,
+                nil,
+                **opts)
+            end
           end
         end
 
@@ -184,26 +182,85 @@ module Mongo
         # @since 2.0.0
         def disconnect!(options = nil)
           if socket
-            socket.close
+            socket.close rescue nil
             @socket = nil
           end
           true
         end
 
+        # Send handshake command to connected host and validate the response.
+        #
+        # @return [BSON::Document] Handshake response from server
+        #
+        # @raise [Mongo::Error] If handshake failed.
         def handshake!
-          payload = if @app_metadata
-            @app_metadata.ismaster_bytes
-          else
-            log_warn("No app metadata provided for handshake with #{address}")
-            ISMASTER_BYTES
-          end
+          command = handshake_command(
+            handshake_document(
+              @app_metadata,
+              server_api: options[:server_api]
+            )
+          )
+          payload = command.serialize.to_s
           message = dispatch_bytes(payload)
-          reply = message.documents.first
+          result = Operation::Result.new(message)
+          result.validate!
+          reply = result.documents.first
           set_compressor!(reply)
+          set_hello_ok!(reply)
+          @server_connection_id = reply['connectionId']
           reply
-        rescue => e
-          log_warn("Failed to handshake with #{address}: #{e.class}: #{e}:\n#{e.backtrace[0..5].join("\n")}")
+        rescue => exc
+          msg = "Failed to handshake with #{address}"
+          Utils.warn_bg_exception(msg, exc,
+            logger: options[:logger],
+            log_prefix: options[:log_prefix],
+            bg_error_backtrace: options[:bg_error_backtrace],
+          )
           raise
+        end
+
+        # Build a document that should be used for connection check.
+        #
+        # @return [BSON::Document] Document that should be sent to a server
+        #     for connection check.
+        #
+        # @api private
+        def check_document
+          server_api = @app_metadata.server_api || options[:server_api]
+          if hello_ok? || server_api
+            doc = HELLO_DOC
+            if server_api
+              doc = doc.merge(Utils.transform_server_api(server_api))
+            end
+            doc
+          else
+            LEGACY_HELLO_DOC
+          end
+        end
+
+        private
+
+        def add_server_connection_id
+          yield
+        rescue Mongo::Error => e
+          if server_connection_id
+            note = "sconn:#{server_connection_id}"
+            e.add_note(note)
+          end
+          raise e
+        end
+
+        # Update @hello_ok flag according to server reply to legacy hello
+        # command. The flag will be set to true if connected server supports
+        # hello command, otherwise the flag will be set to false.
+        #
+        # @param [ BSON::Document ] reply Server reply to legacy hello command.
+        def set_hello_ok!(reply)
+          @hello_ok = !!reply[:helloOk]
+        end
+
+        def hello_ok?
+          @hello_ok
         end
       end
     end

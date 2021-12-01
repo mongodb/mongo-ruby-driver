@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Matcher for determining if the server is of the expected type according to
 # the test.
 #
@@ -34,6 +37,7 @@ module Mongo
           when 'PossiblePrimary' then server.unknown?
           when 'RSGhost' then server.ghost?
           when 'RSOther' then server.other?
+          when 'LoadBalancer' then server.load_balancer?
           else
             raise "Unknown type #{type}"
         end
@@ -120,8 +124,8 @@ module Mongo
       # @return [ String ] address The server address.
       attr_reader :address
 
-      # @return [ Hash ] ismaster The ismaster response.
-      attr_reader :ismaster
+      # @return [ Hash ] hello The hello response.
+      attr_reader :hello
 
       # Create the new response.
       #
@@ -135,7 +139,7 @@ module Mongo
       def initialize(response, uri)
         @uri = uri
         @address = response[0]
-        @ismaster = BSON::ExtJSON.parse_obj(response[1])
+        @hello = BSON::ExtJSON.parse_obj(response[1])
       end
     end
 
@@ -149,7 +153,7 @@ module Mongo
       end
 
       def when
-        Utils.underscore(@spec.fetch('when'))
+        ::Utils.underscore(@spec.fetch('when'))
       end
 
       def max_wire_version
@@ -161,7 +165,7 @@ module Mongo
       end
 
       def type
-        Utils.underscore(@spec.fetch('type'))
+        ::Utils.underscore(@spec.fetch('type'))
       end
 
       def result
@@ -249,7 +253,7 @@ module Mongo
         'server_opening_event' => Mongo::Monitoring::Event::ServerOpening,
         'topology_description_changed_event' => Mongo::Monitoring::Event::TopologyChanged,
         'topology_opening_event' => Mongo::Monitoring::Event::TopologyOpening
-      }
+      }.freeze
 
       attr_reader :name
       attr_reader :data

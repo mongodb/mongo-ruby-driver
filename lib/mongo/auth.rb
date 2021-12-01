@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,7 +83,7 @@ module Mongo
     #   nonce used in speculative auth on the specified connection that
     #   produced the specified speculative auth result.
     # @option opts [ BSON::Document | nil ] speculative_auth_result The
-    #   value of speculativeAuthenticate field of ismaster response of
+    #   value of speculativeAuthenticate field of hello response of
     #   the handshake on the specified connection.
     #
     # @return [ Auth::Aws | Auth::CR | Auth::Gssapi | Auth::LDAP |

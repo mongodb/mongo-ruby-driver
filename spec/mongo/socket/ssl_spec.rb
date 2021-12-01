@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # this test performs direct network connections without retries.
@@ -50,6 +53,46 @@ describe Mongo::Socket::SSL, retry: 3 do
   end
 
   describe '#connect!' do
+    context 'when TLS context hooks are provided' do
+      # https://github.com/jruby/jruby-openssl/issues/221
+      fails_on_jruby
+
+      let(:proc) do
+        Proc.new do |context|
+          if BSON::Environment.jruby?
+            context.ciphers = ["AES256-SHA256"]
+          else
+            context.ciphers = ["AES256-SHA"]
+          end
+        end
+      end
+
+      before do
+        Mongo.tls_context_hooks = [ proc ]
+      end
+
+      after do
+        Mongo.tls_context_hooks.clear
+      end
+
+      it 'runs the TLS context hook before connecting' do
+        if ENV['OCSP_ALGORITHM']
+          skip "OCSP configurations use different certificates which this test does not handle"
+        end
+
+        expect(proc).to receive(:call).and_call_original
+        socket
+        # Even though we are requesting a single cipher in the hook,
+        # there may be multiple ciphers available in the context.
+        # All of the ciphers should match the requested one (using
+        # OpenSSL's idea of what "match" means).
+        socket.context.ciphers.each do |cipher|
+          unless cipher.first =~ /SHA256/ || cipher.last == 256
+            raise "Unexpected cipher #{cipher} after requesting SHA-256"
+          end
+        end
+      end
+    end
 
     context 'when a certificate is provided' do
 
@@ -246,7 +289,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         it 'raises an error' do
           lambda do
             socket
-          end.should raise_error(Mongo::Error::SocketError, /SSL handshake failed due to a hostname mismatch/)
+          end.should raise_error(Mongo::Error::SocketError, /TLS handshake failed due to a hostname mismatch/)
         end
       end
 
@@ -263,67 +306,40 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
     end
 
-    context 'when ruby version is < 2.4.1' do
-      ruby_version_lt '2.4.1'
-
-      context 'when a key is passed, but it is not of the right type' do
-
-        let(:ssl_options) do
-          key = "This is a string not a key"
-          {
-              :ssl => true,
-              :ssl_key_object => key,
-              :ssl_cert => SpecConfig.instance.client_cert_path,
-              :ssl_verify => false
-          }
-        end
-
-        it 'raises a TypeError' do
-          expect do
-            socket
-          end.to raise_exception(TypeError)
-        end
-      end
-    end
-
     # Note that as of MRI 2.4, Creating a socket with the wrong key type raises
     # a NoMethodError because #private? is attempted to be called on the key.
     # In jruby 9.2 a TypeError is raised.
     # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.
-    context 'when ruby version is >= 2.4.1' do
-      ruby_version_gte '2.4.1'
+    context 'when a key is passed, but it is not of the right type' do
 
-      context 'when a key is passed, but it is not of the right type' do
+      let(:ssl_options) do
+        key = "This is a string not a key"
+        {
+            :ssl => true,
+            :ssl_key_object => key,
+            :ssl_cert => SpecConfig.instance.client_cert_path,
+            :ssl_verify => false
+        }
+      end
 
-        let(:ssl_options) do
-          key = "This is a string not a key"
-          {
-              :ssl => true,
-              :ssl_key_object => key,
-              :ssl_cert => SpecConfig.instance.client_cert_path,
-              :ssl_verify => false
-          }
-        end
-
-        let(:expected_exception) do
-          if SpecConfig.instance.jruby?
-            if RUBY_VERSION >= '2.5.0'
-              # jruby 9.2
-              TypeError
-            else
-              # jruby 9.1
-              OpenSSL::OpenSSLError
-            end
+      let(:expected_exception) do
+        if SpecConfig.instance.jruby?
+          if RUBY_VERSION >= '2.5.0'
+            # jruby 9.2
+            TypeError
           else
-            NoMethodError
+            # jruby 9.1
+            OpenSSL::OpenSSLError
           end
+        else
+          NoMethodError
         end
+      end
 
-        it 'raises a NoMethodError' do
-          expect do
-            socket
-          end.to raise_exception(expected_exception)
-        end
+      it 'raises a NoMethodError' do
+        expect do
+          socket
+        end.to raise_exception(expected_exception)
       end
     end
 
@@ -338,7 +354,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'mri' do
-        only_mri
+        require_mri
 
         context 'when a bad certificate is provided' do
 
@@ -360,13 +376,8 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'when a bad key is provided' do
 
           let(:expected_exception) do
-            if RUBY_VERSION >= '2.4.0'
-              # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
-              [OpenSSL::OpenSSLError, /Could not parse PKey/]
-            else
-              # ArgumentError: Could not parse PKey: no start line
-              [ArgumentError, /Could not parse PKey/]
-            end
+            # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
+            [OpenSSL::OpenSSLError, /Could not parse PKey/]
           end
 
           let(:ssl_options) do
@@ -625,7 +636,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'bundled with intermediate cert' do
 
           # https://github.com/jruby/jruby-openssl/issues/181
-          only_mri
+          require_mri
 
           let(:ssl_options) do
             SpecConfig.instance.test_options.merge(
@@ -670,7 +681,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'bundled with intermediate cert' do
 
           # https://github.com/jruby/jruby-openssl/issues/181
-          only_mri
+          require_mri
 
           let(:ssl_options) do
             SpecConfig.instance.test_options.merge(

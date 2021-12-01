@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,25 +21,21 @@ module Mongo
     # Shared behavior of operations that write (update, insert, delete).
     #
     # @since 2.5.2
+    # @api private
     module Write
 
       include ResponseHandling
 
       # Execute the operation.
       #
-      # @example
-      #   operation.execute(server, client: nil)
-      #
       # @param [ Mongo::Server ] server The server to send the operation to.
-      # @param [ Mongo::Client ] client The client that will be used to
-      #   perform auto-encryption if it is necessary to encrypt the command
-      #   being executed (optional).
+      # @param [ Operation::Context ] context The operation context.
       #
       # @return [ Mongo::Operation::Result ] The operation result.
       #
       # @since 2.5.2
-      def execute(server, client:)
-        server.with_connection do |connection|
+      def execute(server, context:)
+        server.with_connection(service_id: context.service_id) do |connection|
           validate!(connection)
           op = if connection.features.op_msg_enabled?
               self.class::OpMsg.new(spec)
@@ -46,34 +45,29 @@ module Mongo
               self.class::Command.new(spec)
             end
 
-          result = op.execute(connection, client: client)
-          validate_result(result, client, connection)
+          result = op.execute(connection, context: context)
+          validate_result(result, connection, context)
         end
       end
 
       # Execute the bulk write operation.
       #
-      # @example
-      #   operation.bulk_execute(connection, client: nil)
-      #
       # @param [ Mongo::Server::Connection ] connection The connection over
       #   which to send the operation.
-      # @param [ Mongo::Client ] client The client that will be used to
-      #   perform auto-encryption if it is necessary to encrypt the command
-      #   being executed (optional).
+      # @param [ Operation::Context ] context The operation context.
       #
       # @return [ Mongo::Operation::Delete::BulkResult,
       #           Mongo::Operation::Insert::BulkResult,
       #           Mongo::Operation::Update::BulkResult ] The bulk result.
       #
       # @since 2.5.2
-      def bulk_execute(connection, client:)
+      def bulk_execute(connection, context:)
         Lint.assert_type(connection, Server::Connection)
 
         if connection.features.op_msg_enabled?
-          self.class::OpMsg.new(spec).execute(connection, client: client).bulk_result
+          self.class::OpMsg.new(spec).execute(connection, context: context).bulk_result
         else
-          self.class::Command.new(spec).execute(connection, client: client).bulk_result
+          self.class::Command.new(spec).execute(connection, context: context).bulk_result
         end
       end
 

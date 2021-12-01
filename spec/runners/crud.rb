@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -93,7 +96,7 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
       end
 
       let(:event_subscriber) do
-        EventSubscriber.new
+        Mrss::EventSubscriber.new
       end
 
       let(:verifier) { Mongo::CRUD::Verifier.new(test) }
@@ -122,6 +125,15 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
           if operation.outcome.error?
             it 'raises an error' do
               expect(result).to be_a(Mongo::Error)
+              if operation.outcome.result
+                verifier.verify_operation_result(
+                  operation.outcome.result,
+                  {
+                    'errorContains' => result.message,
+                    'errorLabels' => result.labels,
+                  }
+                )
+              end
             end
           else
             tested = false
@@ -211,6 +223,16 @@ def define_spec_tests_with_requirements(spec, &block)
         end
         if req.topologies
           require_topology *req.topologies
+        end
+        if SpecConfig.instance.serverless? && req.serverless == :forbid
+          before(:all) do
+            skip "Serverless forbidden"
+          end
+        end
+        if !SpecConfig.instance.serverless? && req.serverless == :require
+          before(:all) do
+            skip "Serverless required"
+          end
         end
 
         instance_exec(req, &block)

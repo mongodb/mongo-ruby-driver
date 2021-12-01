@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,11 +43,11 @@ module Mongo
       # Creates a new OP_MSG protocol message
       #
       # @example Create a OP_MSG wire protocol message
-      #   Msg.new([:more_to_come], {}, { ismaster: 1 },
+      #   Msg.new([:more_to_come], {}, { hello: 1 },
       #           { type: 1, payload: { identifier: 'documents', sequence: [..] } })
       #
-      # @param [ Array<Symbol> ] flags The flag bits. Current supported values
-      #   are :more_to_come and :checksum_present.
+      # @param [ Array<Symbol> ] flags The flag bits. Currently supported
+      #   values are :more_to_come and :checksum_present.
       # @param [ Hash ] options The options.
       # @param [ BSON::Document, Hash ] main_document The document that will
       #   become the payload type 0 section. Can contain global args as they
@@ -60,6 +63,13 @@ module Mongo
       #
       # @since 2.5.0
       def initialize(flags, options, main_document, *sequences)
+        if flags
+          flags.each do |flag|
+            unless KNOWN_FLAGS.key?(flag)
+              raise ArgumentError, "Unknown flag: #{flag.inspect}"
+            end
+          end
+        end
         @flags = flags || []
         @options = options
         unless main_document.is_a?(Hash)
@@ -139,7 +149,9 @@ module Mongo
       # @return [ BSON::ByteBuffer ] buffer containing the serialized message.
       #
       # @since 2.5.0
-      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
+        validate_document_size!(max_bson_size)
+
         super
         add_check_sum(buffer)
         buffer
@@ -187,18 +199,19 @@ module Mongo
       # auto-encryption options, the client has not been instructed to bypass
       # auto-encryption, and mongocryptd determines that this message is
       # eligible for encryption. A message is eligible for encryption if it
-      # represents one of the command types whitelisted by libmongocrypt and it
+      # represents one of the command types allow-listed by libmongocrypt and it
       # contains data that is required to be encrypted by a local or remote json schema.
       #
-      # @param [ Mongo::Client | nil ] client The client used to make the original
-      #   command. This client may have auto-encryption options specified.
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
       #
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
       #   message if encryption was not possible or necessary.
-      def maybe_encrypt(connection, client)
+      def maybe_encrypt(connection, context)
         # TODO verify compression happens later, i.e. when this method runs
         # the message is not compressed.
-        if client && client.encrypter && client.encrypter.encrypt?
+        if context.encrypt?
           if connection.description.max_wire_version < 8
             raise Error::CryptError.new(
               "Cannot perform encryption against a MongoDB server older than " +
@@ -210,7 +223,7 @@ module Mongo
 
           db_name = @main_document[DATABASE_IDENTIFIER]
           cmd = merge_sections
-          enc_cmd = client.encrypter.encrypt(db_name, cmd)
+          enc_cmd = context.encrypter.encrypt(db_name, cmd)
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
@@ -225,18 +238,17 @@ module Mongo
       # decrypted if the specified client exists, that client has been given
       # auto-encryption options, and this message is eligible for decryption.
       # A message is eligible for decryption if it represents one of the command
-      # types whitelisted by libmongocrypt and it contains data that is required
+      # types allow-listed by libmongocrypt and it contains data that is required
       # to be encrypted by a local or remote json schema.
       #
-      # @param [ Mongo::Client | nil ] client The client used to make the original
-      #   command. This client may have auto-encryption options specified.
+      # @param [ Mongo::Operation::Context ] context The operation context.
       #
-      # @return [ Mongo::Protocol::Msg ] The decryption message, or the original
+      # @return [ Mongo::Protocol::Msg ] The decrypted message, or the original
       #   message if decryption was not possible or necessary.
-      def maybe_decrypt(client)
-        if client && client.encrypter
+      def maybe_decrypt(context)
+        if context.decrypt?
           cmd = merge_sections
-          enc_cmd = client.encrypter.decrypt(cmd)
+          enc_cmd = context.encrypter.decrypt(cmd)
           Msg.new(@flags, @options, enc_cmd)
         else
           self
@@ -266,7 +278,44 @@ module Mongo
         num_inserts > 1  || num_updates > 1 || num_deletes > 1
       end
 
+      def maybe_add_server_api(server_api)
+        conflicts = {}
+        %i(apiVersion apiStrict apiDeprecationErrors).each do |key|
+          if @main_document.key?(key)
+            conflicts[key] = @main_document[key]
+          end
+          if @main_document.key?(key.to_s)
+            conflicts[key] = @main_document[key.to_s]
+          end
+        end
+        unless conflicts.empty?
+          raise Error::ServerApiConflict, "The Client is configured with :server_api option but the operation provided the following conflicting parameters: #{conflicts.inspect}"
+        end
+
+        main_document = @main_document.merge(
+          Utils.transform_server_api(server_api)
+        )
+        Msg.new(@flags, @options, main_document, *@sequences)
+      end
+
       private
+
+      # Validate that the documents in this message are all smaller than the
+      # maxBsonObjectSize. If not, raise an exception.
+      def validate_document_size!(max_bson_size)
+        max_bson_size ||= Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
+
+        contains_too_large_document = @sections.any? do |section|
+          section[:type] == 1 &&
+            section[:payload][:sequence].any? do |document|
+              document.to_bson.length > max_bson_size
+            end
+        end
+
+        if contains_too_large_document
+          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
+        end
+      end
 
       def command
         @command ||= if @main_document
@@ -313,10 +362,17 @@ module Mongo
       # @since 2.5.0
       OP_CODE = 2013
 
+      KNOWN_FLAGS = {
+        checksum_present: true,
+        more_to_come: true,
+        exhaust_allowed: true,
+      }
+
       # Available flags for a OP_MSG message.
       FLAGS = Array.new(16).tap do |arr|
         arr[0] = :checksum_present
         arr[1] = :more_to_come
+        arr[16] = :exhaust_allowed
       end.freeze
 
       # @!attribute

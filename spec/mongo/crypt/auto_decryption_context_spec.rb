@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'mongo'
 require 'lite_spec_helper'
 
@@ -5,7 +8,8 @@ describe Mongo::Crypt::AutoDecryptionContext do
   require_libmongocrypt
   include_context 'define shared FLE helpers'
 
-  let(:mongocrypt) { Mongo::Crypt::Handle.new(kms_providers, logger: logger) }
+  let(:credentials) { Mongo::Crypt::KMS::Credentials.new(kms_providers) }
+  let(:mongocrypt) { Mongo::Crypt::Handle.new(credentials, logger: logger) }
   let(:context) { described_class.new(mongocrypt, io, command) }
 
   let(:logger) { nil }
@@ -76,7 +80,7 @@ describe Mongo::Crypt::AutoDecryptionContext do
       end
 
       let(:logger) do
-        ::Logger.new($stdout).tap do |logger|
+        ::Logger.new(STDOUT).tap do |logger|
           logger.level = ::Logger::DEBUG
         end
       end

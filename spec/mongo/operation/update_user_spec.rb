@@ -1,6 +1,12 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::UpdateUser do
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
 
@@ -35,7 +41,7 @@ describe Mongo::Operation::UpdateUser do
     context 'when user update was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary, client: nil)
+        operation.execute(root_authorized_primary, context: context)
       end
 
       it 'updates the user in the database' do

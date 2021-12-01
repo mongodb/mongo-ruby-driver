@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
-require 'runners/sdam_monitoring'
 
 describe 'Connections' do
   clean_slate
@@ -26,6 +28,9 @@ describe 'Connections' do
       # RSpec::Expectations::ExpectationNotMetError: expected Mongo::Error::SocketError, got #<NameError: undefined method `write' for class `Mongo::Socket'>
       fails_on_jruby
 
+      # 4.4 has two monitors and thus our socket mocks get hit twice
+      max_server_version '4.2'
+
       let(:exception) { Mongo::Error::SocketError }
 
       let(:error) do
@@ -44,7 +49,8 @@ describe 'Connections' do
       end
 
       context 'with sdam event subscription' do
-        let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
+
+        let(:subscriber) { Mrss::EventSubscriber.new }
         let(:client) do
           ClientRegistry.instance.global_client('authorized').with(app_name: 'connection_integration').tap do |client|
             client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)
@@ -56,12 +62,12 @@ describe 'Connections' do
         end
 
         it 'publishes server description changed event' do
-          expect(subscriber.events).to be_empty
+          expect(subscriber.succeeded_events).to be_empty
 
           wait_for_all_servers(client.cluster)
 
           connection
-          subscriber.events.clear
+          subscriber.succeeded_events.clear
           error
 
           event = subscriber.first_event('server_description_changed_event')
@@ -229,6 +235,8 @@ describe 'Connections' do
     end
 
     describe 'wire protocol version range update' do
+      require_no_required_api_version
+
       # 3.2 wire protocol is 4.
       # Wire protocol < 2 means only scram auth is available,
       # which is not supported by modern mongos.
@@ -238,48 +246,65 @@ describe 'Connections' do
 
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
-      it 'updates on ismaster response from non-monitoring connections' do
-        # connect server
-        client['test'].insert_one(test: 1)
+      context 'non-lb' do
+        require_topology :single, :replica_set, :sharded
 
-        # kill background threads so that they are not interfering with
-        # our mocked ismaster response
-        client.cluster.servers.each do |server|
-          server.monitor.stop!
+        it 'updates on handshake response from non-monitoring connections' do
+          # connect server
+          client['test'].insert_one(test: 1)
+
+          # kill background threads so that they are not interfering with
+          # our mocked hello response
+          client.cluster.servers.each do |server|
+            server.monitor.stop!
+          end
+
+          server = client.cluster.servers.first
+          expect(server.features.server_wire_versions.max >= 4).to be true
+          max_version = server.features.server_wire_versions.max
+
+          # Depending on server version, handshake here may return a
+          # description that compares equal to the one we got from a
+          # monitoring connection (pre-4.2) or not (4.2+).
+          # Since we do run SDAM flow on handshake responses on
+          # non-monitoring connections, force descriptions to be different
+          # by setting the existing description here to unknown.
+          server.monitor.instance_variable_set('@description',
+            Mongo::Server::Description.new(server.address))
+
+          RSpec::Mocks.with_temporary_scope do
+            # now pretend a handshake returned a different range
+            features = Mongo::Server::Description::Features.new(0..3)
+            # One Features instantiation is for SDAM event publication, this
+            # one always happens. The second one happens on servers
+            # where we do not negotiate auth mechanism.
+            expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
+
+            connection = Mongo::Server::Connection.new(server, server.options)
+            expect(connection.connect!).to be true
+
+            # hello response should update server description via sdam flow,
+            # which includes wire version range
+            expect(server.features.server_wire_versions.max).to eq(3)
+          end
         end
+      end
 
-        server = client.cluster.servers.first
-        expect(server.features.server_wire_versions.max >= 4).to be true
-        max_version = server.features.server_wire_versions.max
+      context 'lb' do
+        require_topology :load_balanced
 
-        # Depending on server version, ismaster here may return a
-        # description that compares equal to the one we got from a
-        # monitoring connection (pre-4.2) or not (4.2+).
-        # Since we do run SDAM flow on ismaster responses on
-        # non-monitoring connections, force descriptions to be different
-        # by setting the existing description here to unknown.
-        server.monitor.instance_variable_set('@description',
-          Mongo::Server::Description.new(server.address))
+        it 'does not update on handshake response from non-monitoring connections since there are not any' do
+          # connect server
+          client['test'].insert_one(test: 1)
 
-        RSpec::Mocks.with_temporary_scope do
-          # now pretend an ismaster returned a different range
-          features = Mongo::Server::Description::Features.new(0..3)
-          # One Features instantiation is for SDAM event publication, this
-          # one always happens. The second one happens on servers
-          # where we do not negotiate auth mechanism.
-          expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
-
-          connection = Mongo::Server::Connection.new(server, server.options)
-          expect(connection.connect!).to be true
-
-          # ismaster response should update server description via sdam flow,
-          # which includes wire version range
-          expect(server.features.server_wire_versions.max).to eq(3)
+          server = client.cluster.servers.first
+          server.load_balancer?.should be true
+          server.features.server_wire_versions.max.should be 0
         end
       end
     end
 
-    describe 'SDAM flow triggered by ismaster on non-monitoring thread' do
+    describe 'SDAM flow triggered by hello on non-monitoring thread' do
       # replica sets can transition between having and not having a primary
       require_topology :replica_set
 

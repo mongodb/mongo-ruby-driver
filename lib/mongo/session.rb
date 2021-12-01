@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,10 +56,16 @@ module Mongo
     #   - *:mode* -- the read preference as a string or symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
+    # @option options [ true | false ] :snapshot Set up the session for
+    #   snapshot reads.
     #
     # @since 2.5.0
     # @api private
     def initialize(server_session, client, options = {})
+      if options[:causal_consistency] && options[:snapshot]
+        raise ArgumentError, ':causal_consistency and :snapshot options cannot be both set on a session'
+      end
+
       @server_session = server_session
       options = options.dup
 
@@ -78,6 +87,12 @@ module Mongo
 
     def cluster
       @client.cluster
+    end
+
+    # @return [ true | false ] Whether the session is configured for snapshot
+    #   reads.
+    def snapshot?
+      !!options[:snapshot]
     end
 
     # @return [ BSON::Timestamp ] The latest seen operation time for this session.
@@ -205,6 +220,12 @@ module Mongo
     # @api private
     attr_reader :pinned_server
 
+    # @return [ Object | nil ] The service id that this session is pinned to,
+    #   if any.
+    #
+    # @api private
+    attr_reader :pinned_service_id
+
     # @return [ BSON::Document | nil ] Recovery token for the sharded
     #   transaction being executed on this session, if any.
     #
@@ -227,7 +248,9 @@ module Mongo
     # Error message describing that sessions are not supported by the server version.
     #
     # @since 2.5.0
+    # @deprecated
     SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
+    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid - do not remove from driver.
 
     # The state of a session in which the last operation was not related to
     # any transaction or no operations have yet occurred.
@@ -364,7 +387,7 @@ module Mongo
     # @since 2.7.0
     def with_transaction(options=nil)
       # Non-configurable 120 second timeout for the entire operation
-      deadline = Time.now + 120
+      deadline = Utils.monotonic_time + 120
       transaction_in_progress = false
       loop do
         commit_options = {}
@@ -377,11 +400,12 @@ module Mongo
           rv = yield self
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+            log_warn("Aborting transaction due to #{e.class}: #{e}")
             abort_transaction
             transaction_in_progress = false
           end
 
-          if Time.now >= deadline
+          if Utils.monotonic_time >= deadline
             transaction_in_progress = false
             raise
           end
@@ -403,7 +427,7 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if Time.now >= deadline ||
+              if Utils.monotonic_time >= deadline ||
                 e.is_a?(Error::OperationFailure) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
@@ -420,10 +444,11 @@ module Mongo
               commit_options[:write_concern] = wc_options.merge(w: :majority)
               retry
             elsif e.label?('TransientTransactionError')
-              if Time.now >= deadline
+              if Utils.monotonic_time >= deadline
                 transaction_in_progress = false
                 raise
               end
+              @state = NO_TRANSACTION_STATE
               next
             else
               transaction_in_progress = false
@@ -441,7 +466,7 @@ module Mongo
       true
     ensure
       if transaction_in_progress
-        log_warn('with_transaction callback altered with_transaction loop, aborting transaction')
+        log_warn('with_transaction callback broke out of with_transaction loop, aborting transaction')
         begin
           abort_transaction
         rescue Error::OperationFailure, Error::InvalidTransactionOperation
@@ -493,6 +518,10 @@ module Mongo
 =end
       end
 
+      if snapshot?
+        raise Mongo::Error::SnapshotSessionTransactionProhibited
+      end
+
       check_if_ended!
 
       if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
@@ -532,6 +561,7 @@ module Mongo
     #
     # @since 2.6.0
     def commit_transaction(options=nil)
+      QueryCache.clear
       check_if_ended!
       check_if_no_transaction!
 
@@ -578,7 +608,7 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute(server, client: @client)
+            Operation::Command.new(spec).execute(server, context: Operation::Context.new(client: @client, session: self))
           end
         end
       ensure
@@ -600,6 +630,8 @@ module Mongo
     #
     # @since 2.6.0
     def abort_transaction
+      QueryCache.clear
+
       check_if_ended!
       check_if_no_transaction!
 
@@ -618,12 +650,16 @@ module Mongo
         unless starting_transaction?
           @aborting_transaction = true
           write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
-            Operation::Command.new(
-              selector: { abortTransaction: 1 },
-              db_name: 'admin',
-              session: self,
-              txn_num: txn_num
-            ).execute(server, client: @client)
+            begin
+              Operation::Command.new(
+                selector: { abortTransaction: 1 },
+                db_name: 'admin',
+                session: self,
+                txn_num: txn_num
+              ).execute(server, context: Operation::Context.new(client: @client, session: self))
+            ensure
+              unpin
+            end
           end
         end
 
@@ -682,7 +718,7 @@ module Mongo
     # @param [ Server ] server The server to pin this session to.
     #
     # @api private
-    def pin(server)
+    def pin_to_server(server)
       if server.nil?
         raise ArgumentError, 'Cannot pin to a nil server'
       end
@@ -694,11 +730,24 @@ module Mongo
       @pinned_server = server
     end
 
+    # Pins this session to the specified service.
+    #
+    # @param [ Object ] service_id The service id to pin this session to.
+    #
+    # @api private
+    def pin_to_service(service_id)
+      if service_id.nil?
+        raise ArgumentError, 'Cannot pin to a nil service id'
+      end
+      @pinned_service_id = service_id
+    end
+
     # Unpins this session from the pinned server, if the session was pinned.
     #
     # @api private
     def unpin
       @pinned_server = nil
+      @pinned_service_id = nil
     end
 
     # Unpins this session from the pinned server, if the session was pinned
@@ -990,6 +1039,9 @@ module Mongo
 
       @server_session.txn_num
     end
+
+    # @api private
+    attr_accessor :snapshot_timestamp
 
     private
 

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +33,14 @@ module Mongo
         include Limited
 
         private
+
+        def selector(connection)
+          super.tap do |selector|
+            if selector[:collation] && !connection.features.collation_enabled?
+              raise Error::UnsupportedCollation
+            end
+          end
+        end
 
         def write_concern_supported?(connection)
           connection.features.collation_enabled?

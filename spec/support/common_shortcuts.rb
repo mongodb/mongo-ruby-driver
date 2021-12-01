@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module CommonShortcuts
   module ClassMethods
     # Declares a topology double, which is configured to accept summary
@@ -96,6 +99,75 @@ module CommonShortcuts
         end
       end
     end
+
+    def clear_ocsp_cache
+      before do
+        Mongo.clear_ocsp_cache
+      end
+    end
+
+    def with_ocsp_mock(ca_file_path, responder_cert_path, responder_key_path,
+      fault: nil, port: 8100
+    )
+      clear_ocsp_cache
+
+      around do |example|
+        args = [
+          SpecConfig.instance.ocsp_files_dir.join('ocsp_mock.py').to_s,
+          '--ca_file', ca_file_path.to_s,
+          '--ocsp_responder_cert', responder_cert_path.to_s,
+          '--ocsp_responder_key', responder_key_path.to_s,
+          '-p', port.to_s,
+        ]
+        if SpecConfig.instance.client_debug?
+          # Use when debugging - tests run faster without -v.
+          args << '-v'
+        end
+        if fault
+          args += ['--fault', fault]
+        end
+        process = ChildProcess.new(*args)
+
+        process.io.inherit!
+
+        retried = false
+        begin
+          process.start
+        rescue
+          if retried
+            raise
+          else
+            sleep 1
+            retried = true
+            retry
+          end
+        end
+
+        begin
+          sleep 0.4
+          example.run
+        ensure
+          if process.exited?
+            raise "Spawned process exited before we stopped it"
+          end
+
+          process.stop
+          process.wait
+        end
+      end
+    end
+
+    def with_openssl_debug
+      around do |example|
+        v = OpenSSL.debug
+        OpenSSL.debug = true
+        begin
+          example.run
+        ensure
+          OpenSSL.debug = v
+        end
+      end
+    end
   end
 
   module InstanceMethods
@@ -138,10 +210,10 @@ module CommonShortcuts
       end
 
       if mode == :unknown
-        ismaster = {}
+        config = {}
       else
-        ismaster = {
-          'ismaster' => mode == :primary,
+        config = {
+          'isWritablePrimary' => mode == :primary,
           'secondary' => mode == :secondary,
           'arbiterOnly' => mode == :arbiter,
           'isreplicaset' => mode == :ghost,
@@ -152,7 +224,7 @@ module CommonShortcuts
           'minWireVersion' => 2, 'maxWireVersion' => 8,
         }
         if [:primary, :secondary, :arbiter, :other].include?(mode)
-          ismaster['setName'] = 'mongodb_set'
+          config['setName'] = 'mongodb_set'
         end
       end
 
@@ -165,13 +237,18 @@ module CommonShortcuts
       allow(cluster).to receive(:app_metadata)
       allow(cluster).to receive(:options).and_return({})
       allow(cluster).to receive(:run_sdam_flow)
+      allow(cluster).to receive(:monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(10)
       server = Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+        monitoring_io: false)
       # Since the server references a double for the cluster, the server
       # must be closed in the scope of the example.
       register_server(server)
-      description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
+      description = Mongo::Server::Description.new(
+        address, config,
+        average_round_trip_time: average_round_trip_time,
+      )
       server.tap do |s|
         allow(s).to receive(:description).and_return(description)
       end

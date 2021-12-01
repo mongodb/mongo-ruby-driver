@@ -1,5 +1,5 @@
-description: "Standalone connection to a replica set node with a me mismatch"
-uri: "mongodb://a/?connect=direct"
+description: "Direct connection to a replica set node with a me mismatch"
+uri: "mongodb://a/?directConnection=true"
 phases: 
   -
     responses: []

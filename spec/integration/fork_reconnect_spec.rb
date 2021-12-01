@@ -1,24 +1,26 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'fork reconnect' do
   require_fork
-  only_mri
+  require_mri
 
   # On multi-shard sharded clusters a succeeding write request does not
   # guarantee that the next operation will succeed (since it could be sent to
   # another shard with a dead connection).
-  require_no_multi_shard
-
-  # On Ruby 2.3 $?.exitstatus is sometimes nil after Process.wait returns which
-  # is not supposed to happen.
-  ruby_version_gte '2.4'
+  require_no_multi_mongos
 
   let(:client) { authorized_client }
   let(:server) { client.cluster.next_primary }
 
   describe 'monitoring connection' do
     let(:monitor) do
-      Mongo::Server::Monitor.new(server, [], Mongo::Monitoring.new, server.options)
+      Mongo::Server::Monitor.new(server, [], Mongo::Monitoring.new, server.options.merge(
+        app_metadata: client.cluster.monitor_app_metadata,
+        push_monitor_app_metadata: client.cluster.push_monitor_app_metadata,
+      ))
     end
 
     it 'reconnects' do
@@ -131,13 +133,68 @@ describe 'fork reconnect' do
         status.exitstatus.should == 0
       else
         Utils.wrap_forked_child do
-          client.database.command(ismaster: 1).should be_a(Mongo::Operation::Result)
+          client.database.command(ping: 1).should be_a(Mongo::Operation::Result)
         end
       end
 
       # Perform a read which can be retried, so that the socket close
       # performed by the child is recovered from.
       client['foo'].find(test: 1)
+    end
+
+    # Test from Driver Sessions Spec
+    #   * Create ClientSession
+    #   * Record its lsid
+    #   * Delete it (so the lsid is pushed into the pool)
+    #   * Fork
+    #   * In the parent, create a ClientSession and assert its lsid is the same.
+    #   * In the child, create a ClientSession and assert its lsid is different.
+    describe 'session pool' do
+      it 'is cleared after fork' do
+        session = client.get_session
+        parent_lsid = session.session_id
+        session.end_session
+        if pid = fork
+          pid, status = Process.wait2(pid)
+          status.exitstatus.should == 0
+        else
+          Utils.wrap_forked_child do
+            client.reconnect
+            child_session = client.get_session
+            child_lsid = child_session.session_id
+            expect(child_lsid).not_to eq(parent_lsid)
+          end
+        end
+
+        expect(client.get_session.session_id).to eq(parent_lsid)
+      end
+
+      # Test from Driver Sessions Spec
+      #   * Create ClientSession
+      #   * Record its lsid
+      #   * Fork
+      #   * In the parent, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is the same.
+      #   * In the child, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is different.
+      it 'does not return parent process sessions to child process pool' do
+        session = client.get_session
+        parent_lsid = session.session_id
+
+        if pid = fork
+          pid, status = Process.wait2(pid)
+          status.exitstatus.should == 0
+        else
+          Utils.wrap_forked_child do
+            client.reconnect
+            session.end_session
+            child_session = client.get_session
+            child_lsid = child_session.session_id
+            expect(child_lsid).not_to eq(parent_lsid)
+          end
+        end
+
+        session.end_session
+        expect(client.get_session.session_id).to eq(parent_lsid)
+      end
     end
   end
 end

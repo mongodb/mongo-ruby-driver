@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Group documents by field and calculate count.
 
 coll = client[:restaurants]

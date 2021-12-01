@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +22,17 @@ module Mongo
   # methods must be considered part of the driver's public API for backwards
   # compatibility reasons. However using these methods outside of the driver
   # is deprecated.
+  #
+  # @note Do not start or stop background threads in finalizers. See
+  #   https://jira.mongodb.org/browse/RUBY-2453 and
+  #   https://bugs.ruby-lang.org/issues/16288. When interpreter exits,
+  #   background threads are stopped first and finalizers are invoked next,
+  #   and MRI's internal data structures are basically corrupt at this point
+  #   if threads are being referenced. Prior to interpreter shutdown this
+  #   means threads cannot be stopped by objects going out of scope, but
+  #   most likely the threads hold references to said objects anyway if
+  #   work is being performed thus the objects wouldn't go out of scope in
+  #   the first place.
   #
   # @api private
   module BackgroundThread
@@ -115,7 +129,7 @@ module Mongo
       # However, we do not want to wait indefinitely because in theory
       # a background thread could be performing, say, network I/O and if
       # the network is no longer available that could take a long time.
-      start_time = Time.now
+      start_time = Utils.monotonic_time
       ([0.1, 0.15] + [0.2] * 5 + [0.3] * 20).each do |interval|
         begin
           Timeout.timeout(interval) do
@@ -129,7 +143,7 @@ module Mongo
       # Some driver objects can be reconnected, for backwards compatibiilty
       # reasons. Clear the thread instance variable to support this cleanly.
       if @thread.alive?
-        log_warn("Failed to stop the background thread in #{self} in #{(Time.now - start_time).to_i} seconds: #{@thread.inspect} (thread status: #{@thread.status})")
+        log_warn("Failed to stop the background thread in #{self} in #{(Utils.monotonic_time - start_time).to_i} seconds: #{@thread.inspect} (thread status: #{@thread.status})")
         # On JRuby the thread may be stuck in aborting state
         # seemingly indefinitely. If the thread is aborting, consider it dead
         # for our purposes (we will create a new thread if needed, and

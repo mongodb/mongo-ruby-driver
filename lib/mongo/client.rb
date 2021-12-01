@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -55,6 +58,7 @@ module Mongo
       :auth_mech_properties,
       :auth_source,
       :auto_encryption_options,
+      :bg_error_backtrace,
       :cleanup,
       :compressors,
       :direct_connection,
@@ -63,6 +67,7 @@ module Mongo
       :database,
       :heartbeat_frequency,
       :id_generator,
+      :load_balanced,
       :local_threshold,
       :logger,
       :log_prefix,
@@ -84,6 +89,7 @@ module Mongo
       :retry_writes,
       :scan,
       :sdam_proc,
+      :server_api,
       :server_selection_timeout,
       :socket_timeout,
       :ssl,
@@ -100,9 +106,11 @@ module Mongo
       :ssl_verify,
       :ssl_verify_certificate,
       :ssl_verify_hostname,
+      :ssl_verify_ocsp_endpoint,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
+      :wrapping_libraries,
       :write,
       :write_concern,
       :zlib_compression_level,
@@ -111,7 +119,16 @@ module Mongo
     # The compression algorithms supported by the driver.
     #
     # @since 2.5.0
-    VALID_COMPRESSORS = [ Mongo::Protocol::Compressed::ZLIB ].freeze
+    VALID_COMPRESSORS = [
+      Mongo::Protocol::Compressed::ZSTD,
+      Mongo::Protocol::Compressed::SNAPPY,
+      Mongo::Protocol::Compressed::ZLIB
+    ].freeze
+
+    # The known server API versions.
+    VALID_SERVER_API_VERSIONS = %w(
+      1
+    ).freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
@@ -213,24 +230,33 @@ module Mongo
     #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
     # @option options [ Hash ] :auth_mech_properties
     # @option options [ String ] :auth_source The source to authenticate from.
+    # @option options [ true | false | nil | Integer ] :bg_error_backtrace
+    #   Experimental. Set to true to log complete backtraces for errors in
+    #   background threads. Set to false or nil to not log backtraces. Provide
+    #   a positive integer to log up to that many backtrace lines.
     # @option options [ Array<String> ] :compressors A list of potential
     #   compressors to use, in order of preference. The driver chooses the
     #   first compressor that is also supported by the server. Currently the
-    #   driver only supports 'zlib'.
+    #   driver only supports 'zstd, 'snappy' and 'zlib'.
     # @option options [ true | false ] :direct_connection Whether to connect
     #   directly to the specified seed, bypassing topology discovery. Exactly
     #   one seed must be provided.
     # @option options [ Symbol ] :connect Deprecated - use :direct_connection
     #   option instead of this option. The connection method to use. This
     #   forces the cluster to behave in the specified way instead of
-    #   auto-discovering. One of :direct, :replica_set, :sharded
+    #   auto-discovering. One of :direct, :replica_set, :sharded,
+    #   :load_balanced. If :connect is set to :load_balanced, the driver
+    #   will behave as if the server is a load balancer even if it isn't
+    #   connected to a load balancer.
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
     # @option options [ String ] :database The database to connect to.
     # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
-    #   for the server monitor to refresh its description via ismaster.
+    #   for the server monitor to refresh its description via hello.
     # @option options [ Object ] :id_generator A custom object to generate ids
     #   for documents. Must respond to #generate.
+    # @option options [ true | false ] :load_balanced Whether to expect to
+    #   connect to a load balancer.
     # @option options [ Integer ] :local_threshold The local threshold boundary
     #   in seconds for selecting a near server for an operation.
     # @option options [ Logger ] :logger A custom logger to use.
@@ -305,11 +331,16 @@ module Mongo
     #   in particular the cluster is nil at this time. sdam_proc should
     #   limit itself to calling #subscribe and #unsubscribe methods on the
     #   client only.
+    # @option options [ Hash ] :server_api The requested server API version.
+    #   This hash can have the following items:
+    #   - *:version* -- string
+    #   - *:strict* -- boolean
+    #   - *:deprecation_errors* -- boolean
     # @option options [ Integer ] :server_selection_timeout The timeout in seconds
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
-    # @option options [ true, false ] :ssl Whether to use SSL.
+    # @option options [ true, false ] :ssl Whether to use TLS.
     # @option options [ String ] :ssl_ca_cert The file containing concatenated
     #   certificate authority certificates used to validate certs passed from the
     #   other end of the connection. Intermediate certificates should NOT be
@@ -370,6 +401,10 @@ module Mongo
     # @option options [ String ] :user The user name.
     # @option options [ Float ] :wait_queue_timeout The time to wait, in
     #   seconds, in the connection pool for a connection to be checked in.
+    # @option options [ Array<Hash> ] :wrapping_libraries Information about
+    #   libraries such as ODMs that are wrapping the driver, to be added to
+    #    metadata sent to the server. Specify the lower level libraries first.
+    #    Allowed hash keys: :name, :version, :platform.
     # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
@@ -443,14 +478,51 @@ module Mongo
         @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
+        addresses.each do |addr|
+          if addr =~ /\Amongodb(\+srv)?:\/\//i
+            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
+          end
+        end
+
         @srv_records = nil
+      end
+
+      options = self.class.canonicalize_ruby_options(options)
+
+      # The server API version is specified to be a string.
+      # However, it is very annoying to always provide the number 1 as a string,
+      # therefore cast to the string type here.
+      if server_api = options[:server_api]
+        if server_api.is_a?(Hash)
+          server_api = Options::Redacted.new(server_api)
+          if (version = server_api[:version]).is_a?(Integer)
+            options[:server_api] = server_api.merge(version: version.to_s)
+          end
+        end
       end
 
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
 
-      options = default_options(options).merge(options)
+      # For gssapi service_name, the default option is given in a hash
+      # (one level down from the top level).
+      merged_options = default_options(options)
+      options.each do |k, v|
+        default_v = merged_options[k]
+        if Hash === default_v
+          v = default_v.merge(v)
+        end
+        merged_options[k] = v
+      end
+      options = merged_options
+
+      options.keys.each do |k|
+        if options[k].nil?
+          options.delete(k)
+        end
+      end
+
       @options = validate_new_options!(options)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
@@ -463,7 +535,9 @@ module Mongo
       validate_options!(addresses)
       validate_authentication_options!
 
-      @database = Database.new(self, @options[:database], @options)
+      database_options = @options.dup
+      database_options.delete(:server_api)
+      @database = Database.new(self, @options[:database], database_options)
 
       # Temporarily set monitoring so that event subscriptions can be
       # set up without there being a cluster
@@ -489,7 +563,6 @@ module Mongo
           end
         end
 
-        yield(self) if block_given?
       rescue
         begin
           @cluster.disconnect!
@@ -498,6 +571,14 @@ module Mongo
           # Drop this exception so that the original exception is raised
         end
         raise
+      end
+
+      if block_given?
+        begin
+          yield(self)
+        ensure
+          close
+        end
       end
     end
 
@@ -571,15 +652,12 @@ module Mongo
 
     # Get a summary of the client state.
     #
-    # @note This method is experimental and subject to change.
+    # @note The exact format and layout of the returned summary string is
+    #   not part of the driver's public API and may be changed at any time.
     #
-    # @example Inspect the client.
-    #   client.summary
-    #
-    # @return [ String ] Summary string.
+    # @return [ String ] The summary string.
     #
     # @since 2.7.0
-    # @api experimental
     def summary
       "#<Client cluster=#{cluster.summary}>"
     end
@@ -609,7 +687,7 @@ module Mongo
     #
     # @return [ BSON::Document ] The user-defined read preference.
     #   The document may have the following fields:
-    #   - *:read* -- read preference specified as a symbol; valid values are
+    #   - *:mode* -- read preference specified as a symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
@@ -657,9 +735,9 @@ module Mongo
     # @return [ Mongo::Client ] A new client instance.
     #
     # @since 2.0.0
-    def with(new_options = Options::Redacted.new)
+    def with(new_options = nil)
       clone.tap do |client|
-        opts = client.update_options(new_options)
+        opts = client.update_options(new_options || Options::Redacted.new)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
@@ -685,6 +763,8 @@ module Mongo
     # @api private
     def update_options(new_options)
       old_options = @options
+
+      new_options = self.class.canonicalize_ruby_options(new_options || {})
 
       validate_new_options!(new_options).tap do |opts|
         # Our options are frozen
@@ -734,7 +814,6 @@ module Mongo
     def read_concern
       options[:read_concern]
     end
-
 
     # Get the write concern for this client. If no option was provided, then a
     # default single server acknowledgement will be used.
@@ -802,6 +881,14 @@ module Mongo
     # @param [ Hash ] filter The filter criteria for getting a list of databases.
     # @param [ Hash ] opts The command options.
     #
+    # @option opts [ true, false ] :authorized_databases A flag that determines
+    #   which databases are returned based on user privileges when access control
+    #   is enabled
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   for more information and usage.
+    # @option opts [ Session ] :session The session to use.
+    #
     # @return [ Array<String> ] The names of the databases.
     #
     # @since 2.0.5
@@ -818,6 +905,14 @@ module Mongo
     # @param [ true, false ] name_only Whether to only return each database name without full metadata.
     # @param [ Hash ] opts The command options.
     #
+    # @option opts [ true, false ] :authorized_databases A flag that determines
+    #   which databases are returned based on user privileges when access control
+    #   is enabled
+    #
+    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   for more information and usage.
+    # @option opts [ Session ] :session The session to use.
+    #
     # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
@@ -825,6 +920,7 @@ module Mongo
       cmd = { listDatabases: 1 }
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
+      cmd[:authorizedDatabases] = true if opts[:authorized_databases]
       use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
     end
 
@@ -835,6 +931,8 @@ module Mongo
     #
     # @param [ Hash ] filter The filter criteria for getting a list of databases.
     # @param [ Hash ] opts The command options.
+    #
+    # @option opts [ Session ] :session The session to use.
     #
     # @return [ Array<Mongo::Database> ] The list of database objects.
     #
@@ -865,8 +963,16 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      get_session(options.merge(implicit: false)) or
-        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
+      session = get_session!(options.merge(implicit: false))
+      if block_given?
+        begin
+          yield session
+        ensure
+          session.end_session
+        end
+      else
+        session
+      end
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
@@ -912,6 +1018,76 @@ module Mongo
         options)
     end
 
+    # Returns a session to use for operations if possible.
+    #
+    # If :session option is set, validates that session and returns it.
+    # Otherwise, if deployment supports sessions, creates a new session and
+    # returns it. When a new session is created, the session will be implicit
+    # (lifecycle is managed by the driver) if the :implicit option is given,
+    # otherwise the session will be explicit (lifecycle managed by the
+    # application). If deployment does not support session, returns nil.
+    #
+    # @option options [ true | false ] :implicit When no session is passed in,
+    #   whether to create an implicit session.
+    # @option options [ Session ] :session The session to validate and return.
+    #
+    # @return [ Session | nil ] Session object or nil if sessions are not
+    #   supported by the deployment.
+    #
+    # @api private
+    def get_session(options = {})
+      get_session!(options)
+    rescue Error::SessionsNotSupported
+      nil
+    end
+
+    # Creates a session to use for operations if possible and yields it to
+    # the provided block.
+    #
+    # If :session option is set, validates that session and uses it.
+    # Otherwise, if deployment supports sessions, creates a new session and
+    # uses it. When a new session is created, the session will be implicit
+    # (lifecycle is managed by the driver) if the :implicit option is given,
+    # otherwise the session will be explicit (lifecycle managed by the
+    # application). If deployment does not support session, yields nil to
+    # the block.
+    #
+    # When the block finishes, if the session was created and was implicit,
+    # or if an implicit session was passed in, the session is ended which
+    # returns it to the pool of available sessions.
+    #
+    # @option options [ true | false ] :implicit When no session is passed in,
+    #   whether to create an implicit session.
+    # @option options [ Session ] :session The session to validate and return.
+    #
+    # @api private
+    def with_session(options = {}, &block)
+      session = get_session(options)
+
+      yield session
+    ensure
+      if session && session.implicit?
+        session.end_session
+      end
+    end
+
+    class << self
+      # Lowercases auth mechanism properties, if given, in the specified
+      # options, then converts the options to an instance of Options::Redacted.
+      #
+      # @api private
+      def canonicalize_ruby_options(options)
+        Options::Redacted.new(Hash[options.map do |k, v|
+          if k == :auth_mech_properties || k == 'auth_mech_properties'
+            if v
+              v = Hash[v.map { |pk, pv| [pk.downcase, pv] }]
+            end
+          end
+          [k, v]
+        end])
+      end
+    end
+
     private
 
     # Create a new encrypter object using the client's auto encryption options
@@ -944,30 +1120,34 @@ module Mongo
       close_encrypter
     end
 
-    # If options[:session] is set, validates that session and returns it.
-    # If deployment supports sessions, creates a new session and returns it.
-    # The session is implicit unless options[:implicit] is given.
-    # If deployment does not support session, returns nil.
+    # Returns a session to use for operations.
     #
-    # @return [ Session | nil ] Session object or nil if sessions are not
-    #   supported by the deployment.
-    def get_session(options = {})
+    # If :session option is set, validates that session and returns it.
+    # Otherwise, if deployment supports sessions, creates a new session and
+    # returns it. When a new session is created, the session will be implicit
+    # (lifecycle is managed by the driver) if the :implicit option is given,
+    # otherwise the session will be explicit (lifecycle managed by the
+    # application). If deployment does not support session, raises
+    # Error::InvalidSession.
+    #
+    # @option options [ true | false ] :implicit When no session is passed in,
+    #   whether to create an implicit session.
+    # @option options [ Session ] :session The session to validate and return.
+    #
+    # @return [ Session ] A session object.
+    #
+    # @raise Error::SessionsNotSupported if sessions are not supported by
+    #   the deployment.
+    #
+    # @api private
+    def get_session!(options = {})
       if options[:session]
         return options[:session].validate!(self)
       end
 
-      if cluster.sessions_supported?
-        Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
-      end
-    end
+      cluster.validate_session_support!
 
-    def with_session(options = {}, &block)
-      session = get_session(options)
-      yield(session)
-    ensure
-      if session && session.implicit?
-        session.end_session
-      end
+      Session.new(cluster.session_pool.checkout, self, { implicit: true }.merge(options))
     end
 
     def initialize_copy(original)
@@ -991,8 +1171,42 @@ module Mongo
     # The argument may contain a subset of options that the client will
     # eventually have; this method validates each of the provided options
     # but does not check for interactions between combinations of options.
-    def validate_new_options!(opts = Options::Redacted.new)
+    def validate_new_options!(opts)
       return Options::Redacted.new unless opts
+      if opts[:read_concern]
+        # Raise an error for non user-settable options
+        if opts[:read_concern][:after_cluster_time]
+          raise Mongo::Error::InvalidReadConcern.new(
+            'The after_cluster_time read_concern option cannot be specified by the user'
+          )
+        end
+
+        given_keys = opts[:read_concern].keys.map(&:to_s)
+        allowed_keys = ['level']
+        invalid_keys = given_keys - allowed_keys
+        # Warn that options are invalid but keep it and forward to the server
+        unless invalid_keys.empty?
+          log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.")
+        end
+      end
+
+      if server_api = opts[:server_api]
+        unless server_api.is_a?(Hash)
+          raise ArgumentError, ":server_api value must be a hash: #{server_api}"
+        end
+
+        extra_keys = server_api.keys - %w(version strict deprecation_errors)
+        unless extra_keys.empty?
+          raise ArgumentError, "Unknown keys under :server_api: #{extra_keys.map(&:inspect).join(', ')}"
+        end
+
+        if version = server_api[:version]
+          unless VALID_SERVER_API_VERSIONS.include?(version)
+            raise ArgumentError, "Unknown server API version: #{version}"
+          end
+        end
+      end
+
       Lint.validate_underscore_read_preference(opts[:read])
       Lint.validate_read_concern_option(opts[:read_concern])
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
@@ -1002,6 +1216,15 @@ module Mongo
           validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
+
+            if compressors.include?('snappy')
+              validate_snappy_compression!
+            end
+
+            if compressors.include?('zstd')
+              validate_zstd_compression!
+            end
+
             _options[key] = compressors unless compressors.empty?
           else
             _options[key] = v
@@ -1021,9 +1244,15 @@ module Mongo
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
 
+      connect = options[:connect]&.to_sym
+
+      if connect && !%i(direct replica_set sharded load_balanced).include?(connect)
+        raise ArgumentError, "Invalid :connect option value: #{connect}"
+      end
+
       if options[:direct_connection]
-        if options[:connect] && options[:connect].to_sym != :direct
-          raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{options[:connect]}"
+        if connect && connect != :direct
+          raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{connect}"
         end
         # When a new client is created, we get the list of seed addresses
         if addresses && addresses.length > 1
@@ -1035,8 +1264,90 @@ module Mongo
         end
       end
 
-      if options[:direct_connection] == false && options[:connect] && options[:connect].to_sym == :direct
-        raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{options[:connect]}"
+      if options[:load_balanced]
+        if addresses && addresses.length > 1
+          raise ArgumentError, "load_balanced=true cannot be used with multiple seeds"
+        end
+
+        if options[:direct_connection]
+          raise ArgumentError, "direct_connection=true cannot be used with load_balanced=true"
+        end
+
+        if connect && connect != :load_balanced
+          raise ArgumentError, "connect=#{connect} cannot be used with load_balanced=true"
+        end
+
+        if options[:replica_set]
+          raise ArgumentError, "load_balanced=true cannot be used with replica_set option"
+        end
+      end
+
+      if connect == :load_balanced
+        if addresses && addresses.length > 1
+          raise ArgumentError, "connect=load_balanced cannot be used with multiple seeds"
+        end
+
+        if options[:replica_set]
+          raise ArgumentError, "connect=load_balanced cannot be used with replica_set option"
+        end
+      end
+
+      if options[:direct_connection] == false && connect && connect == :direct
+        raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{connect}"
+      end
+
+      %i(connect_timeout socket_timeout).each do |key|
+        if value = options[key]
+          unless Numeric === value
+            raise ArgumentError, "#{key} must be a non-negative number: #{value}"
+          end
+          if value < 0
+            raise ArgumentError, "#{key} must be a non-negative number: #{value}"
+          end
+        end
+      end
+
+      if value = options[:bg_error_backtrace]
+        case value
+        when Integer
+          if value <= 0
+            raise ArgumentError, ":bg_error_backtrace option value must be true, false, nil or a positive integer: #{value}"
+          end
+        when true
+          # OK
+        else
+          raise ArgumentError, ":bg_error_backtrace option value must be true, false, nil or a positive integer: #{value}"
+        end
+      end
+
+      if libraries = options[:wrapping_libraries]
+        unless Array === libraries
+          raise ArgumentError, ":wrapping_libraries must be an array of hashes: #{libraries}"
+        end
+
+        libraries = libraries.map do |library|
+          Utils.shallow_symbolize_keys(library)
+        end
+
+        libraries.each do |library|
+          unless Hash === library
+            raise ArgumentError, ":wrapping_libraries element is not a hash: #{library}"
+          end
+
+          if library.empty?
+            raise ArgumentError, ":wrapping_libraries element is empty"
+          end
+
+          unless (library.keys - %i(name platform version)).empty?
+            raise ArgumentError, ":wrapping_libraries element has invalid keys (allowed keys: :name, :platform, :version): #{library}"
+          end
+
+          library.each do |key, value|
+            if value.include?('|')
+              raise ArgumentError, ":wrapping_libraries element value cannot include '|': #{value}"
+            end
+          end
+        end
       end
     end
 
@@ -1104,9 +1415,28 @@ module Mongo
                        "This compressor will not be used.")
           false
         else
+
           true
         end
       end
+    end
+
+    def validate_snappy_compression!
+      return if defined?(Snappy)
+      require 'snappy'
+    rescue LoadError => e
+      raise Error::UnmetDependency, "Cannot enable snappy compression because the snappy gem " \
+        "has not been installed. Add \"gem 'snappy'\" to your Gemfile and run " \
+        "\"bundle install\" to install the gem. (#{e.class}: #{e})"
+    end
+
+    def validate_zstd_compression!
+      return if defined?(Zstd)
+      require 'zstd-ruby'
+    rescue LoadError => e
+      raise Error::UnmetDependency, "Cannot enable zstd compression because the zstd-ruby gem " \
+        "has not been installed. Add \"gem 'zstd-ruby'\" to your Gemfile and run " \
+        "\"bundle install\" to install the gem. (#{e.class}: #{e})"
     end
 
     def validate_max_min_pool_size!(option, opts)

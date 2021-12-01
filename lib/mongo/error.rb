@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,16 +32,19 @@ module Mongo
     # An error field, MongoDB < 2.6
     #
     # @since 2.0.0
+    # @deprecated
     ERR = '$err'.freeze
 
     # An error field, MongoDB < 2.4
     #
     # @since 2.0.0
+    # @deprecated
     ERROR = 'err'.freeze
 
     # The standard error message field, MongoDB 3.0+
     #
     # @since 2.0.0
+    # @deprecated
     ERRMSG = 'errmsg'.freeze
 
     # The constant for the writeErrors array.
@@ -162,6 +168,7 @@ module Mongo
 end
 
 require 'mongo/error/auth_error'
+require 'mongo/error/bad_load_balancer_target'
 require 'mongo/error/sdam_error_detection'
 require 'mongo/error/parser'
 require 'mongo/error/write_retryable'
@@ -174,7 +181,7 @@ require 'mongo/error/credential_check_error'
 require 'mongo/error/crypt_error'
 require 'mongo/error/extra_file_chunk'
 require 'mongo/error/file_not_found'
-require 'mongo/error/operation_failure'
+require 'mongo/error/handshake_error'
 require 'mongo/error/invalid_address'
 require 'mongo/error/invalid_bulk_operation'
 require 'mongo/error/invalid_bulk_operation_type'
@@ -188,8 +195,11 @@ require 'mongo/error/invalid_min_pool_size'
 require 'mongo/error/invalid_read_option'
 require 'mongo/error/invalid_application_name'
 require 'mongo/error/invalid_nonce'
+require 'mongo/error/invalid_read_concern'
 require 'mongo/error/invalid_replacement_document'
 require 'mongo/error/invalid_server_auth_response'
+# Subclass of InvalidServerAuthResponse
+require 'mongo/error/invalid_server_auth_host'
 require 'mongo/error/invalid_server_preference'
 require 'mongo/error/invalid_session'
 require 'mongo/error/invalid_signature'
@@ -199,6 +209,7 @@ require 'mongo/error/invalid_update_document'
 require 'mongo/error/invalid_uri'
 require 'mongo/error/invalid_write_concern'
 require 'mongo/error/insufficient_iteration_count'
+require 'mongo/error/internal_driver_error'
 require 'mongo/error/kms_error'
 require 'mongo/error/lint_error'
 require 'mongo/error/max_bson_size'
@@ -207,11 +218,17 @@ require 'mongo/error/mismatched_domain'
 require 'mongo/error/mongocryptd_spawn_error'
 require 'mongo/error/multi_index_drop'
 require 'mongo/error/need_primary_server'
+require 'mongo/error/no_service_connection_available'
 require 'mongo/error/no_server_available'
 require 'mongo/error/no_srv_records'
 require 'mongo/error/session_ended'
+require 'mongo/error/sessions_not_supported'
+require 'mongo/error/snapshot_session_invalid_server_version'
+require 'mongo/error/snapshot_session_transaction_prohibited'
+require 'mongo/error/operation_failure'
 require 'mongo/error/pool_closed_error'
 require 'mongo/error/raise_original_error'
+require 'mongo/error/server_certificate_revoked'
 require 'mongo/error/socket_error'
 require 'mongo/error/socket_timeout_error'
 require 'mongo/error/failed_string_prep_validation'
@@ -222,7 +239,11 @@ require 'mongo/error/missing_file_chunk'
 require 'mongo/error/missing_password'
 require 'mongo/error/missing_resume_token'
 require 'mongo/error/missing_scram_server_signature'
+require 'mongo/error/missing_service_id'
+require 'mongo/error/server_api_conflict'
+require 'mongo/error/server_api_not_supported'
 require 'mongo/error/unknown_payload_type'
+require 'mongo/error/unmet_dependency'
 require 'mongo/error/unsupported_option'
 require 'mongo/error/unsupported_array_filters'
 require 'mongo/error/unsupported_collation'

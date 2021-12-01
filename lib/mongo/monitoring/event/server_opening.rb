@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -50,7 +53,7 @@ module Mongo
         # @since 2.7.0
         # @api experimental
         def summary
-          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          "#<#{short_class_name}" +
           " address=#{address} topology=#{topology.summary}>"
         end
       end

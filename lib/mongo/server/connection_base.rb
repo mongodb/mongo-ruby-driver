@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +30,7 @@ module Mongo
       include Monitoring::Publishable
 
       # The maximum allowed size in bytes that a user-supplied document may
-      # take up when serialized, if the server's ismaster response does not
+      # take up when serialized, if the server's hello response does not
       # include maxBsonObjectSize field.
       #
       # The commands that are sent to the server may exceed this size by
@@ -63,7 +66,7 @@ module Mongo
                      :update_cluster_time
 
       # Returns the server description for this connection, derived from
-      # the isMaster response for the handshake performed on this connection.
+      # the hello response for the handshake performed on this connection.
       #
       # @note A connection object that hasn't yet connected (handshaken and
       #   authenticated, if authentication is required) does not have a
@@ -85,12 +88,20 @@ module Mongo
         :max_message_size,
         :mongos?
 
+      # @return [ nil | Object ] The service id, if any.
+      def service_id
+        description&.service_id
+      end
+
       # Connection pool generation from which this connection was created.
       # May be nil.
       #
       # @return [ Integer | nil ] Connection pool generation.
       def generation
-        options[:generation]
+        # If the connection is to a load balancer, @generation is set
+        # after handshake completes. If the connection is to another server
+        # type, generation is specified during connection creation.
+        @generation || options[:generation]
       end
 
       def app_metadata
@@ -105,7 +116,7 @@ module Mongo
           if same
             @server.app_metadata
           else
-            AppMetadata.new(options)
+            AppMetadata.new(options.merge(purpose: @server.app_metadata.purpose))
           end
         end
       end
@@ -124,7 +135,7 @@ module Mongo
       #
       # @param [ Array<Message> ] messages A one-element array containing
       #   the message to dispatch.
-      # @param [ Integer ] operation_id The operation id to link messages.
+      # @param [ Operation::Context ] context The operation context.
       # @param [ Hash ] options
       #
       # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
@@ -133,31 +144,40 @@ module Mongo
       #
       # @return [ Protocol::Message | nil ] The reply if needed.
       #
+      # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error.
+      #
       # @since 2.0.0
-      def dispatch(messages, operation_id = nil, client = nil, options = {})
+      def dispatch(messages, context, options = {})
         # The monitoring code does not correctly handle multiple messages,
         # and the driver internally does not send more than one message at
         # a time ever. Thus prohibit multiple message use for now.
         if messages.length != 1
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
+        if description.unknown?
+          raise Error::InternalDriverError, "Cannot dispatch a message on a connection with unknown description: #{description.inspect}"
+        end
         message = messages.first
-        deliver(message, client, options)
+        deliver(message, context, options)
       end
 
       private
 
-      def deliver(message, client, options = {})
+      # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error.
+      def deliver(message, context, options = {})
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
-        buffer = serialize(message, client)
+        buffer = serialize(message, context)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
-          command_started(address, operation_id, message.payload,
+          started_event = command_started(address, operation_id, message.payload,
             socket_object_id: socket.object_id, connection_id: id,
-            connection_generation: generation)
-          start = Time.now
+            connection_generation: generation,
+            server_connection_id: description.server_connection_id,
+            service_id: description.service_id,
+          )
+          start = Utils.monotonic_time
           result = nil
           begin
             result = add_server_diagnostics do
@@ -169,33 +189,38 @@ module Mongo
               end
             end
           rescue Exception => e
-            total_duration = Time.now - start
-            command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
+            total_duration = Utils.monotonic_time - start
+            command_failed(nil, address, operation_id, message.payload,
+              e.message, total_duration,
+              started_event: started_event,
+              service_id: description.service_id,
+            )
             raise
           else
-            total_duration = Time.now - start
-            command_completed(result, address, operation_id, message.payload, total_duration)
+            total_duration = Utils.monotonic_time - start
+            command_completed(result, address, operation_id, message.payload,
+              total_duration,
+              started_event: started_event,
+              service_id: description.service_id,
+            )
           end
-          if client && result
-            result = result.maybe_decrypt(client)
+          if result && context.decrypt?
+            result = result.maybe_decrypt(context)
           end
           result
         end
       end
 
-      def serialize(message, client, buffer = BSON::ByteBuffer.new)
-        start_size = 0
-        final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
-
+      def serialize(message, context, buffer = BSON::ByteBuffer.new)
         # Driver specifications only mandate the fixed 16MiB limit for
         # serialized BSON documents. However, the server returns its
-        # active serialized BSON document size limit in the ismaster response,
+        # active serialized BSON document size limit in the hello response,
         # which is +max_bson_object_size+ below. The +DEFAULT_MAX_BSON_OBJECT_SIZE+
         # is the 16MiB value mandated by the specifications which we use
-        # only as the default if the server's ismaster did not contain
+        # only as the default if the server's hello did not contain
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
-        if client && client.encrypter && client.encrypter.encrypt?
+        if context.encrypt?
           # The client-side encryption specification requires bulk writes to
           # be split at a reduced maxBsonObjectSize. If this message is a bulk
           # write and its size exceeds the reduced size limit, the serializer
@@ -205,18 +230,45 @@ module Mongo
           if message.bulk_write?
             # Make the new maximum size equal to the specified reduced size
             # limit plus the 16KiB overhead allowance.
-            max_bson_size = REDUCED_MAX_BSON_SIZE + MAX_BSON_COMMAND_OVERHEAD
+            max_bson_size = REDUCED_MAX_BSON_SIZE
           end
-        else
-          max_bson_size += MAX_BSON_COMMAND_OVERHEAD
         end
 
-        final_message.serialize(buffer, max_bson_size)
-        if max_message_size &&
-          (buffer.length - start_size) > max_message_size
-        then
-          raise Error::MaxMessageSize.new(max_message_size)
+        # RUBY-2234: It is necessary to check that the message size does not
+        # exceed the maximum bson object size before compressing and serializing
+        # the final message.
+        #
+        # This is to avoid the case where the user performs a bulk write
+        # larger than 16MiB which, when compressed, becomes smaller than 16MiB.
+        # If the driver does not split the bulk writes prior to compression,
+        # the entire operation will be sent to the server, which will raise an
+        # error because the uncompressed operation exceeds the maximum bson size.
+        #
+        # To address this problem, we serialize the message prior to compression
+        # and raise an exception if the serialized message exceeds the maximum
+        # bson size.
+        if max_message_size
+          # Create a separate buffer that contains the un-compressed message
+          # for the purpose of checking its size. Write any pre-existing contents
+          # from the original buffer into the temporary one.
+          temp_buffer = BSON::ByteBuffer.new
+
+          # TODO: address the fact that this line mutates the buffer.
+          temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
+
+          message.serialize(temp_buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
+          if temp_buffer.length > max_message_size
+            raise Error::MaxMessageSize.new(max_message_size)
+          end
         end
+
+        # RUBY-2335: When the un-compressed message is smaller than the maximum
+        # bson size limit, the message will be serialized twice. The operations
+        # layer should be refactored to allow compression on an already-
+        # serialized message.
+        final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
+        final_message.serialize(buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
+
         buffer
       end
     end

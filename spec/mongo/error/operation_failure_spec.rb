@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::Error::OperationFailure do
@@ -82,9 +85,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -95,9 +101,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -119,9 +128,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -145,9 +157,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -158,9 +173,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -199,9 +217,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -213,9 +234,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version >= 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 9,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
             )
           end
 
@@ -223,6 +247,52 @@ describe Mongo::Error::OperationFailure do
             # Error code is not consulted, there is no resumable label =>
             # error is not resumable
             expect(error.change_stream_resumable?).to eql(false)
+          end
+        end
+      end
+
+      context 'when the error code is 43 (CursorNotFound)' do
+        let(:error) { Mongo::Error::OperationFailure.new(nil, result, code: 43, code_name: 'CursorNotFound') }
+        let(:result) do
+          Mongo::Operation::GetMore::Result.new(
+            Mongo::Protocol::Message.new, description)
+        end
+
+        context 'wire protocol < 9' do
+          let(:description) do
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
+            )
+          end
+
+          it 'returns true' do
+            # CursorNotFound exceptions are resumable even if they don't have
+            # a ResumableChangeStreamError label because the server is not aware
+            # of the cursor id, and thus cannot determine if it is a change stream.
+            expect(error.change_stream_resumable?).to be true
+          end
+        end
+
+        context 'wire protocol >= 9' do
+          let(:description) do
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 9,
+              }
+            )
+          end
+
+          it 'returns true' do
+            # CursorNotFound exceptions are resumable even if they don't have
+            # a ResumableChangeStreamError label because the server is not aware
+            # of the cursor id, and thus cannot determine if it is a change stream.
+            expect(error.change_stream_resumable?).to be true
           end
         end
       end
@@ -240,9 +310,12 @@ describe Mongo::Error::OperationFailure do
 
         context 'wire protocol version < 9' do
           let(:description) do
-            Mongo::Server::Description.new('',
-              'minWireVersion' => 0,
-              'maxWireVersion' => 8,
+            Mongo::Server::Description.new(
+              '',
+              {
+                'minWireVersion' => 0,
+                'maxWireVersion' => 8,
+              }
             )
           end
 
@@ -369,6 +442,16 @@ describe Mongo::Error::OperationFailure do
           :code => 999, :code_name => nil)
       end
 
+      it 'is false' do
+        expect(subject.not_master?).to be false
+      end
+    end
+
+    context 'not master in message without code' do
+      subject do
+        described_class.new('not master)', nil)
+      end
+
       it 'is true' do
         expect(subject.not_master?).to be true
       end
@@ -431,15 +514,35 @@ describe Mongo::Error::OperationFailure do
           :code => 999, :code_name => nil)
       end
 
+      it 'is false' do
+        expect(subject.node_recovering?).to be false
+      end
+    end
+
+    context 'node is recovering in message without code' do
+      subject do
+        described_class.new('node is recovering', nil)
+      end
+
       it 'is true' do
         expect(subject.node_recovering?).to be true
       end
     end
 
-    context 'not master or secondary text' do
+    context 'not master or secondary text with a code' do
       subject do
         described_class.new('not master or secondary (999)', nil,
           :code => 999, :code_name => nil)
+      end
+
+      it 'is false' do
+        expect(subject.node_recovering?).to be false
+      end
+    end
+
+    context 'not master or secondary text without code' do
+      subject do
+        described_class.new('not master or secondary', nil)
       end
 
       it 'is true' do

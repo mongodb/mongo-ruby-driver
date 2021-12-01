@@ -1,4 +1,8 @@
-require 'spec_helper'
+# frozen_string_literal: true
+# encoding: utf-8
+
+require 'lite_spec_helper'
+require 'support/shared/server_selector'
 
 describe Mongo::ServerSelector do
 
@@ -196,14 +200,9 @@ describe Mongo::ServerSelector do
   end
 
   describe "#select_server" do
-    skip_if_linting
+    require_no_linting
 
-    context 'when #select returns a list of nils' do
-
-      let(:servers) do
-        [ make_server(:primary) ]
-      end
-
+    context 'replica set topology' do
       let(:cluster) do
         double('cluster').tap do |c|
           allow(c).to receive(:connected?).and_return(true)
@@ -219,19 +218,141 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
           allow(c).to receive(:server_selection_semaphore).and_return(nil)
+          allow(topology).to receive(:compatible?).and_return(true)
         end
       end
 
-      let(:read_pref) do
-        described_class.get(mode: :primary).tap do |pref|
-          allow(pref).to receive(:select).and_return([ nil, nil ])
+      let(:primary) do
+        make_server(:primary).tap do |server|
+          allow(server).to receive(:features).and_return(double("primary features"))
         end
       end
 
-      it 'raises a NoServerAvailable error' do
-        expect do
-          read_pref.select_server(cluster)
-        end.to raise_exception(Mongo::Error::NoServerAvailable)
+      let(:secondary) do
+        make_server(:secondary).tap do |server|
+          allow(server).to receive(:features).and_return(double("secondary features"))
+        end
+      end
+
+      context "when #select_in_replica_set returns a list of nils" do
+        let(:servers) do
+          [ primary ]
+        end
+
+        let(:read_pref) do
+          described_class.get(mode: :primary).tap do |pref|
+            allow(pref).to receive(:select_in_replica_set).and_return([ nil, nil ])
+          end
+        end
+
+        it 'raises a NoServerAvailable error' do
+          expect do
+            read_pref.select_server(cluster)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+
+      context "write_aggregation is true" do
+
+        before do
+          # It does not matter for this context whether primary supports secondary wites or not,
+          # but we need to mock out this call.
+          allow(primary.features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
+        end
+
+        context "read preference is primary" do
+          let(:selector) { Mongo::ServerSelector::Primary.new }
+
+          let(:servers) do
+            [ primary, secondary ]
+          end
+
+          [true, false].each do |secondary_support_writes|
+            context "secondary #{secondary_support_writes ? 'supports' : 'does not support' } writes" do
+              it "selects a primary" do
+                allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(secondary_support_writes)
+
+                expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
+              end
+            end
+          end
+        end
+
+        context "read preference is primary preferred" do
+          let(:selector) { Mongo::ServerSelector::PrimaryPreferred.new }
+
+          let(:servers) do
+            [ primary, secondary ]
+          end
+
+          [true, false].each do |secondary_support_writes|
+            context "secondary #{secondary_support_writes ? 'supports' : 'does not support' } writes" do
+              it "selects a primary" do
+                allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(secondary_support_writes)
+
+                expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
+              end
+            end
+          end
+        end
+
+        context "read preference is secondary preferred" do
+          let(:selector) { Mongo::ServerSelector::SecondaryPreferred.new }
+
+          let(:servers) do
+            [ primary, secondary ]
+          end
+
+          context "secondary supports writes" do
+            it "selects a secondary" do
+              allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(true)
+
+              expect(selector.select_server(cluster, write_aggregation: true)).to eq(secondary)
+            end
+          end
+
+          context "secondary does not support writes" do
+            it "selects a primary" do
+              allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
+
+              expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
+            end
+          end
+        end
+
+        context "read preference is secondary" do
+          let(:selector) { Mongo::ServerSelector::Secondary.new }
+
+          let(:servers) do
+            [ primary, secondary ]
+          end
+
+          context "secondary supports writes" do
+            it "selects a secondary" do
+              allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(true)
+
+              expect(selector.select_server(cluster, write_aggregation: true)).to eq(secondary)
+            end
+          end
+
+          context "secondary does not support writes" do
+            it "selects a primary" do
+              allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
+
+              expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
+            end
+          end
+
+          context "no secondaries in cluster" do
+            let(:servers) do
+              [ primary ]
+            end
+
+            it "selects a primary" do
+              expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
+            end
+          end
+        end
       end
     end
 
@@ -377,8 +498,12 @@ describe Mongo::ServerSelector do
         let(:servers) { [unknown, mongos] }
         let(:selector) { described_class.primary }
 
-        it 'returns the mongos' do
-          expect(selector.select_server(cluster)).to eq(mongos)
+        [true, false].each do |write_aggregation|
+          context "write_aggregation is #{write_aggregation}" do
+            it 'returns the mongos' do
+              expect(selector.select_server(cluster, write_aggregation: write_aggregation)).to eq(mongos)
+            end
+          end
         end
       end
     end
@@ -498,7 +623,7 @@ describe Mongo::ServerSelector do
   end
 
   describe '#filter_stale_servers' do
-    skip_if_linting
+    require_no_linting
 
     include_context 'server selector'
     let(:name) do
@@ -564,7 +689,7 @@ describe Mongo::ServerSelector do
     end
   end
 
-  describe '#candidates' do
+  describe '#suitable_servers' do
     let(:selector) { Mongo::ServerSelector::Primary.new(options) }
 
     let(:cluster) { double('cluster') }
@@ -602,7 +727,7 @@ describe Mongo::ServerSelector do
           end
 
           it 'returns an empty list' do
-            expect(selector.candidates(cluster)).to eq([])
+            expect(selector.suitable_servers(cluster)).to eq([])
           end
         end
       end

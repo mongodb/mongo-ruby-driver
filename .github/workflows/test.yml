@@ -1,0 +1,70 @@
+name: Run Driver Tests
+on: [push, pull_request]
+jobs:
+  build:
+    name: "${{matrix.os}} ruby-${{matrix.ruby}} mongodb-${{matrix.mongodb}} ${{matrix.topology}}"
+    env:
+      CI: true
+      TESTOPTS: "-v"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        ruby: ["2.5", "2.6", "2.7", "3.0"]
+        mongodb: ["3.6", "4.4", "5.0"]
+        topology: [replica_set, sharded_cluster]
+        include:
+          - os: macos
+            ruby: "2.6"
+            mongodb: "5.0"
+            topology: server
+          - os: macos
+            ruby: "2.7"
+            mongodb: "5.0"
+            topology: server
+          - os: macos
+            ruby: "3.0"
+            mongodb: "5.0"
+            topology: server
+          - os: ubuntu-latest
+            ruby: "2.6"
+            mongodb: "5.0"
+            topology: server
+          - os: ubuntu-latest
+            ruby: "2.7"
+            mongodb: "5.0"
+            topology: server
+          - os: ubuntu-latest
+            ruby: "3.0"
+            mongodb: "5.0"
+            topology: server
+          - os: ubuntu-18.04
+            ruby: "2.5"
+            mongodb: "3.6"
+            topology: replica_set
+    steps:
+    - name: repo checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - id: start-mongodb
+      name: start mongodb
+      uses: mongodb-labs/drivers-evergreen-tools@master
+      with:
+        version: "${{matrix.mongodb}}"
+        topology: "${{matrix.topology}}"
+    - name: load ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "${{matrix.ruby}}"
+        bundler: 2
+    - name: bundle
+      run: bundle install --jobs 4 --retry 3
+    - name: test
+      timeout-minutes: 60
+      continue-on-error: true
+      run: bundle exec rake spec:ci
+      env:
+        MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}

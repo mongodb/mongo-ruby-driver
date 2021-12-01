@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Client-Side Encryption' do
@@ -8,7 +11,7 @@ describe 'Client-Side Encryption' do
 
     include_context 'define shared FLE helpers'
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:client) do
       new_local_client(

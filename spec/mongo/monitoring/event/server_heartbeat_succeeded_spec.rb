@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::ServerHeartbeatSucceeded do
@@ -20,7 +23,7 @@ describe Mongo::Monitoring::Event::ServerHeartbeatSucceeded do
   end
 
   let(:event) do
-    described_class.new(address, 1)
+    described_class.new(address, 1, started_event: nil)
   end
 
   describe '#summary' do

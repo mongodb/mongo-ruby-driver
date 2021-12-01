@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +41,7 @@ module Mongo
         {:code_name => 'NotMaster', :code => 10107},
         {:code_name => 'InterruptedAtShutdown', :code => 11600},
         {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
-        {:code_name => 'NotMasterNoSlaveOk', :code => 13435},
+        {:code_name => 'NotPrimaryNoSecondaryOk', :code => 13435},
         {:code_name => 'NotMasterOrSecondary', :code => 13436},
       ].freeze
 
@@ -89,6 +92,12 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
+      # @return [ String ] The server-returned error message
+      #   parsed from the response.
+      #
+      # @api experimental
+      attr_reader :server_message
+
       # Whether the error is a retryable error according to the legacy
       # read retry logic.
       #
@@ -97,7 +106,8 @@ module Mongo
       # @since 2.1.1
       # @deprecated
       def retryable?
-        write_retryable? || RETRY_MESSAGES.any?{ |m| message.include?(m) }
+        write_retryable? ||
+        code.nil? && RETRY_MESSAGES.any?{ |m| message.include?(m) }
       end
 
       # Whether the error is a retryable error according to the modern retryable
@@ -110,11 +120,11 @@ module Mongo
       #
       # @since 2.4.2
       def write_retryable?
-        WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) } ||
-        write_retryable_code?
+        write_retryable_code? ||
+        code.nil? && WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
       end
 
-      def write_retryable_code?
+      private def write_retryable_code?
         if code
           WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }
         else
@@ -122,7 +132,6 @@ module Mongo
           false
         end
       end
-      private :write_retryable_code?
 
       # Error codes and code names that should result in a failing getMore
       # command on a change stream NOT being resumed.
@@ -139,7 +148,7 @@ module Mongo
         {code_name: 'NotMaster', code: 10107},
         {code_name: 'InterruptedAtShutdown', code: 11600},
         {code_name: 'InterruptedDueToReplStateChange', code: 11602},
-        {code_name: 'NotMasterNoSlaveOk', code: 13435},
+        {code_name: 'NotPrimaryNoSecondaryOk', code: 13435},
         {code_name: 'NotMasterOrSecondary', code: 13436},
 
         {code_name: 'StaleShardVersion', code: 63},
@@ -166,6 +175,12 @@ module Mongo
       # @since 2.6.0
       def change_stream_resumable?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
+          # CursorNotFound exceptions are always resumable because the server
+          # is not aware of the cursor id, and thus cannot determine if
+          # the cursor is a change stream and cannot add the
+          # ResumableChangeStreamError label.
+          return true if code == 43
+
           # Connection description is not populated for unacknowledged writes.
           if connection_description.max_wire_version >= 9
             label?('ResumableChangeStreamError')
@@ -209,6 +224,11 @@ module Mongo
       # @since 2.10.0
       attr_reader :write_concern_error_code_name
 
+      # @return [ BSON::Document | nil ] The server-returned error document.
+      #
+      # @api experimental
+      attr_reader :document
+
       # Create the operation failure.
       #
       # @example Create the error object
@@ -223,6 +243,10 @@ module Mongo
       #
       # @option options [ Integer ] :code Error code.
       # @option options [ String ] :code_name Error code name.
+      # @option options [ BSON::Document ] :document The server-returned
+      #   error document.
+      # @option options [ String ] server_message The server-returned
+      #   error message parsed from the response.
       # @option options [ Hash ] :write_concern_error_document The
       #   server-supplied write concern error document, if any.
       # @option options [ Integer ] :write_concern_error_code Error code for
@@ -247,6 +271,8 @@ module Mongo
         @write_concern_error_labels = options[:write_concern_error_labels] || []
         @labels = options[:labels] || []
         @wtimeout = !!options[:wtimeout]
+        @document = options[:document]
+        @server_message = options[:server_message]
       end
 
       # Whether the error is a write concern timeout.
@@ -275,8 +301,10 @@ module Mongo
       #
       # @since 2.10.0
       def unsupported_retryable_write?
-        # code 20 is IllegalOperation
-        code == 20 && message.start_with?("Transaction numbers")
+        # code 20 is IllegalOperation.
+        # Note that the document is expected to be a BSON::Document, thus
+        # either having string keys or providing indifferent access.
+        code == 20 && server_message&.start_with?("Transaction numbers") || false
       end
     end
   end

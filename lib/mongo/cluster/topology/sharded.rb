@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,7 +100,7 @@ module Mongo
         #
         # @since 2.0.0
         def servers(servers)
-          servers.select{ |server| server.mongos? }
+          servers.select { |server| server.mongos? }
         end
 
         # A sharded topology is sharded.

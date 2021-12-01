@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +24,6 @@ module Mongo
     #
     # @since 2.0.0
     class PrimaryPreferred < Base
-      include Selectable
 
       # Name of the this read preference in the server's format.
       #
@@ -40,13 +42,12 @@ module Mongo
         :primary_preferred
       end
 
-      # Whether the slaveOk bit should be set on wire protocol messages.
+      # Whether the secondaryOk bit should be set on wire protocol messages.
       #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ true ] true
-      #
-      # @since 2.0.0
-      def slave_ok?
+      # @api private
+      def secondary_ok?
         true
       end
 
@@ -93,19 +94,17 @@ module Mongo
       # Select servers taking into account any defined tag sets and
       #   local threshold, with the primary preferred.
       #
-      # @example Select servers given a list of candidates,
-      #   with the primary preferred.
-      #   preference = Mongo::ServerSelector::PrimaryPreferred.new
-      #   preference.select([candidate_1, candidate_2])
-      #
       # @return [ Array ] A list of servers matching tag sets and acceptable
       #   latency with the primary preferred.
       #
       # @since 2.0.0
-      def select(candidates)
-        primary = primary(candidates)
-        secondaries = near_servers(secondaries(candidates))
-        primary.first ? primary : secondaries
+      def select_in_replica_set(candidates)
+        primaries = primary(candidates)
+        if primaries.first
+          primaries
+        else
+          near_servers(secondaries(candidates))
+        end
       end
 
       def max_staleness_allowed?

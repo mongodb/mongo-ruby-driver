@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +18,8 @@
 module Mongo
   class Error
 
-    # This exception is raised when a session is attempted to be used and it is invalid.
+    # This exception is raised when a session is attempted to be used and it
+    # is invalid.
     #
     # @since 2.5.0
     class InvalidSession < Error

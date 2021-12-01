@@ -1,10 +1,15 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Connection pool populator integration' do
   let(:options) { {} }
 
   let(:server_options) do
-    SpecConfig.instance.test_options.merge(options).merge(SpecConfig.instance.auth_options)
+    Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+      SpecConfig.instance.all_test_options,
+    )).update(options)
   end
 
   let(:address) do
@@ -269,7 +274,7 @@ describe 'Connection pool populator integration' do
   end
 
   describe 'when forking is enabled' do
-    only_mri
+    require_mri
 
     context 'when min size is provided' do
       min_server_version '2.8'

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -140,7 +143,13 @@ module Mongo
         self
       end
 
-      def maybe_decrypt(client)
+      # Possibly decrypt this message with libmongocrypt.
+      #
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      #
+      # @return [ Mongo::Protocol::Msg ] The decrypted message, or the original
+      #   message if decryption was not possible or necessary.
+      def maybe_decrypt(context)
         # TODO determine if we should be decrypting data coming from pre-4.2
         # servers, potentially using legacy wire protocols. If so we need
         # to implement decryption for those wire protocols as our current
@@ -148,9 +157,21 @@ module Mongo
         self
       end
 
-      def maybe_encrypt(server, client)
+      # Possibly encrypt this message with libmongocrypt.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection on which
+      #   the operation is performed.
+      # @param [ Mongo::Operation::Context ] context The operation context.
+      #
+      # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
+      #   message if encryption was not possible or necessary.
+      def maybe_encrypt(connection, context)
         # Do nothing if the Message subclass has not implemented this method
         self
+      end
+
+      def maybe_add_server_api(server_api)
+        raise Error::ServerApiNotSupported, "Server API parameters cannot be sent to pre-3.6 MongoDB servers. Please remove the :server_api parameter from Client options or use MongoDB 3.6 or newer"
       end
 
       private def merge_sections
@@ -177,10 +198,19 @@ module Mongo
       #
       # @param buffer [String] buffer where the message should be inserted
       # @return [String] buffer containing the serialized message
-      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
+        max_size =
+          if max_bson_size && bson_overhead
+            max_bson_size + bson_overhead
+          elsif max_bson_size
+            max_bson_size
+          else
+            nil
+          end
+
         start = buffer.length
         serialize_header(buffer)
-        serialize_fields(buffer, max_bson_size)
+        serialize_fields(buffer, max_size)
         buffer.replace_int32(start, buffer.length - start)
       end
 
@@ -199,10 +229,33 @@ module Mongo
       # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
       #   this message using BSON types instead of native Ruby types wherever
       #   possible.
+      # @option options [ Numeric ] :socket_timeout The timeout to use for
+      #   each read operation.
       #
       # @return [ Message ] Instance of a Message class
-      def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil, options = {})
-        length, _request_id, response_to, _op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
+      #
+      # @api private
+      def self.deserialize(io,
+        max_message_size = MAX_MESSAGE_SIZE,
+        expected_response_to = nil,
+        options = {}
+      )
+        # io is usually a Mongo::Socket instance, which supports the
+        # timeout option. For compatibility with whoever might call this
+        # method with some other IO-like object, pass options only when they
+        # are not empty.
+        read_options = {}
+        if timeout = options[:socket_timeout]
+          read_options[:timeout] = timeout
+        end
+
+        if read_options.empty?
+          chunk = io.read(16)
+        else
+          chunk = io.read(16, **read_options)
+        end
+        buf = BSON::ByteBuffer.new(chunk)
+        length, _request_id, response_to, _op_code = deserialize_header(buf)
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
@@ -216,14 +269,19 @@ module Mongo
           raise Error::UnexpectedResponse.new(expected_response_to, response_to)
         end
 
-        message = Registry.get(_op_code).allocate
-        buffer = BSON::ByteBuffer.new(io.read(length - 16))
+        if read_options.empty?
+          chunk = io.read(length - 16)
+        else
+          chunk = io.read(length - 16, **read_options)
+        end
+        buf = BSON::ByteBuffer.new(chunk)
 
+        message = Registry.get(_op_code).allocate
         message.send(:fields).each do |field|
           if field[:multi]
-            deserialize_array(message, buffer, field, options)
+            deserialize_array(message, buf, field, options)
           else
-            deserialize_field(message, buffer, field, options)
+            deserialize_field(message, buf, field, options)
           end
         end
         if message.is_a?(Msg)
@@ -374,7 +432,7 @@ module Mongo
       #   each of the elements in this array using BSON types wherever possible.
       #
       # @return [Message] Message with deserialized array.
-      def self.deserialize_array(message, io, field, options)
+      def self.deserialize_array(message, io, field, options = {})
         elements = []
         count = message.instance_variable_get(field[:multi])
         count.times { elements << field[:type].deserialize(io, options) }
@@ -392,7 +450,7 @@ module Mongo
       #   this field using BSON types wherever possible.
       #
       # @return [Message] Message with deserialized field.
-      def self.deserialize_field(message, io, field, options)
+      def self.deserialize_field(message, io, field, options = {})
         message.instance_variable_set(
           field[:name],
           field[:type].deserialize(io, options)

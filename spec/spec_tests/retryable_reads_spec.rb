@@ -1,14 +1,17 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 require 'runners/crud'
 
 describe 'Retryable reads spec tests' do
   require_wired_tiger
-  require_no_multi_shard
+  require_no_multi_mongos
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client) do
-      authorized_client.with({max_read_retries: 0}.update(test.client_options)).tap do |client|
+      authorized_client.use(spec.database_name).with({max_read_retries: 0}.update(test.client_options)).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
       end
     end
@@ -16,7 +19,7 @@ describe 'Retryable reads spec tests' do
 end
 
 describe 'Retryable reads spec tests - legacy' do
-  require_no_multi_shard
+  require_no_multi_mongos
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
     let(:client_options) do
@@ -28,7 +31,7 @@ describe 'Retryable reads spec tests - legacy' do
     end
 
     let(:client) do
-      authorized_client.with(client_options).tap do |client|
+      authorized_client.use(spec.database_name).with(client_options).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
       end
     end

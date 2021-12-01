@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 require 'support/shared/protocol'
 
@@ -27,7 +30,7 @@ describe Mongo::Protocol::Query do
     context 'when options are provided' do
 
       context 'when flags are provided' do
-        let(:options) { { :flags => [:slave_ok] } }
+        let(:options) { { :flags => [:secondary_ok] } }
 
         it 'sets the flags' do
           expect(message.flags).to eq(options[:flags])
@@ -166,7 +169,7 @@ describe Mongo::Protocol::Query do
         end
 
         context 'slave ok flag' do
-          let(:flags) { [:slave_ok] }
+          let(:flags) { [:secondary_ok] }
           it 'sets the third bit' do
             expect(field).to be_int32(4)
           end
@@ -208,7 +211,7 @@ describe Mongo::Protocol::Query do
         end
 
         context 'multiple flags' do
-          let(:flags) { [:await_data, :slave_ok] }
+          let(:flags) { [:await_data, :secondary_ok] }
           it 'sets the correct bits' do
             expect(field).to be_int32(36)
           end

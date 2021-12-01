@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 class SessionTransactionSpecError < StandardError; end
@@ -113,30 +116,16 @@ describe Mongo::Session do
     context 'timeout with callback raising TransientTransactionError' do
       max_example_run_time 7
 
-      after do
-        Timecop.return
-      end
-
       it 'times out' do
-        warp = Time.now + 200
-        entered = false
+        start = Mongo::Utils.monotonic_time
 
-        Thread.new do
-          until entered
-            sleep 0.1
-          end
-          Timecop.travel warp
-        end
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 1)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 2)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
 
         expect do
           session.with_transaction do
-            entered = true
-
-            # This sleep is to give the interrupting thread a chance to run,
-            # it significantly affects how much time is burned in this
-            # looping thread
-            sleep 0.1
-
             exc = Mongo::Error::OperationFailure.new('timeout test')
             exc.add_label('TransientTransactionError')
             raise exc
@@ -149,25 +138,23 @@ describe Mongo::Session do
       context "timeout with commit raising with #{label}" do
         max_example_run_time 7
 
-        after do
-          Timecop.return
-        end
+        # JRuby seems to burn through the monotonic time expectations
+        # very quickly and the retries of the transaction get the original
+        # time which causes the transaction to be stuck there.
+        fails_on_jruby
 
         before do
           # create collection if it does not exist
           collection.insert_one(a: 1)
         end
 
-        it 'times out' do
-          warp = Time.now + 200
-          entered = false
+        it 'times out', retry: 3 do
+          start = Mongo::Utils.monotonic_time
 
-          Thread.new do
-            until entered
-              sleep 0.1
-            end
-            Timecop.travel warp
+          10.times do |i|
+            expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
           end
+          expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
 
           exc = Mongo::Error::OperationFailure.new('timeout test')
           exc.add_label(label)
@@ -176,13 +163,6 @@ describe Mongo::Session do
 
           expect do
             session.with_transaction do
-              entered = true
-
-              # This sleep is to give the interrupting thread a chance to run,
-              # it significantly affects how much time is burned in this
-              # looping thread
-              sleep 0.1
-
               collection.insert_one(a: 2)
             end
           end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')

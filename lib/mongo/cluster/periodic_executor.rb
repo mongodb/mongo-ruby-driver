@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,14 +36,15 @@ module Mongo
       #
       # @example Create a PeriodicExecutor.
       #   Mongo::Cluster::PeriodicExecutor.new([reaper, reaper2])
+      #
+      # @param [ Array<Object> ] executors The executors. Each must respond
+      #   to #execute and #flush.
       # @param [ Hash ] options The options.
       #
       # @option options [ Logger ] :logger A custom logger to use.
       #
       # @api private
-      #
-      # @since 2.5.0
-      def initialize(executors = [], options = {})
+      def initialize(executors, options = {})
         @thread = nil
         @executors = executors
         @stop_semaphore = Semaphore.new

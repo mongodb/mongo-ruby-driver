@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module Mongo
   module CRUD
 
@@ -28,7 +31,7 @@ module Mongo
         @spec = crud_spec
         @data = data
         @description = test['description']
-        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+        @client_options = ::Utils.convert_client_options(test['clientOptions'] || {})
 
         if test['failPoint']
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])

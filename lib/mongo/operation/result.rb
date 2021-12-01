@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +30,7 @@ module Mongo
     # produce a reply (in which case it is assumed to have succeeded).
     #
     # @since 2.0.0
+    # @api semiprivate
     class Result
       extend Forwardable
       include Enumerable
@@ -34,41 +38,49 @@ module Mongo
       # The field name for the cursor document in an aggregation.
       #
       # @since 2.2.0
+      # @api private
       CURSOR = 'cursor'.freeze
 
       # The cursor id field in the cursor document.
       #
       # @since 2.2.0
+      # @api private
       CURSOR_ID = 'id'.freeze
 
       # The field name for the first batch of a cursor.
       #
       # @since 2.2.0
+      # @api private
       FIRST_BATCH = 'firstBatch'.freeze
 
       # The field name for the next batch of a cursor.
       #
       # @since 2.2.0
+      # @api private
       NEXT_BATCH = 'nextBatch'.freeze
 
       # The namespace field in the cursor document.
       #
       # @since 2.2.0
+      # @api private
       NAMESPACE = 'ns'.freeze
 
       # The number of documents updated in the write.
       #
       # @since 2.0.0
+      # @api private
       N = 'n'.freeze
 
       # The ok status field in the result.
       #
       # @since 2.0.0
+      # @api private
       OK = 'ok'.freeze
 
       # The result field constant.
       #
       # @since 2.2.0
+      # @api private
       RESULT = 'result'.freeze
 
       # Initialize a new result.
@@ -106,6 +118,8 @@ module Mongo
       end
 
       # @return [ Array<Protocol::Message> ] replies The wrapped wire protocol replies.
+      #
+      # @api private
       attr_reader :replies
 
       # @return [ Server::Description ] Server description of the server that
@@ -129,6 +143,7 @@ module Mongo
       # @return [ true, false ] If the result is acknowledged.
       #
       # @since 2.0.0
+      # @api public
       def acknowledged?
         !!@replies
       end
@@ -143,6 +158,7 @@ module Mongo
       # @return [ Integer ] The cursor id.
       #
       # @since 2.0.0
+      # @api private
       def cursor_id
         acknowledged? ? replies.last.cursor_id : 0
       end
@@ -153,6 +169,7 @@ module Mongo
       # @return [ Nil ]
       #
       # @since 2.0.0
+      # @api private
       def namespace
         nil
       end
@@ -165,6 +182,7 @@ module Mongo
       # @return [ Array<BSON::Document> ] The documents.
       #
       # @since 2.0.0
+      # @api public
       def documents
         if acknowledged?
           replies.flat_map(&:documents)
@@ -182,9 +200,10 @@ module Mongo
       #
       # @return [ Enumerator ] The enumerator.
       #
-      # @since 2.0.0
-      #
       # @yieldparam [ BSON::Document ] Each document in the result.
+      #
+      # @since 2.0.0
+      # @api public
       def each(&block)
         documents.each(&block)
       end
@@ -197,6 +216,7 @@ module Mongo
       # @return [ String ] The inspection.
       #
       # @since 2.0.0
+      # @api public
       def inspect
         "#<#{self.class.name}:0x#{object_id} documents=#{documents}>"
       end
@@ -209,6 +229,7 @@ module Mongo
       # @return [ Protocol::Message ] The first reply.
       #
       # @since 2.0.0
+      # @api private
       def reply
         if acknowledged?
           replies.first
@@ -225,6 +246,7 @@ module Mongo
       # @return [ Integer ] The number of documents returned.
       #
       # @since 2.0.0
+      # @api public
       def returned_count
         if acknowledged?
           reply.number_returned
@@ -245,6 +267,7 @@ module Mongo
       # @return [ true, false ] If the command was successful.
       #
       # @since 2.0.0
+      # @api public
       def successful?
         return true if !acknowledged?
         if first_document.has_key?(OK)
@@ -262,6 +285,7 @@ module Mongo
       # @return [ true, false ] If the command returned ok.
       #
       # @since 2.1.0
+      # @api public
       def ok?
         # first_document[OK] is a float, and the server can return
         # ok as a BSON int32, BSON int64 or a BSON double.
@@ -285,6 +309,7 @@ module Mongo
       # @return [ Result ] The result if verification passed.
       #
       # @since 2.0.0
+      # @api private
       def validate!
         !successful? ? raise_operation_failure : self
       end
@@ -310,6 +335,8 @@ module Mongo
           labels: parser.labels,
           wtimeout: parser.wtimeout,
           connection_description: connection_description,
+          document: parser.document,
+          server_message: parser.server_message,
         )
       end
 
@@ -317,12 +344,13 @@ module Mongo
       # error information in this result.
       #
       # @raise Error::OperationFailure
-      def raise_operation_failure
+      private def raise_operation_failure
         raise error
       end
-      private :raise_operation_failure
 
       # @return [ TopologyVersion | nil ] The topology version.
+      #
+      # @api private
       def topology_version
         unless defined?(@topology_version)
           @topology_version = first_document['topologyVersion'] &&
@@ -339,6 +367,7 @@ module Mongo
       # @return [ Integer ] The number of documents written.
       #
       # @since 2.0.0
+      # @api public
       def written_count
         if acknowledged?
           first_document[N] || 0
@@ -346,6 +375,8 @@ module Mongo
           0
         end
       end
+
+      # @api public
       alias :n :written_count
 
       # Get the operation time reported in the server response.
@@ -353,9 +384,10 @@ module Mongo
       # @example Get the operation time.
       #   result.operation_time
       #
-      # @return [ Object ] The operation time value.
+      # @return [ Object | nil ] The operation time value.
       #
       # @since 2.5.0
+      # @api public
       def operation_time
         first_document && first_document[OPERATION_TIME]
       end
@@ -365,13 +397,14 @@ module Mongo
       # @example Get the cluster time.
       #   result.cluster_time
       #
-      # @return [ nil | ClusterTime ] The cluster time document.
+      # @return [ ClusterTime | nil ] The cluster time document.
       #
       # Changed in version 2.9.0: This attribute became an instance of
       # ClusterTime, which is a subclass of BSON::Document.
       # Previously it was an instance of BSON::Document.
       #
       # @since 2.5.0
+      # @api public
       def cluster_time
         first_document && ClusterTime[first_document['$clusterTime']]
       end
@@ -384,6 +417,7 @@ module Mongo
       # @return [ Array ] labels The set of labels.
       #
       # @since 2.7.0
+      # @api private
       def labels
         @labels ||= parser.labels
       end
@@ -393,6 +427,12 @@ module Mongo
       # @api private
       def write_concern_error?
         !!(first_document && first_document['writeConcernError'])
+      end
+
+      def snapshot_timestamp
+        if doc = reply.documents.first
+          doc['cursor']&.[]('atClusterTime') || doc['atClusterTime']
+        end
       end
 
       private

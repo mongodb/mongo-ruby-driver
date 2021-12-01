@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +24,8 @@ module Mongo
     # @api private
     module ExecutableNoValidate
 
-      def execute(connection, client:)
-        do_execute(connection, client)
+      def execute(connection, context:)
+        do_execute(connection, context)
       end
     end
   end

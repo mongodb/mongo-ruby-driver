@@ -58,7 +58,6 @@ tests:
         arguments:
           document:
             x: 1
-    # https://jira.mongodb.org/browse/SPEC-1462
     expectations: ~
     result:
       success:
@@ -372,7 +371,6 @@ tests:
             db: *database_name
             coll: *collection_name
           updateDescription:
-            removedFields: []
             updatedFields:
               x:
                 $numberInt: "2"

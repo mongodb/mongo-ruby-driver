@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Socket do
@@ -48,7 +51,7 @@ describe Mongo::Socket do
         socket.send(:map_exceptions) do
           raise OpenSSL::SSL::SSLError.new('Test error')
         end
-      end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address) (MongoDB may not be configured with SSL support)')
+      end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address)')
     end
   end
 
@@ -86,7 +89,7 @@ describe Mongo::Socket do
 
           expect do
             socket.read(10)
-          end.to raise_error(Mongo::Error::SocketTimeoutError, /Took more than .* seconds to receive data \(for /)
+          end.to raise_error(Mongo::Error::SocketTimeoutError, /Took more than .* seconds to receive data.*\(for /)
         end
       end
 

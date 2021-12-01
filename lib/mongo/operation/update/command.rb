@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,13 +32,16 @@ module Mongo
         include BypassDocumentValidation
         include ExecutableNoValidate
         include PolymorphicResult
+        include Validatable
 
         private
 
         def selector(connection)
-          { update: coll_name,
-            updates: send(IDENTIFIER),
-            ordered: ordered? }
+          {
+            update: coll_name,
+            updates: validate_updates(connection, send(IDENTIFIER)),
+            ordered: ordered?,
+          }
         end
 
         def message(connection)

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +58,12 @@ module Mongo
     # @since 2.1.0
     CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :write_concern ].freeze
 
+    # Options that can be used for creating a time-series collection.
+    TIME_SERIES_OPTIONS = {
+      :time_series => :timeseries,
+      :expire_after => :expireAfterSeconds
+    }
+
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
     #
@@ -84,6 +93,11 @@ module Mongo
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
+    # @option options [ Hash ] :time_series Create a time-series collection.
+    #   See https://docs.mongodb.com/manual/core/timeseries-collections/ for more
+    #   information about time-series collection.
+    # @option options [ Integer ] :expire_after Number indicating
+    #   after how many seconds old time-series data should be deleted.
     #
     # @since 2.0.0
     def initialize(database, name, options = {})
@@ -222,7 +236,11 @@ module Mongo
     #
     # @param [ Hash ] opts The options for the create operation.
     #
-    # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
+    # @option opts [ Hash ] :time_series Create a time-series collection.
+    # @option opts [ Integer ] :expire_after Number indicating
+    #   after how many seconds old time-series data should be deleted.
     #
     # @return [ Result ] The result of the command.
     #
@@ -233,23 +251,35 @@ module Mongo
       # TODO put the list of read options in a class-level constant when
       # we figure out what the full set of them is.
       options = Hash[self.options.reject do |key, value|
-        %w(read read_preference).include?(key.to_s)
+        %w(read read_preference read_concern).include?(key.to_s)
       end]
+      options.update(opts.slice(*TIME_SERIES_OPTIONS.keys))
+      # Converting Ruby spelled time series options to server style.
+      TIME_SERIES_OPTIONS.each do |ruby_key, server_key|
+        if options.key?(ruby_key)
+          options[server_key] = options.delete(ruby_key)
+        end
+      end
       operation = { :create => name }.merge(options)
       operation.delete(:write)
       operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
-        server = next_primary(nil, session)
-        if (options[:collation] || options[Operation::COLLATION]) && !server.with_connection { |connection| connection.features }.collation_enabled?
-          raise Error::UnsupportedCollation
+        write_concern = if opts[:write_concern]
+          WriteConcern.get(opts[:write_concern])
+        else
+          self.write_concern
         end
 
-        Operation::Create.new({
-                                selector: operation,
-                                db_name: database.name,
-                                write_concern: write_concern,
-                                session: session
-                                }).execute(server, client: client)
+        context = Operation::Context.new(client: client, session: session)
+        Operation::Create.new(
+          selector: operation,
+          db_name: database.name,
+          write_concern: write_concern,
+          session: session,
+          # Note that these are collection options, collation isn't
+          # taken from options passed to the create method.
+          collation: options[:collation] || options['collation'],
+        ).execute(next_primary(nil, session), context: context)
       end
     end
 
@@ -264,22 +294,33 @@ module Mongo
     # @param [ Hash ] opts The options for the drop operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
     #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(opts = {})
       client.send(:with_session, opts) do |session|
+        temp_write_concern = write_concern
+        write_concern = if opts[:write_concern]
+          WriteConcern.get(opts[:write_concern])
+        else
+          temp_write_concern
+        end
         Operation::Drop.new({
                               selector: { :drop => name },
                               db_name: database.name,
                               write_concern: write_concern,
-                              session: session
-                              }).execute(next_primary(nil, session), client: client)
+                              session: session,
+                              }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
       end
     rescue Error::OperationFailure => ex
-      raise ex unless ex.message =~ /ns not found/
-      false
+      # NamespaceNotFound
+      if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
+        false
+      else
+        raise
+      end
     end
 
     # Find documents in the collection.
@@ -301,25 +342,27 @@ module Mongo
     #   results if some shards are down.
     # @option options [ Integer ] :batch_size The number of documents returned in each batch
     #   of results from MongoDB.
+    # @option options [ Hash ] :collation The collation to use.
     # @option options [ String ] :comment Associate a comment with the query.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the query
-    #   to run in milliseconds.
+    # @option options [ Integer ] :max_time_ms
+    #   The maximum amount of time to allow the query to run, in milliseconds.
     # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
     #   output or behavior of a query.
     # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
     #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
     #   Set this option to prevent that.
-    # @option options [ true, false ] :oplog_replay Internal replication use only - driver
-    #   should not set.
+    # @option options [ true, false ] :oplog_replay For internal replication
+    #   use only, applications should not set this option.
     # @option options [ Hash ] :projection The fields to include or exclude from each doc
     #   in the result set.
+    # @option options [ Session ] :session The session to use.
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
-    # @option options [ Hash ] :collation The collation to use.
-    # @option options [ Session ] :session The session to use.
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ CollectionView ] The collection view.
     #
@@ -345,6 +388,8 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ String ] :comment Associate a comment with the aggregation.
     # @option options [ String ] :hint The index to use for the aggregation.
+    # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
+    #   See the server documentation for details.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
     #   milliseconds to allow the aggregation to run.
     # @option options [ true, false ] :use_cursor Indicates whether the command
@@ -400,7 +445,7 @@ module Mongo
       View::ChangeStream.new(View.new(self, {}, options), pipeline, nil, options)
     end
 
-    # Gets the number of matching documents in the collection.
+    # Gets an estimated number of matching documents in the collection.
     #
     # @example Get the count.
     #   collection.count(name: 1)
@@ -429,40 +474,43 @@ module Mongo
       View.new(self, filter || {}, options).count(options)
     end
 
-    # Gets the number of of matching documents in the collection. Unlike the deprecated #count
-    # method, this will return the exact number of documents matching the filter rather than the estimate.
+    # Gets the number of documents matching the query. Unlike the deprecated
+    # #count method, this will return the exact number of documents matching
+    # the filter (or exact number of documents in the collection, if no filter
+    # is provided) rather than an estimate.
     #
-    # @example Get the number of documents in the collection.
-    #   collection_view.count_documents
+    # Use #estimated_document_count to retrieve an estimate of the number
+    # of documents in the collection using the collection metadata.
     #
     # @param [ Hash ] filter A filter for matching documents.
     # @param [ Hash ] options Options for the operation.
     #
-    # @option opts :skip [ Integer ] The number of documents to skip.
-    # @option opts :hint [ Hash ] Override default index selection and force
+    # @option options :skip [ Integer ] The number of documents to skip.
+    # @option options :hint [ Hash ] Override default index selection and force
     #   MongoDB to use a specific index for the query. Requires server version 3.6+.
-    # @option opts :limit [ Integer ] Max number of docs to count.
-    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
+    # @option options :limit [ Integer ] Max number of docs to count.
+    # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
     #   command to run.
-    # @option opts [ Hash ] :read The read preference options.
-    # @option opts [ Hash ] :collation The collation to use.
+    # @option options :read [ Hash ] The read preference options.
+    # @option options :collation [ Hash ] The collation to use.
     #
     # @return [ Integer ] The document count.
     #
     # @since 2.6.0
-    def count_documents(filter, options = {})
+    def count_documents(filter = {}, options = {})
       View.new(self, filter, options).count_documents(options)
     end
 
-    # Gets an estimate of the count of documents in a collection using collection metadata.
+    # Gets an estimate of the number of documents in the collection using the
+    # collection metadata.
     #
-    # @example Get the number of documents in the collection.
-    #   collection_view.estimated_document_count
+    # Use #count_documents to retrieve the exact number of documents in the
+    # collection, or to count documents matching a filter.
     #
     # @param [ Hash ] options Options for the operation.
     #
-    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the command to
-    #   run.
+    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow
+    #   the command to run for on the server.
     # @option opts [ Hash ] :read The read preference options.
     #
     # @return [ Integer ] The document count.
@@ -536,20 +584,31 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
+      QueryCache.clear_namespace(namespace)
+
       client.send(:with_session, opts) do |session|
-        write_concern = write_concern_with_session(session)
+        write_concern = if opts[:write_concern]
+          WriteConcern.get(opts[:write_concern])
+        else
+          write_concern_with_session(session)
+        end
+
+        if document.nil?
+          raise ArgumentError, "Document to be inserted cannot be nil"
+        end
+
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Insert.new(
-              :documents => [ document ],
-              :db_name => database.name,
-              :coll_name => name,
-              :write_concern => write_concern,
-              :bypass_document_validation => !!opts[:bypass_document_validation],
-              :options => opts,
-              :id_generator => client.options[:id_generator],
-              :session => session,
-              :txn_num => txn_num
-           ).execute(server, client: client)
+            :documents => [ document ],
+            :db_name => database.name,
+            :coll_name => name,
+            :write_concern => write_concern,
+            :bypass_document_validation => !!opts[:bypass_document_validation],
+            :options => opts,
+            :id_generator => client.options[:id_generator],
+            :session => session,
+            :txn_num => txn_num,
+          ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
     end
@@ -562,12 +621,16 @@ module Mongo
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
+    # @option options [ true | false ] :ordered Whether the operations
+    #   should be executed in order.
     # @option options [ Session ] :session The session to use for the operation.
     #
     # @return [ Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_many(documents, options = {})
+      QueryCache.clear_namespace(namespace)
+
       inserts = documents.map{ |doc| { :insert_one => doc }}
       bulk_write(inserts, options)
     end
@@ -607,6 +670,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -627,6 +692,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -675,6 +742,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -702,6 +771,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -729,6 +800,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ Result ] The response from the database.
     #
@@ -757,6 +830,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
@@ -795,6 +870,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -831,6 +908,8 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -849,6 +928,15 @@ module Mongo
     # @since 2.0.0
     def namespace
       "#{database.name}.#{name}"
+    end
+
+    # Whether the collection is a system collection.
+    #
+    # @return [ Boolean ] Whether the system is a system collection.
+    #
+    # @api private
+    def system_collection?
+      name.start_with?('system.')
     end
   end
 end

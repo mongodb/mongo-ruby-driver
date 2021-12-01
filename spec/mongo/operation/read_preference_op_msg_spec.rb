@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::SessionsSupported do
   # https://jira.mongodb.org/browse/RUBY-2224
-  skip_if_linting
+  require_no_linting
 
   let(:selector) do
     BSON::Document.new(name: 'test')
@@ -38,6 +41,8 @@ describe Mongo::Operation::SessionsSupported do
   let(:server) do
     double('server').tap do |server|
       allow(server).to receive(:cluster).and_return(cluster)
+      # TODO consider adding tests for load-balanced topologies also
+      allow(server).to receive(:load_balancer?).and_return(false)
     end
   end
 
@@ -90,6 +95,29 @@ describe Mongo::Operation::SessionsSupported do
           let(:mode) { active_mode }
 
           it_behaves_like 'does not modify selector'
+        end
+      end
+    end
+
+    shared_examples_for 'sends read preference correctly for replica set' do
+      context "when read preference mode is primary" do
+        let(:mode) { :primary}
+
+        it_behaves_like 'does not modify selector'
+      end
+      %i(primary_preferred secondary secondary_preferred nearest).each do |_mode|
+        active_mode = _mode
+
+        context "when read preference mode is #{active_mode}" do
+          let(:mode) { active_mode }
+
+          let(:expected) do
+            selector.merge(:$readPreference => expected_read_preference)
+          end
+
+          it 'adds read preference' do
+            expect(actual).to eq(expected)
+          end
         end
       end
     end
@@ -175,13 +203,13 @@ describe Mongo::Operation::SessionsSupported do
         let(:tag_sets) { nil }
 
         context 'without tag_sets specified' do
-          it_behaves_like 'does not modify selector'
+          it_behaves_like 'adds read preference'
         end
 
         context 'with empty tag_sets' do
           let(:tag_sets) { [] }
 
-          it_behaves_like 'does not modify selector'
+          it_behaves_like 'adds read preference'
         end
 
         context 'with tag_sets specified' do
@@ -256,7 +284,7 @@ describe Mongo::Operation::SessionsSupported do
           let(:hedge) { nil }
 
           context 'when tag_sets and hedge are not specified' do
-            it_behaves_like 'does not modify selector'
+            it_behaves_like 'adds read preference'
           end
 
           context 'when tag_sets are specified' do
@@ -297,7 +325,7 @@ describe Mongo::Operation::SessionsSupported do
         let(:standalone?) { false }
         let(:mongos?) { false }
 
-        it_behaves_like 'sends user-specified read preference'
+        it_behaves_like 'sends read preference correctly for replica set'
       end
     end
   end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +18,7 @@
 module Mongo
   class Server
 
-    # Responsible for periodically polling a server via ismaster commands to
+    # Responsible for periodically polling a server via hello commands to
     # keep the server's status up to date.
     #
     # Does all work in a background thread so as to not interfere with other
@@ -63,6 +66,10 @@ module Mongo
       # @option options [ Float ] :heartbeat_interval The interval between
       #   regular server checks.
       # @option options [ Logger ] :logger A custom logger to use.
+      # @option options [ Mongo::Server::Monitor::AppMetadata ] :monitor_app_metadata
+      #   The metadata to use for regular monitoring connection.
+      # @option options [ Mongo::Server::Monitor::AppMetadata ] :push_monitor_app_metadata
+      #   The metadata to use for push monitor's connection.
       # @option options [ Float ] :socket_timeout The timeout, in seconds, to
       #   execute operations on the monitoring connection.
       #
@@ -72,12 +79,20 @@ module Mongo
         unless monitoring.is_a?(Monitoring)
           raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}"
         end
+        unless options[:app_metadata]
+          raise ArgumentError, 'App metadata is required'
+        end
+        unless options[:push_monitor_app_metadata]
+          raise ArgumentError, 'Push monitor app metadata is required'
+        end
         @server = server
         @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
         @mutex = Mutex.new
+        @sdam_mutex = Mutex.new
         @next_earliest_scan = @next_wanted_scan = Time.now
+        @update_mutex = Mutex.new
       end
 
       # @return [ Server ] server The server that this monitor is monitoring.
@@ -109,20 +124,32 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
-      # Runs the server monitor. Refreshing happens on a separate thread per
-      # server.
-      #
-      # @example Run the monitor.
-      #   monitor.run
-      #
-      # @return [ Thread ] The thread the monitor runs on.
+      # @return [ Server::PushMonitor | nil ] The push monitor, if one is being
+      #   used.
+      def push_monitor
+        @update_mutex.synchronize do
+          @push_monitor
+        end
+      end
+
+      # Perform a check of the server.
       #
       # @since 2.0.0
       def do_work
         scan!
-        delta = @next_wanted_scan - Time.now
-        if delta > 0
-          server.scan_semaphore.wait(delta)
+        # @next_wanted_scan may be updated by the push monitor.
+        # However we need to check for termination flag so that the monitor
+        # thread exits when requested.
+        loop do
+          delta = @next_wanted_scan - Time.now
+          if delta > 0
+            signaled = server.scan_semaphore.wait(delta)
+            if signaled || @stop_requested
+              break
+            end
+          else
+            break
+          end
         end
       end
 
@@ -133,6 +160,8 @@ module Mongo
       #
       # @api public for backwards compatibility only
       def stop!
+        stop_push_monitor!
+
         # Forward super's return value
         super.tap do
           # Important: disconnect should happen after the background thread
@@ -141,12 +170,21 @@ module Mongo
         end
       end
 
+      def stop_push_monitor!
+        @update_mutex.synchronize do
+          if @push_monitor
+            @push_monitor.stop!
+            @push_monitor = nil
+          end
+        end
+      end
+
       # Perform a check of the server with throttling, and update
       # the server's description and average round trip time.
       #
       # If the server was checked less than MIN_SCAN_INTERVAL seconds
       # ago, sleep until MIN_SCAN_INTERVAL seconds have passed since the last
-      # check. Then perform the check which involves running isMaster
+      # check. Then perform the check which involves running hello
       # on the server being monitored and updating the server description
       # as a result.
       #
@@ -168,19 +206,28 @@ module Mongo
 
           result = do_scan
 
+          run_sdam_flow(result)
+        end
+      end
+
+      def run_sdam_flow(result, awaited: false)
+        @sdam_mutex.synchronize do
           old_description = server.description
 
           new_description = Description.new(server.address, result,
-            server.round_trip_time_averager.average_round_trip_time)
+            average_round_trip_time: server.round_trip_time_averager.average_round_trip_time
+          )
 
-          server.cluster.run_sdam_flow(server.description, new_description)
+          server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited)
 
           server.description.tap do |new_description|
-            if new_description.unknown? && !old_description.unknown?
-              @next_earliest_scan = @next_wanted_scan = Time.now
-            else
-              @next_earliest_scan = Time.now + MIN_SCAN_INTERVAL
-              @next_wanted_scan = Time.now + heartbeat_interval
+            unless awaited
+              if new_description.unknown? && !old_description.unknown?
+                @next_earliest_scan = @next_wanted_scan = Time.now
+              else
+                @next_earliest_scan = Time.now + MIN_SCAN_INTERVAL
+                @next_wanted_scan = Time.now + heartbeat_interval
+              end
             end
           end
         end
@@ -209,47 +256,22 @@ module Mongo
       end
 
       def do_scan
-        if monitoring.monitoring?
-          monitoring.started(
-            Monitoring::SERVER_HEARTBEAT,
-            Monitoring::Event::ServerHeartbeatStarted.new(server.address)
-          )
-        end
-
-        # The duration we publish in heartbeat succeeded/failed events is
-        # the time spent on the entire heartbeat. This could include time
-        # to connect the socket (including TLS handshake), not just time
-        # spent on ismaster call itself.
-        # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
-        # requires that the duration exposed here start from "sending the
-        # message" (ismaster). This requirement does not make sense if,
-        # for example, we were never able to connect to the server at all
-        # and thus ismaster was never sent.
-        start_time = Time.now
-
         begin
-          result = ismaster
+          monitoring.publish_heartbeat(server) do
+            check
+          end
         rescue => exc
-          log_warn("Error running ismaster on #{server.address}: #{exc.class}: #{exc}:\n#{exc.backtrace[0..5].join("\n")}")
-          if monitoring.monitoring?
-            monitoring.failed(
-              Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatFailed.new(server.address, Time.now-start_time, exc)
-            )
-          end
-          result = {}
-        else
-          if monitoring.monitoring?
-            monitoring.succeeded(
-              Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, Time.now-start_time)
-            )
-          end
+          msg = "Error checking #{server.address}"
+          Utils.warn_bg_exception(msg, exc,
+            logger: options[:logger],
+            log_prefix: options[:log_prefix],
+            bg_error_backtrace: options[:bg_error_backtrace],
+          )
+          {}
         end
-        result
       end
 
-      def ismaster
+      def check
         if @connection && @connection.pid != Process.pid
           log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{@connection.pid}, new pid #{Process.pid}")
           @connection.disconnect!
@@ -259,7 +281,11 @@ module Mongo
         if @connection
           result = server.round_trip_time_averager.measure do
             begin
-              message = @connection.dispatch_bytes(Monitor::Connection::ISMASTER_BYTES)
+              doc = @connection.check_document
+              cmd = Protocol::Query.new(
+                Database::ADMIN, Database::COMMAND, doc, :limit => -1
+              )
+              message = @connection.dispatch_bytes(cmd.serialize.to_s)
               message.documents.first
             rescue Mongo::Error
               @connection.disconnect!
@@ -274,6 +300,26 @@ module Mongo
             connection.handshake!
           end
           @connection = connection
+          if result['topologyVersion']
+            # Successful response, server 4.4+
+            @update_mutex.synchronize do
+              @push_monitor ||= PushMonitor.new(
+                self,
+                TopologyVersion.new(result['topologyVersion']),
+                monitoring,
+                **Utils.shallow_symbolize_keys(options.merge(
+                  socket_timeout: heartbeat_interval + connection.socket_timeout,
+                  app_metadata: options[:push_monitor_app_metadata],
+                  check_document: @connection.check_document
+                )),
+              )
+            end
+            push_monitor.run!
+          else
+            # Failed response or pre-4.4 server
+            stop_push_monitor!
+          end
+          result
         end
         result
       end

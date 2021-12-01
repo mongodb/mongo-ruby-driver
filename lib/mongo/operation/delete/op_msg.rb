@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +29,21 @@ module Mongo
         include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
+        include Validatable
 
         private
 
         def selector(connection)
           { delete: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
-            ordered: ordered? }
+            ordered: ordered?,
+            let: spec[:let],
+          }.compact.tap do |selector|
+            if hint = spec[:hint]
+              validate_hint_on_update(connection, selector)
+              selector[:hint] = hint
+            end
+          end
         end
 
         def message(connection)

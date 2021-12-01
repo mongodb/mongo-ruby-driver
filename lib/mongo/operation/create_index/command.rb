@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +33,23 @@ module Mongo
         private
 
         def selector(connection)
-          { :createIndexes => coll_name, :indexes => indexes }
+          indexes.each do |index|
+            if index[:collation] && !connection.features.collation_enabled?
+              raise Error::UnsupportedCollation
+            end
+          end
+
+          {
+            createIndexes: coll_name,
+            indexes: indexes,
+          }.tap do |selector|
+            if commit_quorum = spec[:commit_quorum]
+              unless connection.features.commit_quorum_enabled?
+                raise Error::UnsupportedOption.commit_quorum_error
+              end
+              selector[:commitQuorum] = commit_quorum
+            end
+          end
         end
 
         def message(connection)

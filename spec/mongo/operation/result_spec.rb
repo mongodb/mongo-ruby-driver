@@ -1,10 +1,15 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Result do
 
   let(:description) do
-    Mongo::Server::Description.new(double('description address'),
-      'minWireVersion' => 0, 'maxWireVersion' => 2)
+    Mongo::Server::Description.new(
+      double('description address'),
+      { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+    )
   end
 
   let(:result) do
@@ -31,7 +36,7 @@ describe Mongo::Operation::Result do
     context 'when the reply is for a read command' do
 
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [{ 'isWritablePrimary' => true, 'ok' => 1.0 }]
       end
 
       it 'returns true' do
@@ -145,7 +150,7 @@ describe Mongo::Operation::Result do
     context 'when the reply is for a read command' do
 
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [{ 'hello' => true, 'ok' => 1.0 }]
       end
 
       it 'returns the number returned' do
@@ -337,7 +342,7 @@ describe Mongo::Operation::Result do
       it 'raises OperationFailure' do
         expect do
           result.validate!
-        end.to raise_error(Mongo::Error::OperationFailure, /Replication is being shut down \(91\)/)
+        end.to raise_error(Mongo::Error::OperationFailure, /\[91\]: Replication is being shut down/)
       end
     end
   end

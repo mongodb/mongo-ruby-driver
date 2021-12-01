@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'support/keyword_struct'
+
 module Mongo
   module CRUD
-    class Context
-      def transform_arguments(arguments)
-        arguments
-      end
-    end
+    Context = KeywordStruct.new(
+      :session0,
+      :session1,
+      :sdam_subscriber,
+      :threads,
+      :primary_address,
+    )
   end
 end

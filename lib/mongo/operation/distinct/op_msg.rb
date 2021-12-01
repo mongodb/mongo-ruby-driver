@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +27,13 @@ module Mongo
       class OpMsg < OpMsgBase
         include CausalConsistencySupported
         include ExecutableTransactionLabel
+
+        private
+
+        def selector(connection)
+          # Collation is always supported on 3.6+ servers that would use OP_MSG.
+          spec[:selector].merge(collation: spec[:collation]).compact
+        end
       end
     end
   end

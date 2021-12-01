@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -23,7 +26,7 @@ module Mongo
       private
 
       def log_event(event)
-        if event.previous_topology != event.new_topology
+        if event.previous_topology.class != event.new_topology.class
           log_debug(
             "Topology type '#{event.previous_topology.display_name}' changed to " +
             "type '#{event.new_topology.display_name}'."

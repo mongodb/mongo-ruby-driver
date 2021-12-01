@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/kill_cursors/command_builder'
 require 'mongo/operation/kill_cursors/command'
 require 'mongo/operation/kill_cursors/op_msg'
 require 'mongo/operation/kill_cursors/legacy'

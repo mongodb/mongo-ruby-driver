@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,16 +30,17 @@ module Mongo
           #
           # @since 2.2.0
           MAPPINGS = BSON::Document.new(
-            :allow_disk_use => 'allowDiskUse',
-            :max_time_ms => 'maxTimeMS',
+            allow_disk_use: 'allowDiskUse',
+            bypass_document_validation: 'bypassDocumentValidation',
+            explain: 'explain',
+            collation: 'collation',
+            comment: 'comment',
+            hint: 'hint',
+            let: 'let',
             # This is intentional; max_await_time_ms is an alias for maxTimeMS
             # used on getMore commands for change streams.
-            :max_await_time_ms => 'maxTimeMS',
-            :explain => 'explain',
-            :bypass_document_validation => 'bypassDocumentValidation',
-            :collation => 'collation',
-            :hint => 'hint',
-            :comment => 'comment'
+            max_await_time_ms: 'maxTimeMS',
+            max_time_ms: 'maxTimeMS',
           ).freeze
 
           def_delegators :@view, :collection, :database, :read, :write_concern
@@ -52,12 +56,9 @@ module Mongo
 
           # Initialize the builder.
           #
-          # @example Initialize the builder.
-          #   Aggregation.new(map, reduce, view, options)
-          #
           # @param [ Array<Hash> ] pipeline The aggregation pipeline.
           # @param [ Collection::View ] view The collection view.
-          # @param [ Hash ] options The map/reduce options.
+          # @param [ Hash ] options The map/reduce and read preference options.
           #
           # @since 2.2.0
           def initialize(pipeline, view, options)
@@ -76,11 +77,12 @@ module Mongo
           # @since 2.2.0
           def specification
             spec = {
-                    selector: aggregation_command,
-                    db_name: database.name,
-                    read: view.read_preference,
-                    session: @options[:session]
-                   }
+              selector: aggregation_command,
+              db_name: database.name,
+              read: @options[:read_preference] || view.read_preference,
+              session: @options[:session],
+              collation: @options[:collation],
+            }
             if write?
               spec.update(write_concern: write_concern)
             end

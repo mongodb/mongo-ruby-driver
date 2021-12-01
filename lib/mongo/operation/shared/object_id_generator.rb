@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +21,7 @@ module Mongo
     # The default generator of ids for documents.
     #
     # @since 2.2.0
+    # @api private
     class ObjectIdGenerator
 
       # Generate a new id.

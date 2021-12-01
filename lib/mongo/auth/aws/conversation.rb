@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,10 +52,7 @@ module Mongo
             payload: BSON::Binary.new(client_final_payload),
             conversationId: conversation_id,
           )
-          selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-          cluster_time = connection.mongos? && connection.cluster_time
-          selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-          Protocol::Msg.new([], {}, selector)
+          build_message(connection, user.auth_source, selector)
         end
 
         private

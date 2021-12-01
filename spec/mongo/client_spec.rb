@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # NB: tests for .new, #initialize, #use, #with and #dup are in
@@ -538,6 +541,23 @@ describe Mongo::Client do
     end
   end
 
+  describe '#database' do
+
+    let(:database) { client.database }
+
+    context 'when client has :server_api option' do
+
+      let(:client) do
+        new_local_client_nmio(['localhost'], server_api: {version: '1'})
+      end
+
+      it 'is not transfered to the collection' do
+        database.options[:server_api].should be nil
+      end
+    end
+
+  end
+
   describe '#database_names' do
 
     it 'returns a list of database names' do
@@ -595,12 +615,27 @@ describe Mongo::Client do
     end
 
     context 'when name_only is true' do
+      min_server_fcv '3.6'
+
+      let(:command) do
+        Utils.get_command_event(root_authorized_client, 'listDatabases') do |client|
+          client.list_databases({}, true)
+        end.command
+      end
+
+      it 'sends the command with the nameOnly flag set to true' do
+        expect(command[:nameOnly]).to be(true)
+      end
+    end
+
+    context 'when authorized_databases is provided' do
+      min_server_fcv '4.0'
 
       let(:client_options) do
         root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
       end
 
-      let(:subscriber) { EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       let(:client) do
         ClientRegistry.instance.new_local_client(
@@ -614,12 +649,32 @@ describe Mongo::Client do
         subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
       end
 
-      before do
-        client.list_databases({}, true)
+      let(:authDb) do
+        { authorized_databases: true }
       end
 
-      it 'sends the command with the nameOnly flag set to true' do
-        expect(command[:nameOnly]).to be(true)
+      let(:noAuthDb) do
+        { authorized_databases: false }
+      end
+
+      before do
+        client.list_databases({}, true, authDb)
+        client.list_databases({}, true, noAuthDb)
+      end
+
+      let(:events) do
+        subscriber.command_started_events('listDatabases')
+      end
+
+      it 'sends the command with the authorizedDatabases flag set to true' do
+        expect(events.length).to eq(2)
+        command = events.first.command
+        expect(command[:authorizedDatabases]).to be(true)
+      end
+
+      it 'sends the command with the authorizedDatabases flag set to nil' do
+        command = events.last.command
+        expect(command[:authorizedDatabases]).to be_nil
       end
     end
   end
@@ -689,6 +744,13 @@ describe Mongo::Client do
       old_id = client.cluster.object_id
       client.reconnect
       new_id = client.cluster.object_id
+      expect(new_id).not_to eql(old_id)
+    end
+
+    it 'replaces the session pool' do
+      old_id = client.cluster.session_pool.object_id
+      client.reconnect
+      new_id = client.cluster.session_pool.object_id
       expect(new_id).not_to eql(old_id)
     end
 
@@ -856,6 +918,48 @@ describe Mongo::Client do
         expect {
           session
         }.to raise_exception(Mongo::Error::InvalidSession)
+      end
+    end
+  end
+
+  describe '#summary' do
+
+    context 'monitoring omitted' do
+      let(:client) do
+        new_local_client_nmio(
+          ['127.0.0.1:27017'],
+          :read => { :mode => :primary },
+          :database => SpecConfig.instance.test_db
+        )
+      end
+
+      it 'indicates lack of monitoring' do
+        client.summary.should =~ /servers=.*UNKNOWN.*NO-MONITORING/
+      end
+    end
+
+    context 'monitoring present' do
+      require_topology :single, :replica_set, :sharded
+
+      let(:client) do
+        authorized_client
+      end
+
+      it 'does not indicate lack of monitoring' do
+        client.summary.should =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS)/
+        client.summary.should_not =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+      end
+    end
+
+    context 'background threads killed' do
+      let(:client) do
+        authorized_client.tap do |client|
+          client.cluster.servers.map(&:disconnect!)
+        end
+      end
+
+      it 'does not indicate lack of monitoring' do
+        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/
       end
     end
   end

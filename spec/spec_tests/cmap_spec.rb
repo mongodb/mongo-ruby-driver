@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 require 'runners/cmap'
@@ -22,9 +25,13 @@ describe 'Cmap' do
   end
 
   let(:options) do
-    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
-      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
-      .merge(monitoring_io: false)
+    Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+      SpecConfig.instance.all_test_options,
+    )).update(monitoring_io: false).tap do |options|
+      # We have a wait queue timeout set in the test suite options, but having
+      # this option set interferes with assertions in the cmap spec tests.
+      options.delete(:wait_queue_timeout)
+    end
   end
 
   CMAP_TESTS.each do |file|
@@ -33,7 +40,7 @@ describe 'Cmap' do
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
 
       before do
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
 
         monitoring = Mongo::Monitoring.new(monitoring: false)
         monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
@@ -69,6 +76,9 @@ describe 'Cmap' do
         allow(socket).to receive(:alive?).and_return(true)
 
         allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(socket)
+        if @server.load_balancer?
+          allow_any_instance_of(Mongo::Server::Connection).to receive(:service_id).and_return('very fake')
+        end
         spec.run
       end
 

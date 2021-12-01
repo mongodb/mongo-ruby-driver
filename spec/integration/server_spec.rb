@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Server' do
@@ -30,6 +33,8 @@ describe 'Server' do
       end
 
       context 'unknown server in disconnected cluster' do
+        require_topology :single, :replica_set, :sharded
+
         before do
           client.close
           server.unknown!

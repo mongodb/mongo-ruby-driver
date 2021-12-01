@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,10 +70,10 @@ module Mongo
         end
 
         # Work around https://jira.mongodb.org/browse/SERVER-17397
-        if ClusterConfig.instance.server_version < '4.3' &&
+        if ClusterConfig.instance.server_version < '4.4' &&
           global_client.cluster.servers.length > 1
         then
-          mongos_each_direct_client do |client|
+          ::Utils.mongos_each_direct_client do |client|
             client.database.command(flushRouterConfig: 1)
           end
         end
@@ -86,7 +89,7 @@ module Mongo
 
         setup_fail_point(client)
 
-        @subscriber = EventSubscriber.new
+        @subscriber = Mrss::EventSubscriber.new
         client.subscribe(Mongo::Monitoring::COMMAND, @subscriber)
 
         @target = case @target_type
@@ -107,7 +110,7 @@ module Mongo
 
       def run
         change_stream = begin
-          @target.watch(@pipeline, Utils.snakeize_hash(@options))
+          @target.watch(@pipeline, ::Utils.snakeize_hash(@options))
         rescue Mongo::Error::OperationFailure => e
           return {
             result: {

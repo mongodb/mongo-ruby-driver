@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::MapReduce do
@@ -55,6 +58,14 @@ describe Mongo::Collection::View::MapReduce do
 
   let(:map_reduce) do
     described_class.new(view, map, reduce, options)
+  end
+
+  describe '#initialize' do
+    it 'warns of deprecation' do
+      Mongo::Logger.logger.should receive(:warn).with('MONGODB | The map_reduce operation is deprecated, please use the aggregation pipeline instead')
+
+      map_reduce
+    end
   end
 
   describe '#map_function' do
@@ -239,7 +250,7 @@ describe Mongo::Collection::View::MapReduce do
             Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
           end
 
-          let(:subscriber) { EventSubscriber.new }
+          let(:subscriber) { Mrss::EventSubscriber.new }
 
           let(:client) do
             authorized_client.tap do |client|
@@ -581,6 +592,7 @@ describe Mongo::Collection::View::MapReduce do
 
       context 'when the server is not valid for writing' do
         clean_slate
+        require_warning_clean
 
         before do
           stop_monitoring(authorized_client)
@@ -661,13 +673,19 @@ describe Mongo::Collection::View::MapReduce do
 
       context 'when the server is a valid for writing' do
         clean_slate
+        require_warning_clean
 
         before do
           stop_monitoring(authorized_client)
         end
 
         it 'does not reroute the operation to a primary' do
-          expect(Mongo::Logger.logger).not_to receive(:warn)
+          # We produce a deprecation warning, but there shouldn't be
+          # the reroute warning.
+          expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
+            expect(msg).not_to include('Rerouting the MapReduce operation to the primary server')
+          end
+
           map_reduce.to_a
         end
       end

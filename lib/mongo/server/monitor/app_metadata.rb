@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +25,7 @@ module Mongo
       #
       # @api private
       class AppMetadata < Server::AppMetadata
-        def initialize(options)
+        def initialize(options = {})
           super
           if instance_variable_defined?(:@request_auth_mech)
             remove_instance_variable(:@request_auth_mech)

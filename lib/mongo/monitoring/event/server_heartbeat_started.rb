@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -24,17 +27,24 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
+        # @return [ true | false ] Whether the heartbeat was awaited.
+        def awaited?
+          @awaited
+        end
+
         # Create the event.
         #
         # @example Create the event.
         #   ServerHeartbeatStarted.new(address)
         #
         # @param [ Address ] address The server address.
+        # @param [ true | false ] awaited Whether the heartbeat was awaited.
         #
         # @since 2.7.0
         # @api private
-        def initialize(address)
+        def initialize(address, awaited: false)
           @address = address
+          @awaited = !!awaited
         end
 
         # Returns a concise yet useful summary of the event.
@@ -46,7 +56,7 @@ module Mongo
         # @since 2.7.0
         # @api experimental
         def summary
-          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          "#<#{short_class_name}" +
           " address=#{address}>"
         end
       end

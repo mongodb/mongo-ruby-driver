@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +71,7 @@ module Mongo
       # @param [ Server::Connection ] connection The connection.
       # @param [ Auth::*::Conversation ] conversation The conversation.
       # @param [ BSON::Document | nil ] speculative_auth_result The
-      #   value of speculativeAuthenticate field of ismaster response of
+      #   value of speculativeAuthenticate field of hello response of
       #   the handshake on the specified connection.
       def converse_multi_step(connection, conversation,
         speculative_auth_result: nil
@@ -100,7 +103,13 @@ module Mongo
       end
 
       def dispatch_msg(connection, conversation, msg)
-        reply = connection.dispatch([msg])
+        context = Operation::Context.new(options: {
+          server_api: connection.options[:server_api],
+        })
+        if server_api = context.server_api
+          msg = msg.maybe_add_server_api(server_api)
+        end
+        reply = connection.dispatch([msg], context)
         reply_document = reply.documents.first
         validate_reply!(connection, conversation, reply_document)
         result = Operation::Result.new(reply, connection.description)
@@ -112,14 +121,14 @@ module Mongo
       # raises Unauthorized if not.
       def validate_reply!(connection, conversation, doc)
         if doc[:ok] != 1
-          extra = [doc[:code], doc[:codeName]].compact.join(': ')
-          msg = doc[:errmsg]
-          unless extra.empty?
-            msg += " (#{extra})"
-          end
+          message = Error::Parser.build_message(
+            code: doc[:code],
+            code_name: doc[:codeName],
+            message: doc[:errmsg],
+          )
           raise Unauthorized.new(user,
             used_mechanism: self.class.const_get(:MECHANISM),
-            message: msg,
+            message: message,
             server: connection.server,
           )
         end

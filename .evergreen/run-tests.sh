@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 if echo "$AUTH" |grep -q ^aws; then
   # Do not set -x as this will expose passwords in Evergreen logs
@@ -9,23 +10,26 @@ else
   set -x
 fi
 
+MRSS_ROOT=`dirname "$0"`/../spec/shared
+
+. $MRSS_ROOT/shlib/distro.sh
+. $MRSS_ROOT/shlib/set_env.sh
+. $MRSS_ROOT/shlib/server.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-aws.sh
-. `dirname "$0"`/functions-server.sh
 . `dirname "$0"`/functions-config.sh
 
-arch=`host_arch`
+arch=`host_distro`
 
 show_local_instructions
 
 set_home
 set_env_vars
-
-setup_ruby
+set_env_ruby
 
 prepare_server $arch
 
-install_mlaunch_pip
+install_mlaunch_virtualenv
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -33,78 +37,11 @@ install_mlaunch_pip
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
-mongo_version=`echo $MONGODB_VERSION |tr -d .`
-if test $mongo_version = latest; then
-  mongo_version=44
-fi
-  
-# Compression is handled via an environment variable, convert to URI option
-if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
-  add_uri_option compressors=zlib
-fi
+calculate_server_args
+launch_ocsp_mock
+launch_server "$dbdir"
 
-args="--setParameter enableTestCommands=1"
-# diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
-# and mlaunch does not support specifying mongod-only parameters:
-# https://github.com/rueckstiess/mtools/issues/696
-# Pass it to 3.4 and newer servers where it is accepted by all daemons.
-if test $mongo_version -ge 34; then
-  args="$args --setParameter diagnosticDataCollectionEnabled=false"
-fi
-uri_options=
-if test "$TOPOLOGY" = replica-set; then
-  args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
-  export HAVE_ARBITER=1
-elif test "$TOPOLOGY" = sharded-cluster; then
-  args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
-  if test -z "$SINGLE_MONGOS"; then
-    args="$args --mongos 2"
-  fi
-else
-  args="$args --single"
-fi
-if test -n "$MMAPV1"; then
-  args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
-  uri_options="$uri_options&retryReads=false&retryWrites=false"
-fi
-if test "$AUTH" = auth; then
-  args="$args --auth --username bob --password pwd123"
-elif test "$AUTH" = x509; then
-  args="$args --auth --username bootstrap --password bootstrap"
-elif echo "$AUTH" |grep -q ^aws; then
-  args="$args --auth --username bootstrap --password bootstrap"
-  args="$args --setParameter authenticationMechanisms=MONGODB-AWS,SCRAM-SHA-1,SCRAM-SHA-256"
-  uri_options="$uri_options&authMechanism=MONGODB-AWS&authSource=\$external"
-fi
-if test "$SSL" = ssl; then
-  args="$args --sslMode requireSSL"\
-" --sslPEMKeyFile spec/support/certificates/server-second-level-bundle.pem"\
-" --sslCAFile spec/support/certificates/ca.crt"\
-" --sslClientCertificate spec/support/certificates/client.pem"
-
-  if test "$AUTH" = x509; then
-    client_pem=client-x509.pem
-    uri_options="$uri_options&authMechanism=MONGODB-X509"
-  elif echo $RVM_RUBY |grep -q jruby; then
-    # JRuby does not grok chained certificate bundles -
-    # https://github.com/jruby/jruby-openssl/issues/181
-    client_pem=client.pem
-  else
-    client_pem=client-second-level-bundle.pem
-  fi
-  
-  uri_options="$uri_options&"\
-"tlsCAFile=spec/support/certificates/ca.crt&"\
-"tlsCertificateKeyFile=spec/support/certificates/$client_pem"
-fi
-
-# Docker forwards ports to the external interface, not to the loopback.
-# Hence we must bind to all interfaces here.
-if test -n "$BIND_ALL"; then
-  args="$args --bind_ip_all"
-fi
-
-python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
+uri_options="$URI_OPTIONS"
 
 bundle_install
 
@@ -149,13 +86,13 @@ EOT
     --eval "$create_user_cmd"
 elif test "$AUTH" = aws-regular; then
   clear_instance_profile
-  
+
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 
   hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
 elif test "$AUTH" = aws-assume-role; then
   clear_instance_profile
-  
+
   ./.evergreen/aws -a "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID" \
     -s "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY" \
     -r us-east-1 \
@@ -170,13 +107,15 @@ elif test "$AUTH" = aws-assume-role; then
   export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
   export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
 
+  aws sts get-caller-identity
+
   hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
 
   uri_options="$uri_options&"\
 "authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
 elif test "$AUTH" = aws-ec2; then
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
-  
+
   # We need to assign an instance profile to the current instance, otherwise
   # since we don't place credentials into the environment the test suite
   # cannot connect to the MongoDB server while bootstrapping.
@@ -188,26 +127,50 @@ elif test "$AUTH" = aws-ecs; then
     # drivers-evergreen-tools performs this operation in its ECS E2E tester.
     eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
   fi
-  
+
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
 
 if test -n "$FLE"; then
-  curl -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+  curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   tar xf libmongocrypt-all.tar.gz
 
   export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
   test -f "$LIBMONGOCRYPT_PATH"
 fi
 
+if test -n "$OCSP_CONNECTIVITY"; then
+  # TODO Maybe OCSP_CONNECTIVITY=* should set SSL=ssl instead.
+  uri_options="$uri_options&tls=true"
+fi
+
+if test -n "$EXTRA_URI_OPTIONS"; then
+  uri_options="$uri_options&$EXTRA_URI_OPTIONS"
+fi
+
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
+
+if echo "$AUTH" |grep -q ^aws-assume-role; then
+  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' |wc
+fi
 
 set_fcv
 
-echo Preparing the test suite
-bundle exec rake spec:prepare
+if test "$TOPOLOGY" = replica-set && ! echo "$MONGODB_VERSION" |fgrep -q 2.6; then
+  ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
+fi
+
+if test "$API_VERSION_REQUIRED" = 1; then
+  ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.require_api_version
+  export SERVER_API='version: "1"'
+fi
+
+if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
+  echo Preparing the test suite
+  bundle exec rake spec:prepare
+fi
 
 if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
@@ -216,19 +179,63 @@ if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
 fi
 
 export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
+
+# Compression is handled via an environment variable, convert to URI option
+if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
+  add_uri_option compressors=zlib
+fi
+
+if test "$COMPRESSOR" = snappy; then
+  add_uri_option compressors=snappy
+fi
+
+if test "$COMPRESSOR" = zstd; then
+  add_uri_option compressors=zstd
+fi
+
+
 echo "Running tests"
+set +e
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 elif test "$FORK" = 1; then
   bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
+elif test "$STRESS" = 1; then
+  bundle exec rspec spec/integration/fork*spec.rb spec/stress
+elif test "$OCSP_VERIFIER" = 1; then
+  bundle exec rspec spec/integration/ocsp_verifier_spec.rb
+elif test -n "$OCSP_CONNECTIVITY"; then
+  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
+elif test "$SOLO" = 1; then
+  for attempt in `seq 10`; do
+    echo "Attempt $attempt"
+    bundle exec rspec spec/solo/clean_exit_spec.rb 2>&1 |tee test.log
+    if grep -qi 'segmentation fault' test.log; then
+      echo 'Test failed - Ruby crashed' 1>&2
+      exit 1
+    fi
+    if fgrep -i '[BUG]' test.log; then
+      echo 'Test failed - Ruby complained about a bug' 1>&2
+      exit 1
+    fi
+  done
 else
   bundle exec rake spec:ci
 fi
+
 test_status=$?
-echo "TEST STATUS"
-echo ${test_status}
+echo "TEST STATUS: ${test_status}"
+set -e
+
+if test -f tmp/rspec-all.json; then
+  mv tmp/rspec-all.json tmp/rspec.json
+fi
 
 kill_jruby
+
+if test -n "$OCSP_MOCK_PID"; then
+  kill "$OCSP_MOCK_PID"
+fi
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 

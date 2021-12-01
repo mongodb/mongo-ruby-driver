@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,34 +43,42 @@ module Mongo
       #   Query.new('xgen', 'users', {:name => 'Tyler'}, :skip => 5,
       #                                                  :limit => 10)
       #
-      # @example Find all users with slave ok bit set
-      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :flags => [:slave_ok])
+      # @example Find all users with secondaryOk bit set
+      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :flags => [:secondary_ok])
       #
       # @example Find all user ids.
       #   Query.new('xgen', 'users', {}, :fields => {:id => 1})
       #
-      # @param database [String, Symbol] The database to query.
-      # @param collection [String, Symbol] The collection to query.
-      # @param selector [Hash] The query selector.
-      # @param options [Hash] The additional query options.
+      # @param [ String, Symbol ] database The database to query.
+      # @param [ String, Symbol ] collection The collection to query.
+      # @param [ Hash ] selector The query selector.
+      # @param [ Hash ] options The additional query options.
       #
-      # @option options :project [Hash] The projection.
-      # @option options :skip [Integer] The number of documents to skip.
-      # @option options :limit [Integer] The number of documents to return.
-      # @option options :flags [Array] The flags for the query message.
-      #
-      #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
-      #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
+      # @option options [ Array<Symbol> ] :flags The flag bits.
+      #   Currently supported values are :await_data, :exhaust,
+      #   :no_cursor_timeout, :oplog_replay, :partial, :secondary_ok,
+      #   :tailable_cursor.
+      # @option options [ Integer ] :limit The number of documents to return.
+      # @option options [ Hash ] :project The projection.
+      # @option options [ Integer ] :skip The number of documents to skip.
       def initialize(database, collection, selector, options = {})
         @database = database
         @namespace = "#{database}.#{collection}"
+        if selector.nil?
+          raise ArgumentError, 'Selector cannot be nil'
+        end
         @selector = selector
         @options = options
         @project = options[:project]
         @limit = determine_limit
         @skip = options[:skip]  || 0
         @flags = options[:flags] || []
-        @upconverter = Upconverter.new(collection, selector, options, flags)
+        @upconverter = Upconverter.new(
+          collection,
+          BSON::Document.new(selector),
+          BSON::Document.new(options),
+          flags,
+        )
         super
       end
 
@@ -115,11 +126,47 @@ module Mongo
         compress_if_possible(selector.keys.first, compressor, zlib_compression_level)
       end
 
+      # Serializes message into bytes that can be sent on the wire.
+      #
+      # @param [ BSON::ByteBuffer ] buffer where the message should be inserted.
+      # @param [ Integer ] max_bson_size The maximum bson object size.
+      #
+      # @return [ BSON::ByteBuffer ] buffer containing the serialized message.
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil, bson_overhead = nil)
+        validate_document_size!(max_bson_size)
+
+        super
+      end
+
       protected
 
       attr_reader :upconverter
 
       private
+
+      # Validate that the documents in this message are all smaller than the
+      # maxBsonObjectSize. If not, raise an exception.
+      def validate_document_size!(max_bson_size)
+        max_bson_size ||= Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE
+
+        documents = if @selector.key?(:documents)
+                      @selector[:documents]
+                    elsif @selector.key?(:deletes)
+                      @selector[:deletes]
+                    elsif @selector.key?(:updates)
+                      @selector[:updates]
+                    else
+                      []
+                    end
+
+        contains_too_large_document = documents.any? do |doc|
+          doc.to_bson.length > max_bson_size
+        end
+
+        if contains_too_large_document
+          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
+        end
+      end
 
       # The operation code required to specify a Query message.
       # @return [Fixnum] the operation code.
@@ -132,10 +179,11 @@ module Mongo
       end
 
       # Available flags for a Query message.
+      # @api private
       FLAGS = [
         :reserved,
         :tailable_cursor,
-        :slave_ok,
+        :secondary_ok,
         :oplog_replay,
         :no_cursor_timeout,
         :await_data,
@@ -184,7 +232,7 @@ module Mongo
         }.freeze
 
         SPECIAL_FIELD_MAPPINGS = {
-          :$readPreference => 'readPreference',
+          :$readPreference => '$readPreference',
           :$orderby => 'sort',
           :$hint => 'hint',
           :$comment => 'comment',
@@ -208,16 +256,6 @@ module Mongo
           :await_data => 'awaitData',
           :partial => 'allowPartialResults'
         }.freeze
-
-        # Find command constant.
-        #
-        # @since 2.1.0
-        FIND = 'find'.freeze
-
-        # Filter attribute constant.
-        #
-        # @since 2.1.0
-        FILTER = 'filter'.freeze
 
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
@@ -243,6 +281,15 @@ module Mongo
         #
         # @since 2.1.0
         def initialize(collection, filter, options, flags)
+          # Although the docstring claims both hashes and BSON::Documents
+          # are acceptable, this class expects the filter and options to
+          # contain symbol keys which isn't what the operation layer produces.
+          unless BSON::Document === filter
+            raise ArgumentError, 'Filter must provide indifferent access'
+          end
+          unless BSON::Document === options
+            raise ArgumentError, 'Options must provide indifferent access'
+          end
           @collection = collection
           @filter = filter
           @options = options
@@ -271,7 +318,7 @@ module Mongo
         #
         # @since 2.1.0
         def command_name
-          ((filter[:$query] || !command?) ? FIND : filter.keys.first).to_s
+          ((filter[:$query] || !command?) ? :find : filter.keys.first).to_s
         end
 
         private
@@ -293,15 +340,25 @@ module Mongo
         end
 
         def find_command
-          document = BSON::Document.new
-          document.store(FIND, collection)
-          document.store(FILTER, query_filter)
+          document = BSON::Document.new(
+            find: collection,
+            filter: query_filter,
+          )
           OPTION_MAPPINGS.each do |legacy, option|
             document.store(option, options[legacy]) unless options[legacy].nil?
           end
-          Mongo::Lint.validate_camel_case_read_preference(filter['readPreference'])
+          if Lint.enabled?
+            filter.each do |k, v|
+              unless String === k
+                raise Error::LintError, "All keys in filter must be strings: #{filter.inspect}"
+              end
+            end
+          end
+          Lint.validate_camel_case_read_preference(filter['readPreference'])
           SPECIAL_FIELD_MAPPINGS.each do |special, normal|
-            document.store(normal, filter[special]) unless filter[special].nil?
+            unless (v = filter[special]).nil?
+              document.store(normal, v)
+            end
           end
           FLAG_MAPPINGS.each do |legacy, flag|
             document.store(flag, true) if flags.include?(legacy)

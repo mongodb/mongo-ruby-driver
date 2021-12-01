@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Auth::User::View do
@@ -20,7 +23,7 @@ describe Mongo::Auth::User::View do
   shared_context 'testing write concern' do
 
     let(:subscriber) do
-      EventSubscriber.new
+      Mrss::EventSubscriber.new
     end
 
     let(:client) do

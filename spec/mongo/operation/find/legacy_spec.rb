@@ -1,7 +1,12 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Find::Legacy do
   max_server_version '3.4'
+
+  let(:context) { Mongo::Operation::Context.new }
 
   let(:selector) { { foo: 1 } }
   let(:query_options) { {} }
@@ -73,6 +78,7 @@ describe Mongo::Operation::Find::Legacy do
         double('description').tap do |description|
           expect(description).to receive(:mongos?) { false }
           expect(description).to receive(:standalone?) { false }
+          #expect(description).to receive(:load_balancer?) { false }
         end
       end
 
@@ -100,7 +106,7 @@ describe Mongo::Operation::Find::Legacy do
       end
 
       it 'applies the correct flags' do
-        expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
+        expect(message.flags).to eq([ :no_cursor_timeout, :secondary_ok ])
       end
     end
 
@@ -116,7 +122,7 @@ describe Mongo::Operation::Find::Legacy do
 
       it 'does not raise an exception' do
         authorized_primary.with_connection do |connection|
-          expect(op.execute(connection, client: nil)).to be_a(Mongo::Operation::Find::Legacy::Result)
+          expect(op.execute(connection, context: context)).to be_a(Mongo::Operation::Find::Legacy::Result)
         end
       end
     end

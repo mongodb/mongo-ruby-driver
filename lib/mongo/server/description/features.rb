@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -23,39 +26,43 @@ module Mongo
         # List of features and the wire protocol version they appear in.
         #
         # Wire protocol versions map to server releases as follows:
-        # - 2 => 2.6
-        # - 3 => 3.0
-        # - 4 => 3.2
-        # - 5 => 3.4
-        # - 6 => 3.6
-        # - 7 => 4.0
-        # - 8 => 4.2
-        # - 9 => 4.4
+        # -  2 => 2.6
+        # -  3 => 3.0
+        # -  4 => 3.2
+        # -  5 => 3.4
+        # -  6 => 3.6
+        # -  7 => 4.0
+        # -  8 => 4.2
+        # -  9 => 4.4
+        # - 13 => 5.0
+        # - 14 => 5.1
         #
         # @since 2.0.0
         MAPPINGS = {
-          :retryable_write_error_label => 9,
+          merge_out_on_secondary: 13,
+          retryable_write_error_label: 9,
+          commit_quorum: 9,
           # Server versions older than 4.2 do not reliably validate options
           # provided by the client during findAndModify operations, requiring the
           # driver to raise client-side errors when those options are provided.
-          :find_and_modify_option_validation => 8,
-          :transactions => 7,
-          :scram_sha_256 => 7,
-          :array_filters => 6,
-          :op_msg => 6,
-          :sessions => 6,
-          :collation => 5,
-          :max_staleness => 5,
+          find_and_modify_option_validation: 8,
+          transactions: 7,
+          scram_sha_256: 7,
+          array_filters: 6,
+          op_msg: 6,
+          sessions: 6,
+          collation: 5,
+          max_staleness: 5,
           # Server versions older than 3.4 do not reliably validate options
           # provided by the client during update/delete operations, requiring the
           # driver to raise client-side errors when those options are provided.
-          :update_delete_option_validation => 5,
-          :find_command => 4,
-          :list_collections => 3,
-          :list_indexes => 3,
-          :scram_sha_1 => 3,
-          :write_command => 2,
-          :users_info => 2
+          update_delete_option_validation: 5,
+          find_command: 4,
+          list_collections: 3,
+          list_indexes: 3,
+          scram_sha_1: 3,
+          write_command: 2,
+          users_info: 2,
         }.freeze
 
         # Error message if the server is too old for this version of the driver.
@@ -73,7 +80,7 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = (2..9).freeze
+        DRIVER_WIRE_VERSIONS = (6..14).freeze
 
         # Create the methods for each mapping to tell if they are supported.
         #

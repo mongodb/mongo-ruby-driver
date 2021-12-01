@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +62,14 @@ module Mongo
     def read_with_retry_cursor(session, server_selector, view, &block)
       read_with_retry(session, server_selector) do |server|
         result = yield server
-        Cursor.new(view, result, server, session: session)
+
+        # RUBY-2367: This will be updated to allow the query cache to
+        # cache cursors with multi-batch results.
+        if QueryCache.enabled? && !view.collection.system_collection?
+          CachingCursor.new(view, result, server, session: session)
+        else
+          Cursor.new(view, result, server, session: session)
+        end
       end
     end
 
@@ -470,7 +480,7 @@ module Mongo
       else
         "Retry"
       end
-      Logger.logger.warn "#{message} due to: #{e.class.name} #{e.message}"
+      Logger.logger.warn "#{message} due to: #{e.class.name}: #{e.message}"
     end
 
     # Retry writes on MMAPv1 should raise an actionable error; append actionable

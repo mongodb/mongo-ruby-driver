@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::URI do
@@ -727,9 +730,9 @@ describe Mongo::URI do
             'readPreference=secondary&maxStalenessSeconds=89'
           end
 
-          it 'does not raise an exception until the read preference is used' do
+          it 'does not raise an exception and drops the option' do
             client = new_local_client_nmio(string)
-            expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
+            expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary))
           end
         end
       end
@@ -854,16 +857,16 @@ describe Mongo::URI do
           context 'when a mapping value is missing' do
             let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:,CANONICALIZE_HOST_NAME:" }
 
-            it 'sets the options on a client created with the uri' do
-              expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => nil, 'service_name' => nil })
+            it 'sets the options to defaults' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
             end
           end
 
           context 'when a mapping value is missing but another is present' do
             let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:foo,CANONICALIZE_HOST_NAME:" }
 
-            it 'sets the options on a client created with the uri' do
-              expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => nil, 'service_name' => 'foo' })
+            it 'only sets the present value' do
+              expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'foo' })
             end
           end
         end
@@ -1013,84 +1016,111 @@ describe Mongo::URI do
 
     context 'auth mechanism properties provided' do
 
+      shared_examples 'sets options in the expected manner' do
+        it 'preserves case in auth mechanism properties returned from URI' do
+          expect(uri.uri_options[:auth_mech_properties]).to eq(expected_uri_options)
+        end
+
+        it 'downcases auth mechanism properties keys in client options' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:auth_mech_properties]).to eq(expected_client_options)
+        end
+      end
+
       context 'service_name' do
         let(:options) do
-          "authMechanismProperties=SERVICE_NAME:#{service_name}"
+          "authMechanismProperties=SERVICE_name:#{service_name}"
         end
+
         let(:service_name) { 'foo' }
-        let(:expected) { Mongo::Options::Redacted.new({ service_name: service_name }) }
 
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            SERVICE_name: service_name,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            service_name: service_name,
+          )
         end
+
+        include_examples 'sets options in the expected manner'
       end
 
       context 'canonicalize_host_name' do
         let(:options) do
-          "authMechanismProperties=CANONICALIZE_HOST_NAME:#{canonicalize_host_name}"
+          "authMechanismProperties=CANONICALIZE_HOST_name:#{canonicalize_host_name}"
         end
+
         let(:canonicalize_host_name) { 'true' }
-        let(:expected) { Mongo::Options::Redacted.new({ canonicalize_host_name: true }) }
 
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            CANONICALIZE_HOST_name: true,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            canonicalize_host_name: true,
+          )
         end
+
+        include_examples 'sets options in the expected manner'
       end
 
       context 'service_realm' do
         let(:options) do
-          "authMechanismProperties=SERVICE_REALM:#{service_realm}"
+          "authMechanismProperties=SERVICE_realm:#{service_realm}"
         end
 
         let(:service_realm) { 'dumdum' }
-        let(:expected) { Mongo::Options::Redacted.new({ service_realm: service_realm }) }
 
-
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            SERVICE_realm: service_realm,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            service_realm: service_realm,
+          )
         end
+
+        include_examples 'sets options in the expected manner'
       end
 
       context 'multiple properties' do
         let(:options) do
-          "authMechanismProperties=SERVICE_REALM:#{service_realm}," +
-            "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
-            "SERVICE_NAME:#{service_name}"
+          "authMechanismProperties=SERVICE_realm:#{service_realm}," +
+            "CANONICALIZE_HOST_name:#{canonicalize_host_name}," +
+            "SERVICE_name:#{service_name}"
         end
 
         let(:service_name) { 'foo' }
         let(:canonicalize_host_name) { 'true' }
         let(:service_realm) { 'dumdum' }
 
-        let(:expected) do
-          Mongo::Options::Redacted.new({ service_name: service_name,
-                                         canonicalize_host_name: true,
-                                         service_realm: service_realm })
+        let(:expected_uri_options) do
+          Mongo::Options::Redacted.new(
+            SERVICE_name: service_name,
+            CANONICALIZE_HOST_name: true,
+            SERVICE_realm: service_realm,
+          )
         end
 
-        it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        let(:expected_client_options) do
+          Mongo::Options::Redacted.new(
+            service_name: service_name,
+            canonicalize_host_name: true,
+            service_realm: service_realm,
+          )
         end
 
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
-        end
+        include_examples 'sets options in the expected manner'
       end
     end
 

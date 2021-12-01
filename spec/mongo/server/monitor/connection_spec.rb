@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Server::Monitor::Connection do
@@ -9,13 +12,21 @@ describe Mongo::Server::Monitor::Connection do
 
   declare_topology_double
 
+  let(:monitor_app_metadata) do
+    Mongo::Server::Monitor::AppMetadata.new(
+      server_api: SpecConfig.instance.ruby_options[:server_api],
+    )
+  end
+
   let(:cluster) do
-    double('cluster').tap do |cl|
-      allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new({}))
-      allow(cl).to receive(:options).and_return({})
-      allow(cl).to receive(:heartbeat_interval).and_return(1000)
-      allow(cl).to receive(:run_sdam_flow)
+    double('cluster').tap do |cluster|
+      allow(cluster).to receive(:topology).and_return(topology)
+      allow(cluster).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new({}))
+      allow(cluster).to receive(:options).and_return({})
+      allow(cluster).to receive(:monitor_app_metadata).and_return(monitor_app_metadata)
+      allow(cluster).to receive(:push_monitor_app_metadata).and_return(monitor_app_metadata)
+      allow(cluster).to receive(:heartbeat_interval).and_return(1000)
+      allow(cluster).to receive(:run_sdam_flow)
     end
   end
 
@@ -27,10 +38,12 @@ describe Mongo::Server::Monitor::Connection do
   end
 
   let(:monitor) do
+    metadata = Mongo::Server::Monitor::AppMetadata.new(options)
     register_background_thread_object(
       Mongo::Server::Monitor.new(server, server.event_listeners, server.monitoring,
         {
-          app_metadata: Mongo::Server::Monitor::AppMetadata.new(options),
+          app_metadata: metadata,
+          push_monitor_app_metadata: metadata,
         }.update(options))
     ).tap do |monitor|
       monitor.scan!
@@ -119,6 +132,65 @@ describe Mongo::Server::Monitor::Connection do
 
       it 'uses the connect_timeout as the socket_timeout' do
         expect(connection.send(:socket).timeout).to eq(10)
+      end
+    end
+  end
+
+  describe '#connect!' do
+
+    let(:options) do
+      SpecConfig.instance.test_options.merge(
+        app_metadata: monitor_app_metadata,
+      )
+    end
+
+    context 'when address resolution fails' do
+      let(:connection) { described_class.new(server.address, options) }
+
+      it 'propagates the exception' do
+        connection
+
+        expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
+        lambda do
+          connection.connect!
+        end.should raise_error(SocketError, 'Test exception')
+      end
+    end
+  end
+
+  describe '#check_document' do
+    context 'with API version' do
+      let(:meta) do
+        Mongo::Server::AppMetadata.new({
+          server_api: { version: '1' }
+        })
+      end
+
+      [false, true].each do |hello_ok|
+        it "returns hello document if server #{ if hello_ok then 'supports' else 'does not support' end } hello" do
+          subject = described_class.new(double("address"), app_metadata: meta)
+          expect(subject).to receive(:hello_ok?).and_return(hello_ok)
+          document = subject.check_document
+          expect(document['hello']).to eq(1)
+        end
+      end
+    end
+
+    context 'without API version' do
+      let(:meta) { Mongo::Server::AppMetadata.new({}) }
+
+      it 'returns legacy hello document' do
+        subject = described_class.new(double("address"), app_metadata: meta)
+        expect(subject).to receive(:hello_ok?).and_return(false)
+        document = subject.check_document
+        expect(document['isMaster']).to eq(1)
+      end
+
+      it 'returns hello document when server responded with helloOk' do
+        subject = described_class.new(double("address"), app_metadata: meta)
+        expect(subject).to receive(:hello_ok?).and_return(true)
+        document = subject.check_document
+        expect(document['hello']).to eq(1)
       end
     end
   end

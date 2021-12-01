@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +35,7 @@ module Mongo
       #   nonce used in speculative auth on the specified connection that
       #   produced the specified speculative auth result.
       # @option opts [ BSON::Document | nil ] speculative_auth_result The
-      #   value of speculativeAuthenticate field of ismaster response of
+      #   value of speculativeAuthenticate field of hello response of
       #   the handshake on the specified connection.
       def initialize(user, connection, **opts)
         super
@@ -45,7 +48,7 @@ module Mongo
       attr_reader :speculative_auth_client_nonce
 
       # @return [ BSON::Document | nil ] The value of speculativeAuthenticate
-      #   field of ismaster response of the handshake on the current connection.
+      #   field of hello response of the handshake on the current connection.
       attr_reader :speculative_auth_result
 
       def conversation

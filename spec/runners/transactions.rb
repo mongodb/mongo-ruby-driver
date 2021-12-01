@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'runners/transactions/context'
 require 'runners/transactions/operation'
 require 'runners/transactions/spec'
 require 'runners/transactions/test'
@@ -26,21 +28,22 @@ def define_transactions_spec_tests(test_paths)
     context(spec.description) do
 
       define_spec_tests_with_requirements(spec) do |req|
+
         spec.tests.each do |test|
 
-          before do
-            if ClusterConfig.instance.topology == :sharded
-              if test.multiple_mongoses? && SpecConfig.instance.addresses.length == 1
-                skip "Test requires multiple mongoses"
-              elsif !test.multiple_mongoses? && SpecConfig.instance.addresses.length > 1
-                # Many transaction spec tests that do not specifically deal with
-                # sharded transactions fail when run against a multi-mongos cluster
-                skip "Test does not specify multiple mongoses"
+          context(test.description) do
+
+            before(:all) do
+              if ClusterConfig.instance.topology == :sharded
+                if test.multiple_mongoses? && SpecConfig.instance.addresses.length == 1
+                  skip "Test requires multiple mongoses"
+                elsif !test.multiple_mongoses? && SpecConfig.instance.addresses.length > 1
+                  # Many transaction spec tests that do not specifically deal with
+                  # sharded transactions fail when run against a multi-mongos cluster
+                  skip "Test does not specify multiple mongoses"
+                end
               end
             end
-          end
-
-          context(test.description) do
 
             if test.skip_reason
               before(:all) do

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Address do
@@ -234,7 +237,7 @@ describe Mongo::Address do
       end
 
       let(:address) do
-        Mongo::Address.new(custom_hostname)
+        Mongo::Address.new("#{custom_hostname}:#{SpecConfig.instance.any_port}")
       end
 
       before do
@@ -263,21 +266,25 @@ describe Mongo::Address do
         end
       end
 
-      if Socket.const_defined?(:TCP_KEEPINTVL)
-        it 'sets the socket TCP_KEEPINTVL option' do
-          expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPINTVL).int).to be <= 10
-        end
-      end
+      context 'keep-alive options' do
+        fails_on_jruby
 
-      if Socket.const_defined?(:TCP_KEEPCNT)
-        it 'sets the socket TCP_KEEPCNT option' do
-          expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPCNT).int).to be <= 9
+        if Socket.const_defined?(:TCP_KEEPINTVL)
+          it 'sets the socket TCP_KEEPINTVL option' do
+            expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPINTVL).int).to be <= 10
+          end
         end
-      end
 
-      if Socket.const_defined?(:TCP_KEEPIDLE)
-        it 'sets the socket TCP_KEEPIDLE option' do
-          expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE).int).to be <= 120
+        if Socket.const_defined?(:TCP_KEEPCNT)
+          it 'sets the socket TCP_KEEPCNT option' do
+            expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPCNT).int).to be <= 9
+          end
+        end
+
+        if Socket.const_defined?(:TCP_KEEPIDLE)
+          it 'sets the socket TCP_KEEPIDLE option' do
+            expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE).int).to be <= 120
+          end
         end
       end
     end

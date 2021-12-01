@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Unknown do
@@ -86,7 +89,7 @@ describe Mongo::Cluster::Topology::Unknown do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     let(:desc) do
       Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))

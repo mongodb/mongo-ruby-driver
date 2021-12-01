@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
-require 'runners/sdam_monitoring'
 
 describe Mongo::Cluster do
 
@@ -39,6 +41,34 @@ describe Mongo::Cluster do
       end
     end
 
+    context 'when topology is load-balanced' do
+      require_topology :load_balanced
+
+      it 'emits SDAM events' do
+        allow(monitoring).to receive(:succeeded)
+
+        register_cluster(
+          described_class.new(
+            SpecConfig.instance.addresses,
+            monitoring,
+            SpecConfig.instance.test_options
+            )
+          )
+
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::TOPOLOGY_OPENING, any_args
+          )
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::TOPOLOGY_CHANGED, any_args
+          ).twice
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::SERVER_OPENING, any_args
+          )
+          expect(monitoring).to have_received(:succeeded).with(
+            Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, any_args
+          )
+      end
+    end
   end
 
   describe '#==' do
@@ -179,6 +209,9 @@ describe Mongo::Cluster do
     before do
       expect(server).to receive(:monitor).at_least(:once).and_return(monitor)
       expect(monitor).to receive(:scan!)
+
+      # scan! complains that there isn't a monitor on the server, calls summary
+      allow(monitor).to receive(:running?)
     end
 
     it 'returns true' do
@@ -272,27 +305,11 @@ describe Mongo::Cluster do
 
   describe '#add' do
 
-    context 'when topology is Single' do
-
-      let(:cluster) { cluster_with_semaphore }
-
-      let(:topology) do
-        Mongo::Cluster::Topology::Single.new({}, cluster)
-      end
-
-      before do
-        cluster.add('a')
-      end
-
-      it 'does not add discovered servers to the cluster' do
-        expect(cluster.servers[0].address.seed).to_not eq('a')
-      end
-    end
-
     context 'topology is Sharded' do
+      require_topology :sharded
 
       let(:topology) do
-        Mongo::Cluster::Topology::Single.new({}, cluster)
+        Mongo::Cluster::Topology::Sharded.new({}, cluster)
       end
 
       before do
@@ -307,6 +324,7 @@ describe Mongo::Cluster do
         expect(server).not_to be nil
 
         expect(server.last_scan).to be nil
+        expect(server.last_scan_monotime).to be nil
       end
     end
   end
@@ -344,13 +362,13 @@ describe Mongo::Cluster do
       end
 
       let(:monitoring) { Mongo::Monitoring.new }
-      let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       it 'publishes server closed event once' do
         monitoring.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
         expect(cluster.disconnect!).to be(true)
         expect(subscriber.first_event('server_closed_event')).not_to be nil
-        subscriber.events.clear
+        subscriber.succeeded_events.clear
         expect(cluster.disconnect!).to be(true)
         expect(subscriber.first_event('server_closed_event')).to be nil
       end
@@ -366,6 +384,7 @@ describe Mongo::Cluster do
     end
 
     before do
+      cluster.next_primary
       cluster.servers.each do |server|
         expect(server).to receive(:reconnect!).and_call_original
       end
@@ -434,7 +453,7 @@ describe Mongo::Cluster do
     end
 
     let(:primary_candidates) do
-      if cluster.single?
+      if cluster.single? || cluster.load_balanced?
         cluster.servers
       elsif cluster.sharded?
         cluster.servers
@@ -595,7 +614,23 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#sessions_supported?' do
+  describe '#validate_session_support!' do
+    shared_examples 'supports sessions' do
+      it 'supports sessions' do
+        lambda do
+          cluster.validate_session_support!
+        end.should_not raise_error
+      end
+    end
+
+    shared_examples 'does not support sessions' do
+      it 'does not support sessions' do
+        lambda do
+          cluster.validate_session_support!
+        end.should raise_error(Mongo::Error::SessionsNotSupported)
+      end
+    end
+
     context 'when client has not contacted any servers' do
 
       let(:cluster) do
@@ -604,8 +639,16 @@ describe Mongo::Cluster do
             monitoring_io: false, server_selection_timeout: 0.183))
       end
 
-      it 'is false' do
-        expect(cluster.send(:sessions_supported?)).to be false
+      context 'in load-balanced topology' do
+        require_topology :load_balanced
+
+        it_behaves_like 'supports sessions'
+      end
+
+      context 'not in load-balanced topology' do
+        require_topology :single, :replica_set, :sharded
+
+        it_behaves_like 'does not support sessions'
       end
     end
 
@@ -629,22 +672,20 @@ describe Mongo::Cluster do
         cluster.servers_list.map(&:unknown!)
       end
 
-      it 'is true' do
-        expect(cluster.send(:sessions_supported?)).to be true
-      end
+      it_behaves_like 'supports sessions'
     end
 
     context 'in server < 3.6' do
       max_server_version '3.4'
+
+      let(:cluster) { client.cluster }
 
       context 'in single topology' do
         require_topology :single
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
 
       context 'in single topology with replica set name set' do
@@ -656,9 +697,7 @@ describe Mongo::Cluster do
               connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
         end
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
 
       context 'in replica set topology' do
@@ -666,9 +705,7 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
 
       context 'in sharded topology' do
@@ -676,14 +713,14 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
-        end
+        it_behaves_like 'does not support sessions'
       end
     end
 
     context 'in server 3.6+' do
       min_server_fcv '3.6'
+
+      let(:cluster) { client.cluster }
 
       context 'in single topology' do
         require_topology :single
@@ -692,10 +729,8 @@ describe Mongo::Cluster do
 
         # Contrary to the session spec, 3.6 and 4.0 standalone servers
         # report a logical session timeout and thus are considered to
-        # support sessions
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        # support sessions.
+        it_behaves_like 'supports sessions'
       end
 
       context 'in single topology with replica set name set' do
@@ -707,9 +742,7 @@ describe Mongo::Cluster do
               connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
         end
 
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        it_behaves_like 'supports sessions'
       end
 
       context 'in replica set topology' do
@@ -717,9 +750,7 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        it_behaves_like 'supports sessions'
       end
 
       context 'in sharded topology' do
@@ -727,9 +758,7 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is true' do
-          expect(client.cluster.send(:sessions_supported?)).to be true
-        end
+        it_behaves_like 'supports sessions'
       end
     end
   end
@@ -770,6 +799,9 @@ describe Mongo::Cluster do
     let(:default_address) { SpecConfig.instance.addresses.first }
 
     context 'cluster has unknown servers' do
+      # Servers are never unknown in load-balanced topology.
+      require_topology :single, :replica_set, :sharded
+
       it 'includes unknown servers' do
         cluster.servers_list.each do |server|
           expect(server).to be_unknown

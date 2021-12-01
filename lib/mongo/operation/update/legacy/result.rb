@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,17 +24,20 @@ module Mongo
         # version <= 2.4.
         #
         # @since 2.0.0
+        # @api semiprivate
         class Result < Operation::Result
           include Operation::Result::UseLegacyErrorParser
 
           # Whether an existing document was updated.
           #
           # @since 2.0.0
+          # @api private
           UPDATED_EXISTING = 'updatedExisting'.freeze
 
           # The upserted docs field in the result.
           #
           # @since 2.0.0
+          # @api private
           UPSERTED = 'upserted'.freeze
 
           # Get the number of documents matched.
@@ -42,6 +48,7 @@ module Mongo
           # @return [ Integer ] The matched count.
           #
           # @since 2.0.0
+          # @api public
           def matched_count
             return 0 unless acknowledged?
             if upsert?
@@ -59,6 +66,7 @@ module Mongo
           # @return [ nil ] Always omitted for legacy versions.
           #
           # @since 2.0.0
+          # @api public
           def modified_count; end
 
           # The identifier of the inserted document if an upsert
@@ -70,6 +78,7 @@ module Mongo
           # @return [ Object ] The upserted id.
           #
           # @since 2.0.0
+          # @api public
           def upserted_id
             first[UPSERTED] if upsert?
           end
@@ -82,6 +91,7 @@ module Mongo
           # @return [ Integer ] The number upserted.
           #
           # @since 2.4.2
+          # @api public
           def upserted_count
             upsert? ? n : 0
           end

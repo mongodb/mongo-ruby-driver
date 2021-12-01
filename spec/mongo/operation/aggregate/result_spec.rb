@@ -1,10 +1,15 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Aggregate::Result do
 
   let(:description) do
-    Mongo::Server::Description.new(double('description address'),
-      'minWireVersion' => 0, 'maxWireVersion' => 2)
+    Mongo::Server::Description.new(
+      double('description address'),
+      { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+    )
   end
 
   let(:result) do

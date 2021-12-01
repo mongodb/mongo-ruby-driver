@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'getMore operation' do
   # https://jira.mongodb.org/browse/RUBY-1987
   min_server_fcv '3.2'
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

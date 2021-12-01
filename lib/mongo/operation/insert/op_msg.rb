@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +33,9 @@ module Mongo
 
         private
 
-        def get_result(connection, client, options = {})
+        def get_result(connection, context, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(connection, client), @ids)
+          Result.new(*dispatch_message(connection, context), @ids)
         end
 
         def selector(connection)

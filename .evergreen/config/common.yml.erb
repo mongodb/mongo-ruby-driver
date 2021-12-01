@@ -1,0 +1,549 @@
+# When a task that used to pass starts to fail, go through all versions that
+# may have been skipped to detect when the task started failing.
+stepback: true
+
+# Fail builds when pre tasks fail.
+pre_error_fails_task: true
+
+# Mark a failure as a system/bootstrap failure (purple box) rather then a task
+# failure by default.
+# Actual testing tasks are marked with `type: test`
+command_type: system
+
+# Protect ourself against rogue test case, or curl gone wild, that runs forever.
+<% if @atlas %>
+exec_timeout_secs: 1800
+<% else %>
+exec_timeout_secs: 2700
+<% end %>
+
+<% egos_wrap = "./egos stdbuf -i0 -o0 -e0" %>
+
+# What to do when evergreen hits the timeout (`post:` tasks are run automatically)
+timeout:
+  - command: shell.exec
+    params:
+      script: |
+        true
+
+functions:
+  "fetch source":
+    # Executes git clone and applies the submitted patch, if any
+    - command: git.get_project
+      params:
+        directory: "src"
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          set -ex
+
+          git submodule update --init --recursive
+
+  "fetch egos":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          set -e
+
+          # Python version:
+          #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
+
+          # C version:
+          curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
+          gcc -O2 -g -oegos -lrt egos.c
+
+  <% if @atlas %>
+  "create expansions":
+    # Make an evergreen expansion file with dynamic values
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          # Get the current unique version of this checkout
+          if [ "${is_patch}" = "true" ]; then
+            CURRENT_VERSION=$(git describe)-patch-${version_id}
+          else
+            CURRENT_VERSION=latest
+          fi
+
+          export DRIVERS_TOOLS="$(pwd)/../drivers-tools"
+
+          # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
+          if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
+            export DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
+          fi
+
+          export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
+          export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
+          export UPLOAD_BUCKET="${project}"
+          export PROJECT_DIRECTORY="$(pwd)"
+
+          cat <<EOT > expansion.yml
+          CURRENT_VERSION: "$CURRENT_VERSION"
+          DRIVERS_TOOLS: "$DRIVERS_TOOLS"
+          MONGO_ORCHESTRATION_HOME: "$MONGO_ORCHESTRATION_HOME"
+          MONGODB_BINARIES: "$MONGODB_BINARIES"
+          UPLOAD_BUCKET: "$UPLOAD_BUCKET"
+          PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
+          PREPARE_SHELL: |
+            set -o errexit
+            set -o xtrace
+            export DRIVERS_TOOLS="$DRIVERS_TOOLS"
+            export MONGO_ORCHESTRATION_HOME="$MONGO_ORCHESTRATION_HOME"
+            export MONGODB_BINARIES="$MONGODB_BINARIES"
+            export UPLOAD_BUCKET="$UPLOAD_BUCKET"
+            export PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
+
+            export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
+            export PATH="$MONGODB_BINARIES:$PATH"
+            export PROJECT="${project}"
+            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
+            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
+            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
+            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
+            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
+            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
+            export RVM_RUBY="${RVM_RUBY}"
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
+            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
+            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+          EOT
+          # See what we've done
+          cat expansion.yml
+  <% else %>
+  "create expansions":
+    # Make an evergreen expansion file with dynamic values
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          # Get the current unique version of this checkout
+          if [ "${is_patch}" = "true" ]; then
+            CURRENT_VERSION=$(git describe)-patch-${version_id}
+          else
+            CURRENT_VERSION=latest
+          fi
+
+          export DRIVERS_TOOLS="$(pwd)/../drivers-tools"
+
+          # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
+          if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
+            export DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
+          fi
+
+          export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
+          export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
+          export UPLOAD_BUCKET="${project}"
+          export PROJECT_DIRECTORY="$(pwd)"
+
+          cat <<EOT > expansion.yml
+          CURRENT_VERSION: "$CURRENT_VERSION"
+          DRIVERS_TOOLS: "$DRIVERS_TOOLS"
+          MONGO_ORCHESTRATION_HOME: "$MONGO_ORCHESTRATION_HOME"
+          MONGODB_BINARIES: "$MONGODB_BINARIES"
+          UPLOAD_BUCKET: "$UPLOAD_BUCKET"
+          PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
+          PREPARE_SHELL: |
+            set -o errexit
+            #set -o xtrace
+            export DRIVERS_TOOLS="$DRIVERS_TOOLS"
+            export MONGO_ORCHESTRATION_HOME="$MONGO_ORCHESTRATION_HOME"
+            export MONGODB_BINARIES="$MONGODB_BINARIES"
+            export UPLOAD_BUCKET="$UPLOAD_BUCKET"
+            export PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
+
+            export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
+            export PATH="$MONGODB_BINARIES:$PATH"
+            export PROJECT="${project}"
+
+            export AUTH=${AUTH}
+            export SSL=${SSL}
+            export TOPOLOGY=${TOPOLOGY}
+            export COMPRESSOR=${COMPRESSOR}
+            export RVM_RUBY="${RVM_RUBY}"
+            export MONGODB_VERSION=${MONGODB_VERSION}
+            export FCV=${FCV}
+            export MONGO_RUBY_DRIVER_LINT=${LINT}
+            export RETRY_READS=${RETRY_READS}
+            export RETRY_WRITES=${RETRY_WRITES}
+            export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
+            export SINGLE_MONGOS="${SINGLE_MONGOS}"
+            export BSON="${BSON}"
+            export MMAPV1="${MMAPV1}"
+            export FLE="${FLE}"
+            export FORK="${FORK}"
+            export SOLO="${SOLO}"
+            export EXTRA_URI_OPTIONS="${EXTRA_URI_OPTIONS}"
+            export API_VERSION_REQUIRED="${API_VERSION_REQUIRED}"
+            export DOCKER_DISTRO="${DOCKER_DISTRO}"
+
+            export STRESS="${STRESS}"
+            export OCSP_ALGORITHM="${OCSP_ALGORITHM}"
+            export OCSP_STATUS="${OCSP_STATUS}"
+            export OCSP_DELEGATE="${OCSP_DELEGATE}"
+            export OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}"
+            export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
+            export OCSP_VERIFIER="${OCSP_VERIFIER}"
+          EOT
+
+          # See what we've done
+          cat expansion.yml
+  <% end %>
+
+    # Load the expansion file to make an evergreen variable with the current
+    # unique version
+    - command: expansions.update
+      params:
+        file: src/expansion.yml
+
+  "delete serverless instance":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        shell: bash
+        script: |
+          ${PREPARE_SHELL}
+          if [[ -n "${SERVERLESS_INSTANCE_NAME}" ]]; then
+            SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} .evergreen/serverless/delete-instance.sh
+          fi
+
+  "export AWS auth credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          IAM_AUTH_ASSUME_AWS_ACCOUNT="${iam_auth_assume_aws_account}"
+          IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY="${iam_auth_assume_aws_secret_access_key}"
+          IAM_AUTH_ASSUME_ROLE_NAME="${iam_auth_assume_role_name}"
+          IAM_AUTH_EC2_INSTANCE_ACCOUNT="${iam_auth_ec2_instance_account}"
+          IAM_AUTH_EC2_INSTANCE_PROFILE="${iam_auth_ec2_instance_profile}"
+          IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY="${iam_auth_ec2_instance_secret_access_key}"
+          IAM_AUTH_ECS_ACCOUNT="${iam_auth_ecs_account}"
+          IAM_AUTH_ECS_ACCOUNT_ARN="${iam_auth_ecs_account_arn}"
+          IAM_AUTH_ECS_CLUSTER="${iam_auth_ecs_cluster}"
+          IAM_AUTH_ECS_SECRET_ACCESS_KEY="${iam_auth_ecs_secret_access_key}"
+          IAM_AUTH_ECS_SECURITY_GROUP="${iam_auth_ecs_security_group}"
+          IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
+          IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
+          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+          EOT
+
+  "export FLE credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
+          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
+          MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
+          MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
+          MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${fle_azure_tenant_id}"
+          MONGO_RUBY_DRIVER_AZURE_CLIENT_ID="${fle_azure_client_id}"
+          MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET="${fle_azure_client_secret}"
+          MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${fle_azure_identity_platform_endpoint}"
+          MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${fle_azure_key_vault_endpoint}"
+          MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${fle_azure_key_name}"
+          MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}"
+          MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY="${fle_gcp_private_key}"
+          MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
+          EOT
+
+  "export Kerberos credentials":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          cat <<EOT > .env.private
+          SASL_HOST=${sasl_host}
+          SASL_PORT=${sasl_port}
+          SASL_USER=${sasl_user}
+          SASL_PASS=${sasl_pass}
+          SASL_DB=${sasl_db}
+          PRINCIPAL=${principal}
+          KERBEROS_DB=${kerberos_db}
+          KEYTAB_BASE64=${keytab_base64}
+          EOT
+
+  "exec script" :
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          sh ${PROJECT_DIRECTORY}/${file}
+
+  "upload mo artifacts":
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          find $MONGO_ORCHESTRATION_HOME -name \*.log\* | xargs tar czf mongodb-logs.tar.gz
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongodb-logs.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-mongodb-logs.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+        display_name: "mongodb-logs.tar.gz"
+
+  "upload working dir":
+    - command: archive.targz_pack
+      params:
+        target: "working-dir.tar.gz"
+        source_dir: ${PROJECT_DIRECTORY}/
+        include:
+          - "./**"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: working-dir.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/artifacts/${task_id}-${execution}-working-dir.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+        display_name: "working-dir.tar.gz"
+    - command: archive.targz_pack
+      params:
+        target: "drivers-dir.tar.gz"
+        source_dir: ${DRIVERS_TOOLS}
+        include:
+          - "./**"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: drivers-dir.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/artifacts/${task_id}-${execution}-drivers-dir.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+        display_name: "drivers-dir.tar.gz"
+
+  "upload test results to s3":
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        # src is the relative path to repo checkout,
+        # This is specified in this yaml file earlier.
+        local_file: ./src/tmp/rspec.json
+        display_name: rspec.json
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/rspec.json
+        content_type: application/json
+        permissions: public-read
+        bucket: mciuploads
+    # AWS does not appear to support on-the-fly gzip encoding; compress
+    # the results manually and upload a compressed file.
+    # Typical size reduction: 50 MB -> 800 KB
+    - command: shell.exec
+      params:
+        script: |
+          gzip <src/tmp/rspec.json >src/tmp/rspec.json.gz
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        # src is the relative path to repo checkout,
+        # This is specified in this yaml file earlier.
+        local_file: ./src/tmp/rspec.json.gz
+        display_name: rspec.json.gz
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/rspec.json.gz
+        content_type: application/gzip
+        permissions: public-read
+        bucket: mciuploads
+    - command: shell.exec
+      params:
+        script: |
+          xz -9 <src/tmp/rspec.json >src/tmp/rspec.json.xz
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        # src is the relative path to repo checkout,
+        # This is specified in this yaml file earlier.
+        local_file: ./src/tmp/rspec.json.xz
+        display_name: rspec.json.xz
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/rspec.json.xz
+        content_type: application/x-xz
+        permissions: public-read
+        bucket: mciuploads
+
+  "upload test results":
+    - command: attach.xunit_results
+      params:
+        file: ./src/tmp/rspec.xml
+
+  "delete private environment":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          rm -f .env.private
+
+  "build and test docker image":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          set -x
+          <%= egos_wrap %> .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
+
+  "run tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          <%= egos_wrap %> .evergreen/run-tests.sh
+
+  "run tests via docker":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          <%= egos_wrap %> .evergreen/run-tests-docker.sh
+
+  "run AWS auth tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          <%= egos_wrap %> .evergreen/run-tests-aws-auth.sh
+
+  "run Kerberos unit tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          <%= egos_wrap %> .evergreen/run-tests-kerberos-unit.sh
+
+  "run Kerberos integration tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          <%= egos_wrap %> .evergreen/run-tests-kerberos-integration.sh
+
+  "run Atlas tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} .evergreen/run-tests-atlas.sh
+
+  "run serverless tests":
+    - command: shell.exec
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # This hack with PROJECT env is necessary while serverless
+          # rejects creating instances with too long names.
+          PROJECT="mongo-ruby-driver" LOADBALANCED="ON" .evergreen/serverless/create-instance.sh
+          cat serverless-expansion.yml
+
+    - command: expansions.update
+      params:
+        file: src/serverless-expansion.yml
+
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" MULTI_ATLASPROXY_SERVERLESS_URI="${MULTI_ATLASPROXY_SERVERLESS_URI}" SINGLE_ATLASPROXY_SERVERLESS_URI="${SINGLE_ATLASPROXY_SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
+
+pre:
+  - func: "fetch source"
+  - func: "fetch egos"
+  - func: "create expansions"
+
+post:
+  - func: "delete private environment"
+  # Removed, causing timeouts
+  # - func: "upload working dir"
+  - func: "upload mo artifacts"
+  #- func: "upload test results"
+  - func: "upload test results to s3"
+  <% if @atlas %>
+  - func: "delete serverless instance"
+  <% end %>
+
+tasks:
+
+  <% if @atlas %>
+  - name: "test-atlas"
+    commands:
+      - func: "run Atlas tests"
+  - name: "test-serverless"
+    commands:
+      - func: "run serverless tests"
+  <% else %>
+  - name: "test-docker"
+    commands:
+      - func: "build and test docker image"
+  - name: "test-mlaunch"
+    commands:
+      - func: "run tests"
+  - name: "test-via-docker"
+    commands:
+      - func: "run tests via docker"
+  - name: "test-kerberos-integration"
+    commands:
+      - func: "export Kerberos credentials"
+      - func: "run Kerberos integration tests"
+  - name: "test-kerberos"
+    commands:
+      - func: "run Kerberos unit tests"
+  - name: "test-fle"
+    commands:
+      - func: "export FLE credentials"
+      - func: "run tests"
+  - name: "test-aws-auth"
+    commands:
+      - func: "export AWS auth credentials"
+      - func: "run AWS auth tests"
+  <% end %>

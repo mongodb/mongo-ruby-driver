@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +28,24 @@ module Mongo
     # @since 2.0.0
     class CollectionsInfo
       include Specifiable
-      include CollectionsInfoOrListCollections
+      include PolymorphicOperation
+      include PolymorphicLookup
+
+      private
+
+      def final_operation(connection)
+         op_class = if connection.features.list_collections_enabled?
+          if connection.features.op_msg_enabled?
+            ListCollections::OpMsg
+          else
+            ListCollections::Command
+          end
+        else
+          CollectionsInfo::Command
+        end
+
+        op_class.new(spec)
+      end
     end
   end
 end

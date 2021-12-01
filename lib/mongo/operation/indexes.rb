@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +30,21 @@ module Mongo
     # @since 2.0.0
     class Indexes
       include Specifiable
-      include OpMsgOrListIndexesCommand
+      include PolymorphicOperation
+      include PolymorphicLookup
+
+      private
+
+      def final_operation(connection)
+        cls = if connection.features.op_msg_enabled?
+          polymorphic_class(self.class.name, :OpMsg)
+        elsif connection.features.list_indexes_enabled?
+          polymorphic_class(self.class.name, :Command)
+        else
+          polymorphic_class(self.class.name, :Legacy)
+        end
+        cls.new(spec)
+      end
     end
   end
 end

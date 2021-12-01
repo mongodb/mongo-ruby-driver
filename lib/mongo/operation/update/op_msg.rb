@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,17 +29,21 @@ module Mongo
         include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
+        include Validatable
 
         private
 
         def selector(connection)
-          { update: coll_name,
-            Protocol::Msg::DATABASE_IDENTIFIER => db_name,
-            ordered: ordered? }
+          {
+            update: coll_name,
+            ordered: ordered?,
+            let: spec[:let]
+          }.compact
         end
 
         def message(connection)
-          section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
+          updates = validate_updates(connection, send(IDENTIFIER))
+          section = Protocol::Msg::Section1.new(IDENTIFIER, updates)
           Protocol::Msg.new(flags, {}, command(connection), section)
         end
       end

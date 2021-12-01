@@ -1,0 +1,33 @@
+{
+  "status": {
+      "$numberInt": "1"
+  },
+  "_id": {
+    "$binary": {
+        "base64": "AZUREAAAAAAAAAAAAAAAAA==",
+        "subType": "04"
+    }
+  },
+  "masterKey": {
+    "provider": "azure",
+    "keyVaultEndpoint": "key-vault-csfle.vault.azure.net",
+    "keyName": "key-name-csfle"
+  },
+  "updateDate": {
+      "$date": {
+          "$numberLong": "1557827033449"
+      }
+  },
+  "keyAltNames": ["ssn_encryption_key"],
+  "keyMaterial": {
+    "$binary": {
+        "base64": "GjKv7Q/e62E14noqXuwOWf/AI3IZJcdQ1Jcsh86MR/582kuHBQSy7hXYi1sL\n8fn8zkWe987/Ll2Oq43049djxQGEobmw8Qg3Gk2czRCzS8TMy6yASMfwROO7\nn0k+QJwiTqzLRfP+rkJVxSde1v+nPjmonup8T1L98WJywjHFDWaxI32o7X6U\nY9iTVdQ1o8RfyR9IUOg7asHWq1zbn7CwmHz264OBG79SKXN5AkG8X4QfGIQh\nu0v7H3n4r8ZpvIMa2XFrHGkoDgkCKiAmat5s5RkChT57Bu6h4Q98Fg1clIBU\n2G/BrdtbzKYktpq6CZFyvtXd48juya3w7UDLAu7h6Q==",
+        "subType": "00"
+    }
+  },
+  "creationDate": {
+      "$date": {
+          "$numberLong": "1637319584426"
+      }
+   }
+}

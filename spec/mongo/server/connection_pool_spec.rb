@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
@@ -5,9 +8,13 @@ describe Mongo::Server::ConnectionPool do
   let(:options) { {} }
 
   let(:server_options) do
-    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
-      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
-      .merge(options)
+    Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
+      SpecConfig.instance.all_test_options,
+    )).tap do |opts|
+      opts.delete(:min_pool_size)
+      opts.delete(:max_pool_size)
+      opts.delete(:wait_queue_timeout)
+    end.update(options)
   end
 
   let(:address) do
@@ -310,6 +317,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'connection of the same generation as pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       before do
         expect(pool.generation).to eq(connection.generation)
       end
@@ -342,6 +354,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'connection of earlier generation than pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       let(:connection) do
         pool.check_out.tap do |connection|
           expect(connection).to receive(:generation).at_least(:once).and_return(0)
@@ -357,6 +374,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'connection of later generation than pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       let(:connection) do
         pool.check_out.tap do |connection|
           expect(connection).to receive(:generation).at_least(:once).and_return(7)
@@ -442,6 +464,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when there is an available connection which is stale' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       let(:options) do
         { max_pool_size: 2, max_idle_time: 0.1 }
       end
@@ -482,13 +509,54 @@ describe Mongo::Server::ConnectionPool do
 
       context 'when the max size is reached' do
 
-        it 'raises a timeout error' do
-          expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
-          expect {
+        context 'without service_id' do
+          it 'raises a timeout error' do
+            expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
             pool.check_out
-            pool.check_out
-          }.to raise_error(::Timeout::Error)
-          expect(pool.size).to eq(1)
+            expect {
+              pool.check_out
+            }.to raise_error(::Timeout::Error)
+            expect(pool.size).to eq(1)
+          end
+        end
+
+        context 'with service_id' do
+          require_topology :load_balanced
+
+          let(:service_id) do
+            pool.with_connection do |connection|
+              connection.service_id.should_not be nil
+              connection.service_id
+            end
+          end
+
+          it 'raises a timeout error' do
+            expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
+            service_id
+
+            pool.check_out(service_id: service_id)
+
+            expect {
+              pool.check_out(service_id: service_id)
+            }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+
+            expect(pool.size).to eq(1)
+          end
+
+          it 'waits for the timeout' do
+            expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
+            service_id
+
+            pool.check_out(service_id: service_id)
+
+            start_time = Mongo::Utils.monotonic_time
+            expect {
+              pool.check_out(service_id: service_id)
+            }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+            elapsed_time = Mongo::Utils.monotonic_time - start_time
+
+            elapsed_time.should > 1
+          end
         end
       end
     end
@@ -527,14 +595,14 @@ describe Mongo::Server::ConnectionPool do
         authorized_client
       end
 
-       let(:pool) do
+      let(:pool) do
         client.cluster.next_primary.pool
       end
 
        it 'raises an error and emits ConnectionCheckOutFailedEvent' do
         pool
 
-        subscriber = EventSubscriber.new
+        subscriber = Mrss::EventSubscriber.new
         client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
         subscriber.clear_events!
@@ -572,6 +640,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     shared_examples_for 'disconnects and removes all connections in the pool and bumps generation' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
       it 'disconnects and removes and bumps' do
         old_connections = []
         pool.instance_variable_get('@available_connections').each do |connection|

@@ -1,7 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Insert do
-  require_no_multi_shard
+  require_no_multi_mongos
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   before do
     begin
@@ -100,7 +106,7 @@ describe Mongo::Operation::Insert do
 
       let(:inserted_ids) do
         authorized_primary.with_connection do |connection|
-          op.bulk_execute(connection, client: nil).inserted_ids
+          op.bulk_execute(connection, context: context).inserted_ids
         end
       end
 
@@ -131,7 +137,7 @@ describe Mongo::Operation::Insert do
 
         let(:response) do
           authorized_primary.with_connection do |connection|
-            op.bulk_execute(connection, client: nil)
+            op.bulk_execute(connection, context: context)
           end
         end
 
@@ -151,7 +157,7 @@ describe Mongo::Operation::Insert do
 
         let(:response) do
           authorized_primary.with_connection do |connection|
-            op.bulk_execute(connection, client: nil)
+            op.bulk_execute(connection, context: context)
           end
         end
 
@@ -190,7 +196,7 @@ describe Mongo::Operation::Insert do
 
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
-              failing_insert.bulk_execute(connection, client: nil)
+              failing_insert.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find.count).to eq(1)
           end
@@ -206,7 +212,7 @@ describe Mongo::Operation::Insert do
 
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
-              failing_insert.bulk_execute(connection, client: nil)
+              failing_insert.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find.count).to eq(1)
           end
@@ -239,7 +245,7 @@ describe Mongo::Operation::Insert do
 
           it 'does not abort after first error' do
             authorized_primary.with_connection do |connection|
-              failing_insert.bulk_execute(connection, client: nil)
+              failing_insert.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find.count).to eq(2)
           end
@@ -256,7 +262,7 @@ describe Mongo::Operation::Insert do
 
           it 'does not after first error' do
             authorized_primary.with_connection do |connection|
-              failing_insert.bulk_execute(connection, client: nil)
+              failing_insert.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find.count).to eq(2)
           end

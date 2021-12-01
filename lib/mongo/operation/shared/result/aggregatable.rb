@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +22,7 @@ module Mongo
       # Defines custom behavior of bulk write results
       #
       # @since 2.0.0
+      # @api private
       module Aggregatable
 
         # Aggregate the write errors returned from this result.

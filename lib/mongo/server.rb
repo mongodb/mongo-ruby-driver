@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +54,9 @@ module Mongo
     #   done by this server. Note: setting this option to false will make
     #   the server non-functional. It is intended for use in tests which
     #   manually invoke SDAM state transitions.
+    # @option options [ true | false ] :load_balancer Whether this server
+    #   is a load balancer.
+    # @option options [ String ] :connect The client connection mode.
     #
     # @since 2.0.0
     def initialize(address, cluster, monitoring, event_listeners, options = {})
@@ -64,14 +70,19 @@ module Mongo
       @connection_id_gen = Class.new do
         include Id
       end
-      @scan_semaphore = Semaphore.new
+      @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
-      @description = Description.new(address, {})
+      @description = Description.new(address, {},
+        load_balancer: !!@options[:load_balancer],
+        force_load_balancer: force_load_balancer?,
+      )
       @last_scan = nil
+      @last_scan_monotime = nil
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
-            app_metadata: Monitor::AppMetadata.new(cluster.options),
+            app_metadata: cluster.monitor_app_metadata,
+            push_monitor_app_metadata: cluster.push_monitor_app_metadata,
             heartbeat_interval: cluster.heartbeat_interval,
         ))
         unless _monitor == false
@@ -102,6 +113,15 @@ module Mongo
     #   description the monitor refreshes.
     attr_reader :description
 
+    # Returns whether this server is forced to be a load balancer.
+    #
+    # @return [ true | false ] Whether this server is forced to be a load balancer.
+    #
+    # @api private
+    def force_load_balancer?
+      options[:connect] == :load_balanced
+    end
+
     # @return [ Time | nil ] last_scan The time when the last server scan
     #   completed, or nil if the server has not been scanned yet.
     #
@@ -113,6 +133,18 @@ module Mongo
         @last_scan
       end
     end
+
+    # @return [ Float | nil ] last_scan_monotime The monotonic time when the last server scan
+    #   completed, or nil if the server has not been scanned yet.
+    # @api private
+    def last_scan_monotime
+      if description && !description.config.empty?
+        description.last_update_monotime
+      else
+        @last_scan_monotime
+      end
+    end
+
 
     # @deprecated
     def heartbeat_frequency
@@ -163,6 +195,7 @@ module Mongo
                    :secondary?,
                    :standalone?,
                    :unknown?,
+                   :load_balancer?,
                    :last_write_date,
                    :logical_session_timeout
 
@@ -171,6 +204,11 @@ module Mongo
                    :app_metadata,
                    :cluster_time,
                    :update_cluster_time
+
+    # @api private
+    def_delegators :cluster,
+                   :monitor_app_metadata,
+                   :push_monitor_app_metadata
 
     def_delegators :features,
                    :check_driver_support!
@@ -198,20 +236,6 @@ module Mongo
     def ==(other)
       return false unless other.is_a?(Server)
       address == other.address
-    end
-
-    # Get a new context for this server in which to send messages.
-    #
-    # @example Get the server context.
-    #   server.context
-    #
-    # @return [ Mongo::Server::Context ] context The server context.
-    #
-    # @since 2.0.0
-    #
-    # @deprecated Will be removed in version 3.0
-    def context
-      Context.new(self)
     end
 
     # Determine if a connection to the server is able to be established and
@@ -272,19 +296,6 @@ module Mongo
       @connected
     end
 
-    # When the server is flagged for garbage collection, stop the monitor
-    # thread.
-    #
-    # @example Finalize the object.
-    #   Server.finalize(monitor)
-    #
-    # @param [ Server::Monitor ] monitor The server monitor.
-    #
-    # @since 2.2.0
-    def self.finalize(monitor)
-      proc { monitor.stop! }
-    end
-
     # Start monitoring the server.
     #
     # Used internally by the driver to add a server to a cluster
@@ -292,14 +303,20 @@ module Mongo
     #
     # @api private
     def start_monitoring
+      publish_opening_event
+      if options[:monitoring_io] != false
+        monitor.run!
+      end
+    end
+
+    # Publishes the server opening event.
+    #
+    # @api private
+    def publish_opening_event
       publish_sdam_event(
         Monitoring::SERVER_OPENING,
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
-      if options[:monitoring_io] != false
-        ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
-        monitor.run!
-      end
     end
 
     # Get a pretty printed server inspection.
@@ -311,7 +328,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
+      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port} #{status}>"
     end
 
     # @return [ String ] String representing server status (e.g. PRIMARY).
@@ -319,6 +336,8 @@ module Mongo
     # @api private
     def status
       case
+      when load_balancer?
+        'LB'
       when primary?
         'PRIMARY'
       when secondary?
@@ -350,6 +369,10 @@ module Mongo
       status = self.status || ''
       if replica_set_name
         status += " replica_set=#{replica_set_name}"
+      end
+
+      unless monitor&.running?
+        status += " NO-MONITORING"
       end
 
       if @pool
@@ -421,8 +444,8 @@ module Mongo
     # @return [ Object ] The result of the block execution.
     #
     # @since 2.3.0
-    def with_connection(&block)
-      pool.with_connection(&block)
+    def with_connection(service_id: nil, &block)
+      pool.with_connection(service_id: service_id, &block)
     end
 
     # Handle handshake failure.
@@ -432,7 +455,11 @@ module Mongo
     def handle_handshake_failure!
       yield
     rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError => e
-      unknown!(generation: e.generation)
+      unknown!(
+        generation: e.generation,
+        service_id: e.service_id,
+        stop_push_monitor: true,
+      )
       raise
     end
 
@@ -455,7 +482,11 @@ module Mongo
       raise
     rescue Mongo::Error::SocketError => e
       # non-timeout network error
-      unknown!(generation: e.generation)
+      unknown!(
+        generation: e.generation,
+        service_id: e.service_id,
+        stop_push_monitor: true,
+      )
       raise
     rescue Auth::Unauthorized
       # auth error, keep server description and topology as they are
@@ -501,11 +532,33 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
+    # @option options [ Object ] :service_id Discard state for the specified
+    #   service id only.
     # @option options [ TopologyVersion ] :topology_version Topology version
     #   of the error response that is causing the server to be marked unknown.
+    # @option options [ true | false ] :stop_push_monitor Whether to stop
+    #   the PushMonitor associated with the server, if any.
+    # @option options [ Object ] :service_id Discard state for the specified
+    #   service id only.
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
+      if load_balancer?
+        # When the client is in load-balanced topology, servers (the one and
+        # only that can be) starts out as a load balancer and stays as a
+        # load balancer indefinitely. As such it is not marked unknown.
+        #
+        # However, this method also clears connection pool for the server
+        # when the latter is marked unknown, and this part needs to happen
+        # when the server is a load balancer.
+        if service_id = options[:service_id]
+          pool.disconnect!(service_id: service_id)
+        elsif Lint.enabled?
+          raise Error::LintError, 'Load balancer was asked to be marked unknown without a service id'
+        end
+        return
+      end
+
       if options[:generation] && options[:generation] < pool.generation
         return
       end
@@ -516,13 +569,23 @@ module Mongo
         return
       end
 
+      if options[:stop_push_monitor]
+        monitor&.stop_push_monitor!
+      end
+
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
       config = {}
+      if options[:service_id]
+        config['serviceId'] = options[:service_id]
+      end
       if options[:topology_version]
         config['topologyVersion'] = options[:topology_version]
       end
-      new_description = Description.new(address, config)
+      new_description = Description.new(address, config,
+        load_balancer: load_balancer?,
+        force_load_balancer: options[:connect] == :load_balanced,
+      )
       cluster.run_sdam_flow(description, new_description, options)
     end
 
@@ -531,11 +594,14 @@ module Mongo
       @description = description
     end
 
+    # @param [ Object ] :service_id Close connections with the specified
+    #   service id only.
+    #
     # @api private
-    def clear_connection_pool
+    def clear_connection_pool(service_id: nil)
       @pool_lock.synchronize do
         if @pool
-          @pool.disconnect!
+          @pool.disconnect!(service_id: service_id)
         end
       end
     end
@@ -548,6 +614,7 @@ module Mongo
     # @api private
     def update_last_scan
       @last_scan = Time.now
+      @last_scan_monotime = Utils.monotonic_time
     end
   end
 end
@@ -558,7 +625,7 @@ require 'mongo/server/connection_base'
 require 'mongo/server/pending_connection'
 require 'mongo/server/connection'
 require 'mongo/server/connection_pool'
-require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
 require 'mongo/server/round_trip_time_averager'
+require 'mongo/server/push_monitor'

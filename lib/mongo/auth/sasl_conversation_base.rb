@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,19 +38,7 @@ module Mongo
       # @return [ Protocol::Message ] The first SASL conversation message.
       def start(connection)
         selector = client_first_document
-        if connection && connection.features.op_msg_enabled?
-          selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-          cluster_time = connection.mongos? && connection.cluster_time
-          selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-          Protocol::Msg.new([], {}, selector)
-        else
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            selector,
-            limit: -1,
-          )
-        end
+        build_message(connection, user.auth_source, selector)
       end
 
       private

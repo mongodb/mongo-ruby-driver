@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +19,7 @@ module Mongo
   module Operation
     class MapReduce
 
-      # A MongoDB mapreduce operation sent as an op message.
+      # A MongoDB map-reduce operation sent as an op message.
       #
       # @api private
       #

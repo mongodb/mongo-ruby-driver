@@ -36,6 +36,7 @@ tests:
     options:
       directConnection: false
       connect: replica_set
+      replicaSet: foo
     
   -
     description: directConnection=true and connect=sharded

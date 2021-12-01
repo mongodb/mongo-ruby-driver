@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,11 +86,24 @@ module Mongo
       # @param [ Mongo::Server ] server The server the connection is for.
       # @param [ Hash ] options The connection options.
       #
-      # @option options [ Integer ] :generation Connection pool's generation
-      #   for this connection.
+      # @option options [ Integer ] :generation The generation of this
+      #   connection. The generation should only be specified in this option
+      #   when not in load-balancing mode, and it should be the generation
+      #   of the connection pool when the connection is created. In
+      #   load-balancing mode, the generation is set on the connection
+      #   after the handshake completes.
+      # @option options [ Hash ] :server_api The requested server API version.
+      #   This hash can have the following items:
+      #   - *:version* -- string
+      #   - *:strict* -- boolean
+      #   - *:deprecation_errors* -- boolean
       #
       # @since 2.0.0
       def initialize(server, options = {})
+        if server.load_balancer? && options[:generation]
+          raise ArgumentError, "Generation cannot be set when server is a load balancer"
+        end
+
         @id = server.next_connection_id
         @monitoring = server.monitoring
         @options = options.freeze
@@ -163,7 +179,16 @@ module Mongo
         unless @socket
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
-          @socket, @description = do_connect
+          @socket, @description, @compressor = do_connect
+
+          if server.load_balancer?
+            if Lint.enabled?
+              unless service_id
+                raise Error::InternalDriverError, "The connection is to a load balancer and it must have service_id set here, but does not"
+              end
+            end
+            @generation = connection_pool.generation_manager.generation(service_id: service_id)
+          end
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionReady.new(address, id)
@@ -177,7 +202,7 @@ module Mongo
       # Separate method to permit easier mocking in the test suite.
       #
       # @return [ Array<Socket, Server::Description> ] Connected socket and
-      #   a server description instance from the ismaster response of the
+      #   a server description instance from the hello response of the
       #   returned socket.
       private def do_connect
         socket = add_server_diagnostics do
@@ -194,7 +219,7 @@ module Mongo
           raise
         end
 
-        [socket, pending_connection.description]
+        [socket, pending_connection.description, pending_connection.compressor]
       end
 
       # Disconnect the connection.
@@ -220,7 +245,7 @@ module Mongo
         @auth_mechanism = nil
         @last_checkin = nil
         if socket
-          socket.close
+          socket.close rescue nil
           @socket = nil
         end
         @closed = true
@@ -306,7 +331,12 @@ module Mongo
           yield
         rescue Error::SocketError => e
           @error = e
-          @server.unknown!(generation: e.generation)
+          @server.unknown!(
+            generation: e.generation,
+            # or description.service_id?
+            service_id: e.service_id,
+            stop_push_monitor: true,
+          )
           raise
         rescue Error::SocketTimeoutError => e
           @error = e

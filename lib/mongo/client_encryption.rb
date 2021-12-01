@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,13 +31,18 @@ module Mongo
     # @option options [ String ] :key_vault_namespace The name of the
     #   key vault collection in the format "database.collection".
     # @option options [ Hash ] :kms_providers A hash of key management service
-    #   configuration information. Valid hash keys are :local or :aws. There
-    #   may be more than one KMS provider specified.
+    #   configuration information.
+    #   @see Mongo::Crypt::KMS::Credentials for list of options for every
+    #   supported provider.
+    #   @note There may be more than one KMS provider specified.
+    #
+    # @raise [ ArgumentError ] If required options are missing or incorrectly
+    #   formatted.
     def initialize(key_vault_client, options={})
       @encrypter = Crypt::ExplicitEncrypter.new(
         key_vault_client,
         options[:key_vault_namespace],
-        options[:kms_providers]
+        Crypt::KMS::Credentials.new(options[:kms_providers])
       )
     end
 
@@ -61,10 +69,9 @@ module Mongo
     # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
     #   BSON::Binary object with type :uuid.
     def create_data_key(kms_provider, options={})
-      @encrypter.create_and_insert_data_key(
-        kms_provider,
-        options
-      )
+      key_document = Crypt::KMS::MasterKeyDocument.new(kms_provider, options)
+      key_alt_names = options[:key_alt_names]
+      @encrypter.create_and_insert_data_key(key_document, key_alt_names)
     end
 
     # Encrypts a value using the specified encryption key and algorithm.

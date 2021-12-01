@@ -1,8 +1,12 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Command do
+  require_no_required_api_version
 
-  let(:selector) { { :ismaster => 1 } }
+  let(:selector) { { :ping => 1 } }
   let(:options) { { :limit => -1 } }
   let(:spec) do
     { :selector => selector,
@@ -11,6 +15,8 @@ describe Mongo::Operation::Command do
     }
   end
   let(:op) { described_class.new(spec) }
+
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#initialize' do
 
@@ -43,7 +49,7 @@ describe Mongo::Operation::Command do
     context 'when the command succeeds' do
 
       let(:response) do
-        op.execute(authorized_primary, client: nil)
+        op.execute(authorized_primary, context: context)
       end
 
       it 'returns the reponse' do
@@ -59,7 +65,7 @@ describe Mongo::Operation::Command do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          op.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
@@ -67,12 +73,12 @@ describe Mongo::Operation::Command do
     context 'when a document exceeds max bson size' do
 
       let(:selector) do
-        { :ismaster => '1'*17000000 }
+        { :hello => '1'*17000000 }
       end
 
       it 'raises an error' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          op.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end

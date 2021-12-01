@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +30,7 @@ module Mongo
         include Limited
         include ReadPreferenceSupported
         include PolymorphicResult
+        include CommandBuilder
 
         private
 

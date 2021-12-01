@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +52,66 @@ module Mongo
       # @api private
       attr_reader :pid
 
+      # Build a document that should be used for connection handshake.
+      #
+      # @param [ Server::AppMetadata ] app_metadata Application metadata
+      # @param [ BSON::Document ] speculative_auth_doc The speculative
+      #   authentication document, if any.
+      # @param [ true | false ] load_balancer Whether the connection is to
+      #   a load balancer.
+      # @param server_api [ Hash | nil ] server_api Server API version.
+      #
+      # @return [BSON::Document] Document that should be sent to a server
+      #     for handshake purposes.
+      #
+      # @api private
+      def handshake_document(app_metadata, speculative_auth_doc: nil, load_balancer: false, server_api: nil)
+        serv_api = app_metadata.server_api || server_api
+        document = if serv_api
+                     HELLO_DOC.merge(Utils.transform_server_api(serv_api))
+                   else
+                     LEGACY_HELLO_DOC
+                   end
+        document.merge(app_metadata.validated_document).tap do |doc|
+          if speculative_auth_doc
+            doc.update(speculativeAuthenticate: speculative_auth_doc)
+          end
+          if load_balancer
+            doc.update(loadBalanced: true)
+          end
+        end
+      end
+
+      # Build a command that should be used for connection handshake.
+      #
+      # @param [ BSON::Document ] handshake_document Document that should be
+      #   sent to a server for handshake purpose.
+      #
+      # @return [ Protocol::Message ] Command that should be sent to a server
+      #   for handshake purposes.
+      #
+      # @api private
+      def handshake_command(handshake_document)
+        if handshake_document['apiVersion']
+          Protocol::Msg.new(
+            [], {}, handshake_document.merge({'$db' => Database::ADMIN})
+          )
+        else
+          Protocol::Query.new(
+            Database::ADMIN,
+            Database::COMMAND,
+            handshake_document,
+            :limit => -1
+          )
+        end
+      end
+
+
       private
+
+      HELLO_DOC = BSON::Document.new({ hello: 1 }).freeze
+
+      LEGACY_HELLO_DOC = BSON::Document.new({ isMaster: 1, helloOk: true }).freeze
 
       attr_reader :socket
 
@@ -88,14 +150,22 @@ module Mongo
         # Server::Monitor::Connection does not reference its server, but
         # knows its address. Server::Connection delegates the address to its
         # server.
-        note = "on #{address.seed}"
+        note = +"on #{address.seed}"
         if respond_to?(:id)
           note << ", connection #{generation}:#{id}"
+        end
+        # Non-monitoring connections have service id.
+        # Monitoring connections do not.
+        if respond_to?(:service_id) && service_id
+          note << ", service id #{service_id}"
         end
         e.add_note(note)
         if respond_to?(:generation)
           # Non-monitoring connections
           e.generation = generation
+          if respond_to?(:description)
+            e.service_id = service_id
+          end
         end
         raise e
       end
@@ -105,8 +175,8 @@ module Mongo
           options.select { |k, v| k.to_s.start_with?('ssl') }
         else
           # Due to the way options are propagated from the client, if we
-          # decide that we don't want to use TLS we need to have the ssl
-          # options explicitly set to false or the value provided to the
+          # decide that we don't want to use TLS we need to have the :ssl
+          # option explicitly set to false or the value provided to the
           # connection might be overwritten by the default inherited from
           # the client.
           {ssl: false}

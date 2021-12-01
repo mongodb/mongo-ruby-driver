@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Failing retryable operations' do
   # Requirement for fail point
   min_server_fcv '4.0'
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client_options) do
     {}
@@ -106,7 +109,7 @@ describe 'Failing retryable operations' do
           },
         }
 
-        if ClusterConfig.instance.short_server_version >= '4.3'
+        if ClusterConfig.instance.short_server_version >= '4.4'
           # Server versions 4.4 and newer will add the RetryableWriteError
           # label to all retryable errors, and the driver must not add the label
           # if it is not already present.

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 shared_context 'server selector' do
 
   let(:max_staleness) { nil }
@@ -22,7 +25,19 @@ shared_context 'server selector' do
       expect(server.unknown?).to be true
     end
   end
-  let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness, hedge: hedge } }
+  let(:server_selection_timeout_options) do
+    {
+      server_selection_timeout: 0.1,
+    }
+  end
+  let(:options) do
+    {
+      mode: name,
+      tag_sets: tag_sets,
+      max_staleness: max_staleness,
+      hedge: hedge,
+    }
+  end
   let(:selector) { described_class.new(options) }
   let(:monitoring) do
     Mongo::Monitoring.new(monitoring: false)
@@ -46,10 +61,10 @@ shared_examples 'a server selector mode' do
     end
   end
 
-  describe '#slave_ok?' do
+  describe '#secondary_ok?' do
 
-    it 'returns whether the slave_ok bit should be set' do
-      expect(selector.slave_ok?).to eq(slave_ok)
+    it 'returns whether the secondary_ok bit should be set' do
+      expect(selector.secondary_ok?).to eq(secondary_ok)
     end
   end
 

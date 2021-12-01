@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
+require 'support/shared/auth_context'
 
 describe Mongo::Auth::Scram do
   require_no_external_user
@@ -7,9 +11,7 @@ describe Mongo::Auth::Scram do
     authorized_client.cluster.next_primary
   end
 
-  let(:connection) do
-    Mongo::Server::Connection.new(server, SpecConfig.instance.test_options)
-  end
+  include_context 'auth unit tests'
 
   let(:cache_mod) { Mongo::Auth::CredentialCache }
 
@@ -65,7 +67,7 @@ describe Mongo::Auth::Scram do
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
             expect {
-              authenticator.login(connection)
+              authenticator.login
             }.to raise_error(Mongo::Auth::Unauthorized)
           end
         end

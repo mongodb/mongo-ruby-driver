@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 require 'runners/connection_string'
 
-describe 'Uri Options' do
+describe 'URI options' do
   include Mongo::ConnectionString
 
   # Since the tests issue global assertions on Mongo::Logger,
@@ -22,38 +25,22 @@ describe 'Uri Options' do
             require_mongo_kerberos
           end
 
-          context 'when the uri should warn', if: test.warn? do
+          if test.valid?
 
-            before do
-              expect(Mongo::Logger.logger).to receive(:warn)
+            # The warning assertion needs to be first because the test caches
+            # the client instance, and subsequent examples don't instantiate it
+            # again.
+            if test.warn?
+              it 'warns' do
+                expect(Mongo::Logger.logger).to receive(:warn)#.and_call_original
+                expect(test.client).to be_a(Mongo::Client)
+              end
+            else
+              it 'does not warn' do
+                expect(Mongo::Logger.logger).not_to receive(:warn)
+                expect(test.client).to be_a(Mongo::Client)
+              end
             end
-
-            it 'warns' do
-              expect(test.client).to be_a(Mongo::Client)
-            end
-          end
-
-          context 'when the uri is invalid', unless: test.valid? do
-
-            it 'raises an error' do
-              expect{
-                test.uri
-              }.to raise_exception(Mongo::Error::InvalidURI)
-            end
-          end
-
-          context 'when the uri should not warn', if: !test.warn? && test.valid? do
-
-            before do
-              expect(Mongo::Logger.logger).not_to receive(:warn)
-            end
-
-            it 'does not raise an exception or warning' do
-              expect(test.client).to be_a(Mongo::Client)
-            end
-          end
-
-          context 'when the uri is valid', if: test.valid? do
 
             if test.hosts
               it 'creates a client with the correct hosts' do
@@ -65,8 +52,38 @@ describe 'Uri Options' do
               expect(test.client).to match_auth(test)
             end
 
-            it 'creates a client with the correct options' do
-              expect(test.client).to match_options(test)
+            if opts = test.expected_options
+              if opts['compressors'] && opts['compressors'].include?('snappy')
+                before do
+                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /snappy/
+                    skip "This test requires snappy compression"
+                  end
+                end
+              end
+
+              if opts['compressors'] && opts['compressors'].include?('zstd')
+                before do
+                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /zstd/
+                    skip "This test requires zstd compression"
+                  end
+                end
+              end
+
+              it 'creates a client with the correct options' do
+                mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
+                expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
+                  opts,
+                )
+                mapped.should == expected
+              end
+            end
+
+          else
+
+            it 'raises an error' do
+              expect{
+                test.uri
+              }.to raise_exception(Mongo::Error::InvalidURI)
             end
           end
         end

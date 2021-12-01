@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # these tests fail intermittently in evergreen
@@ -52,20 +55,14 @@ describe Mongo::Server::Connection, retry: 3 do
       described_class.new(server, server.options)
     end
 
-    let(:reply) do
-      double('reply').tap do |r|
-        allow(r).to receive(:documents).and_return([ ismaster ])
-      end
-    end
-
-    context 'when the ismaster response includes saslSupportedMechs' do
+    context 'when the hello response includes saslSupportedMechs' do
       min_server_fcv '4.0'
 
       let(:server_options) do
         SpecConfig.instance.test_options.merge(
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
-          auth_source: SpecConfig.instance.test_db,
+          auth_source: 'admin',
         )
       end
 
@@ -74,7 +71,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
 
       before do
-        client = authorized_client.with(database: SpecConfig.instance.test_db)
+        client = authorized_client.with(database: 'admin')
         info = client.database.users.info(SpecConfig.instance.test_user.name)
         expect(info.length).to eq(1)
         # this before block may have made 2 or 3 clients
@@ -94,7 +91,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when the ismaster response indicates the auth mechanism is :scram' do
+    context 'when the hello response indicates the auth mechanism is :scram' do
       require_no_external_user
 
       let(:features) do
@@ -116,7 +113,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when the ismaster response indicates the auth mechanism is :mongodb_cr' do
+    context 'when the hello response indicates the auth mechanism is :mongodb_cr' do
       let(:features) do
         Mongo::Server::Description::Features.new(0..2)
       end

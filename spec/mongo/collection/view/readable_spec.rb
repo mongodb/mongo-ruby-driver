@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::Readable do
@@ -598,6 +601,72 @@ describe Mongo::Collection::View::Readable do
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
         end
+      end
+    end
+  end
+
+  describe "#estimated_document_count" do
+
+    let(:result) do
+      view.estimated_document_count(options)
+    end
+
+    context 'when limit is set' do
+      it 'raises an error' do
+        expect {
+          view.limit(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+      end
+    end
+
+    context 'when skip is set' do
+      it 'raises an error' do
+        expect {
+          view.skip(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+      end
+    end
+
+    context 'when collection has documents' do
+      let(:documents) do
+        (1..10).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
+      end
+
+      context 'when a selector is provided' do
+
+        let(:selector) do
+          { field: 'test1' }
+        end
+
+        it 'raises an error' do
+          expect {
+            result
+          }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with a filter")
+        end
+      end
+
+      context 'when no selector is provided' do
+
+        it 'returns the estimated count of matching documents' do
+          expect(view.estimated_document_count).to eq(10)
+        end
+      end
+    end
+
+    context 'when collection does not exist' do
+
+      let(:view) do
+        Mongo::Collection::View.new(
+          authorized_client['nonexistent-collection-for-estimated-document-count'], selector, options)
+      end
+
+      it 'returns 0' do
+        view.estimated_document_count.should == 0
       end
     end
   end

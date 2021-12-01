@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,8 +110,7 @@ EOT
         expected_command = expected_event.delete('command')
         actual_command = actual_event.delete('command')
 
-        # Hash#compact is ruby 2.4+
-        expected_presence = expected_command.select { |k, v| !v.nil? }
+        expected_presence = expected_command.compact
         expected_absence = expected_command.select { |k, v| v.nil? }
 
         expected_presence.each do |k, v|
@@ -189,6 +191,14 @@ EOT
             expect([nil, []]).to include(actual[k])
           else
             expect(actual[k]).to eq(expected[k].values)
+          end
+          return
+        end
+
+        if k == 'updateDescription'
+          # Change stream result - verify subset, not exact match
+          expected.fetch(k).each do |sub_k, sub_v|
+            {sub_k => sub_v}.should == {sub_k => actual.fetch(k).fetch(sub_k)}
           end
           return
         end

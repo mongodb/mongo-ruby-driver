@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,7 +91,7 @@ module Mongo
       #
       # @since 2.0.0
       def execute(target)
-        op_name = Utils.underscore(name)
+        op_name = ::Utils.underscore(name)
         if target.is_a?(Mongo::Database)
           op_name = "db_#{op_name}"
         elsif target.is_a?(Mongo::Client)
@@ -99,14 +102,14 @@ module Mongo
 
       def database_options
         if opts = @spec['databaseOptions']
-          Utils.convert_operation_options(opts)
+          ::Utils.convert_operation_options(opts)
         else
           nil
         end
       end
 
       def collection_options
-        Utils.convert_operation_options(@spec['collectionOptions'])
+        ::Utils.convert_operation_options(@spec['collectionOptions'])
       end
 
       private
@@ -114,31 +117,31 @@ module Mongo
       # read operations
 
       def aggregate(collection, context)
-        collection.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
+        collection.aggregate(arguments['pipeline'], transformed_options(context)).to_a
       end
 
       def db_aggregate(database, context)
-        database.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
+        database.aggregate(arguments['pipeline'], transformed_options(context)).to_a
       end
 
       def count(collection, context)
-        collection.count(arguments['filter'], context.transform_arguments(options))
+        collection.count(arguments['filter'], transformed_options(context))
       end
 
       def count_documents(collection, context)
-        collection.count_documents(arguments['filter'], context.transform_arguments(options))
+        collection.count_documents(arguments['filter'], transformed_options(context))
       end
 
       def distinct(collection, context)
-        collection.distinct(arguments['fieldName'], arguments['filter'], context.transform_arguments(options))
+        collection.distinct(arguments['fieldName'], arguments['filter'], transformed_options(context))
       end
 
       def estimated_document_count(collection, context)
-        collection.estimated_document_count(context.transform_arguments(options))
+        collection.estimated_document_count(transformed_options(context))
       end
 
       def find(collection, context)
-        opts = context.transform_arguments(options)
+        opts = transformed_options(context)
         if arguments['modifiers']
           opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers']))
         end
@@ -183,7 +186,7 @@ module Mongo
       # write operations
 
       def bulk_write(collection, context)
-        result = collection.bulk_write(requests, context.transform_arguments(options))
+        result = collection.bulk_write(requests, transformed_options(context))
         return_doc = {}
         return_doc['deletedCount'] = result.deleted_count || 0
         return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
@@ -197,50 +200,50 @@ module Mongo
       end
 
       def delete_many(collection, context)
-        result = collection.delete_many(arguments['filter'], context.transform_arguments(options))
+        result = collection.delete_many(arguments['filter'], transformed_options(context))
         { 'deletedCount' => result.deleted_count }
       end
 
       def delete_one(collection, context)
-        result = collection.delete_one(arguments['filter'], context.transform_arguments(options))
+        result = collection.delete_one(arguments['filter'], transformed_options(context))
         { 'deletedCount' => result.deleted_count }
       end
 
       def insert_many(collection, context)
-        result = collection.insert_many(arguments['documents'], context.transform_arguments(options))
+        result = collection.insert_many(arguments['documents'], transformed_options(context))
         { 'insertedIds' => result.inserted_ids }
       end
 
       def insert_one(collection, context)
-        result = collection.insert_one(arguments['document'], context.transform_arguments(options))
+        result = collection.insert_one(arguments['document'], transformed_options(context))
         { 'insertedId' => result.inserted_id }
       end
 
       def replace_one(collection, context)
-        result = collection.replace_one(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
+        result = collection.replace_one(arguments['filter'], arguments['replacement'], transformed_options(context))
         update_return_doc(result)
       end
 
       def update_many(collection, context)
-        result = collection.update_many(arguments['filter'], arguments['update'], context.transform_arguments(options))
+        result = collection.update_many(arguments['filter'], arguments['update'], transformed_options(context))
         update_return_doc(result)
       end
 
       def update_one(collection, context)
-        result = collection.update_one(arguments['filter'], arguments['update'], context.transform_arguments(options))
+        result = collection.update_one(arguments['filter'], arguments['update'], transformed_options(context))
         update_return_doc(result)
       end
 
       def find_one_and_delete(collection, context)
-        collection.find_one_and_delete(arguments['filter'], context.transform_arguments(options))
+        collection.find_one_and_delete(arguments['filter'], transformed_options(context))
       end
 
       def find_one_and_replace(collection, context)
-        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
+        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], transformed_options(context))
       end
 
       def find_one_and_update(collection, context)
-        collection.find_one_and_update(arguments['filter'], arguments['update'], context.transform_arguments(options))
+        collection.find_one_and_update(arguments['filter'], arguments['update'], transformed_options(context))
       end
 
       # ddl
@@ -270,7 +273,8 @@ module Mongo
       end
 
       def create_collection(database, context)
-        database[arguments.fetch('collection')].create(session: context.session)
+        opts = transformed_options(context)
+        database[arguments.fetch('collection')].create(session: opts[:session])
       end
 
       def rename(collection, context)
@@ -351,6 +355,16 @@ module Mongo
         end
       end
 
+      def configure_fail_point(client, context)
+        fp = arguments.fetch('failPoint')
+        $disable_fail_points ||= []
+        $disable_fail_points << [
+          fp,
+          ClusterConfig.instance.primary_address,
+        ]
+        client.use('admin').database.command(fp)
+      end
+
       # options & arguments
 
       def options
@@ -360,11 +374,13 @@ module Mongo
         # bulk write test is an exception in that it has an "options" key
         # with the options.
         arguments.merge(arguments['options'] || {}).each do |spec_k, v|
-          ruby_k = Utils.underscore(spec_k).to_sym
+          ruby_k = ::Utils.underscore(spec_k).to_sym
 
-          if v.is_a?(Hash) && v['$numberLong']
-            v = v['$numberLong'].to_i
-          end
+          ruby_k = {
+            min: :min_value,
+            max: :max_value,
+            show_record_id: :show_disk_loc
+          }[ruby_k] || ruby_k
 
           if respond_to?("transform_#{ruby_k}", true)
             v = send("transform_#{ruby_k}", v)
@@ -390,8 +406,8 @@ module Mongo
       end
 
       def bulk_request(request)
-        op_name = Utils.underscore(request['name'])
-        args = Utils.shallow_snakeize_hash(request['arguments'])
+        op_name = ::Utils.underscore(request['name'])
+        args = ::Utils.shallow_snakeize_hash(request['arguments'])
         if args[:document]
           unless args.keys == [:document]
             raise "If :document is given, it must be the only key"
@@ -406,7 +422,7 @@ module Mongo
       end
 
       def transform_return_document(v)
-        Utils.underscore(v).to_sym
+        ::Utils.underscore(v).to_sym
       end
 
       def update
@@ -414,7 +430,7 @@ module Mongo
       end
 
       def transform_read_preference(v)
-        Utils.snakeize_hash(v)
+        ::Utils.snakeize_hash(v)
       end
 
       def read_preference
@@ -428,6 +444,27 @@ module Mongo
         return_doc['matchedCount'] = result.matched_count
         return_doc['modifiedCount'] = result.modified_count if result.modified_count
         return_doc
+      end
+
+      def transformed_options(context)
+        opts = options.dup
+        if opts[:session]
+          opts[:session] = case opts[:session]
+          when 'session0'
+            unless context.session0
+              raise "Trying to use session0 but it is not in context"
+            end
+            context.session0
+          when 'session1'
+            unless context.session1
+              raise "Trying to use session1 but it is not in context"
+            end
+            context.session1
+          else
+            raise "Invalid session name '#{opts[:session]}'"
+          end
+        end
+        opts
       end
     end
   end

@@ -1,6 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Indexes do
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
+
   describe '#execute' do
 
     let(:index_spec) do
@@ -24,7 +31,7 @@ describe Mongo::Operation::Indexes do
     end
 
     let(:indexes) do
-      operation.execute(authorized_primary, client: nil)
+      operation.execute(authorized_primary, context: context)
     end
 
     it 'returns the indexes for the collection' do

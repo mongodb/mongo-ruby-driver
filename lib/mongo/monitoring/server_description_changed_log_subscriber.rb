@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -25,8 +28,16 @@ module Mongo
       def log_event(event)
         log_debug(
           "Server description for #{event.address} changed from " +
-          "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
+          "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'#{awaited_indicator(event)}."
         )
+      end
+
+      def awaited_indicator(event)
+        if event.awaited?
+          ' [awaited]'
+        else
+          ''
+        end
       end
     end
   end

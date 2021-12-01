@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +24,7 @@ module Mongo
 
     class << self
 
-      # Get the wrapped logger. If none was set will return a default debug
+      # Get the wrapped logger. If none was set will return a default info
       # level logger.
       #
       # @example Get the wrapped logger.
@@ -75,8 +78,8 @@ module Mongo
       private
 
       def default_logger
-        logger = ::Logger.new($stdout)
-        logger.level = ::Logger::DEBUG
+        logger = ::Logger.new(STDOUT)
+        logger.level = ::Logger::INFO
         logger
       end
     end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -119,8 +122,10 @@ module Mongo
             },
             db_name: Database::ADMIN,
           )
-          # end_sessions does not take a client as an argument
-          op.execute(server, client: nil)
+          context = Operation::Context.new(options: {
+            server_api: server.options[:server_api],
+          })
+          op.execute(server, context: context)
         end
       rescue Mongo::Error, Error::AuthError
       end
@@ -128,6 +133,13 @@ module Mongo
       private
 
       def about_to_expire?(session)
+        # Load balancers spec explicitly requires to ignore the logical session
+        # timeout value.
+        # No rationale is provided as of the time of this writing.
+        if @cluster.load_balanced?
+          return false
+        end
+
         logical_session_timeout = @cluster.logical_session_timeout
 
         if logical_session_timeout
@@ -137,6 +149,10 @@ module Mongo
       end
 
       def prune!
+        # Load balancers spec explicitly requires not to prune sessions.
+        # No rationale is provided as of the time of this writing.
+        return if @cluster.load_balanced?
+
         while !@queue.empty?
           if about_to_expire?(@queue[-1])
             @queue.pop

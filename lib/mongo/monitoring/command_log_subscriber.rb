@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -57,6 +60,7 @@ module Mongo
           _prefix = prefix(event,
             connection_generation: event.connection_generation,
             connection_id: event.connection_id,
+            server_connection_id: event.server_connection_id,
           )
           log_debug("#{_prefix} | STARTED | #{format_command(event.command)}")
         end
@@ -100,12 +104,19 @@ module Mongo
         end
       end
 
-      def prefix(event, connection_generation: nil, connection_id: nil)
+      def prefix(event, connection_generation: nil, connection_id: nil,
+        server_connection_id: nil
+      )
         extra = [connection_generation, connection_id].compact.join(':')
         if extra == ''
           extra = nil
+        else
+          extra = "conn:#{extra}"
         end
-        "[#{event.request_id}] #{event.address.to_s}#{extra && " ##{extra}"} | " +
+        if server_connection_id
+          extra += " sconn:#{server_connection_id}"
+        end
+        "#{event.address.to_s} req:#{event.request_id}#{extra && " #{extra}"} | " +
           "#{event.database_name}.#{event.command_name}"
       end
 

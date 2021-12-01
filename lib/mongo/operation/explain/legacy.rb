@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +33,18 @@ module Mongo
         private
 
         def message(connection)
-          Protocol::Query.new(db_name, coll_name, command(connection), options(connection))
+          if spec[:collation] && !connection.features.collation_enabled?
+            raise Error::UnsupportedCollation
+          end
+
+          Protocol::Query.new(
+            db_name,
+            coll_name,
+            Find::Builder::Legacy.selector(spec, connection),
+            options(connection).update(
+              Find::Builder::Legacy.query_options(spec, connection),
+            ),
+          )
         end
       end
     end

@@ -1,11 +1,14 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "shared", "lib"))
+
 COVERAGE_MIN = 90
 CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
 
 SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam/**/*.yml").sort
 SDAM_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam_monitoring/*.yml").sort
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/server_selection_rtt/*.yml").sort
-SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/server_selection/**/*.yml").sort
-MAX_STALENESS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/max_staleness/**/*.yml").sort
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/crud/**/*.yml").sort
 CRUD2_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/crud_v2/**/*.yml").sort
 RETRYABLE_WRITES_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/retryable_writes/**/*.yml").sort
@@ -13,7 +16,6 @@ RETRYABLE_READS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/retryable_read
 COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/command_monitoring/**/*.yml").sort
 CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/connection_string/*.yml").sort
 URI_OPTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/uri_options/*.yml").sort
-DNS_SEEDLIST_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/dns_seedlist_discovery/*.yml").sort
 GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/gridfs/*.yml").sort
 TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions/*.yml").sort
 TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_api/*.yml").sort
@@ -22,7 +24,11 @@ CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
 
-if ENV['CI']
+# Disable output buffering: https://www.rubyguides.com/2019/02/ruby-io/
+STDOUT.sync = true
+STDERR.sync = true
+
+if %w(1 true yes).include?(ENV['CI']&.downcase)
   autoload :Byebug, 'byebug'
 else
   # Load debuggers before loading the driver code, so that breakpoints
@@ -47,6 +53,7 @@ end
 autoload :Benchmark, 'benchmark'
 autoload :IceNine, 'ice_nine'
 autoload :Timecop, 'timecop'
+autoload :ChildProcess, 'childprocess'
 
 if BSON::Environment.jruby?
   require 'concurrent-ruby'
@@ -58,15 +65,19 @@ end
 require 'support/utils'
 require 'support/spec_config'
 
-Mongo::Logger.logger = Logger.new($stdout)
+Mongo::Logger.logger = Logger.new(STDOUT)
 unless SpecConfig.instance.client_debug?
   Mongo::Logger.logger.level = Logger::INFO
 end
 Encoding.default_external = Encoding::UTF_8
 
+module Mrss
+  autoload :Utils, 'mrss/utils'
+end
+
+require 'mrss/lite_constraints'
 require 'support/matchers'
-require 'support/lite_constraints'
-require 'support/event_subscriber'
+require 'mrss/event_subscriber'
 require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'
@@ -74,6 +85,8 @@ require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
+require 'support/session_registry'
+require 'support/local_resource_registry'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
@@ -82,10 +95,12 @@ else
   TimeoutInterrupt = Timeout
 end
 
+class ExampleTimeout < StandardError; end
+
 RSpec.configure do |config|
   config.extend(CommonShortcuts::ClassMethods)
   config.include(CommonShortcuts::InstanceMethods)
-  config.extend(LiteConstraints)
+  config.extend(Mrss::LiteConstraints)
   config.include(ClientRegistryMacros)
 
   if SpecConfig.instance.ci?
@@ -102,19 +117,24 @@ RSpec.configure do |config|
     end
   end
 
-  if SpecConfig.instance.ci?
+  if SpecConfig.instance.ci? && !%w(1 true yes).include?(ENV['INTERACTIVE']&.downcase)
     # Allow a max of 30 seconds per test.
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
     config.around(:each) do |example|
-      TimeoutInterrupt.timeout(45) do
+      timeout = if %w(1 true yes).include?(ENV['STRESS']&.downcase)
+        210
+      else
+        45
+      end
+      TimeoutInterrupt.timeout(timeout, ExampleTimeout) do
         example.run
       end
     end
   end
 
   if SpecConfig.instance.ci?
-    if defined?(Rfc)
+    if defined?(Rfc::Rif)
       unless BSON::Environment.jruby?
         Rfc::Rif.output_object_space_stats = true
       end

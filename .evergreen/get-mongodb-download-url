@@ -1,11 +1,3 @@
 #!/usr/bin/env ruby
 
-desired_version, arch = ARGV
-if arch.nil?
-  STDERR.puts "Usage: get-mongodb-download-url desired-version arch"
-  exit 1
-end
-
-load File.join(File.dirname(__FILE__), 'tools.rb')
-
-puts ServerVersionRegistry.new(desired_version, arch).download_url
+load File.join(File.dirname(__FILE__), '../spec/shared/bin/get-mongodb-download-url')

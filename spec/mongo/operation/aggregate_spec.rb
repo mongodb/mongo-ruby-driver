@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Aggregate do
@@ -19,6 +22,7 @@ describe Mongo::Operation::Aggregate do
   end
   let(:op) { described_class.new(spec) }
 
+  let(:context) { Mongo::Operation::Context.new }
 
   describe '#initialize' do
 
@@ -64,7 +68,7 @@ describe Mongo::Operation::Aggregate do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary, client: nil)
+          op.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

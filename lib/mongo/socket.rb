@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +18,23 @@
 require 'mongo/socket/ssl'
 require 'mongo/socket/tcp'
 require 'mongo/socket/unix'
+require 'mongo/socket/ocsp_verifier'
+require 'mongo/socket/ocsp_cache'
 
 module Mongo
 
   # Provides additional data around sockets for the driver's use.
   #
   # @since 2.0.0
+  # @api private
   class Socket
     include ::Socket::Constants
 
-    # Error message for SSL related exceptions.
+    # Error message for TLS related exceptions.
     #
     # @since 2.0.0
-    SSL_ERROR = 'MongoDB may not be configured with SSL support'.freeze
+    # @deprecated
+    SSL_ERROR = 'MongoDB may not be configured with TLS support'.freeze
 
     # Error message for timeouts on socket calls.
     #
@@ -105,9 +112,14 @@ module Mongo
     def summary
       fileno = @socket&.fileno rescue '<no socket>' || '<no socket>'
       if monitor?
-        "#{connection_address}:m #{fileno}"
+        indicator = if options[:push]
+          'pm'
+        else
+          'm'
+        end
+        "#{connection_address};#{indicator};fd=#{fileno}"
       else
-        "#{connection_address}:c:#{connection_generation} #{fileno}"
+        "#{connection_address};c:#{connection_generation};fd=#{fileno}"
       end
     end
 
@@ -123,7 +135,7 @@ module Mongo
       sock_arr = [ @socket ]
       if Kernel::select(sock_arr, nil, sock_arr, 0)
         # The eof? call is supposed to return immediately since select
-        # indicated the socket is readable. However, if @socket is an SSL
+        # indicated the socket is readable. However, if @socket is a TLS
         # socket, eof? can block anyway - see RUBY-2140.
         begin
           Timeout.timeout(0.1) do
@@ -146,7 +158,14 @@ module Mongo
     #
     # @since 2.0.0
     def close
-      @socket.close rescue nil
+      begin
+        # Sometimes it seems the close call can hang for a long time
+        ::Timeout.timeout(5) do
+          @socket.close
+        end
+      rescue
+        # Silence all errors
+      end
       true
     end
 
@@ -173,20 +192,21 @@ module Mongo
     #   socket.read(4096)
     #
     # @param [ Integer ] length The number of bytes to read.
+    # @param [ Numeric ] timeout The timeout to use for each chunk read.
     #
     # @raise [ Mongo::SocketError ] If not all data is returned.
     #
     # @return [ Object ] The data from the socket.
     #
     # @since 2.0.0
-    def read(length)
+    def read(length, timeout: nil)
       map_exceptions do
-        data = read_from_socket(length)
+        data = read_from_socket(length, timeout: timeout)
         unless (data.length > 0 || length == 0)
           raise IOError, "Expected to read > 0 bytes but read 0 bytes"
         end
         while data.length < length
-          chunk = read_from_socket(length - data.length)
+          chunk = read_from_socket(length - data.length, timeout: timeout)
           unless (chunk.length > 0 || length == 0)
             raise IOError, "Expected to read > 0 bytes but read 0 bytes"
           end
@@ -216,6 +236,8 @@ module Mongo
     #
     # @return [ Integer ] The length of bytes written to the socket.
     #
+    # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error during the write.
+    #
     # @since 2.0.0
     def write(*args)
       map_exceptions do
@@ -243,14 +265,19 @@ module Mongo
 
     private
 
-    def read_from_socket(length)
+    def read_from_socket(length, timeout: nil)
       # Just in case
       if length == 0
         return ''.force_encoding('BINARY')
       end
 
-      if _timeout = self.timeout
-        deadline = Time.now + _timeout
+      _timeout = timeout || self.timeout
+      if _timeout
+        if _timeout > 0
+          deadline = Utils.monotonic_time + _timeout
+        elsif _timeout < 0
+          raise Errno::ETIMEDOUT, "Negative timeout #{_timeout} given to socket"
+        end
       end
 
       # We want to have a fixed and reasonably small size buffer for reads
@@ -302,7 +329,7 @@ module Mongo
       # reading from a TLS socket may require writing which may raise WaitWritable
       rescue IO::WaitReadable, IO::WaitWritable => exc
         if deadline
-          select_timeout = deadline - Time.now
+          select_timeout = deadline - Utils.monotonic_time
           if select_timeout <= 0
             raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
           end
@@ -312,8 +339,21 @@ module Mongo
         else
           select_args = [nil, [@socket], [@socket], select_timeout]
         end
-        unless Kernel::select(*select_args)
-          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+        rv = Kernel.select(*select_args)
+        if BSON::Environment.jruby?
+          # Ignore the return value of Kernel.select.
+          # On JRuby, select appears to return nil prior to timeout expiration
+          # (apparently due to a EAGAIN) which then causes us to fail the read
+          # even though we could have retried it.
+          # Check the deadline ourselves.
+          if deadline
+            select_timeout = deadline - Utils.monotonic_time
+            if select_timeout <= 0
+              raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+            end
+          end
+        elsif rv.nil?
+          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data (select call timed out)"
         end
         retry
       end
@@ -322,15 +362,11 @@ module Mongo
     end
 
     def allocate_string(capacity)
-      if RUBY_VERSION >= '2.4.0'
-        String.new('', :capacity => capacity, :encoding => 'BINARY')
-      else
-        ('x'*capacity).force_encoding('BINARY')
-      end
+      String.new('', :capacity => capacity, :encoding => 'BINARY')
     end
 
     def read_buffer_size
-      # Buffer size for non-SSL reads
+      # Buffer size for non-TLS reads
       # 64kb
       65536
     end
@@ -384,6 +420,10 @@ module Mongo
       set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
       set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
     rescue
+      # JRuby 9.2.13.0 and lower do not define TCP_KEEPINTVL etc. constants.
+      # JRuby 9.2.14.0 defines the constants but does not allow to get or
+      # set them with this error:
+      # Errno::ENOPROTOOPT: Protocol not available - Protocol not available
     end
 
     def set_option(sock, option, default)
@@ -408,7 +448,7 @@ module Mongo
       rescue IOError, SystemCallError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address}) (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       end
     end
 

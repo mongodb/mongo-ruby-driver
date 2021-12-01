@@ -1,4 +1,4 @@
-.. _reference-compatibility-ruby:
+.. _compatibility:
 
 ********************
 Driver Compatibility
@@ -12,12 +12,25 @@ Driver Compatibility
    :depth: 1
    :class: singlecol
 
-.. _reference-compatibility-mongodb-ruby:
+
+.. _mongodb-compatibility:
 
 MongoDB Compatibility
 =====================
 
-.. include:: /includes/ruby-driver-compatibility-matrix-mongodb.rst
+The following compatibility table specifies the recommended
+version(s) of the MongoDB Ruby driver for use with a specific version of
+MongoDB. Except when indicated, the specified driver versions expose or
+take advantage of the features added in the corresponding server versions.
+
+MongoDB server releases are generally backwards compatible, meaning a
+particular version of the driver will generally work with newer versions of
+the server but may not take advantage of the functionality released in the
+newer version of the server.
+
+The first column lists the driver versions.“D” in other columns means support
+for that MongoDB version is deprecated and will be removed in a future driver
+version.
 
 .. list-table::
    :header-rows: 1
@@ -25,6 +38,9 @@ MongoDB Compatibility
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - MongoDB 5.1
+     - MongoDB 5.0
+     - MongoDB 4.4
      - MongoDB 4.2
      - MongoDB 4.0
      - MongoDB 3.6
@@ -32,10 +48,8 @@ MongoDB Compatibility
      - MongoDB 3.2
      - MongoDB 3.0
      - MongoDB 2.6
-     - MongoDB 2.4
 
-   * - 2.12
-     - |checkmark|
+   * - 2.17
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -43,8 +57,74 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      -
+     -
+     -
+     -
+
+   * - 2.16
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     - D
+     - D
+     - D
+
+   * - 2.15
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
+   * - 2.14
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
+   * - 2.13
+     -
+     -
+     - |checkmark| [#ocsp]_
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
+   * - 2.12
+     -
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
 
    * - 2.11
+     -
+     -
+     -
      - |checkmark| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -52,9 +132,11 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.10
+     -
+     -
+     -
      - |checkmark| [#srv-polling]_ [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -62,63 +144,74 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
 
    * - 2.9
      -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
 
    * - 2.8
      -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
 
    * - 2.7
      -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
 
    * - 2.6
      -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
 
    * - 2.5
      -
      -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     -
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
 
    * - 2.4
      -
      -
      -
-     - |checkmark|
+     -
+     -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -129,7 +222,9 @@ MongoDB Compatibility
      -
      -
      -
-     - |checkmark|
+     -
+     -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -139,7 +234,9 @@ MongoDB Compatibility
      -
      -
      -
-     - |checkmark|
+     -
+     -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -150,9 +247,13 @@ MongoDB Compatibility
      -
      -
      -
+     -
+     -
+     -
      - |checkmark|
      - |checkmark|
-     - |checkmark|
+
+.. [#ocsp] OCSP verification is implemented as of driver version 2.14.
 
 .. [#srv-polling] Polling of SRV records in sharded topologies is
    implemented as of driver version 2.11.
@@ -162,14 +263,14 @@ MongoDB Compatibility
 
 The driver does not support older versions of MongoDB.
 
-.. _reference-compatibility-language-ruby:
+
+.. _ruby-compatibility:
 
 Ruby Compatibility
 ==================
 
-The following compatibility table specifies the recommended
-version(s) of the MongoDB Ruby driver for use with a specific version of
-Ruby.
+The following compatibility table specifies the versions of Ruby supported
+by the various versions of the MongoDB Ruby driver.
 
 The first column lists the driver versions. "D" in a column means support
 for that Ruby version is deprecated.
@@ -180,6 +281,7 @@ for that Ruby version is deprecated.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - Ruby 3.0
      - Ruby 2.7
      - Ruby 2.6
      - Ruby 2.5
@@ -193,7 +295,82 @@ for that Ruby version is deprecated.
      - JRuby 9.1
      - JRuby
 
+   * - 2.17
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+
+   * - 2.16
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     -
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+
+   * - 2.15
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     - D
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+   * - 2.14
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     - D
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+
+   * - 2.13
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     -
+     -
+     - |checkmark|
+     -
+     -
+
    * - 2.12
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -208,6 +385,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.11
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -222,6 +400,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.10
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -237,6 +416,7 @@ for that Ruby version is deprecated.
 
    * - 2.9
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -250,6 +430,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.8
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -265,6 +446,7 @@ for that Ruby version is deprecated.
 
    * - 2.7
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -279,6 +461,7 @@ for that Ruby version is deprecated.
 
    * - 2.6
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -292,6 +475,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.5
+     -
      -
      -
      -
@@ -310,6 +494,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -324,6 +509,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -334,6 +520,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.2
+     -
      -
      -
      -
@@ -352,6 +539,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -366,6 +554,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -376,6 +565,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
 The driver does not support older versions of Ruby.
+
 
 Rails/ActiveSupport Compatibility
 =================================
@@ -393,16 +583,64 @@ compatibility code for behavior like time serialization to be correct:
 Applications using Mongoid 7.0.6 or newer do not need to explicitly load
 the driver's ActiveSupport code, since Mongoid automatically does so.
 
+
+.. _tls-compatibility:
+
+TLS/SSL Compatibility
+=====================
+
+The driver will utilize the protocols supported by the underlying Ruby
+``openssl`` extension. In turn, the ``openssl`` extension generally exposes
+the functionality that exists in the operating system's OpenSSL library.
+
+Industry best practices, and some regulations, require the use of TLS 1.1
+or newer. Some operating systems or versions may not provide an OpenSSL version
+new enough to support these TLS versions.
+
+Users of macOS older than 10.13 (High Sierra) will need to install Ruby from
+`rvm`_, `homebrew`_, `macports`_, or another similar source. See
+`installation information on ruby-lang.org`_ for more options.
+
+Users of Linux or other non-macOS Unix can check their OpenSSL version
+as follows:
+
+.. code-block:: sh
+
+  openssl version
+
+If the version number is less than 1.0.1 support for TLS 1.1 or newer is
+not available. Contact your operating system vendor for a solution or upgrade
+to a newer distribution.
+
+You can check your Ruby interpreter by executing the following command:
+
+.. code-block:: sh
+
+  ruby -e "require 'net/http'; require 'json'; puts JSON.parse(Net::HTTP.get(URI('https://www.howsmyssl.com/a/check')))['tls_version']"
+
+You should see "TLS 1.X" where X is >= 1.
+
+You can read more about TLS versions and their security implications `here
+<https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Protocols>`_.
+
+.. _rvm: https://rvm.io/
+.. _homebrew: https://brew.sh/
+.. _macports: https://www.macports.org/
+.. _installation information on ruby-lang.org: https://www.ruby-lang.org/en/documentation/installation
+
+
 Atlas Compatibility
 ===================
 
 `Driver version 2.6.1 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.1>`_
 or higher is recommended when using MongoDB Atlas, as this version has
-significant SSL performance improvements.
+significant performance improvements when TLS connections are used, and all
+Atlas connections use TLS.
 
 When running on JRuby and connecting to Atlas Free Tier,
 `driver version 2.6.4 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.4>`_
 or higher and Java 8 or higher are required.
+
 
 ``mongo_kerberos`` Compatibility
 ================================
@@ -419,12 +657,12 @@ the driver.
    * - Ruby Driver
      - mongo_kerberos |nbsp| 2.1
 
-   * - 2.7 - 2.12
+   * - 2.7 - 2.16
      - |checkmark|
 
 
-JRuby Kerberos
-==============
+JRuby and Kerberos Authentication
+=================================
 
 If the ``mongo_kerberos`` gem is used for Kerberos authentication with JRuby, the the JVM system
 property "sun.security.jgss.native" to will be set to "true" in order to facilitate the use of
@@ -434,3 +672,12 @@ obtaining Kerberos credentials as well.
 
 .. include:: /includes/unicode-checkmark.rst
 .. include:: /includes/unicode-nbsp.rst
+
+
+JRuby and TLS Connections
+=========================
+
+Due to JRuby limitations:
+
+- ECDSA server certificates are not supported.
+- OCSP endpoint checking is not performed.

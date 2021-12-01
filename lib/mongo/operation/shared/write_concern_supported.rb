@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +21,7 @@ module Mongo
     # Custom behavior for operations that support write concern.
     #
     # @since 2.5.2
+    # @api private
     module WriteConcernSupported
 
       private

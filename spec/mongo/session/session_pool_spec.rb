@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Session::SessionPool do
   min_server_fcv '3.6'
-  require_topology :replica_set, :sharded
+  require_topology :replica_set, :sharded, :load_balanced
   clean_slate_for_all
 
   let(:cluster) do
@@ -110,10 +113,26 @@ describe Mongo::Session::SessionPool do
           pool.checkout
         end
 
-        it 'disposes of the old session and returns a new one' do
-          expect(checked_out_session).not_to be(old_session_a)
-          expect(checked_out_session).not_to be(old_session_b)
-          expect(pool.instance_variable_get(:@queue)).to be_empty
+        context "in non load-balanced topology" do
+          require_topology :replica_set, :sharded
+
+          it 'disposes of the old session and returns a new one' do
+            old_sessions = [old_session_a, old_session_b]
+            expect(old_sessions).not_to include(pool.checkout)
+            expect(old_sessions).not_to include(pool.checkout)
+            expect(pool.instance_variable_get(:@queue)).to be_empty
+          end
+        end
+
+        context "in load-balanced topology" do
+          require_topology :load_balanced
+
+          it 'doed not dispose of the old session' do
+            old_sessions = [old_session_a, old_session_b]
+            expect(old_sessions).to include(checked_out_session)
+            expect(old_sessions).to include(checked_out_session)
+            expect(pool.instance_variable_get(:@queue)).to be_empty
+          end
         end
       end
     end
@@ -135,10 +154,26 @@ describe Mongo::Session::SessionPool do
         pool.checkin(old_session_b)
       end
 
-      it 'disposes of the old sessions instead of adding them to the pool' do
-        expect(pool.checkout).not_to be(old_session_a)
-        expect(pool.checkout).not_to be(old_session_b)
-        expect(pool.instance_variable_get(:@queue)).to be_empty
+      context "in non load-balanced topology" do
+        require_topology :replica_set, :sharded
+
+        it 'disposes of the old sessions instead of adding them to the pool' do
+          old_sessions = [old_session_a, old_session_b]
+          expect(old_sessions).not_to include(pool.checkout)
+          expect(old_sessions).not_to include(pool.checkout)
+          expect(pool.instance_variable_get(:@queue)).to be_empty
+        end
+      end
+
+      context "in load-balanced topology" do
+        require_topology :load_balanced
+
+        it 'does not dispose of the old sessions' do
+          old_sessions = [old_session_a, old_session_b]
+          expect(old_sessions).to include(pool.checkout)
+          expect(old_sessions).to include(pool.checkout)
+          expect(pool.instance_variable_get(:@queue)).to be_empty
+        end
       end
     end
   end
@@ -157,7 +192,7 @@ describe Mongo::Session::SessionPool do
       pool.checkout
     end
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:client) do
       authorized_client.tap do |client|

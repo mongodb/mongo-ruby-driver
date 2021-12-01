@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +23,16 @@ module Mongo
       # usersInfo command.
       #
       # @since 2.1.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # The field name for the users document in a usersInfo result.
         #
         # @since 2.1.0
+        # @api private
         USERS = 'users'.freeze
 
+        # @api public
         def documents
           reply.documents.first[USERS]
         end

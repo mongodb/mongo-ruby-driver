@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Insert::OpMsg do
@@ -72,7 +75,7 @@ describe Mongo::Operation::Insert::OpMsg do
 
   describe 'write concern' do
     # https://jira.mongodb.org/browse/RUBY-2224
-    skip_if_linting
+    require_no_linting
 
     context 'when write concern is not specified' do
 
@@ -92,14 +95,14 @@ describe Mongo::Operation::Insert::OpMsg do
     context 'when write concern is specified' do
 
       it 'includes write concern in the selector' do
-        expect(op.send(:command, connection)[:writeConcern]).to eq(write_concern.options)
+        expect(op.send(:command, connection)[:writeConcern]).to eq(BSON::Document.new(write_concern.options))
       end
     end
   end
 
   describe '#message' do
     # https://jira.mongodb.org/browse/RUBY-2224
-    skip_if_linting
+    require_no_linting
 
     context 'when the server supports OP_MSG' do
       min_server_fcv '3.6'
@@ -167,7 +170,7 @@ describe Mongo::Operation::Insert::OpMsg do
 
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
           # Mocks on features are incompatible with linting
-          skip_if_linting
+          require_no_linting
 
           let(:expected_global_args) do
             global_args.dup.tap do |args|

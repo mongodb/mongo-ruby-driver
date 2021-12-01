@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Step down behavior' do
@@ -29,7 +32,7 @@ describe 'Step down behavior' do
     end
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:test_client) do
     authorized_client_without_any_retries.with(server_selection_timeout: 20).tap do |client|

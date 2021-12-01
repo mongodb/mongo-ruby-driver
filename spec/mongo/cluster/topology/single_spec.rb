@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Single do
@@ -73,12 +76,12 @@ describe Mongo::Cluster::Topology::Single do
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true,
+      Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8,
         'setName' => 'testing' })
     end
@@ -87,8 +90,10 @@ describe Mongo::Cluster::Topology::Single do
       topology.servers([ mongos, standalone, standalone_two, replica_set ])
     end
 
-    it 'returns only the first standalone server' do
-      expect(servers).to eq([ standalone ])
+    it 'returns all data-bearing non-unknown servers' do
+      # mongos and replica_set do not have ok: 1 in their descriptions,
+      # and are considered unknown.
+      expect(servers).to eq([ standalone, standalone_two ])
     end
   end
 
@@ -111,19 +116,28 @@ describe Mongo::Cluster::Topology::Single do
           monitoring, temp_cluster)
       end
 
+      let(:server_1) do
+        double('server').tap do |server|
+          allow(server).to receive(:address).and_return(Mongo::Address.new('one'))
+        end
+      end
+
+      let(:server_2) do
+        double('server').tap do |server|
+          allow(server).to receive(:address).and_return(Mongo::Address.new('two'))
+        end
+      end
+
       let(:temp_cluster) do
         double('temp cluster').tap do |cluster|
-          allow(cluster).to receive(:servers_list).and_return([
-            double('server'),
-            double('server'),
-          ])
+          allow(cluster).to receive(:servers_list).and_return([server_1, server_2])
         end
       end
 
       it 'fails' do
         expect do
           topology
-        end.to raise_error(ArgumentError, 'Cannot instantiate a single topology with more than one server in the cluster')
+        end.to raise_error(ArgumentError, /Cannot instantiate a single topology with more than one server in the cluster: one, two/)
       end
     end
   end
@@ -164,7 +178,7 @@ describe Mongo::Cluster::Topology::Single do
   end
 
   describe '#summary' do
-    skip_if_linting
+    require_no_linting
 
     let(:desc) do
       Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))

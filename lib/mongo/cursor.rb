@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,8 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-require 'mongo/cursor/builder'
 
 module Mongo
 
@@ -66,22 +67,25 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(view, result, server, options = {})
+      unless result.is_a?(Operation::Result)
+        raise ArgumentError, "Second argument must be a Mongo::Operation::Result: #{result.inspect}"
+      end
+
       @view = view
       @server = server
       @initial_result = result
+      @namespace = result.namespace
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
-      @coll_name = nil
       @options = options
       @session = @options[:session]
       unless closed?
         register
-        ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
+        ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec,
           cluster,
-          kill_cursors_op_spec,
           server,
           @session))
       end
@@ -90,23 +94,25 @@ module Mongo
     # @api private
     attr_reader :server
 
+    # @api private
+    attr_reader :initial_result
+
     # Finalize the cursor for garbage collection. Schedules this cursor to be included
     # in a killCursors operation executed by the Cluster's CursorReaper.
     #
-    # @example Finalize the cursor.
-    #   Cursor.finalize(id, cluster, op, server)
-    #
-    # @param [ Integer ] cursor_id The cursor's id.
+    # @param [ Cursor::KillSpec ] kill_spec The KillCursor operation specification.
     # @param [ Mongo::Cluster ] cluster The cluster associated with this cursor and its server.
-    # @param [ Hash ] op_spec The killCursors operation specification.
     # @param [ Mongo::Server ] server The server to send the killCursors operation to.
     #
     # @return [ Proc ] The Finalizer.
     #
-    # @since 2.3.0
-    def self.finalize(cursor_id, cluster, op_spec, server, session)
+    # @api private
+    def self.finalize(kill_spec, cluster, server, session)
+      unless KillSpec === kill_spec
+        raise ArgumentError, "First argument must be a KillSpec: #{kill_spec.inspect}"
+      end
       proc do
-        cluster.schedule_kill_cursor(cursor_id, op_spec, server)
+        cluster.schedule_kill_cursor(kill_spec, server)
         session.end_session if session && session.implicit?
       end
     end
@@ -138,6 +144,7 @@ module Mongo
     #
     # @since 2.0.0
     def each
+
       # If we already iterated past the first batch (i.e., called get_more
       # at least once), the cursor on the server side has advanced past
       # the first batch and restarting iteration from the beginning by
@@ -208,10 +215,12 @@ module Mongo
         unless closed?
           if exhausted?
             close
+            @fully_iterated = true
             raise StopIteration
           end
           @documents = get_more
         else
+          @fully_iterated = true
           raise StopIteration
         end
       else
@@ -228,6 +237,9 @@ module Mongo
       # over the last document, or if the batch is empty
       if @documents.size <= 1
         cache_batch_resume_token
+        if closed?
+          @fully_iterated = true
+        end
       end
 
       return @documents.shift
@@ -264,12 +276,19 @@ module Mongo
     # @return [ nil ] Always nil.
     #
     # @raise [ Error::OperationFailure ] If the server cursor close fails.
+    # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error.
     def close
       return if closed?
 
       unregister
       read_with_one_retry do
-        kill_cursors_operation.execute(@server, client: client)
+        spec = {
+          coll_name: collection_name,
+          db_name: database.name,
+          cursor_ids: [id],
+        }
+        op = Operation::KillCursors.new(spec)
+        execute_operation(op)
       end
 
       nil
@@ -287,7 +306,20 @@ module Mongo
     #
     # @since 2.2.0
     def collection_name
-      @coll_name || collection.name
+      # In most cases, this will be equivalent to the name of the collection
+      # object in the driver. However, in some cases (e.g. when connected
+      # to an Atlas Data Lake), the namespace returned by the find command
+      # may be different, which is why we want to use the collection name based
+      # on the namespace in the command result.
+      if @namespace
+        # Often, the namespace will be in the format "database.collection".
+        # However, sometimes the collection name will contain periods, which
+        # is why this method joins all the namespace components after the first.
+        ns_components = @namespace.split('.')
+        ns_components[1...ns_components.length].join('.')
+      else
+        collection.name
+      end
     end
 
     # Get the cursor id.
@@ -331,7 +363,22 @@ module Mongo
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
-      process(get_more_operation.execute(@server, client: client))
+      process(execute_operation(get_more_operation))
+    end
+
+    # @api private
+    def kill_spec
+      KillSpec.new(
+        cursor_id: id,
+        coll_name: collection_name,
+        db_name: database.name,
+        service_id: initial_result.connection_description.service_id,
+      )
+    end
+
+    # @api private
+    def fully_iterated?
+      !!@fully_iterated
     end
 
     private
@@ -351,28 +398,29 @@ module Mongo
     end
 
     def get_more_operation
-      if @server.with_connection { |connection| connection.features }.find_command_enabled?
-        spec = Builder::GetMoreCommand.new(self, @session).specification
-      else
-        spec = Builder::OpGetMore.new(self).specification
-      end
+      spec = {
+        session: @session,
+        db_name: database.name,
+        coll_name: collection_name,
+        cursor_id: id,
+        # 3.2+ servers use batch_size, 3.0- servers use to_return.
+        # TODO should to_return be calculated in the operation layer?
+        batch_size: batch_size,
+        to_return: to_return,
+        max_time_ms: if view.respond_to?(:max_await_time_ms) &&
+          view.max_await_time_ms &&
+          view.options[:await_data]
+        then
+          view.max_await_time_ms
+        else
+          nil
+        end,
+      }
       Operation::GetMore.new(spec)
     end
 
     def end_session
       @session.end_session if @session && @session.implicit?
-    end
-
-    def kill_cursors_operation
-      Operation::KillCursors.new(kill_cursors_op_spec)
-    end
-
-    def kill_cursors_op_spec
-      if @server.with_connection { |connection| connection.features }.find_command_enabled?
-        Builder::KillCursorsCommand.new(self).specification
-      else
-        Builder::OpKillCursors.new(self).specification
-      end
     end
 
     def limited?
@@ -381,7 +429,6 @@ module Mongo
 
     def process(result)
       @remaining -= result.returned_count if limited?
-      @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       # #process is called for the first batch of results. In this case
       # the @cursor_id may be zero (all results fit in the first batch).
       # Thus we need to check both @cursor_id and the cursor_id of the result
@@ -416,5 +463,16 @@ module Mongo
     def unregister
       cluster.unregister_cursor(@cursor_id)
     end
+
+    def execute_operation(op)
+      context = Operation::Context.new(
+        client: client,
+        session: @session,
+        service_id: initial_result.connection_description.service_id,
+      )
+      op.execute(@server, context: context)
+    end
   end
 end
+
+require 'mongo/cursor/kill_spec'

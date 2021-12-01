@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +62,13 @@ module Mongo
       #
       # @return [ Integer | nil ] Connection pool generation.
       attr_accessor :generation
+
+      # Returns service id for the connection on which the error occurred.
+      #
+      # @return [ Object | nil ] Service id.
+      #
+      # @api experimental
+      attr_accessor :service_id
 
       # @api public
       def to_s

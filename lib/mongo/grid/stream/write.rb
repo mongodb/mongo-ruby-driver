@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,12 +85,12 @@ module Mongo
             @open = true
           end
 
-          # Write to the GridFS bucket from the source stream.
+          # Write to the GridFS bucket from the source stream or a string.
           #
           # @example Write to GridFS.
           #   stream.write(io)
           #
-          # @param [ IO ] io The source io stream to upload from.
+          # @param [ String | IO ] io The string or IO object to upload from.
           #
           # @return [ Stream::Write ] self The write stream itself.
           #
@@ -95,7 +98,13 @@ module Mongo
           def write(io)
             ensure_open!
             @indexes ||= ensure_indexes!
-            @length += io.size
+            @length += if io.respond_to?(:bytesize)
+              # String objects
+              io.bytesize
+            else
+              # IO objects
+              io.size
+            end
             chunks = File::Chunk.split(io, file_info, @n)
             @n += chunks.size
             chunks_collection.insert_many(chunks) unless chunks.empty?

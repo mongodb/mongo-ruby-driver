@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -30,6 +33,12 @@ module Mongo
       # @api experimental
       def summary
         "#<#{self.class}>"
+      end
+
+      private
+
+      def short_class_name
+        self.class.name.sub(/^Mongo::Monitoring::Event::/, '')
       end
     end
   end

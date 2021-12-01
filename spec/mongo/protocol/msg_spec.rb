@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 require 'support/shared/protocol'
 
@@ -100,7 +103,7 @@ describe Mongo::Protocol::Msg do
       context 'when the main_document are not equal' do
 
         let(:other_main_document) do
-          { '$db'=> SpecConfig.instance.test_db, ismaster: 1 }
+          { '$db'=> SpecConfig.instance.test_db, hello: 1 }
         end
 
         let(:other) do
@@ -423,6 +426,16 @@ describe Mongo::Protocol::Msg do
 
       it 'does not check the sequence document keys' do
         expect(message.serialize).to be_a(BSON::ByteBuffer)
+      end
+    end
+
+    [:more_to_come, :exhaust_allowed].each do |flag|
+      context "with #{flag} flag" do
+        let(:flags) { [flag] }
+
+        it "round trips #{flag} flag" do
+          expect(deserialized.flags).to eq(flags)
+        end
       end
     end
   end

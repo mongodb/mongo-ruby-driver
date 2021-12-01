@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,13 +47,13 @@ module Mongo
         # @since 2.0.0
         def create(user_or_name, options = {})
           user = generate(user_or_name, options)
-          client.send(:with_session, options) do |session|
+          execute_operation(options) do |session|
             Operation::CreateUser.new(
               user: user,
               db_name: database.name,
               session: session,
               write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client: client)
+            )
           end
         end
 
@@ -81,13 +84,13 @@ module Mongo
         #
         # @since 2.0.0
         def remove(name, options = {})
-          client.send(:with_session, options) do |session|
+          execute_operation(options) do |session|
             Operation::RemoveUser.new(
               user_name: name,
               db_name: database.name,
               session: session,
               write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client: client)
+            )
           end
         end
 
@@ -106,14 +109,14 @@ module Mongo
         #
         # @since 2.0.0
         def update(user_or_name, options = {})
-          client.send(:with_session, options) do |session|
-            user = generate(user_or_name, options)
+          user = generate(user_or_name, options)
+          execute_operation(options) do |session|
             Operation::UpdateUser.new(
               user: user,
               db_name: database.name,
               session: session,
               write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
-            ).execute(next_primary(nil, session), client: client)
+            )
           end
         end
 
@@ -137,17 +140,24 @@ module Mongo
         private
 
         def user_query(name, options = {})
-          client.send(:with_session, options) do |session|
+          execute_operation(options) do |session|
             Operation::UsersInfo.new(
               user_name: name,
               db_name: database.name,
               session: session
-            ).execute(next_primary(nil, session), client: client)
+            )
           end
         end
 
         def generate(user, options)
           user.is_a?(String) ? Auth::User.new({ user: user }.merge(options)) : user
+        end
+
+        def execute_operation(options)
+          client.send(:with_session, options) do |session|
+            op = yield session
+            op.execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+          end
         end
       end
     end

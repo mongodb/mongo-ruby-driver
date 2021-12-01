@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 shared_examples 'an operation using a session' do
 
   describe 'operation execution' do
@@ -54,9 +57,9 @@ shared_examples 'an operation using a session' do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           operation_result
-        }.to raise_exception(Mongo::Error::InvalidSession)
+        end.to raise_exception(Mongo::Error::InvalidSession)
       end
     end
 
@@ -182,7 +185,7 @@ end
 
 shared_examples 'an operation supporting causally consistent reads' do
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|
@@ -619,7 +622,7 @@ shared_examples 'an operation updating cluster time' do
     client.start_session
   end
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
     authorized_client.tap do |client|

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -20,6 +23,7 @@ module Mongo
       #
       # @since 2.1.0
       class CommandFailed < Mongo::Event::Base
+        include Secure
 
         # @return [ Server::Address ] address The server address.
         attr_reader :address
@@ -49,6 +53,15 @@ module Mongo
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
 
+        # @return [ nil | Object ] The service id, if any.
+        attr_reader :service_id
+
+        # @return [ Monitoring::Event::CommandStarted ] started_event The corresponding
+        #   started event.
+        #
+        # @api private
+        attr_reader :started_event
+
         # Create the new event.
         #
         # @example Create the event.
@@ -61,18 +74,36 @@ module Mongo
         # @param [ String ] message The error message.
         # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Float ] duration The duration the command took in seconds.
+        # @param [ Monitoring::Event::CommandStarted ] started_event The corresponding
+        #   started event.
+        # @param [ Object ] service_id The service id, if any.
         #
-        # @since 2.1.0
         # @api private
-        def initialize(command_name, database_name, address, request_id, operation_id, message, failure, duration)
+        def initialize(command_name, database_name, address,
+          request_id, operation_id, message, failure, duration,
+          started_event:, service_id: nil
+        )
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
           @operation_id = operation_id
+          @service_id = service_id
           @message = message
-          @failure = failure
+          @started_event = started_event
+          @failure = redacted(command_name, failure)
           @duration = duration
+        end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @api experimental
+        def summary
+          "#<#{short_class_name} address=#{address} #{database_name}.#{command_name}>"
         end
 
         # Create the event from a wire protocol message payload.
@@ -86,12 +117,17 @@ module Mongo
         # @param [ String ] message The error message.
         # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Float ] duration The duration of the command in seconds.
+        # @param [ Monitoring::Event::CommandStarted ] started_event The corresponding
+        #   started event.
+        # @param [ Object ] service_id The service id, if any.
         #
         # @return [ CommandFailed ] The event.
         #
         # @since 2.1.0
         # @api private
-        def self.generate(address, operation_id, payload, message, failure, duration)
+        def self.generate(address, operation_id, payload, message,
+          failure, duration, started_event:, service_id: nil
+        )
           new(
             payload[:command_name],
             payload[:database_name],
@@ -100,7 +136,9 @@ module Mongo
             operation_id,
             message,
             failure,
-            duration
+            duration,
+            started_event: started_event,
+            service_id: service_id,
           )
         end
       end

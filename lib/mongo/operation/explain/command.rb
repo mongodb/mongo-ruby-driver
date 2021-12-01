@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +32,22 @@ module Mongo
         include PolymorphicResult
 
         private
+
+        def selector(connection)
+          # The mappings are BSON::Documents and as such store keys as
+          # strings, the spec here has symbol keys.
+          spec = BSON::Document.new(self.spec)
+
+          if spec[:collation] && !connection.features.collation_enabled?
+            raise Error::UnsupportedCollation
+          end
+
+          {
+            explain: {
+              find: coll_name,
+            }.update(Find::Builder::Command.selector(spec, connection)),
+          }.update(spec[:explain] || {})
+        end
 
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))

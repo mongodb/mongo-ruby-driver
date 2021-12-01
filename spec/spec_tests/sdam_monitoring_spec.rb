@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 require 'runners/sdam'
 require 'runners/sdam/verifier'
-require 'runners/sdam_monitoring'
 
 describe 'SDAM Monitoring' do
   include Mongo::SDAM
@@ -14,7 +16,7 @@ describe 'SDAM Monitoring' do
     context("#{spec.description} (#{file.sub(%r'.*/data/sdam_monitoring/', '')})") do
 
       before(:all) do
-        @subscriber = Mongo::SDAMMonitoring::PhasedTestSubscriber.new
+        @subscriber = Mrss::PhasedEventSubscriber.new
         sdam_proc = lambda do |client|
           client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
           client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
@@ -37,8 +39,13 @@ describe 'SDAM Monitoring' do
           # Since we set monitoring_io: false, servers are not monitored
           # by the cluster. Start monitoring on them manually (this publishes
           # the server opening event but, again due to monitoring_io being
-          # false, does not do network I/O or change server status)>
-          server.start_monitoring
+          # false, does not do network I/O or change server status).
+          #
+          # If the server is a load balancer, it doesn't normally get monitored
+          # so don't start here either.
+          unless server.load_balancer?
+            server.start_monitoring
+          end
         end
       end
 
@@ -51,7 +58,7 @@ describe 'SDAM Monitoring' do
         context("Phase: #{phase_index + 1}") do
 
           before(:all) do
-            phase.responses.each do |response|
+            phase.responses&.each do |response|
               # For each response in the phase, we need to change that server's description.
               server = find_server(@client, response.address)
               server ||= @servers_cache[response.address.to_s]
@@ -59,14 +66,14 @@ describe 'SDAM Monitoring' do
                 raise "Server should have been found"
               end
 
-              result = response.ismaster
+              result = response.hello
               # Spec tests do not always specify wire versions, but the
               # driver requires them. Set them to zero which was
               # the legacy default in the driver.
               result['minWireVersion'] ||= 0
               result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
-                server.description.address, result, 0.5)
+                server.description.address, result, average_round_trip_time: 0.5)
               @client.cluster.run_sdam_flow(server.description, new_description)
             end
             @subscriber.phase_finished(phase_index)

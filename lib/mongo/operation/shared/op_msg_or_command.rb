@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,14 +23,8 @@ module Mongo
     #
     # @api private
     module OpMsgOrCommand
+      include PolymorphicOperation
       include PolymorphicLookup
-
-      def execute(server, client:, options: {})
-        server.with_connection do |connection|
-          operation = final_operation(connection)
-          operation.execute(connection, client: client, options: options)
-        end
-      end
 
       private
 

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,12 +28,13 @@ class Mongo::Cluster
   class SdamFlow
     extend Forwardable
 
-    def initialize(cluster, previous_desc, updated_desc)
+    def initialize(cluster, previous_desc, updated_desc, awaited: false)
       @cluster = cluster
       @topology = cluster.topology
       @original_desc = @previous_desc = previous_desc
       @updated_desc = updated_desc
       @servers_to_disconnect = []
+      @awaited = !!awaited
     end
 
     attr_reader :cluster
@@ -50,6 +54,10 @@ class Mongo::Cluster
     attr_reader :previous_desc
     attr_reader :updated_desc
     attr_reader :original_desc
+
+    def awaited?
+      @awaited
+    end
 
     def_delegators :topology, :replica_set_name
 
@@ -97,6 +105,11 @@ class Mongo::Cluster
       end
 
       case topology
+      when Topology::LoadBalanced
+        @updated_desc = ::Mongo::Server::Description::LoadBalancer.new(
+          updated_desc.address,
+        )
+        update_server_descriptions
       when Topology::Single
         if topology.replica_set_name
           if updated_desc.replica_set_name != topology.replica_set_name
@@ -104,7 +117,7 @@ class Mongo::Cluster
               "Server #{updated_desc.address.to_s} has an incorrect replica set name '#{updated_desc.replica_set_name}'; expected '#{topology.replica_set_name}'"
             )
             @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
-              {}, updated_desc.average_round_trip_time)
+              {}, average_round_trip_time: updated_desc.average_round_trip_time)
             update_server_descriptions
           end
         end
@@ -173,6 +186,7 @@ class Mongo::Cluster
         raise ArgumentError, "Unknown topology #{topology.class}"
       end
 
+      verify_invariants
       commit_changes
       disconnect_servers
     end
@@ -220,7 +234,7 @@ class Mongo::Cluster
 
       if stale_primary?
         @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
-          {}, updated_desc.average_round_trip_time)
+          {}, average_round_trip_time: updated_desc.average_round_trip_time)
         update_server_descriptions
         check_if_has_primary
         return
@@ -249,7 +263,8 @@ class Mongo::Cluster
         if server.address != updated_desc.address
           if server.primary?
             server.update_description(::Mongo::Server::Description.new(
-              server.address, {}, server.description.average_round_trip_time))
+              server.address, {},
+              average_round_trip_time: server.description.average_round_trip_time))
           end
         end
       end
@@ -358,6 +373,9 @@ class Mongo::Cluster
           end
         end
       end
+
+      verify_invariants
+
       added_servers
     end
 
@@ -431,15 +449,12 @@ class Mongo::Cluster
       # the server - in case of a stale primary, the server reported itself
       # as being a primary but updated_desc here will be unknown.
 
-      # We do not notify on unknown -> unknown changes.
-      # This can also be important for tests which have real i/o
-      # happening against bogus addresses which yield unknown responses
-      # and that also mock responses with the resulting race condition,
-      # though tests should avoid performing real i/o with monitoring_io: false
-      # option.
-      if updated_desc.unknown? && previous_desc.unknown?
-        return
-      end
+      # We used to not notify on Unknown -> Unknown server changes.
+      # Technically these are valid state changes (or at least as valid as
+      # other server description changes when the description has not
+      # changed meaningfully but the events are still published).
+      # The current version of the driver notifies on Unknown -> Unknown
+      # transitions.
 
       # Avoid dispatching events when updated description is the same as
       # previous description. This allows this method to be called multiple
@@ -456,6 +471,7 @@ class Mongo::Cluster
           topology,
           previous_desc,
           updated_desc,
+          awaited: awaited?,
         )
       )
       @previous_desc = updated_desc
@@ -595,6 +611,16 @@ class Mongo::Cluster
       end
 
       @previous_server_descriptions != server_descriptions
+    end
+
+    def verify_invariants
+      if Mongo::Lint.enabled?
+        if cluster.topology.single?
+          if cluster.servers_list.length > 1
+            raise Mongo::Error::LintError, "Trying to create a single topology with multiple servers: #{cluster.servers_list}"
+          end
+        end
+      end
     end
   end
 end

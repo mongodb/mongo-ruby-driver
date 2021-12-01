@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::ChangeStream do
@@ -53,7 +56,7 @@ describe Mongo::Collection::View::ChangeStream do
 
   let(:command_spec) do
     change_stream.send(:instance_variable_set, '@resuming', false)
-    change_stream.send(:aggregate_spec, double('session'))
+    change_stream.send(:aggregate_spec, double('server'), double('session'), nil)
   end
 
   let(:cursor) do
@@ -368,6 +371,19 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   describe '#close' do
+
+    context 'ignores any exceptions or errors' do
+      [
+        Mongo::Error::OperationFailure,
+        Mongo::Error::SocketError,
+        Mongo::Error::SocketTimeoutError
+      ].each do |err|
+        it "ignores #{err}" do
+          expect(cursor).to receive(:close).and_raise(err)
+          change_stream.close
+        end
+      end
+    end
 
     context 'when documents have not been retrieved and the stream is closed' do
 

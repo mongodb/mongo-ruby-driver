@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 module AddsDiagnostics
   shared_examples 'it adds diagnostics' do
     it 'indicates the server used for the operation' do

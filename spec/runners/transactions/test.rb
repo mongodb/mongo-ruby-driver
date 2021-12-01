@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,13 +44,20 @@ module Mongo
         @spec = crud_spec
         @data = data
         @description = test['description']
-        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+        @client_options = {
+          # Disable legacy read & write retries, so that when spec tests
+          # disable modern retries we do not retry at all instead of using
+          # legacy retries which is contrary to what the tests want.
+          max_read_retries: 0,
+          max_write_retries: 0,
+          app_name: 'Tx spec - test client',
+        }.update(::Utils.convert_client_options(test['clientOptions'] || {}))
 
         @fail_point_command = test['failPoint']
 
         @session_options = if opts = test['sessionOptions']
           Hash[opts.map do |session_name, options|
-            [session_name.to_sym, Utils.convert_operation_options(options)]
+            [session_name.to_sym, ::Utils.convert_operation_options(options)]
           end]
         else
           {}
@@ -107,15 +117,35 @@ module Mongo
       end
 
       def test_client
-        @test_client ||= ClientRegistry.instance.global_client(
-          'authorized_without_retry_writes'
-        ).with(@client_options.merge(
-          database: @spec.database_name,
-        ))
+        @test_client ||= begin
+          sdam_proc = lambda do |test_client|
+            test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
+
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::SERVER_CLOSED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, sdam_subscriber)
+            test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
+          end
+
+          ClientRegistry.instance.new_local_client(
+            SpecConfig.instance.addresses,
+            SpecConfig.instance.authorized_test_options.merge(
+              database: @spec.database_name,
+              auth_source: SpecConfig.instance.auth_options[:auth_source] || 'admin',
+              sdam_proc: sdam_proc,
+            ).merge(@client_options))
+        end
       end
 
-      def event_subscriber
-        @event_subscriber ||= EventSubscriber.new
+      def command_subscriber
+        @command_subscriber ||= Mrss::EventSubscriber.new
+      end
+
+      def sdam_subscriber
+        @sdam_subscriber ||= Mrss::EventSubscriber.new(name: 'sdam subscriber')
       end
 
       # Run the test.
@@ -127,17 +157,33 @@ module Mongo
       #
       # @since 2.6.0
       def run
-        test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
+        @threads = {}
 
         results = @operations.map do |op|
           target = resolve_target(test_client, op)
           if op.needs_session?
-            op.execute(target, session0, session1)
+            context = CRUD::Context.new(
+              session0: session0,
+              session1: session1,
+              sdam_subscriber: sdam_subscriber,
+              threads: @threads,
+              primary_address: @primary_address,
+            )
           else
             # Hack to support write concern operations tests, which are
             # defined to use transactions format but target pre-3.6 servers
             # that do not support sessions
-            op.execute(target || support_client, nil, nil)
+            target ||= support_client
+            context = CRUD::Context.new(
+              sdam_subscriber: sdam_subscriber,
+              threads: @threads,
+              primary_address: @primary_address,
+            )
+          end
+
+          op.execute(target, context).tap do
+            @threads = context.threads
+            @primary_address = context.primary_address
           end
         end
 
@@ -147,7 +193,7 @@ module Mongo
         @session0&.end_session
         @session1&.end_session
 
-        actual_events = Utils.yamlify_command_events(event_subscriber.started_events)
+        actual_events = ::Utils.yamlify_command_events(command_subscriber.started_events)
         actual_events = actual_events.reject do |event|
           event['command_started_event']['command']['endSessions']
         end
@@ -169,7 +215,7 @@ module Mongo
           contents: @result_collection.with(
             read: {mode: 'primary'},
             read_concern: { level: 'local' },
-          ).find.to_a,
+          ).find.sort(_id: 1).to_a,
           events: actual_events,
         }
       end
@@ -181,7 +227,7 @@ module Mongo
         end
 
         if ClusterConfig.instance.fcv_ish >= '4.2'
-          mongos_each_direct_client do |direct_client|
+          ::Utils.mongos_each_direct_client do |direct_client|
             direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
           end
         end
@@ -216,9 +262,10 @@ module Mongo
 
         coll.insert_many(@data) unless @data.empty?
 
-        $distinct_ran ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
-          mongos_each_direct_client do |direct_client|
-            direct_client['test'].distinct('foo').to_a
+        $distinct_ran ||= {}
+        $distinct_ran[@spec.database_name] ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
+          ::Utils.mongos_each_direct_client do |direct_client|
+            direct_client.use(@spec.database_name)['test'].distinct('foo').to_a
           end
         end
 
@@ -245,6 +292,7 @@ module Mongo
             client.command(configureFailPoint: fail_point_command['configureFailPoint'],
               mode: 'off')
           end
+          $disable_fail_points = nil
         end
 
         if @test_client

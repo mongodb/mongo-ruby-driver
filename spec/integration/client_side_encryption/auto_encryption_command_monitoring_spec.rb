@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Auto Encryption' do
@@ -12,7 +15,7 @@ describe 'Auto Encryption' do
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'
 
-  let(:subscriber) { EventSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
   let(:db_name) { 'auto_encryption' }
 
   let(:encryption_client) do

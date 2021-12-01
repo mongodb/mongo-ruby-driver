@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # These tests assume the server was started with the certificates in
@@ -35,7 +38,7 @@ describe 'X.509 auth integration tests' do
       "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost".freeze
     end
 
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     shared_examples 'authenticates successfully' do
       it 'authenticates successfully' do
@@ -59,7 +62,7 @@ describe 'X.509 auth integration tests' do
       context 'server 4.4 and higher' do
         min_server_fcv '4.4'
 
-        it 'uses speculative authentication in ismaster to authenticate' do
+        it 'uses speculative authentication in hello to authenticate' do
           commands.should == %w(connectionStatus)
         end
       end

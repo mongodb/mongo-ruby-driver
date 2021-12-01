@@ -1,6 +1,22 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Database do
+
+  shared_context 'more than 100 collections' do
+    let(:client) do
+      root_authorized_client.use('many-collections')
+    end
+
+    before do
+      120.times do |i|
+        client["coll-#{i}"].drop
+        client["coll-#{i}"].create
+      end
+    end
+  end
 
   describe '#==' do
 
@@ -82,6 +98,26 @@ describe Mongo::Database do
         expect(collection.server_selector).to eq(Mongo::ServerSelector.get(mode: :secondary))
         expect(collection.read_preference).to eq(BSON::Document.new(mode: :secondary))
       end
+
+      context ':server_api option' do
+
+        let(:client) do
+          new_local_client_nmio(['localhost'], server_api: {version: '1'})
+        end
+
+        it 'is not transfered to the collection' do
+          client.options[:server_api].should == {'version' => '1'}
+          collection.options[:server_api].should be nil
+        end
+      end
+    end
+
+    context 'when providing :server_api option' do
+      it 'is rejected' do
+        lambda do
+          database['foo', server_api: {version: '1'}]
+        end.should raise_error(ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level')
+      end
     end
   end
 
@@ -92,8 +128,8 @@ describe Mongo::Database do
     end
 
     before do
-      database[:users].drop
-      database[:users].create
+      database['users'].drop
+      database['users'].create
     end
 
     let(:actual) do
@@ -153,7 +189,94 @@ describe Mongo::Database do
         expect(collection_names).to include('0_dalmatians')
         expect(collection_names).to include('1_dalmatians')
       end
+    end
 
+    context 'when provided a filter' do
+      min_server_fcv '3.0'
+
+      before do
+        database['users2'].drop
+        database['users2'].create
+      end
+
+      let(:result) do
+        database.collection_names(filter: { name: 'users2' })
+      end
+
+      it 'returns users2 collection' do
+        expect(result.length).to eq(1)
+        expect(result.first).to eq('users2')
+      end
+    end
+
+    context 'when provided authorized_collections or not' do
+
+      context 'on server versions >= 4.0' do
+        min_server_fcv '4.0'
+
+        let(:database) do
+          described_class.new(client, SpecConfig.instance.test_db)
+        end
+
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        context 'when authorized_collections is provided' do
+          let(:options) do
+            { authorized_collections: true }
+          end
+
+          let!(:result) do
+            database.collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes authorized_collections to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['authorizedCollections']).to eq(true)
+          end
+        end
+
+        context 'when no options are provided' do
+          let!(:result) do
+            database.collection_names
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'authorized_collections not passed to server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to be_nil
+          end
+        end
+      end
+    end
+
+    context 'when there are more than 100 collections' do
+      include_context 'more than 100 collections'
+
+      let(:collection_names) do
+        client.database.collection_names.sort
+      end
+
+      it 'lists all collections' do
+        collection_names.length.should == 120
+        collection_names.should include('coll-0')
+        collection_names.should include('coll-119')
+      end
     end
   end
 
@@ -170,8 +293,8 @@ describe Mongo::Database do
     end
 
     before do
-      database[:acol].drop
-      database[:acol].create
+      database['acol'].drop
+      database['acol'].create
     end
 
     context 'server 3.0+' do
@@ -183,8 +306,8 @@ describe Mongo::Database do
 
       context 'with more than one collection' do
         before do
-          database[:anothercol].drop
-          database[:anothercol].create
+          database['anothercol'].drop
+          database['anothercol'].create
 
           expect(database.collections.length).to be > 1
         end
@@ -219,24 +342,141 @@ describe Mongo::Database do
         described_class.new(root_authorized_client, 'admin')
       end
 
-      it 'does not include system collections' do
-        expect(result.none? { |name| name =~ /(^|\.)system\./ }).to be true
+      shared_examples 'does not include system collections' do
+        it 'does not include system collections' do
+          expect(result.none? { |name| name =~ /(^|\.)system\./ }).to be true
+        end
       end
 
-      context 'server 3.0+' do
-        min_server_fcv '3.0'
+      context 'server 4.7+' do
+        min_server_fcv '4.7'
+        # https://jira.mongodb.org/browse/SERVER-35804
+        require_topology :single, :replica_set
+
+        include_examples 'does not include system collections'
 
         it 'returns results' do
           expect(result).to include('acol')
         end
       end
 
-      context 'server 2.6-' do
+      context 'server 3.0-4.5' do
+        min_server_fcv '3.0'
+        max_server_version '4.5'
+
+        include_examples 'does not include system collections'
+
+        it 'returns results' do
+          expect(result).to include('acol')
+        end
+      end
+
+      context 'server 2.6' do
         max_server_version '2.6'
+
+        include_examples 'does not include system collections'
 
         it 'returns results' do
           expect(result).to include('admin.acol')
         end
+      end
+    end
+
+    context 'when provided authorized_collections or name_only options or not' do
+
+      context 'on server versions >= 4.0' do
+        min_server_fcv '4.0'
+
+        let(:database) do
+          described_class.new(client, SpecConfig.instance.test_db)
+        end
+
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        context 'when both are provided' do
+          let(:options) do
+            { name_only: true, authorized_collections: true }
+          end
+
+          let!(:result) do
+            database.list_collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'passes original options to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to eq(true)
+          end
+        end
+
+        context 'when name_only is provided' do
+          let(:options) do
+            { name_only: false }
+          end
+
+          let!(:result) do
+            database.list_collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'no options passed to server because false' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to be_nil
+            expect(command['authorizedCollections']).to be_nil
+          end
+        end
+
+        context 'when no options provided' do
+
+          let!(:result) do
+            database.list_collections
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'no options passed to server because none provided' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to be_nil
+            expect(command['authorizedCollections']).to be_nil
+          end
+        end
+      end
+    end
+
+    context 'when there are more than 100 collections' do
+      include_context 'more than 100 collections'
+
+      let(:collections) do
+        client.database.list_collections
+      end
+
+      let(:collection_names) do
+        # 2.6 server prefixes collection names with database name
+        collections.map { |info| info['name'].sub(/^many-collections\./, '') }.sort
+      end
+
+      it 'lists all collections' do
+        collections.length.should == 120
+        collection_names.should include('coll-0')
+        collection_names.should include('coll-119')
       end
     end
   end
@@ -254,8 +494,8 @@ describe Mongo::Database do
       end
 
       before do
-        database[:users].drop
-        database[:users].create
+        database['users'].drop
+        database['users'].create
       end
 
       it 'returns collection objects for each name' do
@@ -304,6 +544,109 @@ describe Mongo::Database do
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when provided a filter' do
+      min_server_fcv '3.0'
+
+      let(:database) do
+        described_class.new(authorized_client, SpecConfig.instance.test_db)
+      end
+
+      let(:collection2) do
+        Mongo::Collection.new(database, 'users2')
+      end
+
+      before do
+        database['users1'].drop
+        database['users1'].create
+
+        database['users2'].drop
+        database['users2'].create
+      end
+
+      let(:result) do
+        database.collections(filter: { name: 'users2' })
+      end
+
+      it 'returns users2 collection' do
+        expect(result.length).to eq(1)
+        expect(database.collections).to include(collection2)
+      end
+    end
+
+    context 'when provided authorized_collections or not' do
+
+      context 'on server versions >= 4.0' do
+        min_server_fcv '4.0'
+
+        let(:database) do
+          described_class.new(client, SpecConfig.instance.test_db)
+        end
+
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:client) do
+          authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        context 'when authorized_collections are provided' do
+          let(:options) do
+            { authorized_collections: false }
+          end
+
+          let!(:result) do
+            database.collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'authorized_collections not passed to server because false' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to be_nil
+          end
+        end
+
+        context 'when no options are provided' do
+          let!(:result) do
+            database.collections
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'authorized_collections not passed to server because not provided' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['authorizedCollections']).to be_nil
+          end
+        end
+      end
+    end
+
+    context 'when there are more than 100 collections' do
+      include_context 'more than 100 collections'
+
+      let(:collections) do
+        client.database.collections
+      end
+
+      let(:collection_names) do
+        collections.map(&:name).sort
+      end
+
+      it 'lists all collections' do
+        collections.length.should == 120
+        collection_names.should include('coll-0')
+        collection_names.should include('coll-119')
+      end
+    end
   end
 
   describe '#command' do
@@ -313,18 +656,18 @@ describe Mongo::Database do
     end
 
     it 'sends the query command to the cluster' do
-      expect(database.command(:ismaster => 1).written_count).to eq(0)
+      expect(database.command(:ping => 1).written_count).to eq(0)
     end
 
     it 'does not mutate the command selector' do
-      expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
+      expect(database.command({:ping => 1}.freeze).written_count).to eq(0)
     end
 
     context 'when provided a session' do
       min_server_fcv '3.6'
 
       let(:operation) do
-        client.database.command({ :ismaster => 1 }, session: session)
+        client.database.command({ :ping => 1 }, session: session)
       end
 
       let(:failed_operation) do
@@ -335,7 +678,7 @@ describe Mongo::Database do
         client.start_session
       end
 
-      let(:subscriber) { EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
       let(:client) do
         authorized_client.tap do |client|
@@ -348,7 +691,7 @@ describe Mongo::Database do
 
 
       let(:full_command) do
-        subscriber.started_events.find { |cmd| cmd.command_name == 'ismaster' }.command
+        subscriber.started_events.find { |cmd| cmd.command_name == 'ping' }.command
       end
 
       it 'does not add a afterClusterTime field' do
@@ -366,7 +709,7 @@ describe Mongo::Database do
 
         it 'sends the read concern' do
           expect {
-            database.command(:ismaster => 1, readConcern: { level: 'local' })
+            database.command(:ping => 1, readConcern: { level: 'local' })
           }.to_not raise_error
         end
       end
@@ -376,7 +719,7 @@ describe Mongo::Database do
 
         it 'raises an exception' do
           expect {
-            database.command(:ismaster => 1, readConcern: { level: 'yay' })
+            database.command(:ping => 1, readConcern: { level: 'yay' })
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -389,12 +732,12 @@ describe Mongo::Database do
         database.cluster.next_primary
       end
 
-      before do
-        expect(primary_server).to receive(:with_connection).at_least(:once).and_call_original
-      end
-
       it 'uses read preference of primary' do
-        expect(database.command(ping: 1)).to be_successful
+        RSpec::Mocks.with_temporary_scope do
+          expect(primary_server).to receive(:with_connection).with(any_args).and_call_original
+
+          expect(database.command(ping: 1)).to be_successful
+        end
       end
     end
 
@@ -417,12 +760,12 @@ describe Mongo::Database do
         described_class.new(client, SpecConfig.instance.test_db, client.options)
       end
 
-      before do
-        expect(primary_server).to receive(:with_connection).at_least(:once).and_call_original
-      end
-
       it 'does not use the client read preference 'do
-        expect(database.command(ping: 1)).to be_successful
+        RSpec::Mocks.with_temporary_scope do
+          expect(primary_server).to receive(:with_connection).with(any_args).and_call_original
+
+          expect(database.command(ping: 1)).to be_successful
+        end
       end
     end
 
@@ -535,6 +878,29 @@ describe Mongo::Database do
         end
       end
     end
+
+    context 'when client server api is not set' do
+      require_no_required_api_version
+      min_server_fcv '4.7'
+
+      it 'passes server api parameters' do
+        lambda do
+          database.command(ping: 1, apiVersion: 'does-not-exist')
+        end.should raise_error(
+          an_instance_of(Mongo::Error::OperationFailure).and having_attributes(code: 322))
+      end
+    end
+
+    context 'when client server api is set' do
+      require_required_api_version
+      min_server_fcv '4.7'
+
+      it 'reports server api conflict' do
+        lambda do
+          database.command(ping: 1, apiVersion: 'does-not-exist')
+        end.should raise_error(Mongo::Error::ServerApiConflict)
+      end
+    end
   end
 
   describe '#drop' do
@@ -585,6 +951,50 @@ describe Mongo::Database do
           expect{
             database_with_write_options.drop
           }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when write concern is passed in as an option' do
+        min_server_fcv '3.4'
+        require_topology :single
+
+        let(:client_options) do
+          {
+            write_concern: {w: 0},
+            database: :test
+          }
+        end
+
+        let(:session) do
+          client.start_session
+        end
+
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:client) do
+          root_authorized_client.tap do |client|
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end.with(client_options)
+        end
+
+        let(:events) do
+          subscriber.command_started_events('dropDatabase')
+        end
+
+        let(:database_test_wc) do
+          client.database
+        end
+
+        let!(:command) do
+          Utils.get_command_event(client, 'dropDatabase') do |client|
+            database_test_wc.drop({ write_concern: {w: 'majority'} })
+          end.command
+        end
+
+        it 'applies the write concern passed in as an option' do
+          expect(events.length).to eq(1)
+          expect(command).to_not be_nil
+          expect(command[:writeConcern][:w]).to eq('majority')
         end
       end
 

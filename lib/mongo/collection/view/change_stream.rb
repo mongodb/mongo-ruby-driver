@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -203,7 +206,7 @@ module Mongo
           unless closed?
             begin
               @cursor.close
-            rescue Error::OperationFailure
+            rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError
               # ignore
             end
             @cursor = nil
@@ -295,8 +298,8 @@ module Mongo
           [{ '$changeStream' => change_doc }] + @change_stream_filters
         end
 
-        def aggregate_spec(session)
-          super(session).tap do |spec|
+        def aggregate_spec(server, session, read_preference)
+          super(server, session, read_preference).tap do |spec|
             spec[:selector][:aggregate] = 1 unless for_collection?
           end
         end
@@ -346,7 +349,11 @@ module Mongo
         end
 
         def send_initial_query(server, session)
-          initial_query_op(session).execute(server, client: client)
+          initial_query_op(server, session, view.read_preference)
+            .execute(
+              server,
+              context: Operation::Context.new(client: client, session: session)
+            )
         end
 
         def time_to_bson_timestamp(time)

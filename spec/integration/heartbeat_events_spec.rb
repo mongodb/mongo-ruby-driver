@@ -1,33 +1,17 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
-
-class TestHeartbeatSubscriber
-  def initialize
-    @started_events = []
-    @succeeded_events = []
-    @failed_events = []
-  end
-
-  attr_reader :started_events, :succeeded_events, :failed_events
-
-  def started(event)
-    @started_events << event
-  end
-
-  def succeeded(event)
-    @succeeded_events << event
-  end
-
-  def failed(event)
-    @failed_events << event
-  end
-end
 
 describe 'Heartbeat events' do
   class HeartbeatEventsSpecTestException < StandardError; end
 
+  # 4.4 has two monitors and thus issues heartbeats multiple times
+  max_server_version '4.2'
+
   clean_slate_for_all
 
-  let(:subscriber) { TestHeartbeatSubscriber.new }
+  let(:subscriber) { Mrss::EventSubscriber.new }
 
   before do
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
@@ -44,7 +28,7 @@ describe 'Heartbeat events' do
       server_selection_timeout: 0.1, connect: :direct)) }
 
   it 'notifies on successful heartbeats' do
-    client.database.command(ismaster: 1)
+    client.database.command(ping: 1)
 
     started_event = subscriber.started_events.first
     expect(started_event).not_to be nil
@@ -62,10 +46,10 @@ describe 'Heartbeat events' do
 
   it 'notifies on failed heartbeats' do
     exc = HeartbeatEventsSpecTestException.new
-    expect_any_instance_of(Mongo::Server::Monitor).to receive(:ismaster).at_least(:once).and_raise(exc)
+    expect_any_instance_of(Mongo::Server::Monitor).to receive(:check).at_least(:once).and_raise(exc)
 
     expect do
-      client.database.command(ismaster: 1)
+      client.database.command(ping: 1)
     end.to raise_error(Mongo::Error::NoServerAvailable)
 
     started_event = subscriber.started_events.first
@@ -91,7 +75,7 @@ describe 'Heartbeat events' do
 
     shared_examples_for 'does not notify on heartbeats' do
       it 'does not notify on heartbeats' do
-        client.database.command(ismaster: 1)
+        client.database.command(ping: 1)
 
         started_event = subscriber.started_events.first
         expect(started_event).to be nil

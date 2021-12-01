@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'mongo/server/connection_pool/populator'
 
 module Mongo
   class Server
@@ -108,7 +110,7 @@ module Mongo
         @server = server
         @options = options.freeze
 
-        @generation = 1
+        @generation_manager = GenerationManager.new(server: server)
         @closed = false
 
         # A connection owned by this pool should be either in the
@@ -186,12 +188,14 @@ module Mongo
         @max_idle_time ||= options[:max_idle_time]
       end
 
+      # @api private
+      attr_reader :generation_manager
+
       # @return [ Integer ] generation Generation of connections currently
       #   being used by the queue.
       #
-      # @since 2.9.0
       # @api private
-      attr_reader :generation
+      def_delegator :generation_manager, :generation
 
       # Size of the connection pool.
       #
@@ -274,7 +278,7 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       #
       # @since 2.9.0
-      def check_out
+      def check_out(service_id: nil)
         check_invariants
 
         publish_cmap_event(
@@ -291,7 +295,7 @@ module Mongo
           raise Error::PoolClosedError.new(@server.address, self)
         end
 
-        deadline = Time.now + wait_timeout
+        deadline = Utils.monotonic_time + wait_timeout
         pid = Process.pid
         connection = nil
         # It seems that synchronize sets up its own loop, thus a simple break
@@ -303,7 +307,12 @@ module Mongo
             # a connection while this thread is waiting for one.
             @lock.synchronize do
               until @available_connections.empty?
-                connection = @available_connections.pop
+                connection = next_available_connection(service_id: service_id)
+
+                # If service_id is not nil, connection may be nil here
+                # even if there are available connections in the pool
+                # (they could be to other services).
+                break unless connection
 
                 if connection.pid != pid
                   log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
@@ -312,7 +321,7 @@ module Mongo
                   next
                 end
 
-                if connection.generation != generation
+                if connection.generation != generation(service_id: connection.service_id)
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
@@ -332,16 +341,26 @@ module Mongo
                 throw(:done)
               end
 
-              # Ruby does not allow a thread to lock a mutex which it already
-              # holds.
-              if unsynchronized_size < max_size
-                connection = create_connection
-                @pending_connections << connection
-                throw(:done)
+              if service_id
+                # If we need a connection to a particular service, we can't
+                # create one if we don't already have one, but we can wait
+                # for an in-progress operation to return such a connection
+                # to the pool, or for the populator to create a suitable
+                # connection.
+              else
+                # If we are below pool capacity, create a new connection.
+                #
+                # Ruby does not allow a thread to lock a mutex which it already
+                # holds.
+                if unsynchronized_size < max_size
+                  connection = create_connection
+                  @pending_connections << connection
+                  throw(:done)
+                end
               end
             end
 
-            wait = deadline - Time.now
+            wait = deadline - Utils.monotonic_time
             if wait <= 0
               publish_cmap_event(
                 Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
@@ -351,8 +370,14 @@ module Mongo
               )
 
               msg = @lock.synchronize do
+                service_id_msg = if service_id
+                  " for service #{service_id}"
+                else
+                  ''
+                end
+
                 "Timed out attempting to check out a connection " +
-                  "from pool for #{@server.address} after #{wait_timeout} sec. " +
+                  "from pool for #{@server.address}#{service_id_msg} after #{wait_timeout} sec. " +
                   "Connections in pool: #{@available_connections.length} available, " +
                   "#{@checked_out_connections.length} checked out, " +
                   "#{@pending_connections.length} pending " +
@@ -446,7 +471,7 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-          elsif connection.generation != @generation
+          elsif connection.generation != generation(service_id: connection.service_id)
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
           else
@@ -470,8 +495,12 @@ module Mongo
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
+      # @option options [ Object ] :service_id Discard state for the specified
+      #   service id only.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
+      # @option options [ Object ] :service_id Clear connections with
+      #   the specified service id only.
       #
       # @return [ true ] true.
       #
@@ -485,18 +514,38 @@ module Mongo
           stop_populator
         end
 
+        service_id = options && options[:service_id]
+
         @lock.synchronize do
-          @generation += 1
+          @generation_manager.bump(service_id: service_id)
 
           publish_cmap_event(
-            Monitoring::Event::Cmap::PoolCleared.new(@server.address)
+            Monitoring::Event::Cmap::PoolCleared.new(
+              @server.address,
+              service_id: service_id,
+            )
           )
 
           unless options && options[:lazy]
-            until @available_connections.empty?
-              connection = @available_connections.pop
-              connection.disconnect!(reason: :stale)
-              @populate_semaphore.signal
+            if service_id
+              loop do
+                conn = @available_connections.detect do |conn|
+                  conn.service_id == service_id
+                end
+                if conn
+                  @available_connections.delete(conn)
+                  conn.disconnect!(reason: :stale)
+                  @populate_semaphore.signal
+                else
+                  break
+                end
+              end
+            else
+              until @available_connections.empty?
+                connection = @available_connections.pop
+                connection.disconnect!(reason: :stale)
+                @populate_semaphore.signal
+              end
             end
           end
         end
@@ -583,10 +632,10 @@ module Mongo
       # @return [ Object ] The result of the block.
       #
       # @since 2.0.0
-      def with_connection
+      def with_connection(service_id: nil)
         raise_if_closed!
 
-        connection = check_out
+        connection = check_out(service_id: service_id)
         yield(connection)
       ensure
         if connection
@@ -684,8 +733,6 @@ module Mongo
       # @return [ Proc ] The Finalizer.
       def self.finalize(available_connections, pending_connections, populator)
         proc do
-          populator.stop!
-
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
           end
@@ -704,9 +751,33 @@ module Mongo
 
       private
 
+      # Returns the next available connection, optionally scoped to the
+      # specified service. If no suitable connections are available,
+      # returns nil.
+      def next_available_connection(service_id: nil)
+        if service_id
+          conn = @available_connections.detect do |conn|
+            conn.service_id == service_id
+          end
+          if conn
+            @available_connections.delete(conn)
+          end
+          conn
+        else
+          @available_connections.pop
+        end
+      end
+
       def create_connection
-        connection = Connection.new(@server, options.merge(generation: generation,
-          connection_pool: self))
+        opts = options.merge(
+          connection_pool: self,
+          # Do not pass app metadata - this will be retrieved by the connection
+          # based on the auth needs.
+        )
+        unless @server.load_balancer?
+          opts[:generation] = generation
+        end
+        connection = Connection.new(@server, opts)
       end
 
       # Create a connection, connect it, and add it to the pool.
@@ -766,6 +837,13 @@ module Mongo
           connection.disconnect!(reason: :error)
           raise
         end
+      rescue Error::SocketError, Error::SocketTimeoutError => exc
+        @server.unknown!(
+          generation: exc.generation,
+          service_id: exc.service_id,
+          stop_push_monitor: true,
+        )
+        raise
       end
 
       def check_invariants
@@ -792,3 +870,6 @@ module Mongo
     end
   end
 end
+
+require 'mongo/server/connection_pool/generation_manager'
+require 'mongo/server/connection_pool/populator'

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,22 +46,12 @@ module Mongo
         # @param [ Server::Connection ] connection The connection being
         #   authenticated.
         #
-        # @return [ Protocol::Query ] The first CR conversation message.
+        # @return [ Protocol::Message ] The first CR conversation message.
         #
         # @since 2.0.0
         def start(connection)
-          if connection && connection.features.op_msg_enabled?
-            selector = Auth::GET_NONCE.merge(Protocol::Msg::DATABASE_IDENTIFIER => user.auth_source)
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              user.auth_source,
-              Database::COMMAND,
-              Auth::GET_NONCE,
-              limit: -1)
-          end
+          selector = Auth::GET_NONCE
+          build_message(connection, user.auth_source, selector)
         end
 
         # Continue the CR conversation. This sends the client final message
@@ -70,26 +63,13 @@ module Mongo
         # @param [ Mongo::Server::Connection ] connection The connection being
         #   authenticated.
         #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Message ] The next message to send.
         #
         # @since 2.0.0
         def continue(reply_document, connection)
           @nonce = reply_document[Auth::NONCE]
-
-          if connection && connection.features.op_msg_enabled?
-            selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
-            cluster_time = connection.mongos? && connection.cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([], {}, selector)
-          else
-            Protocol::Query.new(
-              user.auth_source,
-              Database::COMMAND,
-              LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
-              limit: -1
-            )
-          end
+          selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
+          build_message(connection, user.auth_source, selector)
         end
       end
     end

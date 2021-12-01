@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,23 +24,8 @@ module Mongo
         arguments && arguments['session'] || object =~ /session/
       end
 
-      def execute(target, session0, session1, active_session=nil)
-        session = case arguments && arguments['session']
-        when 'session0'
-          session0
-        when 'session1'
-          session1
-        else
-          # active session could be nil
-          active_session
-        end
-
-        context = Context.new(
-          session0,
-          session1,
-          session)
-
-        op_name = Utils.underscore(name).to_sym
+      def execute(target, context)
+        op_name = ::Utils.underscore(name).to_sym
         if op_name == :with_transaction
           args = [target]
         else
@@ -53,9 +41,14 @@ module Mongo
             result['error'] = false
           end
         end
+
         result
       rescue Mongo::Error::OperationFailure => e
-        err_doc = e.instance_variable_get(:@result).send(:first_document)
+        result = e.instance_variable_get(:@result)
+        if result.nil?
+          raise "OperationFailure had nil result: #{e}"
+        end
+        err_doc = result.send(:first_document)
         error_code_name = err_doc['codeName'] || err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName']
         if error_code_name.nil?
           # Sometimes the server does not return the error code name,
@@ -102,13 +95,13 @@ module Mongo
         command_value = cmd.delete(command_name)
         cmd = { command_name.to_sym => command_value }.merge(cmd)
 
-        opts = Utils.snakeize_hash(context.transform_arguments(options)).dup
+        opts = ::Utils.snakeize_hash(transformed_options(context)).dup
         opts[:read] = opts.delete(:read_preference)
         database.command(cmd, opts).documents.first
       end
 
       def start_transaction(session, context)
-        session.start_transaction(Utils.convert_operation_options(arguments['options']))
+        session.start_transaction(::Utils.convert_operation_options(arguments['options']))
         nil
       end
 
@@ -128,7 +121,7 @@ module Mongo
         end
 
         if arguments['options']
-          options = Utils.snakeize_hash(arguments['options'])
+          options = ::Utils.snakeize_hash(arguments['options'])
         else
           options = nil
         end
@@ -136,7 +129,7 @@ module Mongo
           callback['operations'].each do |op_spec|
             op = Operation.new(@crud_test, op_spec)
             target = @crud_test.resolve_target(@crud_test.test_client, op)
-            rv = op.execute(target, context.session0, context.session1, session)
+            rv = op.execute(target, context)
             if rv && rv['exception']
               raise rv['exception']
             end
@@ -151,7 +144,7 @@ module Mongo
       end
 
       def targeted_fail_point(collection, context)
-        args = context.transform_arguments(options)
+        args = transformed_options(context)
         session = args[:session]
         unless session.pinned_server
           raise ArgumentError, 'Targeted fail point requires session to be pinned to a server'
@@ -169,7 +162,7 @@ module Mongo
       end
 
       def assert_session_pinned(collection, context)
-        args = context.transform_arguments(options)
+        args = transformed_options(context)
         session = args[:session]
         unless session.pinned_server
           raise ArgumentError, 'Expected session to be pinned'
@@ -177,10 +170,157 @@ module Mongo
       end
 
       def assert_session_unpinned(collection, context)
-        args = context.transform_arguments(options)
+        args = transformed_options(context)
         session = args[:session]
         if session.pinned_server
           raise ArgumentError, 'Expected session to not be pinned'
+        end
+      end
+
+      def wait_for_event(client, context)
+        deadline = Time.now + 5
+        loop do
+          events = _select_events(context)
+          if events.length >= arguments['count']
+            break
+          end
+          if Time.now >= deadline
+            raise "Did not receive an event matching #{arguments} in 5 seconds; received #{events.length} but expected #{arguments['count']} events"
+          else
+            sleep 0.1
+          end
+        end
+      end
+
+      def assert_event_count(client, context)
+        events = _select_events(context)
+        if %w(ServerMarkedUnknownEvent PoolClearedEvent).include?(arguments['event'])
+          # We publish SDAM events from both regular and push monitors.
+          # This means sometimes there are two ServerMarkedUnknownEvent
+          # events published for the same server transition.
+          # Allow actual event count to be at least the expected event count
+          # in case there are multiple transitions in a single test.
+          unless events.length >= arguments['count']
+            raise "Expected #{arguments['count']} #{arguments['event']} events, but have #{events.length}"
+          end
+        else
+          unless events.length == arguments['count']
+            raise "Expected #{arguments['count']} #{arguments['event']} events, but have #{events.length}"
+          end
+        end
+      end
+
+      def _select_events(context)
+        case arguments['event']
+        when 'ServerMarkedUnknownEvent'
+          context.sdam_subscriber.all_events.select do |event|
+            event.is_a?(Mongo::Monitoring::Event::ServerDescriptionChanged) &&
+            event.new_description.unknown?
+          end
+        else
+          context.sdam_subscriber.all_events.select do |event|
+            event.class.name.sub(/.*::/, '') == arguments['event'].sub(/Event$/, '')
+          end
+        end
+      end
+
+      class ThreadContext
+        def initialize
+          @operations = Queue.new
+          @unexpected_operation_results = []
+        end
+
+        def stop?
+          !!@stop
+        end
+
+        def signal_stop
+          @stop = true
+        end
+
+        attr_reader :operations
+        attr_reader :unexpected_operation_results
+      end
+
+      def start_thread(client, context)
+        thread_context = ThreadContext.new
+        thread = Thread.new do
+          loop do
+            begin
+              op_spec = thread_context.operations.pop(true)
+              op = Operation.new(@crud_test, op_spec)
+              target = @crud_test.resolve_target(@crud_test.test_client, op)
+              result = op.execute(target, context)
+              if op_spec['error']
+                unless result['error']
+                  thread_context.unexpected_operation_results << result
+                end
+              else
+                if result['error']
+                  thread_context.unexpected_operation_results << result
+                end
+              end
+            rescue ThreadError
+              # Queue is empty
+            end
+            if thread_context.stop?
+              break
+            else
+              sleep 1
+            end
+          end
+        end
+        class << thread
+          attr_accessor :context
+        end
+        thread.context = thread_context
+        unless context.threads
+          context.threads ||= {}
+        end
+        context.threads[arguments['name']] = thread
+      end
+
+      def run_on_thread(client, context)
+        thread = context.threads.fetch(arguments['name'])
+        thread.context.operations << arguments['operation']
+      end
+
+      def wait_for_thread(client, context)
+        thread = context.threads.fetch(arguments['name'])
+        thread.context.signal_stop
+        thread.join
+        unless thread.context.unexpected_operation_results.empty?
+          raise "Thread #{arguments['name']} had #{thread.context.unexpected_operation_results}.length unexpected operation results"
+        end
+      end
+
+      def wait(client, context)
+        sleep arguments['ms'] / 1000.0
+      end
+
+      def record_primary(client, context)
+        context.primary_address = client.cluster.next_primary.address
+      end
+
+      def run_admin_command(support_client, context)
+        support_client.use('admin').database.command(arguments['command'])
+      end
+
+      def wait_for_primary_change(client, context)
+        timeout = if arguments['timeoutMS']
+          arguments['timeoutMS'] / 1000.0
+        else
+          10
+        end
+        deadline = Time.now + timeout
+        loop do
+          client.cluster.scan!
+          if client.cluster.next_primary.address != context.primary_address
+            break
+          end
+          if Time.now >= deadline
+            raise "Failed to change primary in #{timeout} seconds"
+          end
         end
       end
     end

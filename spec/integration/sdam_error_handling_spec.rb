@@ -1,17 +1,47 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'SDAM error handling' do
-  clean_slate_for_all
+  require_topology :single, :replica_set, :sharded
+
+  clean_slate
+
+  after do
+    # Close all clients after every test to avoid leaking expectations into
+    # subsequent tests because we set global assertions on sockets.
+    ClientRegistry.instance.close_all_clients
+  end
 
   # These tests operate on specific servers, and don't work in a multi
   # shard cluster where multiple servers are equally eligible
-  require_no_multi_shard
+  require_no_multi_mongos
 
-  let(:client) { authorized_client_without_any_retries }
+  let(:diagnostic_subscriber) { Mrss::VerboseEventSubscriber.new }
+
+  let(:client) do
+    new_local_client(SpecConfig.instance.addresses,
+      SpecConfig.instance.all_test_options.merge(
+        socket_timeout: 3, connect_timeout: 3,
+        heartbeat_frequency: 100,
+        # Uncomment to print all events to stdout:
+        #sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
+        **Utils.disable_retries_client_options)
+    )
+  end
 
   let(:server) { client.cluster.next_primary }
 
   shared_examples_for 'marks server unknown' do
+    before do
+      server.monitor.stop!
+    end
+
+    after do
+      client.close
+    end
+
     it 'marks server unknown' do
       expect(server).not_to be_unknown
       RSpec::Mocks.with_temporary_scope do
@@ -22,6 +52,14 @@ describe 'SDAM error handling' do
   end
 
   shared_examples_for 'does not mark server unknown' do
+    before do
+      server.monitor.stop!
+    end
+
+    after do
+      client.close
+    end
+
     it 'does not mark server unknown' do
       expect(server).not_to be_unknown
       RSpec::Mocks.with_temporary_scope do
@@ -148,6 +186,9 @@ describe 'SDAM error handling' do
     end
 
     context 'network error' do
+      # With 4.4 servers we set up two monitoring connections, hence global
+      # socket expectations get hit twice.
+      max_server_version '4.2'
 
       let(:operation) do
         expect_any_instance_of(Mongo::Socket).to receive(:read).and_raise(exception)
@@ -178,17 +219,78 @@ describe 'SDAM error handling' do
     end
   end
 
+  describe 'when there is an error during connection establishment' do
+    require_topology :single
+
+    # The push monitor creates sockets unpredictably and interferes with this
+    # test.
+    max_server_version '4.2'
+
+    # When TLS is used there are two socket classes and we can't simply
+    # mock the base Socket class.
+    require_no_tls
+
+    {
+      SystemCallError => Mongo::Error::SocketError,
+      Errno::ETIMEDOUT => Mongo::Error::SocketTimeoutError,
+    }.each do |raw_error_cls, mapped_error_cls|
+      context raw_error_cls.name do
+        let(:socket) do
+          double('mock socket').tap do |socket|
+            allow(socket).to receive(:set_encoding)
+            allow(socket).to receive(:setsockopt)
+            allow(socket).to receive(:getsockopt)
+            allow(socket).to receive(:connect)
+            allow(socket).to receive(:close)
+            socket.should receive(:write).and_raise(raw_error_cls, 'mocked failure')
+          end
+        end
+
+        it 'marks server unknown' do
+          server = client.cluster.next_primary
+          client.cluster.servers.map(&:disconnect!)
+
+          RSpec::Mocks.with_temporary_scope do
+
+            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
+
+            lambda do
+              client.command(ping: 1)
+            end.should raise_error(mapped_error_cls, /mocked failure/)
+
+            server.should be_unknown
+          end
+        end
+
+        it 'recovers' do
+          server = client.cluster.next_primary
+          # If we do not kill the monitor, the client will recover automatically.
+
+          RSpec::Mocks.with_temporary_scope do
+
+            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
+            Socket.should receive(:new).with(any_args).ordered.once.and_call_original
+
+            lambda do
+              client.command(ping: 1)
+            end.should raise_error(mapped_error_cls, /mocked failure/)
+
+            client.command(ping: 1)
+          end
+        end
+      end
+    end
+
+    after do
+      # Since we stopped monitoring on the client, close it.
+      ClientRegistry.instance.close_all_clients
+    end
+  end
+
   describe 'when there is an error on monitoring connection' do
     clean_slate_for_all
 
-    let(:client) do
-      new_local_client(SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          connect_timeout: 1, socket_timeout: 1,
-      ))
-    end
-
-    let(:subscriber) { EventSubscriber.new }
+    let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:set_subscribers) do
       client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
@@ -199,7 +301,7 @@ describe 'SDAM error handling' do
       expect(server.monitor.connection).not_to be nil
       set_subscribers
       RSpec::Mocks.with_temporary_scope do
-        expect(server.monitor).to receive(:ismaster).and_raise(exception)
+        expect(server.monitor).to receive(:check).and_raise(exception)
         server.monitor.scan!
       end
       expect_server_state_change
@@ -209,6 +311,7 @@ describe 'SDAM error handling' do
       it 'marks server unknown' do
         expect(server).not_to be_unknown
 
+        #subscriber.clear_events!
         events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
         events.should be_empty
 
@@ -228,6 +331,7 @@ describe 'SDAM error handling' do
 
     shared_examples_for 'clears connection pool - cmap event' do
       it 'clears connection pool' do
+        #subscriber.clear_events!
         events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
         events.should be_empty
 
@@ -245,6 +349,7 @@ describe 'SDAM error handling' do
     end
 
     shared_examples_for 'marks server unknown and clears connection pool' do
+=begin These tests are not reliable
       context 'via object inspection' do
         let(:expect_server_state_change) do
           server.summary.should =~ /unknown/i
@@ -254,6 +359,7 @@ describe 'SDAM error handling' do
         it_behaves_like 'marks server unknown'
         it_behaves_like 'clears connection pool'
       end
+=end
 
       context 'via events' do
         # When we use events we do not need to examine object state, therefore
@@ -268,16 +374,22 @@ describe 'SDAM error handling' do
       end
     end
 
-    context 'network timeout' do
-      let(:exception) { Mongo::Error::SocketTimeoutError }
+    context 'via stubs' do
+      # With 4.4 servers we set up two monitoring connections, hence global
+      # socket expectations get hit twice.
+      max_server_version '4.2'
 
-      it_behaves_like 'marks server unknown and clears connection pool'
-    end
+      context 'network timeout' do
+        let(:exception) { Mongo::Error::SocketTimeoutError }
 
-    context 'non-timeout network error' do
-      let(:exception) { Mongo::Error::SocketError }
+        it_behaves_like 'marks server unknown and clears connection pool'
+      end
 
-      it_behaves_like 'marks server unknown and clears connection pool'
+      context 'non-timeout network error' do
+        let(:exception) { Mongo::Error::SocketError }
+
+        it_behaves_like 'marks server unknown and clears connection pool'
+      end
     end
 
     context 'non-timeout network error via fail point' do
@@ -290,7 +402,7 @@ describe 'SDAM error handling' do
           configureFailPoint: 'failCommand',
           mode: {times: 2},
           data: {
-            failCommands: %w(isMaster),
+            failCommands: %w(isMaster hello),
             closeConnection: true,
           },
         )

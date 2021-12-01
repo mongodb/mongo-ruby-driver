@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,28 +45,53 @@ module Mongo
     # Class for parsing the various forms that errors can come in from MongoDB
     # command responses.
     #
+    # The errors can be reported by the server in a number of ways:
+    # - {ok:0} response indicates failure. In newer servers, code, codeName
+    #   and errmsg fields should be set. In older servers some may not be set.
+    # - {ok:1} response with a write concern error (writeConcernError top-level
+    #   field). This indicates that the node responding successfully executed
+    #   the request, but not enough other nodes successfully executed the
+    #   request to satisfy the write concern.
+    # - {ok:1} response with writeErrors top-level field. This can be obtained
+    #   in a bulk write but also in a non-bulk write. In a non-bulk write
+    #   there should be exactly one error in the writeErrors list.
+    #   The case of multiple errors is handled by BulkWrite::Result.
+    # - {ok:1} response with writeConcernErrors top-level field. This can
+    #   only be obtained in a bulk write and is handled by BulkWrite::Result,
+    #   not by this class.
+    #
+    # Note that writeErrors do not have codeName fields - they just provide
+    # codes and messages. writeConcernErrors may similarly not provide code
+    # names.
+    #
     # @since 2.0.0
+    # @api private
     class Parser
       include SdamErrorDetection
 
-      # @return [ BSON::Document ] document The returned document.
+      # @return [ BSON::Document ] The returned document.
       attr_reader :document
 
-      # @return [ String ] message The error message parsed from the document.
+      # @return [ String ] The full error message to be used in the
+      #   raised exception.
       attr_reader :message
 
-      # @return [ Array<Protocol::Message> ] replies The message replies.
+      # @return [ String ] The server-returned error message
+      #   parsed from the response.
+      attr_reader :server_message
+
+      # @return [ Array<Protocol::Message> ] The message replies.
       attr_reader :replies
 
-      # @return [ Integer ] code The error code parsed from the document.
+      # @return [ Integer ] The error code parsed from the document.
       # @since 2.6.0
       attr_reader :code
 
-      # @return [ String ] code_name The error code name parsed from the document.
+      # @return [ String ] The error code name parsed from the document.
       # @since 2.6.0
       attr_reader :code_name
 
-      # @return [ Array<String> ] labels The set of labels associated with the error.
+      # @return [ Array<String> ] The set of labels associated with the error.
       # @since 2.7.0
       attr_reader :labels
 
@@ -145,33 +173,61 @@ module Mongo
         write_concern_error_document && write_concern_error_document['errorLabels']
       end
 
+      class << self
+        def build_message(code: nil, code_name: nil, message: nil)
+          if code_name && code
+            "[#{code}:#{code_name}]: #{message}"
+          elsif code_name
+            # This surely should never happen, if there's a code name
+            # there ought to also be the code provided.
+            # Handle this case for completeness.
+            "[#{code_name}]: #{message}"
+          elsif code
+            "[#{code}]: #{message}"
+          else
+            message
+          end
+        end
+      end
+
       private
 
       def parse!
-        @message = ""
-        parse_single(@message, ERR)
-        parse_single(@message, ERROR)
-        parse_single(@message, ERRMSG)
+        if document['ok'] != 1 && document['writeErrors']
+          raise ArgumentError, "writeErrors should only be given in successful responses"
+        end
+
+        @message = +""
+        parse_single(@message, '$err')
+        parse_single(@message, 'err')
+        parse_single(@message, 'errmsg')
         parse_multiple(@message, 'writeErrors')
         if write_concern_error_document
-          parse_single(@message, ERRMSG, write_concern_error_document)
+          parse_single(@message, 'errmsg', write_concern_error_document)
         end
         parse_flag(@message)
         parse_code
         parse_labels
         parse_wtimeout
+
+        @server_message = @message
+        @message = self.class.build_message(
+          code: code,
+          code_name: code_name,
+          message: @message,
+        )
       end
 
       def parse_single(message, key, doc = document)
         if error = doc[key]
-          append(message ,"#{error} (#{doc[CODE]})")
+          append(message, error)
         end
       end
 
       def parse_multiple(message, key)
         if errors = document[key]
           errors.each do |error|
-            parse_single(message, ERRMSG, error)
+            parse_single(message, 'errmsg', error)
           end
         end
       end

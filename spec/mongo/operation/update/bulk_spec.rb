@@ -1,7 +1,13 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Operation::Update do
-  require_no_multi_shard
+  require_no_multi_mongos
+  require_no_required_api_version
+
+  let(:context) { Mongo::Operation::Context.new }
 
   let(:documents) do
     [{ :q => { :foo => 1 },
@@ -99,7 +105,7 @@ describe Mongo::Operation::Update do
 
         it 'updates the document' do
           authorized_primary.with_connection do |connection|
-            op.bulk_execute(connection, client: nil)
+            op.bulk_execute(connection, context: context)
           end
           expect(authorized_collection.find(field: 'blah').count).to eq(1)
         end
@@ -125,7 +131,7 @@ describe Mongo::Operation::Update do
 
         it 'updates the documents' do
           authorized_primary.with_connection do |connection|
-            op.bulk_execute(connection, client: nil)
+            op.bulk_execute(connection, context: context)
           end
           expect(authorized_collection.find(field: 'blah').count).to eq(2)
         end
@@ -159,7 +165,7 @@ describe Mongo::Operation::Update do
 
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
-              failing_update.bulk_execute(connection, client: nil)
+              failing_update.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
@@ -173,7 +179,7 @@ describe Mongo::Operation::Update do
 
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
-              failing_update.bulk_execute(connection, client: nil)
+              failing_update.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
@@ -208,7 +214,7 @@ describe Mongo::Operation::Update do
 
           it 'does not abort after first error' do
             authorized_primary.with_connection do |connection|
-              failing_update.bulk_execute(connection, client: nil)
+              failing_update.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
@@ -222,7 +228,7 @@ describe Mongo::Operation::Update do
 
           it 'does not abort after first error' do
             authorized_primary.with_connection do |connection|
-              failing_update.bulk_execute(connection, client: nil)
+              failing_update.bulk_execute(connection, context: context)
             end
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end

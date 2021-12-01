@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'runners/cmap/verifier'
 
 module Mongo
@@ -30,7 +33,7 @@ module Mongo
       # @return [ Mongo::ConnectionPool ] pool The connection pool to use for operations.
       attr_reader :pool
 
-      # @return [ EventSubscriber ] subscriber The subscriber receiving the CMAP events.
+      # @return [ Mrss::EventSubscriber ] subscriber The subscriber receiving the CMAP events.
       attr_reader :subscriber
 
       # Instantiate the new spec.
@@ -40,7 +43,7 @@ module Mongo
         @test = YAML.load(File.read(test_path))
 
         @description = @test['description']
-        @pool_options = Utils.snakeize_hash(process_options(@test['poolOptions']))
+        @pool_options = ::Utils.snakeize_hash(process_options(@test['poolOptions']))
         @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
         @processed_ops = []
         @expected_error = @test['error']

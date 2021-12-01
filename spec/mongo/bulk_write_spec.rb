@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::BulkWrite do
@@ -1335,7 +1338,7 @@ describe Mongo::BulkWrite do
             context 'when the number of updates exceeds the max batch size' do
               # Test uses doubles for server descriptions, doubles are
               # incompatible with freezing which linting does for descriptions
-              skip_if_linting
+              require_no_linting
 
               let(:batch_size) do
                 11
@@ -1421,7 +1424,7 @@ describe Mongo::BulkWrite do
 
               # In a multi-sharded cluster, the write seems to go to a
               # different shard from the read
-              require_no_multi_shard
+              require_no_multi_mongos
 
               let(:extra_options) do
                 { write_concern: { w: 0 } }
@@ -2012,7 +2015,7 @@ describe Mongo::BulkWrite do
       context 'when the operations need to be split' do
         # Test uses doubles for server descriptions, doubles are
         # incompatible with freezing which linting does for descriptions
-        skip_if_linting
+        require_no_linting
 
         let(:batch_size) do
           11
@@ -2100,10 +2103,10 @@ describe Mongo::BulkWrite do
 
             # In a multi-shard cluster, retries may go to a different server
             # than original command which these tests are not prepared to handle
-            require_no_multi_shard
+            require_no_multi_mongos
 
 
-            let(:subscriber) { EventSubscriber.new }
+            let(:subscriber) { Mrss::EventSubscriber.new }
 
             let(:client) do
               authorized_client_with_retry_writes.tap do |client|

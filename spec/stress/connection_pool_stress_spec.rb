@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe 'Connection pool stress test' do
@@ -21,9 +24,9 @@ describe 'Connection pool stress test' do
     [].tap do |threads|
       thread_count.times do |i|
         threads << Thread.new do
-          10.times do |j|
+          100.times do |j|
             collection.find(a: i+j).to_a
-            sleep 0.5
+            sleep 0.1
             collection.find(a: i+j).to_a
           end
         end
@@ -132,7 +135,7 @@ describe 'Connection pool stress test' do
     end
 
     context '25 threads, max pool size 5' do
-      let(:thread_count) { 20 }
+      let(:thread_count) { 25 }
 
       it_behaves_like 'does not raise error'
     end
@@ -183,17 +186,19 @@ describe 'Connection pool stress test' do
       # The populator calls create_and_add_connection, which calls connection.connect!
       # and raises if an error occurs (eg, an auth error), so in this test we
       # randomly raise errors on this method.
-      expect(server.pool).to receive(:create_and_add_connection).at_least(:once).and_wrap_original { |m, *args|
-        if rand < 0.05
+      expect(server.pool).to receive(:create_and_add_connection).at_least(:once).and_wrap_original do |m, *args|
+        if rand < 0.1
           raise Mongo::Error::SocketError
         else
           m.call(*args)
         end
-      }
+      end
 
-      expect {
+      server.pool.clear(stop_populator: false)
+
+      expect do
         threads.collect { |t| t.join }
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 end

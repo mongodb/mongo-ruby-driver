@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +38,49 @@ module Mongo
       #
       # @since 2.1.0
       FILES_INDEX = { filename: 1, uploadDate: 1 }.freeze
+
+      # Create the GridFS.
+      #
+      # @example Create the GridFS.
+      #   Grid::FSBucket.new(database)
+      #
+      # @param [ Database ] database The database the files reside in.
+      # @param [ Hash ] options The GridFS options.
+      #
+      # @option options [ String ] :bucket_name The prefix for the files and chunks
+      #   collections.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
+      # @option options [ String ] :fs_name The prefix for the files and chunks
+      #   collections.
+      # @option options [ Hash ] :read The read preference options. The hash
+      #   may have the following items:
+      #   - *:mode* -- read preference specified as a symbol; valid values are
+      #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+      #     and *:nearest*.
+      #   - *:tag_sets* -- an array of hashes.
+      #   - *:local_threshold*.
+      # @option options [ Session ] :session The session to use.
+      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+      #   option.
+      # @option options [ Hash ] :write_concern The write concern options.
+      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
+      #
+      # @since 2.0.0
+      def initialize(database, options = {})
+        @database = database
+        @options = options.dup
+=begin WriteConcern object support
+        if @options[:write_concern].is_a?(WriteConcern::Base)
+          # Cache the instance so that we do not needlessly reconstruct it.
+          @write_concern = @options[:write_concern]
+          @options[:write_concern] = @write_concern.options
+        end
+=end
+        @options.freeze
+        @chunks_collection = database[chunks_name]
+        @files_collection = database[files_name]
+      end
 
       # @return [ Collection ] chunks_collection The chunks collection.
       #
@@ -133,43 +179,6 @@ module Mongo
         file.id
       end
 
-      # Create the GridFS.
-      #
-      # @example Create the GridFS.
-      #   Grid::FSBucket.new(database)
-      #
-      # @param [ Database ] database The database the files reside in.
-      # @param [ Hash ] options The GridFS options.
-      #
-      # @option options [ String ] :fs_name The prefix for the files and chunks
-      #   collections.
-      # @option options [ String ] :bucket_name The prefix for the files and chunks
-      #   collections.
-      # @option options [ Integer ] :chunk_size Override the default chunk
-      #   size.
-      # @option options [ String ] :read The read preference.
-      # @option options [ Session ] :session The session to use.
-      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
-      #   option.
-      # @option options [ Hash ] :write_concern The write concern options.
-      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
-      #
-      # @since 2.0.0
-      def initialize(database, options = {})
-        @database = database
-        @options = options.dup
-=begin WriteConcern object support
-        if @options[:write_concern].is_a?(WriteConcern::Base)
-          # Cache the instance so that we do not needlessly reconstruct it.
-          @write_concern = @options[:write_concern]
-          @options[:write_concern] = @write_concern.options
-        end
-=end
-        @options.freeze
-        @chunks_collection = database[chunks_name]
-        @files_collection = database[files_name]
-      end
-
       # Get the prefix for the GridFS
       #
       # @example Get the prefix.
@@ -179,7 +188,7 @@ module Mongo
       #
       # @since 2.0.0
       def prefix
-        @options[:fs_name] || @options[:bucket_name]|| DEFAULT_ROOT
+        @options[:fs_name] || @options[:bucket_name] || DEFAULT_ROOT
       end
 
       # Remove a single file from the GridFS.
@@ -232,7 +241,8 @@ module Mongo
       #
       # @since 2.1.0
       def open_download_stream(id, options = nil)
-        read_stream(id, options).tap do |stream|
+        options = Utils.shallow_symbolize_keys(options || {})
+        read_stream(id, **options).tap do |stream|
           if block_given?
             begin
               yield stream
@@ -350,15 +360,15 @@ module Mongo
         download_to_stream(open_download_stream_by_name(filename, opts).file_id, io)
       end
 
-      # Opens an upload stream to GridFS to which the contents of a user file came be written.
+      # Opens an upload stream to GridFS to which the contents of a file or
+      # blob can be written.
       #
-      # @example Open a stream to which the contents of a file came be written.
-      #   fs.open_upload_stream('a-file.txt')
-      #
-      # @param [ String ] filename The filename of the file to upload.
+      # @param [ String ] filename The name of the file in GridFS.
       # @param [ Hash ] opts The options for the write stream.
       #
-      # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
+      # @option opts [ Object ] :file_id An optional unique file id.
+      #   A BSON::ObjectId is automatically generated if a file id is not
+      #   provided.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
       #   collection document.
@@ -377,7 +387,8 @@ module Mongo
       #
       # @since 2.1.0
       def open_upload_stream(filename, opts = {})
-        write_stream(filename, opts).tap do |stream|
+        opts = Utils.shallow_symbolize_keys(opts)
+        write_stream(filename, **opts).tap do |stream|
           if block_given?
             begin
               yield stream
@@ -435,14 +446,26 @@ module Mongo
 
       # Get the read preference.
       #
-      # @example Get the read preference.
-      #   fs.read_preference
+      # @note This method always returns a BSON::Document instance, even though
+      #   the FSBucket constructor specifies the type of :read as a Hash, not
+      #   as a BSON::Document.
       #
-      # @return [ Mongo::ServerSelector ] The read preference.
-      #
-      # @since 2.1.0
+      # @return [ BSON::Document ] The read preference.
+      #   The document may have the following fields:
+      #   - *:mode* -- read preference specified as a symbol; valid values are
+      #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+      #     and *:nearest*.
+      #   - *:tag_sets* -- an array of hashes.
+      #   - *:local_threshold*.
       def read_preference
-        @read_preference ||= options[:read] || database.read_preference
+        @read_preference ||= begin
+          pref = options[:read] || database.read_preference
+          if BSON::Document === pref
+            pref
+          else
+            BSON::Document.new(pref)
+          end
+        end
       end
 
       # Get the write concern.
@@ -467,12 +490,12 @@ module Mongo
       #
       # @option opts [ BSON::Document ] :file_info_doc For internal
       #   driver use only. A BSON document to use as file information.
-      def read_stream(id, opts = nil)
-        Stream.get(self, Stream::READ_MODE, { file_id: id }.update(options).update(opts || {}))
+      def read_stream(id, **opts)
+        Stream.get(self, Stream::READ_MODE, { file_id: id }.update(options).update(opts))
       end
 
-      def write_stream(filename, opts)
-        Stream.get(self, Stream::WRITE_MODE, { filename: filename }.merge!(options).merge!(opts))
+      def write_stream(filename, **opts)
+        Stream.get(self, Stream::WRITE_MODE, { filename: filename }.update(options).update(opts))
       end
 
       def chunks_name
@@ -485,8 +508,27 @@ module Mongo
 
       def ensure_indexes!
         if files_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
-          chunks_collection.indexes.create_one(FSBucket::CHUNKS_INDEX, :unique => true)
-          files_collection.indexes.create_one(FSBucket::FILES_INDEX)
+          create_index_if_missing!(files_collection, FSBucket::FILES_INDEX)
+        end
+
+        if chunks_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
+          create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, :unique => true)
+        end
+      end
+
+      def create_index_if_missing!(collection, index_spec, options = {})
+        indexes_view = collection.indexes
+        begin
+          if indexes_view.get(index_spec).nil?
+            indexes_view.create_one(index_spec, options)
+          end
+        rescue Mongo::Error::OperationFailure => e
+          # proceed with index creation if a NamespaceNotFound error is thrown
+          if e.code == 26
+            indexes_view.create_one(index_spec, options)
+          else
+            raise
+          end
         end
       end
     end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
 
 describe Mongo::URI do
@@ -199,37 +202,37 @@ describe Mongo::URI do
 
   context 'authMechanismProperties' do
 
-    let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TRUE' }
+    let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:TRUE' }
 
     it_behaves_like 'parses successfully'
 
     it 'parses correctly' do
       expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-        service_realm: 'foo',
-        canonicalize_host_name: true,
+        SERVICE_realm: 'foo',
+        CANONICALIZE_HOST_name: true,
       ))
     end
 
     context 'canonicalize host name is false' do
 
-      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:false' }
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:false' }
 
       it 'parses correctly' do
         expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-          service_realm: 'foo',
-          canonicalize_host_name: false,
+          SERVICE_realm: 'foo',
+          CANONICALIZE_HOST_name: false,
         ))
       end
     end
 
     context 'canonicalize host name is true in mixed case' do
 
-      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TrUe' }
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:TrUe' }
 
       it 'parses correctly' do
         expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-          service_realm: 'foo',
-          canonicalize_host_name: true,
+          SERVICE_realm: 'foo',
+          CANONICALIZE_HOST_name: true,
         ))
       end
     end
@@ -264,19 +267,52 @@ describe Mongo::URI do
 
   context 'connect' do
 
-    let(:string) { 'mongodb://example.com/?connect=sharded' }
+    let(:client) { new_local_client_nmio(string) }
 
-    it_behaves_like 'parses successfully'
+    shared_examples 'raises an error when client is created' do
+      it 'raises an error when client is created' do
+        lambda do
+          client
+        end.should raise_error(ArgumentError, /Invalid :connect option value/)
+      end
+    end
 
-    it 'is a symbol' do
-      expect(uri.uri_options[:connect]).to eq(:sharded)
+    %i(direct sharded replica_set load_balanced).each do |value|
+      context "#{value}" do
+        let(:string) { "mongodb://example.com/?connect=#{value}" }
+
+        it_behaves_like 'parses successfully'
+
+        it 'is a symbol' do
+          expect(uri.uri_options[:connect]).to eq(value)
+        end
+      end
+    end
+
+    %i(replica-set load-balanced).each do |value|
+      context "#{value}" do
+        let(:string) { "mongodb://example.com/?connect=#{value}" }
+
+        it_behaves_like 'parses successfully'
+
+        it 'is a symbol' do
+          expect(uri.uri_options[:connect]).to eq(value)
+        end
+
+        include_examples 'raises an error when client is created'
+      end
     end
 
     context 'invalid value' do
       let(:string) { 'mongodb://example.com/?connect=bogus' }
 
-      # should raise an error
       it_behaves_like 'parses successfully'
+
+      it 'is a symbol' do
+        expect(uri.uri_options[:connect]).to eq(:bogus)
+      end
+
+      include_examples 'raises an error when client is created'
     end
   end
 
@@ -350,8 +386,8 @@ describe Mongo::URI do
 
       it_behaves_like 'parses successfully'
 
-      it 'is converted to nil' do
-        expect(uri.uri_options[:read]).to eq(BSON::Document.new(max_staleness: nil))
+      it 'is omitted' do
+        uri.uri_options.should_not have_key(:read)
       end
     end
   end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +19,7 @@ module Mongo
   module Operation
     class Create
 
-      # A MongoDB count operation sent as a command message.
+      # A MongoDB create collection operation sent as a command message.
       #
       # @api private
       #
@@ -28,6 +31,12 @@ module Mongo
         include WriteConcernSupported
 
         private
+
+        def selector(connection)
+          selector = spec[:selector]
+          selector = apply_collation(selector, connection, spec[:collation])
+          selector
+        end
 
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +22,7 @@ module Mongo
       # Defines custom behavior of results in find command.
       #
       # @since 2.2.0
+      # @api semiprivate
       class Result < Operation::Result
 
         # Get the cursor id.
@@ -29,6 +33,7 @@ module Mongo
         # @return [ Integer ] The cursor id.
         #
         # @since 2.2.0
+        # @api private
         def cursor_id
           cursor_document ? cursor_document[CURSOR_ID] : super
         end
@@ -41,8 +46,19 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.2.0
+        # @api public
         def documents
           cursor_document[FIRST_BATCH]
+        end
+
+        # The namespace in which this find command was performed.
+        #
+        # @return [ String ] The namespace, usually in the format
+        #   "database.collection".
+        #
+        # @api private
+        def namespace
+          cursor_document['ns']
         end
 
         private

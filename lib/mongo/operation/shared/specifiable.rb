@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +22,7 @@ module Mongo
     # various values from the spec.
     #
     # @since 2.0.0
+    # @api private
     module Specifiable
 
       # The field for database name.
@@ -55,11 +59,6 @@ module Mongo
       #
       # @since 2.0.0
       CURSOR_ID = :cursor_id.freeze
-
-      # The field for cursor ids.
-      #
-      # @since 2.0.0
-      CURSOR_IDS = :cursor_ids.freeze
 
       # The field for an index.
       #
@@ -234,7 +233,7 @@ module Mongo
       #
       # @since 2.0.0
       def coll_name
-        spec[COLL_NAME]
+        spec.fetch(COLL_NAME)
       end
 
       # The id of the cursor created on the server.
@@ -247,18 +246,6 @@ module Mongo
       # @since 2.0.0
       def cursor_id
         spec[CURSOR_ID]
-      end
-
-      # The ids of the cursors to kill from the spec.
-      #
-      # @example Get the cursor ids from the spec.
-      #   specifiable.cursor_ids
-      #
-      # @return [ Array<Integer> ] The cursor ids.
-      #
-      # @since 2.0.0
-      def cursor_ids
-        spec[CURSOR_IDS]
       end
 
       # Get the index from the specification.
@@ -532,17 +519,6 @@ module Mongo
         @spec[:txn_num]
       end
 
-      # For createIndexes operations, the number of votes that a primary must
-      # wait for before commiting an index. Potential values are:
-      # - an integer from 0 to the number of members of the replica set
-      # - "majority" indicating that a majority of data bearing nodes must vote
-      # - "votingMembers" which means that all voting data bearing nodes must vote
-      #
-      # @return [ nil | Integer | String ] The commitQuorum value of the operation.
-      def commit_quorum
-        @spec[:commit_quorum]
-      end
-
       # The command.
       #
       # @return [ Hash ] The command.
@@ -575,6 +551,16 @@ module Mongo
       # @since 2.5.2
       def acknowledged_write?
         write_concern.nil? || write_concern.acknowledged?
+      end
+
+      def apply_collation(selector, connection, collation)
+        if collation
+          unless connection.features.collation_enabled?
+            raise Error::UnsupportedCollation
+          end
+          selector = selector.merge(collation: collation)
+        end
+        selector
       end
     end
   end

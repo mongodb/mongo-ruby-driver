@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +27,12 @@ module Mongo
       class Legacy
         include Specifiable
         include Executable
+        include CommandBuilder
 
         private
 
         def message(connection)
-          Protocol::KillCursors.new(coll_name, db_name, cursor_ids)
+          Protocol::KillCursors.new(coll_name, db_name, int64_cursor_ids)
         end
       end
     end

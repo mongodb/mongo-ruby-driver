@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 autoload :Base64, 'base64'
 autoload :JSON, 'json'
 module Net
@@ -34,14 +37,41 @@ module Utils
   #
   # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
   # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
-  def snakeize_hash(value)
-    return underscore(value) if value.is_a?(String)
+  module_function def shallow_underscore_hash(value)
     return value unless value.is_a?(Hash)
 
     value.reduce({}) do |hash, (k, v)|
       hash.tap do |h|
-        h[underscore(k)] = snakeize_hash(v)
+        h[underscore(k)] = v
       end
+    end
+  end
+
+  # Creates a copy of a hash where all keys and string values are converted to
+  # snake-case symbols.
+  #
+  # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
+  # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
+  def snakeize_hash(value)
+    return underscore(value) if value.is_a?(String)
+    case value
+    when Array
+      value.map do |sub|
+        case sub
+        when Hash
+          snakeize_hash(sub)
+        else
+          sub
+        end
+      end
+    when Hash
+      value.reduce({}) do |hash, (k, v)|
+        hash.tap do |h|
+          h[underscore(k)] = snakeize_hash(v)
+        end
+      end
+    else
+      value
     end
   end
   module_function :snakeize_hash
@@ -85,10 +115,27 @@ module Utils
   end
   module_function :camelize
 
+  module_function def downcase_keys(hash)
+    # TODO replace with Hash#transform_keys when we require Ruby 2.5+
+    Hash[hash.map do |k, v|
+      [k.downcase, v]
+    end]
+  end
+
+  module_function def disable_retries_client_options
+    {
+      retry_reads: false,
+      retry_writes: false,
+      max_read_retries: 0,
+      max_write_retries: 0,
+    }
+  end
+
   # Converts camel case clientOptions, as used in spec tests,
   # to Ruby driver underscore options.
   def convert_client_options(spec_test_options)
     uri = Mongo::URI.new('mongodb://localhost')
+    mapper = Mongo::URI::OptionsMapper.new
     spec_test_options.reduce({}) do |opts, (name, value)|
       if name == 'autoEncryptOpts'
         opts.merge!(
@@ -102,7 +149,7 @@ module Utils
             )
         )
       else
-        uri.send(:add_uri_option, name, value.to_s, opts)
+        mapper.add_uri_option(name, value.to_s, opts)
       end
 
       opts
@@ -286,7 +333,7 @@ module Utils
     else
       ''
     end
-    uri = "mongodb://#{creds}#{address_strs.join(',')}/"
+    uri = +"mongodb://#{creds}#{address_strs.join(',')}/"
     if opts[:database]
       uri << opts[:database]
     end
@@ -362,6 +409,40 @@ module Utils
     end
   end
   module_function :match_with_type?
+
+  # Takes a timeout and a block. Waits up to the specified timeout until
+  # the value of the block is true. If timeout is reached, this method
+  # returns normally and does not raise an exception. The block is invoked
+  # every second or so.
+  module_function def wait_for_condition(timeout)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    loop do
+      if yield
+        break
+      end
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        break
+      end
+      sleep 1
+    end
+  end
+
+  module_function def ensure_port_free(port)
+    TCPServer.open(port) do
+      # Nothing
+    end
+  end
+
+  module_function def wait_for_port_free(port, timeout)
+    wait_for_condition(timeout) do
+      begin
+        ensure_port_free(port)
+        true
+      rescue Errno::EADDRINUSE
+        false
+      end
+    end
+  end
 
   module_function def get_ec2_metadata_token(ttl: 30, http: nil)
     http ||= Net::HTTP.new('169.254.169.254')
@@ -446,6 +527,72 @@ module Utils
     else
       # Exec so that we do not close any clients etc. in the child.
       exec('/bin/true')
+    end
+  end
+
+  module_function def subscribe_all(client, subscriber)
+    subscribe_all_sdam_proc(subscriber).call(client)
+  end
+
+  module_function def subscribe_all_sdam_proc(subscriber)
+    lambda do |client|
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, subscriber)
+      client.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
+      client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, subscriber)
+
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+
+      client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
+  # Creates an event subscriber, subscribes it to command events on the
+  # specified client, invokes the passed block, asserts there is exactly one
+  # command event published, asserts the command event published has the
+  # specified command name, and returns the published event.
+  module_function def get_command_event(client, command_name, include_auth: false)
+    subscriber = Mrss::EventSubscriber.new
+    client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    begin
+      yield client
+    ensure
+      client.unsubscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+
+    subscriber.single_command_started_event(command_name, include_auth: include_auth)
+  end
+
+  # Drops and creates a collection for the purpose of starting the test from
+  # a clean slate.
+  #
+  # @param [ Mongo::Client ] client
+  # @param [ String ] collection_name
+  module_function def create_collection(client, collection_name)
+    client[collection_name].drop
+    client[collection_name].create
+  end
+
+  # If the deployment is a sharded cluster, creates a direct client
+  # to each of the mongos nodes and yields each in turn to the
+  # provided block. Does nothing in other topologies.
+  module_function def mongos_each_direct_client
+    if ClusterConfig.instance.topology == :sharded
+      client = ClientRegistry.instance.global_client('basic')
+      client.cluster.next_primary
+      client.cluster.servers.each do |server|
+        direct_client = ClientRegistry.instance.new_local_client(
+          [server.address.to_s],
+          SpecConfig.instance.test_options.merge(
+            connect: :sharded
+          ).merge(SpecConfig.instance.auth_options))
+        yield direct_client
+        direct_client.close
+      end
     end
   end
 end

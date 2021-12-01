@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'lite_spec_helper'
-require_relative '../app_metadata_shared'
 
 describe Mongo::Server::Monitor::AppMetadata do
 

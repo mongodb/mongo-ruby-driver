@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,20 +73,14 @@ module Mongo
         # @param [ BSON::Document ] reply_document The reply document of the
         #   previous message.
         #
-        # @return [ Protocol::Query ] The next query to execute.
+        # @return [ Protocol::Message ] The next query to execute.
         def continue(reply_document, connection)
           @id = reply_document['conversationId']
           payload = reply_document['payload']
 
           continue_token = authenticator.evaluate_challenge(payload)
           selector = CONTINUE_MESSAGE.merge(payload: continue_token, conversationId: id)
-
-          Protocol::Query.new(
-            Auth::EXTERNAL,
-            Database::COMMAND,
-            selector,
-            limit: 1,
-          )
+          build_message(connection, '$external', selector)
         end
 
         def process_continue_response(reply_document)
@@ -92,15 +89,10 @@ module Mongo
           @continue_token = authenticator.evaluate_challenge(payload)
         end
 
+        # @return [ Protocol::Message ] The next query to execute.
         def finalize(connection)
           selector = CONTINUE_MESSAGE.merge(payload: @continue_token, conversationId: id)
-
-          Protocol::Query.new(
-            Auth::EXTERNAL,
-            Database::COMMAND,
-            selector,
-            limit: 1,
-          )
+          build_message(connection, '$external', selector)
         end
       end
     end

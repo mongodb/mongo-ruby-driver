@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,9 +107,14 @@ module Mongo
     #   to not start the periodic executor. If :monitoring_io is false,
     #   :cleanup automatically defaults to false as well.
     # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
-    #   for the server monitor to refresh its description via ismaster.
+    #   for the server monitor to refresh its description via hello.
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
+    # @option options [ Hash ] :server_api The requested server API version.
+    #   This hash can have the following items:
+    #   - *:version* -- string
+    #   - *:strict* -- boolean
+    #   - *:deprecation_errors* -- boolean
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
@@ -129,7 +137,9 @@ module Mongo
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
-      @app_metadata = Server::AppMetadata.new(@options)
+      @app_metadata = Server::AppMetadata.new(@options.merge(purpose: :application))
+      @monitor_app_metadata = Server::Monitor::AppMetadata.new(@options.merge(purpose: :monitor))
+      @push_monitor_app_metadata = Server::Monitor::AppMetadata.new(@options.merge(purpose: :push_monitor))
       @cluster_time_lock = Mutex.new
       @cluster_time = nil
       @srv_monitor_lock = Mutex.new
@@ -149,6 +159,10 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       Session::SessionPool.create(self)
 
+      if seeds.empty? && load_balanced?
+        raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited'
+      end
+
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
       opening_topology = Topology::Unknown.new(options, monitoring, self)
@@ -161,7 +175,7 @@ module Mongo
       @seeds = seeds = seeds.uniq
       servers = seeds.map do |seed|
         # Server opening events must be sent after topology change events.
-        # Therefore separate server addition, done here before topoolgy change
+        # Therefore separate server addition, done here before topology change
         # event is published, from starting to monitor the server which is
         # done later.
         add(seed, monitor: false)
@@ -169,11 +183,20 @@ module Mongo
 
       if seeds.size >= 1
         # Recreate the topology to get the current server list into it
-        @topology = topology.class.new(topology.options, topology.monitoring, self)
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
-        )
+        recreate_topology(topology, opening_topology)
+      end
+
+      if load_balanced?
+        # We are required by the specifications to produce certain SDAM events
+        # when in load-balanced topology.
+        # These events don't make a lot of sense from the standpoint of the
+        # driver's SDAM implementation, nor from the standpoint of the
+        # driver's load balancer implementation.
+        # They are just required boilerplate.
+        #
+        # Note that this call must be done above the monitoring_io check
+        # because that short-circuits the rest of the constructor.
+        fabricate_lb_sdam_events_and_set_server_type
       end
 
       if options[:monitoring_io] == false
@@ -193,62 +216,65 @@ module Mongo
       @connected = true
 
       if options[:cleanup] != false
-        @cursor_reaper = CursorReaper.new
+        @cursor_reaper = CursorReaper.new(self)
         @socket_reaper = SocketReaper.new(self)
         @periodic_executor = PeriodicExecutor.new([
           @cursor_reaper, @socket_reaper,
         ], options)
 
-        ObjectSpace.define_finalizer(self, self.class.finalize(
-          {}, @periodic_executor, @session_pool))
-
         @periodic_executor.run!
       end
 
-      # Need to record start time prior to starting monitoring
-      start_time = Time.now
+      unless load_balanced?
+        # Need to record start time prior to starting monitoring
+        start_monotime = Utils.monotonic_time
 
-      servers.each do |server|
-        server.start_monitoring
-      end
-
-      if options[:scan] != false
-        server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
-        # The server selection timeout can be very short especially in
-        # tests, when the client waits for a synchronous scan before
-        # starting server selection. Limiting the scan to server selection time
-        # then aborts the scan before it can process even local servers.
-        # Therefore, allow at least 3 seconds for the scan here.
-        if server_selection_timeout < 3
-          server_selection_timeout = 3
+        servers.each do |server|
+          server.start_monitoring
         end
-        deadline = start_time + server_selection_timeout
-        # Wait for the first scan of each server to complete, for
-        # backwards compatibility.
-        # If any servers are discovered during this SDAM round we are going to
-        # wait for these servers to also be queried, and so on, up to the
-        # server selection timeout or the 3 second minimum.
-        loop do
-          # Ensure we do not try to read the servers list while SDAM is running
-          servers = @sdam_flow_lock.synchronize do
-            servers_list.dup
-          end
-          if servers.all? { |server| server.last_scan && server.last_scan >= start_time }
-            break
-          end
-          if (time_remaining = deadline - Time.now) <= 0
-            break
-          end
-          log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
-          # Since the semaphore may have been signaled between us checking
-          # the servers list above and the wait call below, we should not
-          # wait for the full remaining time - wait for up to 1 second, then
-          # recheck the state.
-          server_selection_semaphore.wait([time_remaining, 1].min)
-        end
-      end
 
-      start_stop_srv_monitor
+        if options[:scan] != false
+          server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
+          # The server selection timeout can be very short especially in
+          # tests, when the client waits for a synchronous scan before
+          # starting server selection. Limiting the scan to server selection time
+          # then aborts the scan before it can process even local servers.
+          # Therefore, allow at least 3 seconds for the scan here.
+          if server_selection_timeout < 3
+            server_selection_timeout = 3
+          end
+          deadline = start_monotime + server_selection_timeout
+          # Wait for the first scan of each server to complete, for
+          # backwards compatibility.
+          # If any servers are discovered during this SDAM round we are going to
+          # wait for these servers to also be queried, and so on, up to the
+          # server selection timeout or the 3 second minimum.
+          loop do
+            # Ensure we do not try to read the servers list while SDAM is running
+            servers = @sdam_flow_lock.synchronize do
+              servers_list.dup
+            end
+            if servers.all? { |server| server.last_scan_monotime && server.last_scan_monotime >= start_monotime }
+              break
+            end
+            if (time_remaining = deadline - Utils.monotonic_time) <= 0
+              break
+            end
+            log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
+            # Since the semaphore may have been signaled between us checking
+            # the servers list above and the wait call below, we should not
+            # wait for the full remaining time - wait for up to 1 second, then
+            # recheck the state.
+            begin
+              server_selection_semaphore.wait([time_remaining, 1].min)
+            rescue ::Timeout::Error
+              # nothing
+            end
+          end
+        end
+
+        start_stop_srv_monitor
+      end
     end
 
     # Create a cluster for the provided client, for use when we don't want the
@@ -288,6 +314,12 @@ module Mongo
     # @since 2.4.0
     attr_reader :app_metadata
 
+    # @api private
+    attr_reader :monitor_app_metadata
+
+    # @api private
+    attr_reader :push_monitor_app_metadata
+
     # @return [ Array<String> ] The addresses of seed servers. Contains
     #   addresses that were given to Cluster when it was instantiated, not
     #   current addresses that the cluster is using as a result of SDAM.
@@ -303,6 +335,14 @@ module Mongo
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?
+
+    # Returns whether the cluster is configured to be in the load-balanced
+    # topology.
+    #
+    # @return [ true | false ] Whether the topology is load-balanced.
+    def load_balanced?
+      topology.is_a?(Topology::LoadBalanced)
+    end
 
     [:register_cursor, :schedule_kill_cursor, :unregister_cursor].each do |m|
       define_method(m) do |*args|
@@ -395,7 +435,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      topology.servers(servers_list.compact).compact
+      topology.servers(servers_list)
     end
 
     # The addresses in the cluster.
@@ -444,25 +484,6 @@ module Mongo
 
     # @api private
     attr_reader :server_selection_semaphore
-
-    # Finalize the cluster for garbage collection.
-    #
-    # @example Finalize the cluster.
-    #   Cluster.finalize(pools)
-    #
-    # @param [ Hash<Address, Server::ConnectionPool> ] pools Ignored.
-    # @param [ PeriodicExecutor ] periodic_executor The periodic executor.
-    # @param [ SessionPool ] session_pool The session pool.
-    #
-    # @return [ Proc ] The Finalizer.
-    #
-    # @since 2.2.0
-    def self.finalize(pools, periodic_executor, session_pool)
-      proc do
-        session_pool.end_sessions
-        periodic_executor.stop!
-      end
-    end
 
     # Closes the cluster.
     #
@@ -599,11 +620,30 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
+    # @option aptions [ true | false ] :awaited Whether the updated description
+    #   was a result of processing an awaited hello.
+    # @option options [ Object ] :service_id Change state for the specified
+    #   service id only.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
+      if load_balanced?
+        if updated_desc.config.empty?
+          unless options[:keep_connection_pool]
+            servers_list.each do |server|
+              # TODO should service id be taken out of updated_desc?
+              # We could also assert that
+              # options[:service_id] == updated_desc.service_id
+              server.clear_connection_pool(service_id: options[:service_id])
+            end
+          end
+        end
+        return
+      end
+
       @sdam_flow_lock.synchronize do
-        flow = SdamFlow.new(self, previous_desc, updated_desc)
+        flow = SdamFlow.new(self, previous_desc, updated_desc,
+          awaited: options[:awaited])
         flow.server_description_changed
 
         # SDAM flow may alter the updated description - grab the final
@@ -764,7 +804,7 @@ module Mongo
     end
 
     # Add a server to the cluster with the provided address. Useful in
-    # auto-discovery of new servers when an existing server executes an ismaster
+    # auto-discovery of new servers when an existing server executes a hello
     # and potentially non-configured servers were included.
     #
     # @example Add the server for the address to the cluster.
@@ -781,8 +821,15 @@ module Mongo
     def add(host, add_options=nil)
       address = Address.new(host, options)
       if !addresses.include?(address)
-        server = Server.new(address, self, @monitoring, event_listeners, options.merge(
-          monitor: false))
+        opts = options.merge(monitor: false)
+        # Note that in a load-balanced topology, every server must be a
+        # load balancer (load_balancer: true is specified in the options)
+        # but this option isn't set here because we are required by the
+        # specifications to pretent the server started out as an unknown one
+        # and publish server description change event into the load balancer
+        # one. The actual correct description for this server will be set
+        # by the fabricate_lb_sdam_events_and_set_server_type method.
+        server = Server.new(address, self, @monitoring, event_listeners, opts)
         @update_lock.synchronize do
           # Need to recheck whether server is present in @servers, because
           # the previous check was not under a lock.
@@ -886,21 +933,30 @@ module Mongo
       end
     end
 
-    # Returns whether the deployment that the driver is connected to supports
-    # sessions.
+    # Raises Error::SessionsNotAvailable if the deployment that the driver
+    # is connected to does not support sessions.
     #
     # Session support may change over time, for example due to servers in the
-    # deployment being upgraded or downgraded. This method returns the
-    # current information if the client is connected to at least one data
-    # bearing server. If the client is currently not connected to any data
-    # bearing servers, this method returns the last known value for whether
-    # the deployment supports sessions.
+    # deployment being upgraded or downgraded. If the client is currently not
+    # connected to any data bearing servers, this method considers the state
+    # of session support as of when the client was last connected to at
+    # least one server. If the client has never connected to any servers,
+    # the deployment is considered to not support sessions.
     #
-    # @return [ true | false ] Whether deployment supports sessions.
     # @api private
-    def sessions_supported?
-      if topology.data_bearing_servers?
-        return !!topology.logical_session_timeout
+    def validate_session_support!
+      if topology.is_a?(Topology::LoadBalanced)
+        return
+      end
+
+      @state_change_lock.synchronize do
+        @sdam_flow_lock.synchronize do
+          if topology.data_bearing_servers?
+            unless topology.logical_session_timeout
+              raise_sessions_not_supported
+            end
+          end
+        end
       end
 
       # No data bearing servers known - perform server selection to try to
@@ -908,12 +964,24 @@ module Mongo
       # assessment of whether sessions are currently supported.
       begin
         ServerSelector.get(mode: :primary_preferred).select_server(self)
-        !!topology.logical_session_timeout
+        @state_change_lock.synchronize do
+          @sdam_flow_lock.synchronize do
+            unless topology.logical_session_timeout
+              raise_sessions_not_supported
+            end
+          end
+        end
       rescue Error::NoServerAvailable
         # We haven't been able to contact any servers - use last known
-        # value for esssion support.
-        @update_lock.synchronize do
-          @sessions_supported || false
+        # value for session support.
+        @state_change_lock.synchronize do
+          @sdam_flow_lock.synchronize do
+            @update_lock.synchronize do
+              unless @sessions_supported
+                raise_sessions_not_supported
+              end
+            end
+          end
         end
       end
     end
@@ -930,13 +998,9 @@ module Mongo
         # Start SRV monitor
         @srv_monitor_lock.synchronize do
           unless @srv_monitor
-            monitor_options = options.merge(
-              timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
-            @srv_monitor = _srv_monitor = Srv::Monitor.new(self, monitor_options)
-            finalizer = lambda do
-              _srv_monitor.stop!
-            end
-            ObjectSpace.define_finalizer(self, finalizer)
+            monitor_options = Utils.shallow_symbolize_keys(options.merge(
+              timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT))
+            @srv_monitor = _srv_monitor = Srv::Monitor.new(self, **monitor_options)
           end
           @srv_monitor.run!
         end
@@ -951,6 +1015,57 @@ module Mongo
           end
         end
       end
+    end
+
+    def raise_sessions_not_supported
+      # Intentionally using @servers instead of +servers+ here because we
+      # are supposed to be already holding the @update_lock and we cannot
+      # recursively acquire it again.
+      offending_servers = @servers.select do |server|
+        server.description.data_bearing? && server.logical_session_timeout.nil?
+      end
+      reason = if offending_servers.empty?
+        "There are no known data bearing servers (current seeds: #{@servers.map(&:address).map(&:seed).join(', ')})"
+      else
+        "The following servers have null logical session timeout: #{offending_servers.map(&:address).map(&:seed).join(', ')}"
+      end
+      msg = "The deployment that the driver is connected to does not support sessions: #{reason}"
+      raise Error::SessionsNotSupported, msg
+    end
+
+    def fabricate_lb_sdam_events_and_set_server_type
+      # Although there is no monitoring connection in load balanced mode,
+      # we must emit the following series of SDAM events.
+      server = @servers.first
+      # We are guaranteed to have the server here.
+      server.publish_opening_event
+      server_desc = server.description
+      # This is where a load balancer actually gets its correct server
+      # description.
+      server.update_description(
+        Server::Description.new(server.address, {},
+          load_balancer: true,
+          force_load_balancer: options[:connect] == :load_balanced,
+        )
+      )
+      publish_sdam_event(
+        Monitoring::SERVER_DESCRIPTION_CHANGED,
+        Monitoring::Event::ServerDescriptionChanged.new(
+          server.address,
+          topology,
+          server_desc,
+          server.description
+        )
+      )
+      recreate_topology(topology, topology)
+    end
+
+    def recreate_topology(new_topology_template, previous_topology)
+      @topology = topology.class.new(new_topology_template.options, new_topology_template.monitoring, self)
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
+      )
     end
   end
 end

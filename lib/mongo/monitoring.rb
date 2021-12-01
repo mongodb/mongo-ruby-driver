@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -302,6 +305,53 @@ module Mongo
     # @since 2.1.0
     def failed(topic, event)
       subscribers_for(topic).each{ |subscriber| subscriber.failed(event) }
+    end
+
+    # @api private
+    def publish_heartbeat(server, awaited: false)
+      if monitoring?
+        started_event = Event::ServerHeartbeatStarted.new(
+          server.address, awaited: awaited)
+        started(SERVER_HEARTBEAT, started_event)
+      end
+
+      # The duration we publish in heartbeat succeeded/failed events is
+      # the time spent on the entire heartbeat. This could include time
+      # to connect the socket (including TLS handshake), not just time
+      # spent on hello call itself.
+      # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
+      # requires that the duration exposed here start from "sending the
+      # message" (hello). This requirement does not make sense if,
+      # for example, we were never able to connect to the server at all
+      # and thus hello was never sent.
+      start_time = Utils.monotonic_time
+
+      begin
+        result = yield
+      rescue => exc
+        if monitoring?
+          event = Event::ServerHeartbeatFailed.new(
+            server.address,
+            Utils.monotonic_time - start_time,
+            exc,
+            awaited: awaited,
+            started_event: started_event,
+          )
+          failed(SERVER_HEARTBEAT, event)
+        end
+        raise
+      else
+        if monitoring?
+          event = Event::ServerHeartbeatSucceeded.new(
+            server.address,
+            Utils.monotonic_time - start_time,
+            awaited: awaited,
+            started_event: started_event,
+          )
+          succeeded(SERVER_HEARTBEAT, event)
+        end
+        result
+      end
     end
 
     private

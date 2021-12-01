@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'singleton'
 require 'pathname'
 
@@ -8,10 +11,14 @@ class SpecConfig
   # only loading the lite spec helper. Do I/O eagerly in accessor methods.
   def initialize
     @uri_options = {}
+    @ruby_options = {}
     if ENV['MONGODB_URI']
-      @mongodb_uri = Mongo::URI.new(ENV['MONGODB_URI'])
+      @mongodb_uri = Mongo::URI.get(ENV['MONGODB_URI'])
       @uri_options = Mongo::Options::Mapper.transform_keys_to_symbols(@mongodb_uri.uri_options)
-      if @uri_options[:replica_set]
+      if ENV['TOPOLOGY'] == 'load-balanced'
+        @addresses = @mongodb_uri.servers
+        @connect_options = { connect: :load_balanced }
+      elsif @uri_options[:replica_set]
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :replica_set, replica_set: @uri_options[:replica_set] }
       elsif @uri_options[:connect] == :sharded || ENV['TOPOLOGY'] == 'sharded-cluster'
@@ -26,15 +33,6 @@ class SpecConfig
       else
         @ssl = @uri_options[:ssl]
       end
-    elsif ENV['MONGODB_ADDRESSES']
-      @addresses = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
-      if ENV['RS_ENABLED']
-        @connect_options = { connect: :replica_set, replica_set: ENV['RS_NAME'] }
-      elsif ENV['SHARDED_ENABLED']
-        @connect_options = { connect: :sharded }
-      else
-        @connect_options = { connect: :direct }
-      end
     end
 
     @uri_tls_options = {}
@@ -46,9 +44,19 @@ class SpecConfig
     end
 
     @ssl ||= false
+
+    if (server_api = ENV['SERVER_API']) && !server_api.empty?
+      @ruby_options[:server_api] = BSON::Document.new(YAML.load(server_api))
+      # Since the tests pass options provided by SpecConfig directly to
+      # internal driver objects (e.g. connections), transform server api
+      # parameters here as they would be transformed by Client constructor.
+      if (v = @ruby_options[:server_api][:version]).is_a?(Integer)
+        @ruby_options[:server_api][:version] = v.to_s
+      end
+    end
   end
 
-  attr_reader :uri_options, :connect_options
+  attr_reader :uri_options, :ruby_options, :connect_options
 
   def addresses
     @addresses ||= begin
@@ -74,8 +82,8 @@ class SpecConfig
       # TLS options need to be merged for evergreen due to
       # https://github.com/10gen/mongo-orchestration/issues/268
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
-        server_selection_timeout: 5,
-      ).merge(ssl_options))
+        server_selection_timeout: 5.03,
+      ).merge(ssl_options).merge(ruby_options))
 
       begin
         case client.cluster.topology.class.name
@@ -99,7 +107,7 @@ class SpecConfig
   # Environment
 
   def ci?
-    !!ENV['CI']
+    %w(1 true yes).include?(ENV['CI']&.downcase)
   end
 
   def mri?
@@ -108,6 +116,14 @@ class SpecConfig
 
   def jruby?
     !!(RUBY_PLATFORM =~ /\bjava\b/)
+  end
+
+  def linux?
+    !!(RbConfig::CONFIG['host_os'].downcase =~ /\blinux/)
+  end
+
+  def macos?
+    !!(RbConfig::CONFIG['host_os'].downcase =~ /\bdarwin/)
   end
 
   def platform
@@ -120,6 +136,34 @@ class SpecConfig
 
   def fork?
     %w(1 true yes).include?(ENV['FORK']&.downcase)
+  end
+
+  # OCSP tests require python and various dependencies.
+  # Assumes an OCSP responder is running on port 8100 (configured externally
+  # to the test suite).
+  def ocsp?
+    %w(1 true yes).include?(ENV['OCSP']&.downcase)
+  end
+
+  # OCSP tests require python and various dependencies.
+  # When testing OCSP verifier, there cannot be a responder running on
+  # port 8100 or the tests will fail.
+  def ocsp_verifier?
+    %w(1 true yes).include?(ENV['OCSP_VERIFIER']&.downcase)
+  end
+
+  def ocsp_connectivity?
+    ENV.key?('OCSP_CONNECTIVITY') && ENV['OCSP_CONNECTIVITY'] != ''
+  end
+
+  # Detect whether specs are running against Mongodb Atlas serverless instance.
+  # This method does not do any magic, it just checks whether environment
+  # variable SERVERLESS is set. This is a recommended way to inform spec runners
+  # that they are running against a serverless instance
+  #
+  # @return [ true | false ] Whether specs are running against a serverless instance.
+  def serverless?
+    !!ENV['SERVERLESS']
   end
 
   # Test suite configuration
@@ -221,6 +265,10 @@ EOT
     Pathname.new("#{spec_root}/support/certificates")
   end
 
+  def ocsp_files_dir
+    Pathname.new("#{spec_root}/../.mod/drivers-evergreen-tools/.evergreen/ocsp")
+  end
+
   # TLS certificates & keys
 
   def local_client_key_path
@@ -312,6 +360,11 @@ EOT
     'ruby-driver'.freeze
   end
 
+  # Whether FLE tests should be enabled
+  def fle?
+    ENV['FLE']
+  end
+
   # AWS IAM user access key id
   def fle_aws_key
     ENV['MONGO_RUBY_DRIVER_AWS_KEY']
@@ -332,6 +385,42 @@ EOT
     ENV['MONGO_RUBY_DRIVER_AWS_ARN']
   end
 
+  def fle_azure_tenant_id
+    ENV['MONGO_RUBY_DRIVER_AZURE_TENANT_ID']
+  end
+
+  def fle_azure_client_id
+    ENV['MONGO_RUBY_DRIVER_AZURE_CLIENT_ID']
+  end
+
+  def fle_azure_client_secret
+    ENV['MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET']
+  end
+
+  def fle_azure_identity_platform_endpoint
+    ENV['MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT']
+  end
+
+  def fle_azure_key_vault_endpoint
+    ENV['MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT']
+  end
+
+  def fle_azure_key_name
+    ENV['MONGO_RUBY_DRIVER_AZURE_KEY_NAME']
+  end
+
+  def fle_gcp_email
+    ENV['MONGO_RUBY_DRIVER_GCP_EMAIL']
+  end
+
+  def fle_gcp_private_key
+    ENV['MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY']
+  end
+
+  def fle_gcp_endpoint
+    ENV['MONGO_RUBY_DRIVER_GCP_ENDPOINT']
+  end
+
   def mongocryptd_port
     if ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] &&
       !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?
@@ -340,6 +429,10 @@ EOT
     else
       27020
     end
+  end
+
+  def auth?
+    x509_auth? || user
   end
 
   # Option hashes
@@ -368,17 +461,24 @@ EOT
   end
 
   def ssl_options
-    if ssl?
-      {
+    return {} unless ssl?
+    {
         ssl: true,
         ssl_verify: true,
-        ssl_cert:  client_cert_path,
-        ssl_key:  client_key_path,
-        ssl_ca_cert: ca_cert_path,
-      }.merge(Utils.underscore_hash(@uri_tls_options))
-    else
-      {}
-    end
+    }.tap do |options|
+      # We should use bundled cetificates for ssl except for testing against
+      # Atlas instances. Atlas instances have addresses in domains
+      # mongodb.net or mongodb-dev.net.
+      if @mongodb_uri.servers.grep(/mongodb.*\.net/).empty?
+        options.merge!(
+          {
+            ssl_cert: client_cert_path,
+            ssl_key: client_key_path,
+            ssl_ca_cert: ca_cert_path,
+          }
+        )
+      end
+    end.merge(Utils.underscore_hash(@uri_tls_options))
   end
 
   def compressor_options
@@ -391,6 +491,20 @@ EOT
 
   def retry_writes_options
     {retry_writes: retry_writes?}
+  end
+
+  # The options needed for a successful socket connection to the server(s).
+  # These exclude options needed to handshake (e.g. server api parameters).
+  def connection_options
+    ssl_options
+  end
+
+  # The options needed for successful monitoring of the server(s).
+  # These exclude options needed to perform operations (e.g. credentials).
+  def monitoring_options
+    ssl_options.merge(
+      server_api: ruby_options[:server_api],
+    )
   end
 
   # Base test options.
@@ -414,16 +528,22 @@ EOT
       # means the test suite hangs for about 4 seconds before
       # failing.
       # Server selection timeout of 1 is insufficient for evergreen.
-      server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 4.01 : 2.01),
+      server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 8.01 : 7.01),
 
       # Since connections are established under the wait queue timeout,
       # the wait queue timeout should be at least as long as the
       # connect timeout.
-      wait_queue_timeout: 4,
-      connect_timeout: 3,
-      socket_timeout: 3,
-      max_idle_time: 5
-   }
+      wait_queue_timeout: 6.04,
+      connect_timeout: 2.91,
+      socket_timeout: 5.09,
+      max_idle_time: 100.02,
+
+      # Uncomment to have exceptions in background threads log complete
+      # backtraces.
+      #bg_error_backtrace: true,
+    }.merge(ruby_options).merge(
+      server_api: ruby_options[:server_api] && ::Utils.underscore_hash(ruby_options[:server_api])
+    )
   end
 
   # Options for test suite clients.
@@ -435,6 +555,14 @@ EOT
   # TODO auth_options should probably be in test_options
   def all_test_options
     test_options.merge(auth_options)
+  end
+
+  def authorized_test_options
+    test_options.merge(credentials_or_external_user(
+      user: test_user.name,
+      password: test_user.password,
+      auth_source: auth_options[:auth_source],
+    ))
   end
 
   # User objects
@@ -456,9 +584,13 @@ EOT
 
   # Get the default test user for the suite on versions 2.6 and higher.
   def test_user
+    # When testing against a serverless instance, we are not allowed to create
+    # new users, we just have one user for everyhing.
+    return root_user if serverless?
+
     Mongo::Auth::User.new(
-      database: test_db,
-      user: 'test-user',
+      database: 'admin',
+      user: 'ruby-test-user',
       password: 'password',
       roles: [
         { role: Mongo::Auth::Roles::READ_WRITE, db: test_db },
@@ -472,10 +604,37 @@ EOT
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' },
 
-        # For transaction api spec tests
-        #{ role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
-        #{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
-
+        # For spec tests
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'crud-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'crud-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'crud-default' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'crud-default' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'default_write_concern_db' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'default_write_concern_db' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'retryable-reads-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-reads-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'sdam-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'sdam-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'transaction-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'transaction-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'admin' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'admin' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'command-monitoring-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'command-monitoring-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'session-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'session-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'gridfs-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'gridfs-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'change-stream-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'change-stream-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'change-stream-tests-2' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'change-stream-tests-2' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'retryable-writes-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-writes-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'ts-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'ts-tests' },
       ]
     )
   end
@@ -509,5 +668,10 @@ EOT
     else
       creds
     end
+  end
+
+  # Returns whether the test suite was configured with a single mongos.
+  def single_mongos?
+    %w(1 true yes).include?(ENV['SINGLE_MONGOS'])
   end
 end

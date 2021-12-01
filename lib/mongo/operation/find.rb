@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +19,7 @@ require 'mongo/operation/find/command'
 require 'mongo/operation/find/op_msg'
 require 'mongo/operation/find/legacy'
 require 'mongo/operation/find/result'
+require 'mongo/operation/find/builder'
 
 module Mongo
   module Operation

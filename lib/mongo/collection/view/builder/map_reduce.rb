@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +36,7 @@ module Mongo
             scope: 'scope',
             verbose: 'verbose',
             bypass_document_validation: 'bypassDocumentValidation',
-            collation: 'collation'
+            collation: 'collation',
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :read, :write_concern
@@ -68,36 +71,6 @@ module Mongo
             @options = options
           end
 
-          # Get the specification for issuing a find command on the map/reduce
-          # results.
-          #
-          # @example Get the command specification.
-          #   builder.command_specification
-          #
-          # @return [ Hash ] The specification.
-          #
-          # @since 2.2.0
-          def command_specification
-            {
-              selector: find_command,
-              db_name: query_database,
-              read: read,
-              session: options[:session]
-            }
-          end
-
-          # Get the specification for the document query after a map/reduce.
-          #
-          # @example Get the query specification.
-          #   builder.query_specification
-          #
-          # @return [ Hash ] The specification.
-          #
-          # @since 2.2.0
-          def query_specification
-            { selector: {}, options: {}, db_name: query_database, coll_name: query_collection }
-          end
-
           # Get the specification to pass to the map/reduce operation.
           #
           # @example Get the specification.
@@ -110,6 +83,8 @@ module Mongo
             spec = {
               selector: map_reduce_command,
               db_name: database.name,
+              # Note that selector just above may also have a read preference
+              # specified, per the #map_reduce_command method below.
               read: read,
               session: options[:session]
             }
@@ -118,17 +93,11 @@ module Mongo
 
           private
 
-          OUT_ACTIONS = [ :replace, :merge, :reduce ].freeze
-
           def write?(spec)
             if out = spec[:selector][:out]
               out.is_a?(String) ||
                 (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
             end
-          end
-
-          def find_command
-            BSON::Document.new('find' => query_collection, 'filter' => {})
           end
 
           def map_reduce_command
@@ -137,25 +106,22 @@ module Mongo
               :map => map,
               :reduce => reduce,
               :query => filter,
-              :out => { inline: 1 }
+              :out => { inline: 1 },
             )
+            # Shouldn't this use self.read ?
             if collection.read_concern
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
                 collection.read_concern)
             end
-            command.merge!(view_options)
+            command.update(view_options)
+            command.update(options.slice(:collation))
+            # Read preference isn't simply passed in the command payload
+            # (it may need to be converted to wire protocol flags)
+            # so remove it here and hopefully it's handled elsewhere.
+            # If not, RUBY-2706.
+            command.delete(:read)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
-          end
-
-          def query_database
-            options[:out].respond_to?(:keys) && options[:out][:db] ? options[:out][:db] : database.name
-          end
-
-          def query_collection
-            if options[:out].respond_to?(:keys)
-              options[:out][OUT_ACTIONS.find { |action| options[:out][action] }]
-            end || options[:out]
           end
 
           def view_options

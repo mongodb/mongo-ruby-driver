@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Collection::View::ChangeStream do
@@ -44,8 +47,10 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   let(:connection_description) do
-    Mongo::Server::Description.new(double('description address'),
-      'minWireVersion' => 0, 'maxWireVersion' => 2)
+    Mongo::Server::Description.new(
+      double('description address'),
+      { 'minWireVersion' => 0, 'maxWireVersion' => 2 }
+    )
   end
 
   let(:result) do
@@ -183,7 +188,7 @@ describe Mongo::Collection::View::ChangeStream do
 
   context 'when a killCursors command is issued for the cursor' do
     context 'using Enumerable' do
-      only_mri
+      require_mri
 
       before do
         change_stream
@@ -196,7 +201,7 @@ describe Mongo::Collection::View::ChangeStream do
         change_stream.to_enum
       end
 
-      it 'propagates cursor not found error' do
+      it 'resumes on a cursor not found error' do
         original_cursor_id = cursor.id
 
         client.use(:admin).command({
@@ -204,9 +209,9 @@ describe Mongo::Collection::View::ChangeStream do
           cursors: [cursor.id]
         })
 
-        lambda do
+        expect do
           enum.next
-        end.should raise_error(Mongo::Error::OperationFailure, /cursor.*not found/)
+        end.not_to raise_error
       end
     end
 
@@ -218,7 +223,7 @@ describe Mongo::Collection::View::ChangeStream do
         collection.insert_one(a:2)
       end
 
-      it 'propagates cursor not found error' do
+      it 'resumes on a cursor not found error' do
         original_cursor_id = cursor.id
 
         client.use(:admin).command({
@@ -226,9 +231,9 @@ describe Mongo::Collection::View::ChangeStream do
           cursors: [cursor.id]
         })
 
-        lambda do
+        expect do
           change_stream.try_next
-        end.should raise_error(Mongo::Error::OperationFailure, /cursor.*not found/)
+        end.not_to raise_error
       end
     end
   end

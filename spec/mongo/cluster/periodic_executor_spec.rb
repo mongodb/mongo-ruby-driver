@@ -1,9 +1,14 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe Mongo::Cluster::PeriodicExecutor do
 
+  let(:cluster) { double('cluster') }
+
   let(:executor) do
-    described_class.new
+    described_class.new(cluster)
   end
 
   describe '#log_warn' do

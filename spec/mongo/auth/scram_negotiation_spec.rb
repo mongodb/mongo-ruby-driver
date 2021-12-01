@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 require 'spec_helper'
 
 # max_pool_size is set to 1 to force a single connection being used for
@@ -329,7 +332,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     let(:client) do
-      new_local_client(uri, SpecConfig.instance.ssl_options.merge(max_pool_size: 1))
+      new_local_client(uri, SpecConfig.instance.monitoring_options.merge(max_pool_size: 1))
     end
 
     context 'when the user exists' do

@@ -1,19 +1,36 @@
-#!/usr/bin/env ruby
+# -*- mode: ruby -*-
 
-require 'rubygems'
-
-begin
-  require 'bundler'
-  require 'bundler/gem_tasks'
-rescue LoadError
-  raise '[FAIL] Bundler not found! Install it with ' +
-        '`gem install bundler; bundle install`.'
-end
-
-default_groups = [:default, :testing]
-Bundler.require(*default_groups)
-
+require 'bundler'
+require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
+# TODO move the mongo require into the individual tasks that actually need it
+require 'mongo'
+
+ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
+
+$: << File.join(ROOT, 'spec/shared/lib')
+
+require 'mrss/spec_organizer'
+
+CLASSIFIERS = [
+  [%r,^mongo/server,, :unit_server],
+  [%r,^mongo,, :unit],
+  [%r,^kerberos,, :unit],
+  [%r,^integration/sdam_error_handling,, :sdam_integration],
+  [%r,^integration/cursor_reaping,, :cursor_reaping],
+  [%r,^integration/query_cache,, :query_cache],
+  [%r,^integration/transactions_examples,, :tx_examples],
+  [%r,^(atlas|integration),, :integration],
+  [%r,^spec_tests/sdam_integration,, :spec_sdam_integration],
+  [%r,^spec_tests,, :spec],
+]
+
+RUN_PRIORITY = %i(
+  tx_examples
+  unit unit_server
+  integration sdam_integration cursor_reaping query_cache
+  spec spec_sdam_integration
+)
 
 tasks = Rake.application.instance_variable_get('@tasks')
 tasks['release:do'] = tasks.delete('release')
@@ -45,16 +62,16 @@ namespace :spec do
     client = ClientRegistry.instance.global_client('authorized')
     client.database.command(ping: 1)
     deadline = Time.now + 300
-    while Time.now < deadline
-      if client.cluster.send(:sessions_supported?)
+    loop do
+      begin
+        client.cluster.validate_session_support!
         break
+      rescue Mongo::Error::SessionsNotSupported
+        if Time.now >= deadline
+          raise "Sessions did not become supported in 300 seconds"
+        end
+        client.cluster.scan!
       end
-      sleep 1
-      client.close
-      client.reconnect
-    end
-    unless client.cluster.send(:sessions_supported?)
-      raise "Sessions did not become supported in the allowed time"
     end
   end
 
@@ -71,7 +88,24 @@ namespace :spec do
     SpecConfig.instance.print_summary
   end
 
-  task :ci => ['spec:prepare', :spec]
+  def spec_organizer
+    Mrss::SpecOrganizer.new(
+      root: ROOT,
+      classifiers: CLASSIFIERS,
+      priority_order: RUN_PRIORITY,
+    )
+  end
+
+  task :ci => ['spec:prepare'] do
+    spec_organizer.run
+  end
+
+  desc 'Show test buckets'
+  task :buckets do
+    spec_organizer.ordered_buckets.each do |category, paths|
+      puts "#{category || 'remaining'}: #{paths&.join(' ') || '<none>'}"
+    end
+  end
 end
 
 namespace :release do

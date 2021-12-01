@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,5 +32,6 @@ module Mongo
     autoload(:EncryptionIO, 'mongo/crypt/encryption_io')
     autoload(:ExplicitEncrypter, 'mongo/crypt/explicit_encrypter')
     autoload(:AutoEncrypter, 'mongo/crypt/auto_encrypter')
+    autoload(:KMS, 'mongo/crypt/kms')
   end
 end
