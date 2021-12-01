@@ -282,9 +282,7 @@ module Mongo
           result = server.round_trip_time_averager.measure do
             begin
               doc = @connection.check_document
-              cmd = Protocol::Query.new(
-                Database::ADMIN, Database::COMMAND, doc, :limit => -1
-              )
+              cmd = Protocol::Msg.new([], {}, doc.merge({'$db' => Database::ADMIN}))
               message = @connection.dispatch_bytes(cmd.serialize.to_s)
               message.documents.first
             rescue Mongo::Error
