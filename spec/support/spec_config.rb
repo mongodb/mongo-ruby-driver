@@ -421,6 +421,26 @@ EOT
     ENV['MONGO_RUBY_DRIVER_GCP_ENDPOINT']
   end
 
+  def fle_gcp_project_id
+    ENV['MONGO_RUBY_DRIVER_GCP_PROJECT_ID']
+  end
+
+  def fle_gcp_location
+    ENV['MONGO_RUBY_DRIVER_GCP_LOCATION']
+  end
+
+  def fle_gcp_key_ring
+    ENV['MONGO_RUBY_DRIVER_GCP_KEY_RING']
+  end
+
+  def fle_gcp_key_name
+    ENV['MONGO_RUBY_DRIVER_GCP_KEY_NAME']
+  end
+
+  def fle_gcp_key_version
+    ENV['MONGO_RUBY_DRIVER_GCP_KEY_VERSION']
+  end
+
   def mongocryptd_port
     if ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] &&
       !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?

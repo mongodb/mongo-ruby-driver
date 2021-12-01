@@ -73,5 +73,12 @@ describe Mongo::Crypt::Handle do
         it_behaves_like 'a functioning Mongo::Crypt::Handle'
       end
     end
+
+    context 'GCP' do
+      context 'with valid gcp kms_providers' do
+        include_context 'with GCP kms_providers'
+        it_behaves_like 'a functioning Mongo::Crypt::Handle'
+      end
+    end
   end
 end

@@ -59,6 +59,15 @@ module Crypt
       }
     end
 
+    let(:gcp_kms_providers) do
+      {
+        gcp: {
+          email: SpecConfig.instance.fle_gcp_email,
+          private_key: SpecConfig.instance.fle_gcp_private_key,
+        }
+      }
+    end
+
     # Key vault database and collection names
     let(:key_vault_db) { 'admin' }
     let(:key_vault_coll) { 'datakeys' }
@@ -181,7 +190,7 @@ module Crypt
         'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
         'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
 
-        if SpecConfig.instance.fle?Crypt
+        if SpecConfig.instance.fle?
           fail(reason)
         else
           skip(reason)
@@ -203,8 +212,8 @@ module Crypt
     let(:data_key_options) do
       {
         master_key: {
-          keyVaultEndpoint: SpecConfig.instance.fle_azure_key_vault_endpoint,
-          keyName: SpecConfig.instance.fle_azure_key_name,
+          key_vault_endpoint: SpecConfig.instance.fle_azure_key_vault_endpoint,
+          key_name: SpecConfig.instance.fle_azure_key_name,
         }
       }
     end
@@ -219,6 +228,64 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure_key_alt_names.json'))
+    end
+  end
+
+  shared_context 'with GCP kms_providers' do
+    before do
+      unless SpecConfig.instance.fle_gcp_email &&
+        SpecConfig.instance.fle_gcp_private_key &&
+        SpecConfig.instance.fle_gcp_project_id &&
+        SpecConfig.instance.fle_gcp_location &&
+        SpecConfig.instance.fle_gcp_key_ring &&
+        SpecConfig.instance.fle_gcp_key_name
+
+        reason = 'This test requires the MONGO_RUBY_DRIVER_GCP_EMAIL, ' +
+        'MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY, ' +
+        'MONGO_RUBY_DRIVER_GCP_PROJECT_ID, MONGO_RUBY_DRIVER_GCP_LOCATION, ' +
+        'MONGO_RUBY_DRIVER_GCP_KEY_RING, MONGO_RUBY_DRIVER_GCP_KEY_NAME ' +
+        'environment variables to be set information from Azure.'
+
+        if SpecConfig.instance.fle?
+          fail(reason)
+        else
+          skip(reason)
+        end
+      end
+    end
+
+    let(:kms_provider_name) { 'gcp' }
+    let(:kms_providers) { gcp_kms_providers }
+
+    let(:data_key) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_gcp.json'))
+    end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_gcp.json'))
+    end
+
+    let(:data_key_options) do
+      {
+        master_key: {
+          project_id: SpecConfig.instance.fle_gcp_project_id,
+          location: SpecConfig.instance.fle_gcp_location,
+          key_ring: SpecConfig.instance.fle_gcp_key_ring,
+          key_name: SpecConfig.instance.fle_gcp_key_name,
+        }
+      }
+    end
+
+    let(:encrypted_ssn) do
+      "ARgjwAAAAAAAAAAAAAAAAAACxH7FeQ7bsdbcs8uiNn5Anj2MAU7eS5hFiQsH\nYIEMN88QVamaAgiE+EIYHiRMYGxUFaaIwD17tjzZ2wyQbDd1qMO9TctkIFzn\nqQTOP6eSajU="
+    end
+  end
+
+  shared_context 'with GCP kms_providers and key alt names' do
+    include_context 'with GCP kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_gcp_key_alt_names.json'))
     end
   end
 end

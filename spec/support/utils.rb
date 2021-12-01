@@ -168,6 +168,24 @@ module Utils
       }
     end
 
+    if opts['kmsProviders']['azure']
+      # The tests require that Azure credentials be filled in by the driver.
+      auto_encrypt_opts[:kms_providers][:azure] = {
+        tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+        client_id: SpecConfig.instance.fle_azure_client_id,
+        client_secret: SpecConfig.instance.fle_azure_client_secret,
+      }
+    end
+
+    if opts['kmsProviders']['gcp']
+      # The tests require that GCP credentials be filled in by the driver.
+      auto_encrypt_opts[:kms_providers][:gcp] = {
+        email: SpecConfig.instance.fle_gcp_email,
+        private_key: SpecConfig.instance.fle_gcp_private_key,
+      }
+    end
+
+
     if opts['kmsProviders']['local']
       auto_encrypt_opts[:kms_providers][:local] = {
         key: BSON::ExtJSON.parse_obj(opts['kmsProviders']['local']['key']).data

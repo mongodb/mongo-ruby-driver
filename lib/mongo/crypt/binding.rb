@@ -1082,6 +1082,29 @@ module Mongo
         end
       end
 
+      attach_function(
+        :mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5,
+        [
+          :pointer,
+          :mongocrypt_hmac_fn,
+          :pointer
+        ],
+        :bool
+      )
+
+      def self.setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(
+        handle,
+        rsaes_pkcs_signature_cb
+      )
+        check_status(handle) do
+          mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(
+            handle.ref,
+            rsaes_pkcs_signature_cb,
+            FFI::Pointer::NULL
+          )
+        end
+      end
+
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_t object.
       #

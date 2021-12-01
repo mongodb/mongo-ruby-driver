@@ -88,6 +88,13 @@ module Mongo
         Digest::SHA2.new(256).digest(input)
       end
       module_function :hash_sha256
+
+      def rsaes_pkcs_signature(key, input)
+        key_pem = "-----BEGIN PRIVATE KEY-----\n#{key}\n-----END PRIVATE KEY-----"
+        private_key = OpenSSL::PKey::RSA.new(key_pem)
+        private_key.sign(OpenSSL::Digest::SHA256.new, input)
+      end
+      module_function :rsaes_pkcs_signature
     end
   end
 end

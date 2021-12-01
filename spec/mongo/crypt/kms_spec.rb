@@ -213,4 +213,87 @@ describe Mongo::Crypt::KMS::Credentials do
       end
     end
   end
+
+  context 'GCP' do
+    let (:params) do
+      Mongo::Crypt::KMS::GCP::Credentials.new(kms_provider)
+    end
+
+    context 'with empty GCP kms_provider' do
+      let(:kms_provider) do
+        {}
+      end
+
+      it 'raises an exception' do
+        expect do
+          params
+        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. GCP KMS provider options must be in the format: { email: 'EMAIL', private_key: 'PRIVATE-KEY' }/)
+      end
+    end
+
+    %i(email private_key).each do |key|
+      context "with nil GCP #{key}" do
+        let(:kms_provider) do
+          {
+            email: SpecConfig.instance.fle_gcp_email,
+            private_key: SpecConfig.instance.fle_gcp_private_key,
+          }.update({key => nil})
+        end
+
+        it 'raises an exception' do
+          expect do
+            params
+          end.to raise_error(ArgumentError, /The #{key} option must be a String with at least one character; currently have nil/)
+        end
+      end
+
+      context "with non-string GCP #{key}" do
+        let(:kms_provider) do
+          {
+            email: SpecConfig.instance.fle_gcp_email,
+            private_key: SpecConfig.instance.fle_gcp_private_key,
+          }.update({key => 5})
+        end
+
+        it 'raises an exception' do
+          expect do
+            params
+          end.to raise_error(ArgumentError, /The #{key} option must be a String with at least one character; currently have 5/)
+        end
+      end
+
+      context "with empty string GCP #{key}" do
+        let(:kms_provider) do
+          {
+            email: SpecConfig.instance.fle_gcp_email,
+            private_key: SpecConfig.instance.fle_gcp_private_key,
+          }.update({key => ''})
+        end
+
+        it 'raises an exception' do
+          expect do
+            params
+          end.to raise_error(ArgumentError, /The #{key} option must be a String with at least one character; it is currently an empty string/)
+        end
+      end
+    end
+
+    context 'with valid params' do
+      let(:kms_provider) do
+        {
+          email: SpecConfig.instance.fle_gcp_email,
+          private_key: SpecConfig.instance.fle_gcp_private_key,
+      }
+      end
+
+      it 'returns valid libmongocrypt credentials' do
+        expect(params.to_document).to eq(
+          BSON::Document.new({
+            email: SpecConfig.instance.fle_gcp_email,
+            privateKey: BSON::Binary.new(SpecConfig.instance.fle_gcp_private_key, :generic),
+          })
+        )
+      end
+    end
+  end
 end

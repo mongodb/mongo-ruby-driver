@@ -1,0 +1,37 @@
+{
+    "status": {
+        "$numberInt": "1"
+    },
+    "_id": {
+        "$binary": {
+            "base64": "GCPAAAAAAAAAAAAAAAAAAA==",
+            "subType": "04"
+        }
+    },
+    "masterKey": {
+        "provider": "gcp",
+        "projectId": "devprod-drivers",
+        "location": "global",
+        "keyRing": "key-ring-csfle",
+        "keyName": "key-name-csfle"
+    },
+    "updateDate": {
+        "$date": {
+            "$numberLong": "1557827033449"
+        }
+    },
+    "keyAltNames": [
+        "ssn_encryption_key"
+    ],
+    "keyMaterial": {
+        "$binary": {
+            "base64": "CiQAIgLj0fMxF5M7RuQbBultgQXS8zwxnJbKQPbdsHvLPvfiP1QSiQEAuvl7\nn4jiN8avA4SFq/K/Yns9jBBAiSKtA3OVxrAe4VEZ12U2lntLYHECCzp8OIP8\nBf/FqRjr3AHYKbfRDjngKgGDJBfSjqiq7SJN1OThwQxaBp2nvuvjn6UQ3t/f\noYL0FHW20+PL23+K/35rr8iSAyR4w+7spOJ6XmaQDPuhzKthLcrPaedcAQ==",
+            "subType": "00"
+        }
+    },
+    "creationDate": {
+        "$date": {
+            "$numberLong": "1557827033449"
+        }
+    }
+}
