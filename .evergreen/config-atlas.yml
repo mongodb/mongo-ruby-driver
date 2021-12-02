@@ -166,18 +166,20 @@ functions:
           MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
           MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
           MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
+
           MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${fle_azure_tenant_id}"
           MONGO_RUBY_DRIVER_AZURE_CLIENT_ID="${fle_azure_client_id}"
           MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET="${fle_azure_client_secret}"
           MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${fle_azure_identity_platform_endpoint}"
           MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${fle_azure_key_vault_endpoint}"
           MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${fle_azure_key_name}"
+
           MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}"
           MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY="${fle_gcp_private_key}"
           MONGO_RUBY_DRIVER_GCP_PROJECT_ID="${fle_gcp_project_id}"
           MONGO_RUBY_DRIVER_GCP_LOCATION="${fle_gcp_location}"
-          MONGO_RUBY_DRIVER_GCP_KEY_RING=${fle_gcp_key_ring}"
-          MONGO_RUBY_DRIVER_GCP_KEY_NAME=${fle_gcp_key_name}"
+          MONGO_RUBY_DRIVER_GCP_KEY_RING="${fle_gcp_key_ring}"
+          MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
           MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
           EOT
 
