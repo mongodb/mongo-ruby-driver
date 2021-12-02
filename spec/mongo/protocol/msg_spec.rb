@@ -525,4 +525,56 @@ describe Mongo::Protocol::Msg do
       end
     end
   end
+
+  describe '#number_returned' do
+
+    context 'when the msg contains a find document' do
+
+      let(:find_document) do
+        { "cursor" => {
+          "firstBatch"=> [{"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55a')},
+            {"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55b')}],
+            "id"=>7461086780489262738,
+            "ns"=>"admin.foo"
+          }
+        }
+      end
+
+      let(:find_message) do
+        described_class.new(flags, options, find_document, *sequences)
+      end
+
+      it 'returns the correct number_returned' do
+        expect(find_message.number_returned).to eq(2)
+      end
+    end
+
+    context 'when the msg contains a getmore document' do
+
+      let(:find_document) do
+        { "cursor" => {
+          "nextBatch"=> [{"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55a')},
+            {"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55b')}],
+            "id"=>7461086780489262738,
+            "ns"=>"admin.foo"
+          }
+        }
+      end
+
+      let(:find_message) do
+        described_class.new(flags, options, find_document, *sequences)
+      end
+
+      it 'returns the correct number_returned' do
+        expect(find_message.number_returned).to eq(2)
+      end
+    end
+
+    context 'when the msg contains a document without first/nextBatch' do
+
+      it 'raises and error' do
+        expect{ message.number_returned }.to raise_error(NotImplementedError)
+      end
+    end
+  end
 end

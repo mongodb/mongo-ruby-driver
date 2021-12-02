@@ -301,11 +301,7 @@ module Mongo
       def number_returned
         if doc = documents.first
           if cursor = doc['cursor']
-            if batch = cursor['firstBatch']
-              # find
-              return batch.length
-            elsif batch = cursor['nextBatch']
-              # getMore
+            if batch = cursor['firstBatch'] || cursor['nextBatch']
               return batch.length
             end
           end
