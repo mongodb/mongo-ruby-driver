@@ -1082,6 +1082,15 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(crypt, sign_rsaes_pkcs1_v1_5, ctx=nil)
+      #   @api private
+      #
+      #   Set a crypto hook for the RSASSA-PKCS1-v1_5 algorithm with a SHA-256 hash.
+      #   @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      #   @param [ Proc ] sign_rsaes_pkcs1_v1_5 A RSASSA-PKCS1-v1_5 signing method.
+      #   @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
+      #     that may have been set when hooks were enabled.
+      #   @return [ Boolean ] Whether setting this option succeeded.
       attach_function(
         :mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5,
         [
@@ -1092,6 +1101,13 @@ module Mongo
         :bool
       )
 
+      # Set a crypto hook for the RSASSA-PKCS1-v1_5 algorithm with
+      #   a SHA-256 hash oh the Handle.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ Method ] rsaes_pkcs_signature_cb A RSASSA-PKCS1-v1_5 signing method.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the callbacks aren't set successfully
       def self.setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(
         handle,
         rsaes_pkcs_signature_cb
@@ -1100,7 +1116,7 @@ module Mongo
           mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(
             handle.ref,
             rsaes_pkcs_signature_cb,
-            FFI::Pointer::NULL
+            nil
           )
         end
       end

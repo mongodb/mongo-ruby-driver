@@ -159,6 +159,8 @@ module Mongo
         end
       end
 
+      # Perform signing using RSASSA-PKCS1-v1_5 with SHA256 hash and write
+      # the output to the provided mongocrypt_binary_t object.
       def do_rsaes_pkcs_signature(key_binary_p, input_binary_p,
         output_binary_p, status_p)
         key = Binary.from_pointer(key_binary_p).to_s
@@ -169,7 +171,7 @@ module Mongo
         end
       end
 
-      # We are buildling libmongocrypt without crypto functions to remove the
+      # We are building libmongocrypt without crypto functions to remove the
       # external dependency on OpenSSL. This method binds native Ruby crypto
       # methods to the underlying mongocrypt_t object so that libmongocrypt can
       # still perform cryptography.
