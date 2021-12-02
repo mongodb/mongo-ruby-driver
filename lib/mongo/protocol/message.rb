@@ -326,7 +326,7 @@ module Mongo
       # @return [ 0 ] This method must be overridden, otherwise, always returns 0.
       #
       # @since 2.5.0
-      def number_returned; 0; end
+      def number_returned; raise NotImplementedError; end
 
       private
 
