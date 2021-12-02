@@ -17,7 +17,6 @@
 
 require 'mongo/operation/update/command'
 require 'mongo/operation/update/op_msg'
-require 'mongo/operation/update/legacy'
 require 'mongo/operation/update/result'
 require 'mongo/operation/update/bulk_result'
 

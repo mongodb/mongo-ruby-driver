@@ -17,7 +17,6 @@
 
 require 'mongo/operation/insert/command'
 require 'mongo/operation/insert/op_msg'
-require 'mongo/operation/insert/legacy'
 require 'mongo/operation/insert/result'
 require 'mongo/operation/insert/bulk_result'
 

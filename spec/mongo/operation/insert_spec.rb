@@ -254,37 +254,5 @@ describe Mongo::Operation::Insert do
         end
       end
     end
-
-    context 'when write concern { w: 0 } is used' do
-      max_server_version '3.4'
-
-      let(:spec) do
-        { :documents     => documents,
-          :db_name       => SpecConfig.instance.test_db,
-          :coll_name     => TEST_COLL,
-          :write_concern => Mongo::WriteConcern.get(:w => 0)
-        }
-      end
-
-      let(:documents) do
-        [{ '_id' => 1 }]
-      end
-
-      let(:op) do
-        described_class.new(spec)
-      end
-
-      before do
-        expect(Mongo::Operation::Insert::Legacy).to receive(:new).and_call_original
-      end
-
-      let(:response) do
-        op.execute(authorized_primary, context: context)
-      end
-
-      it 'uses op codes instead of write commands' do
-        expect(response.written_count).to eq(0)
-      end
-    end
   end
 end
