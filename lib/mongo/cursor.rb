@@ -383,6 +383,14 @@ module Mongo
 
     private
 
+    def batch_size_for_get_more
+      if batch_size && use_limit?
+        [batch_size, @remaining].min
+      else
+        batch_size
+      end
+    end
+
     def exhausted?
       limited? ? @remaining <= 0 : false
     end
@@ -405,7 +413,7 @@ module Mongo
         cursor_id: id,
         # 3.2+ servers use batch_size, 3.0- servers use to_return.
         # TODO should to_return be calculated in the operation layer?
-        batch_size: batch_size,
+        batch_size: batch_size_for_get_more,
         to_return: to_return,
         max_time_ms: if view.respond_to?(:max_await_time_ms) &&
           view.max_await_time_ms &&

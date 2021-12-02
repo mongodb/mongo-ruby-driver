@@ -298,6 +298,21 @@ module Mongo
         Msg.new(@flags, @options, main_document, *@sequences)
       end
 
+      def number_returned
+        if doc = documents.first
+          if cursor = doc['cursor']
+            if batch = cursor['firstBatch']
+              # find
+              return batch.length
+            elsif batch = cursor['nextBatch']
+              # getMore
+              return batch.length
+            end
+          end
+        end
+        raise NotImplementedError
+      end
+
       private
 
       # Validate that the documents in this message are all smaller than the
