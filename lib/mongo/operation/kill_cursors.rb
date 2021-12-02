@@ -18,7 +18,6 @@
 require 'mongo/operation/kill_cursors/command_builder'
 require 'mongo/operation/kill_cursors/command'
 require 'mongo/operation/kill_cursors/op_msg'
-require 'mongo/operation/kill_cursors/legacy'
 
 module Mongo
   module Operation

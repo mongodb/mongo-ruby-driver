@@ -231,34 +231,5 @@ describe Mongo::Operation::Update do
         end
       end
     end
-
-    context 'when write concern { w: 0 } is used' do
-      max_server_version '3.4'
-
-      let(:update) do
-        described_class.new({
-                                updates: [ document ],
-                                db_name: SpecConfig.instance.test_db,
-                                coll_name: TEST_COLL,
-                                write_concern: Mongo::WriteConcern.get(:w => 0)
-                            })
-      end
-
-      let(:document) do
-        { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }}, limit: 1 }
-      end
-
-      let(:result) do
-        update.execute(authorized_primary, context: context)
-      end
-
-      before do
-        expect(Mongo::Operation::Update::Legacy).to receive(:new).and_call_original
-      end
-
-      it 'uses op codes instead of write commands' do
-        expect(result.written_count).to eq(0)
-      end
-    end
   end
 end
