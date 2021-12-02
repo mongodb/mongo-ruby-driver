@@ -406,6 +406,7 @@ module Mongo
     end
 
     def get_more_operation
+    require'byebug';byebug
       spec = {
         session: @session,
         db_name: database.name,
