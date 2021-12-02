@@ -66,6 +66,7 @@ module Mongo
       def command_completed(result, address, operation_id, payload, duration,
         started_event:, service_id: nil
       )
+      p payload
         document = result ? (result.documents || []).first : nil
         if document && (document['ok'] && document['ok'] != 1 || document.key?('$err'))
           parser = Error::Parser.new(document)
@@ -83,6 +84,8 @@ module Mongo
       def command_succeeded(result, address, operation_id, payload, duration,
         started_event:, service_id: nil
       )
+#      require'byebug';byebug
+      p 'resp',result&.documents&.first
         monitoring.succeeded(
           Monitoring::COMMAND,
           Event::CommandSucceeded.generate(
