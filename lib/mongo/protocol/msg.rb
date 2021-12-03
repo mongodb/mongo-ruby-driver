@@ -306,7 +306,7 @@ module Mongo
             end
           end
         end
-        raise NotImplementedError
+        0
       end
 
       private
