@@ -248,7 +248,6 @@ module Mongo
       # @since 2.0.0
       # @api public
       def returned_count
-      require'byebug';byebug
         if acknowledged?
           reply.number_returned
         else

@@ -543,6 +543,36 @@ describe Mongo::Cursor do
         end
       end
     end
+
+    context 'when the result set is iterated fully and the cursor id is non-zero' do
+      min_server_fcv '5.0'
+
+      let(:documents) do
+        (1..5).map{ |i| { field: "test#{i}" }}
+      end
+
+      let(:view) { collection.find(test:{'$gte'=>BSON::MinKey.new}).sort(test:1).limit(5).batch_size(4) }
+
+      before do
+        view.to_a
+      end
+
+      it 'schedules a get more command' do
+        get_more_commands = subscriber.started_events.select { |e| e.command_name == 'getMore' }
+        expect(get_more_commands.length).to be 1
+      end
+
+      it 'has a non-zero cursor id on successful get more' do
+        get_more_commands = subscriber.succeeded_events.select { |e| e.command_name == 'getMore' }
+        expect(get_more_commands.length).to be 1
+        expect(get_more_commands[0].reply['cursor']['id']).to_not be 0
+      end
+
+      it 'schedules a kill cursors command' do
+        get_more_commands = subscriber.started_events.select { |e| e.command_name == 'killCursors' }
+        expect(get_more_commands.length).to be 1
+      end
+    end
   end
 
   describe '#inspect' do

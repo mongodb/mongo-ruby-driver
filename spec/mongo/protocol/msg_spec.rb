@@ -528,17 +528,13 @@ describe Mongo::Protocol::Msg do
 
   describe '#number_returned' do
 
+    let(:batch) do
+      (1..2).map{ |i| { field: "test#{i}" }}
+    end
+
     context 'when the msg contains a find document' do
 
-      let(:find_document) do
-        { "cursor" => {
-          "firstBatch"=> [{"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55a')},
-            {"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55b')}],
-            "id"=>7461086780489262738,
-            "ns"=>"admin.foo"
-          }
-        }
-      end
+      let(:find_document) { { "cursor" => { "firstBatch" => batch } } }
 
       let(:find_message) do
         described_class.new(flags, options, find_document, *sequences)
@@ -550,23 +546,14 @@ describe Mongo::Protocol::Msg do
     end
 
     context 'when the msg contains a getmore document' do
+      let(:next_document) { { "cursor" => { "firstBatch" => batch } } }
 
-      let(:find_document) do
-        { "cursor" => {
-          "nextBatch"=> [{"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55a')},
-            {"_id"=>BSON::ObjectId('61a8f1eba15d5d75516fa55b')}],
-            "id"=>7461086780489262738,
-            "ns"=>"admin.foo"
-          }
-        }
-      end
-
-      let(:find_message) do
-        described_class.new(flags, options, find_document, *sequences)
+      let(:next_message) do
+        described_class.new(flags, options, next_document, *sequences)
       end
 
       it 'returns the correct number_returned' do
-        expect(find_message.number_returned).to eq(2)
+        expect(next_message.number_returned).to eq(2)
       end
     end
 
