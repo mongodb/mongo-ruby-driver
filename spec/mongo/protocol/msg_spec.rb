@@ -546,7 +546,7 @@ describe Mongo::Protocol::Msg do
     end
 
     context 'when the msg contains a getmore document' do
-      let(:next_document) { { "cursor" => { "firstBatch" => batch } } }
+      let(:next_document) { { "cursor" => { "nextBatch" => batch } } }
 
       let(:next_message) do
         described_class.new(flags, options, next_document, *sequences)
