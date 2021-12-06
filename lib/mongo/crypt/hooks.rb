@@ -91,13 +91,18 @@ module Mongo
 
       # An RSASSA-PKCS1-v1_5 with SHA-256 signature function.
       #
-      # @param [ String ] key The PKCS#8 encrypted private key.
+      # @param [ String ] key The PKCS#8 private key. It can be either in PEM format,
+      #   or base64 encoded DER format.
       # @param [ String ] input The data to be signed.
       #
       # @return [ String ] The signature.
       def rsaes_pkcs_signature(key, input)
-        key_pem = "-----BEGIN PRIVATE KEY-----\n#{key}\n-----END PRIVATE KEY-----"
-        private_key = OpenSSL::PKey::RSA.new(key_pem)
+        private_key = begin
+          OpenSSL::PKey::RSA.new(key)
+        rescue OpenSSL::PKey::RSAError
+          key_pem = "-----BEGIN PRIVATE KEY-----\n#{key}\n-----END PRIVATE KEY-----\n"
+          OpenSSL::PKey::RSA.new(key_pem)
+        end
         private_key.sign(OpenSSL::Digest::SHA256.new, input)
       end
       module_function :rsaes_pkcs_signature

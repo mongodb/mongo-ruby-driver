@@ -26,7 +26,7 @@ module Mongo
         class Credentials
           include KMS::Validations
 
-          # @return [ String ] GCP email to authenticate.
+          # @return [ String ] GCP email to authenticate with.
           attr_reader :email
 
           # @return [ String ] GCP private key.

@@ -393,8 +393,8 @@ the client secret of the application that has permissions to use the key.
 Additionally, note the key name, key version (if any), and key vault endpoint
 for your master key. You will use that information to generate a data key.
 
-If you have created an GCP KMS master key, note the email and the private key
-the client secret of the application that has permissions to use the key.
+If you have created a GCP KMS master key, note the email and the private key,
+and the client secret of the application that has permissions to use the key.
 Additionally, note the project id, location, key ring, key name, and
 key version (if any) for your master key. You will use that information to
 generate a data key.
