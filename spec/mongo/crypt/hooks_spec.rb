@@ -12,7 +12,11 @@ describe Mongo::Crypt::Hooks do
     end
 
     let(:private_key_pem) do
-      "-----BEGIN PRIVATE KEY-----\n#{private_key_data_b64}\n-----END PRIVATE KEY-----"
+      key_pem = [
+        "-----BEGIN PRIVATE KEY-----",
+        Base64.strict_encode64(Base64.decode64(private_key_data_b64)).scan(/.{1,64}/),
+        "-----END PRIVATE KEY-----",
+      ].join("\n")
     end
 
     let(:signature) do
