@@ -100,7 +100,11 @@ module Mongo
         private_key = begin
           OpenSSL::PKey::RSA.new(key)
         rescue OpenSSL::PKey::RSAError
-          key_pem = "-----BEGIN PRIVATE KEY-----\n#{key}\n-----END PRIVATE KEY-----"
+          key_pem = [
+            "-----BEGIN PRIVATE KEY-----",
+            Base64.strict_encode64(Base64.decode64(key)).scan(/.{1,64}/),
+            "-----END PRIVATE KEY-----",
+          ].join("\n")
           OpenSSL::PKey::RSA.new(key_pem)
         end
         private_key.sign(OpenSSL::Digest::SHA256.new, input)
