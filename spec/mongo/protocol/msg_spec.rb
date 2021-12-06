@@ -559,8 +559,8 @@ describe Mongo::Protocol::Msg do
 
     context 'when the msg contains a document without first/nextBatch' do
 
-      it 'raises and error' do
-        expect{ message.number_returned }.to raise_error(NotImplementedError)
+      it 'returns 0' do
+        expect(message.number_returned).to eq(0)
       end
     end
   end
