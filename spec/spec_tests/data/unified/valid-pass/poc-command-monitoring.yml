@@ -69,8 +69,7 @@ tests:
               command:
                 getMore: { $$type: [ int, long ] }
                 collection: *collection0Name
-                # https://jira.mongodb.org/browse/RUBY-2443
-                batchSize: 3
+                batchSize: 1
               commandName: getMore
               databaseName: *database0Name
           - commandSucceededEvent:
