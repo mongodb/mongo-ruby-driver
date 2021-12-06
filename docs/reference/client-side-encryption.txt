@@ -423,6 +423,10 @@ generate a data key.
       },
       gcp: {
         email: 'GCP-EMAIL',
+        # :private_key value should be base64 encoded GCP private key in DER format.
+        # If you have your GCP private key inf PEM format, you can convert it
+        # to required format using the following code:
+        # Base64.encode64(OpenSSL::PKey::RSA.new('GCP-PRIVATE-KEY-PEM').private_to_der)
         private_key: 'GCP-PRIVATE-KEY',
       }
     }
