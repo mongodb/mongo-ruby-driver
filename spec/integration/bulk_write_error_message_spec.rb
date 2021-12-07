@@ -64,6 +64,9 @@ describe 'BulkWriteError message' do
         fail('Should have raised')
       rescue Mongo::Error::BulkWriteError => e
         e.message.should =~ %r,\AMultiple errors: \[11000\]: (insertDocument :: caused by :: 11000 )?E11000 duplicate key error (collection|index):.*\; \[121\]: Document failed validation -- .*,
+        # The duplicate key error should not print details because it's not a
+        # WriteError or a WriteConcernError
+        expect(e.message.scan(/ -- /).length).to eq 1
       end
     end
   end
