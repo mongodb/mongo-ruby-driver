@@ -324,7 +324,6 @@ module Mongo
       # @return [ Hash | nil ] the details extracted from the document
       def retrieve_details(document)
         return nil unless document
-        details = nil
         if document['writeConcernError'] && document['writeConcernError']['errInfo']
           details = document['writeConcernError']['errInfo']
         elsif document['writeErrors'] && document['writeErrors'][0] && document['writeErrors'][0]['errInfo']
