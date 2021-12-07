@@ -224,6 +224,13 @@ module Mongo
       # @since 2.10.0
       attr_reader :write_concern_error_code_name
 
+      # @return [ String | nil ] The details of the error. For WriteConcernErrors
+      #   this is `document['writeConcernError']['errInfo']`. For WriteErrors this
+      #   is `document['writeErrors'][0]['errInfo']`.
+      #
+      # @since 2.11.0
+      attr_reader :details
+
       # @return [ BSON::Document | nil ] The server-returned error document.
       #
       # @api experimental
@@ -273,6 +280,12 @@ module Mongo
         @wtimeout = !!options[:wtimeout]
         @document = options[:document]
         @server_message = options[:server_message]
+
+        if @document['writeConcernError'] && @document['writeConcernError']['errInfo']
+          @details = @document['writeConcernError']['errInfo']
+        elsif @document['writeErrors'] && @document['writeErrors'][0] && @document['writeErrors'][0]['errInfo']
+          @details = @document['writeErrors'][0]['errInfo']
+        end
       end
 
       # Whether the error is a write concern timeout.
