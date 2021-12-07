@@ -324,12 +324,11 @@ module Mongo
       # @return [ Hash | nil ] the details extracted from the document
       def retrieve_details(document)
         return nil unless document
-        if document['writeConcernError'] && document['writeConcernError']['errInfo']
-          details = document['writeConcernError']['errInfo']
-        elsif document['writeErrors'] && document['writeErrors'][0] && document['writeErrors'][0]['errInfo']
-          details = document['writeErrors'][0]['errInfo']
+        if document['writeConcernError']
+          return document['writeConcernError']['errInfo']
+        elsif document['writeErrors'] && document['writeErrors'][0]
+          return document['writeErrors'][0]['errInfo']
         end
-        details
       end
 
       # Append the details to the message
