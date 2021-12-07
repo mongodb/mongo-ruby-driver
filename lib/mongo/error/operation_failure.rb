@@ -224,9 +224,10 @@ module Mongo
       # @since 2.10.0
       attr_reader :write_concern_error_code_name
 
-      # @return [ String | nil ] The details of the error. For WriteConcernErrors
-      #   this is `document['writeConcernError']['errInfo']`. For WriteErrors this
-      #   is `document['writeErrors'][0]['errInfo']`.
+      # @return [ String | nil ] The details of the error.
+      #   For WriteConcernErrors this is `document['writeConcernError']['errInfo']`.
+      #   For WriteErrors this is `document['writeErrors'][0]['errInfo']`.
+      #   For all other errors this is nil.
       #
       # @since 2.11.0
       attr_reader :details
