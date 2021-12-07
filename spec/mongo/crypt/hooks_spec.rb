@@ -26,12 +26,5 @@ describe Mongo::Crypt::Hooks do
         subject.rsaes_pkcs_signature(private_key_data_b64, input)
       ).to eq(signature)
     end
-
-    it 'raises an error with an invalid key' do
-      invalid_key = 'I_am_not_a_key'
-      expect do
-        subject.rsaes_pkcs_signature(invalid_key, input)
-      end.to raise_error(OpenSSL::PKey::PKeyError)
-    end
   end
 end
