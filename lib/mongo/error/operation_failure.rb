@@ -268,7 +268,9 @@ module Mongo
       #
       # @since 2.5.0, options added in 2.6.0
       def initialize(message = nil, result = nil, options = {})
-        super(message)
+        @details = retrieve_details(options[:document])
+        super(append_details(message, @details))
+
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
@@ -280,12 +282,6 @@ module Mongo
         @wtimeout = !!options[:wtimeout]
         @document = options[:document]
         @server_message = options[:server_message]
-
-        if @document['writeConcernError'] && @document['writeConcernError']['errInfo']
-          @details = @document['writeConcernError']['errInfo']
-        elsif @document['writeErrors'] && @document['writeErrors'][0] && @document['writeErrors'][0]['errInfo']
-          @details = @document['writeErrors'][0]['errInfo']
-        end
       end
 
       # Whether the error is a write concern timeout.
@@ -318,6 +314,30 @@ module Mongo
         # Note that the document is expected to be a BSON::Document, thus
         # either having string keys or providing indifferent access.
         code == 20 && server_message&.start_with?("Transaction numbers") || false
+      end
+
+      private
+
+      # Retrieve the details from a document
+      #
+      # @return [ Hash | nil ] the details extracted from the document
+      def retrieve_details(document)
+        return nil unless document
+        details = nil
+        if document['writeConcernError'] && document['writeConcernError']['errInfo']
+          details = document['writeConcernError']['errInfo']
+        elsif document['writeErrors'] && document['writeErrors'][0] && document['writeErrors'][0]['errInfo']
+          details = document['writeErrors'][0]['errInfo']
+        end
+        details
+      end
+
+      # Append the details to the message
+      #
+      # @return [ String ] the message with the details appended to it
+      def append_details(message, details)
+        return message unless details && message
+        message + " -- #{details.to_json}"
       end
     end
   end
