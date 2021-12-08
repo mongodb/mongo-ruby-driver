@@ -80,6 +80,16 @@ describe Mongo::Crypt::AutoEncryptionContext do
       it_behaves_like 'a functioning AutoEncryptionContext'
     end
 
+    context 'with Azure KMS providers' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'a functioning AutoEncryptionContext'
+    end
+
+    context 'with GCP KMS providers' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'a functioning AutoEncryptionContext'
+    end
+
     context 'with verbose logging' do
       include_context 'with local kms_providers'
 

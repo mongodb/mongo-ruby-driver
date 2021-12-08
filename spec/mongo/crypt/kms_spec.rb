@@ -297,6 +297,11 @@ describe Mongo::Crypt::KMS::Credentials do
 
       context 'PEM private key' do
         require_mri
+        before(:all) do
+          if RUBY_VERSION < "3.0"
+            skip "Ruby version 3.0 or higher required"
+          end
+        end
 
         let(:private_key_pem) do
           OpenSSL::PKey.read(

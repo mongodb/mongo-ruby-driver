@@ -62,7 +62,12 @@ module Mongo
                 # Check if private key is in PEM format.
                 pkey = OpenSSL::PKey::RSA.new(private_key_opt)
                 # PEM it is, need to be converted to base64 encoded DER.
-                Base64.encode64(pkey.private_to_der)
+                der = if pkey.respond_to?(:private_to_der)
+                  pkey.private_to_der
+                else
+                  pkey.to_der
+                end
+                Base64.encode64(der)
               end
             rescue OpenSSL::PKey::RSAError
               # Check if private key is in DER.

@@ -134,6 +134,16 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
       it_behaves_like 'a functioning ExplicitEncryptionContext'
     end
 
+    context 'when mongocrypt is initialized with Azure KMS provider options' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'a functioning ExplicitEncryptionContext'
+    end
+
+    context 'when mongocrypt is initialized with GCP KMS provider options' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'a functioning ExplicitEncryptionContext'
+    end
+
     context 'when mongocrypt is initialized with local KMS provider options' do
       include_context 'with local kms_providers'
       it_behaves_like 'a functioning ExplicitEncryptionContext'
