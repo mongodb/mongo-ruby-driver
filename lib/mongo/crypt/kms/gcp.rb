@@ -29,7 +29,7 @@ module Mongo
           # @return [ String ] GCP email to authenticate with.
           attr_reader :email
 
-          # @return [ String ] GCP private key.
+          # @return [ String ] GCP private key, base64 encoded DER format.
           attr_reader :private_key
 
           # @return [ String | nil ] GCP KMS endpoint.
@@ -43,14 +43,40 @@ module Mongo
           # @param [ Hash ] opts A hash that contains credentials for
           #   GCP KMS provider
           # @option opts [ String ] :email GCP email.
-          # @option opts [ String ] :private_key GCP private key.
+          # @option opts [ String ] :private_key GCP private key. This method accepts
+          #   private key in either base64 encoded DER format, or PEM format.
           # @option opts [ String | nil ] :endpoint GCP endpoint, optional.
           #
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
             @email = validate_param(:email, opts, FORMAT_HINT)
-            @private_key = validate_param(:private_key, opts, FORMAT_HINT)
+
+            @private_key = begin
+              private_key_opt = validate_param(:private_key, opts, FORMAT_HINT)
+              if BSON::Environment.jruby?
+                # We cannot really validate private key on JRuby, so we assume
+                # it is in base64 encoded DER format.
+                private_key_opt
+              else
+                # Check if private key is in PEM format.
+                pkey = OpenSSL::PKey::RSA.new(private_key_opt)
+                # PEM it is, need to be converted to base64 encoded DER.
+                Base64.encode64(pkey.to_der)
+              end
+            rescue OpenSSL::PKey::RSAError
+              # Check if private key is in DER.
+              begin
+                OpenSSL::PKey.read(Base64.decode64(private_key_opt))
+                # Private key is fine, use it.
+                private_key_opt
+              rescue OpenSSL::PKey::PKeyError
+                raise ArgumentError.new(
+                  "The private_key option must be either either base64 encoded DER format, or PEM format."
+                )
+              end
+            end
+
             @endpoint = validate_param(
               :endpoint, opts, FORMAT_HINT, required: false
             )

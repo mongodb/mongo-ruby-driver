@@ -294,6 +294,30 @@ describe Mongo::Crypt::KMS::Credentials do
           })
         )
       end
+
+      context 'PEM private key' do
+        fails_on_jruby
+
+        let(:private_key_pem) do
+          OpenSSL::PKey.read(
+            Base64.decode64(SpecConfig.instance.fle_gcp_private_key)
+          ).export
+        end
+
+        let(:kms_provider) do
+          {
+            email: SpecConfig.instance.fle_gcp_email,
+            private_key: private_key_pem,
+        }
+        end
+
+        it 'returns valid libmongocrypt credentials' do
+          private_key = params.to_document[:privateKey]
+          expect(Base64.decode64(private_key.data)).to eq(
+            Base64.decode64(SpecConfig.instance.fle_gcp_private_key)
+          )
+        end
+      end
     end
   end
 end

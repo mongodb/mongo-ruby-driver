@@ -399,6 +399,10 @@ Additionally, note the project id, location, key ring, key name, and
 key version (if any) for your master key. You will use that information to
 generate a data key.
 
+Please note that GCP private key can be in different formats. Ruby driver
+supports DER encoded RSA private key as base64 encoded string. For MRI Ruby
+the driver additionally support PEM encoded RSA private key.
+
 
 .. code-block:: ruby
 
@@ -423,10 +427,8 @@ generate a data key.
       },
       gcp: {
         email: 'GCP-EMAIL',
-        # :private_key value should be base64 encoded GCP private key in DER format.
-        # If you have your GCP private key inf PEM format, you can convert it
-        # to required format using the following code:
-        # Base64.encode64(OpenSSL::PKey::RSA.new('GCP-PRIVATE-KEY-PEM').private_to_der)
+        # :private_key value should be GCP private key as base64 encoded
+        # DER RSA private key, or PEM RSA private key, if you are using MRI Ruby.
         private_key: 'GCP-PRIVATE-KEY',
       }
     }

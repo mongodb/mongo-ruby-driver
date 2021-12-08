@@ -96,7 +96,17 @@ module Mongo
       #
       # @return [ String ] The signature.
       def rsaes_pkcs_signature(key, input)
-        private_key = OpenSSL::PKey.read(Base64.decode64(key))
+        private_key = if BSON::Environment.jruby?
+          # JRuby cannot read DER format, we need to convert key into PEM first.
+          key_pem = [
+            "-----BEGIN PRIVATE KEY-----",
+            Base64.strict_encode64(Base64.decode64(key)).scan(/.{1,64}/),
+            "-----END PRIVATE KEY-----",
+          ].join("\n")
+          OpenSSL::PKey::RSA.new(key_pem)
+        else
+          OpenSSL::PKey.read(Base64.decode64(key))
+        end
         private_key.sign(OpenSSL::Digest::SHA256.new, input)
       end
       module_function :rsaes_pkcs_signature
