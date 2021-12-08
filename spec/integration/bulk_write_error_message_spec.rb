@@ -66,7 +66,7 @@ describe 'BulkWriteError message' do
         e.message.should =~ %r,\AMultiple errors: \[11000\]: (insertDocument :: caused by :: 11000 )?E11000 duplicate key error (collection|index):.*\; \[121\]: Document failed validation( -- .*)?,
         # The duplicate key error should not print details because it's not a
         # WriteError or a WriteConcernError
-        e.message.scan(/ -- /).length.should be < 1
+        e.message.scan(/ -- /).length.should be <= 1
       end
     end
   end
