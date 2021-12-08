@@ -216,6 +216,16 @@ describe 'Client with auto encryption #reconnect' do
       it_behaves_like 'an auto-encryption client that reconnects properly'
     end
 
+    context 'with Azure KMS providers' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
+    context 'with GCP KMS providers' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
     context 'with local KMS providers' do
       include_context 'with local kms_providers'
       it_behaves_like 'an auto-encryption client that reconnects properly'

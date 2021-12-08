@@ -63,6 +63,16 @@ describe Mongo::Crypt::AutoDecryptionContext do
       it_behaves_like 'a functioning AutoDecryptionContext'
     end
 
+    context 'when mongocrypt is initialized with Azure KMS provider options' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'a functioning AutoDecryptionContext'
+    end
+
+    context 'when mongocrypt is initialized with GCP KMS provider options' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'a functioning AutoDecryptionContext'
+    end
+
     context 'with verbose logging' do
       include_context 'with local kms_providers'
 

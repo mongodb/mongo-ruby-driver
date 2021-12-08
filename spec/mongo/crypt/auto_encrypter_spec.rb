@@ -135,6 +135,35 @@ describe Mongo::Crypt::AutoEncrypter do
       it_behaves_like 'a functioning auto encrypter'
     end
 
+    context 'with Azure KMS providers' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
+    context 'with GCP KMS providers' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
+    context 'with GCP KMS providers and PEM key' do
+      require_mri
+
+      include_context 'with GCP kms_providers'
+
+      let(:kms_providers) do
+        {
+          gcp: {
+            email: SpecConfig.instance.fle_gcp_email,
+            private_key: OpenSSL::PKey.read(
+              Base64.decode64(SpecConfig.instance.fle_gcp_private_key)
+            ).export,
+          }
+        }
+      end
+
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
     context 'with local KMS providers' do
       include_context 'with local kms_providers'
       it_behaves_like 'a functioning auto encrypter'
@@ -153,6 +182,42 @@ describe Mongo::Crypt::AutoEncrypter do
 
     context 'with AWS KMS providers' do
       include_context 'with AWS kms_providers'
+
+      describe '#encrypt' do
+        it 'does not perform encryption' do
+          result = auto_encrypter.encrypt(db_name, command)
+          expect(result).to eq(command)
+        end
+      end
+
+      describe '#decrypt' do
+        it 'still performs decryption' do
+          result = auto_encrypter.decrypt(encrypted_command)
+          expect(result).to eq(command)
+        end
+      end
+    end
+
+    context 'with Azure KMS providers' do
+      include_context 'with Azure kms_providers'
+
+      describe '#encrypt' do
+        it 'does not perform encryption' do
+          result = auto_encrypter.encrypt(db_name, command)
+          expect(result).to eq(command)
+        end
+      end
+
+      describe '#decrypt' do
+        it 'still performs decryption' do
+          result = auto_encrypter.decrypt(encrypted_command)
+          expect(result).to eq(command)
+        end
+      end
+    end
+
+    context 'with GCP KMS providers' do
+      include_context 'with GCP kms_providers'
 
       describe '#encrypt' do
         it 'does not perform encryption' do

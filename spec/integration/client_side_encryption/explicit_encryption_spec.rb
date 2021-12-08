@@ -76,6 +76,18 @@ describe 'Explicit Encryption' do
       it_behaves_like 'an explicit encrypter'
     end
 
+    context 'with Azure KMS provider' do
+      include_context 'with Azure kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with GCP KMS provider' do
+      include_context 'with GCP kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
     context 'with local KMS provider' do
       include_context 'with local kms_providers'
 
@@ -92,6 +104,18 @@ describe 'Explicit Encryption' do
       it_behaves_like 'an explicit encrypter'
     end
 
+    context 'with Azure KMS provider' do
+      include_context 'with Azure kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with GCP KMS provider' do
+      include_context 'with GCP kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
     context 'with local KMS provider' do
       include_context 'with local kms_providers'
 
@@ -104,6 +128,18 @@ describe 'Explicit Encryption' do
 
     context 'with AWS KMS provider' do
       include_context 'with AWS kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with Azure KMS provider' do
+      include_context 'with Azure kms_providers'
+
+      it_behaves_like 'an explicit encrypter'
+    end
+
+    context 'with GCP KMS provider' do
+      include_context 'with GCP kms_providers'
 
       it_behaves_like 'an explicit encrypter'
     end

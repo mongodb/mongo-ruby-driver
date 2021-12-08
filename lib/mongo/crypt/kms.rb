@@ -75,4 +75,5 @@ require "mongo/crypt/kms/credentials"
 require "mongo/crypt/kms/master_key_document"
 require 'mongo/crypt/kms/aws'
 require 'mongo/crypt/kms/azure'
+require 'mongo/crypt/kms/gcp'
 require 'mongo/crypt/kms/local'

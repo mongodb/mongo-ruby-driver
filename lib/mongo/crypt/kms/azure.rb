@@ -105,7 +105,7 @@ module Mongo
         #
         # @raise [ ArgumentError ] If required options are missing or incorrectly.
           def initialize(opts)
-            if opts.is_a?(Hash)
+            unless opts.is_a?(Hash)
               raise ArgumentError.new(
                 'Key document options must contain a key named :master_key with a Hash value'
               )

@@ -305,7 +305,8 @@ Both automatic encryption and explicit encryption require an encryption master k
 This master key is used to encrypt data keys, which are in turn used to encrypt
 user data. The master key can be generated in one of two ways: by creating a
 local key, or by creating a key in a key management service. Currently
-Ruby driver supports AWS Key Management Service (KMS) and Azure Key Vault.
+Ruby driver supports AWS Key Management Service (KMS), Azure Key Vault, and
+Google Cloud Key Management (GCP KMS).
 
 Local Master Key
 ~~~~~~~~~~~~~~~~
@@ -380,7 +381,7 @@ See the `Local Master Key`_ section for more information about generating a new
 local master key.
 
 Create a Data Key Using a Remote Master Key
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have created an AWS KMS master key, note the access key ID and the secret access
 key of the IAM user that has permissions to use the key. Additionally, note
@@ -389,8 +390,19 @@ use that information to generate a data key.
 
 If you have created an Azure master key, note the tenant id, the client id, and
 the client secret of the application that has permissions to use the key.
-Additionally, note the key name, key version (id any), and key vault endpoint
+Additionally, note the key name, key version (if any), and key vault endpoint
 for your master key. You will use that information to generate a data key.
+
+If you have created a GCP KMS master key, note the email and the private key,
+and the client secret of the application that has permissions to use the key.
+Additionally, note the project id, location, key ring, key name, and
+key version (if any) for your master key. You will use that information to
+generate a data key.
+
+Please note that GCP private key can be in different formats. Ruby driver
+supports DER encoded RSA private key as base64 encoded string. For MRI Ruby
+the driver additionally support PEM encoded RSA private key.
+
 
 .. code-block:: ruby
 
@@ -412,6 +424,12 @@ for your master key. You will use that information to generate a data key.
         tenant_id: 'AZURE-TENANT-ID',
         client_id: 'AZURE-CLIENT-ID',
         client_secret: 'AZURE-CLIENT-SECRET'
+      },
+      gcp: {
+        email: 'GCP-EMAIL',
+        # :private_key value should be GCP private key as base64 encoded
+        # DER RSA private key, or PEM RSA private key, if you are using MRI Ruby.
+        private_key: 'GCP-PRIVATE-KEY',
       }
     }
   )
@@ -423,7 +441,6 @@ for your master key. You will use that information to generate a data key.
         region: 'REGION-OF-YOUR-MASTER-KEY',
         key: 'ARN-OF-YOUR-MASTER-KEY'
       }
-
     }
   )
   # => <BSON::Binary... type=ciphertext...>
@@ -435,7 +452,19 @@ for your master key. You will use that information to generate a data key.
         key_vault_endpoint: 'AZURE-KEY-VAULT-ENDPOINT',
         key_name: 'AZURE-KEY-NAME'
       }
+    }
+  )
+  # => <BSON::Binary... type=ciphertext...>
 
+  gcp_data_key_id = client_encryption.create_data_key(
+    'gcp',
+    {
+      master_key: {
+        project_id: 'GCP-PROJECT-ID',
+        location: 'GCP-LOCATION',
+        key_ring: 'GCP-KEY-RING',
+        key_name: 'GCP-KEY-NAME',
+      }
     }
   )
   # => <BSON::Binary... type=ciphertext...>

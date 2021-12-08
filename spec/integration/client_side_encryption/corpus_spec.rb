@@ -89,7 +89,7 @@ describe 'Client-Side Encryption' do
       # to encrypt that value.
       corpus_copied = BSON::Document.new
       corpus.each do |key, doc|
-        if ['_id', 'altname_aws', 'altname_azure', 'altname_local'].include?(key)
+        if ['_id', 'altname_aws', 'altname_azure', 'altname_gcp', 'altname_local'].include?(key)
           corpus_copied[key] = doc
           next
         end
@@ -251,6 +251,20 @@ describe 'Client-Side Encryption' do
 
     context 'with Azure KMS provider' do
       include_context 'with Azure kms_providers'
+
+      context 'with collection validator' do
+        include_context 'with jsonSchema collection validator'
+        it_behaves_like 'a functioning encrypter'
+      end
+
+      context 'with schema map' do
+        include_context 'with local schema map'
+        it_behaves_like 'a functioning encrypter'
+      end
+    end
+
+    context 'with GCP KMS provider' do
+      include_context 'with GCP kms_providers'
 
       context 'with collection validator' do
         include_context 'with jsonSchema collection validator'

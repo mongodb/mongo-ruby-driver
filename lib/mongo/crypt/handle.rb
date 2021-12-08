@@ -159,7 +159,19 @@ module Mongo
         end
       end
 
-      # We are buildling libmongocrypt without crypto functions to remove the
+      # Perform signing using RSASSA-PKCS1-v1_5 with SHA256 hash and write
+      # the output to the provided mongocrypt_binary_t object.
+      def do_rsaes_pkcs_signature(key_binary_p, input_binary_p,
+        output_binary_p, status_p)
+        key = Binary.from_pointer(key_binary_p).to_s
+        input = Binary.from_pointer(input_binary_p).to_s
+
+        write_binary_string_and_set_status(output_binary_p, status_p) do
+          Hooks.rsaes_pkcs_signature(key, input)
+        end
+      end
+
+      # We are building libmongocrypt without crypto functions to remove the
       # external dependency on OpenSSL. This method binds native Ruby crypto
       # methods to the underlying mongocrypt_t object so that libmongocrypt can
       # still perform cryptography.
@@ -224,6 +236,16 @@ module Mongo
           @hmac_sha_512,
           @hmac_sha_256,
           @hmac_hash,
+        )
+
+        @rsaes_pkcs_signature_cb = Proc.new do |_, key_binary_p, input_binary_p,
+          output_binary_p, status_p|
+          do_rsaes_pkcs_signature(key_binary_p, input_binary_p, output_binary_p, status_p)
+        end
+
+        Binding.setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(
+          self,
+          @rsaes_pkcs_signature_cb
         )
       end
 
