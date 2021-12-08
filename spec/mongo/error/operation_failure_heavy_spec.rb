@@ -93,7 +93,7 @@ describe Mongo::Error::OperationFailure do
         rescue Mongo::Error => e
           insert_events = subscriber.succeeded_events.select { |e| e.command_name == "insert" }
           expect(insert_events.length).to eq 1
-          expect(e.message).to match(/\[#{e.code}\].+ -- .+/)
+          expect(e.message).to match(/\[#{e.code}(:.*)?\].+ -- .+/)
 
           expect(e.details).to eq(e.document['writeErrors'][0]['errInfo'])
           expect(e.server_message).to eq(e.document['writeErrors'][0]['errmsg'])
