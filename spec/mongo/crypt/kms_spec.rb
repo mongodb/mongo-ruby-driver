@@ -296,7 +296,7 @@ describe Mongo::Crypt::KMS::Credentials do
       end
 
       context 'PEM private key' do
-        fails_on_jruby
+        require_mri
 
         let(:private_key_pem) do
           OpenSSL::PKey.read(
