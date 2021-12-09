@@ -269,6 +269,8 @@ module Mongo
       uri_option 'directConnection', :direct_connection, type: :bool
       uri_option 'connect', :connect, type: :symbol
       uri_option 'loadBalanced', :load_balanced, type: :bool
+      uri_option 'srvMaxHosts', :srv_max_hosts, type: :integer
+      uri_option 'srvServiceName', :srv_service_name
 
       # Auth Options
       uri_option 'authSource', :auth_source

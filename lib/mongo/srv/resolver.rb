@@ -29,6 +29,16 @@ module Mongo
       #   before querying SRV records.
       RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
+      # Generates the record prefix with a custom SRV service name if it is
+      # provided.
+      #
+      # @option srv_service_name [ String | nil ] The SRV service name to use
+      #   in the record prefix.
+      # @return [ String ] The generated record prefix.
+      def record_prefix(srv_service_name=nil)
+        return srv_service_name ? "_#{srv_service_name}._tcp." : RECORD_PREFIX
+      end
+
       # Creates a new Resolver.
       #
       # @option opts [ Float ] :timeout The timeout, in seconds, to use for
@@ -58,6 +68,8 @@ module Mongo
       # an exception will be raised, otherwise a warning will be logged.
       #
       # @param [ String ] hostname The hostname whose records should be obtained.
+      # @param [ String ] srv_service_name The SRV service name for the DNS query.
+      #   If nil, mongodb is used.
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the :raise_in_invalid
       #   Resolver option is true and a record with a domain name that does
@@ -66,8 +78,8 @@ module Mongo
       #   option is true and no records are found.
       #
       # @return [ Mongo::Srv::Result ] SRV lookup result.
-      def get_records(hostname)
-        query_name = RECORD_PREFIX + hostname
+      def get_records(hostname, srv_service_name=nil)
+        query_name = record_prefix(srv_service_name) + hostname
         resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
 
         # Collect all of the records into a Result object, raising an error

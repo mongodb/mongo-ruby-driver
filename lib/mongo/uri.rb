@@ -538,6 +538,17 @@ module Mongo
           raise_invalid_error_no_fmt!("loadBalanced=true cannot be used with replicaSet option")
         end
       end
+
+      # Can I do this check here? because I have to check the scheme of the URI.
+      unless self.is_a?(URI::SRVProtocol) # TODO: is it better practice to leave off the self?
+        if uri_options[:srv_max_hosts]
+          raise_invalid_error_no_fmt!("srvMaxHosts cannot be used on non-SRV URI")
+        end
+
+        if uri_options[:srv_service_name]
+          raise_invalid_error_no_fmt!("srvServiceName cannot be used on non-SRV URI")
+        end
+      end
     end
   end
 end

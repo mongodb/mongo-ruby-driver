@@ -92,6 +92,8 @@ module Mongo
       :server_api,
       :server_selection_timeout,
       :socket_timeout,
+      :srv_max_hosts,
+      :srv_service_name,
       :ssl,
       :ssl_ca_cert,
       :ssl_ca_cert_object,
@@ -1209,6 +1211,7 @@ module Mongo
 
       Lint.validate_underscore_read_preference(opts[:read])
       Lint.validate_read_concern_option(opts[:read_concern])
+      # TODO: validate srvServiceName
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
@@ -1348,6 +1351,20 @@ module Mongo
             end
           end
         end
+      end
+
+      if options[:srv_max_hosts] && options[:srv_max_hosts] > 0
+        if options[:replica_set]
+          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with replica_set option"
+        end
+
+        if options[:load_balanced]
+          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with load_balanced=true"
+        end
+      end
+
+      if options[:srv_max_hosts] && options[:srv_max_hosts] < 0
+        raise ArgumentError, ":srv_max_hosts must be greater than 0"
       end
     end
 
