@@ -269,7 +269,7 @@ module Mongo
       uri_option 'directConnection', :direct_connection, type: :bool
       uri_option 'connect', :connect, type: :symbol
       uri_option 'loadBalanced', :load_balanced, type: :bool
-      uri_option 'srvMaxHosts', :srv_max_hosts, type: :integer
+      uri_option 'srvMaxHosts', :srv_max_hosts, type: :integer_raise
       uri_option 'srvServiceName', :srv_service_name
 
       # Auth Options
@@ -363,6 +363,26 @@ module Mongo
       end
 
       def revert_integer(value)
+        value
+      end
+
+      # Converts +value+ into an integer.
+      #
+      # If the value is not a valid integer, raise an error.
+      #
+      # @param [ String ] name Name of the URI option being processed.
+      # @param value [ String ] URI option value.
+      #
+      # @return [ nil | Integer ] Converted value.
+      def convert_integer_raise(name, value)
+        unless /\A\d+\z/ =~ value
+          raise ArgumentError, "#{value} is an invalid value for #{name}"
+        end
+
+        value.to_i
+      end
+
+      def revert_integer_raise(value)
         value
       end
 
