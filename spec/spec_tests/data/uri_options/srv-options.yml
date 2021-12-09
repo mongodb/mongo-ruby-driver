@@ -7,6 +7,7 @@ tests:
       auth: ~
       options:
           srvServiceName: "customname"
+          tls: true
     - description: "Non-SRV URI with custom srvServiceName"
       uri: "mongodb://example.com/?srvServiceName=customname"
       valid: false
@@ -22,20 +23,23 @@ tests:
       auth: ~
       options:
           srvMaxHosts: 2
+          tls: true
     - description: "SRV URI with negative integer for srvMaxHosts"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=-1"
       valid: true
       warning: true
       hosts: ~
       auth: ~
-      options: {}
+      options:
+        tls: true
     - description: "SRV URI with invalid type for srvMaxHosts"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=foo"
       valid: true
       warning: true
       hosts: ~
       auth: ~
-      options: {}
+      options:
+        tls: true
     - description: "Non-SRV URI with srvMaxHosts"
       uri: "mongodb://example.com/?srvMaxHosts=2"
       valid: false
@@ -69,6 +73,7 @@ tests:
       options:
           loadBalanced: false
           srvMaxHosts: 2
+          tls: true
     - description: "SRV URI with srvMaxHosts=0 and replicaSet"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=0&replicaSet=foo"
       valid: true
@@ -78,6 +83,7 @@ tests:
       options:
           replicaSet: foo
           srvMaxHosts: 0
+          tls: true
     - description: "SRV URI with srvMaxHosts=0 and loadBalanced=true"
       uri: "mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=0&loadBalanced=true"
       valid: true
@@ -87,3 +93,4 @@ tests:
       options:
           loadBalanced: true
           srvMaxHosts: 0
+          tls: true
