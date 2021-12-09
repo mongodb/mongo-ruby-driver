@@ -758,6 +758,51 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_kms_ctx_get_kms_provider(crypt, kms_providers)
+      #   @api private
+      #
+      # Get the KMS provider identifier associated with this KMS request.
+      #
+      # This is used to conditionally configure TLS connections based on the KMS
+      # request. It is useful for KMIP, which authenticates with a client
+      # certificate.
+      #
+      # @param [ FFI::Pointer ] kms Pointer mongocrypt_kms_ctx_t object.
+      # @param [ FFI::Pointer ] len (outparam) Receives the length of the
+      #   returned string. It may be NULL. If it is not NULL, it is set to
+      #   the length of the returned string without the NULL terminator.
+      #
+      # @returns [ FFI::Pointer ] One of the NULL terminated static strings: "aws", "azure", "gcp", or
+      # "kmip".
+      attach_function(
+        :mongocrypt_kms_ctx_get_kms_provider,
+        [:pointer, :pointer],
+        :pointer
+      )
+
+      # Get the KMS provider identifier associated with this KMS request.
+      #
+      # This is used to conditionally configure TLS connections based on the KMS
+      # request. It is useful for KMIP, which authenticates with a client
+      # certificate.
+      #
+      # @param [ FFI::Pointer ] kms Pointer mongocrypt_kms_ctx_t object.
+      #
+      # @returns [ Symbol | nil ] KMS provider identifier.
+      def self.kms_ctx_get_kms_provider(kms_context)
+        len_ptr = FFI::MemoryPointer.new(:uint32, 1)
+        provider = mongocrypt_kms_ctx_get_kms_provider(
+          kms_context.kms_ctx_p,
+          len_ptr
+        )
+        if len_ptr.nil?
+          nil
+        else
+          len = len_ptr.read(:uint32)
+          provider.read_string(len).to_sym
+        end
+      end
+
       # @!method self.mongocrypt_kms_ctx_message(kms, msg)
       #   @api private
       #

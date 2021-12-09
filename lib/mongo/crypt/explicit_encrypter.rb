@@ -29,10 +29,14 @@ module Mongo
       #   to connect to the key vault collection.
       # @param [ String ] key_vault_namespace The namespace of the key vault
       #   collection in the format "db_name.collection_name".
-      # @param [ Crypt::KMS::Credentials ] :kms_providers A hash of key management service
+      # @param [ Crypt::KMS::Credentials ] kms_providers A hash of key management service
       #   configuration information.
-      def initialize(key_vault_client, key_vault_namespace, kms_providers)
-        @crypt_handle = Handle.new(kms_providers)
+      # @param [ Hash ] kms_tls_options TLS options to connect to KMS
+      #   providers. Keys of the hash should be KSM provider names; values
+      #   should be hashes of TLS connection options. The options are equivalent
+      #   to TLS connection options of Mongo::Client.
+      def initialize(key_vault_client, key_vault_namespace, kms_providers, kms_tls_options)
+        @crypt_handle = Handle.new(kms_providers, kms_tls_options)
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,
           key_vault_namespace: key_vault_namespace
