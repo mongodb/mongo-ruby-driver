@@ -549,6 +549,13 @@ module Mongo
           raise_invalid_error_no_fmt!("srvServiceName cannot be used on non-SRV URI")
         end
       end
+
+      # byebug
+      if uri_options[:srv_max_hosts] && uri_options[:srv_max_hosts] > 0
+        if uri_options[:replica_set]
+          raise_invalid_error_no_fmt!(":srv_max_hosts > 0 cannot be used with replica_set option")
+        end
+      end
     end
   end
 end
