@@ -61,15 +61,18 @@ module Mongo
         options[:timeout] || Monitor::DEFAULT_TIMEOUT
       end
 
-      # Obtains all of the SRV records for a given hostname.
+      # Obtains all of the SRV records for a given hostname. If a srv_max_hosts
+      # is specified and it is greater than 0, return maximum srv_max_hosts records.
       #
       # In the event that a record with a mismatched domain is found or no
       # records are found, if the :raise_on_invalid option is true,
       # an exception will be raised, otherwise a warning will be logged.
       #
       # @param [ String ] hostname The hostname whose records should be obtained.
-      # @param [ String ] srv_service_name The SRV service name for the DNS query.
+      # @param [ String | nil ] srv_service_name The SRV service name for the DNS query.
       #   If nil, mongodb is used.
+      # @param [ Integer ] srv_max_hosts The maximum number of records to return. If this
+      #   number is zero, return all of the records.
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the :raise_in_invalid
       #   Resolver option is true and a record with a domain name that does
@@ -78,7 +81,7 @@ module Mongo
       #   option is true and no records are found.
       #
       # @return [ Mongo::Srv::Result ] SRV lookup result.
-      def get_records(hostname, srv_service_name=nil)
+      def get_records(hostname, srv_service_name=nil, srv_max_hosts=0)
         query_name = record_prefix(srv_service_name) + hostname
         resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
 
@@ -109,6 +112,12 @@ module Mongo
           end
         end
 
+        # if srv_max_hosts is in [1, #addresses)
+        if (1...result.address_strs.length).include? srv_max_hosts
+          sampled_records = resources.shuffle.first(srv_max_hosts)
+          result = Srv::Result.new(hostname)
+          sampled_records.each { |record| result.add_record(record) }
+        end
         result
       end
 

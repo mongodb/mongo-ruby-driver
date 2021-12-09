@@ -182,6 +182,14 @@ module Mongo
       def write_concern_expectation
         @spec['writeConcern']
       end
+
+      def num_seeds
+        @spec['numSeeds']
+      end
+
+      def num_hosts
+        @spec['numHosts']
+      end
     end
 
     class Host
