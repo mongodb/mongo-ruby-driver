@@ -1178,6 +1178,31 @@ describe Mongo::URI do
       end
     end
 
+    context 'when providing srvMaxHosts with non-SRV URI' do
+
+      let(:srv_max_hosts) { 5 }
+      let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+      it 'raises an error' do
+        lambda do
+          uri
+        end.should raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when providing srvServiceName with non-SRV URI' do
+
+      let(:scheme) { "mongodb+srv://" }
+      let(:srv_service_name) { "customname" }
+      let(:options) { "srvServiceName=#{srv_service_name}" }
+
+      it 'raises an error' do
+        lambda do
+          uri
+        end.should raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
     context 'when providing waitQueueTimeoutMS' do
 
       let(:wait_queue_timeout) { 500 }

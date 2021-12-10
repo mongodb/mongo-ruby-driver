@@ -894,6 +894,42 @@ describe Mongo::URI::SRVProtocol do
         end
       end
 
+      context 'when providing srvMaxHosts' do
+        let(:srv_max_hosts) { 0 }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'sets the srv max hosts option' do
+          expect(uri.uri_options[:srv_max_hosts]).to eq(srv_max_hosts)
+        end
+      end
+
+      context 'when providing invalid integer to srvMaxHosts' do
+        let(:srv_max_hosts) { -1 }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'does not set the srv max hosts option' do
+          expect(uri.uri_options).to_not have_key(:srv_max_hosts)
+        end
+      end
+
+      context 'when providing invalid type to srvMaxHosts' do
+        let(:srv_max_hosts) { "foo" }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'does not set the srv max hosts option' do
+          expect(uri.uri_options).to_not have_key(:srv_max_hosts)
+        end
+      end
+
+      context 'when providing srvServiceName' do
+        let(:srv_service_name) { "mongodb" }
+        let(:options) { "srvServiceName=#{srv_service_name}" }
+
+        it 'sets the srv service name option' do
+          expect(uri.uri_options[:srv_service_name]).to eq(srv_service_name)
+        end
+      end
+
       context 'ssl' do
         let(:options) { "ssl=#{ssl}" }
 

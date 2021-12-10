@@ -1513,6 +1513,86 @@ describe Mongo::Client do
             end
           end
         end
+
+        context 'srv_max_hosts > 0 and load_balanced: true' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: 1, load_balanced: true)
+          end
+
+          it 'it is rejected' do
+            expect do
+              client
+            end.to raise_error(ArgumentError, /:srv_max_hosts > 0 cannot be used with load_balanced=true/)
+          end
+        end
+
+        context 'srv_max_hosts > 0 and replicaSet' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+              srv_max_hosts: 1, replica_set: 'rs')
+          end
+
+          it 'it is rejected' do
+            expect do
+              client
+            end.to raise_error(ArgumentError, /:srv_max_hosts > 0 cannot be used with replica_set option/)
+          end
+        end
+
+        context 'srv_max_hosts < 0' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: -1)
+          end
+
+          it 'is accepted and does not add the srv_max_hosts to uri_options' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options).to_not have_key(:srv_max_hosts)
+          end
+        end
+
+        context 'srv_max_hosts invalid type' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: 'foo')
+          end
+
+          it 'is accepted and does not add the srv_max_hosts to uri_options' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options).to_not have_key(:srv_max_hosts)
+          end
+        end
+
+        context 'srv_max_hosts with non-SRV URI' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: 1)
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /srvMaxHosts cannot be used on non-SRV URI/)
+          end
+        end
+
+        context 'srv_max_hosts with non-SRV URI' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_service_name: "customname")
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /srvServiceName cannot be used on non-SRV URI/)
+          end
+        end
       end
 
       context ':bg_error_backtrace option' do
