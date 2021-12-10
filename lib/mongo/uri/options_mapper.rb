@@ -366,26 +366,6 @@ module Mongo
         value
       end
 
-      # Converts +value+ into an integer.
-      #
-      # If the value is not a valid integer, raise an error.
-      #
-      # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
-      #
-      # @return [ nil | Integer ] Converted value.
-      def convert_integer_raise(name, value)
-        unless /\A\d+\z/ =~ value
-          raise ArgumentError, "#{value} is an invalid value for #{name}"
-        end
-
-        value.to_i
-      end
-
-      def revert_integer_raise(value)
-        value
-      end
-
       # Ruby's convention is to provide timeouts in seconds, not milliseconds and
       # to use fractions where more precision is necessary. The connection string
       # options are always in MS so we provide an easy conversion type.
