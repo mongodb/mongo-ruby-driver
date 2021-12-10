@@ -1211,7 +1211,6 @@ module Mongo
 
       Lint.validate_underscore_read_preference(opts[:read])
       Lint.validate_read_concern_option(opts[:read_concern])
-      # TODO: validate srvServiceName
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
         key = k.to_sym
         if VALID_OPTIONS.include?(key)

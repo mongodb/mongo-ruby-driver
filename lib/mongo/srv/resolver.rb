@@ -70,9 +70,9 @@ module Mongo
       #
       # @param [ String ] hostname The hostname whose records should be obtained.
       # @param [ String | nil ] srv_service_name The SRV service name for the DNS query.
-      #   If nil, mongodb is used.
-      # @param [ Integer ] srv_max_hosts The maximum number of records to return. If this
-      #   number is zero, return all of the records.
+      #   If nil, 'mongodb' is used.
+      # @param [ Integer | nill ] srv_max_hosts The maximum number of records to return.
+      #   If this value is zero or nil, return all of the records.
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the :raise_in_invalid
       #   Resolver option is true and a record with a domain name that does
