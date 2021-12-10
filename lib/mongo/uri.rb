@@ -555,6 +555,10 @@ module Mongo
         if uri_options[:replica_set]
           raise_invalid_error_no_fmt!(":srv_max_hosts > 0 cannot be used with replica_set option")
         end
+
+        if options[:load_balanced]
+          raise_invalid_error_no_fmt!(":srv_max_hosts > 0 cannot be used with load_balanced=true")
+        end
       end
     end
   end
