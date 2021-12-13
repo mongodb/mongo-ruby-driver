@@ -55,6 +55,21 @@ module Mongo
 
       private
 
+      # Generates an error message when there are multiple write errors.
+      # The message is generated as follows:
+      #
+      # col has validation { 'validator' => { 'x' => { '$type' => 'string' } } }
+      # col.insert_many([{_id: 1}, {_id: 2}], ordered: false)
+      #
+      # Multiple errors:
+      #   [121]: Document failed validation --
+      #     {"failingDocumentId":1,"details":{"operatorName":"$type",
+      #     "specifiedAs":{"x":{"$type":"string"}},"reason":"field was
+      #     missing"}};
+      #   [121]: Document failed validation --
+      #     {"failingDocumentId":2, "details":{"operatorName":"$type",
+      #     "specifiedAs":{"x":{"$type":"string"}}, "reason":"field was
+      #     missing"}}
       def build_message
         errors = @result['writeErrors']
         return nil unless errors
