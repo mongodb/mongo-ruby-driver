@@ -1624,13 +1624,14 @@ describe Mongo::Client do
         end
 
         context "when setting srv_max_hosts to 0" do
-          let(:options) { { srv_max_hosts: 0 } }
+          let(:srv_max_hosts) { 0 }
+          let(:options) { { srv_max_hosts: srv_max_hosts } }
 
-          it 'is accepted and doesn\'t set srv_max_hosts' do
+          it 'is accepted sets srv_max_hosts' do
             lambda do
               client
             end.should_not raise_error
-            expect(client.options).to_not have_key(:srv_max_hosts)
+            expect(client.options[:srv_max_hosts]).to eq(srv_max_hosts)
           end
         end
 

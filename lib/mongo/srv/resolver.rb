@@ -112,7 +112,8 @@ module Mongo
           end
         end
 
-        if srv_max_hosts && srv_max_hosts < result.address_strs.length
+        # if srv_max_hosts is in [1, #addresses)
+        if (1...result.address_strs.length).include? srv_max_hosts
           sampled_records = resources.shuffle.first(srv_max_hosts)
           result = Srv::Result.new(hostname)
           sampled_records.each { |record| result.add_record(record) }

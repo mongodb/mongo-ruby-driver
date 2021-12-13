@@ -1231,7 +1231,7 @@ module Mongo
           elsif key == :srv_max_hosts
             if v && (!v.is_a?(Integer) || v < 0)
               log_warn("#{v} is not a valid integer for srv_max_hosts")
-            elsif v != 0
+            else
               _options[key] = v
             end
           else
@@ -1358,7 +1358,7 @@ module Mongo
         end
       end
 
-      if options[:srv_max_hosts]
+      if options[:srv_max_hosts] && options[:srv_max_hosts] > 0
         if options[:replica_set]
           raise ArgumentError, ":srv_max_hosts > 0 cannot be used with :replica_set option"
         end
