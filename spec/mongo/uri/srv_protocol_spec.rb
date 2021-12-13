@@ -321,7 +321,7 @@ describe Mongo::URI::SRVProtocol do
           let(:options) { '/?srvServiceName=customname' }
 
           it 'returns an array with the parsed server' do
-            expect(uri.servers).to eq(hosts)
+            uri.servers.should =~ hosts
           end
         end
       end
