@@ -90,7 +90,7 @@ describe Mongo::Error::OperationFailure do
       it 'succeeds and prints the error' do
         begin
           collection.insert_one({x: 1})
-        rescue Mongo::Error => e
+        rescue Mongo::Error::OperationFailure => e
           insert_events = subscriber.succeeded_events.select { |e| e.command_name == "insert" }
           expect(insert_events.length).to eq 1
           expect(e.message).to match(/\[#{e.code}(:.*)?\].+ -- .+/)
