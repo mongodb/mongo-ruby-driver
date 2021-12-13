@@ -292,6 +292,33 @@ describe Mongo::URI::SRVProtocol do
             expect(hosts.include?(uri.servers.first)).to be true
           end
         end
+
+        context 'with srvMaxHosts > total hosts' do
+          let(:servers) { 'test1.test.build.10gen.cc' }
+          let(:options) { "/?srvMaxHosts=3" }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            expect(uri.servers).to eq(hosts)
+          end
+        end
+
+        context 'with srvMaxHosts == total hosts' do
+          let(:servers) { 'test1.test.build.10gen.cc' }
+          let(:options) { "/?srvMaxHosts=2" }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            expect(uri.servers).to eq(hosts)
+          end
+        end
+
+        context 'with srvMaxHosts=0' do
+          let(:servers) { 'test1.test.build.10gen.cc' }
+          let(:options) { "/?srvMaxHosts=0" }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            expect(uri.servers).to eq(hosts)
+          end
+        end
       end
     end
 
