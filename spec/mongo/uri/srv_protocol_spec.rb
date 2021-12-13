@@ -263,13 +263,34 @@ describe Mongo::URI::SRVProtocol do
     end
 
     describe '#servers' do
-      let(:string) { "#{scheme}#{servers}" }
+      let(:string) { "#{scheme}#{servers}#{options}" }
+      let(:options) { "" }
 
       context 'single server' do
         let(:servers) { 'test5.test.build.10gen.cc' }
 
         it 'returns an array with the parsed server' do
           expect(uri.servers).to eq(['localhost.test.build.10gen.cc:27017'])
+        end
+      end
+
+      context 'multiple servers' do
+        let(:servers) { 'test1.test.build.10gen.cc' }
+        let(:hosts) { ["localhost.test.build.10gen.cc:27017", "localhost.test.build.10gen.cc:27018"] }
+
+        context 'without srvMaxHosts'
+        it 'returns an array with the parsed servers' do
+          expect(uri.servers.length).to eq 2
+          expect(uri.servers).to eq(hosts)
+        end
+
+        context 'with srvMaxHosts' do
+          let(:servers) { 'test1.test.build.10gen.cc' }
+          let(:options) { "/?srvMaxHosts=1" }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 1
+            expect(hosts.include?(uri.servers.first)).to be true
+          end
         end
       end
     end
