@@ -1595,7 +1595,7 @@ describe Mongo::Client do
         end
       end
 
-      context 'when mocking an SRV URI' do
+      context 'with SRV lookups mocked at Resolver' do
         let(:srv_result) do
           double('srv result').tap do |result|
             allow(result).to receive(:empty?).and_return(false)
@@ -1626,11 +1626,11 @@ describe Mongo::Client do
         context "when setting srv_max_hosts to 0" do
           let(:options) { { srv_max_hosts: 0 } }
 
-          it 'is accepted and sets srv_max_hosts to nil' do
+          it 'is accepted and doesn\'t set srv_max_hosts' do
             lambda do
               client
             end.should_not raise_error
-            expect(client.options[:srv_max_hosts]).to eq(nil)
+            expect(client.options).to_not have_key(:srv_max_hosts)
           end
         end
 

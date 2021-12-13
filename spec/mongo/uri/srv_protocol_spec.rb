@@ -907,8 +907,8 @@ describe Mongo::URI::SRVProtocol do
         let(:srv_max_hosts) { 0 }
         let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
 
-        it 'sets the srv max hosts option to nil' do
-          expect(uri.uri_options[:srv_max_hosts]).to be nil
+        it 'doesn\'t set the srv max hosts option' do
+          expect(uri.uri_options).to_not have_key(:srv_max_hosts)
         end
       end
 

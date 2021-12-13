@@ -375,7 +375,7 @@ module Mongo
       @user = parse_user!(creds)
       @password = parse_password!(creds)
       @uri_options = Options::Redacted.new(parse_uri_options!(options))
-      @uri_options[:srv_max_hosts] = nil if uri_options[:srv_max_hosts] == 0
+      @uri_options.delete(:srv_max_hosts) if uri_options[:srv_max_hosts] == 0
 
       if db
         @database = parse_database!(db)
@@ -551,7 +551,6 @@ module Mongo
         end
       end
 
-      # byebug
       if uri_options[:srv_max_hosts]
         if uri_options[:replica_set]
           raise_invalid_error_no_fmt!("srvMaxHosts > 0 cannot be used with replicaSet option")

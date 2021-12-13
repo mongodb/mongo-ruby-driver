@@ -1231,8 +1231,8 @@ module Mongo
           elsif key == :srv_max_hosts
             if v && (!v.is_a?(Integer) || v < 0)
               log_warn("#{v} is not a valid integer for srv_max_hosts")
-            else
-              _options[key] = v == 0 ? nil : v
+            elsif v != 0
+              _options[key] = v
             end
           else
             _options[key] = v
