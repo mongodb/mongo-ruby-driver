@@ -534,7 +534,7 @@ module Mongo
       end
 =end
       @options.freeze
-      validate_options!(addresses, uri.is_a?(URI::SRVProtocol))
+      validate_options!(addresses, is_srv: uri.is_a?(URI::SRVProtocol))
       validate_authentication_options!
 
       database_options = @options.dup
@@ -1230,9 +1230,9 @@ module Mongo
             _options[key] = compressors unless compressors.empty?
           elsif key == :srv_max_hosts
             if v && (!v.is_a?(Integer) || v < 0)
-              log_warn("#{v} is not a valid integer for srvMaxHosts")
+              log_warn("#{v} is not a valid integer for srv_max_hosts")
             else
-              _options[key] = v
+              _options[key] = v == 0 ? nil : v
             end
           else
             _options[key] = v
@@ -1247,7 +1247,7 @@ module Mongo
     # Validates all options after they are set on the client.
     # This method is intended to catch combinations of options which are
     # not allowed.
-    def validate_options!(addresses = nil, is_srv = nil)
+    def validate_options!(addresses = nil, is_srv: nil)
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
@@ -1358,23 +1358,23 @@ module Mongo
         end
       end
 
-      if options[:srv_max_hosts] && options[:srv_max_hosts] > 0
+      if options[:srv_max_hosts]
         if options[:replica_set]
-          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with replica_set option"
+          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with :replica_set option"
         end
 
         if options[:load_balanced]
-          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with load_balanced=true"
+          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with :load_balanced=true"
         end
       end
 
       unless is_srv.nil? || is_srv
         if options[:srv_max_hosts]
-          raise ArgumentError, "srvMaxHosts cannot be used on non-SRV URI"
+          raise ArgumentError, ":srv_max_hosts cannot be used on non-SRV URI"
         end
 
         if options[:srv_service_name]
-          raise ArgumentError, "srvServiceName cannot be used on non-SRV URI"
+          raise ArgumentError, ":srv_service_name cannot be used on non-SRV URI"
         end
       end
     end

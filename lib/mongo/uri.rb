@@ -375,6 +375,8 @@ module Mongo
       @user = parse_user!(creds)
       @password = parse_password!(creds)
       @uri_options = Options::Redacted.new(parse_uri_options!(options))
+      @uri_options[:srv_max_hosts] = nil if uri_options[:srv_max_hosts] == 0
+
       if db
         @database = parse_database!(db)
       end
@@ -539,8 +541,7 @@ module Mongo
         end
       end
 
-      # Can I do this check here? because I have to check the scheme of the URI.
-      unless self.is_a?(URI::SRVProtocol) # TODO: is it better practice to leave off the self?
+      unless self.is_a?(URI::SRVProtocol)
         if uri_options[:srv_max_hosts]
           raise_invalid_error_no_fmt!("srvMaxHosts cannot be used on non-SRV URI")
         end
@@ -551,13 +552,13 @@ module Mongo
       end
 
       # byebug
-      if uri_options[:srv_max_hosts] && uri_options[:srv_max_hosts] > 0
+      if uri_options[:srv_max_hosts]
         if uri_options[:replica_set]
-          raise_invalid_error_no_fmt!(":srv_max_hosts > 0 cannot be used with replica_set option")
+          raise_invalid_error_no_fmt!("srvMaxHosts > 0 cannot be used with replicaSet option")
         end
 
         if options[:load_balanced]
-          raise_invalid_error_no_fmt!(":srv_max_hosts > 0 cannot be used with load_balanced=true")
+          raise_invalid_error_no_fmt!("srvMaxHosts > 0 cannot be used with loadBalanced=true")
         end
       end
     end

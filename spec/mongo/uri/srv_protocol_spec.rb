@@ -895,11 +895,20 @@ describe Mongo::URI::SRVProtocol do
       end
 
       context 'when providing srvMaxHosts' do
-        let(:srv_max_hosts) { 0 }
+        let(:srv_max_hosts) { 1 }
         let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
 
         it 'sets the srv max hosts option' do
           expect(uri.uri_options[:srv_max_hosts]).to eq(srv_max_hosts)
+        end
+      end
+
+      context 'when providing srvMaxHosts as 0' do
+        let(:srv_max_hosts) { 0 }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'sets the srv max hosts option to nil' do
+          expect(uri.uri_options[:srv_max_hosts]).to be nil
         end
       end
 
