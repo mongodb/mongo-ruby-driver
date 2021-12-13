@@ -326,7 +326,7 @@ module Mongo
         return nil unless document
         if document['writeConcernError']
           return document['writeConcernError']['errInfo']
-        elsif document['writeErrors'] && document['writeErrors'][0]
+        elsif document['writeErrors']&.first
           return document['writeErrors'][0]['errInfo']
         end
       end
