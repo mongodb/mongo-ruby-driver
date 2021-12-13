@@ -228,8 +228,6 @@ module Mongo
       #   For WriteConcernErrors this is `document['writeConcernError']['errInfo']`.
       #   For WriteErrors this is `document['writeErrors'][0]['errInfo']`.
       #   For all other errors this is nil.
-      #
-      # @since 2.11.0
       attr_reader :details
 
       # @return [ BSON::Document | nil ] The server-returned error document.
@@ -266,8 +264,6 @@ module Mongo
       # @option options [ Array<String> ] :labels The set of labels associated
       #   with the error.
       # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
-      #
-      # @since 2.5.0, options added in 2.6.0
       def initialize(message = nil, result = nil, options = {})
         @details = retrieve_details(options[:document])
         super(append_details(message, @details))
@@ -324,10 +320,10 @@ module Mongo
       # @return [ Hash | nil ] the details extracted from the document
       def retrieve_details(document)
         return nil unless document
-        if document['writeConcernError']
-          return document['writeConcernError']['errInfo']
-        elsif document['writeErrors']&.first
-          return document['writeErrors'][0]['errInfo']
+        if wce = document['writeConcernError']
+          return wce['errInfo']
+        elsif we = document['writeErrors']&.first
+          return we['errInfo']
         end
       end
 
