@@ -298,6 +298,24 @@ module Mongo
         Msg.new(@flags, @options, main_document, *@sequences)
       end
 
+      # Returns the number of documents returned from the server.
+      #
+      # The Msg instance must be for a server reply and the reply must return
+      # an active cursor (either a newly created one or one whose iteration is
+      # continuing via getMore).
+      #
+      # @return [ Integer ] Number of returned documents.
+      def number_returned
+        if doc = documents.first
+          if cursor = doc['cursor']
+            if batch = cursor['firstBatch'] || cursor['nextBatch']
+              return batch.length
+            end
+          end
+        end
+        raise NotImplementedError, "number_returned is only defined for cursor replies"
+      end
+
       private
 
       # Validate that the documents in this message are all smaller than the

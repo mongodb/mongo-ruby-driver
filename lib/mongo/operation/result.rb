@@ -238,10 +238,7 @@ module Mongo
         end
       end
 
-      # Get the count of documents returned by the server.
-      #
-      # @example Get the number returned.
-      #   result.returned_count
+      # Get the number of documents returned by the server in this batch.
       #
       # @return [ Integer ] The number of documents returned.
       #

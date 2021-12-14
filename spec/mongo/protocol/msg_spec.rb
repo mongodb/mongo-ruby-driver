@@ -525,4 +525,45 @@ describe Mongo::Protocol::Msg do
       end
     end
   end
+
+  describe '#number_returned' do
+
+    let(:batch) do
+      (1..2).map{ |i| { field: "test#{i}" }}
+    end
+
+    context 'when the msg contains a find document' do
+
+      let(:find_document) { { "cursor" => { "firstBatch" => batch } } }
+
+      let(:find_message) do
+        described_class.new(flags, options, find_document, *sequences)
+      end
+
+      it 'returns the correct number_returned' do
+        expect(find_message.number_returned).to eq(2)
+      end
+    end
+
+    context 'when the msg contains a getmore document' do
+      let(:next_document) { { "cursor" => { "nextBatch" => batch } } }
+
+      let(:next_message) do
+        described_class.new(flags, options, next_document, *sequences)
+      end
+
+      it 'returns the correct number_returned' do
+        expect(next_message.number_returned).to eq(2)
+      end
+    end
+
+    context 'when the msg contains a document without first/nextBatch' do
+
+      it 'raises NotImplementedError' do
+        lambda do
+          message.number_returned
+        end.should raise_error(NotImplementedError, /number_returned is only defined for cursor replies/)
+      end
+    end
+  end
 end

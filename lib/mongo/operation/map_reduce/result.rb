@@ -131,6 +131,22 @@ module Mongo
           0
         end
 
+        # Get the number of documents returned by the server in this batch.
+        #
+        # Map/Reduce operation returns documents inline without using
+        # cursors; as such, the standard Mongo::Reply#returned_count does
+        # not work correctly for Map/Reduce.
+        #
+        # Note that the Map/Reduce operation is limited to max BSON document
+        # size (16 MB) in its inline result set.
+        #
+        # @return [ Integer ] The number of documents returned.
+        #
+        # @api public
+        def returned_count
+          reply.documents.length
+        end
+
         private
 
         def first_document
