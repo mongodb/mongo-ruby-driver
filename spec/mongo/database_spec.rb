@@ -607,6 +607,7 @@ describe Mongo::Database do
           it 'does not send authorized_collections to the server' do
             expect(events.length).to eq(1)
             command = events.first.command
+            expect(command['nameOnly']).to eq(true)
             expect(command['authorizedCollections']).to be_nil
           end
         end
@@ -624,7 +625,7 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'ignores it and sets it to true' do
+          it 'is ignored and set to true' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
