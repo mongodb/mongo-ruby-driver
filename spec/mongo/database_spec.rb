@@ -255,11 +255,11 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'authorized_collections not passed to server' do
+          it 'authorized_collections and name_only are passed to server' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to be_nil
+            expect(command['authorizedCollections']).to eq(true)
           end
         end
       end
@@ -591,9 +591,9 @@ describe Mongo::Database do
           end
         end
 
-        context 'when authorized_collections are provided' do
+        context 'when authorized_collections and name_only are provided as false' do
           let(:options) do
-            { authorized_collections: false }
+            { authorized_collections: false, name_only: false }
           end
 
           let!(:result) do
@@ -604,11 +604,11 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'authorized_collections not passed to server because false' do
+          it 'is ignored and both are sent as true' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to be_nil
+            expect(command['authorizedCollections']).to eq(true)
           end
         end
 
@@ -621,10 +621,11 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'authorized_collections not passed to server because not provided' do
+          it 'authorized_collections and name_only are passed to the server' do
             expect(events.length).to eq(1)
             command = events.first.command
-            expect(command['authorizedCollections']).to be_nil
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to eq(true)
           end
         end
       end
