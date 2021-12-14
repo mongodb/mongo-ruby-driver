@@ -66,10 +66,7 @@ module Mongo
         @batch_size = options[:batch_size]
         session = client.send(:get_session, options)
         cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          if server.description.server_version_gte? '4.0'
-            options.merge!(authorized_collections: true)
-          end
-          send_initial_query(server, session, options.merge(name_only: true))
+          send_initial_query(server, session, options.merge(name_only: true, authorized_collections: true))
         end
         cursor.map do |info|
           if cursor.initial_result.connection_description.features.list_collections_enabled?
