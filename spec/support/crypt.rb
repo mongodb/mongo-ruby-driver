@@ -68,6 +68,14 @@ module Crypt
       }
     end
 
+    let(:kmip_kms_providers) do
+      {
+        kmip: {
+          endpoint: SpecConfig.instance.fle_kmip_endpoint,
+        }
+      }
+    end
+
     # Key vault database and collection names
     let(:key_vault_db) { 'admin' }
     let(:key_vault_coll) { 'datakeys' }
@@ -87,6 +95,18 @@ module Crypt
       {
         mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
         mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
+      }
+    end
+
+    let(:kms_tls_options) do
+      {}
+    end
+
+    let(:default_kms_tls_options_for_provider) do
+      {
+        ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+        ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+        ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
       }
     end
   end
@@ -286,6 +306,45 @@ module Crypt
 
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_gcp_key_alt_names.json'))
+    end
+  end
+
+  shared_context 'with KMIP kms_providers' do
+    let(:kms_provider_name) { 'kmip' }
+    let(:kms_providers) { kmip_kms_providers }
+
+    let(:kms_tls_options) do
+      {
+        kmip: default_kms_tls_options_for_provider
+      }
+    end
+
+    let(:data_key) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_kmip.json'))
+    end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_kmip.json'))
+    end
+
+    let(:data_key_options) do
+      {
+        master_key: {
+          key_id: "1"
+        }
+      }
+    end
+
+    let(:encrypted_ssn) do
+      "ASjCDwAAAAAAAAAAAAAAAAAC/ga87lE2+z1ZVpLcoP51EWKVgne7f5/vb0Jq\nt3odeB0IIuoP7xxLCqSJe+ueFm86gVA1gIiip5CKe/043PD4mquxO2ARwy8s\nCX/D4tMmvDA="
+    end
+  end
+
+  shared_context 'with KMIP kms_providers and key alt names' do
+    include_context 'with KMIP kms_providers'
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_kmip_key_alt_names.json'))
     end
   end
 end

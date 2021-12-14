@@ -403,6 +403,12 @@ Please note that GCP private key can be in different formats. Ruby driver
 supports DER encoded RSA private key as base64 encoded string. For MRI Ruby
 the driver additionally support PEM encoded RSA private key.
 
+If you have created a master key using a Key Management Interoperability
+Protocol (KMIP) compatible key management server, note the server host and port,
+and key id. You will use that information to generate a data key. You may also
+need certificate authority certificate(s), as well as  and your client
+certificate and private key to authenticate to KMIP server.
+
 
 .. code-block:: ruby
 
@@ -430,6 +436,18 @@ the driver additionally support PEM encoded RSA private key.
         # :private_key value should be GCP private key as base64 encoded
         # DER RSA private key, or PEM RSA private key, if you are using MRI Ruby.
         private_key: 'GCP-PRIVATE-KEY',
+      },
+      kmip: {
+        # KMIP server endpoint may include port.
+        endpoint: 'KMIP-SERVER-HOST'
+      },
+      # TLS options to connect to KMIP server.
+      kms_tls_options: {
+        kmip: {
+          ssl_ca_cert: 'PATH-TO-CA-FILE',
+          ssl_cert: 'PATH-TO-CLIENT-CERT-FILE',
+          ssl_key: 'PATH-TO-CLIENT-KEY-FILE'
+        }
       }
     }
   )
@@ -477,6 +495,11 @@ For more information about creating a data key, see the
 :drivers:`Create a Data Encryption Key </security/client-side-field-level-encryption-guide/#b.-create-a-data-encryption-key>`
 section of the MongoDB manual.
 
+For a list of possible KMS TLS options
+see :manual:`create client reference </reference/config-database/>`.
+``Mongo::ClientEncryption`` constructor accepts same ``ssl_`` options as
+``Mongo::Client``.
+
 Auto-Encryption Options
 =======================
 Automatic encryption can be configured on a ``Mongo::Client`` using the
@@ -522,6 +545,50 @@ keys are stored in the ``admin`` database in the ``datakeys`` collection:
   )
 
 There is no default key vault namespace, and this option must be provided.
+
+``:kms_providers``
+~~~~~~~~~~~~~~~~~~
+A Hash that contains KMP provider names as keys, and provider options as values.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: {
+        aws: {
+          access_key_id: 'IAM-ACCESS-KEY-ID',
+          secret_access_key: 'IAM-SECRET-ACCESS-KEY'
+        }
+      }
+    }
+  )
+
+``:kms_tls_options``
+~~~~~~~~~~~~~~~~~~
+A Hash that contains KMP provider names as keys, and TLS options to connect to
+corresponding providers.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_namespace: 'admin.datakeys',
+      kms_providers: {
+        kmip: {
+          endpoint: 'KMIP-SERVER-HOST'
+        }
+      },
+      kms_tls_options: {
+        kmip: {
+          ssl_ca_cert: 'PATH-TO-CA-FILE',
+          ssl_cert: 'PATH-TO-CLIENT-CERT-FILE',
+          ssl_key: 'PATH-TO-CLIENT-KEY-FILE'
+        }
+      }
+    }
+  )
+
 
 ``:schema_map``
 ~~~~~~~~~~~~~~~

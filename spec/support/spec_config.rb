@@ -441,6 +441,18 @@ EOT
     ENV['MONGO_RUBY_DRIVER_GCP_KEY_VERSION']
   end
 
+  def fle_kmip_endpoint
+    "localhost:5698"
+  end
+
+  def fle_kmip_tls_ca_file
+    "#{spec_root}/../.evergreen/x509gen/ca.pem"
+  end
+
+  def fle_kmip_tls_certificate_key_file
+    "#{spec_root}/../.evergreen/x509gen/client.pem"
+  end
+
   def mongocryptd_port
     if ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] &&
       !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?

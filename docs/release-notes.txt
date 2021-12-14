@@ -17,6 +17,14 @@ comprehensive list of changes in each version of the driver and the
 for the complete list of changes, including those internal to the driver and
 its test suite.
 
+2.18
+====
+
+This release includes the following new features:
+
+- Added support for Azure Key Vault, Google Cloud Key Management, and any
+  KMIP compliant Key Management System to be used as master key storage for
+  client side encryption.
 
 2.17
 ====
@@ -148,7 +156,7 @@ functionality has been added:
   cross-driver mechanims to discover deployment topology or force direct
   connection.
 - Support for :ref:`MONGODB-AWS authentication mechanism <aws-auth>`.
-- When SCRAM authentication is used with 4.4 and newer servers, the driver will 
+- When SCRAM authentication is used with 4.4 and newer servers, the driver will
   complete authentication with fewer network roundtrips.
 - The driver creates an additional monitoring connection for 4.4 and newer
   servers, permitting the server to notify the driver when its state changes.
@@ -265,7 +273,7 @@ This release adds the following new features:
 
 The following smaller improvements have been made:
 
-- Support for the ``startAfter`` option in the ``$changeStream``        
+- Support for the ``startAfter`` option in the ``$changeStream``
   aggregation pipeline stage.
 - Field order of BSON documents sent to the server changed for better logging.
 - Certificate paths with unescaped slashes can now be specified in

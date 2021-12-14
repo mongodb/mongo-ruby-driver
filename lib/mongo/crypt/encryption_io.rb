@@ -265,7 +265,7 @@ module Mongo
         )
         yield(mongo_socket.socket)
       rescue => e
-        raise Error::KmsError, "Error decrypting data key: #{e.class}: #{e.message}"
+        raise Error::KmsError, "Error when connecting to KMS provider: #{e.class}: #{e.message}"
       ensure
         mongo_socket&.close
       end
