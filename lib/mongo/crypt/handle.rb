@@ -35,15 +35,21 @@ module Mongo
       #
       # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
       #   of the collection that stores auto encrypted documents.
+      # @param [ Hash ] kms_tls_options TLS options to connect to KMS
+      #   providers. Keys of the hash should be KSM provider names; values
+      #   should be hashes of TLS connection options. The options are equivalent
+      #   to TLS connection options of Mongo::Client.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
-      def initialize(kms_providers, options={})
+      def initialize(kms_providers, kms_tls_options, options={})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @mongocrypt = FFI::AutoPointer.new(
           Binding.mongocrypt_new,
           Binding.method(:mongocrypt_destroy)
         )
+
+        @kms_tls_options =  kms_tls_options
 
         @schema_map = options[:schema_map]
         set_schema_map if @schema_map
@@ -62,6 +68,16 @@ module Mongo
       # @return [ FFI::Pointer ]
       def ref
         @mongocrypt
+      end
+
+      # Return TLS options for KMS provider. If there are no TLS options set,
+      # empty hash is returned.
+      #
+      # @param [ String ] provider KSM provider name.
+      #
+      # @return [ Hash ] TLS options to connect to KMS provider.
+      def kms_tls_options(provider)
+        @kms_tls_options.fetch(provider, {})
       end
 
       private

@@ -35,13 +35,14 @@ module Mongo
       #   that implements driver I/O methods required to run the
       #   state machine.
       def initialize(mongocrypt_handle, io)
+        @mongocrypt_handle = mongocrypt_handle
         # Ideally, this level of the API wouldn't be passing around pointer
         # references between objects, so this method signature is subject to change.
 
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @ctx_p = FFI::AutoPointer.new(
-          Binding.mongocrypt_ctx_new(mongocrypt_handle.ref),
+          Binding.mongocrypt_ctx_new(@mongocrypt_handle.ref),
           Binding.method(:mongocrypt_ctx_destroy)
         )
 
@@ -103,7 +104,9 @@ module Mongo
             mongocrypt_done
           when :need_kms
             while kms_context = Binding.ctx_next_kms_ctx(self) do
-              @encryption_io.feed_kms(kms_context)
+              provider = Binding.kms_ctx_get_kms_provider(kms_context)
+              tls_options = @mongocrypt_handle.kms_tls_options(provider)
+              @encryption_io.feed_kms(kms_context, tls_options)
             end
 
             Binding.ctx_kms_done(self)

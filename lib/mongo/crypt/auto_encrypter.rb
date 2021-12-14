@@ -66,6 +66,11 @@ module Mongo
       #   @see Mongo::Crypt::KMS::Credentials for list of options for every
       #   supported provider.
       #   @note There may be more than one KMS provider specified.
+      # @option options [ Hash ] :kms_tls_options TLS options to connect to KMS
+      #   providers. Keys of the hash should be KSM provider names; values
+      #   should be hashes of TLS connection options. The options are equivalent
+      #   to TLS connection options of Mongo::Client.
+      #   @see Mongo::Client#initialize for list of TLS options.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
@@ -74,6 +79,7 @@ module Mongo
 
         @crypt_handle = Crypt::Handle.new(
           Crypt::KMS::Credentials.new(@options[:kms_providers]),
+          Crypt::KMS::Validations.validate_tls_options(@options[:kms_tls_options]),
           schema_map: @options[:schema_map]
         )
 

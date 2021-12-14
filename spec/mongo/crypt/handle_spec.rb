@@ -11,7 +11,8 @@ describe Mongo::Crypt::Handle do
 
   describe '#initialize' do
     let(:credentials) { Mongo::Crypt::KMS::Credentials.new(kms_providers) }
-    let(:handle) { described_class.new(credentials, schema_map: schema_map) }
+    let(:kms_tls_options) { {} }
+    let(:handle) { described_class.new(credentials, kms_tls_options, schema_map: schema_map) }
     let(:schema_map) { nil }
 
     shared_examples 'a functioning Mongo::Crypt::Handle' do

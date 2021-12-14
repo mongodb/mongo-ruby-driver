@@ -131,9 +131,10 @@ module Mongo
       #   corresponding to one remote KMS data key. Contains information about
       #   the endpoint at which to establish a TLS connection and the message
       #   to send on that connection.
-      def feed_kms(kms_context)
-        with_ssl_socket(kms_context.endpoint) do |ssl_socket|
-
+      # @param [ Hash ] tls_options. TLS options to connect to KMS provider.
+      #   The options are same as for Mongo::Client.
+      def feed_kms(kms_context, tls_options)
+        with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|
           Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
             'Socket write operation timed out'
           ) do
@@ -242,6 +243,8 @@ module Mongo
       # Provide a TLS socket to be used for KMS calls in a block API
       #
       # @param [ String ] endpoint The URI at which to connect the TLS socket.
+      # @param [ Hash ] tls_options. TLS options to connect to KMS provider.
+      #   The options are same as for Mongo::Client.
       # @yieldparam [ OpenSSL::SSL::SSLSocket ] ssl_socket Yields a TLS socket
       #   connected to the specified endpoint.
       #
@@ -250,60 +253,21 @@ module Mongo
       #
       # @note The socket is always closed when the provided block has finished
       #   executing
-      def with_ssl_socket(endpoint)
-        host, port = endpoint.split(':')
-        port ||= 443 # Default port for AWS KMS API
-
-        # Create TCPSocket and set nodelay option
-        tcp_socket = TCPSocket.open(host, port)
-        begin
-          tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-
-          ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
-          begin
-            # tcp_socket will be closed when ssl_socket is closed
-            ssl_socket.sync_close = true
-            # perform SNI
-            # It does not work with Azure, therefore commented out.
-            # ssl_socket.hostname = "#{host}:#{port}"
-
-            Timeout.timeout(
-              SOCKET_TIMEOUT,
-              Error::SocketTimeoutError,
-              "KMS socket connection timed out after #{SOCKET_TIMEOUT} seconds",
-            ) do
-              ssl_socket.connect
-            end
-
-            yield(ssl_socket)
-          ensure
-            begin
-              Timeout.timeout(
-                SOCKET_TIMEOUT,
-                Error::SocketTimeoutError,
-                'KMS TLS socket close timed out'
-              ) do
-                ssl_socket.sysclose
-              end
-            rescue
-            end
-          end
-        ensure
-          # Still close tcp socket manually in case TLS socket creation
-          # fails.
-          begin
-            Timeout.timeout(
-              SOCKET_TIMEOUT,
-              Error::SocketTimeoutError,
-              'KMS TCP socket close timed out'
-            ) do
-              tcp_socket.close
-            end
-          rescue
-          end
+      def with_ssl_socket(endpoint, tls_options)
+        address = begin
+          host, port = endpoint.split(':')
+          port ||= 443 # All supported KMS APIs use this port by default.
+          Address.new([host, port].join(':'))
         end
+        mongo_socket = address.socket(
+          SOCKET_TIMEOUT,
+          tls_options.merge(ssl: true)
+        )
+        yield(mongo_socket.socket)
       rescue => e
         raise Error::KmsError, "Error decrypting data key: #{e.class}: #{e.message}"
+      ensure
+        mongo_socket&.close
       end
     end
   end

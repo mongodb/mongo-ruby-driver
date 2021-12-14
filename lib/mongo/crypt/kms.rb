@@ -66,6 +66,43 @@ module Mongo
             nil
           end
         end
+
+        # Validate KMS TLS options.
+        #
+        # @param [ Hash | nil ] options TLS options to connect to KMS
+        #   providers. Keys of the hash should be KSM provider names; values
+        #   should be hashes of TLS connection options. The options are equivalent
+        #   to TLS connection options of Mongo::Client.
+        #
+        # @return [ Hash ] Provided TLS options if valid.
+        #
+        # @raise [ ArgumentError ] If required options are missing or incorrectly
+        #   formatted.
+        def validate_tls_options(options)
+          opts = options || {}
+          opts.each do |provider, provider_opts|
+            if provider_opts[:ssl] == false || opts[:tls] == false
+              raise ArgumentError.new(
+                "Incorrect TLS options for #{provider}: TLS is required"
+              )
+            end
+            %i(
+              ssl_verify_certificate
+              ssl_verify_hostname
+              ssl_verify_ocsp_endpoint
+            ).each do |opt|
+              if provider_opts[opt] == false
+                raise ArgumentError.new(
+                  "Incorrect TLS options for #{provider}: " +
+                  'Insecure TLS options prohibited, ' +
+                  "#{opt} cannot be set to false for KMS"
+                )
+              end
+            end
+          end
+          opts
+        end
+        module_function :validate_tls_options
       end
     end
   end
