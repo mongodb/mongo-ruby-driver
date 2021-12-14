@@ -695,16 +695,20 @@ Ruby Options
      - none
 
    * - ``:srv_max_hosts``
-     - The maximum number of mongos connections that may be created
+     - The maximum number of mongoses that the driver will communicate with
        for sharded topologies. If this option is set to 0, there will
-       be no maximum number of connections. If the given URI resolves
+       be no maximum number of mongoses. If the given URI resolves
        to more hosts than ``:srv_max_hosts``, the client will ramdomly
-       choose an ``:srv_max_hosts`` sized subset of hosts.
+       choose an ``:srv_max_hosts`` sized subset of hosts. Note that the
+       hosts that the driver ignores during client construction will never
+       be used. If the hosts chosen by the driver become unavailable, the
+       client will quit working completely, even though the deployment has
+       other functional mongoses.
      - ``Integer``
      - 0
 
    * - ``:srv_service_name``
-     - The SRV service name to use in the DNS query.
+     - The service name to use in the SRV DNS query.
      - ``String``
      - mongodb
 

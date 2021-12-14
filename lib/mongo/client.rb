@@ -342,6 +342,13 @@ module Mongo
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
+    # @option options [ Integer ] :srv_max_hosts The maximum number of mongoses
+    #   that the driver will communicate with for sharded topologies. If this
+    #   option is 0, then there will be no maximum number of mongoses. If the
+    #   given URI resolves to more hosts than ``:srv_max_hosts``, the client
+    #   will ramdomly choose an ``:srv_max_hosts`` sized subset of hosts.
+    # @option options [ String ] :srv_service_name The service name to use in
+    #   the SRV DNS query.
     # @option options [ true, false ] :ssl Whether to use TLS.
     # @option options [ String ] :ssl_ca_cert The file containing concatenated
     #   certificate authority certificates used to validate certs passed from the
