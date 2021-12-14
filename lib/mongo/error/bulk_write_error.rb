@@ -55,15 +55,42 @@ module Mongo
 
       private
 
+      # Generates an error message when there are multiple write errors.
+      #
+      # @example Multiple documents fail validation
+      #
+      # col has validation { 'validator' => { 'x' => { '$type' => 'string' } } }
+      # col.insert_many([{_id: 1}, {_id: 2}], ordered: false)
+      #
+      # Multiple errors:
+      #   [121]: Document failed validation --
+      #     {"failingDocumentId":1,"details":{"operatorName":"$type",
+      #     "specifiedAs":{"x":{"$type":"string"}},"reason":"field was
+      #     missing"}};
+      #   [121]: Document failed validation --
+      #     {"failingDocumentId":2, "details":{"operatorName":"$type",
+      #     "specifiedAs":{"x":{"$type":"string"}}, "reason":"field was
+      #     missing"}}
+      #
+      # @return [ String ] The error message
       def build_message
         errors = @result['writeErrors']
         return nil unless errors
 
-        fragment = errors.first(10).map do |error|
-          "[#{error['code']}]: #{error['errmsg']}"
-        end.join('; ')
+        fragment = ""
+        cut_short = false
+        errors.first(10).each_with_index do |error, i|
+          fragment += "; " if fragment.length > 0
+          fragment += "[#{error['code']}]: #{error['errmsg']}"
+          fragment += " -- #{error['errInfo'].to_json}" if error['errInfo']
 
-        fragment += '...' if errors.length > 10
+          if fragment.length > 3000
+            cut_short = i < [9, errors.length].min
+            break
+          end
+        end
+
+        fragment += '...' if errors.length > 10 || cut_short
 
         if errors.length > 1
           fragment = "Multiple errors: #{fragment}"

@@ -224,6 +224,12 @@ module Mongo
       # @since 2.10.0
       attr_reader :write_concern_error_code_name
 
+      # @return [ String | nil ] The details of the error.
+      #   For WriteConcernErrors this is `document['writeConcernError']['errInfo']`.
+      #   For WriteErrors this is `document['writeErrors'][0]['errInfo']`.
+      #   For all other errors this is nil.
+      attr_reader :details
+
       # @return [ BSON::Document | nil ] The server-returned error document.
       #
       # @api experimental
@@ -258,10 +264,10 @@ module Mongo
       # @option options [ Array<String> ] :labels The set of labels associated
       #   with the error.
       # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
-      #
-      # @since 2.5.0, options added in 2.6.0
       def initialize(message = nil, result = nil, options = {})
-        super(message)
+        @details = retrieve_details(options[:document])
+        super(append_details(message, @details))
+
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
@@ -305,6 +311,28 @@ module Mongo
         # Note that the document is expected to be a BSON::Document, thus
         # either having string keys or providing indifferent access.
         code == 20 && server_message&.start_with?("Transaction numbers") || false
+      end
+
+      private
+
+      # Retrieve the details from a document
+      #
+      # @return [ Hash | nil ] the details extracted from the document
+      def retrieve_details(document)
+        return nil unless document
+        if wce = document['writeConcernError']
+          return wce['errInfo']
+        elsif we = document['writeErrors']&.first
+          return we['errInfo']
+        end
+      end
+
+      # Append the details to the message
+      #
+      # @return [ String ] the message with the details appended to it
+      def append_details(message, details)
+        return message unless details && message
+        message + " -- #{details.to_json}"
       end
     end
   end
