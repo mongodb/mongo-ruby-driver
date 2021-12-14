@@ -591,9 +591,9 @@ describe Mongo::Database do
           end
         end
 
-        context 'when authorized_collections and name_only are provided as false' do
+        context 'when authorized_collections is provided' do
           let(:options) do
-            { authorized_collections: false, name_only: false }
+            { authorized_collections: false }
           end
 
           let!(:result) do
@@ -604,11 +604,30 @@ describe Mongo::Database do
             subscriber.command_started_events('listCollections')
           end
 
-          it 'is ignored and both are sent as true' do
+          it 'does not send authorized_collections to the server' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['authorizedCollections']).to be_nil
+          end
+        end
+
+        context 'when name_only is provided' do
+          let(:options) do
+            { name_only: false }
+          end
+
+          let!(:result) do
+            database.collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'ignores it and sets it to true' do
             expect(events.length).to eq(1)
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to eq(true)
           end
         end
 
