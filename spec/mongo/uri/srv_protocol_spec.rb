@@ -263,13 +263,66 @@ describe Mongo::URI::SRVProtocol do
     end
 
     describe '#servers' do
-      let(:string) { "#{scheme}#{servers}" }
+      let(:string) { "#{scheme}#{servers}#{options}" }
+      let(:servers) { 'test1.test.build.10gen.cc' }
+      let(:options) { '' }
 
       context 'single server' do
         let(:servers) { 'test5.test.build.10gen.cc' }
-
         it 'returns an array with the parsed server' do
           expect(uri.servers).to eq(['localhost.test.build.10gen.cc:27017'])
+        end
+      end
+
+      context 'multiple servers' do
+        let(:hosts) { ['localhost.test.build.10gen.cc:27017', 'localhost.test.build.10gen.cc:27018'] }
+
+        context 'without srvMaxHosts' do
+          it 'returns an array with the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            uri.servers.should =~ hosts
+          end
+        end
+
+        context 'with srvMaxHosts' do
+          let(:options) { '/?srvMaxHosts=1' }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 1
+            expect(hosts.include?(uri.servers.first)).to be true
+          end
+        end
+
+        context 'with srvMaxHosts > total hosts' do
+          let(:options) { '/?srvMaxHosts=3' }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            uri.servers.should =~ hosts
+          end
+        end
+
+        context 'with srvMaxHosts == total hosts' do
+          let(:options) { '/?srvMaxHosts=2' }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            uri.servers.should =~ hosts
+          end
+        end
+
+        context 'with srvMaxHosts=0' do
+          let(:options) { '/?srvMaxHosts=0' }
+          it 'returns an array with only one of the parsed servers' do
+            expect(uri.servers.length).to eq 2
+            uri.servers.should =~ hosts
+          end
+        end
+
+        context 'when setting the srvServiceName' do
+          let(:servers) { 'test22.test.build.10gen.cc' }
+          let(:options) { '/?srvServiceName=customname' }
+
+          it 'returns an array with the parsed server' do
+            uri.servers.should =~ hosts
+          end
         end
       end
     end
@@ -891,6 +944,51 @@ describe Mongo::URI::SRVProtocol do
 
         it 'sets the wait queue timeout option' do
           expect(uri.uri_options[:wait_queue_timeout]).to eq(0.5)
+        end
+      end
+
+      context 'when providing srvMaxHosts' do
+        let(:srv_max_hosts) { 1 }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'sets the srv max hosts option' do
+          expect(uri.uri_options[:srv_max_hosts]).to eq(srv_max_hosts)
+        end
+      end
+
+      context 'when providing srvMaxHosts as 0' do
+        let(:srv_max_hosts) { 0 }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'doesn\'t set the srv max hosts option' do
+          expect(uri.uri_options[:srv_max_hosts]).to eq(srv_max_hosts)
+        end
+      end
+
+      context 'when providing invalid integer to srvMaxHosts' do
+        let(:srv_max_hosts) { -1 }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'does not set the srv max hosts option' do
+          expect(uri.uri_options).to_not have_key(:srv_max_hosts)
+        end
+      end
+
+      context 'when providing invalid type to srvMaxHosts' do
+        let(:srv_max_hosts) { "foo" }
+        let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
+
+        it 'does not set the srv max hosts option' do
+          expect(uri.uri_options).to_not have_key(:srv_max_hosts)
+        end
+      end
+
+      context 'when providing srvServiceName' do
+        let(:srv_service_name) { "mongodb" }
+        let(:options) { "srvServiceName=#{srv_service_name}" }
+
+        it 'sets the srv service name option' do
+          expect(uri.uri_options[:srv_service_name]).to eq(srv_service_name)
         end
       end
 

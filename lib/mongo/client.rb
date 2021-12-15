@@ -92,6 +92,8 @@ module Mongo
       :server_api,
       :server_selection_timeout,
       :socket_timeout,
+      :srv_max_hosts,
+      :srv_service_name,
       :ssl,
       :ssl_ca_cert,
       :ssl_ca_cert_object,
@@ -340,6 +342,13 @@ module Mongo
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
+    # @option options [ Integer ] :srv_max_hosts The maximum number of mongoses
+    #   that the driver will communicate with for sharded topologies. If this
+    #   option is 0, then there will be no maximum number of mongoses. If the
+    #   given URI resolves to more hosts than ``:srv_max_hosts``, the client
+    #   will ramdomly choose an ``:srv_max_hosts`` sized subset of hosts.
+    # @option options [ String ] :srv_service_name The service name to use in
+    #   the SRV DNS query.
     # @option options [ true, false ] :ssl Whether to use TLS.
     # @option options [ String ] :ssl_ca_cert The file containing concatenated
     #   certificate authority certificates used to validate certs passed from the
@@ -532,7 +541,7 @@ module Mongo
       end
 =end
       @options.freeze
-      validate_options!(addresses)
+      validate_options!(addresses, is_srv: uri.is_a?(URI::SRVProtocol))
       validate_authentication_options!
 
       database_options = @options.dup
@@ -1226,6 +1235,12 @@ module Mongo
             end
 
             _options[key] = compressors unless compressors.empty?
+          elsif key == :srv_max_hosts
+            if v && (!v.is_a?(Integer) || v < 0)
+              log_warn("#{v} is not a valid integer for srv_max_hosts")
+            else
+              _options[key] = v
+            end
           else
             _options[key] = v
           end
@@ -1239,7 +1254,7 @@ module Mongo
     # Validates all options after they are set on the client.
     # This method is intended to catch combinations of options which are
     # not allowed.
-    def validate_options!(addresses = nil)
+    def validate_options!(addresses = nil, is_srv: nil)
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
@@ -1347,6 +1362,26 @@ module Mongo
               raise ArgumentError, ":wrapping_libraries element value cannot include '|': #{value}"
             end
           end
+        end
+      end
+
+      if options[:srv_max_hosts] && options[:srv_max_hosts] > 0
+        if options[:replica_set]
+          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with :replica_set option"
+        end
+
+        if options[:load_balanced]
+          raise ArgumentError, ":srv_max_hosts > 0 cannot be used with :load_balanced=true"
+        end
+      end
+
+      unless is_srv.nil? || is_srv
+        if options[:srv_max_hosts]
+          raise ArgumentError, ":srv_max_hosts cannot be used on non-SRV URI"
+        end
+
+        if options[:srv_service_name]
+          raise ArgumentError, ":srv_service_name cannot be used on non-SRV URI"
         end
       end
     end

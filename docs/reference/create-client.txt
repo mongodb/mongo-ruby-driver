@@ -235,7 +235,7 @@ routers explicitly, the driver will not discover remaining routers that
 may be configured and will not attempt to connect to them.
 
 The driver will automatically balance the operation load among the routers
-it is aware of. 
+it is aware of.
 
 To connect to a MongoDB Atlas cluster which is deployed as a sharded cluster,
 connect to the URI:
@@ -537,7 +537,7 @@ Ruby Options
    * - ``:max_idle_time``
      - The maximum time, in seconds, that a connection can be idle before it
        is closed by the connection pool.
-       
+
        *Warning:* when connected to a load balancer, the driver uses existing
        connections for iterating cursors (which includes change streams)
        and executing transactions. Setting an idle time via this option may
@@ -669,11 +669,11 @@ Ruby Options
        - ``:version`` (String)
        - ``:strict`` (true or false)
        - ``:deprecation_errors`` (true or false)
-       
+
        Note that the server API version can only be specified as a Ruby option,
        not as a URI option, and it cannot be overridden for database and
        collection objects.
-       
+
        If server API version is changed on a client (such as via the ``with``
        call), the entire API version hash is replaced with the new specification
        (the old and the new individual fields are NOT merged).
@@ -693,6 +693,24 @@ Ruby Options
        is passed (such as a negative value or a non-numeric value).
      - ``Float``
      - none
+
+   * - ``:srv_max_hosts``
+     - The maximum number of mongoses that the driver will communicate with
+       for sharded topologies. If this option is set to 0, there will
+       be no maximum number of mongoses. If the given URI resolves
+       to more hosts than ``:srv_max_hosts``, the client will ramdomly
+       choose an ``:srv_max_hosts`` sized subset of hosts. Note that the
+       hosts that the driver ignores during client construction will never
+       be used. If the hosts chosen by the driver become unavailable, the
+       client will quit working completely, even though the deployment has
+       other functional mongoses.
+     - ``Integer``
+     - 0
+
+   * - ``:srv_service_name``
+     - The service name to use in the SRV DNS query.
+     - ``String``
+     - mongodb
 
    * - ``:ssl``
      - Tell the client to connect to the servers via TLS.
@@ -1011,6 +1029,12 @@ URI options are explained in detail in the :manual:`Connection URI reference
        Unlike the corresponding Ruby option which fails client creation on
        invalid values (e.g. negative and non-numeric values), invalid values
        provided via this URI option are ignored with a warning.
+
+  * - srvMaxHosts=Integer
+    - ``:srv_max_hosts => Integer``
+
+  * - srvServiceName=String
+    - ``:srv_service_name => String``
 
    * - ssl=Boolean
      - ``:ssl => true|false``
@@ -1874,7 +1898,7 @@ the highest compression at the same CPU consumption compared to the other
 compressors. For maximum server compatibility all three compressors can be
 specified, e.g. as ``compressors: ["zstd", "snappy", "zlib"]``.
 
-``zstd`` compressor requires the 
+``zstd`` compressor requires the
 `zstd-ruby <https://rubygems.org/gems/zstd-ruby>`_ library to be installed.
 ``snappy`` compressor requires the
 `snappy <https://rubygems.org/gems/snappy>`_ library to be installed.

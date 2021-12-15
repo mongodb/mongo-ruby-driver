@@ -66,6 +66,11 @@ describe 'DNS Seedlist Discovery' do
             it 'creates a client with the correct seeds' do
               expect(test.client).to have_hosts(test, test.seeds)
             end
+          elsif test.num_seeds
+            it 'has the right number of seeds' do
+              num_servers = test.client.cluster.servers_list.length
+              expect(num_servers).to eq(test.num_seeds)
+            end
           else
             it 'creates a client with the correct hosts' do
               expect(test.client).to have_hosts(test, test.hosts)

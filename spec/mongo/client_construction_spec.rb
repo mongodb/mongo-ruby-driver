@@ -1513,6 +1513,139 @@ describe Mongo::Client do
             end
           end
         end
+
+        context 'srv_max_hosts > 0 and load_balanced: true' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: 1, load_balanced: true)
+          end
+
+          it 'it is rejected' do
+            expect do
+              client
+            end.to raise_error(ArgumentError, /:srv_max_hosts > 0 cannot be used with :load_balanced=true/)
+          end
+        end
+
+        context 'srv_max_hosts > 0 and replica_set' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+              srv_max_hosts: 1, replica_set: 'rs')
+          end
+
+          it 'it is rejected' do
+            expect do
+              client
+            end.to raise_error(ArgumentError, /:srv_max_hosts > 0 cannot be used with :replica_set option/)
+          end
+        end
+
+        context 'srv_max_hosts < 0' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: -1)
+          end
+
+          it 'is accepted and does not add the srv_max_hosts to uri_options' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options).to_not have_key(:srv_max_hosts)
+          end
+        end
+
+        context 'srv_max_hosts invalid type' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: 'foo')
+          end
+
+          it 'is accepted and does not add the srv_max_hosts to uri_options' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options).to_not have_key(:srv_max_hosts)
+          end
+        end
+
+        context 'srv_max_hosts with non-SRV URI' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_max_hosts: 1)
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /:srv_max_hosts cannot be used on non-SRV URI/)
+          end
+        end
+
+        context 'srv_service_name with non-SRV URI' do
+          let(:client) do
+            new_local_client_nmio(['127.0.0.1:27017'],
+               srv_service_name: "customname")
+          end
+
+          it 'is rejected' do
+            lambda do
+              client
+            end.should raise_error(ArgumentError, /:srv_service_name cannot be used on non-SRV URI/)
+          end
+        end
+      end
+
+      context 'with SRV lookups mocked at Resolver' do
+        let(:srv_result) do
+          double('srv result').tap do |result|
+            allow(result).to receive(:empty?).and_return(false)
+            allow(result).to receive(:address_strs).and_return(
+              [ClusterConfig.instance.primary_address_str])
+          end
+        end
+
+        let(:client) do
+          allow_any_instance_of(Mongo::Srv::Resolver).to receive(:get_records).and_return(srv_result)
+          allow_any_instance_of(Mongo::Srv::Resolver).to receive(:get_txt_options_string)
+
+          new_local_client_nmio('mongodb+srv://foo.a.b', options)
+        end
+
+        context "when setting srv_max_hosts" do
+          let(:srv_max_hosts) { 1 }
+          let(:options) { { srv_max_hosts: srv_max_hosts } }
+
+          it 'is accepted and sets srv_max_hosts' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options[:srv_max_hosts]).to eq(srv_max_hosts)
+          end
+        end
+
+        context "when setting srv_max_hosts to 0" do
+          let(:srv_max_hosts) { 0 }
+          let(:options) { { srv_max_hosts: srv_max_hosts } }
+
+          it 'is accepted sets srv_max_hosts' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options[:srv_max_hosts]).to eq(srv_max_hosts)
+          end
+        end
+
+        context "when setting srv_service_name" do
+          let(:srv_service_name) { 'customname' }
+          let(:options) { { srv_service_name: srv_service_name } }
+
+          it 'is accepted and sets srv_service_name' do
+            lambda do
+              client
+            end.should_not raise_error
+            expect(client.options[:srv_service_name]).to eq(srv_service_name)
+          end
+        end
       end
 
       context ':bg_error_backtrace option' do

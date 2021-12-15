@@ -538,6 +538,26 @@ module Mongo
           raise_invalid_error_no_fmt!("loadBalanced=true cannot be used with replicaSet option")
         end
       end
+
+      unless self.is_a?(URI::SRVProtocol)
+        if uri_options[:srv_max_hosts]
+          raise_invalid_error_no_fmt!("srvMaxHosts cannot be used on non-SRV URI")
+        end
+
+        if uri_options[:srv_service_name]
+          raise_invalid_error_no_fmt!("srvServiceName cannot be used on non-SRV URI")
+        end
+      end
+
+      if uri_options[:srv_max_hosts] && uri_options[:srv_max_hosts] > 0
+        if uri_options[:replica_set]
+          raise_invalid_error_no_fmt!("srvMaxHosts > 0 cannot be used with replicaSet option")
+        end
+
+        if options[:load_balanced]
+          raise_invalid_error_no_fmt!("srvMaxHosts > 0 cannot be used with loadBalanced=true")
+        end
+      end
     end
   end
 end
