@@ -143,7 +143,7 @@ if test -n "$FLE"; then
   echo "Waiting for mock KMS servers to start..."
    wait_for_kms_server() {
       for i in $(seq 60); do
-         if curl -d "" -X POST -s -k "https://localhost:$1/"; test $? -eq 0; then
+         if curl -s "localhost:$1"; test $? -ne 7; then
             return 0
          else
             sleep 1
