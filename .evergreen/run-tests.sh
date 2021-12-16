@@ -143,7 +143,6 @@ if test -n "$FLE"; then
   echo "Waiting for mock KMS servers to start..."
    wait_for_kms_server() {
       for i in $(seq 60); do
-         # Exit code 7: "Failed to connect to host".
          if curl -s "localhost:$1"; test $? -ne 7; then
             return 0
          else
