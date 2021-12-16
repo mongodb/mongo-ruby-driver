@@ -64,7 +64,7 @@ jobs:
       run: bundle install --jobs 4 --retry 3
     - name: test
       timeout-minutes: 60
-      continue-on-error: true
+      continue-on-error: false
       run: bundle exec rake spec:ci
       env:
         MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
