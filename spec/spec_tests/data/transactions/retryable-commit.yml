@@ -1164,9 +1164,9 @@ tests:
       mode: { times: 1 }
       data:
           failCommands: ["commitTransaction"]
+          errorLabels: ["RetryableWriteError"]
           writeConcernError:
             code: 11600
-            errorLabels: ["RetryableWriteError"]
             errmsg: Replication is being shut down
 
     operations:
@@ -1240,9 +1240,9 @@ tests:
       mode: { times: 1 }
       data:
           failCommands: ["commitTransaction"]
+          errorLabels: ["RetryableWriteError"]
           writeConcernError:
             code: 11602
-            errorLabels: ["RetryableWriteError"]
             errmsg: Replication is being shut down
 
     operations:
@@ -1316,9 +1316,9 @@ tests:
       mode: { times: 1 }
       data:
           failCommands: ["commitTransaction"]
+          errorLabels: ["RetryableWriteError"]
           writeConcernError:
             code: 189
-            errorLabels: ["RetryableWriteError"]
             errmsg: Replication is being shut down
 
     operations:
@@ -1392,9 +1392,9 @@ tests:
       mode: { times: 1 }
       data:
           failCommands: ["commitTransaction"]
+          errorLabels: ["RetryableWriteError"]
           writeConcernError:
             code: 91
-            errorLabels: ["RetryableWriteError"]
             errmsg: Replication is being shut down
 
     operations:
