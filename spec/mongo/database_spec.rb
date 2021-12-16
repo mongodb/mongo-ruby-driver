@@ -591,7 +591,7 @@ describe Mongo::Database do
           end
         end
 
-        context 'when authorized_collections are provided' do
+        context 'when authorized_collections are provided as false' do
           let(:options) do
             { authorized_collections: false }
           end
@@ -609,6 +609,27 @@ describe Mongo::Database do
             command = events.first.command
             expect(command['nameOnly']).to eq(true)
             expect(command['authorizedCollections']).to be_nil
+          end
+        end
+
+        context 'when authorized_collections are provided as true' do
+          let(:options) do
+            { authorized_collections: true }
+          end
+
+          let!(:result) do
+            database.collections(options)
+          end
+
+          let(:events) do
+            subscriber.command_started_events('listCollections')
+          end
+
+          it 'authorized_collections not passed to server because false' do
+            expect(events.length).to eq(1)
+            command = events.first.command
+            expect(command['nameOnly']).to eq(true)
+            expect(command['authorizedCollections']).to eq(true)
           end
         end
 
