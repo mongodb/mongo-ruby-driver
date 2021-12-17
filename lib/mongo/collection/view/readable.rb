@@ -207,6 +207,7 @@ module Mongo
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Mongo::Session ] :session The session to use for the operation.
         #
         # @return [ Integer ] The document count.
         #
