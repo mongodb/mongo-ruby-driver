@@ -58,6 +58,16 @@ describe 'Client-Side Encryption' do
               gcp: {
                 email: SpecConfig.instance.fle_gcp_email,
                 private_key: SpecConfig.instance.fle_gcp_private_key,
+              },
+              kmip: {
+                endpoint: SpecConfig.instance.fle_kmip_endpoint
+              }
+            },
+            kms_tls_options: {
+              kmip: {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
               }
             },
             key_vault_namespace: 'admin.datakeys',
@@ -88,6 +98,16 @@ describe 'Client-Side Encryption' do
             gcp: {
               email: SpecConfig.instance.fle_gcp_email,
               private_key: SpecConfig.instance.fle_gcp_private_key,
+            },
+            kmip: {
+              endpoint: SpecConfig.instance.fle_kmip_endpoint
+            }
+          },
+          kms_tls_options: {
+            kmip: {
+              ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+              ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
             }
           },
           key_vault_namespace: 'admin.datakeys',
@@ -212,6 +232,22 @@ describe 'Client-Side Encryption' do
             location: SpecConfig.instance.fle_gcp_location,
             key_ring: SpecConfig.instance.fle_gcp_key_ring,
             key_name: SpecConfig.instance.fle_gcp_key_name,
+          }
+        }
+      end
+
+      it_behaves_like 'can create and use a data key'
+    end
+
+    context 'with KMIP KMS options' do
+      include_context 'with KMIP kms_providers'
+
+      let(:key_alt_name) { 'kmip_altname' }
+      let(:value_to_encrypt) { 'hello kmip' }
+      let(:data_key_options) do
+        {
+          master_key: {
+            key_id: "1"
           }
         }
       end

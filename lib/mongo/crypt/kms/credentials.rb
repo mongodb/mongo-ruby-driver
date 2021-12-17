@@ -49,11 +49,17 @@ module Mongo
           if kms_providers.key?(:gcp)
             @gcp = GCP::Credentials.new(kms_providers[:gcp])
           end
+          if kms_providers.key?(:kmip)
+            @kmip = KMIP::Credentials.new(kms_providers[:kmip])
+          end
           if kms_providers.key?(:local)
             @local = Local::Credentials.new(kms_providers[:local])
           end
-          if @aws.nil? && @azure.nil? && @gcp.nil? && @local.nil?
-            raise ArgumentError.new("KMS providers options must have one of the following keys: :aws, :azure, :gcp, :local")
+          if @aws.nil? && @azure.nil? && @gcp.nil? && @kmip.nil? && @local.nil?
+            raise ArgumentError.new(
+              "KMS providers options must have one of the following keys: " +
+              ":aws, :azure, :gcp, :kmip, :local"
+            )
           end
         end
 
@@ -65,6 +71,7 @@ module Mongo
             bson[:aws] = @aws.to_document if @aws
             bson[:azure] = @azure.to_document if @azure
             bson[:gcp] = @gcp.to_document if @gcp
+            bson[:kmip] = @kmip.to_document if @kmip
             bson[:local] = @local.to_document if @local
           end
         end

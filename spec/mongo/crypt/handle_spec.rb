@@ -102,5 +102,12 @@ describe Mongo::Crypt::Handle do
         it_behaves_like 'a functioning Mongo::Crypt::Handle'
       end
     end
+
+    context 'KMIP' do
+      context 'with valid kmip kms_providers' do
+        include_context 'with KMIP kms_providers'
+        it_behaves_like 'a functioning Mongo::Crypt::Handle'
+      end
+    end
   end
 end

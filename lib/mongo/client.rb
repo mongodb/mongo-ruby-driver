@@ -429,9 +429,13 @@ module Mongo
     #     instance containing the encryption key vault
     #   - :key_vault_namespace => String, the namespace of the key vault in the
     #     format database.collection
-    #   - :kms_providers => Hash, A hash of key management service configuration
-    #     information. Valid hash keys are :local or :aws. There may be more
-    #     than one kms provider specified.
+    #   - :kms_providers => Hash, A hash of key management service (KMS) configuration
+    #     information. Valid hash keys are :aws, :azure, :gcp, :kmip, :local.
+    #     There may be more than one kms provider specified.
+    #   - :kms_tls_options => Hash, A hash of TLS options to authenticate to
+    #     KMS providers, usually used for KMIP servers. Valid hash keys
+    #     are :aws, :azure, :gcp, :kmip, :local. There may be more than one
+    #     kms provider specified.
     #   - :schema_map => Hash | nil, JSONSchema for one or more collections
     #     specifying which fields should be encrypted.
     #     - Note: Schemas supplied in the schema_map only apply to configuring

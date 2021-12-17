@@ -73,6 +73,11 @@ describe Mongo::Crypt::AutoDecryptionContext do
       it_behaves_like 'a functioning AutoDecryptionContext'
     end
 
+    context 'when mongocrypt is initialized with KMIP KMS provider options' do
+      include_context 'with KMIP kms_providers'
+      it_behaves_like 'a functioning AutoDecryptionContext'
+    end
+
     context 'with verbose logging' do
       include_context 'with local kms_providers'
 

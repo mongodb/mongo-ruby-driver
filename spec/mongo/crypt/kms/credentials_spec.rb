@@ -325,4 +325,80 @@ describe Mongo::Crypt::KMS::Credentials do
       end
     end
   end
+
+  context 'KMIP' do
+    let (:params) do
+      Mongo::Crypt::KMS::KMIP::Credentials.new(kms_provider)
+    end
+
+    context 'with empty KMIP kms_provider' do
+      let(:kms_provider) do
+        {}
+      end
+
+      it 'raises an exception' do
+        expect do
+          params
+        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. KMIP KMS provider options must be in the format: { endpoint: 'ENDPOINT' }/)
+      end
+    end
+
+    context "with nil KMIP endpoint" do
+      let(:kms_provider) do
+        {
+          endpoint: nil
+        }
+      end
+
+      it 'raises an exception' do
+        expect do
+          params
+        end.to raise_error(ArgumentError, /The endpoint option must be a String with at least one character; currently have nil/)
+      end
+    end
+
+    context "with non-string KMIP endpoint" do
+      let(:kms_provider) do
+        {
+          endpoint: 5,
+        }
+      end
+
+      it 'raises an exception' do
+        expect do
+          params
+        end.to raise_error(ArgumentError, /The endpoint option must be a String with at least one character; currently have 5/)
+      end
+    end
+
+    context "with empty string KMIP endpoint" do
+      let(:kms_provider) do
+        {
+          endpoint: '',
+        }
+      end
+
+      it 'raises an exception' do
+        expect do
+          params
+        end.to raise_error(ArgumentError, /The endpoint option must be a String with at least one character; it is currently an empty string/)
+      end
+    end
+
+    context 'with valid params' do
+      let(:kms_provider) do
+        {
+        endpoint: SpecConfig.instance.fle_kmip_endpoint,
+        }
+      end
+
+      it 'returns valid libmongocrypt credentials' do
+        expect(params.to_document).to eq(
+          BSON::Document.new({
+            endpoint: SpecConfig.instance.fle_kmip_endpoint,
+          })
+        )
+      end
+    end
+  end
 end

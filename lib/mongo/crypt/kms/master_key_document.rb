@@ -26,7 +26,7 @@ module Mongo
       class MasterKeyDocument
 
         # Known KMS provider names.
-        KMS_PROVIDERS = %w(aws azure gcp local).freeze
+        KMS_PROVIDERS = %w(aws azure gcp kmip local).freeze
 
         # Creates a master key document object form a parameters hash.
         #
@@ -46,6 +46,7 @@ module Mongo
             when 'aws' then KMS::AWS::MasterKeyDocument.new(master_key)
             when 'azure' then KMS::Azure::MasterKeyDocument.new(master_key)
             when 'gcp' then KMS::GCP::MasterKeyDocument.new(master_key)
+            when 'kmip' then KMS::KMIP::MasterKeyDocument.new(master_key)
             when 'local' then KMS::Local::MasterKeyDocument.new(master_key)
             else
               raise ArgumentError.new("KMS provider must be one of #{KMS_PROVIDERS}")

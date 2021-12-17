@@ -24,6 +24,8 @@ describe 'Client-Side Encryption' do
     let(:local_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-local.json')) }
     let(:aws_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-aws.json')) }
     let(:azure_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-azure.json')) }
+    let(:gcp_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-gcp.json')) }
+    let(:kmip_data_key) { BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-key-kmip.json')) }
 
     let(:client_encrypted) do
       new_local_client(
@@ -40,6 +42,20 @@ describe 'Client-Side Encryption' do
                 tenant_id: SpecConfig.instance.fle_azure_tenant_id,
                 client_id: SpecConfig.instance.fle_azure_client_id,
                 client_secret: SpecConfig.instance.fle_azure_client_secret,
+              },
+              gcp: {
+                email: SpecConfig.instance.fle_gcp_email,
+                private_key: SpecConfig.instance.fle_gcp_private_key,
+              },
+              kmip: {
+                endpoint: SpecConfig.instance.fle_kmip_endpoint,
+              }
+            },
+            kms_tls_options: {
+              kmip: {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
               }
             },
             key_vault_namespace: 'admin.datakeys',
@@ -66,6 +82,20 @@ describe 'Client-Side Encryption' do
               tenant_id: SpecConfig.instance.fle_azure_tenant_id,
               client_id: SpecConfig.instance.fle_azure_client_id,
               client_secret: SpecConfig.instance.fle_azure_client_secret,
+            },
+            gcp: {
+              email: SpecConfig.instance.fle_gcp_email,
+              private_key: SpecConfig.instance.fle_gcp_private_key,
+            },
+            kmip: {
+              endpoint: SpecConfig.instance.fle_kmip_endpoint,
+            }
+          },
+          kms_tls_options: {
+            kmip: {
+              ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+              ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
             }
           },
           key_vault_namespace: 'admin.datakeys',
@@ -78,7 +108,7 @@ describe 'Client-Side Encryption' do
     end
 
     let(:corpus_encrypted_expected) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus_encrypted.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/corpus/corpus-encrypted.json'))
     end
 
     let(:corpus_copied) do
@@ -89,7 +119,7 @@ describe 'Client-Side Encryption' do
       # to encrypt that value.
       corpus_copied = BSON::Document.new
       corpus.each do |key, doc|
-        if ['_id', 'altname_aws', 'altname_azure', 'altname_gcp', 'altname_local'].include?(key)
+        if ['_id', 'altname_aws', 'altname_azure', 'altname_gcp', 'altname_kmip', 'altname_local'].include?(key)
           corpus_copied[key] = doc
           next
         end
@@ -106,6 +136,8 @@ describe 'Client-Side Encryption' do
               'GCPAAAAAAAAAAAAAAAAAAA=='
             elsif doc['kms'] == 'aws'
               'AWSAAAAAAAAAAAAAAAAAAA=='
+            elsif doc['kms'] == 'kmip'
+              'KMIPAAAAAAAAAAAAAAAAAA=='
             end
 
             { key_id: BSON::Binary.new(Base64.decode64(key_id), :uuid) }
@@ -132,7 +164,7 @@ describe 'Client-Side Encryption' do
             # If doc['allowed'] is false, this error was expected and the value
             # should be copied over without being encrypted.
             if doc['allowed']
-              raise "Unexpected error occured in client-side encryption " +
+              raise "Unexpected error occurred in client-side encryption " +
                 "corpus tests: #{e.class}: #{e.message}"
             end
 
@@ -152,6 +184,8 @@ describe 'Client-Side Encryption' do
       key_vault_collection.insert_one(local_data_key)
       key_vault_collection.insert_one(aws_data_key)
       key_vault_collection.insert_one(azure_data_key)
+      key_vault_collection.insert_one(gcp_data_key)
+      key_vault_collection.insert_one(kmip_data_key)
     end
 
     shared_context 'with jsonSchema collection validator' do
@@ -194,9 +228,6 @@ describe 'Client-Side Encryption' do
           .find(_id: corpus_encrypted_id)
           .first
 
-        # Check that the actual encrypted document matches the expected
-        # encrypted document.
-        expect(corpus_encrypted_actual.keys).to eq(corpus_encrypted_expected.keys)
 
         corpus_encrypted_actual.each do |key, value|
           # If it was deterministically encrypted, test the encrypted values
@@ -221,60 +252,14 @@ describe 'Client-Side Encryption' do
       end
     end
 
-    context 'with local KMS provider' do
-      include_context 'with local kms_providers'
-
-      context 'with collection validator' do
-        include_context 'with jsonSchema collection validator'
-        it_behaves_like 'a functioning encrypter'
-      end
-
-      context 'with schema map' do
-        include_context 'with local schema map'
-        it_behaves_like 'a functioning encrypter'
-      end
+    context 'with collection validator' do
+      include_context 'with jsonSchema collection validator'
+      it_behaves_like 'a functioning encrypter'
     end
 
-    context 'with AWS KMS provider' do
-      include_context 'with AWS kms_providers'
-
-      context 'with collection validator' do
-        include_context 'with jsonSchema collection validator'
-        it_behaves_like 'a functioning encrypter'
-      end
-
-      context 'with schema map' do
-        include_context 'with local schema map'
-        it_behaves_like 'a functioning encrypter'
-      end
-    end
-
-    context 'with Azure KMS provider' do
-      include_context 'with Azure kms_providers'
-
-      context 'with collection validator' do
-        include_context 'with jsonSchema collection validator'
-        it_behaves_like 'a functioning encrypter'
-      end
-
-      context 'with schema map' do
-        include_context 'with local schema map'
-        it_behaves_like 'a functioning encrypter'
-      end
-    end
-
-    context 'with GCP KMS provider' do
-      include_context 'with GCP kms_providers'
-
-      context 'with collection validator' do
-        include_context 'with jsonSchema collection validator'
-        it_behaves_like 'a functioning encrypter'
-      end
-
-      context 'with schema map' do
-        include_context 'with local schema map'
-        it_behaves_like 'a functioning encrypter'
-      end
+    context 'with schema map' do
+      include_context 'with local schema map'
+      it_behaves_like 'a functioning encrypter'
     end
   end
 end

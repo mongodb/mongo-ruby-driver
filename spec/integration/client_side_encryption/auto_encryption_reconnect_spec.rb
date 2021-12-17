@@ -21,6 +21,7 @@ describe 'Client with auto encryption #reconnect' do
         {
           auto_encryption_options: {
             kms_providers: kms_providers,
+            kms_tls_options: kms_tls_options,
             key_vault_namespace: key_vault_namespace,
             key_vault_client: key_vault_client_option,
             schema_map: { 'auto_encryption.users': schema_map },
@@ -197,6 +198,21 @@ describe 'Client with auto encryption #reconnect' do
       it_behaves_like 'an auto-encryption client that reconnects properly'
     end
 
+    context 'with Azure KMS providers' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
+    context 'with GCP KMS providers' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
+    context 'with KMIP KMS providers' do
+      include_context 'with KMIP kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
     context 'with local KMS providers' do
       include_context 'with local kms_providers'
       it_behaves_like 'an auto-encryption client that reconnects properly'
@@ -223,6 +239,11 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'with GCP KMS providers' do
       include_context 'with GCP kms_providers'
+      it_behaves_like 'an auto-encryption client that reconnects properly'
+    end
+
+    context 'with KMIP KMS providers' do
+      include_context 'with KMIP kms_providers'
       it_behaves_like 'an auto-encryption client that reconnects properly'
     end
 

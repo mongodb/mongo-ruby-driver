@@ -139,6 +139,24 @@ if test -n "$FLE"; then
 
   export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
   test -f "$LIBMONGOCRYPT_PATH"
+
+  echo "Waiting for mock KMS servers to start..."
+   wait_for_kms_server() {
+      for i in $(seq 60); do
+         if curl -s "localhost:$1"; test $? -ne 7; then
+            return 0
+         else
+            sleep 1
+         fi
+      done
+      echo "Could not detect mock KMS server on port $1"
+      return 1
+   }
+   wait_for_kms_server 8000
+   wait_for_kms_server 8001
+   wait_for_kms_server 8002
+   wait_for_kms_server 5698
+   echo "Waiting for mock KMS servers to start... done."
 fi
 
 if test -n "$OCSP_CONNECTIVITY"; then

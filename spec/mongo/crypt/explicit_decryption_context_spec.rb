@@ -64,6 +64,16 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
       end
     end
 
+    context 'when mongocrypt is initialized with KMIP KMS provider options' do
+      include_context 'with KMIP kms_providers'
+
+      it 'initializes context' do
+        expect do
+          context
+        end.not_to raise_error
+      end
+    end
+
     context 'with verbose logging' do
       include_context 'with local kms_providers'
 
