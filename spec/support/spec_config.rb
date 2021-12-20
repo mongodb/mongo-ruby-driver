@@ -296,7 +296,11 @@ EOT
   end
 
   def local_client_pem_path
-    "#{ssl_certs_dir}/client.pem"
+    if (algo = ENV['OCSP_ALGORITHM'])&.empty?
+      "#{ssl_certs_dir}/client.pem"
+    else
+      Pathname.new("#{spec_root}/support/ocsp/#{algo}/server.pem")
+    end
   end
 
   def client_pem_path
