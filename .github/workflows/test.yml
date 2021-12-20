@@ -62,6 +62,10 @@ jobs:
         bundler: 2
     - name: bundle
       run: bundle install --jobs 4 --retry 3
+    - name: prepare test suite
+      run: bundle exec rake spec:prepare
+      env:
+        MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
     - name: prepare replica set
       run: ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
       if: ${{ matrix.topology == 'replica_set' }}
