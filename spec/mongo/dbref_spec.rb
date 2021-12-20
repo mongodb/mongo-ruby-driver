@@ -15,7 +15,7 @@ describe Mongo::DBRef do
     context 'when the database is not provided' do
 
       let(:dbref) do
-        described_class.new('users', object_id)
+        described_class.new({'$ref' => 'users', '$id' => object_id})
       end
 
       it 'returns the json document without database' do
@@ -26,7 +26,7 @@ describe Mongo::DBRef do
     context 'when the database is provided' do
 
       let(:dbref) do
-        described_class.new('users', object_id, 'database')
+        described_class.new({'$ref' => 'users', '$id' => object_id, '$db' => 'database'})
       end
 
       it 'returns the json document with database' do
@@ -42,7 +42,7 @@ describe Mongo::DBRef do
   describe '#initialize' do
 
     let(:dbref) do
-      described_class.new('users', object_id)
+      described_class.new({'$ref' => 'users', '$id' => object_id})
     end
 
     it 'sets the collection' do
@@ -56,7 +56,7 @@ describe Mongo::DBRef do
     context 'when a database is provided' do
 
       let(:dbref) do
-        described_class.new('users', object_id, 'db')
+        described_class.new({'$ref' => 'users', '$id' => object_id, '$db' => 'db'})
       end
 
       it 'sets the database' do
@@ -68,7 +68,7 @@ describe Mongo::DBRef do
   describe '#to_bson' do
 
     let(:dbref) do
-      described_class.new('users', object_id, 'database')
+      described_class.new({'$ref' => 'users', '$id' => object_id, '$db' => 'database'})
     end
 
     it 'converts the underlying document to bson' do
@@ -81,7 +81,7 @@ describe Mongo::DBRef do
     context 'when the database is not provided' do
 
       let(:dbref) do
-        described_class.new('users', object_id)
+        described_class.new({'$ref' => 'users', '$id' => object_id})
       end
 
       it 'returns the json document without database' do
@@ -92,7 +92,7 @@ describe Mongo::DBRef do
     context 'when the database is provided' do
 
       let(:dbref) do
-        described_class.new('users', object_id, 'database')
+        described_class.new({'$ref' => 'users', '$id' => object_id, '$db' => 'database'})
       end
 
       it 'returns the json document with database' do
@@ -114,7 +114,7 @@ describe Mongo::DBRef do
     context 'when a database exists' do
 
       let(:dbref) do
-        described_class.new('users', object_id, 'database')
+        described_class.new({'$ref' => 'users', '$id' => object_id, '$db' => 'database'})
       end
 
       it 'decodes the ref' do
@@ -133,7 +133,7 @@ describe Mongo::DBRef do
     context 'when no database exists' do
 
       let(:dbref) do
-        described_class.new('users', object_id)
+        described_class.new({'$ref' => 'users', '$id' => object_id})
       end
 
       it 'decodes the ref' do
