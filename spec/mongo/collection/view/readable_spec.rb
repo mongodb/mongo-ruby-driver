@@ -671,6 +671,32 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#count_documents' do
+
+    let(:result) do
+      new_view.count_documents(options)
+    end
+
+    context 'when session is given' do
+      let(:subscriber) { Mrss::EventSubscriber.new }
+
+      before do
+        authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+
+      it 'passes the session' do
+        authorized_collection.client.with_session do |session|
+          session_id = session.session_id
+
+          authorized_collection.count_documents({}, session: session)
+
+          event = subscriber.single_command_started_event('aggregate')
+          event.command['lsid'].should == session_id
+        end
+      end
+    end
+  end
+
   describe '#distinct' do
 
     context 'when incorporating read concern' do
