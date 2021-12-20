@@ -12,7 +12,7 @@ describe 'Versioned API examples' do
   min_server_version("5.0")
 
   let(:uri_string) do
-    "mongodb://#{SpecConfig.instance.addresses.join(',')}"
+    "mongodb://#{SpecConfig.instance.addresses.join(',')}/versioned-api-examples"
   end
 
   it 'Versioned API example 1' do
