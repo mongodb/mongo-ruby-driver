@@ -798,7 +798,11 @@ module Mongo
         if len_ptr.nil?
           nil
         else
-          len = len_ptr.read(:uint32)
+          len = if BSON::Environment.jruby?
+            len_ptr.get_uint32
+          else
+            len_ptr.get(:uint32, 0)
+          end
           provider.read_string(len).to_sym
         end
       end

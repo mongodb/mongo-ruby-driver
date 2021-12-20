@@ -1289,9 +1289,7 @@ buildvariants:
   - matrix_name: "fle-4.4"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      # https://jira.mongodb.org/browse/RUBY-2832
-      # ruby: [ruby-3.0, ruby-2.7, jruby-9.2]
-      ruby: [ruby-3.0, ruby-2.7]
+      ruby: [ruby-3.0, ruby-2.7, jruby-9.2]
       topology: standalone
       mongodb-version: ['4.4']
       os: ubuntu1804

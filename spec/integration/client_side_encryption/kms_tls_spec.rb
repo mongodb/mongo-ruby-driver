@@ -44,24 +44,47 @@ describe 'Client-Side Encryption' do
               }
            }
           )
-        end.to raise_error(Mongo::Error::KmsError, /certificate verify failed \(certificate has expired\)/)
+        end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
       end
     end
 
     context 'Invalid Hostname in KMS Certificate' do
-      it 'raises an error when creating data key' do
-        expect do
-          client_encryption.create_data_key(
-            'aws',
-            {
-              master_key: {
-                region: "us-east-1",
-                key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                endpoint: "127.0.0.1:8001",
-              }
-           }
-          )
-        end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
+      context 'MRI' do
+        require_mri
+
+        it 'raises an error when creating data key' do
+          expect do
+            client_encryption.create_data_key(
+              'aws',
+              {
+                master_key: {
+                  region: "us-east-1",
+                  key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
+                  endpoint: "127.0.0.1:8001",
+                }
+            }
+            )
+          end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
+        end
+      end
+
+      context 'JRuby' do
+        require_jruby
+
+        it 'raises an error when creating data key' do
+          expect do
+            client_encryption.create_data_key(
+              'aws',
+              {
+                master_key: {
+                  region: "us-east-1",
+                  key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
+                  endpoint: "127.0.0.1:8001",
+                }
+            }
+            )
+          end.to raise_error(Mongo::Error::KmsError, /hostname mismatch/)
+        end
       end
     end
 

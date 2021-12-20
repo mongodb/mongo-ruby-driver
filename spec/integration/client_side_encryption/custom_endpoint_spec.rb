@@ -93,12 +93,27 @@ describe 'Client-Side Encryption' do
         }
       end
 
-      it 'throws an exception' do
-        expect do
-          data_key_id
-        end.to raise_error(Mongo::Error::KmsError, /Connection refused/)
+      context 'MRI' do
+        require_mri
+
+        it 'throws an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(Mongo::Error::KmsError, /Connection refused/)
+        end
+      end
+
+      context 'JRuby' do
+        require_jruby
+
+        it 'throws an exception' do
+          expect do
+            data_key_id
+          end.to raise_error(Mongo::Error::KmsError)
+        end
       end
     end
+
 
     context 'with region, key, and endpoint with invalid region' do
       let(:master_key) do
