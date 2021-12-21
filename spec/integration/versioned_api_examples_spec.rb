@@ -9,9 +9,10 @@ describe 'Versioned API examples' do
   # the tests to simple configurations
   require_no_auth
   require_no_tls
+  min_server_version("5.0")
 
   let(:uri_string) do
-    "mongodb://#{SpecConfig.instance.addresses.join(',')}"
+    "mongodb://#{SpecConfig.instance.addresses.join(',')}/versioned-api-examples"
   end
 
   it 'Versioned API example 1' do

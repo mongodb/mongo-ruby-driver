@@ -62,9 +62,23 @@ jobs:
         bundler: 2
     - name: bundle
       run: bundle install --jobs 4 --retry 3
+    - name: prepare test suite
+      run: bundle exec rake spec:prepare
+      env:
+        MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
+    - name: prepare replica set
+      run: ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
+      if: ${{ matrix.topology == 'replica_set' }}
+      env:
+        MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
+    - name: wait for sessions
+      run: bundle exec rake spec:wait_for_sessions
+      if: ${{ matrix.topology == 'sharded_cluster' && matrix.mongodb == '3.6' }}
+      env:
+        MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
     - name: test
       timeout-minutes: 60
-      continue-on-error: true
+      continue-on-error: false
       run: bundle exec rake spec:ci
       env:
         MONGODB_URI: ${{ steps.start-mongodb.outputs.cluster-uri }}
