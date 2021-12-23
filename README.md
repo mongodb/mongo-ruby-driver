@@ -88,7 +88,7 @@ to run the driver's test suite.
 Release History
 ---------------
 
-Full release notes and release history are available [on the GitHub releases
+Full relea se notes and release history are available [on the GitHub releases
 page](https://github.com/mongodb/mongo-ruby-driver/releases).
 
 
