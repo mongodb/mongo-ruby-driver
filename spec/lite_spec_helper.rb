@@ -118,14 +118,17 @@ RSpec.configure do |config|
   end
 
   if SpecConfig.instance.ci? && !%w(1 true yes).include?(ENV['INTERACTIVE']&.downcase)
-    # Allow a max of 30 seconds per test.
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
     config.around(:each) do |example|
       timeout = if %w(1 true yes).include?(ENV['STRESS']&.downcase)
         210
       else
-        45
+        if BSON::Environment.jruby?
+          90
+        else
+          45
+        end
       end
       TimeoutInterrupt.timeout(timeout, ExampleTimeout) do
         example.run
