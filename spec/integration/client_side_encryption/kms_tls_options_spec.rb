@@ -200,18 +200,21 @@ describe 'Client-Side Encryption' do
 
     # We do noy use shared examples for AWS because of the way we pass endpoint.
     context 'AWS' do
+      let(:master_key_template) do
+        {
+          region: "us-east-1",
+          key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
+        }
+      end
+
       context 'with no client certificate' do
         it 'TLS handshake failed' do
           expect do
             client_encryption_no_client_cert.create_data_key(
               'aws',
               {
-                master_key: {
-                  region: "us-east-1",
-                  key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                  endpoint: "127.0.0.1:8002",
-                }
-             }
+                master_key: master_key_template.merge({endpoint: "127.0.0.1:8002"})
+              }
             )
           end.to raise_error(Mongo::Error::KmsError, /(SocketError|ECONNRESET)/)
         end
@@ -223,11 +226,7 @@ describe 'Client-Side Encryption' do
             client_encryption_with_tls.create_data_key(
               'aws',
               {
-                master_key: {
-                  region: "us-east-1",
-                  key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                  endpoint: "127.0.0.1:8002",
-                }
+                master_key: master_key_template.merge({endpoint: "127.0.0.1:8002"})
              }
             )
           end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
@@ -235,82 +234,44 @@ describe 'Client-Side Encryption' do
       end
 
       context 'with expired server certificate' do
-        context "MRI" do
-          require_mri
-
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_expired.create_data_key(
-                'aws',
-                {
-                  master_key: {
-                    region: "us-east-1",
-                    key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                    endpoint: "127.0.0.1:8000",
-                  }
-              }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /certificate has expired/)
+        let(:error_regex) do
+          if BSON::Environment.jruby?
+            /certificate verify failed/
+          else
+            /certificate has expired/
           end
         end
 
-        context 'JRuby' do
-          require_jruby
-
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_expired.create_data_key(
-                'aws',
-                {
-                  master_key: {
-                    region: "us-east-1",
-                    key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                    endpoint: "127.0.0.1:8000",
-                  }
+        it 'TLS handshake failed' do
+          expect do
+            client_encryption_expired.create_data_key(
+              'aws',
+              {
+                master_key: master_key_template.merge({endpoint: "127.0.0.1:8000"})
               }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
-          end
+            )
+          end.to raise_error(Mongo::Error::KmsError, error_regex)
         end
       end
 
       context 'with server certificate with invalid hostname' do
-        context 'MRI' do
-          require_mri
-
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_invalid_hostname.create_data_key(
-                'aws',
-                {
-                  master_key: {
-                    region: "us-east-1",
-                    key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                    endpoint: "127.0.0.1:8001",
-                  }
-              }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
+        let(:error_regex) do
+          if BSON::Environment.jruby?
+            /TLS handshake failed due to a hostname mismatch/
+          else
+            /certificate verify failed/
           end
         end
 
-        context 'JRuby' do
-          require_jruby
-
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_invalid_hostname.create_data_key(
-                'aws',
-                {
-                  master_key: {
-                    region: "us-east-1",
-                    key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                    endpoint: "127.0.0.1:8001",
-                  }
+        it 'TLS handshake failed' do
+          expect do
+            client_encryption_invalid_hostname.create_data_key(
+              'aws',
+              {
+                master_key: master_key_template.merge({endpoint: "127.0.0.1:8001"})
               }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /TLS handshake failed due to a hostname mismatch/)
-          end
+            )
+          end.to raise_error(Mongo::Error::KmsError, error_regex)
         end
       end
     end
@@ -342,71 +303,46 @@ describe 'Client-Side Encryption' do
         end
       end
 
-      context 'MRI' do
-        require_mri
-
-        context 'with expired server certificate' do
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_expired.create_data_key(
-                kms_provider,
-                {
-                  master_key: master_key
-              }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /certificate has expired/)
+      context 'with expired server certificate' do
+        let(:error_regex) do
+          if BSON::Environment.jruby?
+            /certificate verify failed/
+          else
+            /certificate has expired/
           end
         end
-      end
 
-      context 'JRuby' do
-        require_jruby
-
-        context 'with expired server certificate' do
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_expired.create_data_key(
-                kms_provider,
-                {
-                  master_key: master_key
-              }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
-          end
+        it 'TLS handshake failed' do
+          expect do
+            client_encryption_expired.create_data_key(
+              kms_provider,
+              {
+                master_key: master_key
+            }
+            )
+          end.to raise_error(Mongo::Error::KmsError, error_regex)
         end
       end
 
       context 'with server certificate with invalid hostname' do
-        context 'MRI' do
-          require_mri
-
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_invalid_hostname.create_data_key(
-                kms_provider,
-                {
-                  master_key: master_key
-               }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
+        let(:error_regex) do
+          if BSON::Environment.jruby?
+            /TLS handshake failed due to a hostname mismatch/
+          else
+            /certificate verify failed/
           end
         end
 
-        context 'JRuby' do
-          require_jruby
-
-          it 'TLS handshake failed' do
-            expect do
-              client_encryption_invalid_hostname.create_data_key(
-                kms_provider,
-                {
-                  master_key: master_key
-               }
-              )
-            end.to raise_error(Mongo::Error::KmsError, /TLS handshake failed due to a hostname mismatch/)
-          end
+        it 'TLS handshake failed' do
+          expect do
+            client_encryption_invalid_hostname.create_data_key(
+              kms_provider,
+              {
+                master_key: master_key
+              }
+            )
+          end.to raise_error(Mongo::Error::KmsError, error_regex)
         end
-
       end
     end
 
