@@ -40,7 +40,7 @@ module Mongo
       #
       # @param [ String ] test_path The path to the file.
       def initialize(test_path)
-        @test = YAML.load(File.read(test_path))
+        @test = ::Utils.load_spec_yaml_file(test_path)
 
         @description = @test['description']
         @pool_options = ::Utils.snakeize_hash(process_options(@test['poolOptions']))

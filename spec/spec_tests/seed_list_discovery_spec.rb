@@ -15,7 +15,7 @@ describe 'DNS Seedlist Discovery' do
 
   SEED_LIST_DISCOVERY_TESTS.each do |test_path|
 
-    spec = YAML.load(File.read(test_path))
+    spec = ::Utils.load_spec_yaml_file(test_path)
 
     test = Mongo::ConnectionString::Test.new(spec)
 

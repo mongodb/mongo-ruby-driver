@@ -77,7 +77,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(test_path)
-        @test = YAML.load(File.read(test_path))
+        @test = ::Utils.load_spec_yaml_file(test_path)
         @description = @test['description']
         @uri_string = @test['uri']
         @uri = URI.new(uri_string)

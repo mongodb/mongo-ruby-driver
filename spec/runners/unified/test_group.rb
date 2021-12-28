@@ -6,7 +6,7 @@ module Unified
   class TestGroup
     def initialize(path, **opts)
       if String === path
-        data = YAML.load(File.read(path))
+        data = ::Utils.load_spec_yaml_file(path)
       else
         data = path
       end
