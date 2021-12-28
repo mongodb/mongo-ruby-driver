@@ -12,9 +12,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(test_path)
-        contents = File.read(test_path)
-
-        @spec = YAML.load(contents)
+        @spec = ::Utils.load_spec_yaml_file(test_path)
         @description = File.basename(test_path)
         @data = BSON::ExtJSON.parse_obj(@spec['data'])
         @tests = @spec['tests']

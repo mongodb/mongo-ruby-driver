@@ -28,7 +28,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(test_path)
-          @test = YAML.load(File.read(test_path))
+          @test = ::Utils.load_spec_yaml_file(test_path)
           @description = "#{File.basename(test_path)}: avg_rtt_ms: #{@test['avg_rtt_ms']}, new_rtt_ms: #{@test['new_rtt_ms']}," +
                            " new_avg_rtt: #{@test['new_avg_rtt']}"
           @average_rtt = @test['avg_rtt_ms'] == 'NULL' ? nil : @test['avg_rtt_ms'].to_f / 1000

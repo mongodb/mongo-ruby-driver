@@ -613,4 +613,35 @@ module Utils
       end
     end
   end
+
+  module_function def load_spec_yaml_file(path)
+    permitted_classes = [
+                          BigDecimal,
+                          Date,
+                          Time,
+                          Range,
+                          Regexp,
+                          Symbol,
+                          BSON::Binary,
+                          BSON::Code,
+                          BSON::CodeWithScope,
+                          BSON::DbPointer,
+                          BSON::Decimal128,
+                          BSON::Int32,
+                          BSON::Int64,
+                          BSON::MaxKey,
+                          BSON::MinKey,
+                          BSON::ObjectId,
+                          BSON::Regexp::Raw,
+                          BSON::Symbol::Raw,
+                          BSON::Timestamp,
+                          BSON::Undefined,
+                        ]
+    if RUBY_VERSION.start_with?("2.5")
+      YAML.safe_load(File.read(path), permitted_classes, [], true)
+    else
+      # Here we have Ruby 2.6+ that supports the new syntax of `safe_load``.
+      YAML.safe_load(File.read(path), permitted_classes: permitted_classes, aliases: true)
+    end
+  end
 end

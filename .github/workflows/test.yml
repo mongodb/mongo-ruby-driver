@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        ruby: ["2.5", "2.6", "2.7", "3.0"]
+        ruby: ["2.5", "2.6", "2.7", "3.0", "3.1"]
         mongodb: ["3.6", "4.4", "5.0"]
         topology: [replica_set, sharded_cluster]
         include:
@@ -38,6 +38,10 @@ jobs:
             topology: server
           - os: ubuntu-latest
             ruby: "3.0"
+            mongodb: "5.0"
+            topology: server
+          - os: ubuntu-latest
+            ruby: "3.1"
             mongodb: "5.0"
             topology: server
           - os: ubuntu-18.04
