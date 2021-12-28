@@ -11,7 +11,7 @@ def standard_dependencies
     # Explicitly specify each rspec dependency so that we can use
     # rspec-mocks-diag instead of rspec-mocks
     gem 'rspec-core', '~> 3.9'
-    gem 'activesupport'
+    gem 'activesupport', '<7'
     gem 'rake'
     gem 'webrick'
 
