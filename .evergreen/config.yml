@@ -843,7 +843,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: "4.2"
       topology: standalone
-      os: ubuntu1604
+      os: ubuntu1804
       preload: preload
     display_name: "Docker ${os} ${mongodb-version} ${topology} ${ruby} ${preload}"
     tasks:
@@ -854,7 +854,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: "4.2"
       topology: standalone
-      os: ubuntu1604
+      os: ubuntu1804
       preload: nopreload
     display_name: "Docker ${os} ${mongodb-version} ${topology} ${ruby} ${preload}"
     tasks:
