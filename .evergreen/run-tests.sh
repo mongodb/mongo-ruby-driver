@@ -134,6 +134,17 @@ elif test "$AUTH" = kerberos; then
 fi
 
 if test -n "$FLE"; then
+  # Start the KMS servers first so that they are launching while we are
+  # fetching libmongocrypt.
+  if test "$DOCKER_PRELOAD" != 1; then
+    . .evergreen/csfle/activate_venv.sh
+  fi
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
+  python3 -u .evergreen/csfle/kms_kmip_server.py &
+  
   curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   tar xf libmongocrypt-all.tar.gz
 
