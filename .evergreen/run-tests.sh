@@ -266,6 +266,11 @@ if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
+# KMS virtualenv doesn't have mlaunch, get rid of it.
+if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
+  deactivate
+fi
+
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
 exit ${test_status}
