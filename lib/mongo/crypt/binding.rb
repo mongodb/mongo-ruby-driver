@@ -798,7 +798,14 @@ module Mongo
         if len_ptr.nil?
           nil
         else
-          len = len_ptr.read(:uint32)
+          len = if BSON::Environment.jruby?
+            # JRuby FFI implementation does not have `read(type)` method, but it
+            # has this `get_uint32`.
+            len_ptr.get_uint32
+          else
+            # For MRI we use a documented `read` method - https://www.rubydoc.info/github/ffi/ffi/FFI%2FPointer:read
+            len_ptr.read(:uint32)
+          end
           provider.read_string(len).to_sym
         end
       end
