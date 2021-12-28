@@ -64,7 +64,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(test_path)
-          @test = YAML.load(File.read(test_path))
+          @test = ::Utils.load_spec_yaml_file(test_path)
           @description = "#{@test['topology_description']['type']}: #{File.basename(test_path)}"
           @heartbeat_frequency = @test['heartbeatFrequencyMS'] / 1000 if @test['heartbeatFrequencyMS']
           @read_preference = @test['read_preference']
