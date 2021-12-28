@@ -678,6 +678,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when session is given' do
+      min_server_fcv '3.6'
+
       let(:subscriber) { Mrss::EventSubscriber.new }
 
       before do
