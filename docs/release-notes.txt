@@ -25,6 +25,12 @@ This release includes the following new features:
 - Added support for Azure Key Vault, Google Cloud Key Management, and any
   KMIP compliant Key Management System to be used as master key storage for
   client side encryption.
+- The DBRef class has been moved to bson-ruby and requires bson-ruby 4.13.0
+  or greater. For backwards compatibility, BSON::DBRef is aliased as Mongo::DBRef.
+  The BSON::DBRef class derives from BSON::Document, unlike Mongo::DBRef which
+  derived from Object. BSON::DBRef retains all fields, unlike Mongo::DBRef which
+  only allowed $ref, $id, and $db. BSON::DBRef also reorders the fields if
+  necessary to place $ref, $id, and $db first, in that order.
 
 2.17
 ====
