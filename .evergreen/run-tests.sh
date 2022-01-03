@@ -276,4 +276,10 @@ fi
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
+if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
+  # Terminate all kmip servers... and whatever else happens to be running
+  # that is a python script.
+  pkill python3
+fi
+
 exit ${test_status}
