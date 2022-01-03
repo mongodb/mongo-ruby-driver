@@ -137,7 +137,10 @@ if test -n "$FLE"; then
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
-    . .evergreen/csfle/activate_venv.sh
+    # We already have a virtualenv activated for mlaunch,
+    # install kms dependencies into it.
+    #. .evergreen/csfle/activate_venv.sh
+    pip install boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
   fi
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
@@ -264,11 +267,6 @@ kill_jruby
 
 if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
-fi
-
-# KMS virtualenv doesn't have mlaunch, get rid of it.
-if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
-  deactivate
 fi
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
