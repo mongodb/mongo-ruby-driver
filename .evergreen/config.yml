@@ -93,7 +93,10 @@ functions:
             export UPLOAD_BUCKET="$UPLOAD_BUCKET"
             export PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
 
-            export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
+            # TMPDIR cannot be too long, see
+            # https://github.com/broadinstitute/cromwell/issues/3647.
+            # Why is it even set at all?
+            #export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
             export PATH="$MONGODB_BINARIES:$PATH"
             export PROJECT="${project}"
 
