@@ -134,6 +134,25 @@ elif test "$AUTH" = kerberos; then
 fi
 
 if test -n "$FLE"; then
+  # Start the KMS servers first so that they are launching while we are
+  # fetching libmongocrypt.
+  if test "$DOCKER_PRELOAD" != 1; then
+    # We already have a virtualenv activated for mlaunch,
+    # install kms dependencies into it.
+    #. .evergreen/csfle/activate_venv.sh
+    
+    # Adjusted package versions:
+    # cryptography 3.4 requires rust, see
+    # https://github.com/pyca/cryptography/issues/5771.
+    #pip install boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
+    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+  fi
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
+  python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
+  python3 -u .evergreen/csfle/kms_kmip_server.py &
+  
   curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
   tar xf libmongocrypt-all.tar.gz
 
@@ -256,5 +275,11 @@ if test -n "$OCSP_MOCK_PID"; then
 fi
 
 python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
+
+if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
+  # Terminate all kmip servers... and whatever else happens to be running
+  # that is a python script.
+  pkill python3
+fi
 
 exit ${test_status}
