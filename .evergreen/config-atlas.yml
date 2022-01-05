@@ -600,7 +600,7 @@ axes:
   - id: "os"
     display_name: OS
     values:
-      - id: ubuntu1804
+      - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
       - id: ubuntu1804
@@ -818,7 +818,7 @@ axes:
 buildvariants:
   - matrix_name: "all"
     matrix_spec:
-      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
     display_name: "Atlas tests ${ruby}"
     run_on:
       - ubuntu1804-small
@@ -827,7 +827,7 @@ buildvariants:
 
   - matrix_name: "serverless single mongos"
     matrix_spec:
-      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
       single-mongos: single-mongos
     display_name: "Atlas serverless ${ruby} single mongos"
     run_on:
@@ -837,7 +837,7 @@ buildvariants:
 
   - matrix_name: "serverless multiple mongos"
     matrix_spec:
-      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "jruby-9.2"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
     display_name: "Atlas serverless tests ${ruby}"
     run_on:
       - ubuntu1804-small

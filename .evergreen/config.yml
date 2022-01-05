@@ -475,6 +475,10 @@ tasks:
     commands:
       - func: "export FLE credentials"
       - func: "run tests"
+  - name: "test-fle-via-docker"
+    commands:
+      - func: "export FLE credentials"
+      - func: "run tests via docker"
   - name: "test-aws-auth"
     commands:
       - func: "export AWS auth credentials"
@@ -634,7 +638,7 @@ axes:
   - id: "os"
     display_name: OS
     values:
-      - id: ubuntu1804
+      - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
       - id: ubuntu1804
@@ -1296,7 +1300,7 @@ buildvariants:
       fle: fle
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "test-fle"
+      - name: "test-fle-via-docker"
 
   - matrix_name: "fle-4.2"
     matrix_spec:
