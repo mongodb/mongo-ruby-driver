@@ -166,9 +166,8 @@ if SpecConfig.instance.active_support?
     # See: https://github.com/rails/rails/issues/43851,
     # https://github.com/rails/rails/issues/43889, etc.
     require 'active_support'
-  else
-    require "active_support/time"
   end
+  require "active_support/time"
   require 'mongo/active_support'
 end
 
