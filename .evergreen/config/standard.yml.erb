@@ -208,7 +208,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "4.2"
       topology: <%= tt %>
-      os: rhel70
+      os: rhel80
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -384,7 +384,7 @@ buildvariants:
       mongodb-version: '4.4'
       topology: replica-set
       bson: "*"
-      os: rhel70
+      os: rhel80
     display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
     tasks:
       - name: "test-mlaunch"
@@ -454,7 +454,7 @@ buildvariants:
       ruby: [ruby-2.5]
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
-      os: ubuntu1804
+      os: ubuntu1604
       fle: fle
     display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
@@ -466,7 +466,7 @@ buildvariants:
       ruby: [ruby-2.6]
       topology: standalone
       mongodb-version: ["4.0"]
-      os: ubuntu1804
+      os: ubuntu1604
       fle: fle
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:

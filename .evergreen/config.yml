@@ -910,7 +910,7 @@ buildvariants:
   - matrix_name: "mongo-5.0"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
+      ruby: ["ruby-3.1", "ruby-2.7"]
       mongodb-version: '5.0'
       topology: '*'
       os: ubuntu1804
@@ -921,11 +921,11 @@ buildvariants:
   - matrix_name: "single-lb"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
+      ruby: ["ruby-3.0"]
       mongodb-version: '5.0'
       topology: load-balanced
       single-mongos: single-mongos
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} single-lb ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -933,7 +933,7 @@ buildvariants:
   - matrix_name: "mongo-5.0-api-version"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
+      ruby: ["ruby-3.1"]
       mongodb-version: '5.0'
       topology: standalone
       api-version-required: yes
@@ -990,10 +990,10 @@ buildvariants:
   - matrix_name: "lint-5.0"
     matrix_spec:
       lint: on
-      ruby: "ruby-2.7"
+      ruby: ["ruby-3.1", "ruby-2.7"]
       mongodb-version: ["5.0"]
       topology: '*'
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1012,7 +1012,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, jruby-9.2]
+      ruby: [ruby-3.1, ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, jruby-9.2]
       mongodb-version: ["4.4"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
@@ -1048,7 +1048,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "4.2"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel70
+      os: rhel80
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1083,7 +1083,7 @@ buildvariants:
       mongodb-version: "4.4"
       topology: "standalone"
       compressor: 'zlib'
-      os: ubuntu1604
+      os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1112,14 +1112,14 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "snappy-auth-3.0"
+  - matrix_name: "snappy-auth-3"
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
-      ruby: ["ruby-3.0"]
+      ruby: ["ruby-3.1"]
       mongodb-version: "4.4"
       topology: "standalone"
       compressor: 'snappy'
-      os: ubuntu1604
+      os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1220,11 +1220,11 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: [ruby-3.0, ruby-2.7, jruby-9.2]
+      ruby: [ruby-3.1, ruby-2.7, jruby-9.2]
       mongodb-version: '4.4'
       topology: replica-set
       bson: "*"
-      os: rhel70
+      os: rhel80
     display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
     tasks:
       - name: "test-mlaunch"
@@ -1279,7 +1279,7 @@ buildvariants:
       auth-and-ssl: "noauth-and-nossl"
       # https://jira.mongodb.org/browse/RUBY-2832
       # ruby: [ruby-3.0, ruby-2.7, jruby-9.2]
-      ruby: [ruby-3.0, ruby-2.7]
+      ruby: [ruby-3.1, ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: ['4.4']
       os: ubuntu1804
@@ -1294,7 +1294,7 @@ buildvariants:
       ruby: [ruby-2.5]
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
-      os: ubuntu1804
+      os: ubuntu1604
       fle: fle
     display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
@@ -1306,7 +1306,7 @@ buildvariants:
       ruby: [ruby-2.6]
       topology: standalone
       mongodb-version: ["4.0"]
-      os: ubuntu1804
+      os: ubuntu1604
       fle: fle
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
@@ -1326,7 +1326,7 @@ buildvariants:
   - matrix_name: aws-auth-temporary
     matrix_spec:
       auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs]
-      ruby: [ruby-2.7]
+      ruby: [ruby-3.1]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
