@@ -1059,7 +1059,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "3.6"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel62
+      os: rhel70
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
