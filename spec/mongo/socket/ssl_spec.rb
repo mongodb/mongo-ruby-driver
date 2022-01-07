@@ -332,7 +332,12 @@ describe Mongo::Socket::SSL, retry: 3 do
             OpenSSL::OpenSSLError
           end
         else
-          NoMethodError
+          # MRI
+          if RUBY_VERSION >= '3.1.0'
+            TypeError
+          else
+            NoMethodError
+          end
         end
       end
 
