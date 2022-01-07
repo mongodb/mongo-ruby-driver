@@ -364,8 +364,13 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'when a bad certificate is provided' do
 
           let(:expected_exception) do
-            # OpenSSL::X509::CertificateError: nested asn1 error
-            [OpenSSL::OpenSSLError, /asn1 error/i]
+            if RUBY_VERSION >= '3.1.0'
+              # OpenSSL::X509::CertificateError: PEM_read_bio_X509: no start line
+              OpenSSL::X509::CertificateError
+            else
+              # OpenSSL::X509::CertificateError: nested asn1 error
+              [OpenSSL::OpenSSLError, /asn1 error/i]
+            end
           end
 
           let(:ssl_options) do
