@@ -402,5 +402,42 @@ describe 'SRV Monitoring' do
         end
       end
     end
+
+    context 'when the client mocks the srvServiceName' do
+
+      let(:uri) do
+        "mongodb+srv://test-fake.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}&tlsInsecure=true&srvServiceName=customname"
+      end
+
+      it 'finds the records using the custom service name' do
+
+        rules = [
+          ['_customname._tcp.test-fake.test.build.10gen.cc', :srv,
+            [0, 0, 27998, 'localhost.test.build.10gen.cc'],
+            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
+          ],
+        ]
+
+        mock_dns(rules) do
+          15.times do
+            address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+            if address_strs == %w(
+                localhost.test.build.10gen.cc:27998
+                localhost.test.build.10gen.cc:27999
+              )
+            then
+              break
+            end
+            sleep 1
+          end
+
+          address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+          expect(address_strs).to eq(%w(
+            localhost.test.build.10gen.cc:27998
+            localhost.test.build.10gen.cc:27999
+          ))
+        end
+      end
+    end
   end
 end
