@@ -14,6 +14,9 @@ module Unified
         if batch_size = args.use('batchSize')
           opts[:batch_size] = batch_size
         end
+        if comment = args.use('comment')
+          opts[:comment] = comment
+        end
         cs = object.watch(pipeline, **opts)
         name = op.use!('saveResultAsEntity')
         entities.set(:change_stream, name, cs)

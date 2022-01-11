@@ -3,6 +3,8 @@ schemaVersion: "1.0"
 createEntities:
   - client:
       id: &client0 client0
+      observeEvents:
+        - commandStartedEvent
   - database:
       id: &database0 database0
       client: *client0
@@ -70,3 +72,25 @@ tests:
             ]
           }
         }
+
+  - description: "Test comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
+        topologies: [replicaset]
+    operations:
+      - name: createChangeStream
+        object: *collection0
+        arguments:
+          pipeline: []
+          comment: &comment0 { name: "test1" }
+        saveResultAsEntity: &changeStream0 changeStream0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                aggregate: *collection0
+                pipeline:
+                  -
+                    $changeStream: {}
+                comment: *comment0
