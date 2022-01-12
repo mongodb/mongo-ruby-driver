@@ -420,6 +420,8 @@ module Mongo
     #   changes that occurred after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
+    # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with a $changeStream

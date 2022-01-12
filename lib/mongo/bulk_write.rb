@@ -179,7 +179,8 @@ module Mongo
         :max_time_ms => options[:max_time_ms],
         :options => options,
         :id_generator => client.options[:id_generator],
-        :session => session
+        :session => session,
+        :comment => options[:comment]
       }
     end
 

@@ -39,9 +39,12 @@ module Mongo
         end
 
         def selector(connection)
-          { insert: coll_name,
+          {
+            insert: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
-            ordered: ordered? }
+            ordered: ordered?,
+            comment: spec[:comment],
+          }.compact
         end
 
         def message(connection)

@@ -433,6 +433,8 @@ module Mongo
     #   changes that occurred at or after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
+    # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
@@ -609,6 +611,7 @@ module Mongo
             :id_generator => client.options[:id_generator],
             :session => session,
             :txn_num => txn_num,
+            :comment => opts[:comment]
           ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end

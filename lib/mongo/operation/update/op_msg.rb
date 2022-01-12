@@ -37,7 +37,8 @@ module Mongo
           {
             update: coll_name,
             ordered: ordered?,
-            let: spec[:let]
+            let: spec[:let],
+            comment: spec[:comment]
           }.compact
         end
 

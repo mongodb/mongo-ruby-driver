@@ -73,7 +73,7 @@ tests:
           }
         }
 
-  - description: "Test comment"
+  - description: "Test with document comment"
     runOnRequirements:
       - minServerVersion: "4.4"
         topologies: [replicaset]
@@ -94,3 +94,24 @@ tests:
                   -
                     $changeStream: {}
                 comment: *comment0
+
+  - description: "Test with string comment"
+    runOnRequirements:
+        - topologies: [replicaset]
+    operations:
+      - name: createChangeStream
+        object: *collection0
+        arguments:
+          pipeline: []
+          comment: "comment"
+        saveResultAsEntity: &changeStream0 changeStream0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                aggregate: *collection0
+                pipeline:
+                  -
+                    $changeStream: {}
+                comment: "comment"

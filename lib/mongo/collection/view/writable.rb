@@ -359,7 +359,8 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 txn_num: txn_num,
-                let: opts[:let]
+                let: opts[:let],
+                comment: opts[:comment]
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -425,6 +426,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -490,6 +492,7 @@ module Mongo
                 session: session,
                 txn_num: txn_num,
                 let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end

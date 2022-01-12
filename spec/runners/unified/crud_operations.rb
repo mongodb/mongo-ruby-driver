@@ -112,7 +112,9 @@ module Unified
     def insert_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          comment: args.use('comment')
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -123,7 +125,9 @@ module Unified
     def insert_many(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          comment: args.use('comment')
+        }
         unless (ordered = args.use('ordered')).nil?
           opts[:ordered] = ordered
         end
@@ -139,6 +143,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -152,6 +157,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         collection.update_many(args.use!('filter'), args.use!('update'), **opts)
       end
@@ -163,6 +169,7 @@ module Unified
         collection.replace_one(
           args.use!('filter'),
           args.use!('replacement'),
+          comment: args.use('comment'),
           upsert: args.use('upsert'),
         )
       end
