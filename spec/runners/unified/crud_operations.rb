@@ -69,6 +69,7 @@ module Unified
         update = args.use!('update')
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym
@@ -87,6 +88,7 @@ module Unified
         update = args.use!('replacement')
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)

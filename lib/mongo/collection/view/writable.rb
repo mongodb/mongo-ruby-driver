@@ -180,6 +180,7 @@ module Mongo
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
               let: opts[:let],
+              comment: opts[:comment]
             }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
