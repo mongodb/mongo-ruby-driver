@@ -215,6 +215,12 @@ module Unified
       if session = args.use('session')
         opts[:session] = entities.get(:session, session)
       end
+      if comment = args.use('comment')
+        opts[:comment] = comment
+      end
+      if batch_size = args.use('batchSize')
+        opts[:batch_size] = batch_size
+      end
       unless args.empty?
         raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}"
       end
