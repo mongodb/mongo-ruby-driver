@@ -164,6 +164,7 @@ module Unified
           args.use!('filter'),
           args.use!('replacement'),
           upsert: args.use('upsert'),
+          let: args.use('let')
         )
       end
     end
