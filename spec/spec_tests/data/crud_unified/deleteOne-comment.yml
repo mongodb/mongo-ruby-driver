@@ -1,0 +1,79 @@
+description: "deleteOne-comment"
+
+schemaVersion: "1.0"
+
+runOnRequirements:
+  - minServerVersion: "4.4"
+
+createEntities:
+  - client:
+      id: &client0 client0
+      observeEvents: [ commandStartedEvent ]
+  - database:
+      id: &database0 database0
+      client: *client0
+      databaseName: &database0Name crud-tests
+  - collection:
+      id: &collection0 collection0
+      database: *database0
+      collectionName: &collection0Name coll0
+
+initialData: &initialData
+  - collectionName: *collection0Name
+    databaseName: *database0Name
+    documents:
+      - { _id: 1 }
+      - { _id: 2 }
+
+tests:
+  - description: "deleteOne with string comment"
+    operations:
+      - name: deleteOne
+        object: *collection0
+        arguments:
+          filter: &filter { _id: 1 }
+          comment: "comment"
+        expectResult:
+          deletedCount: 1
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                delete: *collection0Name
+                deletes:
+                  -
+                    q: *filter
+                comment: "comment"
+    outcome:
+      -
+        collectionName: *collection0Name
+        databaseName: *database0Name
+        documents:
+          - { _id: 2 }
+
+  - description: "deleteOne with document comment"
+    operations:
+      - name: deleteOne
+        object: *collection0
+        arguments:
+          filter: *filter
+          comment: &comment { key: "value" }
+        expectResult:
+          deletedCount: 1
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                delete: *collection0Name
+                deletes:
+                  -
+                    q: *filter
+                comment: *comment
+    outcome:
+      -
+        collectionName: *collection0Name
+        databaseName: *database0Name
+        documents:
+          - { _id: 2 }

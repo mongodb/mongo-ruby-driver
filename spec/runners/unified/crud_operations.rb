@@ -10,6 +10,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -103,6 +104,7 @@ module Unified
         filter = args.use!('filter')
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -182,6 +184,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -195,6 +198,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         collection.delete_many(args.use!('filter'), **opts)
       end
@@ -209,6 +213,9 @@ module Unified
         opts = {}
         if ordered = args.use('ordered')
           opts[:ordered] = true
+        end
+        if comment = args.use('comment')
+          opts[:comment] = comment
         end
         collection.bulk_write(requests, **opts)
       end

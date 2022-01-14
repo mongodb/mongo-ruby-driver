@@ -38,6 +38,7 @@ module Mongo
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
             ordered: ordered?,
             let: spec[:let],
+            comment: spec[:comment],
           }.compact.tap do |selector|
             if hint = spec[:hint]
               validate_hint_on_update(connection, selector)

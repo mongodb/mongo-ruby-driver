@@ -1,0 +1,247 @@
+description: bulkWrite-delete-comment
+schemaVersion: '1.0'
+runOnRequirements:
+  - minServerVersion: "4.4"
+
+createEntities:
+  -
+    client:
+      id: &client0 client0
+      observeEvents:
+        - commandStartedEvent
+  -
+    database:
+      id: &database0 database0
+      client: client0
+      databaseName: &database_name crud-v2
+  -
+    collection:
+      id: &collection0 collection0
+      database: database0
+      collectionName: &collection_name BulkWrite_delete_comment
+
+initialData:
+  -
+    collectionName: *collection_name
+    databaseName: *database_name
+    documents:
+      -
+        _id: 1
+        x: 11
+      -
+        _id: 2
+        x: 22
+      -
+        _id: 3
+        x: 33
+      -
+        _id: 4
+        x: 44
+tests:
+  - description: 'BulkWrite deleteOne with string comment'
+    operations:
+      -
+        object: *collection0
+        name: bulkWrite
+        arguments:
+          requests:
+            -
+              deleteOne:
+                filter: &deleteOne_filter1
+                  _id: 1
+            -
+              deleteOne:
+                filter: &deleteOne_filter2
+                  _id: 2
+          ordered: true
+          comment: &string_comment "comment"
+        expectResult:
+          deletedCount: 2
+          insertedCount: 0
+          insertedIds: { $$unsetOrMatches: {} }
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+          upsertedIds: {  }
+    expectEvents:
+      -
+        client: *client0
+        events:
+          -
+            commandStartedEvent:
+              command:
+                delete: *collection_name
+                deletes:
+                  -
+                    q: *deleteOne_filter1
+                    limit: 1
+                  -
+                    q: *deleteOne_filter2
+                    limit: 1
+                ordered: true
+                comment: *string_comment
+    outcome:
+      -
+        collectionName: *collection_name
+        databaseName: *database_name
+        documents:
+          -
+            _id: 3
+            x: 33
+          -
+            _id: 4
+            x: 44
+
+  - description: 'BulkWrite deleteOne with document comment'
+    operations:
+      -
+        object: *collection0
+        name: bulkWrite
+        arguments:
+          requests:
+            -
+              deleteOne:
+                filter: *deleteOne_filter1
+            -
+              deleteOne:
+                filter: *deleteOne_filter2
+          ordered: true
+          comment: &document_comment { key: "value" }
+        expectResult:
+          deletedCount: 2
+          insertedCount: 0
+          insertedIds: { $$unsetOrMatches: {} }
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+          upsertedIds: {  }
+    expectEvents:
+      -
+        client: *client0
+        events:
+          -
+            commandStartedEvent:
+              command:
+                delete: *collection_name
+                deletes:
+                  -
+                    q: *deleteOne_filter1
+                    limit: 1
+                  -
+                    q: *deleteOne_filter2
+                    limit: 1
+                ordered: true
+                comment: *document_comment
+    outcome:
+      -
+        collectionName: *collection_name
+        databaseName: *database_name
+        documents:
+          -
+            _id: 3
+            x: 33
+          -
+            _id: 4
+            x: 44
+
+  - description: 'BulkWrite deleteMany with string comment'
+    operations:
+      -
+        object: *collection0
+        name: bulkWrite
+        arguments:
+          requests:
+            -
+              deleteMany:
+                filter: &deleteMany_filter1
+                  _id:
+                    $lt: 3
+            -
+              deleteMany:
+                filter: &deleteMany_filter2
+                  _id:
+                    $gte: 4
+          ordered: true
+          comment: *string_comment
+        expectResult:
+          deletedCount: 3
+          insertedCount: 0
+          insertedIds: { $$unsetOrMatches: {} }
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+          upsertedIds: {  }
+    expectEvents:
+      -
+        client: *client0
+        events:
+          -
+            commandStartedEvent:
+              command:
+                delete: *collection_name
+                deletes:
+                  -
+                    q: *deleteMany_filter1
+                    limit: 0
+                  -
+                    q: *deleteMany_filter2
+                    limit: 0
+                ordered: true
+                comment: *string_comment
+    outcome:
+      -
+        collectionName: *collection_name
+        databaseName: *database_name
+        documents:
+          -
+            _id: 3
+            x: 33
+
+  - description: 'BulkWrite deleteMany with document comment'
+    operations:
+      -
+        object: *collection0
+        name: bulkWrite
+        arguments:
+          requests:
+            -
+              deleteMany:
+                filter: *deleteMany_filter1
+            -
+              deleteMany:
+                filter: *deleteMany_filter2
+          ordered: true
+          comment: *document_comment
+        expectResult:
+          deletedCount: 3
+          insertedCount: 0
+          insertedIds: { $$unsetOrMatches: {} }
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+          upsertedIds: {  }
+    expectEvents:
+      -
+        client: *client0
+        events:
+          -
+            commandStartedEvent:
+              command:
+                delete: *collection_name
+                deletes:
+                  -
+                    q: *deleteMany_filter1
+                    limit: 0
+                  -
+                    q: *deleteMany_filter2
+                    limit: 0
+                ordered: true
+                comment: *document_comment
+    outcome:
+      -
+        collectionName: *collection_name
+        databaseName: *database_name
+        documents:
+          -
+            _id: 3
+            x: 33

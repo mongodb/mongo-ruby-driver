@@ -1,0 +1,109 @@
+description: bulkWrite-insertOne-comment
+schemaVersion: '1.0'
+
+runOnRequirements:
+  - minServerVersion: "4.4"
+
+createEntities:
+  -
+    client:
+      id: &client0 client0
+      observeEvents:
+        - commandStartedEvent
+  -
+    database:
+      id: &database0 database0
+      client: client0
+      databaseName: &database_name crud-v2
+  -
+    collection:
+      id: &collection0 collection0
+      database: database0
+      collectionName: &collection_name BulkWrite_insert_comment
+
+initialData:
+  -
+    collectionName: *collection_name
+    databaseName: *database_name
+    documents: []
+
+tests:
+  - description: 'BulkWrite insertOne with string comment'
+    operations:
+      -
+        object: *collection0
+        name: bulkWrite
+        arguments:
+          requests:
+            -
+              insertOne:
+                document: &document1 { _id: 1, x: "foo" }
+            -
+              insertOne:
+                document: &document2 { _id: 2, x: "bar" }
+          comment: &string_comment "comment"
+        expectResult:
+          deletedCount: 0
+          insertedCount: 2
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+          upsertedIds: { }
+    expectEvents:
+      -
+        client: *client0
+        events:
+          -
+            commandStartedEvent:
+              command:
+                insert: *collection_name
+                documents:
+                  - *document1
+                  - *document2
+                comment: *string_comment
+    outcome: &outcome
+      -
+        collectionName: *collection_name
+        databaseName: *database_name
+        documents:
+          -
+            _id: 1
+            x: "foo"
+          -
+            _id: 2
+            x: "bar"
+
+  - description: 'BulkWrite insertOne with document comment'
+    operations:
+      -
+        object: *collection0
+        name: bulkWrite
+        arguments:
+          requests:
+            -
+              insertOne:
+                document: *document1
+            -
+              insertOne:
+                document: *document2
+          comment: &document_comment { key: "value" }
+        expectResult:
+          deletedCount: 0
+          insertedCount: 2
+          matchedCount: 0
+          modifiedCount: 0
+          upsertedCount: 0
+          upsertedIds: { }
+    expectEvents:
+      -
+        client: *client0
+        events:
+          -
+            commandStartedEvent:
+              command:
+                insert: *collection_name
+                documents:
+                  - *document1
+                  - *document2
+                comment: *document_comment
+    outcome: *outcome
