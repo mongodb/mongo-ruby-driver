@@ -175,7 +175,7 @@ axes:
   - id: docker-distro
     display_name: Docker Distro
     values:
-      <% %w(debian92 debian10).each do |distro| %>
+      <% %w(debian92 debian10 ubuntu1804).each do |distro| %>
         - id: <%= distro %>
           display_name: <%= distro %>
           variables:
