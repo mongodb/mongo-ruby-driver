@@ -630,6 +630,10 @@ axes:
           display_name: debian10
           variables:
             DOCKER_DISTRO: debian10
+        - id: ubuntu1804
+          display_name: ubuntu1804
+          variables:
+            DOCKER_DISTRO: ubuntu1804
 
   - id: "compressor"
     display_name: Compressor
