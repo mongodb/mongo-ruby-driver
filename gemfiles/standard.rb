@@ -28,6 +28,9 @@ def standard_dependencies
     # for benchmark tests
     gem 'yajl-ruby', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
+
+    gem 'ruby-debug-ide'
+    gem 'debase', platforms: :mri
   end
 
   group :testing do

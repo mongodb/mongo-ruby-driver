@@ -44,6 +44,8 @@ set_env_vars() {
     export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
   elif test "$BSON" = master; then
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
+  elif test "$BSON" = 4_stable; then
+    export BUNDLE_GEMFILE=gemfiles/bson_4-stable.gemfile
   elif test "$COMPRESSOR" = snappy; then
     export BUNDLE_GEMFILE=gemfiles/snappy_compression.gemfile
   elif test "$COMPRESSOR" = zstd; then

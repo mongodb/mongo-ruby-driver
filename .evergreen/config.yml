@@ -756,7 +756,11 @@ axes:
         display_name: min
         variables:
           BSON: min
-
+      - id: 4_stable
+        display_name: 4_stable
+        variables:
+          BSON: 4_stable
+  
   - id: storage-engine
     display_name: Storage Engine
     values:
