@@ -43,6 +43,7 @@ set_env_vars() {
   if test "$BSON" = min; then
     export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
   elif test "$BSON" = master; then
+    export MONGO_RUBY_DRIVER_BSON_MASTER=1
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
   elif test "$BSON" = 4-stable; then
     export BUNDLE_GEMFILE=gemfiles/bson_4-stable.gemfile
