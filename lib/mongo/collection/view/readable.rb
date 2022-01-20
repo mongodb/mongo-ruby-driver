@@ -153,6 +153,8 @@ module Mongo
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Integer ] The document count.
         #
@@ -187,6 +189,7 @@ module Mongo
                 # For some reason collation was historically accepted as a
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
+                count: opts[count],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end.n.to_i
           end

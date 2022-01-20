@@ -50,6 +50,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ BSON::Document, nil ] The document, if found.
         #
@@ -150,6 +152,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -212,6 +216,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -266,6 +272,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -326,6 +334,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -364,7 +374,7 @@ module Mongo
                 session: session,
                 txn_num: txn_num,
                 let: opts[:let],
-                comment: opts[:comment]
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -392,6 +402,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -458,6 +470,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #

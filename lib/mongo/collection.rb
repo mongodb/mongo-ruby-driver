@@ -462,6 +462,8 @@ module Mongo
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Integer ] The document count.
     #
