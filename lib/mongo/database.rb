@@ -125,6 +125,8 @@ module Mongo
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with nameOnly: true, that allows a user without the
     #   required privilege to run the command when access control is enforced
+    # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+    #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -150,7 +152,9 @@ module Mongo
     #   name and other information
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with nameOnly: true, that allows a user without the
-    #   required privilege to run the command when access control is enforced
+    #   required privilege to run the command when access control is enforced.
+    # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+    #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -173,7 +177,9 @@ module Mongo
     # @option options [ Hash ] :filter A filter on the collections returned.
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with name_only: true, that allows a user without the
-    #   required privilege to run the command when access control is enforced
+    #   required privilege to run the command when access control is enforced.
+    # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+    #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.

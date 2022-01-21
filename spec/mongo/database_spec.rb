@@ -18,6 +18,14 @@ describe Mongo::Database do
     end
   end
 
+  let(:subscriber) { Mrss::EventSubscriber.new }
+
+  let(:monitored_client) do
+    root_authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -278,6 +286,17 @@ describe Mongo::Database do
         collection_names.should include('coll-119')
       end
     end
+
+    context 'with comment' do
+      min_server_version '4.4'
+
+      it 'returns collection names and send comment' do
+        database = described_class.new(monitored_client, SpecConfig.instance.test_db)
+        database.collection_names(comment: "comment")
+        command = subscriber.command_started_events("listCollections").last&.command
+        expect(command&.fetch("comment")).to eq("comment")
+      end
+    end
   end
 
   describe '#list_collections' do
@@ -479,6 +498,17 @@ describe Mongo::Database do
         collection_names.should include('coll-119')
       end
     end
+
+    context 'with comment' do
+      min_server_version '4.4'
+
+      it 'returns collection names and send comment' do
+        database = described_class.new(monitored_client, SpecConfig.instance.test_db)
+        database.list_collections(comment: "comment")
+        command = subscriber.command_started_events("listCollections").last&.command
+        expect(command&.fetch("comment")).to eq("comment")
+      end
+    end
   end
 
   describe '#collections' do
@@ -666,6 +696,17 @@ describe Mongo::Database do
         collections.length.should == 120
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
+      end
+    end
+
+    context 'with comment' do
+      min_server_version '4.4'
+
+      it 'returns collection names and send comment' do
+        database = described_class.new(monitored_client, SpecConfig.instance.test_db)
+        database.collections(comment: "comment")
+        command = subscriber.command_started_events("listCollections").last&.command
+        expect(command&.fetch("comment")).to eq("comment")
       end
     end
   end
