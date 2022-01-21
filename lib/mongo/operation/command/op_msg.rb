@@ -25,6 +25,12 @@ module Mongo
       #
       # @since 2.5.2
       class OpMsg < OpMsgBase
+
+        def selector(connection)
+          spec[:selector].merge(
+            comment: spec[:comment],
+          ).compact
+        end
       end
     end
   end

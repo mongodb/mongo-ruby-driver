@@ -8,6 +8,14 @@ require 'spec_helper'
 
 describe Mongo::Client do
 
+  let(:subscriber) { Mrss::EventSubscriber.new }
+
+  let(:monitored_client) do
+    root_authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
   describe '#==' do
 
     let(:client) do
@@ -584,6 +592,17 @@ describe Mongo::Client do
         expect(result.first).to eq(filter[:name])
       end
     end
+
+    context 'with comment' do
+      min_server_version '4.4'
+
+      it 'returns a list of database names and send comment' do
+        result = monitored_client.database_names({}, comment: "comment")
+        expect(result).to include('admin')
+        command = subscriber.command_started_events("listDatabases").last&.command
+        expect(command&.fetch("comment")).to eq("comment")
+      end
+    end
   end
 
   describe '#list_databases' do
@@ -677,6 +696,19 @@ describe Mongo::Client do
         expect(command[:authorizedDatabases]).to be_nil
       end
     end
+
+    context 'with comment' do
+      min_server_version '4.4'
+
+      it 'returns a list of database names and send comment' do
+        result = monitored_client.list_databases({}, false, comment: "comment").collect do |i|
+          i['name']
+        end
+        expect(result).to include('admin')
+        command = subscriber.command_started_events("listDatabases").last&.command
+        expect(command&.fetch("comment")).to eq("comment")
+      end
+    end
   end
 
   describe '#list_mongo_databases' do
@@ -717,6 +749,17 @@ describe Mongo::Client do
       it 'returns a filtered list of Mongo::Database objects' do
         expect(result.length).to eq(1)
         expect(result.first.name).to eq(filter[:name])
+      end
+    end
+
+    context 'with comment' do
+      min_server_version '4.4'
+
+      it 'returns a list of database names and send comment' do
+        result = monitored_client.list_mongo_databases({}, comment: "comment")
+        expect(result).to all(be_a(Mongo::Database))
+        command = subscriber.command_started_events("listDatabases").last&.command
+        expect(command&.fetch("comment")).to eq("comment")
       end
     end
   end

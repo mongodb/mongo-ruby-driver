@@ -258,6 +258,7 @@ module Mongo
             db_name: name,
             read: preference,
             session: session,
+            comment: opts[:comment],
           ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
