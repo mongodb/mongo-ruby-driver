@@ -43,7 +43,10 @@ set_env_vars() {
   if test "$BSON" = min; then
     export BUNDLE_GEMFILE=gemfiles/bson_min.gemfile
   elif test "$BSON" = master; then
+    export MONGO_RUBY_DRIVER_BSON_MASTER=1
     export BUNDLE_GEMFILE=gemfiles/bson_master.gemfile
+  elif test "$BSON" = 4-stable; then
+    export BUNDLE_GEMFILE=gemfiles/bson_4-stable.gemfile
   elif test "$COMPRESSOR" = snappy; then
     export BUNDLE_GEMFILE=gemfiles/snappy_compression.gemfile
   elif test "$COMPRESSOR" = zstd; then
@@ -59,17 +62,18 @@ set_env_vars() {
 bundle_install() {
   args=--quiet
   
-  if test "$BSON" = master; then
+  if test "$BSON" = master || test "$BSON" = 4-stable; then
     # In Docker bson is installed in the image, remove it if we need bson master.
     gem uni bson || true
   fi
 
   # On JRuby we can test against bson master but not in a conventional way.
   # See https://jira.mongodb.org/browse/RUBY-2156
-  if echo $RVM_RUBY |grep -q jruby && test "$BSON" = master; then
+  if echo $RVM_RUBY |grep -q jruby && (test "$BSON" = master || test "$BSON" = 4-stable); then
     unset BUNDLE_GEMFILE
     git clone https://github.com/mongodb/bson-ruby
     (cd bson-ruby &&
+      git checkout "origin/$BSON" &&
       bundle install &&
       rake compile &&
       gem build *.gemspec &&

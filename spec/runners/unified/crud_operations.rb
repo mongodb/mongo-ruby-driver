@@ -175,6 +175,7 @@ module Unified
           args.use!('replacement'),
           comment: args.use('comment'),
           upsert: args.use('upsert'),
+          let: args.use('let')
         )
       end
     end

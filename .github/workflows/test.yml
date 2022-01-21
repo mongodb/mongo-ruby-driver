@@ -1,3 +1,7 @@
+# Note on topology: server:
+# The GH actions use mongo-orchestration, which uses a "server" topology for
+# the standalone one.
+
 name: Run Driver Tests
 on: [push, pull_request]
 jobs:

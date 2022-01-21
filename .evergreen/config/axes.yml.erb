@@ -121,6 +121,10 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.1"
+        display_name: ruby-3.1
+        variables:
+          RVM_RUBY: "ruby-3.1"
       - id: "ruby-3.0"
         display_name: ruby-3.0
         variables:
@@ -149,12 +153,18 @@ axes:
   - id: "os"
     display_name: OS
     values:
+      - id: ubuntu2004
+        display_name: "Ubuntu 20.04"
+        run_on: ubuntu2004-small
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-small
       - id: ubuntu1604
         display_name: "Ubuntu 16.04"
         run_on: ubuntu1604-small
+      - id: rhel80
+        display_name: "RHEL 8"
+        run_on: rhel80-small
       - id: rhel70
         display_name: "RHEL 7"
         run_on: rhel70-small
@@ -165,7 +175,7 @@ axes:
   - id: docker-distro
     display_name: Docker Distro
     values:
-      <% %w(debian92 debian10).each do |distro| %>
+      <% %w(debian92 debian10 ubuntu1804).each do |distro| %>
         - id: <%= distro %>
           display_name: <%= distro %>
           variables:
