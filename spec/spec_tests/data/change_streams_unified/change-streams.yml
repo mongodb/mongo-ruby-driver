@@ -1,5 +1,7 @@
 description: "change-streams"
 schemaVersion: "1.0"
+runOnRequirements:
+  - topologies: [ replicaset, sharded-replicaset ]
 createEntities:
   - client:
       id: &client0 client0
@@ -21,7 +23,6 @@ tests:
   - description: "Test array truncation"
     runOnRequirements:
       - minServerVersion: "4.7"
-        topologies: [replicaset]
     operations:
       - name: insertOne
         object: *collection0
@@ -76,7 +77,6 @@ tests:
   - description: "Test with document comment"
     runOnRequirements:
       - minServerVersion: "4.4"
-        topologies: [replicaset]
     operations:
       - name: createChangeStream
         object: *collection0
@@ -95,9 +95,20 @@ tests:
                     $changeStream: {}
                 comment: *comment0
 
-  - description: "Test with string comment"
+  - description: "Test with document comment - pre 4.4"
     runOnRequirements:
-        - topologies: [replicaset]
+      - maxServerVersion: "4.2.99"
+    operations:
+      - name: createChangeStream
+        object: *collection0
+        arguments:
+          pipeline: []
+          comment: &comment0 { name: "test1" }
+        expectError:
+          errorContains: "comment must be a string, not a object"
+          isClientError: false
+
+  - description: "Test with string comment"
     operations:
       - name: createChangeStream
         object: *collection0
