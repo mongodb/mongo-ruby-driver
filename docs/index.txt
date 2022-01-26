@@ -8,9 +8,10 @@ Ruby MongoDB Driver
 
 .. default-domain:: mongodb
 
-The MongoDB Ruby driver is the officially supported Ruby driver for MongoDB.
-It can be used on its own, but it also serves as the basis of several
-object mapping libraries.
+Welcome to the documentation site for the official MongoDB Ruby driver. 
+You can add the driver to your application to work with MongoDB in 
+Ruby. Download it using `gem <https://rubygems.org/gems/mongo>`__ or 
+set up runnable project by following our Quick Start guide.
 
 Get Started
 ===========
