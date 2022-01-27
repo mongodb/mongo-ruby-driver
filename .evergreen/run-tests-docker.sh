@@ -23,7 +23,7 @@ done
 
 if test -f .env.private; then
   params="$params -a .env.private"
-  gem install dotenv
+  gem install dotenv || gem install --user dotenv
 fi
 
 # OCSP verifier tests need debian10 so that ocsp mock works
