@@ -27,9 +27,9 @@ module Mongo
       class OpMsg < OpMsgBase
 
         def selector(connection)
-          spec[:selector].merge(
-            comment: spec[:comment],
-          ).compact
+          spec[:selector].dup.tap do |sel|
+            sel[:comment] = spec[:comment] unless spec[:comment].nil?
+          end
         end
       end
     end
