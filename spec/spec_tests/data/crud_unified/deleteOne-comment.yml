@@ -23,7 +23,8 @@ initialData: &initialData
     databaseName: *database0Name
     documents:
       - { _id: 1 }
-      - { _id: 2 }
+      - { _id: 2, name: "name" }
+      - { _id: 3, name: "name" }
 
 tests:
   - description: "deleteOne with string comment"
@@ -33,7 +34,7 @@ tests:
         arguments:
           filter: &filter { _id: 1 }
           comment: "comment"
-        expectResult:
+        expectResult: &expect_result
           deletedCount: 1
     expectEvents:
       - client: *client0
@@ -42,15 +43,15 @@ tests:
               command:
                 delete: *collection0Name
                 deletes:
-                  -
-                    q: *filter
+                  - q: *filter
+                    limit: 1
                 comment: "comment"
-    outcome:
-      -
-        collectionName: *collection0Name
+    outcome: &outcome
+      - collectionName: *collection0Name
         databaseName: *database0Name
         documents:
-          - { _id: 2 }
+          - { _id: 2, name: "name" }
+          - { _id: 3, name: "name" }
 
   - description: "deleteOne with document comment"
     operations:
@@ -59,8 +60,7 @@ tests:
         arguments:
           filter: *filter
           comment: &comment { key: "value" }
-        expectResult:
-          deletedCount: 1
+        expectResult: *expect_result
     expectEvents:
       - client: *client0
         events:
@@ -68,12 +68,7 @@ tests:
               command:
                 delete: *collection0Name
                 deletes:
-                  -
-                    q: *filter
+                  - q: *filter
+                    limit: 1
                 comment: *comment
-    outcome:
-      -
-        collectionName: *collection0Name
-        databaseName: *database0Name
-        documents:
-          - { _id: 2 }
+    outcome: *outcome
