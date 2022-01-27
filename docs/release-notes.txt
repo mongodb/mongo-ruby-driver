@@ -20,6 +20,9 @@ its test suite.
 2.18
 ====
 
+This release of the Ruby driver deprecates JRuby support. JRuby support will
+be removed in a future version of the driver.
+
 This release includes the following new features:
 
 - Added support for Azure Key Vault, Google Cloud Key Management, and any

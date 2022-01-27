@@ -291,9 +291,24 @@ for that Ruby version is deprecated.
      - Ruby 2.1
      - Ruby 2.0
      - Ruby 1.9
+     - JRuby 9.3
      - JRuby 9.2
      - JRuby 9.1
-     - JRuby
+
+   * - 2.18
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     -
+     -
+     -
+     -
+     -
+     - D
+     -
 
    * - 2.17
      - |checkmark|
@@ -306,8 +321,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - |checkmark|
      -
+     - |checkmark|
      -
 
    * - 2.16
@@ -321,8 +336,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - |checkmark|
      -
+     - |checkmark|
      -
 
    * - 2.15
@@ -336,9 +351,10 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      -
-     -
+   
    * - 2.14
      -
      - |checkmark|
@@ -350,8 +366,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - |checkmark|
      -
+     - |checkmark|
      -
 
    * - 2.13
@@ -365,8 +381,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - |checkmark|
      -
+     - |checkmark|
      -
 
    * - 2.12
@@ -380,8 +396,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - |checkmark|
      -
+     - |checkmark|
      -
 
    * - 2.11
@@ -395,8 +411,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - |checkmark|
      -
+     - |checkmark|
      -
 
    * - 2.10
@@ -410,9 +426,9 @@ for that Ruby version is deprecated.
      - D
      - D
      - D
-     - |checkmark|
-     - |checkmark|
      -
+     - |checkmark|
+     - |checkmark|
 
    * - 2.9
      -
@@ -425,9 +441,9 @@ for that Ruby version is deprecated.
      - D
      - D
      - D
-     - |checkmark|
-     - |checkmark|
      -
+     - |checkmark|
+     - |checkmark|
 
    * - 2.8
      -
@@ -440,9 +456,9 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     - |checkmark|
+     - |checkmark|
 
    * - 2.7
      -
@@ -455,9 +471,9 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
+     - |checkmark|
+     - |checkmark|
 
    * - 2.6
      -
@@ -470,101 +486,16 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-
-   * - 2.5
-     -
-     -
-     -
      -
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 2.4
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 2.3
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 2.2
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 2.1
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 2.0
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
      - |checkmark|
 
 The driver does not support older versions of Ruby.
+
+.. note::
+
+  The JRuby support is deprecated and will be removed in a future version
+  of the driver.
 
 
 Rails/ActiveSupport Compatibility
