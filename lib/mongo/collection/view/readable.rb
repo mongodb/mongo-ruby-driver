@@ -189,7 +189,7 @@ module Mongo
                 # For some reason collation was historically accepted as a
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
-                count: opts[count],
+                comment: opts[comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end.n.to_i
           end
