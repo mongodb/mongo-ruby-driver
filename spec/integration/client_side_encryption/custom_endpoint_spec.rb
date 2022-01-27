@@ -95,7 +95,7 @@ describe 'Client-Side Encryption' do
 
       let(:error_regex) do
         if BSON::Environment.jruby?
-          /Bad file descriptor/
+          /SocketError/
         else
           /Connection refused/
         end
