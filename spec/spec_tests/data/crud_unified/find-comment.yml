@@ -5,7 +5,7 @@ schemaVersion: "1.0"
 createEntities:
   - client:
       id: &client0 client0
-      observeEvents: [ commandStartedEvent, commandSucceededEvent ]
+      observeEvents: [ commandStartedEvent ]
   - database:
       id: &database0 database0
       client: *client0
@@ -36,6 +36,7 @@ tests:
             _id: 1
           comment: "comment"
         expectResult: &expect_result
+          - { _id: 1 }
     expectEvents:
       - client: *client0
         events:
@@ -77,7 +78,7 @@ tests:
           errorContains: "'comment' field must be of BSON type string"
           isClientError: false
 
-  - description: "find with and then getMore"
+  - description: "find with comment does not set comment on getMore"
     operations:
       - name: find
         object: *collection0
@@ -100,31 +101,15 @@ tests:
                 filter: { _id: { $gt: 1 } }
                 batchSize: 2
                 comment: "comment"
-          - commandSucceededEvent:
-              command:
-                find: *collection0Name
-                filter: { _id: { $gt: 1 } }
-                batchSize: 2
-                comment: "comment"
           - commandStartedEvent:
               command:
                 getMore: { $$type: [ int, long ] }
                 collection: *collection0Name
                 batchSize: 2
-          - commandSucceededEvent:
-              command:
-                getMore: { $$type: [ int, long ] }
-                collection: *collection0Name
-                batchSize: 2
-                comment: "comment"
+                comment: null
           - commandStartedEvent:
               command:
                 getMore: { $$type: [ int, long ] }
                 collection: *collection0Name
                 batchSize: 2
-          - commandSucceededEvent:
-              command:
-                getMore: { $$type: [ int, long ] }
-                collection: *collection0Name
-                batchSize: 2
-                comment: "comment"
+                comment: null

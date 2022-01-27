@@ -53,6 +53,13 @@ tests:
                   _id: 3
           comment: &string_comment "comment"
         expectResult: &expect_results
+          deletedCount: 1
+          insertedCount: 1
+          insertedIds: { 0: 5 }
+          matchedCount: 2
+          modifiedCount: 2
+          upsertedCount: 0
+          upsertedIds: {  }
     expectEvents:
       - client: *client0
         events:
