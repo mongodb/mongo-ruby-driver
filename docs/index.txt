@@ -10,8 +10,7 @@ Ruby MongoDB Driver
 
 Welcome to the documentation site for the official MongoDB Ruby driver. 
 You can add the driver to your application to work with MongoDB in 
-Ruby. Download it using `gem <https://rubygems.org/gems/mongo>`__ or 
-set up runnable project by following our Quick Start guide.
+Ruby.
 
 Get Started
 ===========
