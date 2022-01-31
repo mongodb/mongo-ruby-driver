@@ -1,10 +1,6 @@
-description: "findOneAndDelete
--comment"
-
+description: "findOneAndDelete-comment"
 schemaVersion: "1.0"
 
-runOnRequirements:
-  - minServerVersion: "4.4"
 
 createEntities:
   - client:
@@ -28,6 +24,8 @@ initialData: &initialData
 
 tests:
   - description: "findOneAndDelete with string comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
     operations:
       - name: findOneAndDelete
         object: *collection0
@@ -48,6 +46,8 @@ tests:
                 comment: "comment"
 
   - description: "findOneAndDelete with document comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
     operations:
       - name: findOneAndDelete
         object: *collection0
@@ -65,3 +65,25 @@ tests:
                 query: *filter
                 remove: true
                 comment: *comment
+
+  - description: "findOneAndDelete with comment - pre 4.4"
+    runOnRequirements:
+      - maxServerVersion: "4.2.99"
+    operations:
+      - name: findOneAndDelete
+        object: *collection0
+        arguments:
+          filter: *filter
+          comment: "comment"
+        expectError:
+          isClientError: false
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                findAndModify: *collection0Name
+                query: *filter
+                remove: true
+                comment: "comment"
+    outcome: *initialData

@@ -1,10 +1,5 @@
-description: "findOneAndReplace
--comment"
-
+description: "findOneAndReplace-comment"
 schemaVersion: "1.0"
-
-runOnRequirements:
-  - minServerVersion: "4.4"
 
 createEntities:
   - client:
@@ -28,6 +23,8 @@ initialData: &initialData
 
 tests:
   - description: "findOneAndReplace with string comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
     operations:
       - name: findOneAndReplace
         object: *collection0
@@ -50,6 +47,8 @@ tests:
                 comment: "comment"
 
   - description: "findOneAndReplace with document comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
     operations:
       - name: findOneAndReplace
         object: *collection0
@@ -68,3 +67,27 @@ tests:
                 query: *filter
                 update: *replacement
                 comment: *comment
+
+  - description: "findOneAndReplace with comment - pre 4.4"
+    runOnRequirements:
+      - minServerVersion: "4.2.0" # findAndModify option validation was introduced in 4.2
+        maxServerVersion: "4.2.99"
+    operations:
+      - name: findOneAndReplace
+        object: *collection0
+        arguments:
+          filter: *filter
+          replacement: *replacement
+          comment: "comment"
+        expectError:
+          isClientError: false
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                findAndModify: *collection0Name
+                query: *filter
+                update: *replacement
+                comment: "comment"
+    outcome: *initialData

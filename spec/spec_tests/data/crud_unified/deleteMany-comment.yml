@@ -1,9 +1,6 @@
 description: "deleteMany-comment"
-
 schemaVersion: "1.0"
 
-runOnRequirements:
-  - minServerVersion: "4.4"
 
 createEntities:
   - client:
@@ -28,6 +25,8 @@ initialData: &initialData
 
 tests:
   - description: "deleteMany with string comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
     operations:
       - name: deleteMany
         object: *collection0
@@ -53,6 +52,8 @@ tests:
           - { _id: 1 }
 
   - description: "deleteMany with document comment"
+    runOnRequirements:
+      - minServerVersion: "4.4"
     operations:
       - name: deleteMany
         object: *collection0
@@ -71,3 +72,26 @@ tests:
                     limit: 0
                 comment: *comment
     outcome: *outcome
+
+  - description: "deleteMany with comment - pre 4.4"
+    runOnRequirements:
+      - maxServerVersion: "4.2.99"
+    operations:
+      - name: deleteMany
+        object: *collection0
+        arguments:
+          filter: *filter
+          comment: "comment"
+        expectError:
+          isClientError: false
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                delete: *collection0Name
+                deletes:
+                  - q: *filter
+                    limit: 0
+                comment: "comment"
+    outcome: *initialData
