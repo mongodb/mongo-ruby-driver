@@ -33,32 +33,32 @@ describe Mongo::Auth::Scram::Conversation do
 
   describe '#start' do
 
-    let(:query) do
-      conversation.start(nil)
+    let(:msg) do
+      conversation.start(connection)
     end
 
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
     end
 
-    let(:selector) do
-      query.selector
+    let(:command) do
+      msg.payload['command']
     end
 
     it 'sets the sasl start flag' do
-      expect(selector[:saslStart]).to eq(1)
+      expect(command[:saslStart]).to eq(1)
     end
 
     it 'sets the auto authorize flag' do
-      expect(selector[:autoAuthorize]).to eq(1)
+      expect(command[:autoAuthorize]).to eq(1)
     end
 
     it 'sets the mechanism' do
-      expect(selector[:mechanism]).to eq('SCRAM-SHA-1')
+      expect(command[:mechanism]).to eq('SCRAM-SHA-1')
     end
 
-    it 'sets the payload' do
-      expect(selector[:payload].data).to eq('n,,n=user,r=NDA2NzU3MDY3MDYwMTgy')
+    it 'sets the command' do
+      expect(command[:payload].data).to eq('n,,n=user,r=NDA2NzU3MDY3MDYwMTgy')
     end
   end
 
@@ -77,26 +77,26 @@ describe Mongo::Auth::Scram::Conversation do
         )
       end
 
-      let(:query) do
+      let(:msg) do
         conversation.continue(continue_document, connection)
       end
 
-      let(:selector) do
-        query.selector
+      let(:command) do
+        msg.payload['command']
       end
 
       it 'sets the conversation id' do
-        expect(selector[:conversationId]).to eq(1)
+        expect(command[:conversationId]).to eq(1)
       end
 
-      it 'sets the payload' do
-        expect(selector[:payload].data).to eq(
+      it 'sets the command' do
+        expect(command[:payload].data).to eq(
           'c=biws,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,p=qYUYNy6SQ9Jucq9rFA9nVgXQdbM='
         )
       end
 
       it 'sets the continue flag' do
-        expect(selector[:saslContinue]).to eq(1)
+        expect(command[:saslContinue]).to eq(1)
       end
     end
 
@@ -135,26 +135,26 @@ describe Mongo::Auth::Scram::Conversation do
         BSON::Binary.new('v=gwo9E8+uifshm7ixj441GvIfuUY=')
       end
 
-      let(:query) do
+      let(:msg) do
         conversation.continue(continue_document, connection)
         conversation.process_continue_response(finalize_document)
         conversation.finalize(connection)
       end
 
-      let(:selector) do
-        query.selector
+      let(:command) do
+        msg.payload['command']
       end
 
       it 'sets the conversation id' do
-        expect(selector[:conversationId]).to eq(1)
+        expect(command[:conversationId]).to eq(1)
       end
 
-      it 'sets the empty payload' do
-        expect(selector[:payload].data).to eq('')
+      it 'sets the empty command' do
+        expect(command[:payload].data).to eq('')
       end
 
       it 'sets the continue flag' do
-        expect(selector[:saslContinue]).to eq(1)
+        expect(command[:saslContinue]).to eq(1)
       end
     end
 
