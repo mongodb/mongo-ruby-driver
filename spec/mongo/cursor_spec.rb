@@ -551,7 +551,7 @@ describe Mongo::Cursor do
         (1..5).map{ |i| { field: "test#{i}" }}
       end
 
-      let(:view) { collection.find(test:{'$gte'=>BSON::MinKey.new}).sort(test:1).limit(5).batch_size(4) }
+      let(:view) { collection.find(field:{'$gte'=>BSON::MinKey.new}).sort(field:1).limit(5).batch_size(4) }
 
       before do
         view.to_a

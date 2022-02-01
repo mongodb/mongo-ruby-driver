@@ -612,6 +612,7 @@ describe Mongo::Server::Connection do
   end
 
   describe '#dispatch' do
+    require_no_required_api_version
 
     let(:server) { monitored_server }
 
@@ -634,50 +635,31 @@ describe Mongo::Server::Connection do
       end
     end
 
-    let(:documents) do
-      [{ 'name' => 'testing' }]
-    end
-
-    let(:insert) do
-      Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
-    end
-
-    let(:query) do
-      Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { 'name' => 'testing' })
+    (0..2).each do |i|
+      let("msg#{i}".to_sym) do
+        Mongo::Protocol::Msg.new(
+          [],
+          {},
+          {ping: 1, :$db => SpecConfig.instance.test_db}
+        )
+      end
     end
 
     context 'when providing a single message' do
 
       let(:reply) do
-        connection.dispatch([ query ], context)
-      end
-
-      before do
-        authorized_collection.delete_many
-        authorized_collection.insert_one(name: 'testing')
+        connection.dispatch([ msg0 ], context)
       end
 
       it 'it dispatches the message to the socket' do
-        expect(reply.documents.first['name']).to eq('testing')
+        expect(reply.payload['reply']['ok']).to eq(1.0)
       end
     end
 
     context 'when providing multiple messages' do
 
-      let(:selector) do
-        { :getlasterror => 1 }
-      end
-
-      let(:command) do
-        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, '$cmd', selector, :limit => -1)
-      end
-
       let(:reply) do
-        connection.dispatch([ insert, command ], context)
-      end
-
-      before do
-        authorized_collection.delete_many
+        connection.dispatch([ msg0, msg1 ], context)
       end
 
       it 'raises ArgumentError' do
@@ -689,43 +671,23 @@ describe Mongo::Server::Connection do
 
     context 'when the response_to does not match the request_id' do
 
-      let(:documents) do
-        [{ 'name' => 'bob' }, { 'name' => 'alice' }]
-      end
-
-      let(:insert) do
-        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
-      end
-
-      let(:query_bob) do
-        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'bob' })
-      end
-
-      let(:query_alice) do
-        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
-      end
-
       before do
-        authorized_collection.delete_many
-      end
-
-      before do
-        connection.dispatch([ insert ], context)
+        connection.dispatch([ msg0 ], context)
         # Fake a query for which we did not read the response. See RUBY-1117
-        allow(query_bob).to receive(:replyable?) { false }
-        connection.dispatch([ query_bob ], context)
+        allow(msg1).to receive(:replyable?) { false }
+        connection.dispatch([ msg1 ], context)
       end
 
       it 'raises an UnexpectedResponse error' do
         expect {
-          connection.dispatch([ query_alice ], context)
+          connection.dispatch([ msg0 ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse,
           /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
       it 'marks connection perished' do
         expect {
-          connection.dispatch([ query_alice ], context)
+          connection.dispatch([ msg0 ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
         connection.should be_error
@@ -733,11 +695,11 @@ describe Mongo::Server::Connection do
 
       it 'makes the connection no longer usable' do
         expect {
-          connection.dispatch([ query_alice ], context)
+          connection.dispatch([ msg0 ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
         expect {
-          connection.dispatch([ query_alice ], context)
+          connection.dispatch([ msg0 ], context)
         }.to raise_error(Mongo::Error::ConnectionPerished)
       end
     end
@@ -745,92 +707,47 @@ describe Mongo::Server::Connection do
     context 'when a request is interrupted (Thread.kill)' do
       require_no_required_api_version
 
-      let(:documents) do
-        [{ 'name' => 'bob' }, { 'name' => 'alice' }]
-      end
-
-      let(:insert) do
-        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
-      end
-
-      let(:query_bob) do
-        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'bob' })
-      end
-
-      let(:query_alice) do
-        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
-      end
-
       before do
         authorized_collection.delete_many
-        connection.dispatch([ insert ], context)
+        connection.dispatch([ msg0 ], context)
       end
 
       it 'closes the socket and does not use it for subsequent requests' do
         t = Thread.new {
           # Kill the thread just before the reply is read
           allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill && !t.alive? }
-          connection.dispatch([ query_bob ], context)
+          connection.dispatch([ msg1 ], context)
         }
         t.join
         allow(Mongo::Protocol::Message).to receive(:deserialize_header).and_call_original
-        resp = connection.dispatch([ query_alice ], context)
-        expect(resp.documents.first['name']).to eq('alice')
+        resp = connection.dispatch([ msg2 ], context)
+        expect(resp.payload['reply']['ok']).to eq(1.0)
       end
     end
 
     context 'when the message exceeds the max size' do
+      require_no_linting
 
-      context 'when the message is an insert' do
-
-        before do
-          allow(connection).to receive(:max_message_size).and_return(200)
-        end
-
-        let(:documents) do
-          [{ 'name' => 'testing' } ] * 10
-        end
-
-        let(:reply) do
-          connection.dispatch([ insert ], context)
-        end
-
-        it 'checks the size against the max message size' do
-          expect {
-            reply
-          }.to raise_exception(Mongo::Error::MaxMessageSize)
-        end
+      let(:command) do
+        Mongo::Protocol::Msg.new(
+          [],
+          {},
+          {ping: 1, padding: 'x'*16384, :$db => SpecConfig.instance.test_db}
+        )
       end
 
-      context 'when the message is a command' do
-        # Server description is frozen when linting is enabled, which is
-        # incompatible with expectations set on it in this test
-        require_no_linting
+      let(:reply) do
+        connection.dispatch([ command ], context)
+      end
 
-        let(:selector) do
-          # The driver allows up to 16KiB for command overhead on top of
-          # the max bson object size reported by the server.
-          # Add that much padding.
-          { :getlasterror => '1', 'padding' => 'x'*16384 }
-        end
-
-        let(:command) do
-          Mongo::Protocol::Query.new(SpecConfig.instance.test_db, '$cmd', selector, :limit => -1)
-        end
-
-        let(:reply) do
-          connection.dispatch([ command ], context)
-        end
-
-        it 'checks the size against the max bson size' do
-          # 100 works for non-x509 auth.
-          # 10 is needed for x509 auth due to smaller payloads, apparently.
-          expect_any_instance_of(Mongo::Server::Description).to receive(
-            :max_bson_object_size).at_least(:once).and_return(10)
-          expect do
-            reply
-          end.to raise_exception(Mongo::Error::MaxBSONSize)
-        end
+      it 'checks the size against the max bson size' do
+        # 100 works for non-x509 auth.
+        # 10 is needed for x509 auth due to smaller payloads, apparently.
+        expect_any_instance_of(Mongo::Server::Description).to receive(
+          :max_bson_object_size).at_least(:once).and_return(10)
+        expect do
+          reply
+        end.to raise_exception(Mongo::Error::MaxBSONSize)
       end
     end
 
@@ -861,7 +778,7 @@ describe Mongo::Server::Connection do
 
         let(:result) do
           expect do
-            connection.dispatch([ insert ], context)
+            connection.dispatch([ msg0 ], context)
           end.to raise_error(Mongo::Error::SocketError)
         end
 
@@ -918,7 +835,7 @@ describe Mongo::Server::Connection do
 
         let(:result) do
           expect do
-            connection.dispatch([ insert ], context)
+            connection.dispatch([ msg0 ], context)
           end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
 
@@ -991,20 +908,16 @@ describe Mongo::Server::Connection do
           end
         end
 
-        let(:message) do
-          insert
-        end
-
         before do
-          expect(message).to receive(:replyable?) { false }
-          connection.send(:deliver, message, context)
+          expect(msg0).to receive(:replyable?) { false }
+          connection.send(:deliver, msg0, context)
 
           connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end
 
         let(:reply) do
           Mongo::Protocol::Message.deserialize(connection.send(:socket),
-            16*1024*1024, message.request_id)
+            16*1024*1024, msg0.request_id)
         end
 
         it 'raises a timeout error' do
@@ -1014,30 +927,6 @@ describe Mongo::Server::Connection do
         end
       end
     end
-
-=begin this is now handled by connection pool
-    context 'when the process is forked' do
-
-      let(:insert) do
-        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
-      end
-
-      before do
-        authorized_collection.delete_many
-        expect(Process).to receive(:pid).at_least(:once).and_return(1)
-      end
-
-      it 'disconnects the connection' do
-        expect(connection).to receive(:disconnect!).and_call_original
-        connection.dispatch([ insert ])
-      end
-
-      it 'sets a new pid' do
-        connection.dispatch([ insert ])
-        expect(connection.send(:pid)).to eq(1)
-      end
-    end
-=end
   end
 
   describe '#initialize' do
