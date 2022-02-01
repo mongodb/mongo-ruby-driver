@@ -612,6 +612,7 @@ describe Mongo::Server::Connection do
   end
 
   describe '#dispatch' do
+    require_no_required_api_version
 
     let(:server) { monitored_server }
 
