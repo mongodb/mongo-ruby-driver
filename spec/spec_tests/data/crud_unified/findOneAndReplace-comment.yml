@@ -45,6 +45,12 @@ tests:
                 query: *filter
                 update: *replacement
                 comment: "comment"
+    outcome: &outcome
+      - collectionName: *collection0Name
+        databaseName: *database0Name
+        documents:
+          - { _id: 1, x: 5 }
+          - { _id: 2 }
 
   - description: "findOneAndReplace with document comment"
     runOnRequirements:
@@ -67,6 +73,8 @@ tests:
                 query: *filter
                 update: *replacement
                 comment: *comment
+    outcome: *outcome
+
 
   - description: "findOneAndReplace with comment - pre 4.4"
     runOnRequirements:

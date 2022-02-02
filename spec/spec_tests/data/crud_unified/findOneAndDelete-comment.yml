@@ -44,6 +44,11 @@ tests:
                 query: *filter
                 remove: true
                 comment: "comment"
+    outcome: &outcome
+      - collectionName: *collection0Name
+        databaseName: *database0Name
+        documents:
+          - { _id: 2 }
 
   - description: "findOneAndDelete with document comment"
     runOnRequirements:
@@ -65,10 +70,12 @@ tests:
                 query: *filter
                 remove: true
                 comment: *comment
+    outcome: *outcome
 
   - description: "findOneAndDelete with comment - pre 4.4"
     runOnRequirements:
-      - maxServerVersion: "4.2.99"
+      - minServerVersion: "4.2.0" # findAndModify option validation was introduced in 4.2
+        maxServerVersion: "4.2.99"
     operations:
       - name: findOneAndDelete
         object: *collection0

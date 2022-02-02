@@ -67,6 +67,8 @@ tests:
               databaseName: *database0Name
 
   - description: "aggregate with a string comment"
+    runOnRequirements:
+      - minServerVersion: "3.6.0"
     operations:
       - name: aggregate
         arguments:
@@ -102,18 +104,30 @@ tests:
 
   - description: "aggregate with a document comment - pre 4.4"
     runOnRequirements:
-      - maxServerVersion: "4.2.99"
+      - minServerVersion: "3.6.0"
+        maxServerVersion: "4.2.99"
     operations:
       - name: aggregate
         object: *collection0
         arguments:
           pipeline: [ { $match: { _id: { $gt: 1 } }} ]
-          comment: &comment0 { content: "test" }
+          comment: *comment0
         expectError:
-          errorContains: "comment must be a string, not a object"
           isClientError: false
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                aggregate: *collection0Name
+                pipeline: [ { $match: { _id: { $gt: 1 } }} ]
+                comment: *comment0
+              commandName: aggregate
+              databaseName: *database0Name
 
   - description: "aggregate with comment does not set comment on getMore"
+    runOnRequirements:
+      - minServerVersion: "3.6.0"
     operations:
       - name: aggregate
         arguments:
@@ -143,7 +157,7 @@ tests:
                 getMore: { $$type: [ int, long ] }
                 collection: *collection0Name
                 batchSize: 2
-                comment: null
+                comment: { $$exists: false }
               commandName: getMore
               databaseName: *database0Name
           - commandStartedEvent:
@@ -151,6 +165,6 @@ tests:
                 getMore: { $$type: [ int, long ] }
                 collection: *collection0Name
                 batchSize: 2
-                comment: null
+                comment: { $$exists: false }
               commandName: getMore
               databaseName: *database0Name

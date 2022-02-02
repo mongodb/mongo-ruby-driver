@@ -19,6 +19,7 @@ initialData:
   - collectionName: *collection0
     databaseName: *database0
     documents: []
+
 tests:
   - description: "Test array truncation"
     runOnRequirements:
@@ -91,13 +92,13 @@ tests:
               command:
                 aggregate: *collection0
                 pipeline:
-                  -
-                    $changeStream: {}
+                  - $changeStream: {}
                 comment: *comment0
 
   - description: "Test with document comment - pre 4.4"
     runOnRequirements:
-      - maxServerVersion: "4.2.99"
+      - minServerVersion: "3.6.0"
+        maxServerVersion: "4.2.99"
     operations:
       - name: createChangeStream
         object: *collection0
@@ -105,10 +106,20 @@ tests:
           pipeline: []
           comment: &comment0 { name: "test1" }
         expectError:
-          errorContains: "comment must be a string, not a object"
           isClientError: false
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                aggregate: *collection0
+                pipeline:
+                  - $changeStream: {}
+                comment: *comment0
 
   - description: "Test with string comment"
+    runOnRequirements:
+      - minServerVersion: "3.6.0"
     operations:
       - name: createChangeStream
         object: *collection0
@@ -123,6 +134,5 @@ tests:
               command:
                 aggregate: *collection0
                 pipeline:
-                  -
-                    $changeStream: {}
+                  - $changeStream: {}
                 comment: "comment"

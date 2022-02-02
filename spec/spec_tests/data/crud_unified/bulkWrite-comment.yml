@@ -1,4 +1,4 @@
-description: bulkWrite-update-comment
+description: bulkWrite-comment
 schemaVersion: '1.0'
 
 createEntities:
@@ -13,7 +13,7 @@ createEntities:
   - collection:
       id: &collection0 collection0
       database: database0
-      collectionName: &collection_name BulkWrite_update_comment
+      collectionName: &collection_name BulkWrite_comment
 
 initialData: &initial_data
   - collectionName: *collection_name
@@ -27,6 +27,7 @@ initialData: &initial_data
         x: 33
       - _id: 4
         x: 44
+
 tests:
   - description: 'BulkWrite with string comment'
     runOnRequirements:
@@ -161,6 +162,15 @@ tests:
           requests: *requests
           comment: "comment"
         expectError:
-          errorContains: "BSON field 'insert.comment' is an unknown field."
           isClientError: false
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                insert: *collection_name
+                documents:
+                  - *inserted_document
+                ordered: true
+                comment: "comment"
     outcome: *initial_data

@@ -1,7 +1,6 @@
 description: "deleteMany-comment"
 schemaVersion: "1.0"
 
-
 createEntities:
   - client:
       id: &client0 client0
