@@ -80,7 +80,8 @@ module Mongo
         # @option options [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
         # @option options [ Hash ] :collation The collation to use.
-        # @option options [ String ] :comment Associate a comment with the aggregation.
+        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        #   comment to attach to this command.
         # @option options [ String ] :hint The index to use for the aggregation.
         # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
         #   See the server documentation for details.
