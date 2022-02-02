@@ -88,7 +88,7 @@ module Mongo
         #   option takes a resume token and starts a new change stream returning the first
         #   notification after the token. This will allow users to watch collections that have been
         #   dropped and recreated or newly renamed collections without missing any notifications.
-        # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+        # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
         #   The server will report an error if `startAfter` and `resumeAfter` are both specified.

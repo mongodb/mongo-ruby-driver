@@ -79,7 +79,7 @@ module Mongo
       #   view.drop_one('name_1')
       #
       # @param [ String ] name The name of the index.
-      # @param [ String, Bson::Document, Hash ] comment A user-provided
+      # @param [ Object ] comment A user-provided
       #   comment to attach to this command.
       #
       # @return [ Result ] The response.
@@ -95,14 +95,16 @@ module Mongo
       # @example Drop all indexes on the collection.
       #   view.drop_all
       #
-      # @param [ String, Bson::Document, Hash ] comment A user-provided
+      # @param [ Hash ] options Options for this operation.
+      #
+      # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop_all(comment: nil)
-        drop_by_name(Index::ALL, comment: comment)
+      def drop_all(options = {})
+        drop_by_name(Index::ALL, comment: options[:comment])
       end
 
       # Creates an index on the collection.
@@ -140,7 +142,7 @@ module Mongo
       #   - "majority" indicating that a majority of data bearing nodes must vote
       #   - "votingMembers" which means that all voting data bearing nodes must vote
       # @option options [ Session ] :session The session to use for the operation.
-      # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+      # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
       # @note Note that the options listed may be subset of those available.

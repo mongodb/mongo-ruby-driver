@@ -54,7 +54,7 @@ module Mongo
       # @option options [ true, false ] :authorized_collections A flag, when
       #   set to true, that allows a user without the required privilege
       #   to run the command when access control is enforced.
-      # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+      # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/

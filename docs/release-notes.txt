@@ -36,7 +36,7 @@ This release includes the following new features:
   only allowed $ref, $id, and $db. BSON::DBRef also reorders the fields if
   necessary to place $ref, $id, and $db first, in that order.
 - CRUD methods, methods for listing databases, collection, and indexes management
-  methods now supports a new option ``comment``. This option enables users to
+  methods now support a new option ``comment``. This option enables users to
   specify an arbitrary comment to help trace the operation through the
   database profiler, currentOp and logs.
 

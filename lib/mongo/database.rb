@@ -125,7 +125,7 @@ module Mongo
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with nameOnly: true, that allows a user without the
     #   required privilege to run the command when access control is enforced
-    # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+    # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
@@ -153,7 +153,7 @@ module Mongo
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with nameOnly: true, that allows a user without the
     #   required privilege to run the command when access control is enforced.
-    # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+    # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
@@ -178,7 +178,7 @@ module Mongo
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with name_only: true, that allows a user without the
     #   required privilege to run the command when access control is enforced.
-    # @option options [ String, Bson::Document, Hash ] :comment A user-provided
+    # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
@@ -385,7 +385,7 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
-    # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+    # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ String ] :hint The index to use for the aggregation.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
@@ -428,7 +428,7 @@ module Mongo
     #   changes that occurred after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
-    # @potion options [ String, Bson::Document, Hash ] :comment A user-provided
+    # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
     # @note A change stream only allows 'majority' read concern.
