@@ -5,9 +5,10 @@ shared_context 'scram conversation context' do
   let(:connection) do
     double('connection').tap do |connection|
       features = double('features')
-      allow(features).to receive(:op_msg_enabled?)
+      allow(features).to receive(:op_msg_enabled?).and_return(true)
       allow(connection).to receive(:features).and_return(features)
       allow(connection).to receive(:server)
+      allow(connection).to receive(:mongos?)
     end
   end
 end
