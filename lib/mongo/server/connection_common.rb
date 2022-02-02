@@ -92,7 +92,7 @@ module Mongo
       #
       # @api private
       def handshake_command(handshake_document)
-        if handshake_document['apiVersion']
+        if handshake_document['apiVersion'] || handshake_document['loadBalanced']
           Protocol::Msg.new(
             [], {}, handshake_document.merge({'$db' => Database::ADMIN})
           )

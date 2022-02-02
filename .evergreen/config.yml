@@ -752,15 +752,15 @@ axes:
         display_name: master
         variables:
           BSON: master
-      - id: min
-        display_name: min
-        variables:
-          BSON: min
       - id: 4-stable
         display_name: 4-stable
         variables:
           BSON: 4-stable
-  
+      - id: min
+        display_name: min
+        variables:
+          BSON: min
+
   - id: storage-engine
     display_name: Storage Engine
     values:
