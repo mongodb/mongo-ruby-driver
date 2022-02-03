@@ -79,15 +79,17 @@ module Mongo
       #   view.drop_one('name_1')
       #
       # @param [ String ] name The name of the index.
-      # @param [ Object ] comment A user-provided
+      # @param [ Hash ] options Options for this operation.
+      #
+      # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop_one(name, comment: nil)
+      def drop_one(name, options = {})
         raise Error::MultiIndexDrop.new if name == Index::ALL
-        drop_by_name(name, comment: comment)
+        drop_by_name(name, comment: options[:comment])
       end
 
       # Drop all indexes on the collection.
@@ -303,8 +305,8 @@ module Mongo
             index_name: name,
             session: session,
             write_concern: write_concern,
-            comment: comment,
           }
+          spec[:comment] = comment unless comment.nil?
           server = next_primary(nil, session)
           Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
         end
