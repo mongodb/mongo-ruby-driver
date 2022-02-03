@@ -159,7 +159,8 @@ describe Mongo::Index::View do
       it 'drops the index' do
         expect(view.drop_one('another_-1', comment: "comment")).to be_successful
         command = subscriber.command_started_events("dropIndexes").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
@@ -240,7 +241,8 @@ describe Mongo::Index::View do
         it 'drops indexes' do
           expect(view.drop_all(comment: "comment")).to be_successful
           command = subscriber.command_started_events("dropIndexes").last&.command
-          expect(command&.fetch("comment")).to eq("comment")
+          expect(command).not_to be_nil
+          expect(command["comment"]).to eq("comment")
         end
       end
     end
@@ -719,7 +721,8 @@ describe Mongo::Index::View do
           )
         ).to be_successful
         command = subscriber.single_command_started_event("createIndexes")&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
@@ -1050,7 +1053,8 @@ describe Mongo::Index::View do
           )
         ).to be_successful
         command = subscriber.single_command_started_event("createIndexes")&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end

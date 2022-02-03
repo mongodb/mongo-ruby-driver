@@ -294,7 +294,8 @@ describe Mongo::Database do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
         database.collection_names(comment: "comment")
         command = subscriber.command_started_events("listCollections").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
@@ -506,7 +507,8 @@ describe Mongo::Database do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
         database.list_collections(comment: "comment")
         command = subscriber.command_started_events("listCollections").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
@@ -706,7 +708,8 @@ describe Mongo::Database do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
         database.collections(comment: "comment")
         command = subscriber.command_started_events("listCollections").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end

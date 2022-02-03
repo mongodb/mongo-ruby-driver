@@ -600,7 +600,8 @@ describe Mongo::Client do
         result = monitored_client.database_names({}, comment: "comment")
         expect(result).to include('admin')
         command = subscriber.command_started_events("listDatabases").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
@@ -706,7 +707,8 @@ describe Mongo::Client do
         end
         expect(result).to include('admin')
         command = subscriber.command_started_events("listDatabases").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
@@ -759,7 +761,8 @@ describe Mongo::Client do
         result = monitored_client.list_mongo_databases({}, comment: "comment")
         expect(result).to all(be_a(Mongo::Database))
         command = subscriber.command_started_events("listDatabases").last&.command
-        expect(command&.fetch("comment")).to eq("comment")
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end
