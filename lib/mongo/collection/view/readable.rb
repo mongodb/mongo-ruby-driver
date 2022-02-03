@@ -128,7 +128,7 @@ module Mongo
         # @note Set profilingLevel to 2 and the comment will be logged in the profile
         #   collection along with the query.
         #
-        # @param [ String, Hash, BSON::Document ] comment The comment to be associated with the query.
+        # @param [ Object ] comment The comment to be associated with the query.
         #
         # @return [ String, View ] Either the comment or a
         #   new +View+.
@@ -154,7 +154,7 @@ module Mongo
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
-        # @option options [ Object ] :comment A user-provided
+        # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
         # @return [ Integer ] The document count.
