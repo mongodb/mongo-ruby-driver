@@ -919,6 +919,47 @@ describe Mongo::Client do
           expect(before_last_use).to be < (pool.instance_variable_get(:@queue)[0].last_use)
         end
       end
+
+      context 'when an implicit session is used without enough connections' do
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:client) do
+          ClientRegistry.instance.new_local_client(
+            SpecConfig.instance.addresses, options
+          ).tap do |cl|
+            cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+        end
+
+        let(:options) do
+          { :max_pool_size => 1 }
+        end
+
+        let(:threads) do
+          (1..3).map do |i|
+            Thread.new do
+              client['test'].insert_one({test: "test#{i}"})
+            end
+          end
+        end
+
+        let(:command) do
+          subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
+        end
+
+        before do
+          threads.each do |thread|
+            thread.value
+          end
+        end
+
+        it 'uses the same implicit session' do
+          expect(
+            subscriber.started_events.map { |e| e.command['lsid'] }.uniq.count
+          ).to eq 1
+          expect(subscriber.succeeded_events.length).to eq 3
+        end
+      end
     end
 
     context 'when two clients have the same cluster' do
