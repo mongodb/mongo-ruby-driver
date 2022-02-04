@@ -609,7 +609,9 @@ module Mongo
           if write_concern && !write_concern.is_a?(WriteConcern::Base)
             write_concern = WriteConcern.get(write_concern)
           end
-          write_with_retry(self, write_concern, true) do |server, txn_num, is_retry|
+
+          context = Operation::Context.new(client: @client, session: self)
+          write_with_retry(self, write_concern, true, context: context) do |connection, txn_num, is_retry|
             if is_retry
               if write_concern
                 wco = write_concern.options.merge(w: :majority)
@@ -626,7 +628,7 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute(server, context: Operation::Context.new(client: @client, session: self))
+            Operation::Command.new(spec).execute_c(connection, context: context)
           end
         end
       ensure
