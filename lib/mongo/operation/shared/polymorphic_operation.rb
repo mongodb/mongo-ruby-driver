@@ -39,8 +39,8 @@ module Mongo
       end
 
       def execute_c(connection, context:, options: {})
-          operation = final_operation(connection)
-          operation.execute(connection, context: context, options: options)
+        operation = final_operation(connection)
+        operation.execute(connection, context: context, options: options)
       end
     end
   end

@@ -40,7 +40,8 @@ module Mongo
     # @example
     #   Session.new(server_session, client, options)
     #
-    # @param [ ServerSession ] server_session The server session this session is associated with.
+    # @param [ ServerSession | nil ] server_session The server session this session is associated with.
+    #   If the :implicit option is true, this will be nil.
     # @param [ Client ] client The client through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
@@ -50,7 +51,9 @@ module Mongo
     #   to start_transaction by default, can contain any of the options that
     #   start_transaction accepts.
     # @option options [ true|false ] :implicit For internal driver use only -
-    #   specifies whether the session is implicit.
+    #   specifies whether the session is implicit. If this is true, the server_session
+    #   will be nil. This is done so that the server session is only checked
+    #   out after the connection is checked out.
     # @option options [ Hash ] :read_preference The read preference options hash,
     #   with the following optional keys:
     #   - *:mode* -- the read preference as a string or symbol; valid values are

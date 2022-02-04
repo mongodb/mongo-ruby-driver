@@ -65,18 +65,16 @@ module Mongo
         operations.each do |operation|
           if single_statement?(operation)
             write_concern = write_concern(session)
-            write_with_retry(session, write_concern) do |server, txn_num|
-              server.with_connection(service_id: context.service_id) do |connection|
-                execute_operation(
-                  operation.keys.first,
-                  operation.values.flatten,
-                  connection,
-                  context,
-                  operation_id,
-                  result_combiner,
-                  session,
-                  txn_num)
-              end
+            write_with_retry(session, write_concern, context: context) do |connection, txn_num|
+              execute_operation(
+                operation.keys.first,
+                operation.values.flatten,
+                connection,
+                context,
+                operation_id,
+                result_combiner,
+                session,
+                txn_num)
             end
           else
             nro_write_with_retry(session, write_concern) do |server|

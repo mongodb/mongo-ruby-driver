@@ -1168,7 +1168,6 @@ module Mongo
 
       cluster.validate_session_support!
 
-      # cluster.session_pool.checkout
       Session.new(nil, self, { implicit: true }.merge(options))
     end
 

@@ -950,7 +950,7 @@ describe Mongo::Client do
             expect(
               subscriber.started_events.map { |e| e.command['lsid'] }.uniq.count
             ).to eq 1
-            expect(subscriber.succeeded_events.length).to eq 3
+            expect(subscriber.succeeded_events.length).to eq(subscriber.started_events.length)
           end
         end
 
@@ -996,6 +996,134 @@ describe Mongo::Client do
             end
             threads << Thread.new do
               client['test'].delete_one({test: "test"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert, update and find" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].find({test: "test"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert, update and bulk write" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].bulk_write([{ insert_one: { test: "test1" } },
+                                         { update_one: { filter: { test: "test1" }, update: { test: "test2" } } } ])
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert, update and find_one_and_delete" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_delete({test: "test"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert, update and find_one_and_update" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_update({test: "test"}, {test: "test2"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert, update and find_one_and_replace" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing all of the operations" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].delete_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].find({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].bulk_write([{ insert_one: { test: "test1" } },
+                                         { update_one: { filter: { test: "test1" }, update: { test: "test2" } } } ])
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_delete({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_update({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
             end
             threads
           end
