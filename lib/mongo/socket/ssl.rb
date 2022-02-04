@@ -105,9 +105,9 @@ module Mongo
         @host, @port, @host_name = host, port, host_name
         @context = create_context(options)
         @family = family
-        @tcp_socket = ::Socket.new(family, ::Socket::SOCK_STREAM, 0)
+        @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
         begin
-          @tcp_socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+          @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
           set_socket_options(@tcp_socket)
           run_tls_context_hooks
 
