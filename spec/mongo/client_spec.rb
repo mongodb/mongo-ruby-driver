@@ -935,29 +935,72 @@ describe Mongo::Client do
           { :max_pool_size => 1 }
         end
 
-        let(:threads) do
-          (1..3).map do |i|
-            Thread.new do
-              client['test'].insert_one({test: "test#{i}"})
-            end
-          end
-        end
-
         let(:command) do
           subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
         end
 
-        before do
-          threads.each do |thread|
-            thread.value
+        shared_examples "a single connection" do
+          before do
+            threads.each do |thread|
+              thread.value
+            end
+          end
+
+          it 'uses the same implicit session' do
+            expect(
+              subscriber.started_events.map { |e| e.command['lsid'] }.uniq.count
+            ).to eq 1
+            expect(subscriber.succeeded_events.length).to eq 3
           end
         end
 
-        it 'uses the same implicit session' do
-          expect(
-            subscriber.started_events.map { |e| e.command['lsid'] }.uniq.count
-          ).to eq 1
-          expect(subscriber.succeeded_events.length).to eq 3
+        context "when doing three inserts" do
+          let(:threads) do
+            (1..3).map do |i|
+              Thread.new do
+                puts "INSERT #{i}"
+                client['test'].insert_one({test: "test#{i}"})
+              end
+            end
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert and two updates" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
+        context "when doing an insert, update and delete" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].delete_one({test: "test"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
         end
       end
     end
