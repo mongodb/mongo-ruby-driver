@@ -47,6 +47,9 @@ module Unified
         if max_time_ms = args.use('maxTimeMS')
           opts[:max_time_ms] = max_time_ms
         end
+        if comment = args.use('comment')
+          opts[:comment] = comment
+        end
         collection.estimated_document_count(**opts)
       end
     end
