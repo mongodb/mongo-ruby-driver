@@ -25,6 +25,12 @@ module Mongo
       #
       # @since 2.5.2
       class OpMsg < OpMsgBase
+
+        def selector(connection)
+          spec[:selector].dup.tap do |sel|
+            sel[:comment] = spec[:comment] unless spec[:comment].nil?
+          end
+        end
       end
     end
   end

@@ -343,7 +343,8 @@ module Mongo
     # @option options [ Integer ] :batch_size The number of documents returned in each batch
     #   of results from MongoDB.
     # @option options [ Hash ] :collation The collation to use.
-    # @option options [ String ] :comment Associate a comment with the query.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
     # @option options [ Integer ] :max_time_ms
@@ -386,7 +387,8 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
-    # @option options [ String ] :comment Associate a comment with the aggregation.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     # @option options [ String ] :hint The index to use for the aggregation.
     # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
     #   See the server documentation for details.
@@ -433,6 +435,8 @@ module Mongo
     #   changes that occurred at or after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
@@ -460,6 +464,8 @@ module Mongo
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Integer ] The document count.
     #
@@ -494,6 +500,8 @@ module Mongo
     # @option options :read [ Hash ] The read preference options.
     # @option options :collation [ Hash ] The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Integer ] The document count.
     #
@@ -510,9 +518,11 @@ module Mongo
     #
     # @param [ Hash ] options Options for the operation.
     #
-    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow
+    # @option options :max_time_ms [ Integer ] The maximum amount of time to allow
     #   the command to run for on the server.
-    # @option opts [ Hash ] :read The read preference options.
+    # @option options [ Hash ] :read The read preference options.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Integer ] The document count.
     #
@@ -609,6 +619,7 @@ module Mongo
             :id_generator => client.options[:id_generator],
             :session => session,
             :txn_num => txn_num,
+            :comment => opts[:comment]
           ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end

@@ -50,6 +50,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ BSON::Document, nil ] The document, if found.
         #
@@ -77,7 +79,8 @@ module Mongo
               bypassDocumentValidation: opts[:bypass_document_validation],
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
-              let: opts[:let]
+              let: opts[:let],
+              comment: opts[:comment],
             }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
@@ -149,6 +152,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -180,6 +185,7 @@ module Mongo
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
               let: opts[:let],
+              comment: opts[:comment]
             }.compact
 
             write_with_retry(session, write_concern) do |server, txn_num|
@@ -210,6 +216,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -243,6 +251,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -263,6 +272,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -297,6 +308,7 @@ module Mongo
                 session: session,
                 txn_num: txn_num,
                 let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -322,6 +334,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -359,7 +373,8 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 txn_num: txn_num,
-                let: opts[:let]
+                let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -387,6 +402,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -425,6 +442,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end
@@ -452,6 +470,8 @@ module Mongo
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         # @option options [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -490,6 +510,7 @@ module Mongo
                 session: session,
                 txn_num: txn_num,
                 let: opts[:let],
+                comment: opts[:comment],
               ).execute(server, context: Operation::Context.new(client: client, session: session))
             end
           end

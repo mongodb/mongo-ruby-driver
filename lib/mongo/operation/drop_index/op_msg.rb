@@ -30,7 +30,11 @@ module Mongo
         private
 
         def selector(connection)
-          { :dropIndexes => coll_name, :index => index_name }
+          {
+            :dropIndexes => coll_name,
+            :index => index_name,
+            :comment => spec[:comment],
+          }.compact
         end
       end
     end

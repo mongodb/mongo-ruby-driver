@@ -125,6 +125,8 @@ module Mongo
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with nameOnly: true, that allows a user without the
     #   required privilege to run the command when access control is enforced
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -150,7 +152,9 @@ module Mongo
     #   name and other information
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with nameOnly: true, that allows a user without the
-    #   required privilege to run the command when access control is enforced
+    #   required privilege to run the command when access control is enforced.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -173,7 +177,9 @@ module Mongo
     # @option options [ Hash ] :filter A filter on the collections returned.
     # @option options [ true, false ] :authorized_collections A flag, when
     #   set to true and used with name_only: true, that allows a user without the
-    #   required privilege to run the command when access control is enforced
+    #   required privilege to run the command when access control is enforced.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     #   See https://docs.mongodb.com/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -258,6 +264,7 @@ module Mongo
             db_name: name,
             read: preference,
             session: session,
+            comment: opts[:comment],
           ).execute(server, context: Operation::Context.new(client: client, session: session))
         end
       end
@@ -378,7 +385,8 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
-    # @option options [ String ] :comment Associate a comment with the aggregation.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     # @option options [ String ] :hint The index to use for the aggregation.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
     #   milliseconds to allow the aggregation to run.
@@ -420,6 +428,8 @@ module Mongo
     #   changes that occurred after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with a $changeStream

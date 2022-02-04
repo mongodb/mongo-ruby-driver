@@ -69,7 +69,8 @@ module Mongo
         :unique => :unique,
         :version => :v,
         :weights => :weights,
-        :collation => :collation
+        :collation => :collation,
+        :comment => :comment,
       }.freeze
 
       # Drop an index by its name.
@@ -78,13 +79,17 @@ module Mongo
       #   view.drop_one('name_1')
       #
       # @param [ String ] name The name of the index.
+      # @param [ Hash ] options Options for this operation.
+      #
+      # @option options [ Object ] :comment A user-provided
+      #   comment to attach to this command.
       #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop_one(name)
+      def drop_one(name, options = {})
         raise Error::MultiIndexDrop.new if name == Index::ALL
-        drop_by_name(name)
+        drop_by_name(name, comment: options[:comment])
       end
 
       # Drop all indexes on the collection.
@@ -92,11 +97,16 @@ module Mongo
       # @example Drop all indexes on the collection.
       #   view.drop_all
       #
+      # @param [ Hash ] options Options for this operation.
+      #
+      # @option options [ Object ] :comment A user-provided
+      #   comment to attach to this command.
+      #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop_all
-        drop_by_name(Index::ALL)
+      def drop_all(options = {})
+        drop_by_name(Index::ALL, comment: options[:comment])
       end
 
       # Creates an index on the collection.
@@ -134,6 +144,8 @@ module Mongo
       #   - "majority" indicating that a majority of data bearing nodes must vote
       #   - "votingMembers" which means that all voting data bearing nodes must vote
       # @option options [ Session ] :session The session to use for the operation.
+      # @option options [ Object ] :comment A user-provided
+      #   comment to attach to this command.
       #
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
@@ -148,7 +160,7 @@ module Mongo
         if session = @options[:session]
           create_options[:session] = session
         end
-        %i(commit_quorum session).each do |key|
+        %i(commit_quorum session comment).each do |key|
           if value = options.delete(key)
             create_options[key] = value
           end
@@ -185,6 +197,7 @@ module Mongo
       #     - "majority" indicating that a majority of data bearing nodes must vote
       #     - "votingMembers" which means that all voting data bearing nodes must vote
       #   - session: The session to use.
+      #   - comment: A user-provided comment to attach to this command.
       #
       # @return [ Result ] The result of the command.
       #
@@ -213,6 +226,7 @@ module Mongo
             session: session,
             commit_quorum: options[:commit_quorum],
             write_concern: write_concern,
+            comment: options[:comment],
           }
 
           Operation::CreateIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
@@ -283,7 +297,7 @@ module Mongo
 
       private
 
-      def drop_by_name(name)
+      def drop_by_name(name, comment: nil)
         client.send(:with_session, @options) do |session|
           spec = {
             db_name: database.name,
@@ -292,6 +306,7 @@ module Mongo
             session: session,
             write_concern: write_concern,
           }
+          spec[:comment] = comment unless comment.nil?
           server = next_primary(nil, session)
           Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
         end

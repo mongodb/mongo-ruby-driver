@@ -5,6 +5,18 @@ require 'spec_helper'
 
 describe Mongo::Index::View do
 
+  let(:subscriber) { Mrss::EventSubscriber.new }
+
+  let(:client) do
+    authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
+  let(:authorized_collection) do
+    client[TEST_COLL]
+  end
+
   let(:view) do
     described_class.new(authorized_collection, options)
   end
@@ -140,6 +152,17 @@ describe Mongo::Index::View do
         end
       end
     end
+
+    context 'with a comment' do
+      min_server_version '4.4'
+
+      it 'drops the index' do
+        expect(view.drop_one('another_-1', comment: "comment")).to be_successful
+        command = subscriber.command_started_events("dropIndexes").last&.command
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
+      end
+    end
   end
 
   describe '#drop_all' do
@@ -209,6 +232,17 @@ describe Mongo::Index::View do
           it 'does not apply the write concern' do
             expect(result).to be_successful
           end
+        end
+      end
+
+      context 'with a comment' do
+        min_server_version '4.4'
+
+        it 'drops indexes' do
+          expect(view.drop_all(comment: "comment")).to be_successful
+          command = subscriber.command_started_events("dropIndexes").last&.command
+          expect(command).not_to be_nil
+          expect(command["comment"]).to eq("comment")
         end
       end
     end
@@ -672,6 +706,25 @@ describe Mongo::Index::View do
         end
       end
     end
+
+    context 'with a comment' do
+      min_server_version '4.4'
+
+      it 'creates indexes' do
+        expect(
+          view.create_many(
+            [
+              { key: { random: 1 }, unique: true },
+              { key: { testing: -1 }, unique: true }
+            ],
+            comment: "comment"
+          )
+        ).to be_successful
+        command = subscriber.single_command_started_event("createIndexes")&.command
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
+      end
+    end
   end
 
   describe '#create_one' do
@@ -986,6 +1039,22 @@ describe Mongo::Index::View do
             view.create_one({ 'x' => 1 }, commit_quorum: 'majority')
           end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the commit_quorum option/)
         end
+      end
+    end
+
+    context 'with a comment' do
+      min_server_version '4.4'
+
+      it 'creates index' do
+        expect(
+          view.create_one(
+            { 'x' => 1 },
+            comment: "comment"
+          )
+        ).to be_successful
+        command = subscriber.single_command_started_event("createIndexes")&.command
+        expect(command).not_to be_nil
+        expect(command["comment"]).to eq("comment")
       end
     end
   end

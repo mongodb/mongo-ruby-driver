@@ -35,6 +35,10 @@ This release includes the following new features:
   derived from Object. BSON::DBRef retains all fields, unlike Mongo::DBRef which
   only allowed $ref, $id, and $db. BSON::DBRef also reorders the fields if
   necessary to place $ref, $id, and $db first, in that order.
+- CRUD methods, methods for listing databases, collection, and indexes management
+  methods now support a new option ``comment``. This option enables users to
+  specify an arbitrary comment to help trace the operation through the
+  database profiler, currentOp and logs.
 
 2.17
 ====

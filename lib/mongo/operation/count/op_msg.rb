@@ -30,7 +30,10 @@ module Mongo
         private
 
         def selector(connection)
-          spec[:selector].merge(collation: spec[:collation]).compact
+          spec[:selector].merge(
+            collation: spec[:collation],
+            comment: spec[:comment],
+          ).compact
         end
       end
     end

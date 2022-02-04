@@ -53,7 +53,9 @@ module Mongo
       # @option options [ Hash ] :filter A filter on the collections returned.
       # @option options [ true, false ] :authorized_collections A flag, when
       #   set to true, that allows a user without the required privilege
-      #   to run the command when access control is enforced
+      #   to run the command when access control is enforced.
+      # @option options [ Object ] :comment A user-provided
+      #   comment to attach to this command.
       #
       #   See https://docs.mongodb.com/manual/reference/command/listCollections/
       #   for more information and usage.
@@ -186,6 +188,7 @@ module Mongo
           spec[:selector][:nameOnly] = true if options[:name_only]
           spec[:selector][:filter] = options[:filter] if options[:filter]
           spec[:selector][:authorizedCollections] = true if options[:authorized_collections]
+          spec[:comment] = options[:comment] if options[:comment]
         end
       end
 

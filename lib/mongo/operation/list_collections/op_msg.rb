@@ -31,7 +31,10 @@ module Mongo
         private
 
         def selector(connection)
-          (spec[SELECTOR] || {}).merge(listCollections: 1)
+          (spec[SELECTOR] || {}).merge({
+            listCollections: 1,
+            comment: spec[:comment]
+          }).compact
         end
       end
     end

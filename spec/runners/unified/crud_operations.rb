@@ -10,6 +10,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -46,6 +47,9 @@ module Unified
         if max_time_ms = args.use('maxTimeMS')
           opts[:max_time_ms] = max_time_ms
         end
+        if comment = args.use('comment')
+          opts[:comment] = comment
+        end
         collection.estimated_document_count(**opts)
       end
     end
@@ -69,6 +73,7 @@ module Unified
         update = args.use!('update')
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym
@@ -87,6 +92,7 @@ module Unified
         update = args.use!('replacement')
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -101,6 +107,7 @@ module Unified
         filter = args.use!('filter')
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -112,7 +119,9 @@ module Unified
     def insert_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          comment: args.use('comment')
+        }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -123,7 +132,9 @@ module Unified
     def insert_many(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = {
+          comment: args.use('comment')
+        }
         unless (ordered = args.use('ordered')).nil?
           opts[:ordered] = ordered
         end
@@ -139,6 +150,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -152,6 +164,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         collection.update_many(args.use!('filter'), args.use!('update'), **opts)
       end
@@ -163,6 +176,7 @@ module Unified
         collection.replace_one(
           args.use!('filter'),
           args.use!('replacement'),
+          comment: args.use('comment'),
           upsert: args.use('upsert'),
           let: args.use('let')
         )
@@ -174,6 +188,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -187,6 +202,7 @@ module Unified
       use_arguments(op) do |args|
         opts = {
           let: args.use('let'),
+          comment: args.use('comment'),
         }
         collection.delete_many(args.use!('filter'), **opts)
       end
@@ -202,6 +218,9 @@ module Unified
         if ordered = args.use('ordered')
           opts[:ordered] = true
         end
+        if comment = args.use('comment')
+          opts[:comment] = comment
+        end
         collection.bulk_write(requests, **opts)
       end
     end
@@ -215,6 +234,12 @@ module Unified
       }
       if session = args.use('session')
         opts[:session] = entities.get(:session, session)
+      end
+      if comment = args.use('comment')
+        opts[:comment] = comment
+      end
+      if batch_size = args.use('batchSize')
+        opts[:batch_size] = batch_size
       end
       unless args.empty?
         raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}"

@@ -33,7 +33,8 @@ module Mongo
           {
             createIndexes: coll_name,
             indexes: indexes,
-          }.tap do |selector|
+            comment: spec[:comment],
+          }.compact.tap do |selector|
             if commit_quorum = spec[:commit_quorum]
               # While server versions 3.4 and newer generally perform option
               # validation, there was a bug on server versions 4.2.0 - 4.2.5 where

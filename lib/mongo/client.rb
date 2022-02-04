@@ -901,6 +901,8 @@ module Mongo
     #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -925,6 +927,8 @@ module Mongo
     #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Array<Hash> ] The info for each database.
     #
@@ -946,6 +950,8 @@ module Mongo
     # @param [ Hash ] opts The command options.
     #
     # @option opts [ Session ] :session The session to use.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @return [ Array<Mongo::Database> ] The list of database objects.
     #
@@ -1013,6 +1019,8 @@ module Mongo
     #   changes that occurred at or after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
+    # @option options [ Object ] :comment A user-provided
+    #   comment to attach to this command.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with a $changeStream
