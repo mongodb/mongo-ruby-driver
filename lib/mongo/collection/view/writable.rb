@@ -367,7 +367,8 @@ module Mongo
               update_doc['upsert'] = true
             end
 
-            write_with_retry(session, write_concern) do |server, txn_num|
+            context = Operation::Context.new(client: client, session: session)
+            write_with_retry(session, write_concern, context: context) do |connection, txn_num|
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -378,7 +379,7 @@ module Mongo
                 txn_num: txn_num,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute_c(connection, context: context)
             end
           end
         end

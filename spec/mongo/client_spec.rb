@@ -932,7 +932,7 @@ describe Mongo::Client do
         end
 
         let(:options) do
-          { :max_pool_size => 1 }
+          { :max_pool_size => 1, :retry_writes => true }
         end
 
         let(:command) do
@@ -1093,6 +1093,24 @@ describe Mongo::Client do
           include_examples "a single connection"
         end
 
+        context "when doing an insert, update and a replace" do
+          let(:threads) do
+            threads = []
+            threads << Thread.new do
+              client['test'].insert_one({test: "test"})
+            end
+            threads << Thread.new do
+              client['test'].update_one({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].replace_one({test: "test"}, {test: "test2"})
+            end
+            threads
+          end
+
+          include_examples "a single connection"
+        end
+
         context "when doing all of the operations" do
           let(:threads) do
             threads = []
@@ -1123,6 +1141,9 @@ describe Mongo::Client do
             end
             threads << Thread.new do
               client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
+            end
+            threads << Thread.new do
+              client['test'].replace_one({test: "test"}, {test: "test2"})
             end
             threads
           end
