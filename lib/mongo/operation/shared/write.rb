@@ -44,6 +44,14 @@ module Mongo
         end
       end
 
+      def execute_c(connection, context:)
+          validate!(connection)
+          op = self.class::OpMsg.new(spec)
+
+          result = op.execute(connection, context: context)
+          validate_result(result, connection, context)
+      end
+
       # Execute the bulk write operation.
       #
       # @param [ Mongo::Server::Connection ] connection The connection over

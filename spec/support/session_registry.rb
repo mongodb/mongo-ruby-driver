@@ -9,7 +9,7 @@ module Mongo
 
     def get_session(options = {})
       get_session_without_tracking(options).tap do |session|
-        SessionRegistry.instance.register(session)
+        #SessionRegistry.instance.register(session)
       end
     end
   end

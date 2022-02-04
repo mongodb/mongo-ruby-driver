@@ -203,7 +203,7 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def write_with_retry(session, write_concern, ending_transaction = false, &block)
+    def write_with_retry(session, write_concern, ending_transaction = false, context:, &block)
       if ending_transaction && !session
         raise ArgumentError, 'Cannot end a transaction without a session'
       end
@@ -221,20 +221,27 @@ module Mongo
         return legacy_write_with_retry(server, session, &block)
       end
 
-      txn_num = if session.in_transaction?
-        session.txn_num
-      else
-        session.next_txn_num
-      end
+      txn_num = nil
+
       begin
-        yield(server, txn_num, false)
+        server.with_connection(service_id: context.service_id) do |connection|
+          session.materialize(connection) do
+            txn_num = if session.in_transaction?
+              session.txn_num
+            else
+              session.next_txn_num
+            end
+
+            yield(connection, txn_num, false)
+          end
+        end
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
           raise e
         end
-        retry_write(e, session, txn_num, &block)
+        retry_write(e, session, txn_num, context: context, &block)
       rescue Error::OperationFailure => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
@@ -244,7 +251,7 @@ module Mongo
           raise e
         end
 
-        retry_write(e, session, txn_num, &block)
+        retry_write(e, session, txn_num, context: context, &block)
       end
     end
 
@@ -423,7 +430,7 @@ module Mongo
       raise original_error
     end
 
-    def retry_write(original_error, session, txn_num, &block)
+    def retry_write(original_error, session, txn_num, context:, &block)
       # We do not request a scan of the cluster here, because error handling
       # for the error which triggered the retry should have updated the
       # server description and/or topology as necessary (specifically,
@@ -444,7 +451,9 @@ module Mongo
         raise Error::RaiseOriginalError
       end
       log_retry(original_error, message: 'Write retry')
-      yield(server, txn_num, true)
+      server.with_connection(service_id: context.service_id) do |connection|
+        yield(connection, txn_num, true)
+      end
     rescue Error::SocketError, Error::SocketTimeoutError => e
       e.add_note('modern retry')
       e.add_note('attempt 2')

@@ -27,31 +27,43 @@ module Mongo
       include ResponseHandling
 
       def do_execute(connection, context, options = {})
-        unpin_maybe(session) do
-          add_error_labels(connection, context) do
-            add_server_diagnostics(connection) do
-              get_result(connection, context, options).tap do |result|
-                if session
-                  if session.in_transaction? &&
-                    connection.description.load_balancer?
-                  then
-                    if session.pinned_service_id
-                      unless session.pinned_service_id == connection.service_id
-                        raise Error::InternalDriverError, "Expected operation to use service #{session.pinned_session_id} but it used #{connection.service_id}"
+        materialize_implicit_session(session, connection) do
+          unpin_maybe(session) do
+            add_error_labels(connection, context) do
+              add_server_diagnostics(connection) do
+                get_result(connection, context, options).tap do |result|
+                  if session
+                    if session.in_transaction? &&
+                      connection.description.load_balancer?
+                    then
+                      if session.pinned_service_id
+                        unless session.pinned_service_id == connection.service_id
+                          raise Error::InternalDriverError, "Expected operation to use service #{session.pinned_session_id} but it used #{connection.service_id}"
+                        end
+                      else
+                        session.pin_to_service(connection.service_id)
                       end
-                    else
-                      session.pin_to_service(connection.service_id)
+                    end
+
+                    if session.snapshot? && !session.snapshot_timestamp
+                      session.snapshot_timestamp = result.snapshot_timestamp
                     end
                   end
-
-                  if session.snapshot? && !session.snapshot_timestamp
-                    session.snapshot_timestamp = result.snapshot_timestamp
-                  end
+                  process_result(result, connection)
                 end
-                process_result(result, connection)
               end
             end
           end
+        end
+      end
+
+      def materialize_implicit_session(session, connection)
+        if session&.implicit?
+          session.materialize(connection) do
+            yield
+          end
+        else
+          yield
         end
       end
 
