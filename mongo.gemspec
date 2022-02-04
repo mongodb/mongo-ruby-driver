@@ -43,6 +43,6 @@ Gem::Specification.new do |s|
   if %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_BSON_MASTER'])
     s.add_dependency 'bson', '>=4.13.0', '<6.0.0'
   else 
-    s.add_dependency 'bson', '>=4.13.0', '<5.0.0'
+    s.add_dependency 'bson', '>=4.14.1', '<5.0.0'
   end
 end
