@@ -1168,7 +1168,8 @@ module Mongo
 
       cluster.validate_session_support!
 
-      Session.new(nil, self, { implicit: true }.merge(options))
+      session = options.key?(:implicit) && !options[:implicit] ? cluster.session_pool.checkout : nil
+      Session.new(session, self, { implicit: true }.merge(options))
     end
 
     def initialize_copy(original)

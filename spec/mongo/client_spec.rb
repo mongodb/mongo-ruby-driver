@@ -958,7 +958,6 @@ describe Mongo::Client do
           let(:threads) do
             (1..3).map do |i|
               Thread.new do
-                puts "INSERT #{i}"
                 client['test'].insert_one({test: "test#{i}"})
               end
             end
