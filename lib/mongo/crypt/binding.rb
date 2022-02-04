@@ -28,6 +28,9 @@ unless ENV['LIBMONGOCRYPT_PATH']
     end
   end
 
+  # JRuby 9.3.2.0 replaces a LoadError with our custom message with a
+  # generic NameError, when this load is attempted as part of autoloading
+  # process. JRuby 9.2.20.0 propagates LoadError as expected.
   raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
       "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
 end

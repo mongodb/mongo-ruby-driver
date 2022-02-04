@@ -228,6 +228,13 @@ describe Mongo::Address do
 
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
+      # In JRuby 9.3.2.0 Socket::PF_INET6 is nil, causing IPv6 tests to fail.
+      # https://github.com/jruby/jruby/issues/7069
+      # JRuby 9.2 works correctly, this test is skipped on all JRuby versions
+      # because we intend to remove JRuby support altogether and therefore
+      # adding logic to condition on JRuby versions does not make sense.
+      fails_on_jruby
+
       let(:custom_hostname) do
         'not_localhost'
       end
