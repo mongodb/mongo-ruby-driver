@@ -39,7 +39,8 @@ class RetryableTestConsumer
   def write
     # This passes a nil session and therefore triggers
     # legacy_write_with_retry code path
-    write_with_retry(session, write_concern) do
+    context = Mongo::Operation::Context.new(client: @client, session: session)
+    write_with_retry(context.session, write_concern, context: context) do
       operation.execute
     end
   end
@@ -71,7 +72,9 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
       allow(session).to receive(:next_txn_num) { i += 1 }
       allow(session).to receive(:in_transaction?).and_return(false)
       allow(session).to receive(:pinned_server)
+      allow(session).to receive(:pinned_service_id)
       allow(session).to receive(:starting_transaction?).and_return(false)
+      allow(session).to receive(:materialize).and_yield()
     end
   end
 
@@ -92,7 +95,15 @@ describe Mongo::Retryable do
     double('operation')
   end
 
-  let(:server) { double('server') }
+  let(:connection) do
+    double('connection')
+  end
+
+  let(:server) do
+    double('server').tap do |server|
+      allow(server).to receive('with_connection').and_yield(connection)
+    end
+  end
 
   let(:max_read_retries) { 1 }
   let(:max_write_retries) { 1 }
@@ -120,6 +131,11 @@ describe Mongo::Retryable do
     LegacyRetryableTestConsumer.new(operation, cluster, client)
   end
 
+  let(:session) { double('session') }
+  let(:context) do
+    Mongo::Operation::Context.new(client: client, session: session)
+  end
+
   before do
     # Retryable reads perform server selection
     allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:select_server).and_return(server)
@@ -143,7 +159,7 @@ describe Mongo::Retryable do
 
       it 'raises ArgumentError' do
         expect do
-          retryable.write_with_retry(nil, nil, true)
+          retryable.write_with_retry(nil, nil, true, context: context)
         end.to raise_error(ArgumentError, 'Cannot end a transaction without a session')
       end
     end

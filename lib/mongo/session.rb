@@ -669,14 +669,15 @@ module Mongo
       begin
         unless starting_transaction?
           @aborting_transaction = true
-          write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
+          context = Operation::Context.new(client: @client, session: self)
+          write_with_retry(self, txn_options[:write_concern], true, context: context) do |connection, txn_num|
             begin
               Operation::Command.new(
                 selector: { abortTransaction: 1 },
                 db_name: 'admin',
                 session: self,
                 txn_num: txn_num
-              ).execute(server, context: Operation::Context.new(client: @client, session: self))
+              ).execute_c(connection, context: context)
             ensure
               unpin
             end
