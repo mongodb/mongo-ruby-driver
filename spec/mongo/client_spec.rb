@@ -936,7 +936,7 @@ describe Mongo::Client do
         let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:events) do
-          subscriber.started_events.select { |c| c.command_name != 'saslContinue' }
+          subscriber.started_events
         end
 
         shared_examples "a single connection" do
@@ -949,7 +949,7 @@ describe Mongo::Client do
           it 'uses the same implicit session' do
             puts events.map{ |e| e.inspect } if events.map { |e| e.command['lsid'] }.uniq.count != 1
             expect(
-              events.map { |e| e.command['lsid'] }.uniq.count
+              subscriber.started_events.map { |e| e.command['lsid'] }.uniq.reject{ |id| id.nil? }.count
             ).to eq 1
             expect(subscriber.succeeded_events.length).to eq(subscriber.started_events.length)
           end
