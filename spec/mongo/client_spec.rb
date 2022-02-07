@@ -921,23 +921,22 @@ describe Mongo::Client do
       end
 
       context 'when an implicit session is used without enough connections' do
-        require_topology :replica_set # TODO: N, remove this
-        let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do
-          ClientRegistry.instance.new_local_client(
-            SpecConfig.instance.addresses, options
-          ).tap do |cl|
+          authorized_client.with(options).tap do |cl|
             cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
           end
         end
+
 
         let(:options) do
           { :max_pool_size => 1, :retry_writes => true }
         end
 
-        let(:command) do
-          subscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
+        let(:subscriber) { Mrss::EventSubscriber.new }
+
+        let(:events) do
+          subscriber.started_events.filter { |c| c.command_name != 'saslContinue' }
         end
 
         shared_examples "a single connection" do
@@ -949,7 +948,7 @@ describe Mongo::Client do
 
           it 'uses the same implicit session' do
             expect(
-              subscriber.started_events.map { |e| e.command['lsid'] }.uniq.count
+              events.map { |e| e.command['lsid'] }.uniq.count
             ).to eq 1
             expect(subscriber.succeeded_events.length).to eq(subscriber.started_events.length)
           end
