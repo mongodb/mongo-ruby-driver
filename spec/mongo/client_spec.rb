@@ -921,6 +921,7 @@ describe Mongo::Client do
       end
 
       context 'when an implicit session is used without enough connections' do
+        require_topology :replica_set # TODO: N, remove this
         let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:client) do

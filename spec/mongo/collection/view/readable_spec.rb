@@ -686,14 +686,28 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       end
 
+      let(:server) do
+        double('server').tap do |server|
+          allow(server).to receive(:cluster).and_return(authorized_client.cluster)
+        end
+      end
+
+      let(:connection) do
+        double('connection').tap do |connection|
+          allow(connection).to receive(:server).and_return(server)
+        end
+      end
+
       it 'passes the session' do
-        authorized_collection.client.with_session(implicit: false) do |session|
-          session_id = session.session_id
+        authorized_collection.client.with_session do |session|
+          session.materialize(connection) do
+            session_id = session.session_id
 
-          authorized_collection.count_documents({}, session: session)
+            authorized_collection.count_documents({}, session: session)
 
-          event = subscriber.single_command_started_event('aggregate')
-          event.command['lsid'].should == session_id
+            event = subscriber.single_command_started_event('aggregate')
+            event.command['lsid'].should == session_id
+          end
         end
       end
     end
