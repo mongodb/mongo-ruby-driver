@@ -1029,6 +1029,7 @@ module Mongo
     end
 
     def materialize(connection)
+      puts "starting session"
       cluster = connection.server.cluster
       server_session = cluster.session_pool.checkout
       begin
@@ -1037,6 +1038,7 @@ module Mongo
         end
       ensure
         cluster.session_pool.checkin(server_session)
+        puts "ending session"
       end
     end
 
