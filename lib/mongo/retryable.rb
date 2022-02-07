@@ -195,9 +195,11 @@ module Mongo
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
     # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
     #   commitTransaction, false otherwise.
+    # @param [ Context ] context The context for the operation.
     # @param [ Proc ] block The block to execute.
     #
-    # @yieldparam [ Server ] server The server to which the write should be sent.
+    # @yieldparam [ Connection ] connection The connection through which the
+    #   write should be sent.
     # @yieldparam [ Integer ] txn_num Transaction number (NOT the ACID kind).
     #
     # @return [ Result ] The result of the operation.
@@ -209,7 +211,7 @@ module Mongo
       end
 
       unless ending_transaction || retry_write_allowed?(session, write_concern)
-        return legacy_write_with_retry(nil, session, &block)
+        return legacy_write_with_retry(nil, session, context: context, &block)
       end
 
       # If we are here, session is not nil. A session being nil would have
@@ -218,7 +220,7 @@ module Mongo
       server = select_server(cluster, ServerSelector.primary, session)
 
       unless ending_transaction || server.retry_writes?
-        return legacy_write_with_retry(server, session, &block)
+        return legacy_write_with_retry(server, session, context: context, &block)
       end
 
       txn_num = nil
@@ -265,23 +267,28 @@ module Mongo
     # delegates to legacy_write_with_retry which performs write retries using
     # legacy logic.
     #
+    # @param [ nil | Server ] server Optional server to use with the operation.
     # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
+    # @param [ Context ] context The context for the operation.
     #
-    # @yieldparam [ Server ] server The server to which the write should be sent.
+    # @yieldparam [ Connection ] connection The connection through which the
+    #   write should be sent.
     #
     # @api private
-    def nro_write_with_retry(session, write_concern, &block)
+    def nro_write_with_retry(server, session, write_concern, context:, &block)
       if session && session.client.options[:retry_writes]
-        server = select_server(cluster, ServerSelector.primary, session)
+        server ||= select_server(cluster, ServerSelector.primary, session)
         begin
-          yield server
+          server.with_connection(service_id: context.service_id) do |connection|
+            yield connection
+          end
         rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
       else
-        legacy_write_with_retry(nil, session, &block)
+        legacy_write_with_retry(server, session, context: context, &block)
       end
     end
 
@@ -295,11 +302,13 @@ module Mongo
     #   operation. If not provided, the current primary will be retrieved from
     #   the cluster.
     # @param [ nil | Session ] session Optional session to use with the operation.
+    # @param [ Context ] context The context for the operation.
     #
-    # @yieldparam [ Server ] server The server to which the write should be sent.
+    # @yieldparam [ Connection ] connection The connection through which the
+    #    write should be sent.
     #
     # @api private
-    def legacy_write_with_retry(server = nil, session = nil)
+    def legacy_write_with_retry(server = nil, session = nil, context:)
       # This is the pre-session retry logic, and is not subject to
       # current retryable write specifications.
       # In particular it does not retry on SocketError and SocketTimeoutError.
@@ -307,7 +316,9 @@ module Mongo
       begin
         attempt += 1
         server ||= select_server(cluster, ServerSelector.primary, session)
-        yield server
+        server.with_connection(service_id: context.service_id) do |connection|
+          yield connection
+        end
       rescue Error::OperationFailure => e
         e.add_note('legacy retry')
         e.add_note("attempt #{attempt}")

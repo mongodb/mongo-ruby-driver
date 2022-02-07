@@ -244,7 +244,8 @@ module Mongo
               collation: opts[:collation] || opts['collation'] || collation,
             }.compact
 
-            nro_write_with_retry(session, write_concern) do |server|
+            context = Operation::Context.new(client: client, session: session)
+            nro_write_with_retry(nil, session, write_concern, context: context) do |connection|
               Operation::Delete.new(
                 deletes: [ delete_doc ],
                 db_name: collection.database.name,
@@ -254,7 +255,7 @@ module Mongo
                 session: session,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute_c(connection, context: context)
             end
           end
         end
@@ -437,7 +438,8 @@ module Mongo
               update_doc['upsert'] = true
             end
 
-            nro_write_with_retry(session, write_concern) do |server|
+            context = Operation::Context.new(client: client, session: session)
+            nro_write_with_retry(nil, session, write_concern, context: context) do |connection|
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -447,7 +449,7 @@ module Mongo
                 session: session,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute_c(connection, context: context)
             end
           end
         end

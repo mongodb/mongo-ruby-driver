@@ -77,17 +77,15 @@ module Mongo
                 txn_num)
             end
           else
-            nro_write_with_retry(session, write_concern) do |server|
-              server.with_connection(service_id: context.service_id) do |connection|
-                execute_operation(
-                  operation.keys.first,
-                  operation.values.flatten,
-                  connection,
-                  context,
-                  operation_id,
-                  result_combiner,
-                  session)
-              end
+            nro_write_with_retry(nil, session, write_concern, context: context) do |connection|
+              execute_operation(
+                operation.keys.first,
+                operation.values.flatten,
+                connection,
+                context,
+                operation_id,
+                result_combiner,
+                session)
             end
           end
         end

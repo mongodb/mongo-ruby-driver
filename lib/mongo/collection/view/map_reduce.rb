@@ -72,7 +72,7 @@ module Mongo
           @cursor = nil
           session = client.send(:get_session, @options)
           server = cluster.next_primary(nil, session)
-          result = send_initial_query(server, session)
+          result = send_initial_query(server, session, context: Operation::Context.new(client: client, session: session))
           result = send_fetch_query(server, session) unless inline?
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
@@ -223,8 +223,10 @@ module Mongo
         def execute
           view.send(:with_session, @options) do |session|
             write_concern = view.write_concern_with_session(session)
-            nro_write_with_retry(session, write_concern) do |server|
-              send_initial_query(server, session)
+            server = select_server(cluster, ServerSelector.primary, session)
+            context = Operation::Context.new(client: client, session: session)
+            nro_write_with_retry(server, session, write_concern, context: context) do |connection|
+              send_initial_query(server, session, context: context)
             end
           end
         end
@@ -266,13 +268,15 @@ module Mongo
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server, session)
+        def send_initial_query(server, session, context:)
           unless valid_server?(server)
             msg = "Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
           end
-          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+          server.with_connection(service_id: context.service_id) do |connection|
+            initial_query_op(session).execute_c(connection, context: context)
+          end
         end
 
         def fetch_query_spec
