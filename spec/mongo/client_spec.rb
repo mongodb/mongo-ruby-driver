@@ -936,7 +936,7 @@ describe Mongo::Client do
         let(:subscriber) { Mrss::EventSubscriber.new }
 
         let(:events) do
-          subscriber.started_events.filter { |c| c.command_name != 'saslContinue' }
+          subscriber.started_events.select { |c| c.command_name != 'saslContinue' }
         end
 
         shared_examples "a single connection" do
