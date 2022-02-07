@@ -36,11 +36,7 @@ module Mongo
       # @since 2.5.2
       def execute(server, context:)
         server.with_connection(service_id: context.service_id) do |connection|
-          validate!(connection)
-          op = self.class::OpMsg.new(spec)
-
-          result = op.execute(connection, context: context)
-          validate_result(result, connection, context)
+          execute_with_connection(connection, context: context)
         end
       end
 
