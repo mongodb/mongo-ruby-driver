@@ -628,7 +628,7 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute_c(connection, context: context)
+            Operation::Command.new(spec).execute_with_connection(connection, context: context)
           end
         end
       ensure
@@ -677,7 +677,7 @@ module Mongo
                 db_name: 'admin',
                 session: self,
                 txn_num: txn_num
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             ensure
               unpin
             end

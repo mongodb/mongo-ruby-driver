@@ -91,7 +91,7 @@ module Mongo
                 write_concern: write_concern,
                 session: session,
                 txn_num: txn_num,
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end.first['value']
         end
@@ -197,7 +197,7 @@ module Mongo
                 write_concern: write_concern,
                 session: session,
                 txn_num: txn_num,
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end.first['value']
           value unless value.nil? || value.empty?
@@ -255,7 +255,7 @@ module Mongo
                 session: session,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end
         end
@@ -313,7 +313,7 @@ module Mongo
                 txn_num: txn_num,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end
         end
@@ -380,7 +380,7 @@ module Mongo
                 txn_num: txn_num,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end
         end
@@ -449,7 +449,7 @@ module Mongo
                 session: session,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end
         end
@@ -518,7 +518,7 @@ module Mongo
                 txn_num: txn_num,
                 let: opts[:let],
                 comment: opts[:comment],
-              ).execute_c(connection, context: context)
+              ).execute_with_connection(connection, context: context)
             end
           end
         end

@@ -275,7 +275,7 @@ module Mongo
             server = cluster.next_primary(nil, session)
           end
           server.with_connection(service_id: context.service_id) do |connection|
-            initial_query_op(session).execute_c(connection, context: context)
+            initial_query_op(session).execute_with_connection(connection, context: context)
           end
         end
 

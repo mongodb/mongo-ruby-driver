@@ -38,7 +38,15 @@ module Mongo
         end
       end
 
-      def execute_c(connection, context:, options: {})
+      # Execute the operation.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection to send
+      #   the operation through.
+      # @param [ Operation::Context ] context The operation context.
+      # @param [ Hash ] options Operation execution options.
+      #
+      # @return [ Mongo::Operation::Result ] The operation result.
+      def execute_with_connection(connection, context:, options: {})
         operation = final_operation(connection)
         operation.execute(connection, context: context, options: options)
       end

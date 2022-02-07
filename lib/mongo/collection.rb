@@ -622,7 +622,7 @@ module Mongo
             :session => session,
             :txn_num => txn_num,
             :comment => opts[:comment]
-          ).execute_c(connection, context: context)
+          ).execute_with_connection(connection, context: context)
         end
       end
     end
