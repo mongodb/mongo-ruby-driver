@@ -274,9 +274,7 @@ module Mongo
             log_warn(msg)
             server = cluster.next_primary(nil, session)
           end
-          server.with_connection(service_id: context.service_id) do |connection|
-            initial_query_op(session).execute_with_connection(connection, context: context)
-          end
+          initial_query_op(session).execute(server, context: context)
         end
 
         def fetch_query_spec
