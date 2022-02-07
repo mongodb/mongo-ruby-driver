@@ -947,7 +947,7 @@ describe Mongo::Client do
           end
 
           it 'uses the same implicit session' do
-            puts events unless events.map { |e| e.command['lsid'] }.uniq.count == 1
+            puts events.map{ |e| e.inspect } if events.map { |e| e.command['lsid'] }.uniq.count != 1
             expect(
               events.map { |e| e.command['lsid'] }.uniq.count
             ).to eq 1
