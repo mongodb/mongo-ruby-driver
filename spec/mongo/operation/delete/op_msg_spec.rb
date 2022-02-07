@@ -194,11 +194,8 @@ describe Mongo::Operation::Delete::OpMsg do
 
           around do |example|
             RSpec::Mocks.with_temporary_scope do
-              server = double('server')
-              allow(server).to receive(:cluster).and_return(authorized_client.cluster)
-
               connection = double('connection')
-              allow(connection).to receive(:server).and_return(server)
+              allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
 
               session.materialize(connection) do
                 example.run

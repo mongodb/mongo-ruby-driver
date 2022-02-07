@@ -686,15 +686,9 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       end
 
-      let(:server) do
-        double('server').tap do |server|
-          allow(server).to receive(:cluster).and_return(authorized_client.cluster)
-        end
-      end
-
       let(:connection) do
         double('connection').tap do |connection|
-          allow(connection).to receive(:server).and_return(server)
+          allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
         end
       end
 

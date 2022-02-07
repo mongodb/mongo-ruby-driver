@@ -198,6 +198,17 @@ describe Mongo::Operation::Update::OpMsg do
             authorized_client.send(:get_session)
           end
 
+          around do |example|
+            RSpec::Mocks.with_temporary_scope do
+              connection = double('connection')
+              allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
+
+              session.materialize(connection) do
+                example.run
+              end
+            end
+          end
+
           context 'when the topology is replica set or sharded' do
             min_server_fcv '3.6'
             require_topology :replica_set, :sharded
