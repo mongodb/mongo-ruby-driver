@@ -949,7 +949,7 @@ describe Mongo::Client do
           it 'uses the same implicit session' do
             puts events.map{ |e| e.inspect } if events.map { |e| e.command['lsid'] }.uniq.count != 1
             expect(
-              subscriber.started_events.map { |e| e.command['lsid'] }.uniq.reject{ |id| id.nil? }.count
+              subscriber.started_events.map { |e| e.command['lsid'] }.uniq.reject { |id| id.nil? }.count
             ).to eq 1
             expect(subscriber.succeeded_events.length).to eq(subscriber.started_events.length)
           end

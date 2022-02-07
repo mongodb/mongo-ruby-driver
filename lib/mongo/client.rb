@@ -1083,11 +1083,13 @@ module Mongo
     #
     # @api private
     def with_session(options = {}, &block)
+      puts "starting session"
       session = get_session(options)
 
       yield session
     ensure
       if session && session.implicit?
+        puts "ending session"
         session.end_session
       end
     end
