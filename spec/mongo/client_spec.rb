@@ -921,6 +921,7 @@ describe Mongo::Client do
       end
 
       context 'when an implicit session is used without enough connections' do
+        require_topology :replica_set
 
         let(:client) do
           authorized_client.with(options).tap do |cl|
