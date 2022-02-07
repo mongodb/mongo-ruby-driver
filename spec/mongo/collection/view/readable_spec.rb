@@ -687,7 +687,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'passes the session' do
-        authorized_collection.client.with_session do |session|
+        authorized_collection.client.with_session(implicit: false) do |session|
           session_id = session.session_id
 
           authorized_collection.count_documents({}, session: session)
