@@ -44,6 +44,7 @@ module Mongo
         @to_kill = {}
         @active_cursor_ids = Set.new
         @mutex = Mutex.new
+        @pipe_read, @pipe_write = IO.pipe
       end
 
       attr_reader :cluster
@@ -56,12 +57,14 @@ module Mongo
       #
       # @api private
       def schedule_kill_cursor(kill_spec, server)
-        @mutex.synchronize do
-          if @active_cursor_ids.include?(kill_spec.cursor_id)
-            @to_kill[server.address.seed] ||= Set.new
-            @to_kill[server.address.seed] << kill_spec
-          end
-        end
+        msg = [
+          server.address.seed,
+          kill_spec.cursor_id,
+          kill_spec.coll_name,
+          kill_spec.db_name,
+          kill_spec.service_id
+        ].join("\t")
+        @pipe_write.puts(msg)
       end
 
       # Register a cursor id as active.
@@ -107,6 +110,25 @@ module Mongo
 
         @mutex.synchronize do
           @active_cursor_ids.delete(id)
+        end
+      end
+
+      def read_scheduled_kill_specs
+        while readable_io = IO.select([@pipe_read], nil, nil, 0.1)
+          msg = readable_io.first[0].gets.strip
+          seed, cursor_id, coll_name, db_name, service_id = msg.split("\t")
+          kill_spec = Cursor::KillSpec.new(
+            cursor_id: cursor_id.to_i,
+            coll_name: coll_name,
+            db_name: db_name,
+            service_id: service_id
+          )
+          @mutex.synchronize do
+            if @active_cursor_ids.include?(kill_spec.cursor_id)
+              @to_kill[seed] ||= Set.new
+              @to_kill[seed] << kill_spec
+            end
+          end
         end
       end
 

@@ -33,6 +33,18 @@ module Mongo
       end
 
       attr_reader :cursor_id, :coll_name, :db_name, :service_id
+
+      def ==(other)
+        cursor_id == other.cursor_id && coll_name == other.coll_name && db_name == other.db_name && service_id == other.service_id
+      end
+
+      def eql?(other)
+        self.==(other)
+      end
+
+      def hash
+        [cursor_id, coll_name, db_name, service_id].compact.hash
+      end
     end
   end
 end

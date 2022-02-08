@@ -61,11 +61,12 @@ describe Mongo::Cluster::CursorReaper do
 
         before do
           reaper.schedule_kill_cursor(cursor_kill_spec_1, server)
+          reaper.read_scheduled_kill_specs
         end
 
         it 'initializes the list of op specs to a set' do
           expect(to_kill.keys).to eq([ address.seed ])
-          expect(to_kill[address.seed]).to eq(Set.new([cursor_kill_spec_1]))
+          expect(to_kill[address.seed]).to contain_exactly(cursor_kill_spec_1)
         end
       end
 
@@ -73,7 +74,9 @@ describe Mongo::Cluster::CursorReaper do
 
         before do
           reaper.schedule_kill_cursor(cursor_kill_spec_1, server)
+          reaper.read_scheduled_kill_specs
           reaper.schedule_kill_cursor(cursor_kill_spec_2, server)
+          reaper.read_scheduled_kill_specs
         end
 
         it 'adds the op to the server list' do
@@ -85,6 +88,7 @@ describe Mongo::Cluster::CursorReaper do
 
           before do
             reaper.schedule_kill_cursor(cursor_kill_spec_2, server)
+            reaper.read_scheduled_kill_specs
           end
 
           it 'does not allow duplicates ops for a server' do
