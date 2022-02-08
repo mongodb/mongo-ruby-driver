@@ -123,11 +123,9 @@ module Mongo
             db_name: db_name,
             service_id: service_id
           )
-          @mutex.synchronize do
-            if @active_cursor_ids.include?(kill_spec.cursor_id)
-              @to_kill[seed] ||= Set.new
-              @to_kill[seed] << kill_spec
-            end
+          if @active_cursor_ids.include?(kill_spec.cursor_id)
+            @to_kill[seed] ||= Set.new
+            @to_kill[seed] << kill_spec
           end
         end
       end
@@ -144,11 +142,11 @@ module Mongo
         # TODO optimize this to batch kill cursor operations for the same
         # server/database/collection instead of killing each cursor
         # individually.
-
         loop do
           server_address_str = nil
 
           kill_spec = @mutex.synchronize do
+            read_scheduled_kill_specs
             # Find a server that has any cursors scheduled for destruction.
             server_address_str, specs =
               @to_kill.detect { |server_address_str, specs| specs.any? }
