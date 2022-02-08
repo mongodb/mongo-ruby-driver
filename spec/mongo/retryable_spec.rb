@@ -74,7 +74,7 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
       allow(session).to receive(:pinned_server)
       allow(session).to receive(:pinned_service_id)
       allow(session).to receive(:starting_transaction?).and_return(false)
-      allow(session).to receive(:materialize).and_yield()
+      allow(session).to receive(:materialize)
     end
   end
 

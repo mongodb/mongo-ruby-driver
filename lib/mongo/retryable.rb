@@ -227,15 +227,14 @@ module Mongo
 
       begin
         server.with_connection(service_id: context.service_id) do |connection|
-          session.materialize(connection) do
-            txn_num = if session.in_transaction?
-              session.txn_num
-            else
-              session.next_txn_num
-            end
-
-            yield(connection, txn_num, false)
+          session.materialize(connection)
+          txn_num = if session.in_transaction?
+            session.txn_num
+          else
+            session.next_txn_num
           end
+
+          yield(connection, txn_num, false)
         end
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')

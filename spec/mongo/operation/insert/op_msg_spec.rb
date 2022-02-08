@@ -129,14 +129,12 @@ describe Mongo::Operation::Insert::OpMsg do
         authorized_client.start_session
       end
 
-      around do |example|
+      before do
         RSpec::Mocks.with_temporary_scope do
           connection = double('connection')
           allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
 
-          session.materialize(connection) do
-            example.run
-          end
+          session.materialize(connection)
         end
       end
 

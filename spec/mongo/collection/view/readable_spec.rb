@@ -694,14 +694,13 @@ describe Mongo::Collection::View::Readable do
 
       it 'passes the session' do
         authorized_collection.client.with_session do |session|
-          session.materialize(connection) do
-            session_id = session.session_id
+          session.materialize(connection)
+          session_id = session.session_id
 
-            authorized_collection.count_documents({}, session: session)
+          authorized_collection.count_documents({}, session: session)
 
-            event = subscriber.single_command_started_event('aggregate')
-            event.command['lsid'].should == session_id
-          end
+          event = subscriber.single_command_started_event('aggregate')
+          event.command['lsid'].should == session_id
         end
       end
     end

@@ -78,21 +78,6 @@ module Mongo
       @state = NO_TRANSACTION_STATE
     end
 
-    def with_server_session(server_session)
-      if @server_session
-      return yield
-
-        raise Error::InternalDriverError, 'Trying to assign a server session to a client session that already has a server session'
-      end
-
-      @server_session = server_session
-      begin
-        yield
-      ensure
-        @server_session = nil
-      end
-    end
-
     # @return [ Hash ] The options for this session.
     #
     # @since 2.5.0
@@ -1031,13 +1016,7 @@ module Mongo
     def materialize(connection)
       cluster = connection.server.cluster
       server_session = cluster.session_pool.checkout
-      begin
-        with_server_session(server_session) do
-          yield
-        end
-      ensure
-        cluster.session_pool.checkin(server_session)
-      end
+      @server_session ||= server_session
     end
 
     # Increment and return the next transaction number.
