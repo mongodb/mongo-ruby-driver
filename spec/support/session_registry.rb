@@ -4,25 +4,19 @@
 require 'singleton'
 
 module Mongo
-  class Client
-    alias :get_session_without_tracking :get_session
-
-    def get_session(options = {})
-      get_session_without_tracking(options).tap do |session|
-      end
-    end
-
-    def register_session(session)
-      SessionRegistry.instance.register(session)
-    end
-  end
-
   class Session
     alias :end_session_without_tracking :end_session
 
     def end_session
       SessionRegistry.instance.unregister(self)
       end_session_without_tracking
+    end
+
+    alias :materialize_without_tracking :materialize
+
+    def materialize(connection)
+      materialize_without_tracking(connection)
+      SessionRegistry.instance.register(self)
     end
   end
 end
