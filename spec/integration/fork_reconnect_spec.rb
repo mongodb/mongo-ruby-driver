@@ -195,6 +195,10 @@ describe 'fork reconnect' do
             client.reconnect
             session.end_session
             child_session = client.get_session
+
+            connection = double('connection').tap do |connection|
+              allow(connection).to receive_message_chain(:server, :cluster).and_return(client.cluster)
+            end
             child_lsid = child_session.materialize(connection).session_id
             expect(child_lsid).not_to eq(parent_lsid)
           end
