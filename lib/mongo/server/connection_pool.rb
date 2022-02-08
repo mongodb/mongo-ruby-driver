@@ -633,14 +633,12 @@ module Mongo
       #
       # @since 2.0.0
       def with_connection(service_id: nil)
-        puts "starting connection"
         raise_if_closed!
 
         connection = check_out(service_id: service_id)
         yield(connection)
       ensure
         if connection
-          puts "ending connection"
           check_in(connection)
         end
       end

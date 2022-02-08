@@ -921,7 +921,7 @@ describe Mongo::Client do
       end
 
       context 'when an implicit session is used without enough connections' do
-        require_topology :replica_set
+        require_no_multi_mongos
 
         let(:client) do
           authorized_client.with(options).tap do |cl|
@@ -948,7 +948,6 @@ describe Mongo::Client do
           end
 
           it 'uses the same implicit session' do
-            puts events.map{ |e| e.inspect } if events.map { |e| e.command['lsid'] }.uniq.count != 1
             expect(
               subscriber.started_events.map { |e| e.command['lsid'] }.uniq.reject { |id| id.nil? }.count
             ).to eq 1
