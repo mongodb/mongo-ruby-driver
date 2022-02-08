@@ -634,6 +634,10 @@ axes:
         display_name: jruby-9.2
         variables:
           RVM_RUBY: "jruby-9.2"
+      - id: "jruby-9.3"
+        display_name: jruby-9.3
+        variables:
+          RVM_RUBY: "jruby-9.3"
 
   - id: "os"
     display_name: OS
@@ -1034,7 +1038,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: [ruby-3.1, ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, jruby-9.2]
+      ruby: [ruby-3.1, ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, jruby-9.2, jruby-9.3]
       mongodb-version: ["4.4"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1604
@@ -1067,7 +1071,7 @@ buildvariants:
   - matrix_name: "jruby-auth"
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
-      ruby: "jruby-9.2"
+      ruby: "jruby-9.3"
       mongodb-version: "4.2"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel80

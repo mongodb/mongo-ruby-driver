@@ -46,6 +46,9 @@ module Mongo
       # @since 2.0.0
       # @api private
       def initialize(host, port, timeout, family, options = {})
+        if family.nil?
+          raise ArgumentError, 'family must be specified'
+        end
         super(timeout, options)
         @host, @port = host, port
         @family = family
