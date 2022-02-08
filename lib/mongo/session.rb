@@ -1017,6 +1017,7 @@ module Mongo
       cluster = connection.server.cluster
       server_session = cluster.session_pool.checkout
       @server_session ||= server_session
+      client.register_session(self)
     end
 
     # Increment and return the next transaction number.
