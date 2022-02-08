@@ -169,7 +169,7 @@ describe 'fork reconnect' do
           Utils.wrap_forked_child do
             client.reconnect
             child_session = client.get_session
-            child_lsid = session.materialize(connection) do
+            child_lsid = child_session.materialize(connection) do
               child_session.session_id
             end
             expect(child_lsid).not_to eq(parent_lsid)
@@ -192,8 +192,8 @@ describe 'fork reconnect' do
       #   * In the child, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is different.
       it 'does not return parent process sessions to child process pool' do
         session = client.get_session
-        session.materialize(connection) do
-          parent_lsid = session.session_id
+        parent_lsid = session.materialize(connection) do
+          session.session_id
         end
 
         if pid = fork
@@ -204,7 +204,9 @@ describe 'fork reconnect' do
             client.reconnect
             session.end_session
             child_session = client.get_session
-            child_lsid = child_session.session_id
+            child_lsid = child_session.materialize(connection) do
+              child_session.session_id
+            end
             expect(child_lsid).not_to eq(parent_lsid)
           end
         end
