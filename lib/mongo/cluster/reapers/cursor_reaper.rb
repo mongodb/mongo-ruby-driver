@@ -34,6 +34,11 @@ module Mongo
       # @since 2.3.0
       FREQUENCY = 1.freeze
 
+      # Symbol for separating parts of scheduled kill spec messages.
+      #
+      # @api private
+      MSG_SEPARATOR = "\t"
+
       # Create a cursor reaper.
       #
       # @param [ Cluster ] cluster The cluster.
@@ -63,7 +68,7 @@ module Mongo
           kill_spec.coll_name,
           kill_spec.db_name,
           kill_spec.service_id
-        ].join("\t")
+        ].join(MSG_SEPARATOR)
         @pipe_write.puts(msg)
       end
 
@@ -113,10 +118,19 @@ module Mongo
         end
       end
 
+      # Read and decode scheduled kill cursors operations.
+      #
+      # This method mutates instance variables without locking, so is is not
+      # thread safe. Generally, it should not be called itself, this is a helper
+      # for `kill_cursor` method.
+      #
+      # @api private
       def read_scheduled_kill_specs
-        while readable_io = IO.select([@pipe_read], nil, nil, 0.1)
-          msg = readable_io.first[0].gets.strip
-          seed, cursor_id, coll_name, db_name, service_id = msg.split("\t")
+        while select_resp = IO.select([@pipe_read], nil, nil, 0.1)
+          readable_io = select_resp&.first&.first
+          next if readable_io.nil?
+          msg = readable_io.gets.strip
+          seed, cursor_id, coll_name, db_name, service_id = msg.split(MSG_SEPARATOR)
           kill_spec = Cursor::KillSpec.new(
             cursor_id: cursor_id.to_i,
             coll_name: coll_name,
