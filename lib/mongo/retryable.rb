@@ -107,6 +107,13 @@ module Mongo
     #
     # @return [ Result ] The result of the operation.
     def read_with_retry(session = nil, server_selector = nil, &block)
+      materialize_proc = Proc.new do |server|
+        return block.call(server) unless server && session
+        server.with_connection do |connection|
+          session.materialize(connection)
+          block.call(server)
+        end
+      end
       if session.nil? && server_selector.nil?
         # Older versions of Mongoid call read_with_retry without arguments.
         # This is already not correct in a MongoDB 3.6+ environment with
@@ -122,15 +129,21 @@ module Mongo
         # bearing node in the cluster; the block may select a different server
         # which is fine.
         server_selector = ServerSelector.get(mode: :primary_preferred)
-        legacy_read_with_retry(nil, server_selector, &block)
+        legacy_read_with_retry(nil, server_selector) do |server|
+          materialize_proc.call(server)
+        end
       elsif session && session.retry_reads?
-        modern_read_with_retry(session, server_selector, &block)
+        modern_read_with_retry(session, server_selector) do |server|
+          materialize_proc.call(server)
+        end
       elsif client.max_read_retries > 0
-        legacy_read_with_retry(session, server_selector, &block)
+        legacy_read_with_retry(session, server_selector) do |server|
+          materialize_proc.call(server)
+        end
       else
         server = select_server(cluster, server_selector, session)
         begin
-          yield server
+          materialize_proc.call(server)
         rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
