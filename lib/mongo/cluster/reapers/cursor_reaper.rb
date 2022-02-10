@@ -34,11 +34,6 @@ module Mongo
       # @since 2.3.0
       FREQUENCY = 1.freeze
 
-      # Symbol for separating parts of scheduled kill spec messages.
-      #
-      # @api private
-      MSG_SEPARATOR = "\t"
-
       # Create a cursor reaper.
       #
       # @param [ Cluster ] cluster The cluster.
@@ -49,7 +44,7 @@ module Mongo
         @to_kill = {}
         @active_cursor_ids = Set.new
         @mutex = Mutex.new
-        @pipe_read, @pipe_write = IO.pipe
+        @kill_spec_queue = Queue.new
       end
 
       attr_reader :cluster
@@ -57,19 +52,10 @@ module Mongo
       # Schedule a kill cursors operation to be eventually executed.
       #
       # @param [ Cursor::KillSpec ] kill_spec The kill specification.
-      # @param [ Mongo::Server ] server The server to send the kill cursors
-      #   operation to.
       #
       # @api private
-      def schedule_kill_cursor(kill_spec, server)
-        msg = [
-          server.address.seed,
-          kill_spec.cursor_id,
-          kill_spec.coll_name,
-          kill_spec.db_name,
-          kill_spec.service_id
-        ].join(MSG_SEPARATOR)
-        @pipe_write.puts(msg)
+      def schedule_kill_cursor(kill_spec)
+        @kill_spec_queue << kill_spec
       end
 
       # Register a cursor id as active.
@@ -126,20 +112,11 @@ module Mongo
       #
       # @api private
       def read_scheduled_kill_specs
-        while select_resp = IO.select([@pipe_read], nil, nil, 0.1)
-          readable_io = select_resp&.first&.first
-          next if readable_io.nil?
-          msg = readable_io.gets.strip
-          seed, cursor_id, coll_name, db_name, service_id = msg.split(MSG_SEPARATOR)
-          kill_spec = Cursor::KillSpec.new(
-            cursor_id: cursor_id.to_i,
-            coll_name: coll_name,
-            db_name: db_name,
-            service_id: service_id
-          )
+        while !@kill_spec_queue.empty?
+          kill_spec = @kill_spec_queue.pop
           if @active_cursor_ids.include?(kill_spec.cursor_id)
-            @to_kill[seed] ||= Set.new
-            @to_kill[seed] << kill_spec
+            @to_kill[kill_spec.server_seed] ||= Set.new
+            @to_kill[kill_spec.server_seed] << kill_spec
           end
         end
       end

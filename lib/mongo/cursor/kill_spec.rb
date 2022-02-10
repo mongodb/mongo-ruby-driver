@@ -25,17 +25,22 @@ module Mongo
     # @api private
     class KillSpec
 
-      def initialize(cursor_id:, coll_name:, db_name:, service_id:)
+      def initialize(cursor_id:, coll_name:, db_name:, service_id:, server_seed:)
         @cursor_id = cursor_id
         @coll_name = coll_name
         @db_name = db_name
         @service_id = service_id
+        @server_seed = server_seed
       end
 
-      attr_reader :cursor_id, :coll_name, :db_name, :service_id
+      attr_reader :cursor_id, :coll_name, :db_name, :service_id, :server_seed
 
       def ==(other)
-        cursor_id == other.cursor_id && coll_name == other.coll_name && db_name == other.db_name && service_id == other.service_id
+        cursor_id == other.cursor_id &&
+          coll_name == other.coll_name &&
+          db_name == other.db_name &&
+          service_id == other.service_id &&
+          server_seed == other.server_seed
       end
 
       def eql?(other)
@@ -43,7 +48,7 @@ module Mongo
       end
 
       def hash
-        [cursor_id, coll_name, db_name, service_id].compact.hash
+        [cursor_id, coll_name, db_name, service_id, server_seed].compact.hash
       end
     end
   end

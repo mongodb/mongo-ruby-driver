@@ -331,8 +331,9 @@ describe Mongo::Cursor do
 
       before do
         authorized_collection.insert_many(documents)
-        cluster.schedule_kill_cursor(cursor.kill_spec,
-                                     cursor.instance_variable_get(:@server))
+        cluster.schedule_kill_cursor(
+          cursor.kill_spec(cursor.instance_variable_get(:@server))
+        )
       end
 
       let(:view) do
