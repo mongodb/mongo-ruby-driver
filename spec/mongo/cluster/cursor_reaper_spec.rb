@@ -41,12 +41,12 @@ describe Mongo::Cluster::CursorReaper do
     let(:cursor_id) { 1 }
     let(:cursor_kill_spec_1) do
       Mongo::Cursor::KillSpec.new(
-        cursor_id: cursor_id, coll_name: 'c', db_name: 'd', service_id: nil, server_seed: address.seed
+        cursor_id: cursor_id, coll_name: 'c', db_name: 'd', service_id: nil, server_address: address
       )
     end
     let(:cursor_kill_spec_2) do
       Mongo::Cursor::KillSpec.new(
-        cursor_id: cursor_id, coll_name: 'c', db_name: 'q', service_id: nil, server_seed: address.seed
+        cursor_id: cursor_id, coll_name: 'c', db_name: 'q', service_id: nil, server_address: address
       )
     end
     let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
@@ -65,8 +65,8 @@ describe Mongo::Cluster::CursorReaper do
         end
 
         it 'initializes the list of op specs to a set' do
-          expect(to_kill.keys).to eq([ address.seed ])
-          expect(to_kill[address.seed]).to contain_exactly(cursor_kill_spec_1)
+          expect(to_kill.keys).to eq([ address ])
+          expect(to_kill[address]).to contain_exactly(cursor_kill_spec_1)
         end
       end
 
@@ -80,8 +80,8 @@ describe Mongo::Cluster::CursorReaper do
         end
 
         it 'adds the op to the server list' do
-          expect(to_kill.keys).to eq([ address.seed ])
-          expect(to_kill[address.seed]).to contain_exactly(cursor_kill_spec_1, cursor_kill_spec_2)
+          expect(to_kill.keys).to eq([ address ])
+          expect(to_kill[address]).to contain_exactly(cursor_kill_spec_1, cursor_kill_spec_2)
         end
 
         context 'when the same op is added more than once' do
@@ -92,8 +92,8 @@ describe Mongo::Cluster::CursorReaper do
           end
 
           it 'does not allow duplicates ops for a server' do
-            expect(to_kill.keys).to eq([ address.seed ])
-            expect(to_kill[address.seed]).to contain_exactly(cursor_kill_spec_1, cursor_kill_spec_2)
+            expect(to_kill.keys).to eq([ address ])
+            expect(to_kill[address]).to contain_exactly(cursor_kill_spec_1, cursor_kill_spec_2)
           end
         end
       end

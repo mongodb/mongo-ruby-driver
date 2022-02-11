@@ -372,7 +372,7 @@ module Mongo
         coll_name: collection_name,
         db_name: database.name,
         service_id: initial_result.connection_description.service_id,
-        server_seed: server.address.seed,
+        server_address: server.address,
       )
     end
 

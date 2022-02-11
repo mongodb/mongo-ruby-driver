@@ -114,8 +114,8 @@ module Mongo
       def read_scheduled_kill_specs
         while kill_spec = @kill_spec_queue.pop(true)
           if @active_cursor_ids.include?(kill_spec.cursor_id)
-            @to_kill[kill_spec.server_seed] ||= Set.new
-            @to_kill[kill_spec.server_seed] << kill_spec
+            @to_kill[kill_spec.server_address] ||= Set.new
+            @to_kill[kill_spec.server_address] << kill_spec
           end
         end
       rescue ThreadError
@@ -135,13 +135,13 @@ module Mongo
         # server/database/collection instead of killing each cursor
         # individually.
         loop do
-          server_address_str = nil
+          server_address = nil
 
           kill_spec = @mutex.synchronize do
             read_scheduled_kill_specs
             # Find a server that has any cursors scheduled for destruction.
-            server_address_str, specs =
-              @to_kill.detect { |server_address_str, specs| specs.any? }
+            server_address, specs =
+              @to_kill.detect { |_, specs| specs.any? }
 
             if specs.nil?
               # All servers have empty specs, nothing to do.
@@ -180,7 +180,7 @@ module Mongo
           op = Operation::KillCursors.new(spec)
 
           server = cluster.servers.detect do |server|
-            server.address.seed == server_address_str
+            server.address == server_address
           end
 
           unless server
