@@ -112,13 +112,14 @@ module Mongo
       #
       # @api private
       def read_scheduled_kill_specs
-        while !@kill_spec_queue.empty?
-          kill_spec = @kill_spec_queue.pop
+        while kill_spec = @kill_spec_queue.pop(true)
           if @active_cursor_ids.include?(kill_spec.cursor_id)
             @to_kill[kill_spec.server_seed] ||= Set.new
             @to_kill[kill_spec.server_seed] << kill_spec
           end
         end
+      rescue ThreadError
+        # Empty queue, nothing to do.
       end
 
       # Execute all pending kill cursors operations.
