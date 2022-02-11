@@ -940,18 +940,41 @@ describe Mongo::Client do
           subscriber.started_events
         end
 
+        let(:mutex) do
+          Mutex.new
+        end
+
+        let(:checked_out_sessions) { 0 }
+
         shared_examples "a single connection" do
+
           before do
+            checked_out_sessions = 0
+            session_pool = client.cluster.session_pool
+
+            allow(session_pool).to receive(:checkin).and_wrap_original do |m, *args|
+              mutex.synchronize do
+                checked_out_sessions -= 1
+              end
+              m.call(*args)
+            end
+
+            allow(session_pool).to receive(:checkout).and_wrap_original do |m, *args|
+              mutex.synchronize do
+                checked_out_sessions += 1
+              end
+              m.call(*args)
+            end
+
             threads.each do |thread|
               thread.value
             end
           end
 
-          it 'uses the same implicit session' do
-            expect(
-              subscriber.started_events.map { |e| e.command['lsid'] }.uniq.reject { |id| id.nil? }.count
-            ).to eq 1
-            expect(subscriber.succeeded_events.length).to eq(subscriber.started_events.length)
+          it 'has no checked out sessions' do
+            mutex.synchronize do
+              expect(checked_out_sessions).to eq(0)
+            end
           end
         end
 
