@@ -44,6 +44,7 @@ module Mongo
         @to_kill = {}
         @active_cursor_ids = Set.new
         @mutex = Mutex.new
+        @kill_spec_queue = Queue.new
       end
 
       attr_reader :cluster
@@ -51,17 +52,10 @@ module Mongo
       # Schedule a kill cursors operation to be eventually executed.
       #
       # @param [ Cursor::KillSpec ] kill_spec The kill specification.
-      # @param [ Mongo::Server ] server The server to send the kill cursors
-      #   operation to.
       #
       # @api private
-      def schedule_kill_cursor(kill_spec, server)
-        @mutex.synchronize do
-          if @active_cursor_ids.include?(kill_spec.cursor_id)
-            @to_kill[server.address.seed] ||= Set.new
-            @to_kill[server.address.seed] << kill_spec
-          end
-        end
+      def schedule_kill_cursor(kill_spec)
+        @kill_spec_queue << kill_spec
       end
 
       # Register a cursor id as active.
@@ -110,6 +104,24 @@ module Mongo
         end
       end
 
+      # Read and decode scheduled kill cursors operations.
+      #
+      # This method mutates instance variables without locking, so is is not
+      # thread safe. Generally, it should not be called itself, this is a helper
+      # for `kill_cursor` method.
+      #
+      # @api private
+      def read_scheduled_kill_specs
+        while kill_spec = @kill_spec_queue.pop(true)
+          if @active_cursor_ids.include?(kill_spec.cursor_id)
+            @to_kill[kill_spec.server_address] ||= Set.new
+            @to_kill[kill_spec.server_address] << kill_spec
+          end
+        end
+      rescue ThreadError
+        # Empty queue, nothing to do.
+      end
+
       # Execute all pending kill cursors operations.
       #
       # @example Execute pending kill cursors operations.
@@ -122,14 +134,14 @@ module Mongo
         # TODO optimize this to batch kill cursor operations for the same
         # server/database/collection instead of killing each cursor
         # individually.
-
         loop do
-          server_address_str = nil
+          server_address = nil
 
           kill_spec = @mutex.synchronize do
+            read_scheduled_kill_specs
             # Find a server that has any cursors scheduled for destruction.
-            server_address_str, specs =
-              @to_kill.detect { |server_address_str, specs| specs.any? }
+            server_address, specs =
+              @to_kill.detect { |_, specs| specs.any? }
 
             if specs.nil?
               # All servers have empty specs, nothing to do.
@@ -168,7 +180,7 @@ module Mongo
           op = Operation::KillCursors.new(spec)
 
           server = cluster.servers.detect do |server|
-            server.address.seed == server_address_str
+            server.address == server_address
           end
 
           unless server
