@@ -27,12 +27,6 @@ module Mongo
     def materialize(connection)
       materialize_without_tracking(connection)
       SessionRegistry.instance.register(self)
-      begin
-        SessionRegistry.instance.verify_single_session!
-      rescue => e
-        byebug
-        raise e
-      end
     end
   end
 end
@@ -48,21 +42,18 @@ class SessionRegistry
 
   def register(session)
     @mutex.synchronize do
-      puts "REGISTER #{session.session_id}"
       @registry[session.session_id] = session if session
     end
   end
 
   def unregister(session)
     @mutex.synchronize do
-      puts "UNREGISTER #{session.session_id}"
       @registry.delete(session.session_id) unless session.ended?
     end
   end
 
   def verify_sessions_ended!
     @mutex.synchronize do
-      puts "CHECKING SESSION ENDED"
       @registry.delete_if { |_, session| session.ended? }
 
       unless @registry.empty?

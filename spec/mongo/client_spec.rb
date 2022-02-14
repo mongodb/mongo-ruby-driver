@@ -949,31 +949,18 @@ describe Mongo::Client do
         shared_examples "a single connection" do
 
           before do
-            checked_out_sessions = 0
-            session_pool = client.cluster.session_pool
+            SessionRegistry.instance.clear_registry
 
-            allow(session_pool).to receive(:checkin).and_wrap_original do |m, *args|
-              mutex.synchronize do
-                checked_out_sessions -= 1
+            allow_any_instance_of(Mongo::Session).to receive(:materialize).and_wrap_original do |m, *args|
+              m.call(*args).tap do
+                SessionRegistry.instance.verify_single_session!
               end
-              m.call(*args)
-            end
-
-            allow(session_pool).to receive(:checkout).and_wrap_original do |m, *args|
-              mutex.synchronize do
-                checked_out_sessions += 1
-              end
-              m.call(*args)
-            end
-
-            threads.each do |thread|
-              thread.value
             end
           end
 
-          it 'has no checked out sessions' do
-            mutex.synchronize do
-              expect(checked_out_sessions).to eq(0)
+          it 'doesn\'t have any live sessions' do
+            threads.each do |thread|
+              thread.value
             end
           end
         end

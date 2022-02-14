@@ -57,7 +57,7 @@ module Mongo
       end
 
       def materialize_implicit_session(session, connection)
-        session.materialize(connection) if session&.implicit?
+        session.materialize(connection) if session&.implicit? && session&.ended?
       end
 
       def execute(connection, context:, options: {})
