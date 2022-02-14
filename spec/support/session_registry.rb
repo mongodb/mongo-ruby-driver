@@ -4,6 +4,16 @@
 require 'singleton'
 
 module Mongo
+  class Client
+    alias :get_session_without_tracking :get_session
+
+    def get_session(options = {})
+      get_session_without_tracking(options).tap do |session|
+        SessionRegistry.instance.register(session) unless session.ended?
+      end
+    end
+  end
+
   class Session
     alias :end_session_without_tracking :end_session
 
@@ -17,6 +27,12 @@ module Mongo
     def materialize(connection)
       materialize_without_tracking(connection)
       SessionRegistry.instance.register(self)
+      begin
+        SessionRegistry.instance.verify_single_session!
+      rescue => e
+        byebug
+        raise e
+      end
     end
   end
 end
@@ -27,22 +43,43 @@ class SessionRegistry
 
   def initialize
     @registry = {}
+    @mutex = Mutex.new
   end
 
   def register(session)
-    @registry[session.session_id] = session if session
+    @mutex.synchronize do
+      puts "REGISTER #{session.session_id}"
+      @registry[session.session_id] = session if session
+    end
   end
 
   def unregister(session)
-    @registry.delete(session.session_id) unless session.ended?
+    @mutex.synchronize do
+      puts "UNREGISTER #{session.session_id}"
+      @registry.delete(session.session_id) unless session.ended?
+    end
   end
 
   def verify_sessions_ended!
-    @registry.delete_if { |_, session| session.ended? }
+    @mutex.synchronize do
+      puts "CHECKING SESSION ENDED"
+      @registry.delete_if { |_, session| session.ended? }
 
-    unless @registry.empty?
-      sessions = @registry.map { |_, session| session }
-      raise "Session registry contains live sessions: #{sessions.join(', ')}"
+      unless @registry.empty?
+        sessions = @registry.map { |_, session| session }
+        raise "Session registry contains live sessions: #{sessions.join(', ')}"
+      end
+    end
+  end
+
+  def verify_single_session!
+    @mutex.synchronize do
+      @registry.delete_if { |_, session| session.ended? }
+
+      unless @registry.size == 1
+        sessions = @registry.map { |_, session| session.inspect }
+        raise "Session registry contains live sessions: #{sessions.join(', ')}"
+      end
     end
   end
 
