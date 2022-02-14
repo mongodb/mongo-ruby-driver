@@ -929,19 +929,8 @@ describe Mongo::Client do
           end
         end
 
-
         let(:options) do
           { :max_pool_size => 1, :retry_writes => true }
-        end
-
-        let(:subscriber) { Mrss::EventSubscriber.new }
-
-        let(:events) do
-          subscriber.started_events
-        end
-
-        let(:mutex) do
-          Mutex.new
         end
 
         let(:checked_out_sessions) { 0 }
