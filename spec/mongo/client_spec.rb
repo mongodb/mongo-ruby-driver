@@ -942,7 +942,8 @@ describe Mongo::Client do
 
             allow_any_instance_of(Mongo::Session).to receive(:materialize).and_wrap_original do |m, *args|
               m.call(*args).tap do
-                SessionRegistry.instance.verify_single_session!
+                checked_out_connections = args[0].connection_pool.instance_variable_get("@checked_out_connections")
+                expect(checked_out_connections.length).to eq 1
               end
             end
           end
