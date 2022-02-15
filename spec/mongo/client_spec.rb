@@ -933,14 +933,26 @@ describe Mongo::Client do
           { :max_pool_size => 1, :retry_writes => true }
         end
 
-        let(:checked_out_sessions) { 0 }
-
         shared_examples "a single connection" do
 
           before do
             SessionRegistry.instance.clear_registry
 
+            sessions_checked_out = 0
+
+            allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:check_out).and_wrap_original do |m, *args|
+              m.call(*args).tap do
+                sessions_checked_out = 0
+              end
+            end
+
+            allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:check_in).and_wrap_original do |m, *args|
+              expect(sessions_checked_out).to be < 2
+              m.call(*args)
+            end
+
             allow_any_instance_of(Mongo::Session).to receive(:materialize).and_wrap_original do |m, *args|
+              sessions_checked_out += 1
               m.call(*args).tap do
                 checked_out_connections = args[0].connection_pool.instance_variable_get("@checked_out_connections")
                 expect(checked_out_connections.length).to eq 1
