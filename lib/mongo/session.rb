@@ -1013,6 +1013,13 @@ module Mongo
       end
     end
 
+    # Populate a session objects's server_session by checking out a session
+    # from the session pool.
+    #
+    # @param [ Mongo::Connection ] connection The connection object used to get
+    #   the session pool.
+    #
+    # @return [ ServerSession ] The new server session
     def materialize(connection)
       cluster = connection.server.cluster
       server_session = cluster.session_pool.checkout

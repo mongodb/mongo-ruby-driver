@@ -938,15 +938,13 @@ describe Mongo::Client do
           before do
             sessions_checked_out = 0
 
-            allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:check_out).and_wrap_original do |m, *args|
-              m.call(*args).tap do
+            allow_any_instance_of(Mongo::Server).to receive(:with_connection).and_wrap_original do |m, *args, &block|
+              m.call(*args) do |connection|
                 sessions_checked_out = 0
+                res = block.call(connection)
+                expect(sessions_checked_out).to be < 2
+                res
               end
-            end
-
-            allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:check_in).and_wrap_original do |m, *args|
-              expect(sessions_checked_out).to be < 2
-              m.call(*args)
             end
 
             allow_any_instance_of(Mongo::Session).to receive(:materialize).and_wrap_original do |m, *args|
