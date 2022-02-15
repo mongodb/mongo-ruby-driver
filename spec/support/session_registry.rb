@@ -37,40 +37,22 @@ class SessionRegistry
 
   def initialize
     @registry = {}
-    @mutex = Mutex.new
   end
 
   def register(session)
-    @mutex.synchronize do
-      @registry[session.session_id] = session if session
-    end
+    @registry[session.session_id] = session if session
   end
 
   def unregister(session)
-    @mutex.synchronize do
-      @registry.delete(session.session_id) unless session.ended?
-    end
+    @registry.delete(session.session_id) unless session.ended?
   end
 
   def verify_sessions_ended!
-    @mutex.synchronize do
-      @registry.delete_if { |_, session| session.ended? }
+    @registry.delete_if { |_, session| session.ended? }
 
-      unless @registry.empty?
-        sessions = @registry.map { |_, session| session }
-        raise "Session registry contains live sessions: #{sessions.join(', ')}"
-      end
-    end
-  end
-
-  def verify_single_session!
-    @mutex.synchronize do
-      @registry.delete_if { |_, session| session.ended? }
-
-      unless @registry.size == 1
-        sessions = @registry.map { |_, session| session.inspect }
-        raise "Session registry contains live sessions: #{sessions.join(', ')}"
-      end
+    unless @registry.empty?
+      sessions = @registry.map { |_, session| session }
+      raise "Session registry contains live sessions: #{sessions.join(', ')}"
     end
   end
 

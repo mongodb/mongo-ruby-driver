@@ -936,8 +936,6 @@ describe Mongo::Client do
         shared_examples "a single connection" do
 
           before do
-            SessionRegistry.instance.clear_registry
-
             sessions_checked_out = 0
 
             allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:check_out).and_wrap_original do |m, *args|
