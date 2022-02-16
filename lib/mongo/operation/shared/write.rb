@@ -49,11 +49,11 @@ module Mongo
       #
       # @return [ Mongo::Operation::Result ] The operation result.
       def execute_with_connection(connection, context:)
-          validate!(connection)
-          op = self.class::OpMsg.new(spec)
+        validate!(connection)
+        op = self.class::OpMsg.new(spec)
 
-          result = op.execute(connection, context: context)
-          validate_result(result, connection, context)
+        result = op.execute(connection, context: context)
+        validate_result(result, connection, context)
       end
 
       # Execute the bulk write operation.
