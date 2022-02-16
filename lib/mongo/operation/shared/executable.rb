@@ -27,7 +27,7 @@ module Mongo
       include ResponseHandling
 
       def do_execute(connection, context, options = {})
-        materialize_implicit_session(session, connection)
+        session.materialize_if_needed
         unpin_maybe(session) do
           add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
@@ -54,10 +54,6 @@ module Mongo
             end
           end
         end
-      end
-
-      def materialize_implicit_session(session, connection)
-        session.materialize(connection) if session&.implicit? && session&.ended?
       end
 
       def execute(connection, context:, options: {})

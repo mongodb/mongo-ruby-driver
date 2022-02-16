@@ -35,13 +35,23 @@ module Mongo
 
     # Initialize a Session.
     #
-    # @note Applications should use Client#start_session to begin a session.
+    # A session can be explicit or implicit. Lifetime of explicit sessions is
+    # managed by the application - applications explicitry create such sessions
+    # and explicitly end them. Implicit sessions are created automatically by
+    # the driver when sending operations to servers that support sessions
+    # (3.6+), and their lifetime is managed by the driver.
     #
-    # @example
-    #   Session.new(server_session, client, options)
+    # When an implicit session is created, it cannot have a server session
+    # associated with it. The server session will be checked out of the
+    # session pool when an operation using this session is actually executed.
+    # When an explicit session is created, it must reference a server session
+    # that is already allocated.
+    #
+    # @note Applications should use Client#start_session to begin a session.
+    #   This constructor is for internal driver use only.
     #
     # @param [ ServerSession | nil ] server_session The server session this session is associated with.
-    #   If the :implicit option is true, this will be nil.
+    #   If the :implicit option is true, this must be nil.
     # @param [ Client ] client The client through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
@@ -69,11 +79,21 @@ module Mongo
         raise ArgumentError, ':causal_consistency and :snapshot options cannot be both set on a session'
       end
 
+      if options[:implicit]
+        unless server_session.nil?
+          raise ArgumentError, 'Implicit session cannot reference server session during construction'
+        end
+      else
+        if server_session.nil?
+          raise ArgumentError, 'Explicit session must reference server session during construction'
+        end
+      end
+
       @server_session = server_session
       options = options.dup
 
       @client = client.use(:admin)
-      @options = options.freeze
+      @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
     end
@@ -197,7 +217,7 @@ module Mongo
     #
     # @since 2.5.0
     def ended?
-      @server_session.nil?
+      !!@ended
     end
 
     # Get the server session id of this session, if the session was not ended.
@@ -332,6 +352,7 @@ module Mongo
       end
     ensure
       @server_session = nil
+      @ended = true
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -1013,17 +1034,20 @@ module Mongo
       end
     end
 
-    # Populate a session objects's server_session by checking out a session
-    # from the session pool.
+    # If not already set, populate a session objects's server_session by
+    # checking out a session from the session pool.
     #
-    # @param [ Mongo::Connection ] connection The connection object used to get
-    #   the session pool.
-    #
-    # @return [ ServerSession ] The new server session
-    def materialize(connection)
-      cluster = connection.server.cluster
-      server_session = cluster.session_pool.checkout
-      @server_session ||= server_session
+    # @return [ nil ]
+    def materialize_if_needed
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      return unless implicit? && !@server_session
+
+      @server_session = cluster.session_pool.checkout
+
+      nil
     end
 
     # Increment and return the next transaction number.
