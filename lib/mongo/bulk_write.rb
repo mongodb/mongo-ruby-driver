@@ -65,7 +65,7 @@ module Mongo
         operations.each do |operation|
           if single_statement?(operation)
             write_concern = write_concern(session)
-            write_with_retry(session, write_concern, context: context) do |connection, txn_num|
+            write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
               execute_operation(
                 operation.keys.first,
                 operation.values.flatten,
@@ -77,7 +77,7 @@ module Mongo
                 txn_num)
             end
           else
-            nro_write_with_retry(nil, session, write_concern, context: context) do |connection|
+            nro_write_with_retry(nil, session, write_concern, context: context) do |connection, context|
               execute_operation(
                 operation.keys.first,
                 operation.values.flatten,

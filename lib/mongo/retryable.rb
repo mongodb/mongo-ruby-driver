@@ -193,21 +193,20 @@ module Mongo
     #
     # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
-    # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
-    #   commitTransaction, false otherwise.
+    # @param [ true | false ] ending_transaction True if the write operation is
+    #   abortTransaction or commitTransaction, false otherwise.
     # @param [ Context ] context The context for the operation.
     # @param [ Proc ] block The block to execute.
     #
     # @yieldparam [ Connection ] connection The connection through which the
     #   write should be sent.
     # @yieldparam [ Integer ] txn_num Transaction number (NOT the ACID kind).
-    # @yieldparam [ true | false ] is_retry Whether the retry or original
-    #   operation is executed.
+    # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def write_with_retry(session, write_concern, ending_transaction = false, context:, &block)
+    def write_with_retry(session, write_concern, ending_transaction: false, context:, &block)
       if ending_transaction && !session
         raise ArgumentError, 'Cannot end a transaction without a session'
       end
@@ -236,7 +235,9 @@ module Mongo
             session.next_txn_num
           end
 
-          yield(connection, txn_num, false)
+          # The context needs to be duplicated here because we will be using
+          # it later for the retry as well.
+          yield(connection, txn_num, context.dup)
         end
       rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
@@ -244,7 +245,9 @@ module Mongo
         if !e.label?('RetryableWriteError')
           raise e
         end
-        retry_write(e, session, txn_num, context: context, &block)
+        # Context#with creates a new context, which is not necessary here
+        # but the API is less prone to misuse this way.
+        retry_write(e, session, txn_num, context: context.with(is_retry: true), &block)
       rescue Error::OperationFailure => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
@@ -254,7 +257,9 @@ module Mongo
           raise e
         end
 
-        retry_write(e, session, txn_num, context: context, &block)
+        # Context#with creates a new context, which is not necessary here
+        # but the API is less prone to misuse this way.
+        retry_write(e, session, txn_num, context: context.with(is_retry: true), &block)
       end
     end
 
@@ -282,7 +287,7 @@ module Mongo
         server ||= select_server(cluster, ServerSelector.primary, session)
         begin
           server.with_connection(service_id: context.service_id) do |connection|
-            yield connection
+            yield connection, context
           end
         rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
           e.add_note('retries disabled')
@@ -318,7 +323,7 @@ module Mongo
         attempt += 1
         server ||= select_server(cluster, ServerSelector.primary, session)
         server.with_connection(service_id: context.service_id) do |connection|
-          yield connection
+          yield connection, context.dup
         end
       rescue Error::OperationFailure => e
         e.add_note('legacy retry')
@@ -464,7 +469,7 @@ module Mongo
       end
       log_retry(original_error, message: 'Write retry')
       server.with_connection(service_id: context.service_id) do |connection|
-        yield(connection, txn_num, true)
+        yield(connection, txn_num, context)
       end
     rescue Error::SocketError, Error::SocketTimeoutError => e
       e.add_note('modern retry')

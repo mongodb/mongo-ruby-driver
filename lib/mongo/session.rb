@@ -623,8 +623,10 @@ module Mongo
           end
 
           context = Operation::Context.new(client: @client, session: self)
-          write_with_retry(self, write_concern, true, context: context) do |connection, txn_num, is_retry|
-            if is_retry
+          write_with_retry(self, write_concern, ending_transaction: true,
+            context: context,
+          ) do |connection, txn_num, context|
+            if context.retry?
               if write_concern
                 wco = write_concern.options.merge(w: :majority)
                 wco[:wtimeout] ||= 10000
@@ -682,7 +684,9 @@ module Mongo
         unless starting_transaction?
           @aborting_transaction = true
           context = Operation::Context.new(client: @client, session: self)
-          write_with_retry(self, txn_options[:write_concern], true, context: context) do |connection, txn_num|
+          write_with_retry(self, txn_options[:write_concern],
+            ending_transaction: true, context: context,
+          ) do |connection, txn_num|
             begin
               Operation::Command.new(
                 selector: { abortTransaction: 1 },

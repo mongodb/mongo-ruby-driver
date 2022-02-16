@@ -100,6 +100,23 @@ module Mongo
         end
       end
 
+      def retry?
+        !!@is_retry
+      end
+
+      # Returns a new context with the parameters changed as per the
+      # provided arguments.
+      #
+      # @option opts [ true|false ] :is_retry Whether the operation is a retry
+      #   or a first attempt.
+      def with(**opts)
+        dup.tap do |copy|
+          opts.each do |k, v|
+            copy.instance_variable_set("@#{k}", v)
+          end
+        end
+      end
+
       def encrypt?
         client&.encrypter&.encrypt? || false
       end
