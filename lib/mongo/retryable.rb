@@ -227,7 +227,7 @@ module Mongo
 
       begin
         server.with_connection(service_id: context.service_id) do |connection|
-          session.materialize(connection)
+          session.materialize_if_needed
           txn_num = if session.in_transaction?
             session.txn_num
           else

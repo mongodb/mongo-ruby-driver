@@ -27,7 +27,7 @@ module Mongo
       include ResponseHandling
 
       def do_execute(connection, context, options = {})
-        session.materialize_if_needed
+        session&.materialize_if_needed
         unpin_maybe(session) do
           add_error_labels(connection, context) do
             add_server_diagnostics(connection) do

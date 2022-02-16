@@ -45,7 +45,8 @@ class SessionRegistry
   end
 
   def unregister(session)
-    @registry.delete(session.session_id) unless session.ended?
+    return if session.ended? || !session.materialized?
+    @registry.delete(session.session_id)
   end
 
   def verify_sessions_ended!

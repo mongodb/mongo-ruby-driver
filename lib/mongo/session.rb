@@ -234,6 +234,10 @@ module Mongo
         raise Error::SessionEnded
       end
 
+      unless materialized?
+        raise Error::SessionNotMaterialized
+      end
+
       @server_session.session_id
     end
 
@@ -348,7 +352,9 @@ module Mongo
           rescue Mongo::Error, Error::AuthError
           end
         end
-        @client.cluster.session_pool.checkin(@server_session)
+        if @server_session
+          @client.cluster.session_pool.checkin(@server_session)
+        end
       end
     ensure
       @server_session = nil
