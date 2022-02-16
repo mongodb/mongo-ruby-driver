@@ -9,7 +9,7 @@ module Mongo
 
     def get_session(options = {})
       get_session_without_tracking(options).tap do |session|
-        SessionRegistry.instance.register(session) if session && !session.ended?
+        SessionRegistry.instance.register(session) if session&.materialized?
       end
     end
   end
@@ -22,11 +22,12 @@ module Mongo
       end_session_without_tracking
     end
 
-    alias :materialize_without_tracking :materialize
+    alias :materialize_if_needed_without_tracking :materialize_if_needed
 
-    def materialize(connection)
-      materialize_without_tracking(connection)
-      SessionRegistry.instance.register(self)
+    def materialize_if_needed
+      materialize_if_needed_without_tracking.tap do
+        SessionRegistry.instance.register(self)
+      end
     end
   end
 end

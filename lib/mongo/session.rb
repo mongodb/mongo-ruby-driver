@@ -1038,6 +1038,8 @@ module Mongo
     # checking out a session from the session pool.
     #
     # @return [ nil ]
+    #
+    # @api private
     def materialize_if_needed
       if ended?
         raise Error::SessionEnded
@@ -1048,6 +1050,15 @@ module Mongo
       @server_session = cluster.session_pool.checkout
 
       nil
+    end
+
+    # @api private
+    def materialized?
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      !@server_session.nil?
     end
 
     # Increment and return the next transaction number.
