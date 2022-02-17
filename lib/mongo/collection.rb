@@ -609,7 +609,7 @@ module Mongo
         end
 
         context = Operation::Context.new(client: client, session: session)
-        write_with_retry(session, write_concern, context: context) do |connection, txn_num|
+        write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
           Operation::Insert.new(
             :documents => [ document ],
             :db_name => database.name,

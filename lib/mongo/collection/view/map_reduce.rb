@@ -225,7 +225,7 @@ module Mongo
             write_concern = view.write_concern_with_session(session)
             server = select_server(cluster, ServerSelector.primary, session)
             context = Operation::Context.new(client: client, session: session)
-            nro_write_with_retry(server, session, write_concern, context: context) do |connection|
+            nro_write_with_retry(server, session, write_concern, context: context) do |connection, context|
               send_initial_query(server, session, context: context)
             end
           end
