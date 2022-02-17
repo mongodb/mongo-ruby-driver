@@ -26,7 +26,7 @@ describe 'GridFS bucket integration' do
           actual = stream.read
         end
 
-        actual.encoding == Encoding::BINARY
+        actual.encoding.should == Encoding::BINARY
         actual.should == data.b
       end
     end
