@@ -201,6 +201,8 @@ module Mongo
     # @yieldparam [ Connection ] connection The connection through which the
     #   write should be sent.
     # @yieldparam [ Integer ] txn_num Transaction number (NOT the ACID kind).
+    # @yieldparam [ true | false ] is_retry Whether the retry or original
+    #   operation is executed.
     #
     # @return [ Result ] The result of the operation.
     #
