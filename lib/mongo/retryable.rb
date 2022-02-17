@@ -280,6 +280,7 @@ module Mongo
     #
     # @yieldparam [ Connection ] connection The connection through which the
     #   write should be sent.
+    # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @api private
     def nro_write_with_retry(server, session, write_concern, context:, &block)
@@ -312,6 +313,8 @@ module Mongo
     #
     # @yieldparam [ Connection ] connection The connection through which the
     #    write should be sent.
+    # @yieldparam [ nil ] txn_num nil as transaction number.
+    # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @api private
     def legacy_write_with_retry(server = nil, session = nil, context:)
@@ -323,7 +326,8 @@ module Mongo
         attempt += 1
         server ||= select_server(cluster, ServerSelector.primary, session)
         server.with_connection(service_id: context.service_id) do |connection|
-          yield connection, context.dup
+          # Legacy retries do not use txn_num
+          yield connection, nil, context.dup
         end
       rescue Error::OperationFailure => e
         e.add_note('legacy retry')
