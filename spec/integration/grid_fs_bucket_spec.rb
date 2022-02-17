@@ -26,8 +26,8 @@ describe 'GridFS bucket integration' do
           actual = stream.read
         end
 
-        actual.encoding.name.should == 'ASCII-8BIT'
-        actual.should == data.dup.force_encoding('binary')
+        actual.encoding.should == Encoding::BINARY
+        actual.should == data.b
       end
     end
 
@@ -41,7 +41,7 @@ describe 'GridFS bucket integration' do
 
     context 'in UTF-8 encoding' do
       let(:data_to_write) do
-        data.encoding.name.should == 'UTF-8'
+        data.encoding.should == Encoding::UTF_8
         data.freeze
       end
 
