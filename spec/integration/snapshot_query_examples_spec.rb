@@ -4,7 +4,8 @@
 require 'spec_helper'
 
 describe 'Snapshot Query Examples' do
-  require_topology :replica_set
+  require_topology :replica_set, :sharded
+  min_server_fcv '5.0'
 
   let(:uri_string) do
     "mongodb://#{SpecConfig.instance.addresses.join(',')}"
