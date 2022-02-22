@@ -8,7 +8,7 @@ describe 'Snapshot Query Examples' do
   min_server_fcv '5.0'
 
   let(:uri_string) do
-    "mongodb://#{SpecConfig.instance.addresses.join(',')}"
+    "mongodb://#{SpecConfig.instance.addresses.join(',')}/?w=majority"
   end
 
   context "Snapshot Query Example 1" do
