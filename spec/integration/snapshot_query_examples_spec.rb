@@ -30,6 +30,7 @@ describe 'Snapshot Query Examples' do
         age: 10,
         adoptable: true
       })
+      client.close
     end
 
     it "returns a snapshot of the data" do
@@ -57,6 +58,7 @@ describe 'Snapshot Query Examples' do
       # End Snapshot Query Example 1
 
       expect(adoptablePetsCount).to eq 2
+      client.close
     end
   end
 
@@ -69,7 +71,8 @@ describe 'Snapshot Query Examples' do
         shoeType: "boot",
         price: 30,
         saleDate: Time.now
-     })
+      })
+      client.close
     end
 
     it "returns a snapshot of the data" do
@@ -105,6 +108,7 @@ describe 'Snapshot Query Examples' do
       # End Snapshot Query Example 2
 
       expect(total).to eq 1
+      client.close
     end
   end
 end
