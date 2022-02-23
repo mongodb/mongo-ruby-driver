@@ -280,6 +280,7 @@ module Mongo
     #
     # @yieldparam [ Connection ] connection The connection through which the
     #   write should be sent.
+    # @yieldparam [ nil ] txn_num nil as transaction number.
     # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @api private
@@ -288,7 +289,7 @@ module Mongo
         server ||= select_server(cluster, ServerSelector.primary, session)
         begin
           server.with_connection(service_id: context.service_id) do |connection|
-            yield connection, context
+            yield connection, nil, context
           end
         rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
           e.add_note('retries disabled')

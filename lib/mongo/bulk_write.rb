@@ -77,7 +77,7 @@ module Mongo
                 txn_num)
             end
           else
-            nro_write_with_retry(nil, session, write_concern, context: context) do |connection, context|
+            nro_write_with_retry(nil, session, write_concern, context: context) do |connection, txn_num, context|
               execute_operation(
                 operation.keys.first,
                 operation.values.flatten,
