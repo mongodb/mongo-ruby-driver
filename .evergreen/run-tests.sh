@@ -274,7 +274,7 @@ if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
-python -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
+python2 -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
   # Terminate all kmip servers... and whatever else happens to be running
