@@ -273,7 +273,6 @@ module Mongo
     # delegates to legacy_write_with_retry which performs write retries using
     # legacy logic.
     #
-    # @param [ nil | Server ] server Optional server to use with the operation.
     # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
     # @param [ Context ] context The context for the operation.
@@ -284,9 +283,9 @@ module Mongo
     # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @api private
-    def nro_write_with_retry(server, session, write_concern, context:, &block)
+    def nro_write_with_retry(session, write_concern, context:, &block)
+      server = select_server(cluster, ServerSelector.primary, session)
       if session && session.client.options[:retry_writes]
-        server ||= select_server(cluster, ServerSelector.primary, session)
         begin
           server.with_connection(service_id: context.service_id) do |connection|
             yield connection, nil, context
