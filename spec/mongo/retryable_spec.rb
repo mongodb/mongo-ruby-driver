@@ -159,7 +159,7 @@ describe Mongo::Retryable do
 
       it 'raises ArgumentError' do
         expect do
-          retryable.write_with_retry(nil, nil, true, context: context)
+          retryable.write_with_retry(nil, nil, context: context.with(is_retry: true))
         end.to raise_error(ArgumentError, 'Cannot end a transaction without a session')
       end
     end

@@ -694,7 +694,7 @@ describe Mongo::Collection::View::Readable do
 
       it 'passes the session' do
         authorized_collection.client.with_session do |session|
-          session.materialize(connection)
+          session.materialize_if_needed
           session_id = session.session_id
 
           authorized_collection.count_documents({}, session: session)
