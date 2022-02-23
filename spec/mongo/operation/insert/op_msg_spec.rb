@@ -126,15 +126,8 @@ describe Mongo::Operation::Insert::OpMsg do
       end
 
       let(:session) do
-        authorized_client.start_session
-      end
-
-      before do
-        RSpec::Mocks.with_temporary_scope do
-          connection = double('connection')
-          allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
-
-          session.materialize(connection)
+        Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
+          allow(session).to receive(:session_id).and_return(42)
         end
       end
 
@@ -188,7 +181,7 @@ describe Mongo::Operation::Insert::OpMsg do
           end
 
           before do
-            session.instance_variable_set(:@options, { implicit: true })
+            session.implicit?.should be true
           end
 
           it 'creates the correct OP_MSG message' do
@@ -215,8 +208,10 @@ describe Mongo::Operation::Insert::OpMsg do
         context 'when the session is implicit' do
 
           let(:session) do
-            # Use client#get_session so the session is implicit
-            authorized_client.send(:get_session)
+            Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
+              allow(session).to receive(:session_id).and_return(42)
+              session.should be_implicit
+            end
           end
 
           context 'when the topology is replica set or sharded' do
@@ -271,6 +266,10 @@ describe Mongo::Operation::Insert::OpMsg do
 
           let(:session) do
             authorized_client.start_session
+          end
+
+          before do
+            session.should_not be_implicit
           end
 
           let(:expected_global_args) do
