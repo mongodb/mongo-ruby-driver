@@ -66,6 +66,7 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
   def session
     double('session').tap do |session|
       expect(session).to receive(:retry_writes?).and_return(true)
+      allow(session).to receive(:materialize_if_needed)
 
       # mock everything else that is in the way
       i = 1
@@ -131,7 +132,13 @@ describe Mongo::Retryable do
     LegacyRetryableTestConsumer.new(operation, cluster, client)
   end
 
-  let(:session) { double('session') }
+  let(:session) do
+    double('session').tap do |session|
+      allow(session).to receive(:pinned_service_id).and_return(nil)
+      allow(session).to receive(:materialize_if_needed)
+    end
+  end
+
   let(:context) do
     Mongo::Operation::Context.new(client: client, session: session)
   end
@@ -159,7 +166,9 @@ describe Mongo::Retryable do
 
       it 'raises ArgumentError' do
         expect do
-          retryable.write_with_retry(nil, nil, context: context.with(is_retry: true))
+          retryable.write_with_retry(nil, nil, ending_transaction: true, context: context) do
+            fail 'Expected not to get here'
+          end
         end.to raise_error(ArgumentError, 'Cannot end a transaction without a session')
       end
     end
