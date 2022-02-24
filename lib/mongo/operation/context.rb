@@ -100,6 +100,7 @@ module Mongo
         end
       end
 
+      # Whether the operation is a retry (true) or an initial attempt (false).
       def retry?
         !!@is_retry
       end
