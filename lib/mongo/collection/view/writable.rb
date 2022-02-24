@@ -84,7 +84,7 @@ module Mongo
             }.compact
 
             context = Operation::Context.new(client: client, session: session)
-            write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::WriteCommand.new(
                 selector: cmd,
                 db_name: database.name,
@@ -190,7 +190,7 @@ module Mongo
             }.compact
 
             context = Operation::Context.new(client: client, session: session)
-            write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::WriteCommand.new(
                 selector: cmd,
                 db_name: database.name,
@@ -245,7 +245,7 @@ module Mongo
             }.compact
 
             context = Operation::Context.new(client: client, session: session)
-            nro_write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::Delete.new(
                 deletes: [ delete_doc ],
                 db_name: collection.database.name,
@@ -302,7 +302,7 @@ module Mongo
             }.compact
 
             context = Operation::Context.new(client: client, session: session)
-            write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::Delete.new(
                 deletes: [ delete_doc ],
                 db_name: collection.database.name,
@@ -369,7 +369,7 @@ module Mongo
             end
 
             context = Operation::Context.new(client: client, session: session)
-            write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -439,7 +439,7 @@ module Mongo
             end
 
             context = Operation::Context.new(client: client, session: session)
-            nro_write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -507,7 +507,7 @@ module Mongo
             end
 
             context = Operation::Context.new(client: client, session: session)
-            write_with_retry(session, write_concern, context: context) do |connection, txn_num, context|
+            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,

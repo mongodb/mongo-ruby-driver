@@ -40,7 +40,7 @@ class RetryableTestConsumer
     # This passes a nil session and therefore triggers
     # legacy_write_with_retry code path
     context = Mongo::Operation::Context.new(client: @client, session: session)
-    write_with_retry(context.session, write_concern, context: context) do
+    write_with_retry(write_concern, context: context) do
       operation.execute
     end
   end
@@ -164,9 +164,13 @@ describe Mongo::Retryable do
     context 'when ending_transaction is true' do
       let(:retryable) { RetryableTestConsumer.new(operation, cluster, client) }
 
+      let(:context) do
+        Mongo::Operation::Context.new(client: client, session: nil)
+      end
+
       it 'raises ArgumentError' do
         expect do
-          retryable.write_with_retry(nil, nil, ending_transaction: true, context: context) do
+          retryable.write_with_retry(nil, ending_transaction: true, context: context) do
             fail 'Expected not to get here'
           end
         end.to raise_error(ArgumentError, 'Cannot end a transaction without a session')

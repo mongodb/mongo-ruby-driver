@@ -623,7 +623,7 @@ module Mongo
           end
 
           context = Operation::Context.new(client: @client, session: self)
-          write_with_retry(self, write_concern, ending_transaction: true,
+          write_with_retry(write_concern, ending_transaction: true,
             context: context,
           ) do |connection, txn_num, context|
             if context.retry?
@@ -684,7 +684,7 @@ module Mongo
         unless starting_transaction?
           @aborting_transaction = true
           context = Operation::Context.new(client: @client, session: self)
-          write_with_retry(self, txn_options[:write_concern],
+          write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
           ) do |connection, txn_num|
             begin

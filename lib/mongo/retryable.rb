@@ -191,7 +191,6 @@ module Mongo
     # @note This only retries operations on not master failures, since it is
     #   the only case we can be sure a partial write did not already occur.
     #
-    # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
     # @param [ true | false ] ending_transaction True if the write operation is
     #   abortTransaction or commitTransaction, false otherwise.
@@ -206,13 +205,15 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def write_with_retry(session, write_concern, ending_transaction: false, context:, &block)
+    def write_with_retry(write_concern, ending_transaction: false, context:, &block)
+      session = context.session
+
       if ending_transaction && !session
         raise ArgumentError, 'Cannot end a transaction without a session'
       end
 
       unless ending_transaction || retry_write_allowed?(session, write_concern)
-        return legacy_write_with_retry(nil, session, context: context, &block)
+        return legacy_write_with_retry(nil, context: context, &block)
       end
 
       # If we are here, session is not nil. A session being nil would have
@@ -221,7 +222,7 @@ module Mongo
       server = select_server(cluster, ServerSelector.primary, session)
 
       unless ending_transaction || server.retry_writes?
-        return legacy_write_with_retry(server, session, context: context, &block)
+        return legacy_write_with_retry(server, context: context, &block)
       end
 
       txn_num = nil
@@ -247,7 +248,7 @@ module Mongo
         end
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
-        retry_write(e, session, txn_num, context: context.with(is_retry: true), &block)
+        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
       rescue Error::OperationFailure => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
@@ -259,7 +260,7 @@ module Mongo
 
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
-        retry_write(e, session, txn_num, context: context.with(is_retry: true), &block)
+        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
       end
     end
 
@@ -273,7 +274,6 @@ module Mongo
     # delegates to legacy_write_with_retry which performs write retries using
     # legacy logic.
     #
-    # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
     # @param [ Context ] context The context for the operation.
     #
@@ -283,7 +283,9 @@ module Mongo
     # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @api private
-    def nro_write_with_retry(session, write_concern, context:, &block)
+    def nro_write_with_retry(write_concern, context:, &block)
+      session = context.session
+
       server = select_server(cluster, ServerSelector.primary, session)
       if session && session.client.options[:retry_writes]
         begin
@@ -295,7 +297,7 @@ module Mongo
           raise e
         end
       else
-        legacy_write_with_retry(server, session, context: context, &block)
+        legacy_write_with_retry(server, context: context, &block)
       end
     end
 
@@ -308,7 +310,6 @@ module Mongo
     # @param [ Server ] server The server which should be used for the
     #   operation. If not provided, the current primary will be retrieved from
     #   the cluster.
-    # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ Context ] context The context for the operation.
     #
     # @yieldparam [ Connection ] connection The connection through which the
@@ -317,7 +318,9 @@ module Mongo
     # @yieldparam [ Operation::Context ] context The operation context.
     #
     # @api private
-    def legacy_write_with_retry(server = nil, session = nil, context:)
+    def legacy_write_with_retry(server = nil, context:)
+      session = context.session
+
       # This is the pre-session retry logic, and is not subject to
       # current retryable write specifications.
       # In particular it does not retry on SocketError and SocketTimeoutError.
@@ -451,7 +454,9 @@ module Mongo
       raise original_error
     end
 
-    def retry_write(original_error, session, txn_num, context:, &block)
+    def retry_write(original_error, txn_num, context:, &block)
+      session = context.session
+
       # We do not request a scan of the cluster here, because error handling
       # for the error which triggered the retry should have updated the
       # server description and/or topology as necessary (specifically,
