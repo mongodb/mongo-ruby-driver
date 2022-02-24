@@ -28,6 +28,9 @@ initialData: &initial_data
       - _id: 4
         x: 44
 
+# Tests in this file differs from the one in specification repo because
+# Ruby dirver does not group bulk write operations by command.
+# See https://jira.mongodb.org/browse/DRIVERS-2215
 tests:
   - description: 'BulkWrite with string comment'
     runOnRequirements:
@@ -48,7 +51,7 @@ tests:
             - updateOne:
                 filter: &updateOne_filter
                   _id: 2
-                update: &update { x: "updated" }
+                update: &update { $set: {x: "updated"} }
             - deleteOne:
                 filter: &deleteOne_filter
                   _id: 3
@@ -56,7 +59,7 @@ tests:
         expectResult: &expect_results
           deletedCount: 1
           insertedCount: 1
-          insertedIds: { 0: 5 }
+          insertedIds: { $$unsetOrMatches: { 0: 5} }
           matchedCount: 2
           modifiedCount: 2
           upsertedCount: 0
@@ -92,6 +95,7 @@ tests:
                 delete: *collection_name
                 deletes:
                   - q: *deleteOne_filter
+                    limit: 1
                 ordered: true
                 comment: *string_comment
     outcome: &outcome
@@ -148,6 +152,7 @@ tests:
                 delete: *collection_name
                 deletes:
                   - q: *deleteOne_filter
+                    limit: 1
                 ordered: true
                 comment: *document_comment
     outcome: *outcome
