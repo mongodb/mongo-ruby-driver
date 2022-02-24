@@ -58,6 +58,7 @@ describe 'Snapshot Query Examples' do
 
       # End Snapshot Query Example 1
 
+      puts "SNAPSHOT RUNNING"
       expect(adoptable_pets_count).to eq 2
       client.close
     end
