@@ -15,50 +15,50 @@ describe 'Snapshot Query Examples' do
   context "Snapshot Query Example 1" do
     before do
       client = Mongo::Client.new(uri_string, database: "pets")
-      client['cats'].delete_many({})
-      client['dogs'].delete_many({})
+      client['cats'].delete_many
+      client['dogs'].delete_many
 
-      client['cats'].insert_one({
+      client['cats'].insert_one(
         name: "Whiskers",
         color: "white",
         age: 10,
         adoptable: true
-      })
+      )
 
-      client['dogs'].insert_one({
+      client['dogs'].insert_one(
         name: "Pebbles",
         color: "Brown",
         age: 10,
         adoptable: true
-      })
+      )
       client.close
     end
 
     it "returns a snapshot of the data" do
 
-      adoptablePetsCount = 0
+      adoptable_pets_count = 0
 
       # Start Snapshot Query Example 1
 
       client = Mongo::Client.new(uri_string, database: "pets")
 
       client.start_session(snapshot: true) do |session|
-        adoptablePetsCount = client['cats'].aggregate([
+        adoptable_pets_count = client['cats'].aggregate([
           { "$match": { "adoptable": true } },
-          { "$count": "adoptableCatsCount" }
-        ], session: session).first["adoptableCatsCount"]
+          { "$count": "adoptable_cats_count" }
+        ], session: session).first["adoptable_cats_count"]
 
-        adoptablePetsCount += client['dogs'].aggregate([
+        adoptable_pets_count += client['dogs'].aggregate([
           { "$match": { "adoptable": true } },
-          { "$count": "adoptableDogsCount" }
-        ], session: session).first["adoptableDogsCount"]
+          { "$count": "adoptable_dogs_count" }
+        ], session: session).first["adoptable_dogs_count"]
 
-        puts adoptablePetsCount
+        puts adoptable_pets_count
       end
 
       # End Snapshot Query Example 1
 
-      expect(adoptablePetsCount).to eq 2
+      expect(adoptable_pets_count).to eq 2
       client.close
     end
   end
@@ -66,13 +66,13 @@ describe 'Snapshot Query Examples' do
   context "Snapshot Query Example 2" do
     before do
       client = Mongo::Client.new(uri_string, database: "retail")
-      client['sales'].delete_many({})
+      client['sales'].delete_many
 
-      client['sales'].insert_one({
+      client['sales'].insert_one(
         shoeType: "boot",
         price: 30,
         saleDate: Time.now
-      })
+      )
       client.close
     end
 
@@ -102,8 +102,8 @@ describe 'Snapshot Query Examples' do
                  }
               }
           },
-          { "$count": "totalDailySales" }
-        ], session: session).first["totalDailySales"]
+          { "$count": "total_daily_sales" }
+        ], session: session).first["total_daily_sales"]
       end
 
       # End Snapshot Query Example 2
