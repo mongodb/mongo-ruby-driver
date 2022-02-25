@@ -7,6 +7,10 @@
 # It is likely that all of the current distros we use have a recent enough
 # and working Python 3 implementation, such that we could use Python 3 for
 # everything.
+#
+# Note that some distros (e.g. ubuntu2004) do not contain a `python' binary
+# at all, thus python2 or python3 must be explicitly specified depending on
+# the desired version.
 
 set -e
 set -o pipefail
