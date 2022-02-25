@@ -662,6 +662,8 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Session ] :session The session to use for the set of operations.
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     #
     # @return [ BulkWrite::Result ] The result of the operation.
     #
