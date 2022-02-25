@@ -220,13 +220,12 @@ module Mongo
       !!@ended
     end
 
-    # Get the server session id of this session, if the session was not ended.
-    # If the session was ended, returns nil.
-    #
-    # @example Get the session id.
-    #   session.session_id
+    # Get the server session id of this session, if the session has not been
+    # ended. If the session had been ended, raises Error::SessionEnded.
     #
     # @return [ BSON::Document ] The server session id.
+    #
+    # @raise [ Error::SessionEnded ] If the session had been ended.
     #
     # @since 2.5.0
     def session_id
@@ -234,6 +233,13 @@ module Mongo
         raise Error::SessionEnded
       end
 
+      # An explicit session will always have a session_id, because during
+      # construction a server session must be provided. An implicit session
+      # will not have a session_id until materialized, thus calls to
+      # session_id might fail. An application should not have an opportunity
+      # to experience this failure because an implicit session shouldn't be
+      # accessible to applications due to its lifetime being constrained to
+      # operation execution, which is done entirely by the driver.
       unless materialized?
         raise Error::SessionNotMaterialized
       end
