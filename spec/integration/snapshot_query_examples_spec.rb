@@ -5,7 +5,6 @@ require 'spec_helper'
 
 describe 'Snapshot Query Examples' do
   require_topology :replica_set, :sharded
-  require_stress
   min_server_fcv '5.0'
 
   let(:uri_string) do
