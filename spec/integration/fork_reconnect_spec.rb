@@ -150,15 +150,9 @@ describe 'fork reconnect' do
     #   * In the parent, create a ClientSession and assert its lsid is the same.
     #   * In the child, create a ClientSession and assert its lsid is different.
     describe 'session pool' do
-      let(:connection) do
-        double('connection').tap do |connection|
-          allow(connection).to receive_message_chain(:server, :cluster).and_return(client.cluster)
-        end
-      end
-
       it 'is cleared after fork' do
-        session = client.get_session
-        parent_lsid = session.materialize(connection).session_id
+        session = client.get_session.materialize_if_needed
+        parent_lsid = session.session_id
         session.end_session
 
         if pid = fork
@@ -167,13 +161,14 @@ describe 'fork reconnect' do
         else
           Utils.wrap_forked_child do
             client.reconnect
-            child_session = client.get_session
-            child_lsid = child_session.materialize(connection).session_id
+            child_session = client.get_session.materialize_if_needed
+            child_lsid = child_session.session_id
             expect(child_lsid).not_to eq(parent_lsid)
           end
         end
 
-        session_id = client.get_session.materialize(connection).session_id
+        session = client.get_session.materialize_if_needed
+        session_id = session.session_id
         expect(session_id).to eq(parent_lsid)
       end
 
@@ -186,8 +181,8 @@ describe 'fork reconnect' do
       #   * In the child, return the ClientSession to the pool, create a new
       #     ClientSession, and assert its lsid is different.
       it 'does not return parent process sessions to child process pool' do
-        session = client.get_session
-        parent_lsid = session.materialize(connection).session_id
+        session = client.get_session.materialize_if_needed
+        parent_lsid = session.session_id
 
         if pid = fork
           pid, status = Process.wait2(pid)
@@ -196,18 +191,15 @@ describe 'fork reconnect' do
           Utils.wrap_forked_child do
             client.reconnect
             session.end_session
-            child_session = client.get_session
+            child_session = client.get_session.materialize_if_needed
 
-            connection = double('connection').tap do |connection|
-              allow(connection).to receive_message_chain(:server, :cluster).and_return(client.cluster)
-            end
-            child_lsid = child_session.materialize(connection).session_id
+            child_lsid = child_session.session_id
             expect(child_lsid).not_to eq(parent_lsid)
           end
         end
 
         session.end_session
-        session_id = client.get_session.materialize(connection).session_id
+        session_id = client.get_session.materialize_if_needed.session_id
         expect(session_id).to eq(parent_lsid)
       end
     end
