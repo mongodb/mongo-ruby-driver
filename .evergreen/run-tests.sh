@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Note that mlaunch is executed with (and therefore installed with) Python 2.
+# The reason for this is that in the past, some of the distros we tested on
+# had an ancient version of Python 3 that was unusable (e.g. it couldn't
+# install anything from PyPI due to outdated TLS/SSL implementation).
+# It is likely that all of the current distros we use have a recent enough
+# and working Python 3 implementation, such that we could use Python 3 for
+# everything.
+
 set -e
 set -o pipefail
 
