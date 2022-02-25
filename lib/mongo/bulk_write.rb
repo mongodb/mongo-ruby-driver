@@ -180,7 +180,8 @@ module Mongo
         :options => options,
         :id_generator => client.options[:id_generator],
         :session => session,
-        :comment => options[:comment]
+        :comment => options[:comment],
+        :let => options[:let],
       }
     end
 

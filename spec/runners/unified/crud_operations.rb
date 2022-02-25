@@ -221,6 +221,9 @@ module Unified
         if comment = args.use('comment')
           opts[:comment] = comment
         end
+        if let = args.use('let')
+          opts[:let] = let
+        end
         collection.bulk_write(requests, **opts)
       end
     end
