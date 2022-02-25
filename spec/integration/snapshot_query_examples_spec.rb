@@ -5,7 +5,7 @@ require 'spec_helper'
 
 describe 'Snapshot Query Examples' do
   require_topology :replica_set, :sharded
-  require_stress
+  require_no_auth
   min_server_fcv '5.0'
 
   let(:uri_string) do
@@ -58,7 +58,6 @@ describe 'Snapshot Query Examples' do
 
       # End Snapshot Query Example 1
 
-      puts "SNAPSHOT RUNNING"
       expect(adoptable_pets_count).to eq 2
       client.close
     end
