@@ -181,8 +181,10 @@ describe 'fork reconnect' do
       #   * Create ClientSession
       #   * Record its lsid
       #   * Fork
-      #   * In the parent, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is the same.
-      #   * In the child, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is different.
+      #   * In the parent, return the ClientSession to the pool, create a new
+      #     ClientSession, and assert its lsid is the same.
+      #   * In the child, return the ClientSession to the pool, create a new
+      #     ClientSession, and assert its lsid is different.
       it 'does not return parent process sessions to child process pool' do
         session = client.get_session
         parent_lsid = session.materialize(connection).session_id
