@@ -1047,7 +1047,7 @@ module Mongo
     # If not already set, populate a session objects's server_session by
     # checking out a session from the session pool.
     #
-    # @return [ nil ]
+    # @return [ Session ] Self.
     #
     # @api private
     def materialize_if_needed
@@ -1059,7 +1059,7 @@ module Mongo
 
       @server_session = cluster.session_pool.checkout
 
-      nil
+      self
     end
 
     # @api private
