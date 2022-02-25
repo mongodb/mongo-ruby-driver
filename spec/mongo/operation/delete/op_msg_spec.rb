@@ -242,7 +242,7 @@ describe Mongo::Operation::Delete::OpMsg do
           end
 
           before do
-            session.should_not be_implict
+            session.should_not be_implicit
           end
 
           let(:expected_global_args) do
