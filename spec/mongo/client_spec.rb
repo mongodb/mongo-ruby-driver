@@ -935,6 +935,13 @@ describe Mongo::Client do
         end
 
         shared_examples "a single connection" do
+          # JRuby, due to being concurrent, does not like rspec setting mocks
+          # in threads while other threads are calling the methods being mocked.
+          # My theory is that rspec removes & redefines methods as part of
+          # the mocking process, but while a method is undefined JRuby is
+          # running another thread that calls it leading to this exception:
+          # NoMethodError: undefined method `with_connection' for #<Mongo::Server:0x5386 address=localhost:27017 PRIMARY>
+          fails_on_jruby
 
           before do
             sessions_checked_out = 0
