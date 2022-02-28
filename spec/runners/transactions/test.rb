@@ -22,6 +22,7 @@ module Mongo
     #
     # @since 2.6.0
     class TransactionsTest < CRUD::CRUDTestBase
+      include MongosMacros
 
       attr_reader :expected_results
       attr_reader :skip_reason
@@ -262,11 +263,8 @@ module Mongo
 
         coll.insert_many(@data) unless @data.empty?
 
-        $distinct_ran ||= {}
-        $distinct_ran[@spec.database_name] ||= if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
-          ::Utils.mongos_each_direct_client do |direct_client|
-            direct_client.use(@spec.database_name)['test'].distinct('foo').to_a
-          end
+        if description =~ /distinct/ || @operations.any? { |op| op.name == 'distinct' }
+          run_mongos_distincts(@spec.database_name, 'test')
         end
 
         admin_support_client.command(@fail_point_command) if @fail_point_command

@@ -33,6 +33,7 @@ describe 'Snapshot Query Examples' do
         age: 10,
         adoptable: true
       )
+      run_mongos_distincts "pets" "cats"
     end
 
     it "returns a snapshot of the data" do
@@ -74,6 +75,7 @@ describe 'Snapshot Query Examples' do
         price: 30,
         saleDate: Time.now
       )
+      run_mongos_distincts "retail" "sales"
     end
 
     it "returns a snapshot of the data" do

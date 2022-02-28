@@ -81,6 +81,7 @@ require 'mrss/event_subscriber'
 require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'
+require 'support/mongos_macros'
 require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
@@ -102,6 +103,7 @@ RSpec.configure do |config|
   config.include(CommonShortcuts::InstanceMethods)
   config.extend(Mrss::LiteConstraints)
   config.include(ClientRegistryMacros)
+  config.include(MongosMacros)
 
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe
