@@ -16,7 +16,7 @@ describe 'Snapshot Query Examples' do
 
   context "Snapshot Query Example 1" do
     before do
-      client = Mongo::Client.new(uri_string, database: "pets")
+      client = authorized_client.use('pets')
       client['cats'].delete_many
       client['dogs'].delete_many
 
@@ -33,7 +33,6 @@ describe 'Snapshot Query Examples' do
         age: 10,
         adoptable: true
       )
-      client.close
     end
 
     it "returns a snapshot of the data" do
@@ -67,7 +66,7 @@ describe 'Snapshot Query Examples' do
 
   context "Snapshot Query Example 2" do
     before do
-      client = Mongo::Client.new(uri_string, database: "retail")
+      client = authorized_client.use('retail')
       client['sales'].delete_many
 
       client['sales'].insert_one(
@@ -75,7 +74,6 @@ describe 'Snapshot Query Examples' do
         price: 30,
         saleDate: Time.now
       )
-      client.close
     end
 
     it "returns a snapshot of the data" do
