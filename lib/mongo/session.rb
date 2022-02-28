@@ -692,7 +692,7 @@ module Mongo
           context = Operation::Context.new(client: @client, session: self)
           write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
-          ) do |connection, txn_num|
+          ) do |connection, txn_num, context|
             begin
               Operation::Command.new(
                 selector: { abortTransaction: 1 },
