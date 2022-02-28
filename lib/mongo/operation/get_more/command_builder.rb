@@ -30,6 +30,7 @@ module Mongo
             collection: spec.fetch(:coll_name),
             batchSize: spec[:batch_size],
             maxTimeMS: spec[:max_time_ms],
+            comment: spec[:comment],
           }.compact
         end
       end

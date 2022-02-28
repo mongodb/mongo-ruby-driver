@@ -423,6 +423,7 @@ module Mongo
         else
           nil
         end,
+        comment: view.options[:comment],
       }
       Operation::GetMore.new(spec)
     end
