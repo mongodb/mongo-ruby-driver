@@ -55,6 +55,7 @@ tests:
                   -
                     q: *filter
                     u: *update
+                    multi: true
                 let: *let0
     outcome:
       -
@@ -67,7 +68,7 @@ tests:
 
   - description: "updateMany with let option unsupported (server-side error)"
     runOnRequirements:
-      - minServerVersion: "3.6.0"
+      - minServerVersion: "4.2.0"
         maxServerVersion: "4.4.99"
     operations:
       - name: updateMany
@@ -92,6 +93,7 @@ tests:
                   -
                     q: *filter1
                     u: *update1
+                    multi: true
                 let: *let1
     outcome:
       -
