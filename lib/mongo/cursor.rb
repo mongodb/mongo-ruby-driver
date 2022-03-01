@@ -423,6 +423,11 @@ module Mongo
         else
           nil
         end,
+        comment: if view.respond_to?(:options) && view.options.is_a?(Hash)
+          view.options[:comment]
+        else
+          nil
+        end,
       }
       Operation::GetMore.new(spec)
     end
