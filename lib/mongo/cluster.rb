@@ -622,7 +622,7 @@ module Mongo
     #   on 4.2+ servers).
     # @option aptions [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
-    # @option options [ Object ] :service_id Change state for the specified
+    # @option options [ Object ] :connection_global_id Change state for the specified
     #   service id only.
     #
     # @api private
@@ -633,8 +633,8 @@ module Mongo
             servers_list.each do |server|
               # TODO should service id be taken out of updated_desc?
               # We could also assert that
-              # options[:service_id] == updated_desc.service_id
-              server.clear_connection_pool(service_id: options[:service_id])
+              # options[:connection_global_id] == updated_desc.connection_global_id
+              server.clear_connection_pool(connection_global_id: options[:connection_global_id])
             end
           end
         end

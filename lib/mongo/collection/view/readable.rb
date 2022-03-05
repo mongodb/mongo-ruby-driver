@@ -712,7 +712,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              service_id: result.connection_description.service_id,
+              connection_global_id: result.connection_global_id,
             )
             result = op.execute(server, context: context)
             Cursor.new(self, result, server, session: session)

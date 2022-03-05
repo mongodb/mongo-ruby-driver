@@ -38,7 +38,7 @@ module Mongo
 
     def_delegators :@view, :collection
     def_delegators :collection, :client, :database
-    def_delegators :@server, :cluster
+    def_delegators :@server, :cluster, :connection
 
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
@@ -371,7 +371,7 @@ module Mongo
         cursor_id: id,
         coll_name: collection_name,
         db_name: database.name,
-        service_id: initial_result.connection_description.service_id,
+        connection_global_id: connection.global_id,
         server_address: server.address,
       )
     end
@@ -481,7 +481,7 @@ module Mongo
       context = Operation::Context.new(
         client: client,
         session: @session,
-        service_id: initial_result.connection_description.service_id,
+        connection_global_id: connection.global_id,
       )
       op.execute(@server, context: context)
     end

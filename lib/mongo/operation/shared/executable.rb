@@ -41,6 +41,7 @@ module Mongo
                       end
                     else
                       session.pin_to_service(connection.service_id)
+                      session.pin_to_connection(connection.global_id)
                     end
                   end
 

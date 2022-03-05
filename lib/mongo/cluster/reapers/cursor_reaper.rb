@@ -192,7 +192,7 @@ module Mongo
 
           options = {
             server_api: server.options[:server_api],
-            service_id: kill_spec.service_id,
+            connection_global_id: kill_spec.connection_global_id,
           }
           op.execute(server, context: Operation::Context.new(options: options))
         end
