@@ -36,7 +36,8 @@ describe 'Snapshot Query Examples' do
       if ClusterConfig.instance.topology == :sharded
         run_mongos_distincts "pets", "cats"
       else
-        authorized_client.use('pets')['cats'].distinct('foo')
+        wait_for_snapshot(db: 'pets', collection: 'cats')
+        wait_for_snapshot(db: 'pets', collection: 'dogs')
       end
     end
 
@@ -83,7 +84,7 @@ describe 'Snapshot Query Examples' do
       if ClusterConfig.instance.topology == :sharded
         run_mongos_distincts "retail", "sales"
       else
-        authorized_client.use('retail')['sales'].distinct('foo')
+        wait_for_snapshot(db: 'retail', collection: 'sales')
       end
     end
 

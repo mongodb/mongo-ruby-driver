@@ -370,5 +370,27 @@ module CommonShortcuts
         thread.join
       end
     end
+
+    # Wait for snapshot reads to become available to prevent this error:
+    # [246:SnapshotUnavailable]: Unable to read from a snapshot due to pending collection catalog changes; please retry the operation. Snapshot timestamp is Timestamp(1646666892, 4). Collection minimum is Timestamp(1646666892, 5) (on localhost:27017, modern retry, attempt 1)
+    def wait_for_snapshot(db: nil, collection: nil, client: nil)
+      client ||= authorized_client
+      client = client.use(db) if db
+      collection ||= 'any'
+      start_time = Mongo::Utils.monotonic_time
+      begin
+        client.start_session(snapshot: true) do |session|
+          client[collection].aggregate([{'$match': {any: true}}], session: session).to_a
+        end
+      rescue Mongo::Error::OperationFailure => e
+        # Retry them as the server demands...
+        if e.code == 246 # SnapshotUnavailable
+          if Mongo::Utils.monotonic_time < start_time + 10
+            retry
+          end
+        end
+        raise
+      end
+    end
   end
 end
