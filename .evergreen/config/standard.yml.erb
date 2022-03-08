@@ -180,11 +180,22 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "stress older"
+    matrix_spec:
+      stress: on
+      ruby: ["ruby-2.7"]
+      mongodb-version: ['4.2', '4.0', '3.6']
+      topology: replica-set
+      os: ubuntu1604
+    display_name: "${mongodb-version} ${topology} stress ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
   - matrix_name: "stress"
     matrix_spec:
       stress: on
       ruby: ["ruby-2.7"]
-      mongodb-version: ['5.0', '4.4', '4.2', '4.0', '3.6']
+      mongodb-version: ['5.0', '4.4']
       topology: replica-set
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
