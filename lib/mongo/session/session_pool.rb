@@ -99,6 +99,10 @@ module Mongo
       #
       # @since 2.5.0
       def checkin(session)
+        if session.nil?
+          raise ArgumentError, 'session cannot be nil'
+        end
+
         @mutex.synchronize do
           prune!
           unless about_to_expire?(session)
@@ -133,6 +137,10 @@ module Mongo
       private
 
       def about_to_expire?(session)
+        if session.nil?
+          raise ArgumentError, 'session cannot be nil'
+        end
+
         # Load balancers spec explicitly requires to ignore the logical session
         # timeout value.
         # No rationale is provided as of the time of this writing.

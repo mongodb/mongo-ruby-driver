@@ -312,12 +312,12 @@ describe Mongo::Session do
   end
 
   describe '#start_session' do
-    context 'when block doesn\'t raise an error' do 
-      it 'closes the session after the block' do 
+    context 'when block doesn\'t raise an error' do
+      it 'closes the session after the block' do
         block_session = nil
-        authorized_client.start_session do |session| 
+        authorized_client.start_session do |session|
           expect(session.ended?).to be false
-          block_session = session 
+          block_session = session
         end
         expect(block_session.ended?).to be true
       end
@@ -326,7 +326,7 @@ describe Mongo::Session do
     context 'when block raises an error' do
       it 'closes the session after the block' do
         block_session = nil
-        expect do 
+        expect do
           authorized_client.start_session do |session|
             block_session = session
             raise 'This is an error!'
@@ -338,11 +338,16 @@ describe Mongo::Session do
 
     context 'when block returns value' do
       it 'is returned by the function' do
-        res = authorized_client.start_session do |session| 
+        res = authorized_client.start_session do |session|
           4
         end
         expect(res).to be 4
       end
+    end
+
+    it 'returns a session with session id' do
+      session = authorized_client.start_session
+      session.session_id.should be_a(BSON::Document)
     end
   end
 end

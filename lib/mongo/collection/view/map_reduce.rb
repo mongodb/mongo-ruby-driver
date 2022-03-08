@@ -72,7 +72,7 @@ module Mongo
           @cursor = nil
           session = client.send(:get_session, @options)
           server = cluster.next_primary(nil, session)
-          result = send_initial_query(server, session)
+          result = send_initial_query(server, session, context: Operation::Context.new(client: client, session: session))
           result = send_fetch_query(server, session) unless inline?
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
@@ -223,8 +223,9 @@ module Mongo
         def execute
           view.send(:with_session, @options) do |session|
             write_concern = view.write_concern_with_session(session)
-            nro_write_with_retry(session, write_concern) do |server|
-              send_initial_query(server, session)
+            context = Operation::Context.new(client: client, session: session)
+            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+              send_initial_query_with_connection(connection, session, context: context)
             end
           end
         end
@@ -253,11 +254,10 @@ module Mongo
           Operation::MapReduce.new(map_reduce_spec(session))
         end
 
-        def valid_server?(server)
+        def valid_server?(description)
           if secondary_ok?
             true
           else
-            description = server.description
             description.standalone? || description.mongos? || description.primary? || description.load_balancer?
           end
         end
@@ -266,13 +266,22 @@ module Mongo
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server, session)
-          unless valid_server?(server)
-            msg = "Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable"
+        def send_initial_query(server, session, context:)
+          server.with_connection do |connection|
+            send_initial_query_with_connection(connection, session, context: context)
+          end
+        end
+
+        def send_initial_query_with_connection(connection, session, context:)
+          op = initial_query_op(session)
+          if valid_server?(connection.description)
+            op.execute_with_connection(connection, context: context)
+          else
+            msg = "Rerouting the MapReduce operation to the primary server - #{connection.address} is not suitable because it is not currently the primray"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
+            op.execute(server, context: context)
           end
-          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
         def fetch_query_spec
