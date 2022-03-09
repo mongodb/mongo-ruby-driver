@@ -519,6 +519,7 @@ module Mongo
         end
 
         connection_global_id = options && options[:connection_global_id]
+        service_id = options && options[:service_id]
 
         @lock.synchronize do
           @generation_manager.bump(connection_global_id: connection_global_id)
@@ -526,7 +527,7 @@ module Mongo
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
-              connection_global_id: connection_global_id,
+              service_id: service_id
             )
           )
 
@@ -845,6 +846,7 @@ module Mongo
         @server.unknown!(
           generation: exc.generation,
           connection_global_id: connection.global_id,
+          service_id: connection.service_id,
           stop_push_monitor: true,
         )
         raise

@@ -335,6 +335,7 @@ module Mongo
           @server.unknown!(
             generation: e.generation,
             connection_global_id: global_id,
+            service_id: description.service_id,
             stop_push_monitor: true,
           )
           raise

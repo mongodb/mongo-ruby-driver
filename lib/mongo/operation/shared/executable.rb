@@ -126,6 +126,7 @@ module Mongo
             keep_connection_pool: keep_pool,
             generation: connection.generation,
             connection_global_id: connection.global_id,
+            service_id: connection.service_id,
             topology_version: result.topology_version,
           )
 
