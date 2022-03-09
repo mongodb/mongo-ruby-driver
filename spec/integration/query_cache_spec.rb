@@ -21,11 +21,11 @@ describe 'QueryCache' do
     # these tests.
     #
     # Other session leaks will be detected and addressed as part of RUBY-2391.
-    SessionRegistry.instance.clear_registry
+    Mrss::SessionRegistry.instance.clear_registry
   end
 
   after do
-    SessionRegistry.instance.verify_sessions_ended!
+    Mrss::SessionRegistry.instance.verify_sessions_ended!
   end
 
   let(:subscriber) { Mrss::EventSubscriber.new }

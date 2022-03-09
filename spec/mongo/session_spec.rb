@@ -268,6 +268,21 @@ describe Mongo::Session do
         end.to raise_error(Mongo::Error::SessionEnded)
       end
     end
+
+    context "when the sesion is not materialized" do
+      let(:session) { authorized_client.get_session(implicit: true) }
+
+      before do
+        expect(session.materialized?).to be false
+      end
+
+      it "raises SessionNotMaterialized" do
+
+        expect do
+          session.session_id
+        end.to raise_error(Mongo::Error::SessionNotMaterialized)
+      end
+    end
   end
 
   describe '#txn_num' do
