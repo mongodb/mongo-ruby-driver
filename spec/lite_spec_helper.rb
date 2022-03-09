@@ -86,7 +86,7 @@ require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
-require 'support/session_registry'
+require 'mrss/session_registry'
 require 'support/local_resource_registry'
 
 if SpecConfig.instance.mri?
@@ -95,6 +95,8 @@ else
   require 'timeout'
   TimeoutInterrupt = Timeout
 end
+
+Mrss.patch_mongo_for_session_registry
 
 class ExampleTimeout < StandardError; end
 
