@@ -345,7 +345,7 @@ module Mongo
                 throw(:done)
               end
 
-              if @server.load_balancer?
+              if @server.load_balancer? && connection_global_id
                 # If we need a  particular connection, we can't
                 # create one if we don't already have one, but we can wait
                 # for an in-progress operation to return such a connection
@@ -759,7 +759,7 @@ module Mongo
       # specified service. If no suitable connections are available,
       # returns nil.
       def next_available_connection(connection_global_id: nil)
-        if @server.load_balancer?
+        if @server.load_balancer? && connection_global_id
           conn = @available_connections.detect do |conn|
             conn.global_id == connection_global_id
           end

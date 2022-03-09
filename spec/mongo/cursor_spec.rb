@@ -599,6 +599,7 @@ describe Mongo::Cursor do
         allow(reply).to receive(:namespace)
         allow(reply).to receive(:connection_description).and_return(conn_desc)
         allow(reply).to receive(:cursor_id).and_return(42)
+        allow(reply).to receive(:connection_global_id).and_return(1)
       end
     end
 
