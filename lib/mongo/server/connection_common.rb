@@ -163,6 +163,9 @@ module Mongo
         if respond_to?(:generation)
           # Non-monitoring connections
           e.generation = generation
+          if respond_to?(:global_id)
+            e.connection_global_id = global_id
+          end
           if respond_to?(:description)
             e.service_id = service_id
           end

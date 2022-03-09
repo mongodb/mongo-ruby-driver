@@ -157,6 +157,7 @@ describe Mongo::QueryCache do
     before do
       allow(result).to receive(:cursor_id) { 0 }
       allow(result).to receive(:namespace) { 'db.coll' }
+      allow(result).to receive(:connection_global_id) { 1 }
       allow(view).to receive(:limit) { nil }
     end
 

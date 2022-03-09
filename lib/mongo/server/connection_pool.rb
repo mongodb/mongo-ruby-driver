@@ -345,8 +345,8 @@ module Mongo
                 throw(:done)
               end
 
-              if connection_global_id
-                # If we need a connection to a particular service, we can't
+              if @server.load_balancer?
+                # If we need a  particular connection, we can't
                 # create one if we don't already have one, but we can wait
                 # for an in-progress operation to return such a connection
                 # to the pool, or for the populator to create a suitable
@@ -475,7 +475,7 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-          elsif connection.generation != generation(connection_global_id: connection.global_id)
+           elsif connection.generation != generation(connection_global_id: connection.global_id)
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
           else
@@ -531,7 +531,7 @@ module Mongo
           )
 
           unless options && options[:lazy]
-            if connection_global_id
+            if @server.load_balancer?
               loop do
                 conn = @available_connections.detect do |conn|
                   conn.connection_global_id == connection_global_id
@@ -759,7 +759,7 @@ module Mongo
       # specified service. If no suitable connections are available,
       # returns nil.
       def next_available_connection(connection_global_id: nil)
-        if connection_global_id
+        if @server.load_balancer?
           conn = @available_connections.detect do |conn|
             conn.global_id == connection_global_id
           end
@@ -844,8 +844,7 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError => exc
         @server.unknown!(
           generation: exc.generation,
-          # TODO: Check
-          service_id: exc.service_id,
+          connection_global_id: connection.global_id,
           stop_push_monitor: true,
         )
         raise

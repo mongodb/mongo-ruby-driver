@@ -186,12 +186,9 @@ module Mongo
           @socket, @description, @compressor = do_connect
 
           if server.load_balancer?
-            if Lint.enabled?
-              unless service_id
-                raise Error::InternalDriverError, "The connection is to a load balancer and it must have service_id set here, but does not"
-              end
-            end
-            @generation = connection_pool.generation_manager.generation(service_id: service_id)
+            @generation = connection_pool.generation_manager.generation(
+              connection_global_id: global_id
+            )
           end
 
           publish_cmap_event(
@@ -337,8 +334,7 @@ module Mongo
           @error = e
           @server.unknown!(
             generation: e.generation,
-            # or description.service_id?
-            service_id: e.service_id,
+            connection_global_id: global_id,
             stop_push_monitor: true,
           )
           raise

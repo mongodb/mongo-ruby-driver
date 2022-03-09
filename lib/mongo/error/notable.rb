@@ -70,6 +70,8 @@ module Mongo
       # @api experimental
       attr_accessor :service_id
 
+      attr_accessor :connection_global_id
+
       # @api public
       def to_s
         super + notes_tail

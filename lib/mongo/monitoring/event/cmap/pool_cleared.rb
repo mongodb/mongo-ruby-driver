@@ -32,17 +32,17 @@ module Mongo
           attr_reader :address
 
           # @return [ nil | Object ] The service id, if any.
-          attr_reader :service_id
+          attr_reader :connection_global_id
 
           # Create the event.
           #
           # @param [ Address ] address
-          # @param [ Object ] service_id The service id, if any.
+          # @param [ Object ] connection_global_id The connection global id, if any.
           #
           # @api private
-          def initialize(address, service_id: nil)
+          def initialize(address, connection_global_id: nil)
             @address = address
-            @service_id = service_id
+            @connection_global_id = connection_global_id
           end
 
           # Returns a concise yet useful summary of the event.

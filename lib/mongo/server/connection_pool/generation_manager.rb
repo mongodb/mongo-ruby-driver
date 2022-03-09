@@ -31,23 +31,22 @@ module Mongo
         attr_reader :server
 
         def generation(connection_global_id: nil)
-          if connection_global_id
-            unless server.load_balancer?
-              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
-            end
-          else
-            if server.load_balancer?
+          key = if server.load_balancer?
+            if connection_global_id.nil?
               raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
             end
+            connection_global_id
+          else
+            nil
           end
           @lock.synchronize do
-            @map[connection_global_id]
+            @map[key]
           end
         end
 
         def bump(connection_global_id: nil)
           @lock.synchronize do
-            if connection_global_id
+            if server.load_balancer?
               @map[connection_global_id] += 1
             else
               # When service id is not supplied, one of two things may be

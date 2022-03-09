@@ -41,12 +41,20 @@ describe Mongo::Cluster::CursorReaper do
     let(:cursor_id) { 1 }
     let(:cursor_kill_spec_1) do
       Mongo::Cursor::KillSpec.new(
-        cursor_id: cursor_id, coll_name: 'c', db_name: 'd', service_id: nil, server_address: address
+        cursor_id: cursor_id,
+        coll_name: 'c',
+        db_name: 'd',
+        server_address: address,
+        connection_global_id: 1
       )
     end
     let(:cursor_kill_spec_2) do
       Mongo::Cursor::KillSpec.new(
-        cursor_id: cursor_id, coll_name: 'c', db_name: 'q', service_id: nil, server_address: address
+        cursor_id: cursor_id,
+        coll_name: 'c',
+        db_name: 'q',
+        server_address: address,
+        connection_global_id: 1
       )
     end
     let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
