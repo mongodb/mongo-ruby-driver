@@ -534,7 +534,7 @@ module Mongo
             if @server.load_balancer?
               loop do
                 conn = @available_connections.detect do |conn|
-                  conn.connection_global_id == connection_global_id
+                  conn.global_id == connection_global_id
                 end
                 if conn
                   @available_connections.delete(conn)
