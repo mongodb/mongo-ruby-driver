@@ -500,7 +500,7 @@ module Mongo
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
       # @option options [ Object ] :connection_global_id Discard state for the specified
-      #   service id only.
+      #   connection id only.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
       # @option options [ Object ] :connection_global_id Clear connections with
@@ -531,7 +531,7 @@ module Mongo
           )
 
           unless options && options[:lazy]
-            if @server.load_balancer?
+            if @server.load_balancer? && connection_global_id
               loop do
                 conn = @available_connections.detect do |conn|
                   conn.global_id == connection_global_id

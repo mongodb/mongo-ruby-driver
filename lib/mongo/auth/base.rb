@@ -112,7 +112,12 @@ module Mongo
         reply = connection.dispatch([msg], context)
         reply_document = reply.documents.first
         validate_reply!(connection, conversation, reply_document)
-        result = Operation::Result.new(reply, connection.description)
+        connection_global_id = if connection.respond_to?(:global_id)
+          connection.global_id
+        else
+          nil
+        end
+        result = Operation::Result.new(reply, connection.description, connection_global_id)
         connection.update_cluster_time(result)
         reply_document
       end

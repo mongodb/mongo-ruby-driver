@@ -740,7 +740,7 @@ module Mongo
       if connection_global_id.nil?
         raise ArgumentError, 'Cannot pin to a nil connection id'
       end
-      @connection_global_id = connection_global_id
+      @pinned_connection_global_id = connection_global_id
     end
 
     # Unpins this session from the pinned server, if the session was pinned.
@@ -748,7 +748,7 @@ module Mongo
     # @api private
     def unpin
       @pinned_server = nil
-      @connection_global_id = nil
+      @pinned_connection_global_id = nil
     end
 
     # Unpins this session from the pinned server, if the session was pinned

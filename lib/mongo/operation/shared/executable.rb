@@ -35,12 +35,14 @@ module Mongo
                   if session.in_transaction? &&
                     connection.description.load_balancer?
                   then
-                    if session.pinned_service_id
-                      unless session.pinned_service_id == connection.service_id
-                        raise Error::InternalDriverError, "Expected operation to use service #{session.pinned_session_id} but it used #{connection.service_id}"
+                    if session.pinned_connection_global_id
+                      unless session.pinned_connection_global_id == connection.global_id
+                        raise(
+                          Error::InternalDriverError,
+                          "Expected operation to use connection #{session.pinned_connection_global_id} but it used #{connection.global_id}"
+                        )
                       end
                     else
-                      session.pin_to_service(connection.service_id)
                       session.pin_to_connection(connection.global_id)
                     end
                   end
