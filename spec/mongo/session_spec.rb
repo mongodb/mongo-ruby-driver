@@ -272,8 +272,11 @@ describe Mongo::Session do
     context "when the sesion is not materialized" do
       let(:session) { authorized_client.get_session(implicit: true) }
 
-      it "raises SessionNotMaterialized" do
+      before do
         expect(session.materialized?).to be false
+      end
+
+      it "raises SessionNotMaterialized" do
 
         expect do
           session.session_id

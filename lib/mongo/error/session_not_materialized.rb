@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2020 MongoDB Inc.
+# Copyright (C) 2022 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 module Mongo
   class Error
 
-    # This exception is raised when a session is attempted to be used but the
+    # This exception is raised when a session is attempted to be used but
     # it was never materialized.
     class SessionNotMaterialized < InvalidSession
       def initialize
