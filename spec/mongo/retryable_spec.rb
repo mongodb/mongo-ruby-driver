@@ -73,7 +73,7 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
       allow(session).to receive(:next_txn_num) { i += 1 }
       allow(session).to receive(:in_transaction?).and_return(false)
       allow(session).to receive(:pinned_server)
-      allow(session).to receive(:pinned_service_id)
+      allow(session).to receive(:pinned_connection_global_id)
       allow(session).to receive(:starting_transaction?).and_return(false)
       allow(session).to receive(:materialize)
     end
@@ -134,7 +134,7 @@ describe Mongo::Retryable do
 
   let(:session) do
     double('session').tap do |session|
-      allow(session).to receive(:pinned_service_id).and_return(nil)
+      allow(session).to receive(:pinned_connection_global_id).and_return(nil)
       allow(session).to receive(:materialize_if_needed)
     end
   end
