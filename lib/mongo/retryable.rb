@@ -328,7 +328,7 @@ module Mongo
       begin
         attempt += 1
         server ||= select_server(cluster, ServerSelector.primary, session)
-        server.with_connection(service_id: context.service_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           # Legacy retries do not use txn_num
           yield connection, nil, context.dup
         end
