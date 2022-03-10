@@ -794,7 +794,10 @@ describe Mongo::Server::Connection do
             connection.global_id.should_not be nil
 
             RSpec::Mocks.with_temporary_scope do
-              expect(server.pool).to receive(:disconnect!).with(connection_global_id: connection.global_id)
+              expect(server.pool).to receive(:disconnect!).with(
+                connection_global_id: connection.global_id,
+                service_id: connection.service_id
+              )
               result
             end
           end
