@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2014-2020 MongoDB Inc.
+# Copyright (C) 2022 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@
 # limitations under the License.
 
 module Mongo
+  class Error
 
-  # The current version of the driver.
-  #
-  # @since 2.0.0
-  VERSION = '2.18.0.alpha1'.freeze
+    # This exception is raised when a session is attempted to be used but
+    # it was never materialized.
+    class SessionNotMaterialized < InvalidSession
+      def initialize
+        super("The session was not materialized and cannot be used. Use start_session or with_session in order to start a session that will be materialized.")
+      end
+    end
+  end
 end

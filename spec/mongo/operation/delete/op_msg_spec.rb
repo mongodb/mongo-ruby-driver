@@ -163,8 +163,11 @@ describe Mongo::Operation::Delete::OpMsg do
             end
           end
 
-          before do
-            session.instance_variable_set(:@options, { implicit: true })
+          let(:session) do
+            Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
+              allow(session).to receive(:session_id).and_return(42)
+              session.should be_implicit
+            end
           end
 
           it 'creates the correct OP_MSG message' do
@@ -188,8 +191,10 @@ describe Mongo::Operation::Delete::OpMsg do
         context 'when the session is implicit' do
 
           let(:session) do
-            # Use client#get_session so the session is implicit
-            authorized_client.send(:get_session)
+            Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
+              allow(session).to receive(:session_id).and_return(42)
+              session.should be_implicit
+            end
           end
 
           context 'when the topology is replica set or sharded' do
@@ -234,6 +239,10 @@ describe Mongo::Operation::Delete::OpMsg do
 
           let(:session) do
             authorized_client.start_session
+          end
+
+          before do
+            session.should_not be_implicit
           end
 
           let(:expected_global_args) do

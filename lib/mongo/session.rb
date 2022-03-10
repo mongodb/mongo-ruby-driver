@@ -35,12 +35,23 @@ module Mongo
 
     # Initialize a Session.
     #
+    # A session can be explicit or implicit. Lifetime of explicit sessions is
+    # managed by the application - applications explicitry create such sessions
+    # and explicitly end them. Implicit sessions are created automatically by
+    # the driver when sending operations to servers that support sessions
+    # (3.6+), and their lifetime is managed by the driver.
+    #
+    # When an implicit session is created, it cannot have a server session
+    # associated with it. The server session will be checked out of the
+    # session pool when an operation using this session is actually executed.
+    # When an explicit session is created, it must reference a server session
+    # that is already allocated.
+    #
     # @note Applications should use Client#start_session to begin a session.
+    #   This constructor is for internal driver use only.
     #
-    # @example
-    #   Session.new(server_session, client, options)
-    #
-    # @param [ ServerSession ] server_session The server session this session is associated with.
+    # @param [ ServerSession | nil ] server_session The server session this session is associated with.
+    #   If the :implicit option is true, this must be nil.
     # @param [ Client ] client The client through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
@@ -50,7 +61,9 @@ module Mongo
     #   to start_transaction by default, can contain any of the options that
     #   start_transaction accepts.
     # @option options [ true|false ] :implicit For internal driver use only -
-    #   specifies whether the session is implicit.
+    #   specifies whether the session is implicit. If this is true, the server_session
+    #   will be nil. This is done so that the server session is only checked
+    #   out after the connection is checked out.
     # @option options [ Hash ] :read_preference The read preference options hash,
     #   with the following optional keys:
     #   - *:mode* -- the read preference as a string or symbol; valid values are
@@ -66,11 +79,21 @@ module Mongo
         raise ArgumentError, ':causal_consistency and :snapshot options cannot be both set on a session'
       end
 
+      if options[:implicit]
+        unless server_session.nil?
+          raise ArgumentError, 'Implicit session cannot reference server session during construction'
+        end
+      else
+        if server_session.nil?
+          raise ArgumentError, 'Explicit session must reference server session during construction'
+        end
+      end
+
       @server_session = server_session
       options = options.dup
 
       @client = client.use(:admin)
-      @options = options.freeze
+      @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
     end
@@ -194,21 +217,31 @@ module Mongo
     #
     # @since 2.5.0
     def ended?
-      @server_session.nil?
+      !!@ended
     end
 
-    # Get the server session id of this session, if the session was not ended.
-    # If the session was ended, returns nil.
-    #
-    # @example Get the session id.
-    #   session.session_id
+    # Get the server session id of this session, if the session has not been
+    # ended. If the session had been ended, raises Error::SessionEnded.
     #
     # @return [ BSON::Document ] The server session id.
+    #
+    # @raise [ Error::SessionEnded ] If the session had been ended.
     #
     # @since 2.5.0
     def session_id
       if ended?
         raise Error::SessionEnded
+      end
+
+      # An explicit session will always have a session_id, because during
+      # construction a server session must be provided. An implicit session
+      # will not have a session_id until materialized, thus calls to
+      # session_id might fail. An application should not have an opportunity
+      # to experience this failure because an implicit session shouldn't be
+      # accessible to applications due to its lifetime being constrained to
+      # operation execution, which is done entirely by the driver.
+      unless materialized?
+        raise Error::SessionNotMaterialized
       end
 
       @server_session.session_id
@@ -325,10 +358,13 @@ module Mongo
           rescue Mongo::Error, Error::AuthError
           end
         end
-        @client.cluster.session_pool.checkin(@server_session)
+        if @server_session
+          @client.cluster.session_pool.checkin(@server_session)
+        end
       end
     ensure
       @server_session = nil
+      @ended = true
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -591,8 +627,12 @@ module Mongo
           if write_concern && !write_concern.is_a?(WriteConcern::Base)
             write_concern = WriteConcern.get(write_concern)
           end
-          write_with_retry(self, write_concern, true) do |server, txn_num, is_retry|
-            if is_retry
+
+          context = Operation::Context.new(client: @client, session: self)
+          write_with_retry(write_concern, ending_transaction: true,
+            context: context,
+          ) do |connection, txn_num, context|
+            if context.retry?
               if write_concern
                 wco = write_concern.options.merge(w: :majority)
                 wco[:wtimeout] ||= 10000
@@ -608,7 +648,7 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute(server, context: Operation::Context.new(client: @client, session: self))
+            Operation::Command.new(spec).execute_with_connection(connection, context: context)
           end
         end
       ensure
@@ -649,14 +689,17 @@ module Mongo
       begin
         unless starting_transaction?
           @aborting_transaction = true
-          write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
+          context = Operation::Context.new(client: @client, session: self)
+          write_with_retry(txn_options[:write_concern],
+            ending_transaction: true, context: context,
+          ) do |connection, txn_num, context|
             begin
               Operation::Command.new(
                 selector: { abortTransaction: 1 },
                 db_name: 'admin',
                 session: self,
                 txn_num: txn_num
-              ).execute(server, context: Operation::Context.new(client: @client, session: self))
+              ).execute_with_connection(connection, context: context)
             ensure
               unpin
             end
@@ -1006,6 +1049,33 @@ module Mongo
       else
         @operation_time = new_operation_time
       end
+    end
+
+    # If not already set, populate a session objects's server_session by
+    # checking out a session from the session pool.
+    #
+    # @return [ Session ] Self.
+    #
+    # @api private
+    def materialize_if_needed
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      return unless implicit? && !@server_session
+
+      @server_session = cluster.session_pool.checkout
+
+      self
+    end
+
+    # @api private
+    def materialized?
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      !@server_session.nil?
     end
 
     # Increment and return the next transaction number.

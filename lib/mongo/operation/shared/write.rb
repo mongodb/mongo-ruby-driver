@@ -36,12 +36,24 @@ module Mongo
       # @since 2.5.2
       def execute(server, context:)
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
-          validate!(connection)
-          op = self.class::OpMsg.new(spec)
-
-          result = op.execute(connection, context: context)
-          validate_result(result, connection, context)
+          execute_with_connection(connection, context: context)
         end
+      end
+
+      # Execute the operation.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection to send
+      #   the operation through.
+      # @param [ Operation::Context ] context The operation context.
+      # @param [ Hash ] options Operation execution options.
+      #
+      # @return [ Mongo::Operation::Result ] The operation result.
+      def execute_with_connection(connection, context:)
+        validate!(connection)
+        op = self.class::OpMsg.new(spec)
+
+        result = op.execute(connection, context: context)
+        validate_result(result, connection, context)
       end
 
       # Execute the bulk write operation.

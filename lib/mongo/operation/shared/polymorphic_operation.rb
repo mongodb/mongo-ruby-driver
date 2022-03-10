@@ -33,9 +33,21 @@ module Mongo
       # @return [ Mongo::Operation::Result ] The operation result.
       def execute(server, context:, options: {})
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
-          operation = final_operation(connection)
-          operation.execute(connection, context: context, options: options)
+          execute_with_connection(connection, context: context, options: options)
         end
+      end
+
+      # Execute the operation.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection to send
+      #   the operation through.
+      # @param [ Operation::Context ] context The operation context.
+      # @param [ Hash ] options Operation execution options.
+      #
+      # @return [ Mongo::Operation::Result ] The operation result.
+      def execute_with_connection(connection, context:, options: {})
+        operation = final_operation(connection)
+        operation.execute(connection, context: context, options: options)
       end
     end
   end

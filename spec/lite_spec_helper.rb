@@ -81,11 +81,12 @@ require 'mrss/event_subscriber'
 require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'
+require 'support/mongos_macros'
 require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/background_thread_registry'
-require 'support/session_registry'
+require 'mrss/session_registry'
 require 'support/local_resource_registry'
 
 if SpecConfig.instance.mri?
@@ -95,6 +96,8 @@ else
   TimeoutInterrupt = Timeout
 end
 
+Mrss.patch_mongo_for_session_registry
+
 class ExampleTimeout < StandardError; end
 
 RSpec.configure do |config|
@@ -102,6 +105,7 @@ RSpec.configure do |config|
   config.include(CommonShortcuts::InstanceMethods)
   config.extend(Mrss::LiteConstraints)
   config.include(ClientRegistryMacros)
+  config.include(MongosMacros)
 
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe

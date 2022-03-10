@@ -151,32 +151,37 @@ describe 'fork reconnect' do
     #   * In the child, create a ClientSession and assert its lsid is different.
     describe 'session pool' do
       it 'is cleared after fork' do
-        session = client.get_session
+        session = client.get_session.materialize_if_needed
         parent_lsid = session.session_id
         session.end_session
+
         if pid = fork
           pid, status = Process.wait2(pid)
           status.exitstatus.should == 0
         else
           Utils.wrap_forked_child do
             client.reconnect
-            child_session = client.get_session
+            child_session = client.get_session.materialize_if_needed
             child_lsid = child_session.session_id
             expect(child_lsid).not_to eq(parent_lsid)
           end
         end
 
-        expect(client.get_session.session_id).to eq(parent_lsid)
+        session = client.get_session.materialize_if_needed
+        session_id = session.session_id
+        expect(session_id).to eq(parent_lsid)
       end
 
       # Test from Driver Sessions Spec
       #   * Create ClientSession
       #   * Record its lsid
       #   * Fork
-      #   * In the parent, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is the same.
-      #   * In the child, return the ClientSession to the pool, create a new ClientSession, and assert its lsid is different.
+      #   * In the parent, return the ClientSession to the pool, create a new
+      #     ClientSession, and assert its lsid is the same.
+      #   * In the child, return the ClientSession to the pool, create a new
+      #     ClientSession, and assert its lsid is different.
       it 'does not return parent process sessions to child process pool' do
-        session = client.get_session
+        session = client.get_session.materialize_if_needed
         parent_lsid = session.session_id
 
         if pid = fork
@@ -186,14 +191,16 @@ describe 'fork reconnect' do
           Utils.wrap_forked_child do
             client.reconnect
             session.end_session
-            child_session = client.get_session
+            child_session = client.get_session.materialize_if_needed
+
             child_lsid = child_session.session_id
             expect(child_lsid).not_to eq(parent_lsid)
           end
         end
 
         session.end_session
-        expect(client.get_session.session_id).to eq(parent_lsid)
+        session_id = client.get_session.materialize_if_needed.session_id
+        expect(session_id).to eq(parent_lsid)
       end
     end
   end

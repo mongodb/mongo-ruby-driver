@@ -1046,13 +1046,24 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "stress older"
+    matrix_spec:
+      stress: on
+      ruby: ["ruby-2.7"]
+      mongodb-version: ['4.2', '4.0', '3.6']
+      topology: replica-set
+      os: ubuntu1604
+    display_name: "${mongodb-version} ${topology} stress ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
   - matrix_name: "stress"
     matrix_spec:
       stress: on
       ruby: ["ruby-2.7"]
-      mongodb-version: ["4.4", '4.2', '4.0', '3.6']
+      mongodb-version: ['5.0', '4.4']
       topology: replica-set
-      os: ubuntu1604
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1373,7 +1384,7 @@ buildvariants:
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
-  
+
   - matrix_name: ocsp-verifier - ruby-2.5
     matrix_spec:
       ocsp-verifier: true
@@ -1405,7 +1416,7 @@ buildvariants:
       docker-distro: debian10
     display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
     tasks: *1
-  
+
 
   - matrix_name: ocsp-must-staple
     matrix_spec:

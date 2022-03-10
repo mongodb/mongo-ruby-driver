@@ -686,8 +686,15 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       end
 
+      let(:connection) do
+        double('connection').tap do |connection|
+          allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
+        end
+      end
+
       it 'passes the session' do
         authorized_collection.client.with_session do |session|
+          session.materialize_if_needed
           session_id = session.session_id
 
           authorized_collection.count_documents({}, session: session)
