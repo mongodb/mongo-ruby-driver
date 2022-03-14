@@ -47,7 +47,7 @@ module Mongo
         end
 
         if connection_global_id && session&.pinned_connection_global_id
-          raise ArgumentError, 'Trying to pin context to a service when the session is already pinned to a service'
+          raise ArgumentError, 'Trying to pin context to a connection when the session is already pinned to a connection.'
         end
 
         @client = client
