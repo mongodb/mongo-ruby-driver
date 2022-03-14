@@ -86,7 +86,7 @@ module Mongo
         message = build_message(connection, context)
         message = message.maybe_encrypt(connection, context)
         reply = connection.dispatch([ message ], context, options)
-        [reply, connection.description]
+        [reply, connection.description, connection.global_id]
       end
 
       # @param [ Mongo::Server::Connection ] connection The connection on which

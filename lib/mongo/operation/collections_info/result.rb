@@ -36,8 +36,8 @@ module Mongo
         #   query was sent to.
         #
         # @api private
-        def initialize(replies, connection_description, database_name)
-          super(replies, connection_description)
+        def initialize(replies, connection_description, connection_global_id, database_name)
+          super(replies, connection_description, connection_global_id)
           @database_name = database_name
         end
 

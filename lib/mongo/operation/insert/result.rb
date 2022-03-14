@@ -47,8 +47,8 @@ module Mongo
         #
         # @since 2.0.0
         # @api private
-        def initialize(replies, connection_description, ids)
-          super(replies, connection_description)
+        def initialize(replies, connection_description, connection_global_id, ids)
+          super(replies, connection_description, connection_global_id)
           @inserted_ids = ids
         end
 
@@ -67,7 +67,7 @@ module Mongo
 
         # @api public
         def bulk_result
-          BulkResult.new(@replies, connection_description, @inserted_ids)
+          BulkResult.new(@replies, connection_description, connection_global_id, @inserted_ids)
         end
       end
     end
