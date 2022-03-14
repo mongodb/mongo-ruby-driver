@@ -46,16 +46,16 @@ module Mongo
 
         def bump(connection_global_id: nil)
           @lock.synchronize do
-            if server.load_balancer?
+            if server.load_balancer? && connection_global_id
               @map[connection_global_id] += 1
             else
-              # When service id is not supplied, one of two things may be
+              # When connection id is not supplied, one of two things may be
               # happening;
               #
               # 1. The pool is not to a load balancer, in which case we only
               #    need to increment the generation for the nil connection_global_id.
               # 2. The pool is to a load balancer, in which case we need to
-              #    increment the generation for each service.
+              #    increment the generation for each connection.
               #
               # Incrementing everything in the map accomplishes both tasks.
               @map.each do |k, v|
