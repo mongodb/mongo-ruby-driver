@@ -41,6 +41,9 @@ module Mongo
         # @param [ Server::Description ] connection_description
         #   Server description of the server that performed the operation that
         #   this result is for.
+        # @param [ Integer ] connection_global_id
+        #   Global id of the connection on which the operation that
+        #   this result is for was performed.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0

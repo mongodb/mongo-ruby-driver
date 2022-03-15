@@ -623,7 +623,7 @@ module Mongo
     # @option aptions [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
     # @option options [ Object ] :connection_global_id Change state for the specified
-    #   service id only.
+    #   connection only.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
@@ -631,9 +631,6 @@ module Mongo
         if updated_desc.config.empty?
           unless options[:keep_connection_pool]
             servers_list.each do |server|
-              # TODO should service id be taken out of updated_desc?
-              # We could also assert that
-              # options[:connection_global_id] == updated_desc.connection_global_id
               server.clear_connection_pool(connection_global_id: options[:connection_global_id])
             end
           end

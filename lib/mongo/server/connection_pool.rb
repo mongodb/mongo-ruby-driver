@@ -313,7 +313,6 @@ module Mongo
 
                 # If connection_global_id is not nil, connection may be nil here
                 # even if there are available connections in the pool
-                # (they could be to other services).
                 break unless connection
 
                 if connection.pid != pid
@@ -375,7 +374,7 @@ module Mongo
 
               msg = @lock.synchronize do
                 connection_global_id_msg = if connection_global_id
-                  " for service #{connection_global_id}"
+                  " for connection #{connection_global_id}"
                 else
                   ''
                 end
@@ -499,12 +498,10 @@ module Mongo
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
-      # @option options [ Object ] :connection_global_id Discard state for the specified
-      #   connection id only.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
-      # @option options [ Object ] :connection_global_id Clear connections with
-      #   the specified service id only.
+      # @option options [ Integer ] :connection_global_id Clear connections with
+      #   the specified connection global id only.
       #
       # @return [ true ] true.
       #
@@ -519,7 +516,6 @@ module Mongo
         end
 
         connection_global_id = options && options[:connection_global_id]
-        service_id = options && options[:service_id]
 
         @lock.synchronize do
           @generation_manager.bump(connection_global_id: connection_global_id)
@@ -527,7 +523,7 @@ module Mongo
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
-              service_id: service_id
+              connection_global_id: connection_global_id
             )
           )
 
@@ -846,7 +842,6 @@ module Mongo
         @server.unknown!(
           generation: exc.generation,
           connection_global_id: connection.global_id,
-          service_id: connection.service_id,
           stop_push_monitor: true,
         )
         raise

@@ -97,6 +97,9 @@ module Mongo
       #   this result is for. This parameter is allowed to be nil for
       #   compatibility with existing mongo_kerberos library, but should
       #   always be not nil in the driver proper.
+      # @param [ Integer ] connection_global_id
+      #   Global id of the connection on which the operation that
+      #   this result is for was performed.
       #
       # @api private
       def initialize(replies, connection_description = nil, connection_global_id = nil)
@@ -129,6 +132,10 @@ module Mongo
       # @api private
       attr_reader :connection_description
 
+      # @return [ Object ] Global is of the connection that
+      #   the operation was performed on that this result is for.
+      #
+      # @api private
       attr_reader :connection_global_id
 
       # @api private

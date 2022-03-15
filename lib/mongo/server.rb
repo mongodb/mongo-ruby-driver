@@ -458,7 +458,6 @@ module Mongo
       unknown!(
         generation: e.generation,
         connection_global_id: e.connection_global_id,
-        service_id: e.service_id,
         stop_push_monitor: true,
       )
       raise
@@ -486,7 +485,6 @@ module Mongo
       unknown!(
         generation: e.generation,
         connection_global_id: e.connection_global_id,
-        service_id: e.service_id,
         stop_push_monitor: true,
       )
       raise
@@ -552,7 +550,7 @@ module Mongo
         # when the latter is marked unknown, and this part needs to happen
         # when the server is a load balancer.
         if connection_global_id = options[:connection_global_id]
-          pool.disconnect!(connection_global_id: connection_global_id, service_id: options[:service_id])
+          pool.disconnect!(connection_global_id: connection_global_id)
         elsif Lint.enabled?
           raise Error::LintError, 'Load balancer was asked to be marked unknown without a global connection id'
         end
@@ -592,7 +590,7 @@ module Mongo
     end
 
     # @param [ Object ] :connection_global_id Close connections with the specified
-    #   service id only.
+    #   global id only.
     #
     # @api private
     def clear_connection_pool(connection_global_id: nil)

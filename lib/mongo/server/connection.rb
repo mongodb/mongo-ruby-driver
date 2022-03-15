@@ -131,6 +131,8 @@ module Mongo
       # @since 2.9.0
       attr_reader :id
 
+      # @return [ Integer ] The global ID for the connection. This will be unique
+      # across all connections.
       attr_reader :global_id
 
       # The connection pool from which this connection was created.
@@ -335,7 +337,6 @@ module Mongo
           @server.unknown!(
             generation: e.generation,
             connection_global_id: global_id,
-            service_id: description.service_id,
             stop_push_monitor: true,
           )
           raise

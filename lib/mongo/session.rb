@@ -253,7 +253,7 @@ module Mongo
     # @api private
     attr_reader :pinned_server
 
-    # @return [ Object | nil ] The connection global id that this session is pinned to,
+    # @return [ Integer | nil ] The connection global id that this session is pinned to,
     #   if any.
     #
     # @api private
@@ -775,7 +775,7 @@ module Mongo
 
     # Pins this session to the specified connection.
     #
-    # @param [ Object ] connection_global_id The global id of connection to pin
+    # @param [ Integer ] connection_global_id The global id of connection to pin
     # this session to.
     #
     # @api private

@@ -367,12 +367,12 @@ module Mongo
     end
 
     # @api private
-    def kill_spec(connection)
+    def kill_spec(connection_global_id)
       KillSpec.new(
         cursor_id: id,
         coll_name: collection_name,
         db_name: database.name,
-        connection_global_id: @connection_global_id,
+        connection_global_id: connection_global_id,
         server_address: server.address,
       )
     end
