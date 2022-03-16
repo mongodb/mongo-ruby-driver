@@ -30,32 +30,33 @@ module Mongo
 
         attr_reader :server
 
-        def generation(connection_global_id: nil)
-          key = if server.load_balancer?
-            if connection_global_id.nil?
+        def generation(service_id: nil)
+          if service_id
+            unless server.load_balancer?
+              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
+            end
+          else
+            if server.load_balancer?
               raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
             end
-            connection_global_id
-          else
-            nil
           end
           @lock.synchronize do
-            @map[key]
+            @map[service_id]
           end
         end
 
-        def bump(connection_global_id: nil)
+        def bump(service_id: nil)
           @lock.synchronize do
-            if server.load_balancer? && connection_global_id
-              @map[connection_global_id] += 1
+            if service_id
+              @map[service_id] += 1
             else
-              # When connection id is not supplied, one of two things may be
+              # When service id is not supplied, one of two things may be
               # happening;
               #
               # 1. The pool is not to a load balancer, in which case we only
-              #    need to increment the generation for the nil connection_global_id.
+              #    need to increment the generation for the nil service_id.
               # 2. The pool is to a load balancer, in which case we need to
-              #    increment the generation for each connection.
+              #    increment the generation for each service.
               #
               # Incrementing everything in the map accomplishes both tasks.
               @map.each do |k, v|

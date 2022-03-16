@@ -282,6 +282,12 @@ describe 'Client construction' do
       it 'creates the client successfully' do
         client.should be_a(Mongo::Client)
       end
+
+      it 'fails all operations' do
+        lambda do
+          client.command(ping: true)
+        end.should raise_error(Mongo::Error::MissingServiceId)
+      end
     end
   end
 end

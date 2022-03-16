@@ -31,18 +31,18 @@ module Mongo
           # @since 2.9.0
           attr_reader :address
 
-          # @return [ nil | Object ] The connection global id, if any.
-          attr_reader :connection_global_id
+          # @return [ nil | Object ] The service id, if any.
+          attr_reader :service_id
 
           # Create the event.
           #
           # @param [ Address ] address
-          # @param [ Object ] connection_global_id The connection global id, if any.
+          # @param [ Object ] service:service_id The service id, if any.
           #
           # @api private
-          def initialize(address, connection_global_id: nil)
+          def initialize(address, service_id: nil)
             @address = address
-            @connection_global_id = connection_global_id
+            @service_id = service_id
           end
 
           # Returns a concise yet useful summary of the event.

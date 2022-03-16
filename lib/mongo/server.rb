@@ -457,7 +457,7 @@ module Mongo
     rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError => e
       unknown!(
         generation: e.generation,
-        connection_global_id: e.connection_global_id,
+        service_id: e.service_id,
         stop_push_monitor: true,
       )
       raise
@@ -484,7 +484,7 @@ module Mongo
       # non-timeout network error
       unknown!(
         generation: e.generation,
-        connection_global_id: e.connection_global_id,
+        service_id: e.service_id,
         stop_push_monitor: true,
       )
       raise
@@ -536,8 +536,8 @@ module Mongo
     #   of the error response that is causing the server to be marked unknown.
     # @option options [ true | false ] :stop_push_monitor Whether to stop
     #   the PushMonitor associated with the server, if any.
-    # @option options [ Object ] :connection_global_id Discard state for the specified
-    #   connection global id only.
+    # @option options [ Object ] :service_id Discard state for the specified
+    #   service id only.
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
@@ -549,10 +549,10 @@ module Mongo
         # However, this method also clears connection pool for the server
         # when the latter is marked unknown, and this part needs to happen
         # when the server is a load balancer.
-        if connection_global_id = options[:connection_global_id]
-          pool.disconnect!(connection_global_id: connection_global_id)
+        if service_id = options[:service_id]
+          pool.disconnect!(service_id: service_id)
         elsif Lint.enabled?
-          raise Error::LintError, 'Load balancer was asked to be marked unknown without a global connection id'
+          raise Error::LintError, 'Load balancer was asked to be marked unknown without a service id'
         end
         return
       end
@@ -574,6 +574,9 @@ module Mongo
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
       config = {}
+      if options[:service_id]
+        config['serviceId'] = options[:service_id]
+      end
       if options[:topology_version]
         config['topologyVersion'] = options[:topology_version]
       end
@@ -589,14 +592,14 @@ module Mongo
       @description = description
     end
 
-    # @param [ Object ] :connection_global_id Close connections with the specified
-    #   global id only.
+     # @param [ Object ] :service_id Close connections with the specified
+    #   service id only.
     #
     # @api private
-    def clear_connection_pool(connection_global_id: nil)
+    def clear_connection_pool(service_id: nil)
       @pool_lock.synchronize do
         if @pool
-          @pool.disconnect!(connection_global_id: connection_global_id)
+          @pool.disconnect!(service_id: service_id)
         end
       end
     end

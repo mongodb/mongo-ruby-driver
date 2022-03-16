@@ -323,7 +323,7 @@ module Mongo
                 end
 
                 if connection.generation != generation(
-                  connection_global_id: connection.global_id
+                  service_id: connection.service_id
                 )
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
@@ -474,7 +474,7 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-           elsif connection.generation != generation(connection_global_id: connection.global_id)
+           elsif connection.generation != generation(service_id: connection.service_id)
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
           else
@@ -500,8 +500,8 @@ module Mongo
       #   subsequent check out operation.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
-      # @option options [ Integer ] :connection_global_id Clear connections with
-      #   the specified connection global id only.
+      # @option options [ Object ] :service_id Clear connections with
+      #   the specified service id only.
       #
       # @return [ true ] true.
       #
@@ -515,23 +515,23 @@ module Mongo
           stop_populator
         end
 
-        connection_global_id = options && options[:connection_global_id]
+        service_id = options && options[:service_id]
 
         @lock.synchronize do
-          @generation_manager.bump(connection_global_id: connection_global_id)
+          @generation_manager.bump(service_id: service_id)
 
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
-              connection_global_id: connection_global_id
+              service_id: service_id
             )
           )
 
           unless options && options[:lazy]
-            if @server.load_balancer? && connection_global_id
+            if @server.load_balancer? && service_id
               loop do
                 conn = @available_connections.detect do |conn|
-                  conn.global_id == connection_global_id
+                  conn.service_id == service_id
                 end
                 if conn
                   @available_connections.delete(conn)
@@ -841,7 +841,7 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError => exc
         @server.unknown!(
           generation: exc.generation,
-          connection_global_id: connection.global_id,
+          service_id: exc.service_id,
           stop_push_monitor: true,
         )
         raise

@@ -72,9 +72,9 @@ module Mongo
 
       # Returns global id of the connection on which the error occurred.
       #
-      # @return [ Object | nil ] Service id.
+      # @return [ Integer | nil ] Connection global id.
       #
-      # @api experimental
+      # @api private
       attr_accessor :connection_global_id
 
       # @api public
