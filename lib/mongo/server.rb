@@ -592,7 +592,7 @@ module Mongo
       @description = description
     end
 
-     # @param [ Object ] :service_id Close connections with the specified
+    # @param [ Object ] :service_id Close connections with the specified
     #   service id only.
     #
     # @api private

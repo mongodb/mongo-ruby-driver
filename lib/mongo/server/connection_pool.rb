@@ -311,9 +311,27 @@ module Mongo
                   connection_global_id: connection_global_id
                 )
 
-                # If connection_global_id is not nil, connection may be nil here
-                # even if there are available connections in the pool
-                break unless connection
+                if connection.nil?
+                  if connection_global_id
+                    # A particular connection is requested, but it is not available.
+                    # If it is nether available not checked out, we should stop here.
+                    @checked_out_connections.detect do |conn|
+                      conn.connection_global_id == connection_global_id
+                    end.tap do |conn|
+                      if conn.nil?
+                        publish_cmap_event(
+                          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+                            @server.address,
+                            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+                          ),
+                        )
+                        raise Error::ConnectionNotExist.new
+                      end
+                    end
+                  else
+                    break
+                  end
+                end
 
                 if connection.pid != pid
                   log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
@@ -345,11 +363,9 @@ module Mongo
               end
 
               if @server.load_balancer? && connection_global_id
-                # If we need a  particular connection, we can't
-                # create one if we don't already have one, but we can wait
-                # for an in-progress operation to return such a connection
-                # to the pool, or for the populator to create a suitable
-                # connection.
+                # We need a  particular connection, and if it is not available
+                # we can wait for an in-progress operation to return
+                # such a connection to the pool.
               else
                 # If we are below pool capacity, create a new connection.
                 #
@@ -474,7 +490,7 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-           elsif connection.generation != generation(service_id: connection.service_id)
+          elsif connection.generation != generation(service_id: connection.service_id)
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
           else
@@ -752,8 +768,8 @@ module Mongo
 
       private
 
-      # Returns the next available connection, optionally scoped to the
-      # specified service. If no suitable connections are available,
+      # Returns the next available connection, optionally with given
+      # global id. If no suitable connections are available,
       # returns nil.
       def next_available_connection(connection_global_id: nil)
         if @server.load_balancer? && connection_global_id
