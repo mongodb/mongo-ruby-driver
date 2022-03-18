@@ -790,6 +790,11 @@ module Mongo
     #
     # @api private
     def unpin
+      if cluster.load_balanced?
+        cluster.servers.first.with_connection(connection_global_id: @pinned_connection_global_id) do |conn|
+          conn.unpin
+        end
+      end
       @pinned_server = nil
       @pinned_connection_global_id = nil
     end

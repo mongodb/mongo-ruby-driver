@@ -340,22 +340,24 @@ module Mongo
                   next
                 end
 
-                if connection.generation != generation(
-                  service_id: connection.service_id
-                )
-                  # Stale connections should be disconnected in the clear
-                  # method, but if any don't, check again here
-                  connection.disconnect!(reason: :stale)
-                  @populate_semaphore.signal
-                  next
-                end
+                unless connection.pinned?
+                  if connection.generation != generation(
+                    service_id: connection.service_id
+                  )
+                    # Stale connections should be disconnected in the clear
+                    # method, but if any don't, check again here
+                    connection.disconnect!(reason: :stale)
+                    @populate_semaphore.signal
+                    next
+                  end
 
-                if max_idle_time && connection.last_checkin &&
-                  Time.now - connection.last_checkin > max_idle_time
-                then
-                  connection.disconnect!(reason: :idle)
-                  @populate_semaphore.signal
-                  next
+                  if max_idle_time && connection.last_checkin &&
+                    Time.now - connection.last_checkin > max_idle_time
+                  then
+                    connection.disconnect!(reason: :idle)
+                    @populate_semaphore.signal
+                    next
+                  end
                 end
 
                 @pending_connections << connection
