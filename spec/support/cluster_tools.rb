@@ -55,7 +55,7 @@ class ClusterTools
       replSetStepDown: 1, force: true)
   end
 
-  # https://docs.mongodb.com/manual/reference/parameters/#param.enableElectionHandoff
+  # https://mongodb.com/docs/manual/reference/parameters/#param.enableElectionHandoff
   def set_election_handoff(value)
     unless [true, false].include?(value)
       raise ArgumentError, 'Value must be true or false'

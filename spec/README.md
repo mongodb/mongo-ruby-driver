@@ -408,7 +408,7 @@ The client-side encryption tests require the mongocryptd binary to be in the
 system path.
 
 Download enterprise versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
-Read more about installing mongocryptd here: https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#mongocryptd
+Read more about installing mongocryptd here: https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#mongocryptd
 
 Install libmongocrypt on your machine:
 
@@ -513,9 +513,9 @@ To test compression, set the `compressors` URI option:
     MONGODB_URI="mongodb://localhost:27017/?compressors=zlib" rake
 
 Note that as of this writing, the driver supports
-[ztsd](https://docs.mongodb.com/manual/reference/glossary/#term-zstd),
-[snappy](https://docs.mongodb.com/manual/reference/glossary/#term-snappy)
-and [zlib](https://docs.mongodb.com/manual/reference/glossary/#term-zlib)
+[ztsd](https://mongodb.com/docs/manual/reference/glossary/#term-zstd),
+[snappy](https://mongodb.com/docs/manual/reference/glossary/#term-snappy)
+and [zlib](https://mongodb.com/docs/manual/reference/glossary/#term-zlib)
 compression.
 
 Servers 4.2+ enable zlib by default; to test older servers, explicitly enable
@@ -530,7 +530,7 @@ To specify server API parameters, use the `SERVER_API` environment variable.
 The server API parameters cannot be specified via URI options.
 
 Both YAML and JSON syntaxes are accepted:
-    
+
     SERVER_API='{version: "1", strict: true}' rake
 
     SERVER_API='{"version":"1","strict":true}' rake
