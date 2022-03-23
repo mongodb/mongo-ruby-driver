@@ -32,9 +32,6 @@ module Mongo
           add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
               get_result(connection, context, options).tap do |result|
-                if connection.description.load_balancer? && result.cursor_id != 0
-                  connection.pin
-                end
                 if session
                   if session.in_transaction? &&
                     connection.description.load_balancer?
@@ -48,7 +45,6 @@ module Mongo
                       end
                     else
                       session.pin_to_connection(connection.global_id)
-                      connection.pin
                     end
                   end
 

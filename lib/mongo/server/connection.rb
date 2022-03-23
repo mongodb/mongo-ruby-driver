@@ -114,7 +114,6 @@ module Mongo
         @last_checkin = nil
         @auth_mechanism = nil
         @pid = Process.pid
-        @pinned = false
 
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCreated.new(address, id)
@@ -159,21 +158,6 @@ module Mongo
       # @api private
       def error?
         !!@error
-      end
-
-      # @api private
-      def pinned?
-        @pinned
-      end
-
-      # @api private
-      def pin
-        @pinned = true
-      end
-
-      # @api private
-      def unpin
-        @pinned = false
       end
 
       # Establishes a network connection to the target address.

@@ -374,9 +374,6 @@ module Utils
           else
             next
           end
-        elsif k == :load_balanced
-          write_k = 'loadBalanced'
-          write_v = v
         else
           write_v = v
         end

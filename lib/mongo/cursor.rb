@@ -475,9 +475,6 @@ module Mongo
     end
 
     def unregister
-      @server.with_connection(connection_global_id: @connection_global_id) do |conn|
-        conn.unpin
-      end
       cluster.unregister_cursor(@cursor_id)
     end
 

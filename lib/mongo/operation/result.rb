@@ -170,15 +170,7 @@ module Mongo
       # @since 2.0.0
       # @api private
       def cursor_id
-        if acknowledged?
-          if replies.last.respond_to?(:cursor_id)
-            replies.last.cursor_id
-          else
-            0
-          end
-        else
-          0
-        end
+        acknowledged? ? replies.last.cursor_id : 0
       end
 
       # Get the namespace of the cursor. The method should be defined in
