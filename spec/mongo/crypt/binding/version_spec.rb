@@ -14,9 +14,6 @@ describe 'Mongo::Crypt::Binding' do
     end
 
     it 'is in the x.y.z-tag format' do
-      # Current version of libmongocrypt has malformed version number
-      pending 'https://jira.mongodb.org/browse/MONGOCRYPT-412'
-
       expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z\+\d]+)?\z/)
     end
   end
