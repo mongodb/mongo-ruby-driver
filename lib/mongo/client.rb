@@ -898,7 +898,7 @@ module Mongo
     #   which databases are returned based on user privileges when access control
     #   is enabled
     #
-    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
     # @option options [ Object ] :comment A user-provided
@@ -924,7 +924,7 @@ module Mongo
     #   which databases are returned based on user privileges when access control
     #   is enabled
     #
-    #   See https://docs.mongodb.com/manual/reference/command/listDatabases/
+    #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
     # @option options [ Object ] :comment A user-provided

@@ -12,7 +12,7 @@ Transactions
 
 
 Version 4.0 of the MongoDB server introduces
-`multi-document transactions <https://docs.mongodb.com/manual/core/transactions/>`_.
+`multi-document transactions <https://mongodb.com/docs/manual/core/transactions/>`_.
 (Updates to multiple fields within a single document are atomic in all
 versions of MongoDB.) Ruby driver version 2.6.0 adds support for transactions.
 
@@ -100,7 +100,7 @@ when starting a transaction:
 
 To persist changes made in a transaction to the database, the transaction
 must be explicitly committed. If a session ends with an open transaction,
-`the transaction is aborted <https://docs.mongodb.com/manual/core/transactions/#transactions-and-sessions>`_.
+`the transaction is aborted <https://mongodb.com/docs/manual/core/transactions/#transactions-and-sessions>`_.
 A transaction may also be aborted explicitly.
 
 To commit or abort a transaction, call ``commit_transaction`` or
@@ -109,13 +109,13 @@ To commit or abort a transaction, call ``commit_transaction`` or
 .. code-block:: ruby
 
   session.commit_transaction
-  
+
   session.abort_transaction
 
 Note: an outstanding transaction can hold locks to various objects in the
 server, such as the database. For example, the drop call in the following
 snippet will hang for `transactionLifetimeLimitSeconds
-<https://docs.mongodb.com/manual/reference/parameters/#param.transactionLifetimeLimitSeconds>`_
+<https://mongodb.com/docs/manual/reference/parameters/#param.transactionLifetimeLimitSeconds>`_
 seconds (default 60) until the server expires and aborts the transaction:
 
 .. code-block:: ruby
@@ -125,7 +125,7 @@ seconds (default 60) until the server expires and aborts the transaction:
   c1['foo'].insert_one(test: 1)
   session.start_transaction
   c1['foo'].insert_one({test: 2}, session: session)
-  
+
   c2 = Mongo::Client.new(['127.0.0.1:27017']).use(:test_db)
   # hangs
   c2.database.drop
@@ -150,7 +150,7 @@ Retrying Commits
 ================
 
 The transaction commit `can be retried
-<https://docs.mongodb.com/manual/core/transactions/#retry-commit-operation>`_
+<https://mongodb.com/docs/manual/core/transactions/#retry-commit-operation>`_
 if it fails. Here is the Ruby code to do so:
 
 .. code-block:: ruby

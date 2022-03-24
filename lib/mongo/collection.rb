@@ -94,7 +94,7 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ Hash ] :time_series Create a time-series collection.
-    #   See https://docs.mongodb.com/manual/core/timeseries-collections/ for more
+    #   See https://mongodb.com/docs/manual/core/timeseries-collections/ for more
     #   information about time-series collection.
     # @option options [ Integer ] :expire_after Number indicating
     #   after how many seconds old time-series data should be deleted.

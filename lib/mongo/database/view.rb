@@ -57,7 +57,7 @@ module Mongo
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
-      #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+      #   See https://mongodb.com/docs/manual/reference/command/listCollections/
       #   for more information and usage.
       # @option options [ Session ] :session The session to use.
       #
@@ -101,7 +101,7 @@ module Mongo
       #   set to true and used with nameOnly: true, that allows a user without the
       #   required privilege to run the command when access control is enforced
       #
-      #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+      #   See https://mongodb.com/docs/manual/reference/command/listCollections/
       #   for more information and usage.
       # @option options [ Session ] :session The session to use.
       #

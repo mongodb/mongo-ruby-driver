@@ -8,8 +8,8 @@ Ruby MongoDB Driver
 
 .. default-domain:: mongodb
 
-Welcome to the documentation site for the official MongoDB Ruby driver. 
-You can add the driver to your application to work with MongoDB in 
+Welcome to the documentation site for the official MongoDB Ruby driver.
+You can add the driver to your application to work with MongoDB in
 Ruby.
 
 Get Started
@@ -44,7 +44,7 @@ Object Document Mappers (ODM) as opposed to Object Relational Mappers
 The ODM officially supported by MongoDB is Mongoid, originally written
 by Durran Jordan.
 
-For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mongoid/master>`_.
+For tutorials on Mongoid, see the `Mongoid Manual <https://mongodb.com/docs/mongoid/master>`_.
 
 .. COMMENT  For the actual build, see mongodb/docs-ruby repo which pulls the documentation source from:
 ..    mongo-ruby-driver,
@@ -62,7 +62,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
     reference/working-with-data
     reference/schema-operations
     bson-tutorials
-    API <https://docs.mongodb.com/ruby-driver/master/api/>
+    API <https://mongodb.com/docs/ruby-driver/master/api/>
     release-notes
     reference/additional-resources
     contribute
