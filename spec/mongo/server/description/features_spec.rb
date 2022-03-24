@@ -247,4 +247,28 @@ describe Mongo::Server::Description::Features do
       end
     end
   end
+
+  describe '#get_more_comment_enabled?' do
+    context 'when the wire range includes 9' do
+
+      let(:wire_versions) do
+        0..9
+      end
+
+      it 'returns true' do
+        expect(features).to be_get_more_comment_enabled
+      end
+    end
+
+    context 'when the wire range does not include 9' do
+
+      let(:wire_versions) do
+        0..8
+      end
+
+      it 'returns false' do
+        expect(features).to_not be_get_more_comment_enabled
+      end
+    end
+  end
 end
