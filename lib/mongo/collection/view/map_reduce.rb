@@ -250,7 +250,20 @@ module Mongo
         end
 
         def initial_query_op(session)
-          Operation::MapReduce.new(map_reduce_spec(session))
+          spec = map_reduce_spec(session)
+          # Read preference isn't simply passed in the command payload
+          # (it may need to be converted to wire protocol flags).
+          # Passing it in command payload produces errors on at least
+          # 5.0 mongoses.
+          # In the future map_reduce_command should remove :read
+          # from its return value, however we cannot do this right now
+          # due to Mongoid 7 relying on :read being returned as part of
+          # the command - see RUBY-2932.
+          # Delete :read here for now because it cannot be sent to mongos this way.
+          spec = spec.dup
+          spec[:selector] = spec[:selector].dup
+          spec[:selector].delete(:read)
+          Operation::MapReduce.new(spec)
         end
 
         def valid_server?(server)

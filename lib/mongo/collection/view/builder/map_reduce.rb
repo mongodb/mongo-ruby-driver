@@ -115,11 +115,14 @@ module Mongo
             end
             command.update(view_options)
             command.update(options.slice(:collation))
+
             # Read preference isn't simply passed in the command payload
-            # (it may need to be converted to wire protocol flags)
-            # so remove it here and hopefully it's handled elsewhere.
-            # If not, RUBY-2706.
-            command.delete(:read)
+            # (it may need to be converted to wire protocol flags).
+            # Ideally it should be removed here, however due to Mongoid 7
+            # using this method and requiring :read to be returned from it,
+            # we cannot do this just yet - see RUBY-2932.
+            #command.delete(:read)
+
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
