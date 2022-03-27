@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2020 MongoDB Inc.
+# Copyright (C) 2022 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ module Mongo
   class Error
 
     # Exception raised when trying to check out connection that does not exist.
-    class ConnectionNotExist < Error
+    class MissingConnection < Error
     end
   end
 end

@@ -37,7 +37,7 @@ module Mongo
           # Create the event.
           #
           # @param [ Address ] address
-          # @param [ Object ] service:service_id The service id, if any.
+          # @param [ Object ] service_id The service id, if any.
           #
           # @api private
           def initialize(address, service_id: nil)

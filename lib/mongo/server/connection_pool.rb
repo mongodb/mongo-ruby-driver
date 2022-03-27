@@ -325,7 +325,7 @@ module Mongo
                             Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
                           ),
                         )
-                        raise Error::ConnectionNotExist.new
+                        raise Error::MissingConnection.new
                       end
                     end
                   else
