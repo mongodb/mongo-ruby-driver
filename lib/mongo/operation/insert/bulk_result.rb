@@ -41,13 +41,17 @@ module Mongo
         # @param [ Server::Description ] connection_description
         #   Server description of the server that performed the operation that
         #   this result is for.
+        # @param [ Integer ] connection_global_id
+        #   Global id of the connection on which the operation that
+        #   this result is for was performed.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0
         # @api private
-        def initialize(replies, connection_description, ids)
+        def initialize(replies, connection_description, connection_global_id, ids)
           @replies = [*replies] if replies
           @connection_description = connection_description
+          @connection_global_id = connection_global_id
           if replies && replies.first && (doc = replies.first.documents.first)
             if errors = doc['writeErrors']
               # some documents were potentially inserted

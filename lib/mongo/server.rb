@@ -444,8 +444,8 @@ module Mongo
     # @return [ Object ] The result of the block execution.
     #
     # @since 2.3.0
-    def with_connection(service_id: nil, &block)
-      pool.with_connection(service_id: service_id, &block)
+    def with_connection(connection_global_id: nil, &block)
+      pool.with_connection(connection_global_id: connection_global_id, &block)
     end
 
     # Handle handshake failure.
@@ -532,8 +532,6 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
-    # @option options [ Object ] :service_id Discard state for the specified
-    #   service id only.
     # @option options [ TopologyVersion ] :topology_version Topology version
     #   of the error response that is causing the server to be marked unknown.
     # @option options [ true | false ] :stop_push_monitor Whether to stop

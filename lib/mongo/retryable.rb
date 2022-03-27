@@ -228,7 +228,7 @@ module Mongo
       txn_num = nil
 
       begin
-        server.with_connection(service_id: context.service_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           session.materialize_if_needed
           txn_num = if session.in_transaction?
             session.txn_num
@@ -289,7 +289,7 @@ module Mongo
       server = select_server(cluster, ServerSelector.primary, session)
       if session && session.client.options[:retry_writes]
         begin
-          server.with_connection(service_id: context.service_id) do |connection|
+          server.with_connection(connection_global_id: context.connection_global_id) do |connection|
             yield connection, nil, context
           end
         rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
@@ -328,7 +328,7 @@ module Mongo
       begin
         attempt += 1
         server ||= select_server(cluster, ServerSelector.primary, session)
-        server.with_connection(service_id: context.service_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           # Legacy retries do not use txn_num
           yield connection, nil, context.dup
         end
@@ -477,7 +477,7 @@ module Mongo
         raise Error::RaiseOriginalError
       end
       log_retry(original_error, message: 'Write retry')
-      server.with_connection(service_id: context.service_id) do |connection|
+      server.with_connection(connection_global_id: context.connection_global_id) do |connection|
         yield(connection, txn_num, context)
       end
     rescue Error::SocketError, Error::SocketTimeoutError => e

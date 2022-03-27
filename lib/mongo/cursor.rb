@@ -80,11 +80,12 @@ module Mongo
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
+      @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
       unless closed?
         register
-        ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(server),
+        ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
           cluster,
           @session))
       end
@@ -366,12 +367,12 @@ module Mongo
     end
 
     # @api private
-    def kill_spec(server)
+    def kill_spec(connection_global_id)
       KillSpec.new(
         cursor_id: id,
         coll_name: collection_name,
         db_name: database.name,
-        service_id: initial_result.connection_description.service_id,
+        connection_global_id: connection_global_id,
         server_address: server.address,
       )
     end
@@ -481,7 +482,7 @@ module Mongo
       context = Operation::Context.new(
         client: client,
         session: @session,
-        service_id: initial_result.connection_description.service_id,
+        connection_global_id: @connection_global_id,
       )
       op.execute(@server, context: context)
     end

@@ -234,8 +234,7 @@ module Mongo
           # to work if the server it communicates with does not set serviceId
           # in ismaster/hello response.
           #
-          # In practice, there are currently no server version that actually
-          # sets this field.
+          # At the moment we cannot run a proper load balancer setup on evergreen
           #
           # Therefore, when connect=:load_balanced Ruby option is used instead
           # of the loadBalanced=true URI option, if serviceId is not set in
@@ -255,6 +254,8 @@ module Mongo
           # service ids are strings, to distinguish them from the real ones.
           # In particular processId is also a BSON::ObjectId, but will be
           # mapped to a string for clarity that this is a fake service id.
+          #
+          # TODO: Remove this when https://jira.mongodb.org/browse/RUBY-2881 is done.
           if ok? && !service_id
             unless force_load_balancer
               raise Error::MissingServiceId, "The server at #{address.seed} did not provide a service id in handshake response"

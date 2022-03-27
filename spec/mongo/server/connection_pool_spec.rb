@@ -520,24 +520,24 @@ describe Mongo::Server::ConnectionPool do
           end
         end
 
-        context 'with service_id' do
+        context 'with connection_global_id' do
           require_topology :load_balanced
 
-          let(:service_id) do
+          let(:connection_global_id) do
             pool.with_connection do |connection|
-              connection.service_id.should_not be nil
-              connection.service_id
+              connection.global_id.should_not be nil
+              connection.global_id
             end
           end
 
           it 'raises a timeout error' do
             expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
-            service_id
+            connection_global_id
 
-            pool.check_out(service_id: service_id)
+            pool.check_out(connection_global_id: connection_global_id)
 
             expect {
-              pool.check_out(service_id: service_id)
+              pool.check_out(connection_global_id: connection_global_id)
             }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
 
             expect(pool.size).to eq(1)
@@ -545,13 +545,13 @@ describe Mongo::Server::ConnectionPool do
 
           it 'waits for the timeout' do
             expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
-            service_id
+            connection_global_id
 
-            pool.check_out(service_id: service_id)
+            pool.check_out(connection_global_id: connection_global_id)
 
             start_time = Mongo::Utils.monotonic_time
             expect {
-              pool.check_out(service_id: service_id)
+              pool.check_out(connection_global_id: connection_global_id)
             }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
             elapsed_time = Mongo::Utils.monotonic_time - start_time
 
