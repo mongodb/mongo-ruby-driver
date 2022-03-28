@@ -1004,10 +1004,11 @@ module Mongo
     # @param [ Array<Hash> ] pipeline Optional additional filter operators.
     # @param [ Hash ] options The change stream options.
     #
-    # @option options [ String ] :full_document Allowed values: 'default', 'updateLookup'.
-    #   Defaults to 'default'. When set to 'updateLookup', the change notification for partial
-    #   updates will include both a delta describing the changes to the document, as well as a copy
-    #   of the entire document that was changed from some time after the change occurred.
+    # @option options [ String ] :full_document Allowed values: 'updateLookup'.
+    #   When set to 'updateLookup', the change notification for partial updates
+    #   will include both a delta describing the changes to the document, as
+    #   well as a copy of the entire document that was changed from some time
+    #   after the change occurred. The default is to not send a value.
     # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point
     #   for the new change stream.
     # @option options [ Integer ] :max_await_time_ms The maximum amount of time for the server to
