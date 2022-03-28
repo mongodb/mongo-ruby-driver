@@ -18,7 +18,7 @@ configure_for_external_kerberos() {
 
   echo "Running kinit"
   kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p "$PRINCIPAL"
-  
+
   # Realm must be uppercased.
   export SASL_REALM=`echo "$SASL_HOST" |tr a-z A-Z`
 }
@@ -32,21 +32,21 @@ configure_local_kerberos() {
     echo Local Kerberos configuration should only be done in Docker containers 1>&2
     exit 43
   fi
-  
+
   cp .evergreen/local-kerberos/krb5.conf /etc/
   mkdir -p /etc/krb5kdc
   cp .evergreen/local-kerberos/kdc.conf /etc/krb5kdc/kdc.conf
   cp .evergreen/local-kerberos/kadm5.acl /etc/krb5kdc/
-  
+
   cat .evergreen/local-kerberos/test.keytab.base64 |\
     base64 --decode > ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab
-  
+
   (echo masterp; echo masterp) |kdb5_util create -s
   (echo testp; echo testp) |kadmin.local addprinc rubytest@LOCALKRB
-  
+
   krb5kdc
   kadmind
-  
+
   echo 127.0.0.1 krb.local |tee -a /etc/hosts
   echo testp |kinit rubytest@LOCALKRB
 
@@ -59,10 +59,10 @@ configure_local_kerberos() {
     echo MongoDB server is not an enterprise one 1>&2
     exit 44
   fi
-  
+
   mkdir /db
   "$BINDIR"/mongod --dbpath /db --fork --logpath /db/mongod.log
-  
+
   create_user_cmd="`cat <<'EOT'
     db.getSiblingDB("$external").runCommand(
       {
@@ -81,7 +81,7 @@ EOT
   pkill mongod
   sleep 1
 
-  # https://docs.mongodb.com/manual/tutorial/control-access-to-mongodb-with-kerberos-authentication/
+  # https://mongodb.com/docs/manual/tutorial/control-access-to-mongodb-with-kerberos-authentication/
   "$BINDIR"/mongod --dbpath /db --fork --logpath /db/mongod.log \
     --bind_ip 0.0.0.0 \
     --auth --setParameter authenticationMechanisms=GSSAPI &

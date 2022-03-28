@@ -24,6 +24,7 @@ module Mongo
     class Connection < ConnectionBase
       include Monitoring::Publishable
       include Retryable
+      include Id
       extend Forwardable
 
       # The ping command.
@@ -105,6 +106,7 @@ module Mongo
         end
 
         @id = server.next_connection_id
+        @global_id = self.class.next_id
         @monitoring = server.monitoring
         @options = options.freeze
         @server = server
@@ -128,6 +130,10 @@ module Mongo
       #
       # @since 2.9.0
       attr_reader :id
+
+      # @return [ Integer ] The global ID for the connection. This will be unique
+      # across all connections.
+      attr_reader :global_id
 
       # The connection pool from which this connection was created.
       # May be nil.

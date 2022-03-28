@@ -87,7 +87,7 @@ describe 'Cursor pinning' do
 
         enums = []
         connections = []
-        service_ids = []
+        connection_ids = []
 
         4.times do
           view = collection.find({}, batch_size: 1)
@@ -96,11 +96,11 @@ describe 'Cursor pinning' do
           enum.next
 
           enums << enum
-          service_ids << view.cursor.initial_result.connection_description.service_id
+          connection_ids << view.cursor.initial_result.connection_global_id
           connections << server.pool.check_out
         end
 
-        service_ids.uniq.length.should be > 1
+        connection_ids.uniq.length.should be > 1
 
         server.pool.size.should == 4
 

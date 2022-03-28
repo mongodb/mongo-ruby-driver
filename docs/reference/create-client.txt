@@ -1578,7 +1578,7 @@ Usage with Forking Servers
 .. note::
 
   Applications using Mongoid should follow `Mongoid's forking guidance
-  <https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
+  <https://mongodb.com/docs/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
   The guidance and sample code below is provided for applications using the
   Ruby driver directly.
 
@@ -1670,7 +1670,7 @@ to use are:
 This documentation does not provide example code for using the aforementioned
 hooks, because there is no standard for client instance management when
 using the Ruby driver directly. `Mongoid documentation
-<https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_
+<https://mongodb.com/docs/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_
 however provides examples for closing clients in the parent process and
 reconnecting clients in the child processes.
 

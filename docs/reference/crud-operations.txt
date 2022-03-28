@@ -801,7 +801,7 @@ Write Concern
 All write operations in MongoDB are executed with a write concern which is
 the level of acknowledgment requested from MongoDB for the particular write.
 More information about write concerns in general is available in the
-`MongoDB manual <https://docs.mongodb.com/manual/reference/write-concern/>`_.
+`MongoDB manual <https://mongodb.com/docs/manual/reference/write-concern/>`_.
 
 The Ruby driver supports specifying write concern on client, collection,
 session (for transactions on that session), transaction, GridFS bucket

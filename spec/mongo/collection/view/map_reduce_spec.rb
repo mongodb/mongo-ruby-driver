@@ -878,4 +878,20 @@ describe Mongo::Collection::View::MapReduce do
       end
     end
   end
+
+  describe '#map_reduce_spec' do
+    context 'when read preference is given' do
+      let(:view_options) do
+        { read: {mode: :secondary} }
+      end
+
+      context 'selector' do
+        # For compatibility with released versions of Mongoid, this method
+        # must return read preference under the :read key.
+        it 'contains read preference' do
+          map_reduce_spec[:selector][:read].should == {'mode' => :secondary}
+        end
+      end
+    end
+  end
 end

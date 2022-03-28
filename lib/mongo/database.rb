@@ -128,7 +128,7 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
-    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
     #
     # @return [ Array<String> ] Names of the collections.
@@ -156,7 +156,7 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
-    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
     #
     # @return [ Array<Hash> ] Array of information hashes, one for each
@@ -181,7 +181,7 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     #
-    #   See https://docs.mongodb.com/manual/reference/command/listCollections/
+    #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
     #
     # @return [ Array<Mongo::Collection> ] The collections.

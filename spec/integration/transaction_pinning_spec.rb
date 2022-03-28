@@ -76,7 +76,7 @@ describe 'Transaction pinning' do
         session.start_transaction
         client["tx_pin"].insert_one({test: 1}, session: session)
         session.pinned_server.should be nil
-        session.pinned_service_id.should_not be nil
+        session.pinned_connection_global_id.should_not be nil
 
         server.pool.size.should == 1
         server.pool.clear
@@ -99,7 +99,7 @@ describe 'Transaction pinning' do
           session.start_transaction
           client["tx_pin_t#{i}"].insert_one({test: 1}, session: session)
           session.pinned_server.should be nil
-          session.pinned_service_id.should_not be nil
+          session.pinned_connection_global_id.should_not be nil
           sessions << session
           connections << server.pool.check_out
         end

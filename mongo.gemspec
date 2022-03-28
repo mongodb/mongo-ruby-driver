@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform          = Gem::Platform::RUBY
 
   s.authors           = ['Tyler Brock', 'Emily Stolfo', 'Durran Jordan']
-  s.homepage          = 'https://docs.mongodb.com/ruby-driver/'
+  s.homepage          = 'https://mongodb.com/docs/ruby-driver/'
   s.summary           = 'Ruby driver for MongoDB'
   s.description       = 'A Ruby driver for MongoDB'
   s.license           = 'Apache-2.0'
@@ -16,8 +16,8 @@ Gem::Specification.new do |s|
   s.metadata = {
     'bug_tracker_uri' => 'https://jira.mongodb.org/projects/RUBY',
     'changelog_uri' => 'https://github.com/mongodb/mongo-ruby-driver/releases',
-    'documentation_uri' => 'https://docs.mongodb.com/ruby-driver/',
-    'homepage_uri' => 'https://docs.mongodb.com/ruby-driver/',
+    'documentation_uri' => 'https://mongodb.com/docs/ruby-driver/',
+    'homepage_uri' => 'https://mongodb.com/docs/ruby-driver/',
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
@@ -37,12 +37,12 @@ Gem::Specification.new do |s|
   s.bindir            = 'bin'
 
   s.required_ruby_version = ">= 2.5"
-  
-  # For testing driver against bson master we need to depend on bson < 6.0.0 
+
+  # For testing driver against bson master we need to depend on bson < 6.0.0
   # but in release version we want to depend on bson < 5.0.0.
   if %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_BSON_MASTER'])
     s.add_dependency 'bson', '>=4.13.0', '<6.0.0'
-  else 
+  else
     s.add_dependency 'bson', '>=4.14.1', '<5.0.0'
   end
 end

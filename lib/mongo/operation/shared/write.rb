@@ -35,7 +35,7 @@ module Mongo
       #
       # @since 2.5.2
       def execute(server, context:)
-        server.with_connection(service_id: context.service_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           execute_with_connection(connection, context: context)
         end
       end

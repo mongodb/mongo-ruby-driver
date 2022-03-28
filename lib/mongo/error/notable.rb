@@ -70,6 +70,13 @@ module Mongo
       # @api experimental
       attr_accessor :service_id
 
+      # Returns global id of the connection on which the error occurred.
+      #
+      # @return [ Integer | nil ] Connection global id.
+      #
+      # @api private
+      attr_accessor :connection_global_id
+
       # @api public
       def to_s
         super + notes_tail

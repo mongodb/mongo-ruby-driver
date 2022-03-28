@@ -278,7 +278,7 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       #
       # @since 2.9.0
-      def check_out(service_id: nil)
+      def check_out(connection_global_id: nil)
         check_invariants
 
         publish_cmap_event(
@@ -307,12 +307,31 @@ module Mongo
             # a connection while this thread is waiting for one.
             @lock.synchronize do
               until @available_connections.empty?
-                connection = next_available_connection(service_id: service_id)
+                connection = next_available_connection(
+                  connection_global_id: connection_global_id
+                )
 
-                # If service_id is not nil, connection may be nil here
-                # even if there are available connections in the pool
-                # (they could be to other services).
-                break unless connection
+                if connection.nil?
+                  if connection_global_id
+                    # A particular connection is requested, but it is not available.
+                    # If it is nether available not checked out, we should stop here.
+                    @checked_out_connections.detect do |conn|
+                      conn.connection_global_id == connection_global_id
+                    end.tap do |conn|
+                      if conn.nil?
+                        publish_cmap_event(
+                          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+                            @server.address,
+                            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+                          ),
+                        )
+                        raise Error::MissingConnection.new
+                      end
+                    end
+                  else
+                    break
+                  end
+                end
 
                 if connection.pid != pid
                   log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
@@ -321,7 +340,9 @@ module Mongo
                   next
                 end
 
-                if connection.generation != generation(service_id: connection.service_id)
+                if connection.generation != generation(
+                  service_id: connection.service_id
+                )
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
@@ -341,12 +362,10 @@ module Mongo
                 throw(:done)
               end
 
-              if service_id
-                # If we need a connection to a particular service, we can't
-                # create one if we don't already have one, but we can wait
-                # for an in-progress operation to return such a connection
-                # to the pool, or for the populator to create a suitable
-                # connection.
+              if @server.load_balancer? && connection_global_id
+                # We need a  particular connection, and if it is not available
+                # we can wait for an in-progress operation to return
+                # such a connection to the pool.
               else
                 # If we are below pool capacity, create a new connection.
                 #
@@ -370,14 +389,14 @@ module Mongo
               )
 
               msg = @lock.synchronize do
-                service_id_msg = if service_id
-                  " for service #{service_id}"
+                connection_global_id_msg = if connection_global_id
+                  " for connection #{connection_global_id}"
                 else
                   ''
                 end
 
                 "Timed out attempting to check out a connection " +
-                  "from pool for #{@server.address}#{service_id_msg} after #{wait_timeout} sec. " +
+                  "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
                   "Connections in pool: #{@available_connections.length} available, " +
                   "#{@checked_out_connections.length} checked out, " +
                   "#{@pending_connections.length} pending " +
@@ -495,8 +514,6 @@ module Mongo
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
-      # @option options [ Object ] :service_id Discard state for the specified
-      #   service id only.
       # @option options [ true | false ] :stop_populator Whether to stop
       #   the populator background thread. For internal driver use only.
       # @option options [ Object ] :service_id Clear connections with
@@ -522,12 +539,12 @@ module Mongo
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
-              service_id: service_id,
+              service_id: service_id
             )
           )
 
           unless options && options[:lazy]
-            if service_id
+            if @server.load_balancer? && service_id
               loop do
                 conn = @available_connections.detect do |conn|
                   conn.service_id == service_id
@@ -632,10 +649,10 @@ module Mongo
       # @return [ Object ] The result of the block.
       #
       # @since 2.0.0
-      def with_connection(service_id: nil)
+      def with_connection(connection_global_id: nil)
         raise_if_closed!
 
-        connection = check_out(service_id: service_id)
+        connection = check_out(connection_global_id: connection_global_id)
         yield(connection)
       ensure
         if connection
@@ -751,13 +768,13 @@ module Mongo
 
       private
 
-      # Returns the next available connection, optionally scoped to the
-      # specified service. If no suitable connections are available,
+      # Returns the next available connection, optionally with given
+      # global id. If no suitable connections are available,
       # returns nil.
-      def next_available_connection(service_id: nil)
-        if service_id
+      def next_available_connection(connection_global_id: nil)
+        if @server.load_balancer? && connection_global_id
           conn = @available_connections.detect do |conn|
-            conn.service_id == service_id
+            conn.global_id == connection_global_id
           end
           if conn
             @available_connections.delete(conn)
