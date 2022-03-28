@@ -29,7 +29,7 @@ buildvariants:
       ruby: ["ruby-2.7", "ruby-2.5"]
       mongodb-version: ['4.2']
       topology: <%= tt %>
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -51,7 +51,7 @@ buildvariants:
       ruby: "ruby-2.5"
       mongodb-version: ['3.6']
       topology: <%= tt %>
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -62,7 +62,7 @@ buildvariants:
       ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: '4.4'
       topology: <%= tt %>
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -109,7 +109,7 @@ buildvariants:
       mongodb-version: ['4.0', '4.2', '4.4']
       topology: "sharded-cluster"
       single-mongos: single-mongos
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -120,7 +120,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: ["4.0"]
       topology: <%= tt %>
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -142,7 +142,7 @@ buildvariants:
       mongodb-version: ['3.6', '4.0']
       topology: <%= tt %>
       storage-engine: mmapv1
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -164,7 +164,7 @@ buildvariants:
       ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: ["4.4"]
       topology: <%= tt %>
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -175,7 +175,7 @@ buildvariants:
       ruby: [ruby-3.1, ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, jruby-9.2, jruby-9.3]
       mongodb-version: ["4.4"]
       topology: <%= tt %>
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -186,7 +186,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: ['4.2', '4.0', '3.6']
       topology: replica-set
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -208,7 +208,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: "4.2"
       topology: standalone
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -242,7 +242,7 @@ buildvariants:
       mongodb-version: "4.4"
       topology: "replica-set"
       compressor: 'zlib'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -266,7 +266,7 @@ buildvariants:
       mongodb-version: "3.6"
       topology: replica-set
       compressor: 'zlib'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -278,7 +278,7 @@ buildvariants:
       mongodb-version: "4.4"
       topology: "replica-set"
       compressor: 'snappy'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -302,7 +302,7 @@ buildvariants:
       mongodb-version: ["3.6"]
       topology: replica-set
       compressor: 'snappy'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -315,7 +315,7 @@ buildvariants:
 #      mongodb-version: "4.4"
 #      topology: replica-set
 #      compressor: 'snappy'
-#      os: ubuntu1604
+#      os: ubuntu1804
 #    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
 #    tasks:
 #      - name: "test-mlaunch"
@@ -327,7 +327,7 @@ buildvariants:
       mongodb-version: "4.4"
       topology: "replica-set"
       compressor: 'zstd'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -339,7 +339,7 @@ buildvariants:
       mongodb-version: "4.4"
       topology: "standalone"
       compressor: 'zstd'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -351,7 +351,7 @@ buildvariants:
       mongodb-version: "4.2"
       topology: replica-set
       compressor: 'zstd'
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -362,7 +362,7 @@ buildvariants:
 #      mongodb-version: "4.4"
 #      topology: replica-set
 #      compressor: 'zstd'
-#      os: ubuntu1604
+#      os: ubuntu1804
 #    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
 #    tasks:
 #      - name: "test-mlaunch"
@@ -373,7 +373,7 @@ buildvariants:
 #       ruby: ["ruby-head"]
 #       mongodb-version: "4.2"
 #       topology: "*"
-#       os: ubuntu1604
+#       os: ubuntu1804
 #     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
 #     tasks:
 #       - name: "test-mlaunch"
@@ -384,7 +384,7 @@ buildvariants:
       mongodb-version: '4.4'
       topology: replica-set
       as: as
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -406,7 +406,7 @@ buildvariants:
       ruby: ["ruby-2.5"]
       mongodb-version: '3.6'
       topology: replica-set
-      os: ubuntu1604
+      os: ubuntu1804
     display_name: "3.6 Replica Set with 3.4 FCV"
     tasks:
       - name: "test-mlaunch"
@@ -417,7 +417,7 @@ buildvariants:
       ruby: ruby-2.5
     display_name: "Kerberos integration Ubuntu ${ruby}"
     run_on:
-      - ubuntu1604-small
+      - ubuntu1804-small
     tasks:
       - name: "test-kerberos-integration"
 
@@ -526,7 +526,7 @@ buildvariants:
       ruby: [ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1604
+      os: ubuntu2004
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
       - name: test-via-docker
@@ -540,7 +540,7 @@ buildvariants:
       ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1604
+      os: ubuntu2004
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
@@ -553,7 +553,7 @@ buildvariants:
       ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1604
+      os: ubuntu2004
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
@@ -583,7 +583,7 @@ buildvariants:
       ruby: [ruby-3.0, ruby-2.7]
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1604
+      os: ubuntu2004
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -604,7 +604,7 @@ buildvariants:
       ruby: jruby-9.2
       topology: standalone
       mongodb-version: '4.4'
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch

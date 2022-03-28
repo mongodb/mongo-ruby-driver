@@ -610,9 +610,6 @@ axes:
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-small
-      - id: ubuntu1604
-        display_name: "Ubuntu 16.04"
-        run_on: ubuntu1604-small
       - id: rhel80
         display_name: "RHEL 8"
         run_on: rhel80-small
@@ -732,7 +729,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1604-small
+        run_on: ubuntu1804-small
         variables:
           MMAPV1: 'true'
 
