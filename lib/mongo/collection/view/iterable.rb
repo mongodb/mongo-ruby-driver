@@ -149,7 +149,7 @@ module Mongo
           }
         end
 
-        def initial_query_op(server, session)
+        def initial_query_op(session)
           spec = {
             coll_name: collection.name,
             filter: filter,
@@ -193,7 +193,7 @@ module Mongo
         end
 
         def send_initial_query(server, session = nil)
-          initial_query_op(server, session).execute(server, context: Operation::Context.new(client: client, session: session))
+          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
         def use_query_cache?

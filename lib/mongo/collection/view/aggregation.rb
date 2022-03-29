@@ -128,7 +128,7 @@ module Mongo
           @view.send(:server_selector)
         end
 
-        def aggregate_spec(server, session, read_preference)
+        def aggregate_spec(session, read_preference)
           Builder::Aggregation.new(
             pipeline,
             view,
@@ -140,34 +140,35 @@ module Mongo
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op(server, session, read_preference)
-          Operation::Aggregate.new(aggregate_spec(server, session, read_preference))
+        def initial_query_op(session, read_preference)
+          Operation::Aggregate.new(aggregate_spec(session, read_preference))
         end
 
         # Return effective read preference for the operation.
         #
         # If the pipeline contains $merge or $out, and read preference specified
-        # by user is secondary or secondary_preferred, and selected server is below
+        # by user is secondary or secondary_preferred, and target server is below
         # 5.0, than this method returns primary read preference, because the
         # aggregation will be routed to primary. Otherwise return the original
         # read preference.
         #
         # See https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst#read-preferences-and-server-selection
         #
-        # @param [ Server ] server The server on which the operation
-        #   should be executed.
+        # @param [ Server::Connection ] connection The connection which
+        #   will be used for the operation.
         # @return [ Hash | nil ] read preference hash that should be sent with
         #   this command.
-        def effective_read_preference(server)
+        def effective_read_preference(connection)
           return unless view.read_preference
           return view.read_preference unless write?
           return view.read_preference unless [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
 
           primary_read_preference = {mode: :primary}
-          if server.primary?
+          description = connection.description
+          if description.primary?
             log_warn("Routing the Aggregation operation to the primary server")
             primary_read_preference
-          elsif server.mongos? && !server.features.merge_out_on_secondary_enabled?
+          elsif description.mongos? && !description.features.merge_out_on_secondary_enabled?
             log_warn("Routing the Aggregation operation to the primary server")
             primary_read_preference
           else
@@ -177,14 +178,15 @@ module Mongo
         end
 
         def send_initial_query(server, session)
-          initial_query_op(
-            server,
-            session,
-            effective_read_preference(server)
-          ).execute(
-              server,
+          server.with_connection do |connection|
+            initial_query_op(
+              session,
+              effective_read_preference(connection)
+            ).execute_with_connection(
+              connection,
               context: Operation::Context.new(client: client, session: session)
             )
+          end
         end
 
         # Skip, sort, limit, projection are specified as pipeline stages
