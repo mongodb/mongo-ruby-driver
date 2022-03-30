@@ -637,7 +637,7 @@ module Utils
                           BSON::Timestamp,
                           BSON::Undefined,
                         ]
-    if RUBY_VERSION.start_with?("2.5")
+    if RUBY_VERSION < '2.6'
       YAML.safe_load(File.read(path), permitted_classes, [], true)
     else
       # Here we have Ruby 2.6+ that supports the new syntax of `safe_load``.
