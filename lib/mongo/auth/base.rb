@@ -132,12 +132,7 @@ module Mongo
             message: doc[:errmsg],
           )
           if doc[:code] == 91
-            raise Error::OperationFailure.new(
-              message,
-              doc,
-              code: doc[:code],
-              code_name: doc[:codeName]
-            )
+            raise Error::OperationFailure.new(message, doc)
           else
             raise Unauthorized.new(user,
               used_mechanism: self.class.const_get(:MECHANISM),
