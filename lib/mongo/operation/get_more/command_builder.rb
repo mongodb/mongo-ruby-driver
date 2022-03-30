@@ -30,8 +30,11 @@ module Mongo
             collection: spec.fetch(:coll_name),
             batchSize: spec[:batch_size],
             maxTimeMS: spec[:max_time_ms],
-            comment: spec[:comment],
-          }.compact
+          }.compact.tap do |sel|
+            if spec[:comment] && connection.features.get_more_comment_enabled?
+              sel[:comment] = spec[:comment]
+            end
+          end
         end
       end
     end

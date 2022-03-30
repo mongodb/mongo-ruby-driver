@@ -425,10 +425,8 @@ module Mongo
           nil
         end,
       }
-      if server.features.get_more_comment_enabled?
-        if view.respond_to?(:options) && view.options.is_a?(Hash)
-          spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
-        end
+      if view.respond_to?(:options) && view.options.is_a?(Hash)
+        spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
       end
       Operation::GetMore.new(spec)
     end
