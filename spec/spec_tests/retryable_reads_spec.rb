@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 require 'runners/crud'
+require 'runners/unified'
 
 describe 'Retryable reads spec tests' do
   require_wired_tiger
@@ -45,6 +46,22 @@ describe 'Retryable reads spec tests - legacy' do
         skip 'Test not applicable to legacy read retries'
       end
       example.run
+    end
+  end
+
+  describe 'Retryable reads unified spec tests' do
+    require_wired_tiger
+    require_no_multi_mongos
+
+    # TODO: move this?
+    base = "#{CURRENT_PATH}/spec_tests/data/retryable_reads/unified"
+    RETRYABLE_READ_UNIFIED_TESTS = Dir.glob("#{base}/**/*.yml").sort
+    define_unified_spec_tests(base, RETRYABLE_READ_UNIFIED_TESTS) do |spec, req, test|
+      let(:client) do
+        authorized_client.use(spec.database_name).with({max_read_retries: 0}.update(test.client_options)).tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
+        end
+      end
     end
   end
 end
