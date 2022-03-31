@@ -28,6 +28,14 @@ def standard_dependencies
     # for benchmark tests
     gem 'yajl-ruby', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
+
+    platform :mri do
+      # Debugger for VSCode.
+      if !ENV['CI'] && RUBY_VERSION < '3.0'
+        gem 'debase'
+        gem 'ruby-debug-ide'
+      end
+    end
   end
 
   group :testing do
