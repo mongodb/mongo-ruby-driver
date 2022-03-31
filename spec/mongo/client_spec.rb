@@ -966,7 +966,7 @@ describe Mongo::Client do
 
           it 'doesn\'t have any live sessions' do
             threads.each do |thread|
-              thread.value
+              thread.join
             end
           end
         end
@@ -1029,7 +1029,7 @@ describe Mongo::Client do
               client['test'].update_one({test: "test"}, {test: "test2"})
             end
             threads << Thread.new do
-              client['test'].find({test: "test"})
+              client['test'].find({test: "test"}).to_a
             end
             threads
           end
@@ -1144,7 +1144,7 @@ describe Mongo::Client do
               client['test'].delete_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].find({test: "test"})
+              client['test'].find({test: "test"}).to_a
             end
             threads << Thread.new do
               client['test'].bulk_write([{ insert_one: { test: "test1" } },
