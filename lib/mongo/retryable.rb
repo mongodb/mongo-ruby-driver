@@ -240,18 +240,11 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError, Auth::Unauthorized => e
+      rescue Error::SocketError, Error::SocketTimeoutError => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
-
-        # If we get an auth error, it was raised when connecting the connection
-        # and therefore we didn't have the connection yet to add labels.
-        # Therefore, check if it is retryable, and if it is, add the label
-        # and retry it.
-        if e.write_retryable?
-          e.add_label('RetryableWriteError')
-        else
-          raise
+        if !e.label?('RetryableWriteError')
+          raise e
         end
 
         # Context#with creates a new context, which is not necessary here
@@ -264,6 +257,23 @@ module Mongo
           raise_unsupported_error(e)
         elsif !e.label?('RetryableWriteError')
           raise e
+        end
+
+        # Context#with creates a new context, which is not necessary here
+        # but the API is less prone to misuse this way.
+        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
+      rescue Auth::Unauthorized => e
+        e.add_note('modern retry')
+        e.add_note("attempt 1")
+
+        # If we get an auth error, it was raised when connecting the connection
+        # and therefore we didn't have the connection yet to add labels.
+        # Therefore, check if it is retryable, and if it is, add the label
+        # and retry it.
+        if e.write_retryable?
+          e.add_label('RetryableWriteError')
+        else
+          raise
         end
 
         # Context#with creates a new context, which is not necessary here
