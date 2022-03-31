@@ -362,7 +362,7 @@ module Mongo
           raise e
         end
         retry_read(e, server_selector, session, &block)
-      rescue Error::OperationFailure => e
+      rescue Error::OperationFailure, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction? || !e.write_retryable?
