@@ -38,7 +38,7 @@ describe Mongo::Collection::View::Aggregation do
   end
 
   let(:aggregation_spec) do
-    aggregation.send(:aggregate_spec, server, session, nil)
+    aggregation.send(:aggregate_spec, session, nil)
   end
 
   before do
@@ -366,7 +366,7 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       it 'includes the read preference in the spec' do
-        spec = aggregation.send(:aggregate_spec, server, session, read_preference)
+        spec = aggregation.send(:aggregate_spec, session, read_preference)
         expect(spec[:read]).to eq(read_preference)
       end
     end

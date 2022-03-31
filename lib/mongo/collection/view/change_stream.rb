@@ -279,20 +279,22 @@ module Mongo
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
           @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
-            start_at_operation_time_supported = server.description.server_version_gte?('4.0')
+            server.with_connection do |connection|
+              start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
-            result = send_initial_query(server, session)
-            if doc = result.replies.first && result.replies.first.documents.first
-              start_at_operation_time = doc['operationTime']
-            else
-              # The above may set @start_at_operation_time to nil
-              # if it was not in the document for some reason,
-              # for consistency set it to nil here as well.
-              # NB: since this block may be executed more than once, each
-              # execution must write to start_at_operation_time either way.
-              start_at_operation_time = nil
+              result = send_initial_query(connection, session)
+              if doc = result.replies.first && result.replies.first.documents.first
+                start_at_operation_time = doc['operationTime']
+              else
+                # The above may set @start_at_operation_time to nil
+                # if it was not in the document for some reason,
+                # for consistency set it to nil here as well.
+                # NB: since this block may be executed more than once, each
+                # execution must write to start_at_operation_time either way.
+                start_at_operation_time = nil
+              end
+              result
             end
-            result
           end
           @start_at_operation_time = start_at_operation_time
           @start_at_operation_time_supported = start_at_operation_time_supported
@@ -302,8 +304,8 @@ module Mongo
           [{ '$changeStream' => change_doc }] + @change_stream_filters
         end
 
-        def aggregate_spec(server, session, read_preference)
-          super(server, session, read_preference).tap do |spec|
+        def aggregate_spec(session, read_preference)
+          super(session, read_preference).tap do |spec|
             spec[:selector][:aggregate] = 1 unless for_collection?
           end
         end
@@ -352,11 +354,11 @@ module Mongo
           end
         end
 
-        def send_initial_query(server, session)
-          initial_query_op(server, session, view.read_preference)
-            .execute(
-              server,
-              context: Operation::Context.new(client: client, session: session)
+        def send_initial_query(connection, session)
+          initial_query_op(session, view.read_preference)
+            .execute_with_connection(
+              connection,
+              context: Operation::Context.new(client: client, session: session),
             )
         end
 
