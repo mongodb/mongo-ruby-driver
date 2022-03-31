@@ -49,6 +49,10 @@ install_mlaunch_virtualenv
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
 
+if test -z "$TOPOLOGY"; then
+  export TOPOLOGY=standalone
+fi
+
 calculate_server_args
 launch_ocsp_mock
 launch_server "$dbdir"
