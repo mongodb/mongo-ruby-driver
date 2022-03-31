@@ -16,11 +16,15 @@
 # limitations under the License.
 
 module Mongo
-  class Error < StandardError
+  class Error
 
     # A module encapsulating functionality to manage labels added to errors.
     #
-    # @api private
+    # @note Although methods of this module are part of the public API,
+    #   the fact that these methods are defined on this module and not on
+    #   the classes which include this module is not part of the public API.
+    #
+    # @api semipublic
     module Labelable
 
       # Does the error have the given label?

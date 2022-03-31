@@ -16,14 +16,17 @@
 # limitations under the License.
 
 module Mongo
-  class Error < StandardError
+  class Error
 
     # A module encapsulating functionality to manage data attached to
     # exceptions in the driver, since the driver does not currently have a
     # single exception hierarchy root.
     #
-    # @since 2.11.0
-    # @api private
+    # @note Although methods of this module are part of the public API,
+    #   the fact that these methods are defined on this module and not on
+    #   the classes which include this module is not part of the public API.
+    #
+    # @api semipublic
     module Notable
 
       # Returns an array of strings with additional information about the
