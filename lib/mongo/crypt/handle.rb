@@ -51,8 +51,19 @@ module Mongo
 
         @kms_tls_options =  kms_tls_options
 
-        # Rebuild to BSON as schema map implementation requires BSON variable instances
-        @schema_map = BSON::ExtJSON.parse(options[:schema_map].is_a?(String) ? options[:schema_map] : options[:schema_map].to_json)
+        @schema_map =
+          case options[:schema_map].class
+          when String
+            begin
+              # Support raw JSON string
+              BSON::ExtJSON.parse(options[:schema_map])
+            rescue JSON::ParserError
+              nil
+            end
+          when Hash
+            # Rebuild to BSON as schema map implementation requires BSON variable instances
+            BSON::ExtJSON.parse options[:schema_map].to_json
+          end
 
         set_schema_map if @schema_map
 
