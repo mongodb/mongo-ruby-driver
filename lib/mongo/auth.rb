@@ -31,6 +31,7 @@ require 'mongo/auth/scram'
 require 'mongo/auth/scram256'
 require 'mongo/auth/x509'
 require 'mongo/error/read_write_retryable'
+require 'mongo/error/labelable'
 
 
 module Mongo
@@ -130,6 +131,7 @@ module Mongo
     # @since 2.0.0
     class Unauthorized < Mongo::Error::AuthError
       include Error::ReadWriteRetryable
+      include Error::Labelable
 
       # @return [ Integer ] The error code.
       attr_reader :code
