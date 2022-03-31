@@ -240,28 +240,7 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError => e
-        e.add_note('modern retry')
-        e.add_note("attempt 1")
-        if !e.label?('RetryableWriteError')
-          raise e
-        end
-        # Context#with creates a new context, which is not necessary here
-        # but the API is less prone to misuse this way.
-        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
-      rescue Error::OperationFailure => e
-        e.add_note('modern retry')
-        e.add_note("attempt 1")
-        if e.unsupported_retryable_write?
-          raise_unsupported_error(e)
-        elsif !e.label?('RetryableWriteError')
-          raise e
-        end
-
-        # Context#with creates a new context, which is not necessary here
-        # but the API is less prone to misuse this way.
-        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
-      rescue Auth::Unauthorized => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
 
@@ -273,6 +252,18 @@ module Mongo
           e.add_label('RetryableWriteError')
         else
           raise
+        end
+
+        # Context#with creates a new context, which is not necessary here
+        # but the API is less prone to misuse this way.
+        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
+      rescue Error::OperationFailure => e
+        e.add_note('modern retry')
+        e.add_note("attempt 1")
+        if e.unsupported_retryable_write?
+          raise_unsupported_error(e)
+        elsif !e.label?('RetryableWriteError')
+          raise e
         end
 
         # Context#with creates a new context, which is not necessary here

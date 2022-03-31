@@ -8,7 +8,7 @@ require 'runners/unified'
 
 base = "#{CURRENT_PATH}/spec_tests/data/retryable_writes"
 RETRYABLE_WRITES_TESTS = Dir.glob("#{base}/legacy/**/*.yml").sort
-RETRYABLE_WRITE_UNIFIED_TESTS = Dir.glob("#{base}/unified/**/handshakeError.yml").sort
+RETRYABLE_WRITE_UNIFIED_TESTS = Dir.glob("#{base}/unified/**/*.yml").sort
 
 describe 'Retryable writes spec tests - legacy' do
   require_wired_tiger
@@ -26,13 +26,14 @@ describe 'Retryable writes spec tests - legacy' do
   end
 end
 
-# describe 'Retryable reads spec tests - unified' do
-#   require_wired_tiger
-#   require_no_multi_mongos
+describe 'Retryable reads spec tests - unified' do
+  require_wired_tiger
+  require_no_multi_mongos
 
-#   define_unified_spec_tests(base, RETRYABLE_WRITE_UNIFIED_TESTS) do |spec, req, test|
-#     let(:client) do
-#       authorized_client.with(test.client_options.merge({max_write_retries: 0}))
-#     end
-#   end
-# end
+  require_retry_writes
+  define_unified_spec_tests(base, RETRYABLE_WRITE_UNIFIED_TESTS) do |spec, req, test|
+    let(:client) do
+      authorized_client.with(test.client_options.merge({max_write_retries: 0}))
+    end
+  end
+end
