@@ -51,7 +51,8 @@ describe 'fork reconnect' do
       end
     end
 
-    context 'when parent is operating on client during the fork', retry: 3 do
+    retry_test
+    context 'when parent is operating on client during the fork' do
       # This test intermittently fails in evergreen with pool size of 5,
       # with a number of pending connections in the pool.
       # The reason could be that handshaking is slow or operations are slow
@@ -59,7 +60,7 @@ describe 'fork reconnect' do
       # Sometimes it seems the monitoring connection experiences network
       # errors (despite being a loopback connection) which causes the test
       # to fail as then server selection fails.
-      # The retry: 3 is to deal with network errors on monitoring connection.
+      # The retry_test is to deal with network errors on monitoring connection.
 
       let(:client) { authorized_client.with(max_pool_size: 10,
         wait_queue_timeout: 10, socket_timeout: 2, connect_timeout: 2) }

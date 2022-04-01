@@ -631,7 +631,8 @@ shared_examples 'an operation updating cluster time' do
   end
 
   shared_examples_for 'does not update the cluster time of the cluster' do
-    it 'does not update the cluster time of the cluster', retry: 3 do
+    retry_test
+    it 'does not update the cluster time of the cluster' do
       bct = before_cluster_time
       reply_cluster_time
       expect(client.cluster.cluster_time).to eq(before_cluster_time)
@@ -644,6 +645,7 @@ shared_examples 'an operation updating cluster time' do
       min_server_fcv '3.6'
 
       context 'when the cluster is sharded or a replica set' do
+        retry_test
         require_topology :replica_set, :sharded
 
         let(:reply_cluster_time) do
@@ -651,12 +653,12 @@ shared_examples 'an operation updating cluster time' do
           subscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
-        it 'updates the cluster time of the cluster', retry: 3 do
+        it 'updates the cluster time of the cluster' do
           rct = reply_cluster_time
           expect(cluster.cluster_time).to eq(rct)
         end
 
-        it 'updates the cluster time of the session', retry: 3 do
+        it 'updates the cluster time of the session' do
           rct = reply_cluster_time
           expect(session.cluster_time).to eq(rct)
         end
@@ -676,7 +678,8 @@ shared_examples 'an operation updating cluster time' do
 
         it_behaves_like 'does not update the cluster time of the cluster'
 
-        it 'does not update the cluster time of the session', retry: 3 do
+        retry_test
+        it 'does not update the cluster time of the session' do
           reply_cluster_time
           expect(session.cluster_time).to be_nil
         end
@@ -730,7 +733,8 @@ shared_examples 'an operation updating cluster time' do
             new_cluster_time.merge(Mongo::Cluster::CLUSTER_TIME => new_timestamp)
           end
 
-          it 'includes the advanced cluster time in the second command', retry: 3 do
+          retry_test
+          it 'includes the advanced cluster time in the second command' do
             expect(second_command_cluster_time).to eq(advanced_cluster_time)
           end
         end
@@ -746,7 +750,8 @@ shared_examples 'an operation updating cluster time' do
             new_cluster_time.merge(Mongo::Cluster::CLUSTER_TIME => new_timestamp)
           end
 
-          it 'does not advance the cluster time', retry: 3 do
+          retry_test
+          it 'does not advance the cluster time' do
             expect(second_command_cluster_time).to eq(reply_cluster_time)
           end
         end
@@ -759,7 +764,8 @@ shared_examples 'an operation updating cluster time' do
           subscriber.non_auth_command_started_events[-1].command['$clusterTime']
         end
 
-        it 'includes the received cluster time in the second command', retry: 3 do
+        retry_test
+        it 'includes the received cluster time in the second command' do
           reply_cluster_time
           expect(second_command_cluster_time).to eq(reply_cluster_time)
         end

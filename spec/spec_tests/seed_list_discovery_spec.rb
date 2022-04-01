@@ -5,6 +5,7 @@ require 'lite_spec_helper'
 
 require 'support/using_hash'
 require 'runners/connection_string'
+require 'mrss/lite_constraints'
 
 SEED_LIST_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/seed_list_discovery/**/*.yml").sort
 
@@ -23,6 +24,7 @@ describe 'DNS Seedlist Discovery' do
 
       if test.raise_error?
         context 'the uri is invalid' do
+          retry_test
 
           let(:valid_errors) do
             [
@@ -44,8 +46,7 @@ describe 'DNS Seedlist Discovery' do
           end
 
           # In Evergreen sometimes this test fails intermittently.
-          # TODO check if the retry can be applied to context.
-          it 'raises an error', retry: 3 do
+          it 'raises an error' do
             expect(valid_errors).to include(error.class)
           end
         end
@@ -53,10 +54,9 @@ describe 'DNS Seedlist Discovery' do
       else
 
         context 'the uri is valid' do
-
+          retry_test
           # In Evergreen sometimes this test fails intermittently.
-          # TODO check if the retry can be applied to context.
-          it 'does not raise an exception', retry: 3 do
+          it 'does not raise an exception' do
             expect(test.uri).to be_a(Mongo::URI::SRVProtocol)
           end
 
@@ -83,8 +83,8 @@ describe 'DNS Seedlist Discovery' do
 
           if test.expected_options
             # In Evergreen sometimes this test fails intermittently.
-            # TODO check if the retry can be applied to context.
-            it 'creates a client with the correct uri options', retry: 3 do
+            retry_test
+            it 'creates a client with the correct uri options' do
               mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
               # Connection string spec tests do not use canonical URI option names
               actual = Utils.downcase_keys(mapped)

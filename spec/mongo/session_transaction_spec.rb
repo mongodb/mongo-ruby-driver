@@ -148,7 +148,8 @@ describe Mongo::Session do
           collection.insert_one(a: 1)
         end
 
-        it 'times out', retry: 3 do
+        retry_test
+        it 'times out' do
           start = Mongo::Utils.monotonic_time
 
           10.times do |i|
