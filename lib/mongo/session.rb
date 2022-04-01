@@ -790,7 +790,7 @@ module Mongo
     # if the session was pinned.
     #
     # @api private
-    def unpin(connection)
+    def unpin(connection = nil)
       @pinned_server = nil
       @pinned_connection_global_id = nil
       connection.unpin unless connection.nil?
