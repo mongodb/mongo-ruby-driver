@@ -43,7 +43,8 @@ describe 'DNS Seedlist Discovery' do
             ex
           end
 
-          it 'raises an error' do
+          # In Evergreen sometimes this test fails intermittently.
+          it 'raises an error', retry: 3 do
             expect(valid_errors).to include(error.class)
           end
         end
