@@ -44,6 +44,7 @@ describe 'DNS Seedlist Discovery' do
           end
 
           # In Evergreen sometimes this test fails intermittently.
+          # TODO check if the retry can be applied to context.
           it 'raises an error', retry: 3 do
             expect(valid_errors).to include(error.class)
           end
@@ -53,7 +54,9 @@ describe 'DNS Seedlist Discovery' do
 
         context 'the uri is valid' do
 
-          it 'does not raise an exception' do
+          # In Evergreen sometimes this test fails intermittently.
+          # TODO check if the retry can be applied to context.
+          it 'does not raise an exception', retry: 3 do
             expect(test.uri).to be_a(Mongo::URI::SRVProtocol)
           end
 
