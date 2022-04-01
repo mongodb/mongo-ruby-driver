@@ -28,7 +28,7 @@ module Mongo
 
       def do_execute(connection, context, options = {})
         session&.materialize_if_needed
-        unpin_maybe(session) do
+        unpin_maybe(session, connection) do
           add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
               get_result(connection, context, options).tap do |result|

@@ -649,7 +649,6 @@ module Mongo
               write_concern: write_concern,
             }
             Operation::Command.new(spec).execute_with_connection(connection, context: context)
-            connection.unpin
           end
         end
       ensure
@@ -703,7 +702,6 @@ module Mongo
               ).execute_with_connection(connection, context: context)
             ensure
               unpin
-              connection.unpin
             end
           end
         end
@@ -792,9 +790,10 @@ module Mongo
     # if the session was pinned.
     #
     # @api private
-    def unpin
+    def unpin(connection)
       @pinned_server = nil
       @pinned_connection_global_id = nil
+      connection.unpin unless connection.nil?
     end
 
     # Unpins this session from the pinned server, if the session was pinned
@@ -807,7 +806,7 @@ module Mongo
     # @param [ Error ] error The exception instance to process.
     #
     # @api private
-    def unpin_maybe(error)
+    def unpin_maybe(error, connection)
       if !within_states?(Session::NO_TRANSACTION_STATE) &&
         error.label?('TransientTransactionError')
       then
@@ -817,7 +816,7 @@ module Mongo
       if committing_transaction? &&
         error.label?('UnknownTransactionCommitResult')
       then
-        unpin
+        unpin(connection)
       end
     end
 
