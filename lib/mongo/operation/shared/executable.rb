@@ -45,11 +45,22 @@ module Mongo
                       end
                     else
                       session.pin_to_connection(connection.global_id)
+                      connection.pin
                     end
                   end
 
                   if session.snapshot? && !session.snapshot_timestamp
                     session.snapshot_timestamp = result.snapshot_timestamp
+                  end
+                end
+
+                if result.has_cursor_id? &&
+                  connection.description.load_balancer?
+                then
+                  if result.cursor_id == 0
+                    connection.unpin
+                  else
+                    connection.pin
                   end
                 end
                 process_result(result, connection)

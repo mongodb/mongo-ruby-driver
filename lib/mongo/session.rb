@@ -649,6 +649,7 @@ module Mongo
               write_concern: write_concern,
             }
             Operation::Command.new(spec).execute_with_connection(connection, context: context)
+            connection.unpin
           end
         end
       ensure
@@ -702,6 +703,7 @@ module Mongo
               ).execute_with_connection(connection, context: context)
             ensure
               unpin
+              connection.unpin
             end
           end
         end
@@ -786,7 +788,8 @@ module Mongo
       @pinned_connection_global_id = connection_global_id
     end
 
-    # Unpins this session from the pinned server, if the session was pinned.
+    # Unpins this session from the pinned server or connection,
+    # if the session was pinned.
     #
     # @api private
     def unpin
