@@ -17,9 +17,5 @@ describe 'Retryable reads spec tests - unified' do
   # is simply redundant.
   require_retry_writes
 
-  define_unified_spec_tests(base, RETRYABLE_WRITE_UNIFIED_TESTS) do |spec, req, test|
-    let(:client) do
-      authorized_client.with(test.client_options.merge({max_write_retries: 0}))
-    end
-  end
+  define_unified_spec_tests(base, RETRYABLE_WRITE_UNIFIED_TESTS)
 end
