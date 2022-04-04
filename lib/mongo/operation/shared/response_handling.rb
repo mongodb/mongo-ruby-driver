@@ -81,14 +81,15 @@ module Mongo
         end
       end
 
-      # Unpins the session if the session is pinned and the yielded to block
-      # raises errors that are required to unpin the session.
+      # Unpins the session and/or the connection if  the yielded to block
+      # raises errors that are required to unpin the session and the connection.
       #
       # @note This method takes the session as an argument because this module
       #   is included in BulkWrite which does not store the session in the
       #   receiver (despite Specifiable doing so).
       #
       # @param [ Session | nil ] session Session to consider.
+      # @param [ Connection | nil ] connection Connection to unpin.
       def unpin_maybe(session, connection)
         yield
       rescue Mongo::Error => e

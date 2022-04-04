@@ -161,14 +161,28 @@ module Mongo
         !!@error
       end
 
+      # Whether the connection is used by a transaction or cursor operations.
+      #
+      # Pinned connections should not be disconnected and removed from a
+      # connection pool if they are idle or stale.
+      #
+      # # @return [ true | false ] Whether connection is pinned.
+      #
+      # @api private
       def pinned?
         @pinned
       end
 
+      # Mark the connection as pinned.
+      #
+      # @api private
       def pin
         @pinned = true
       end
 
+      # Mark the connection as not pinned.
+      #
+      # @api private
       def unpin
         @pinned = false
       end

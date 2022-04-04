@@ -89,6 +89,26 @@ describe Mongo::Operation::Result do
     end
   end
 
+  describe '#has_cursor_id?' do
+    context 'when the reply exists' do
+
+      let(:cursor_id) { 5 }
+
+      it 'returns true' do
+        expect(result).to have_cursor_id
+      end
+    end
+
+    context 'when the reply does not exist' do
+
+      let(:reply) { nil }
+
+      it 'returns false' do
+        expect(result).not_to have_cursor_id
+      end
+    end
+  end
+
   describe '#documents' do
 
     context 'when the result is for a command' do

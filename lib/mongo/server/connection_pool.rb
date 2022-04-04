@@ -341,6 +341,10 @@ module Mongo
                 end
 
                 if !connection.pinned?
+                  # If connection is marked as pinned, it is used by a transaction
+                  # or a series of cursor operations in a load balanced setup.
+                  # In this case connection should not be disconnected until
+                  # unpinned.
                   if connection.generation != generation(
                     service_id: connection.service_id
                   )
@@ -492,11 +496,13 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-          elsif connection.generation != generation(service_id: connection.service_id)
-            if !connection.pinned?
-              connection.disconnect!(reason: :stale)
-              @populate_semaphore.signal
-            end
+          elsif connection.generation != generation(service_id: connection.service_id) && !connection.pinned?
+            # If connection is marked as pinned, it is used by a transaction
+            # or a series of cursor operations in a load balanced setup.
+            # In this case connection should not be disconnected until
+            # unpinned.
+            connection.disconnect!(reason: :stale)
+            @populate_semaphore.signal
           else
             connection.record_checkin!
             @available_connections << connection

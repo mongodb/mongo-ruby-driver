@@ -316,28 +316,6 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
-    context 'connection of the same generation as pool' do
-      # These tests are also applicable to load balancers, but
-      # require different setup and assertions because load balancers
-      # do not have a single global generation.
-      require_topology :single, :replica_set, :sharded
-
-      before do
-        expect(pool.generation).to eq(connection.generation)
-      end
-
-      it 'adds the connection to the pool' do
-        # connection is checked out
-        expect(pool.available_count).to eq(0)
-        expect(pool.size).to eq(1)
-        pool.check_in(connection)
-        # now connection is in the queue
-        expect(pool.available_count).to eq(1)
-        expect(pool.size).to eq(1)
-        expect(pool.check_out).to eq(connection)
-      end
-    end
-
     shared_examples 'does not add connection to pool' do
       it 'disconnects connection and does not add connection to pool' do
         # connection was checked out
@@ -353,24 +331,69 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
+    shared_examples 'adds connection to the pool' do
+      it 'adds the connection to the pool' do
+        # connection is checked out
+        expect(pool.available_count).to eq(0)
+        expect(pool.size).to eq(1)
+        pool.check_in(connection)
+        # now connection is in the queue
+        expect(pool.available_count).to eq(1)
+        expect(pool.size).to eq(1)
+        expect(pool.check_out).to eq(connection)
+      end
+    end
+
+    context 'connection of the same generation as pool' do
+      # These tests are also applicable to load balancers, but
+      # require different setup and assertions because load balancers
+      # do not have a single global generation.
+      require_topology :single, :replica_set, :sharded
+
+      before do
+        expect(pool.generation).to eq(connection.generation)
+      end
+
+      it_behaves_like 'adds connection to the pool'
+    end
+
     context 'connection of earlier generation than pool' do
       # These tests are also applicable to load balancers, but
       # require different setup and assertions because load balancers
       # do not have a single global generation.
       require_topology :single, :replica_set, :sharded
 
-      let(:connection) do
-        pool.check_out.tap do |connection|
-          expect(connection).to receive(:generation).at_least(:once).and_return(0)
-          expect(connection).not_to receive(:record_checkin!)
+      context 'when connection is not pinned' do
+        let(:connection) do
+          pool.check_out.tap do |connection|
+            expect(connection).to receive(:generation).at_least(:once).and_return(0)
+            expect(connection).not_to receive(:record_checkin!)
+          end
         end
+
+        before do
+          expect(connection.generation).to be < pool.generation
+        end
+
+        it_behaves_like 'does not add connection to pool'
       end
 
-      before do
-        expect(connection.generation).to be < pool.generation
+      context 'when connection is pinned' do
+        let(:connection) do
+          pool.check_out.tap do |connection|
+            allow(connection).to receive(:pinned?).and_return(true)
+            expect(connection).to receive(:generation).at_least(:once).and_return(0)
+            expect(connection).to receive(:record_checkin!)
+          end
+        end
+
+        before do
+          expect(connection.generation).to be < pool.generation
+        end
+
+        it_behaves_like 'adds connection to the pool'
       end
 
-      it_behaves_like 'does not add connection to pool'
     end
 
     context 'connection of later generation than pool' do
@@ -473,23 +496,45 @@ describe Mongo::Server::ConnectionPool do
         { max_pool_size: 2, max_idle_time: 0.1 }
       end
 
-      let(:connection) do
-        pool.check_out.tap do |connection|
-          allow(connection).to receive(:generation).and_return(pool.generation)
-          allow(connection).to receive(:record_checkin!).and_return(connection)
-          expect(connection).to receive(:last_checkin).at_least(:once).and_return(Time.now - 10)
+      context 'when connection is not pinned' do
+        let(:connection) do
+          pool.check_out.tap do |connection|
+            allow(connection).to receive(:generation).and_return(pool.generation)
+            allow(connection).to receive(:record_checkin!).and_return(connection)
+            expect(connection).to receive(:last_checkin).at_least(:once).and_return(Time.now - 10)
+          end
+        end
+
+        before do
+          pool.check_in(connection)
+        end
+
+        it 'closes stale connection and creates a new one' do
+          expect(connection).to receive(:disconnect!)
+          expect(Mongo::Server::Connection).to receive(:new).and_call_original
+          pool.check_out
         end
       end
 
-      before do
-        pool.check_in(connection)
+      context 'when connection is pinned' do
+        let(:connection) do
+          pool.check_out.tap do |connection|
+            allow(connection).to receive(:generation).and_return(pool.generation)
+            allow(connection).to receive(:record_checkin!).and_return(connection)
+            expect(connection).to receive(:pinned?).and_return(true)
+          end
+        end
+
+        before do
+          pool.check_in(connection)
+        end
+
+        it 'does not close stale connection' do
+          expect(connection).not_to receive(:disconnect!)
+          pool.check_out
+        end
       end
 
-      it 'closes stale connection and creates a new one' do
-        expect(connection).to receive(:disconnect!)
-        expect(Mongo::Server::Connection).to receive(:new).and_call_original
-        pool.check_out
-      end
     end
 
     context 'when there are no available connections' do
