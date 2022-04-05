@@ -971,18 +971,19 @@ module Mongo
             end
           end
         end
-      rescue Error::NoServerAvailable
+      rescue Error::NoServerAvailable => e
         # We haven't been able to contact any servers - use last known
         # value for session support.
-        @state_change_lock.synchronize do
-          @sdam_flow_lock.synchronize do
-            @update_lock.synchronize do
-              unless @sessions_supported
-                raise_sessions_not_supported
-              end
-            end
-          end
-        end
+        raise e
+        # @state_change_lock.synchronize do
+        #   @sdam_flow_lock.synchronize do
+        #     @update_lock.synchronize do
+        #       unless @sessions_supported
+        #         raise_sessions_not_supported
+        #       end
+        #     end
+        #   end
+        # end
       end
     end
 
