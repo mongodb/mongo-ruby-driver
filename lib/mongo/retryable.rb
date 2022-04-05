@@ -228,7 +228,10 @@ module Mongo
       txn_num = nil
 
       begin
+        connection_succeeded = false
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+          connection_succeeded = true
+
           session.materialize_if_needed
           txn_num = if session.in_transaction?
             session.txn_num
@@ -240,12 +243,22 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
-          raise e
+          # If we get an auth error, it was raised when connecting the connection
+          # and therefore we didn't have the connection yet to add labels.
+          # Therefore, check if it is retryable, and if it is, add the label
+          # and retry it. We also want to retry this if there was a Socket error
+          # when trying to create the connection.
+          if !connection_succeeded && !session.in_transaction? && e.write_retryable?
+            e.add_label('RetryableWriteError')
+          else
+            raise e
+          end
         end
+
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
         retry_write(e, txn_num, context: context.with(is_retry: true), &block)
@@ -362,7 +375,7 @@ module Mongo
           raise e
         end
         retry_read(e, server_selector, session, &block)
-      rescue Error::OperationFailure => e
+      rescue Error::OperationFailure, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction? || !e.write_retryable?
