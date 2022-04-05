@@ -78,11 +78,33 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "mongo-5.1"
+    matrix_spec:
+      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+      ruby: ["ruby-3.1", "ruby-2.7"]
+      mongodb-version: '5.1'
+      topology: '*'
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "mongo-5.2"
+    matrix_spec:
+      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+      ruby: ["ruby-3.1", "ruby-2.7"]
+      mongodb-version: '5.2'
+      topology: '*'
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
   - matrix_name: "single-lb"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-3.0"]
-      mongodb-version: '5.0'
+      mongodb-version: '5.2'
       topology: load-balanced
       single-mongos: single-mongos
       os: ubuntu2004
