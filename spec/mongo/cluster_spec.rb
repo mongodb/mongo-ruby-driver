@@ -631,27 +631,6 @@ describe Mongo::Cluster do
       end
     end
 
-    context 'when client has not contacted any servers' do
-
-      let(:cluster) do
-        described_class.new(SpecConfig.instance.addresses, monitoring,
-          SpecConfig.instance.test_options.merge(
-            monitoring_io: false, server_selection_timeout: 0.183))
-      end
-
-      context 'in load-balanced topology' do
-        require_topology :load_balanced
-
-        it_behaves_like 'supports sessions'
-      end
-
-      context 'not in load-balanced topology' do
-        require_topology :single, :replica_set, :sharded
-
-        it_behaves_like 'does not support sessions'
-      end
-    end
-
     context 'when client has contacted servers and then disconnected' do
       min_server_fcv '3.6'
       require_wired_tiger
