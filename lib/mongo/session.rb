@@ -786,15 +786,19 @@ module Mongo
       @pinned_connection_global_id = connection_global_id
     end
 
-    # Unpins this session from the pinned server, if the session was pinned.
+    # Unpins this session from the pinned server or connection,
+    # if the session was pinned.
+    #
+    # @param [ Connection | nil ] connection Connection to unpin from.
     #
     # @api private
-    def unpin
+    def unpin(connection = nil)
       @pinned_server = nil
       @pinned_connection_global_id = nil
+      connection.unpin unless connection.nil?
     end
 
-    # Unpins this session from the pinned server, if the session was pinned
+    # Unpins this session from the pinned server or connection, if the session was pinned
     # and the specified exception instance and the session's transaction state
     # require it to be unpinned.
     #
@@ -802,19 +806,20 @@ module Mongo
     # (both client- and server-side generated ones).
     #
     # @param [ Error ] error The exception instance to process.
+    # @param [ Connection | nil ] connection Connection to unpin from.
     #
     # @api private
-    def unpin_maybe(error)
+    def unpin_maybe(error, connection = nil)
       if !within_states?(Session::NO_TRANSACTION_STATE) &&
         error.label?('TransientTransactionError')
       then
-        unpin
+        unpin(connection)
       end
 
       if committing_transaction? &&
         error.label?('UnknownTransactionCommitResult')
       then
-        unpin
+        unpin(connection)
       end
     end
 

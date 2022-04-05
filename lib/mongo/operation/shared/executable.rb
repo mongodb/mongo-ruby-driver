@@ -28,7 +28,7 @@ module Mongo
 
       def do_execute(connection, context, options = {})
         session&.materialize_if_needed
-        unpin_maybe(session) do
+        unpin_maybe(session, connection) do
           add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
               get_result(connection, context, options).tap do |result|
@@ -45,11 +45,22 @@ module Mongo
                       end
                     else
                       session.pin_to_connection(connection.global_id)
+                      connection.pin
                     end
                   end
 
                   if session.snapshot? && !session.snapshot_timestamp
                     session.snapshot_timestamp = result.snapshot_timestamp
+                  end
+                end
+
+                if result.has_cursor_id? &&
+                  connection.description.load_balancer?
+                then
+                  if result.cursor_id == 0
+                    connection.unpin
+                  else
+                    connection.pin
                   end
                 end
                 process_result(result, connection)

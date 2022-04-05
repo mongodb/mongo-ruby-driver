@@ -114,6 +114,7 @@ module Mongo
         @last_checkin = nil
         @auth_mechanism = nil
         @pid = Process.pid
+        @pinned = false
 
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCreated.new(address, id)
@@ -158,6 +159,32 @@ module Mongo
       # @api private
       def error?
         !!@error
+      end
+
+      # Whether the connection is used by a transaction or cursor operations.
+      #
+      # Pinned connections should not be disconnected and removed from a
+      # connection pool if they are idle or stale.
+      #
+      # # @return [ true | false ] Whether connection is pinned.
+      #
+      # @api private
+      def pinned?
+        @pinned
+      end
+
+      # Mark the connection as pinned.
+      #
+      # @api private
+      def pin
+        @pinned = true
+      end
+
+      # Mark the connection as not pinned.
+      #
+      # @api private
+      def unpin
+        @pinned = false
       end
 
       # Establishes a network connection to the target address.

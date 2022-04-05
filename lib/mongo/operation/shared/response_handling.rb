@@ -30,7 +30,7 @@ module Mongo
       #   the operation is performed.
       # @param [ Mongo::Operation::Context ] context The operation context.
       def validate_result(result, connection, context)
-        unpin_maybe(context.session) do
+        unpin_maybe(context.session, connection) do
           add_error_labels(connection, context) do
             add_server_diagnostics(connection) do
               result.validate!
@@ -81,19 +81,20 @@ module Mongo
         end
       end
 
-      # Unpins the session if the session is pinned and the yielded to block
-      # raises errors that are required to unpin the session.
+      # Unpins the session and/or the connection if  the yielded to block
+      # raises errors that are required to unpin the session and the connection.
       #
       # @note This method takes the session as an argument because this module
       #   is included in BulkWrite which does not store the session in the
       #   receiver (despite Specifiable doing so).
       #
       # @param [ Session | nil ] session Session to consider.
-      def unpin_maybe(session)
+      # @param [ Connection | nil ] connection Connection to unpin.
+      def unpin_maybe(session, connection)
         yield
       rescue Mongo::Error => e
         if session
-          session.unpin_maybe(e)
+          session.unpin_maybe(e, connection)
         end
         raise
       end

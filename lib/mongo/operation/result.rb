@@ -158,6 +158,15 @@ module Mongo
         !!@replies
       end
 
+      # Whether the result contains cursor_id
+      #
+      # @return [ true, false ] If the result contains cursor_id.
+      #
+      # @api private
+      def has_cursor_id?
+        acknowledged? && replies.last.respond_to?(:cursor_id)
+      end
+
       # Get the cursor id if the response is acknowledged.
       #
       # @note Cursor ids of 0 indicate there is no cursor on the server.

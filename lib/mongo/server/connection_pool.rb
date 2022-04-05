@@ -340,22 +340,28 @@ module Mongo
                   next
                 end
 
-                if connection.generation != generation(
-                  service_id: connection.service_id
-                )
-                  # Stale connections should be disconnected in the clear
-                  # method, but if any don't, check again here
-                  connection.disconnect!(reason: :stale)
-                  @populate_semaphore.signal
-                  next
-                end
+                if !connection.pinned?
+                  # If connection is marked as pinned, it is used by a transaction
+                  # or a series of cursor operations in a load balanced setup.
+                  # In this case connection should not be disconnected until
+                  # unpinned.
+                  if connection.generation != generation(
+                    service_id: connection.service_id
+                  )
+                    # Stale connections should be disconnected in the clear
+                    # method, but if any don't, check again here
+                    connection.disconnect!(reason: :stale)
+                    @populate_semaphore.signal
+                    next
+                  end
 
-                if max_idle_time && connection.last_checkin &&
-                  Time.now - connection.last_checkin > max_idle_time
-                then
-                  connection.disconnect!(reason: :idle)
-                  @populate_semaphore.signal
-                  next
+                  if max_idle_time && connection.last_checkin &&
+                    Time.now - connection.last_checkin > max_idle_time
+                  then
+                    connection.disconnect!(reason: :idle)
+                    @populate_semaphore.signal
+                    next
+                  end
                 end
 
                 @pending_connections << connection
@@ -490,7 +496,11 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
             @populate_semaphore.signal
-          elsif connection.generation != generation(service_id: connection.service_id)
+          elsif connection.generation != generation(service_id: connection.service_id) && !connection.pinned?
+            # If connection is marked as pinned, it is used by a transaction
+            # or a series of cursor operations in a load balanced setup.
+            # In this case connection should not be disconnected until
+            # unpinned.
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
           else

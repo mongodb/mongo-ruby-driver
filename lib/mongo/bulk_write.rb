@@ -186,7 +186,7 @@ module Mongo
       validate_array_filters!(connection)
       validate_hint!(connection)
 
-      unpin_maybe(session) do
+      unpin_maybe(session, connection) do
         if values.size > connection.description.max_write_batch_size
           split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
         else
@@ -208,7 +208,7 @@ module Mongo
     # 3.6+ servers being able to split less.
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
-      unpin_maybe(session) do
+      unpin_maybe(session, connection) do
         split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
       end
     end
