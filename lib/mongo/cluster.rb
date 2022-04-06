@@ -962,28 +962,13 @@ module Mongo
       # No data bearing servers known - perform server selection to try to
       # get a response from at least one of them, to return an accurate
       # assessment of whether sessions are currently supported.
-      begin
-        ServerSelector.get(mode: :primary_preferred).select_server(self)
-        @state_change_lock.synchronize do
-          @sdam_flow_lock.synchronize do
-            unless topology.logical_session_timeout
-              raise_sessions_not_supported
-            end
+      ServerSelector.get(mode: :primary_preferred).select_server(self)
+      @state_change_lock.synchronize do
+        @sdam_flow_lock.synchronize do
+          unless topology.logical_session_timeout
+            raise_sessions_not_supported
           end
         end
-      rescue Error::NoServerAvailable => e
-        # We haven't been able to contact any servers - use last known
-        # value for session support.
-        raise e
-        # @state_change_lock.synchronize do
-        #   @sdam_flow_lock.synchronize do
-        #     @update_lock.synchronize do
-        #       unless @sessions_supported
-        #         raise_sessions_not_supported
-        #       end
-        #     end
-        #   end
-        # end
       end
     end
 
