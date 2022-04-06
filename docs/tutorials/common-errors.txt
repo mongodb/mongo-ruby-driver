@@ -1,0 +1,59 @@
+*************
+Common Errors
+*************
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 2
+   :class: singlecol
+
+
+``OperationFailure`` When Reading ``local`` With Auth On
+========================================================
+
+If you are getting the following error when trying to read the ``local`` database:
+
+.. code-block:: ruby
+
+  Mongo::Error::OperationFailure: not authorized on local to execute command { find: "oplog.rs", filter: { ts:
+    { $gte: Timestamp 1497449043000|0 } }, sort: { $natural: 1 } } (13)
+
+You can fix this by adjusting the roles your user has and ensuring that it has
+privileges to the local database. If you specifically want to access the oplog,
+you can also create a custom role with read access to the local database's
+``oplog.rs`` collection. You can find more information about role management
+`here <https://www.mongodb.com/docs/manual/reference/method/js-role-management/>`_.
+
+You can find more information about this issue here:
+`MONGOID-4446 <https://jira.mongodb.org/browse/MONGOID-4446>`_.
+
+
+No Server is Available Matching Preference
+==========================================
+
+Some users reported getting the following error:
+
+.. code-block:: ruby
+
+  > client[:contacts].insert_one({ vpa: 'cool@cool'})
+  Mongo::Error::NoServerAvailable: No server is available matching preference: #<Mongo::ServerSelector::Primary:0x14987080 tag_sets=[] max_staleness=nil> using server_selection_timeout=30 and local_threshold=0.015
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/server_selector/selectable.rb:115:in `select_server'
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/cluster.rb:246:in `next_primary'
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/retryable.rb:150:in `legacy_write_with_retry'
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/retryable.rb:103:in `write_with_retry'
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/collection.rb:422:in `block in insert_one'
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/client.rb:485:in `with_session'
+  from /rvm/gems/ruby-2.4.2/gems/mongo-2.5.0/lib/mongo/collection.rb:421:in `insert_one'
+  from (irb):6
+  from /rvm/rubies/ruby-2.4.2/bin/irb:11:in `<main>'
+
+This error was last reported on Ruby Driver version 2.5.0, so updating the driver
+can potentially solve this issue. Some users also have solved this issue by
+updating the port they use to connect to MongoDB. The default port is 27017.
+You can find more information about this potential fix `here <https://stackoverflow.com/questions/36324525/mongoerrornoserveravailable-when-running-rails-app>`_.
+
+See more on this issue here:
+`RUBY-1281 <https://jira.mongodb.org/browse/RUBY-1281>`_.
