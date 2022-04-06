@@ -22,6 +22,16 @@ describe Mongo::Crypt::Handle do
         end
       end
 
+      context 'with schema map in JSON string' do
+        let(:schema_map) do
+          File.read 'spec/support/crypt/schema_maps/schema_map_local.json'
+        end
+
+        it 'does not raise an exception' do
+          expect { handle }.not_to raise_error
+        end
+      end
+
       context 'with invalid schema map' do
         let(:schema_map) { '' }
 
