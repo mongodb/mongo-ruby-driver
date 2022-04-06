@@ -107,7 +107,7 @@ module Unified
           end
         when 'cmap'
           actual_events.select! do |event|
-            event.class.name.sub(/.*::/, '') =~ /^Pool/
+            event.class.name.sub(/.*::/, '') =~ /^(?:Pool|Connection)/
           end
         end
         unless actual_events.length == expected_events.length

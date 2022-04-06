@@ -31,7 +31,7 @@ def standard_dependencies
 
     platform :mri do
       # Debugger for VSCode.
-      if !ENV['CI'] && RUBY_VERSION < '3.0'
+      if !ENV['CI'] && !ENV['DOCKER'] && RUBY_VERSION < '3.0'
         gem 'debase'
         gem 'ruby-debug-ide'
       end

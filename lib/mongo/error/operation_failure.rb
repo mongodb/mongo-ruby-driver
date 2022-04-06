@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+require 'mongo/error/read_write_retryable'
 
 module Mongo
   class Error
@@ -24,53 +25,7 @@ module Mongo
     class OperationFailure < Error
       extend Forwardable
       include SdamErrorDetection
-
-      # Error codes and code names that should result in a failing write
-      # being retried.
-      #
-      # @since 2.6.0
-      # @api private
-      WRITE_RETRY_ERRORS = [
-        {:code_name => 'HostUnreachable', :code => 6},
-        {:code_name => 'HostNotFound', :code => 7},
-        {:code_name => 'NetworkTimeout', :code => 89},
-        {:code_name => 'ShutdownInProgress', :code => 91},
-        {:code_name => 'PrimarySteppedDown', :code => 189},
-        {:code_name => 'ExceededTimeLimit', :code => 262},
-        {:code_name => 'SocketException', :code => 9001},
-        {:code_name => 'NotMaster', :code => 10107},
-        {:code_name => 'InterruptedAtShutdown', :code => 11600},
-        {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
-        {:code_name => 'NotPrimaryNoSecondaryOk', :code => 13435},
-        {:code_name => 'NotMasterOrSecondary', :code => 13436},
-      ].freeze
-
-      # These are magic error messages that could indicate a master change.
-      #
-      # @since 2.4.2
-      # @api private
-      WRITE_RETRY_MESSAGES = [
-        'not master',
-        'node is recovering',
-      ].freeze
-
-      # These are magic error messages that could indicate a cluster
-      # reconfiguration behind a mongos.
-      #
-      # @since 2.1.1
-      # @api private
-      RETRY_MESSAGES = WRITE_RETRY_MESSAGES + [
-        'transport error',
-        'socket exception',
-        "can't connect",
-        'connect failed',
-        'error querying',
-        'could not get last error',
-        'connection attempt failed',
-        'interrupted at shutdown',
-        'unknown replica set',
-        'dbclient error communicating with server'
-      ].freeze
+      include ReadWriteRetryable
 
       def_delegators :@result, :operation_time
 
@@ -97,41 +52,6 @@ module Mongo
       #
       # @api experimental
       attr_reader :server_message
-
-      # Whether the error is a retryable error according to the legacy
-      # read retry logic.
-      #
-      # @return [ true, false ]
-      #
-      # @since 2.1.1
-      # @deprecated
-      def retryable?
-        write_retryable? ||
-        code.nil? && RETRY_MESSAGES.any?{ |m| message.include?(m) }
-      end
-
-      # Whether the error is a retryable error according to the modern retryable
-      # reads and retryable writes specifications.
-      #
-      # This method is also used by the legacy retryable write logic to determine
-      # whether an error is a retryable one.
-      #
-      # @return [ true, false ]
-      #
-      # @since 2.4.2
-      def write_retryable?
-        write_retryable_code? ||
-        code.nil? && WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
-      end
-
-      private def write_retryable_code?
-        if code
-          WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }
-        else
-          # return false rather than nil
-          false
-        end
-      end
 
       # Error codes and code names that should result in a failing getMore
       # command on a change stream NOT being resumed.
@@ -162,7 +82,7 @@ module Mongo
       #
       # @since 2.6.0
       # @api private
-      CHANGE_STREAM_RESUME_MESSAGES = WRITE_RETRY_MESSAGES
+      CHANGE_STREAM_RESUME_MESSAGES = ReadWriteRetryable::WRITE_RETRY_MESSAGES
 
       # Can the change stream on which this error occurred be resumed,
       # provided the operation that triggered this error was a getMore?

@@ -30,6 +30,9 @@ require 'mongo/auth/ldap'
 require 'mongo/auth/scram'
 require 'mongo/auth/scram256'
 require 'mongo/auth/x509'
+require 'mongo/error/read_write_retryable'
+require 'mongo/error/labelable'
+
 
 module Mongo
 
@@ -127,6 +130,11 @@ module Mongo
     #
     # @since 2.0.0
     class Unauthorized < Mongo::Error::AuthError
+      include Error::ReadWriteRetryable
+      include Error::Labelable
+
+      # @return [ Integer ] The error code.
+      attr_reader :code
 
       # Instantiate the new error.
       #
@@ -139,11 +147,14 @@ module Mongo
       # @param [ String ] message The error message returned by the server.
       # @param [ Server ] server The server instance that authentication
       #   was attempted against.
+      # @param [ Integer ] The error code.
       #
       # @since 2.0.0
       def initialize(user, used_mechanism: nil, message: nil,
-        server: nil
+        server: nil, code: nil
       )
+        @code = code
+
         configured_bits = []
         used_bits = [
           "auth source: #{user.auth_source}",

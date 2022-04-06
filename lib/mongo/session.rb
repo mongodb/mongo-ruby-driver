@@ -183,11 +183,11 @@ module Mongo
     # @return [ true, false ] If writes will be retried.
     #
     # @note Retryable writes are only available on server versions at least 3.6
-    #   and with sharded clusters or replica sets.
+    #   and with sharded clusters, replica sets, or load-balanced topologies.
     #
     # @since 2.5.0
     def retry_writes?
-      !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
+      !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded? || cluster.load_balanced?)
     end
 
     # Get the read preference the session will use in the currently

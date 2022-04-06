@@ -131,10 +131,12 @@ module Mongo
             code_name: doc[:codeName],
             message: doc[:errmsg],
           )
+
           raise Unauthorized.new(user,
             used_mechanism: self.class.const_get(:MECHANISM),
             message: message,
             server: connection.server,
+            code: doc[:code]
           )
         end
       end
