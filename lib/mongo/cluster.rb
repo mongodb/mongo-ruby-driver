@@ -937,11 +937,21 @@ module Mongo
     # is connected to does not support sessions.
     #
     # Session support may change over time, for example due to servers in the
-    # deployment being upgraded or downgraded. If the client is currently not
-    # connected to any data bearing servers, this method considers the state
-    # of session support as of when the client was last connected to at
-    # least one server. If the client has never connected to any servers,
-    # the deployment is considered to not support sessions.
+    # deployment being upgraded or downgraded.  If the client isn't connected to
+    # any servers and doesn't find any servers
+    # for the duration of server selection timeout, this method will raise
+    # NoServerAvailable. This method is called from the operation execution flow,
+    # and if it raises NoServerAvailable the entire operation will fail
+    # with that exception, since the operation execution has waited for
+    # the server selection timeout for any server to become available
+    # (which would be a superset of the servers suitable for the operation being
+    # attempted) and none materialized.
+    #
+    # @raise [ Error::SessionsNotAvailable ] If the deployment that the driver
+    #   is connected to does not support sessions.
+    # @raise [ Error::NoServerAvailable ] If the client isn't connected to
+    #   any servers and doesn't find any servers for the duration of
+    #   server selection timeout.
     #
     # @api private
     def validate_session_support!
@@ -962,25 +972,11 @@ module Mongo
       # No data bearing servers known - perform server selection to try to
       # get a response from at least one of them, to return an accurate
       # assessment of whether sessions are currently supported.
-      begin
-        ServerSelector.get(mode: :primary_preferred).select_server(self)
-        @state_change_lock.synchronize do
-          @sdam_flow_lock.synchronize do
-            unless topology.logical_session_timeout
-              raise_sessions_not_supported
-            end
-          end
-        end
-      rescue Error::NoServerAvailable
-        # We haven't been able to contact any servers - use last known
-        # value for session support.
-        @state_change_lock.synchronize do
-          @sdam_flow_lock.synchronize do
-            @update_lock.synchronize do
-              unless @sessions_supported
-                raise_sessions_not_supported
-              end
-            end
+      ServerSelector.get(mode: :primary_preferred).select_server(self)
+      @state_change_lock.synchronize do
+        @sdam_flow_lock.synchronize do
+          unless topology.logical_session_timeout
+            raise_sessions_not_supported
           end
         end
       end
