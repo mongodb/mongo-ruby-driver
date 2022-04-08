@@ -1571,6 +1571,7 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 
 Note that when creating a client using the `block syntax <#block-syntax>`_ described above, the client is automatically closed after the block finishes executing.
 
+.. _forking:
 
 Usage with Forking Servers
 ==========================
