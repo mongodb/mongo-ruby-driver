@@ -22,6 +22,8 @@ else
   set -x
 fi
 
+find /opt -name 'python3*'
+
 MRSS_ROOT=`dirname "$0"`/../spec/shared
 
 . $MRSS_ROOT/shlib/distro.sh
