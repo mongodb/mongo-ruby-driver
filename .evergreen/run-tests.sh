@@ -22,7 +22,11 @@ else
   set -x
 fi
 
-find /opt -name 'python3*'
+if test -z "$DOCKER"; then
+  export PATH=/opt/python/3.7/bin:$PATH
+  
+  python3 -V
+fi
 
 MRSS_ROOT=`dirname "$0"`/../spec/shared
 
