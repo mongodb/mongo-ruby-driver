@@ -111,7 +111,7 @@ describe 'Client-Side Encryption' do
       end
 
       let(:error_regex) do
-        /us-east-1/
+        //
       end
 
       it_behaves_like 'raising a KMS error'
