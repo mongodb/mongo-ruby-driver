@@ -49,20 +49,19 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
 
-        @kms_tls_options =  kms_tls_options
+        @kms_tls_options = kms_tls_options
 
         @schema_map =
           case options[:schema_map].class
           when String
             begin
-              # Support raw JSON string
+              # Rebuild to raw JSON string as schema map implementation requires BSON variable instances
               BSON::ExtJSON.parse(options[:schema_map])
             rescue JSON::ParserError
               nil
             end
-          when Hash
-            # Rebuild to BSON as schema map implementation requires BSON variable instances
-            BSON::ExtJSON.parse options[:schema_map].to_json
+          else
+            options[:schema_map]
           end
 
         set_schema_map if @schema_map
