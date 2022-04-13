@@ -36,6 +36,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if comment = args.use('comment')
+          opts[:comment] = comment
+        end
         collection.find(args.use!('filter')).count_documents(**opts)
       end
     end
