@@ -282,9 +282,9 @@ tests:
               command:
                 aggregate: *collection0Name
                 pipeline: *pipeline
+                comment: *objectComment
               commandName: aggregate
               databaseName: *database0Name
-              comment: *objectComment
 
   - description: "estimatedDocumentCount with comment on less than 4.9.0"
     runOnRequirements:
