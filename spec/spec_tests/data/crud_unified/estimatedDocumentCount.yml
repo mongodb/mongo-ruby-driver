@@ -298,15 +298,15 @@ tests:
         arguments:
           comment: *objectComment
         expectResult: 3
-    expectedEvents:
+    expectEvents:
       - client: *client0
         events:
           - commandStartedEvent:
-            command:
-              count: *collection0Name
-              comment: *objectComment
-            commandName: count
-            databaseName: *database0Name
+              command:
+                count: *collection0Name
+                comment: *objectComment
+              commandName: count
+              databaseName: *database0Name
 
   - description: "estimatedDocumentCount with comment on less than 4.4.14 - string comment"
     runOnRequirements:
