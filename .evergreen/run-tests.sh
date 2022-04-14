@@ -22,6 +22,18 @@ else
   set -x
 fi
 
+if test -z "$DOCKER"; then
+  if test -d /opt/python/3.7/bin; then
+    # Most Evergreen configurations.
+    export PATH=/opt/python/3.7/bin:$PATH
+  elif test -d /opt/python37/bin; then
+    # Configurations that use Docker in Evergreen - these don't preload.
+    export PATH=/opt/python37/bin:$PATH
+  fi
+  
+  python3 -V
+fi
+
 MRSS_ROOT=`dirname "$0"`/../spec/shared
 
 . $MRSS_ROOT/shlib/distro.sh
@@ -41,7 +53,9 @@ set_env_ruby
 
 prepare_server $arch
 
-install_mlaunch_virtualenv
+if test -z "$DOCKER"; then
+  install_mlaunch_virtualenv
+fi
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
@@ -318,7 +332,7 @@ if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
-python2 -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
+python3 -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
   # Terminate all kmip servers... and whatever else happens to be running
