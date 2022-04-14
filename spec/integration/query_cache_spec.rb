@@ -345,15 +345,24 @@ describe 'QueryCache' do
 
         it 'uses the cache' do
           results_limit_5 = authorized_collection.find.limit(5).to_a
+          results_limit_negative_5 = authorized_collection.find.limit(-5).to_a
           results_limit_3 = authorized_collection.find.limit(3).to_a
+          results_limit_negative_3 = authorized_collection.find.limit(-3).to_a
           results_no_limit = authorized_collection.find.to_a
           results_limit_0 = authorized_collection.find.limit(0).to_a
+
 
           expect(results_limit_5.length).to eq(5)
           expect(results_limit_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
 
+          expect(results_limit_negative_5.length).to eq(5)
+          expect(results_limit_negative_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
+
           expect(results_limit_3.length).to eq(3)
           expect(results_limit_3.map { |r| r["test"] }).to eq([0, 1, 2])
+
+          expect(results_limit_negative_3.length).to eq(3)
+          expect(results_limit_negative_3.map { |r| r["test"] }).to eq([0, 1, 2])
 
           expect(results_no_limit.length).to eq(10)
           expect(results_no_limit.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -372,18 +381,29 @@ describe 'QueryCache' do
 
         it 'uses the cache' do
           results_limit_5 = authorized_collection.find.limit(5).to_a
+          results_limit_negative_5 = authorized_collection.find.limit(-5).to_a
           results_limit_3 = authorized_collection.find.limit(3).to_a
+          results_limit_negative_3 = authorized_collection.find.limit(-3).to_a
           results_no_limit = authorized_collection.find.to_a
           results_limit_0 = authorized_collection.find.limit(0).to_a
 
           expect(results_limit_5.length).to eq(5)
           expect(results_limit_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
 
+          expect(results_limit_negative_5.length).to eq(5)
+          expect(results_limit_negative_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
+
+
           expect(results_limit_3.length).to eq(3)
           expect(results_limit_3.map { |r| r["test"] }).to eq([0, 1, 2])
 
+          expect(results_limit_negative_3.length).to eq(3)
+          expect(results_limit_negative_3.map { |r| r["test"] }).to eq([0, 1, 2])
+
+
           expect(results_no_limit.length).to eq(10)
           expect(results_no_limit.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
 
           expect(results_limit_0.length).to eq(10)
           expect(results_limit_0.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -422,8 +442,116 @@ describe 'QueryCache' do
           end
         end
 
+        context 'and two queries are performed with a larger negative limit' do
+          it 'uses the query cache for the third query' do
+            results1 = authorized_collection.find.limit(-3).to_a
+            results2 = authorized_collection.find.limit(-3).to_a
+
+            expect(results1.length).to eq(3)
+            expect(results1.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(results2.length).to eq(3)
+            expect(results2.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(events.length).to eq(2)
+          end
+        end
+
         context 'and the second query has a smaller limit' do
           let(:results) { authorized_collection.find.limit(1).to_a }
+
+          it 'uses the cached query' do
+            expect(results.count).to eq(1)
+            expect(results.first["test"]).to eq(0)
+            expect(events.length).to eq(1)
+          end
+        end
+
+        context 'and the second query has a smaller negative limit' do
+          let(:results) { authorized_collection.find.limit(-1).to_a }
+
+          it 'uses the cached query' do
+            expect(results.count).to eq(1)
+            expect(results.first["test"]).to eq(0)
+            expect(events.length).to eq(1)
+          end
+        end
+
+        context 'and the second query has no limit' do
+          it 'queries again' do
+            expect(authorized_collection.find.to_a.count).to eq(10)
+            expect(events.length).to eq(2)
+          end
+        end
+      end
+
+      context 'when the first query has a negative limit' do
+        before do
+          authorized_collection.find.limit(-2).to_a
+        end
+
+        context 'and the second query has a larger limit' do
+          let(:results) { authorized_collection.find.limit(3).to_a }
+
+          it 'queries again' do
+            expect(results.length).to eq(3)
+            expect(results.map { |result| result["test"] }).to eq([0, 1, 2])
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'and the second query has a larger negative limit' do
+          let(:results) { authorized_collection.find.limit(-3).to_a }
+
+          it 'queries again' do
+            expect(results.length).to eq(3)
+            expect(results.map { |result| result["test"] }).to eq([0, 1, 2])
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'and two queries are performed with a larger limit' do
+          it 'uses the query cache for the third query' do
+            results1 = authorized_collection.find.limit(3).to_a
+            results2 = authorized_collection.find.limit(3).to_a
+
+            expect(results1.length).to eq(3)
+            expect(results1.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(results2.length).to eq(3)
+            expect(results2.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'and two queries are performed with a larger negative limit' do
+          it 'uses the query cache for the third query' do
+            results1 = authorized_collection.find.limit(-3).to_a
+            results2 = authorized_collection.find.limit(-3).to_a
+
+            expect(results1.length).to eq(3)
+            expect(results1.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(results2.length).to eq(3)
+            expect(results2.map { |r| r["test"] }).to eq([0, 1, 2])
+
+            expect(events.length).to eq(2)
+          end
+        end
+
+        context 'and the second query has a smaller limit' do
+          let(:results) { authorized_collection.find.limit(1).to_a }
+
+          it 'uses the cached query' do
+            expect(results.count).to eq(1)
+            expect(results.first["test"]).to eq(0)
+            expect(events.length).to eq(1)
+          end
+        end
+
+        context 'and the second query has a smaller negative limit' do
+          let(:results) { authorized_collection.find.limit(-1).to_a }
 
           it 'uses the cached query' do
             expect(results.count).to eq(1)

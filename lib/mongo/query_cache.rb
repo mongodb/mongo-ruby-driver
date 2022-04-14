@@ -179,9 +179,7 @@ module Mongo
       #
       # @api private
       def get(**opts)
-        limit = opts[:limit]
-        # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
-        limit = nil if limit == 0
+        limit = normalized_limit(opts[:limit])
 
         _namespace_key = namespace_key(**opts)
         _cache_key = cache_key(**opts)
@@ -192,9 +190,7 @@ module Mongo
         caching_cursor = namespace_hash[_cache_key]
         return nil unless caching_cursor
 
-        caching_cursor_limit = caching_cursor.view.limit
-        # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
-        caching_cursor_limit = nil if caching_cursor_limit == 0
+        caching_cursor_limit = normalized_limit(caching_cursor.view.limit)
 
         # There are two scenarios in which a caching cursor could fulfill the
         # query:
@@ -212,6 +208,14 @@ module Mongo
         else
           nil
         end
+      end
+
+      def normalized_limit(limit)
+        return nil unless limit
+        # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
+        return nil if limit == 0
+        # For the purposes of caching, a negative limit is the same as as a positive limit.
+        limit.abs
       end
 
       private
