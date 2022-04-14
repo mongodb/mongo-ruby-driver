@@ -180,6 +180,9 @@ module Mongo
       # @api private
       def get(**opts)
         limit = opts[:limit]
+        # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
+        limit = nil if limit == 0
+
         _namespace_key = namespace_key(**opts)
         _cache_key = cache_key(**opts)
 
@@ -190,6 +193,8 @@ module Mongo
         return nil unless caching_cursor
 
         caching_cursor_limit = caching_cursor.view.limit
+        # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
+        caching_cursor_limit = nil if caching_cursor_limit == 0
 
         # There are two scenarios in which a caching cursor could fulfill the
         # query:
@@ -199,6 +204,7 @@ module Mongo
         #
         # Otherwise, return nil because the stored cursor will not satisfy
         # the query.
+
         if limit && (caching_cursor_limit.nil? || caching_cursor_limit >= limit)
           caching_cursor
         elsif limit.nil? && caching_cursor_limit.nil?

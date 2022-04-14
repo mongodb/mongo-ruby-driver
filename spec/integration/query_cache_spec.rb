@@ -347,6 +347,7 @@ describe 'QueryCache' do
           results_limit_5 = authorized_collection.find.limit(5).to_a
           results_limit_3 = authorized_collection.find.limit(3).to_a
           results_no_limit = authorized_collection.find.to_a
+          results_limit_0 = authorized_collection.find.limit(0).to_a
 
           expect(results_limit_5.length).to eq(5)
           expect(results_limit_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
@@ -356,6 +357,36 @@ describe 'QueryCache' do
 
           expect(results_no_limit.length).to eq(10)
           expect(results_no_limit.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+          expect(results_limit_0.length).to eq(10)
+          expect(results_limit_0.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+          expect(events.length).to eq(1)
+        end
+      end
+
+      context 'when the first query has a 0 limit' do
+        before do
+          authorized_collection.find.limit(0).to_a
+        end
+
+        it 'uses the cache' do
+          results_limit_5 = authorized_collection.find.limit(5).to_a
+          results_limit_3 = authorized_collection.find.limit(3).to_a
+          results_no_limit = authorized_collection.find.to_a
+          results_limit_0 = authorized_collection.find.limit(0).to_a
+
+          expect(results_limit_5.length).to eq(5)
+          expect(results_limit_5.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4])
+
+          expect(results_limit_3.length).to eq(3)
+          expect(results_limit_3.map { |r| r["test"] }).to eq([0, 1, 2])
+
+          expect(results_no_limit.length).to eq(10)
+          expect(results_no_limit.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+          expect(results_limit_0.length).to eq(10)
+          expect(results_limit_0.map { |r| r["test"] }).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
           expect(events.length).to eq(1)
         end

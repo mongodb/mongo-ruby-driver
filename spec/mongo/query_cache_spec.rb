@@ -199,6 +199,56 @@ describe Mongo::QueryCache do
             expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
           end
         end
+
+        context 'when the query has a 0 limit' do
+          let(:limit) { 0 }
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+          end
+        end
+      end
+
+      context 'when that entry has a 0 limit' do
+        let(:caching_cursor_options) do
+          {
+            namespace: 'db.coll',
+            selector: { field: 'value' },
+            limit: 0,
+          }
+        end
+
+        let(:query_options) do
+          caching_cursor_options.merge(limit: limit)
+        end
+
+        before do
+          allow(view).to receive(:limit) { 0 }
+        end
+
+        context 'when the query has a limit' do
+          let(:limit) { 5 }
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+          end
+        end
+
+        context 'when the query has no limit' do
+          let(:limit) { nil }
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+          end
+        end
+
+        context 'when the query has a 0 limit' do
+          let(:limit) { 0 }
+
+          it 'returns the caching cursor' do
+            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+          end
+        end
       end
 
       context 'when that entry has a limit' do
@@ -244,6 +294,14 @@ describe Mongo::QueryCache do
 
         context 'and the new query has no limit' do
           let(:limit) { nil }
+
+          it 'returns nil' do
+            expect(Mongo::QueryCache.get(**query_options)).to be_nil
+          end
+        end
+
+        context 'and the new query has a 0 limit' do
+          let(:limit) { 0 }
 
           it 'returns nil' do
             expect(Mongo::QueryCache.get(**query_options)).to be_nil

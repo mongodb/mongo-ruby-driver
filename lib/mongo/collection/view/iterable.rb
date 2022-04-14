@@ -71,6 +71,9 @@ module Mongo
             # re-use results from an earlier query with the same or larger
             # limit, and then impose the lower limit during iteration.
             limit_for_cached_query = respond_to?(:limit) ? limit : nil
+
+            # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
+            limit_for_cached_query = nil if limit_for_cached_query == 0
           end
 
           if block_given?
