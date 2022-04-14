@@ -183,7 +183,11 @@ if test -n "$FLE"; then
       gem install libmongocrypt-helper --pre
       
       # https://stackoverflow.com/questions/19072070/how-to-find-where-gem-files-are-installed
-      path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so)
+      path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so |head -1 || true)
+      if test -z "$path"; then
+        echo Failed to find libmongocrypt.so in installed gems 1>&2
+        exit 1
+      fi
       cp $path .
       LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
       
