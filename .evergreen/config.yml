@@ -777,10 +777,14 @@ axes:
   - id: "fle"
     display_name: FLE
     values:
-      - id: "fle"
-        display_name: FLE
+      - id: "helper"
+        display_name: via LMC helper
         variables:
-          FLE: true
+          FLE: helper
+      - id: "path"
+        display_name: via LMC path
+        variables:
+          FLE: path
 
   - id: ocsp-algorithm
     display_name: OCSP Algorithm
@@ -1318,7 +1322,7 @@ buildvariants:
       topology: standalone
       mongodb-version: ['4.4']
       os: ubuntu1804
-      fle: fle
+      fle: helper
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
@@ -1330,7 +1334,7 @@ buildvariants:
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
       os: ubuntu1804
-      fle: fle
+      fle: helper
     display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
@@ -1342,7 +1346,7 @@ buildvariants:
       topology: standalone
       mongodb-version: ["4.0"]
       os: ubuntu1804
-      fle: fle
+      fle: path
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
@@ -1354,7 +1358,7 @@ buildvariants:
       topology: standalone
       mongodb-version: ['5.0']
       os: ubuntu1804
-      fle: fle
+      fle: helper
       docker-distro: ubuntu1804
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
@@ -1384,7 +1388,7 @@ buildvariants:
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
-
+  
   - matrix_name: ocsp-verifier - ruby-2.5
     matrix_spec:
       ocsp-verifier: true
@@ -1416,7 +1420,7 @@ buildvariants:
       docker-distro: debian10
     display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
     tasks: *1
-
+  
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
