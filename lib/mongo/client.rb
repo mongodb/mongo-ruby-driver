@@ -302,7 +302,7 @@ module Mongo
     # @option options [ Hash ] :read The read preference options. The hash
     #   may have the following items:
     #   - *:mode* -- read preference specified as a symbol; valid values are
-    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     #:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
@@ -701,7 +701,7 @@ module Mongo
     # @return [ BSON::Document ] The user-defined read preference.
     #   The document may have the following fields:
     #   - *:mode* -- read preference specified as a symbol; valid values are
-    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     #:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
@@ -1003,13 +1003,35 @@ module Mongo
     #
     # @param [ Array<Hash> ] pipeline Optional additional filter operators.
     # @param [ Hash ] options The change stream options.
+    # @option options [ String ] :full_document Allowed values: nil, 'default',
+    #   'updateLookup', 'whenAvailable', 'required'.
     #
-    # @option options [ String ] :full_document Allowed values: nil, 'default'
-    #   (behaves same as nil), 'updateLookup'. When set to 'updateLookup', the
-    #   change notification for partial updates will include both a delta
-    #   describing the changes to the document, as well as a copy of the entire
-    #   document that was changed from some time after the change occurred. The
-    #   default is to not send a value.
+    #   The default is to not send a value (i.e. nil), which is equivalent to
+    #   'default'. By default, the change notification for partial updates will
+    #   include a delta describing the changes to the document.
+    #
+    #   When set to 'updateLookup', the change notification for partial updates
+    #   will include both a delta describing the changes to the document as well
+    #   as a copy of the entire document that was changed from some time after
+    #   the change occurred.
+    #
+    #   When set to 'whenAvailable', configures the change stream to return the
+    #   post-image of the modified document for replace and update change events
+    #   if the post-image for this event is available.
+    #
+    #   When set to 'required', the same behavior as 'whenAvailable' except that
+    #   an error is raised if the post-image is not available.
+    # @option options [ String ] :full_document_before_change Allowed values: nil,
+    #   'whenAvailable', 'required', 'off'.
+    #
+    #   The default is to not send a value (i.e. nil), which is equivalent to 'off'.
+    #
+    #   When set to 'whenAvailable', configures the change stream to return the
+    #   pre-image of the modified document for replace, update, and delete change
+    #   events if it is available.
+    #
+    #   When set to 'required', the same behavior as 'whenAvailable' except that
+    #   an error is raised if the pre-image is not available.
     # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point
     #   for the new change stream.
     # @option options [ Integer ] :max_await_time_ms The maximum amount of time for the server to
