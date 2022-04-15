@@ -244,6 +244,9 @@ module Unified
       if batch_size = args.use('batchSize')
         opts[:batch_size] = batch_size
       end
+      if !(allow_disk_use = args.use('allowDiskUse')).nil?
+        opts[:allow_disk_use] = allow_disk_use
+      end
       unless args.empty?
         raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}"
       end
