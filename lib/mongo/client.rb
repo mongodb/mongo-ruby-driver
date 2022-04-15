@@ -302,7 +302,7 @@ module Mongo
     # @option options [ Hash ] :read The read preference options. The hash
     #   may have the following items:
     #   - *:mode* -- read preference specified as a symbol; valid values are
-    #     #:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
@@ -701,7 +701,7 @@ module Mongo
     # @return [ BSON::Document ] The user-defined read preference.
     #   The document may have the following fields:
     #   - *:mode* -- read preference specified as a symbol; valid values are
-    #     #:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
