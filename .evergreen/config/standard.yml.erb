@@ -452,7 +452,7 @@ buildvariants:
       topology: standalone
       mongodb-version: ['4.4']
       os: ubuntu1804
-      fle: fle
+      fle: helper
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
@@ -464,7 +464,7 @@ buildvariants:
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
       os: ubuntu1804
-      fle: fle
+      fle: helper
     display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
@@ -476,7 +476,7 @@ buildvariants:
       topology: standalone
       mongodb-version: ["4.0"]
       os: ubuntu1804
-      fle: fle
+      fle: path
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
@@ -488,7 +488,7 @@ buildvariants:
       topology: standalone
       mongodb-version: ['5.0']
       os: ubuntu1804
-      fle: fle
+      fle: helper
       docker-distro: ubuntu1804
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:

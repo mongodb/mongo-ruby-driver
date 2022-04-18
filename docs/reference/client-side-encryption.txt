@@ -35,10 +35,30 @@ libmongocrypt
 ~~~~~~~~~~~~~
 
 Libmongocrypt is a C library used by the driver for client-side encryption.
-To use client-side encryption, you must install the libmongocrypt binary
+To use client-side encryption, you must install the libmongocrypt library
 on the machine running your Ruby program.
 
-To download a pre-built binary:
+The easiest way to install this library is to install `libmongocrypt-helper
+<https://rubygems.org/gems/libmongocrypt-helper>`_ as follows:
+
+.. code-block:: bash
+
+  gem install libmongocrypt-helper --pre
+
+The version number of libmongocrypt-helper is the version of included
+libmongocrypt followed by the release number, e.g. 1.3.2.r1.
+Because Ruby considers any letters in the version number to indicate a
+pre-release version, the ``--pre`` flag is needed.
+
+The driver will automatically load libmongocrypt-helper - no further
+configuration is needed.
+
+.. note::
+
+  libmongocrypt-helper currently only supports Linux operating systems.
+
+Alternatively you can download a pre-built binary distribution of libmongocrypt
+and manually place the required shared object on your computer, as follows:
 
 - Download a tarball of all libmongocrypt variations `here <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
 
@@ -64,6 +84,11 @@ you add this variable to your rc files. For example:
 .. code-block:: bash
 
   export LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt.so
+
+.. note::
+
+  The binary referenced in this section can be a pre-release version of
+  libmongocrypt which is not recommended for production environments.
 
 mongocryptd
 ~~~~~~~~~~~
