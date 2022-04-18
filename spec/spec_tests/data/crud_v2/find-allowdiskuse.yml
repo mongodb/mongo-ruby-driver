@@ -5,7 +5,7 @@ collection_name: &collection_name 'test_find_allowdiskuse'
 
 tests:
   -
-    description: "Find does not send allowDiskuse when value is not specified"
+    description: "Find does not send allowDiskUse when value is not specified"
     operations:
       -
         object: collection
@@ -19,7 +19,7 @@ tests:
             find: *collection_name
             allowDiskUse:
   -
-    description: "Find sends allowDiskuse false when false is specified"
+    description: "Find sends allowDiskUse false when false is specified"
     operations:
       -
         object: collection
