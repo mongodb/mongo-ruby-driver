@@ -22,18 +22,6 @@ else
   set -x
 fi
 
-if test -z "$DOCKER"; then
-  if test -d /opt/python/3.7/bin; then
-    # Most Evergreen configurations.
-    export PATH=/opt/python/3.7/bin:$PATH
-  elif test -d /opt/python37/bin; then
-    # Configurations that use Docker in Evergreen - these don't preload.
-    export PATH=/opt/python37/bin:$PATH
-  fi
-  
-  python3 -V
-fi
-
 MRSS_ROOT=`dirname "$0"`/../spec/shared
 
 . $MRSS_ROOT/shlib/distro.sh
@@ -51,9 +39,28 @@ set_home
 set_env_vars
 set_env_ruby
 
+if test "$DOCKER_PRELOAD" != 1; then
+  if test -n "$DOCKER"; then
+    # If we are running in Docker and not preloading, we need to fetch the
+    # Python binary.
+    curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/"$arch"-python37.tar.xz | \
+      tar xfJ - -C /opt
+  fi
+  
+  if test -d /opt/python/3.7/bin; then
+    # Most Evergreen configurations.
+    export PATH=/opt/python/3.7/bin:$PATH
+  elif test -d /opt/python37/bin; then
+    # Configurations that use Docker in Evergreen - these don't preload.
+    export PATH=/opt/python37/bin:$PATH
+  fi
+  
+  python3 -V
+fi
+
 prepare_server $arch
 
-if test -z "$DOCKER"; then
+if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_virtualenv
 fi
 
