@@ -53,6 +53,17 @@ module Unified
       end
     end
 
+    def rename(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        to = args.use!('to')
+        collection.client.use(:admin).command({
+          renameCollection: "#{collection.database.name}.#{collection.name}",
+          to: "#{collection.database.name}.#{to}"
+        })
+      end
+    end
+
     def assert_collection_exists(op, state = true)
       consume_test_runner(op)
       use_arguments(op) do |args|
