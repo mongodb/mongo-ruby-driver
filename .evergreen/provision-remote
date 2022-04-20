@@ -27,6 +27,8 @@ method="$1"
 # Waiting for previous apt runs:
 # https://askubuntu.com/questions/132059/how-to-make-a-package-manager-wait-if-another-instance-of-apt-is-running
 
+# FIXME: Assumes we are running on ubuntu1804 which is true in Evergreen
+# but not necessarily true in local testing.
 do_ssh "$target" '
   while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock; do
     echo Waiting for existing package manager commands to finish... 1>&2 &&
@@ -39,7 +41,10 @@ do_ssh "$target" '
   else
     sudo apt-get update &&
     sudo env DEBIAN_FRONTEND=noninteractive apt-get -y install rsync psmisc
-  fi
+  fi &&
+  
+  curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/ubuntu1804-python37.tar.xz | \
+    tar xfJ - -C /opt
 '
 
 do_rsync --delete --exclude .git --exclude .env.private\* -a \

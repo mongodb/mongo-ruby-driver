@@ -40,7 +40,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: ['4.0']
       topology: <%= tt %>
-      os: rhel70
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -131,7 +131,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: ["4.0"]
       topology: [replica-set, sharded-cluster]
-      os: rhel70
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -230,7 +230,7 @@ buildvariants:
       ruby: "jruby-9.2"
       mongodb-version: "3.6"
       topology: <%= tt %>
-      os: rhel70
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -426,7 +426,7 @@ buildvariants:
   #  matrix_spec:
   #    # Other Rubies segfault
   #    ruby: [ruby-2.7]
-  #    os: rhel70
+  #    os: ubuntu1804
   #  display_name: "Kerberos integration RHEL ${ruby} ${os}"
   #  tasks:
   #    - name: "test-kerberos-integration"
@@ -439,7 +439,7 @@ buildvariants:
       ruby: "ruby-2.6"
       mongodb-version: "4.2"
       topology: standalone
-      os: rhel70
+      os: ubuntu1804
       auth-and-ssl: kerberos
     display_name: "Kerberos Tests"
     tasks:
