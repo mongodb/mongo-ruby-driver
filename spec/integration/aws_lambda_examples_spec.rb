@@ -40,7 +40,7 @@ describe "AWS Lambda examples in Ruby" do
     # Import the dependency.
     require "mongo"
 
-    # Create a Mongo::Client instance.
+    # Create a Mongo::Client instance using AWS IAM authentication.
     # CRITICAL: You must create client outside the handler so that the client
     # can be reused across function invocations.
     client = Mongo::Client.new([ENV["MONGODB_HOST"]],
