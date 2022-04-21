@@ -23,11 +23,16 @@ describe "AWS Lambda examples in Ruby" do
     end
 
     # End AWS Lambda Example 1
+
+    client.close
   end
 
   it "to the deployment using AWS IAM authentication" do
     allow(ENV).to receive(:[]).and_call_original
     allow(ENV).to receive(:[]).with("MONGODB_HOST").and_return("localhost:2017")
+    allow(ENV).to receive(:[]).with("AWS_ACCESS_KEY_ID").and_return(ENV["MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"])
+    allow(ENV).to receive(:[]).with("AWS_SECRET_ACCESS_KEY").and_return(ENV["MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY"])
+    allow(ENV).to receive(:[]).with("AWS_SESSION_TOKEN").and_return(ENV["MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN"])
     allow(ENV).to receive(:[]).with("MONGODB_DATABASE").and_return("test")
 
     # Start AWS Lambda Example 2
@@ -40,10 +45,10 @@ describe "AWS Lambda examples in Ruby" do
     # can be reused across function invocations.
     client = Mongo::Client.new([ENV["MONGODB_HOST"]],
                                auth_mech: :aws,
-                               user: ENV["MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"],
-                               password: ENV["MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY"],
+                               user: ENV["AWS_ACCESS_KEY_ID"],
+                               password: ENV["AWS_SECRET_ACCESS_KEY"],
                                auth_mech_properties: {
-                                 aws_session_token: ENV["MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN"],
+                                 aws_session_token: ENV["AWS_SESSION_TOKEN"],
                                },
                                database: ENV["MONGODB_DATABASE"])
 
@@ -53,5 +58,7 @@ describe "AWS Lambda examples in Ruby" do
     end
 
     # End AWS Lambda Example 2
+
+    client.close
   end
 end
