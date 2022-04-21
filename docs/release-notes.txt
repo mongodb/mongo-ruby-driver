@@ -20,9 +20,7 @@ its test suite.
 2.18
 ====
 
-This release of the Ruby driver supports MongoDB version 5.2. it also
-deprecates JRuby support. JRuby support will be removed in a future version
-of the driver.
+This release of the Ruby driver supports MongoDB version 5.2.
 
 This release includes the following new features:
 
