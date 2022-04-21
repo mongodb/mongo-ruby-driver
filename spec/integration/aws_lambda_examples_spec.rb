@@ -29,7 +29,7 @@ describe "AWS Lambda examples in Ruby" do
 
   it "to the deployment using AWS IAM authentication" do
     allow(ENV).to receive(:[]).and_call_original
-    allow(ENV).to receive(:[]).with("MONGODB_HOST").and_return("localhost:2017")
+    allow(ENV).to receive(:[]).with("MONGODB_HOST").and_return(SpecConfig.instance.addresses.first)
     allow(ENV).to receive(:[]).with("AWS_ACCESS_KEY_ID").and_return(ENV["MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"])
     allow(ENV).to receive(:[]).with("AWS_SECRET_ACCESS_KEY").and_return(ENV["MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY"])
     allow(ENV).to receive(:[]).with("AWS_SESSION_TOKEN").and_return(ENV["MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN"])
