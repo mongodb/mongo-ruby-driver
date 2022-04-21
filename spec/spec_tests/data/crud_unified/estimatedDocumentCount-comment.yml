@@ -88,7 +88,7 @@ tests:
               commandName: count
               databaseName: *database0Name
 
-  - description: "estimatedDocumentCount with document comment - pre 4.4.13, server error"
+  - description: "estimatedDocumentCount with document comment - pre 4.4.14, server error"
     runOnRequirements:
       - minServerVersion: "3.6.0"
         maxServerVersion: "4.4.13"
@@ -98,7 +98,7 @@ tests:
         arguments:
           # Even though according to the docs count command does not support any
           # comment for server version less than 4.4, no error is raised by such
-          # servers. Therefore, we have only one tests with document comment
+          # servers. Therefore, we have only one test with a document comment
           # to test server errors.
           # https://jira.mongodb.org/browse/SERVER-63315
           # Server supports count with comment of any type for comment starting from 4.4.14.
