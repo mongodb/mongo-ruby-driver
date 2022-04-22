@@ -17,6 +17,12 @@ module Unified
         if comment = args.use('comment')
           opts[:comment] = comment
         end
+        if full_document = args.use('fullDocument')
+          opts[:full_document] = full_document
+        end
+        if full_document_before_change = args.use('fullDocumentBeforeChange')
+          opts[:full_document_before_change] = full_document_before_change
+        end
         cs = object.watch(pipeline, **opts)
         name = op.use!('saveResultAsEntity')
         entities.set(:change_stream, name, cs)

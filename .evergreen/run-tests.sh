@@ -39,15 +39,40 @@ set_home
 set_env_vars
 set_env_ruby
 
+if test "$DOCKER_PRELOAD" != 1; then
+  if test -n "$DOCKER"; then
+    # If we are running in Docker and not preloading, we need to fetch the
+    # Python binary.
+    curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/"$arch"-python37.tar.xz | \
+      tar xfJ - -C /opt
+  fi
+  
+  if test -d /opt/python/3.7/bin; then
+    # Most Evergreen configurations.
+    export PATH=/opt/python/3.7/bin:$PATH
+  elif test -d /opt/python37/bin; then
+    # Configurations that use Docker in Evergreen - these don't preload.
+    export PATH=/opt/python37/bin:$PATH
+  fi
+  
+  python3 -V
+fi
+
 prepare_server $arch
 
-install_mlaunch_virtualenv
+if test "$DOCKER_PRELOAD" != 1; then
+  install_mlaunch_virtualenv
+fi
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
 
 export dbdir="$MONGO_ORCHESTRATION_HOME"/db
 mkdir -p "$dbdir"
+
+if test -z "$TOPOLOGY"; then
+  export TOPOLOGY=standalone
+fi
 
 calculate_server_args
 launch_ocsp_mock
@@ -165,11 +190,39 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
   
-  curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
-  tar xf libmongocrypt-all.tar.gz
+  if test "$FLE" = helper; then
+    gem install libmongocrypt-helper --pre
+  elif test "$FLE" = path; then
+    if false; then
+      # We would ideally like to use the actual libmongocrypt binary here,
+      # however there isn't a straightforward way to obtain a binary that
+      # 1) is of a release version and 2) doesn't contain crypto.
+      # These could be theoretically spelunked out of libmongocrypt's
+      # evergreen tasks.
+      curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+      tar xf libmongocrypt-all.tar.gz
 
-  export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
-  test -f "$LIBMONGOCRYPT_PATH"
+      export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
+    else
+      # So, install the helper for the binary.
+      gem install libmongocrypt-helper --pre
+      
+      # https://stackoverflow.com/questions/19072070/how-to-find-where-gem-files-are-installed
+      path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so |head -1 || true)
+      if test -z "$path"; then
+        echo Failed to find libmongocrypt.so in installed gems 1>&2
+        exit 1
+      fi
+      cp $path .
+      LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
+      
+      gem uni libmongocrypt-helper
+    fi
+    test -f "$LIBMONGOCRYPT_PATH"
+  else
+    echo "Unknown FLE value: $FLE" 1>&2
+    exit 1
+  fi
 
   echo "Waiting for mock KMS servers to start..."
    wait_for_kms_server() {
@@ -286,7 +339,7 @@ if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
-python2 -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
+python3 -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
   # Terminate all kmip servers... and whatever else happens to be running

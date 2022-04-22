@@ -337,8 +337,8 @@ for that Ruby version is deprecated.
      -
      -
      -
-     - D
-     - D
+     - |checkmark|
+     - |checkmark|
      -
 
    * - 2.17
@@ -522,11 +522,6 @@ for that Ruby version is deprecated.
      - |checkmark|
 
 The driver does not support older versions of Ruby.
-
-.. note::
-
-  The JRuby support is deprecated and will be removed in a future version
-  of the driver.
 
 
 Rails/ActiveSupport Compatibility

@@ -16,23 +16,28 @@
 # limitations under the License.
 
 unless ENV['LIBMONGOCRYPT_PATH']
-  # It seems that MRI maintains autoload configuration for a module until
-  # that module is defined, but JRuby removes autoload configuration as soon
-  # as the referenced file is attempted to be loaded, even if the module
-  # never ends up being defined.
-  if BSON::Environment.jruby?
-    module Mongo
-      module Crypt
-        autoload :Binding, 'mongo/crypt/binding'
+  begin
+    require 'libmongocrypt_helper'
+  rescue LoadError => e
+    # It seems that MRI maintains autoload configuration for a module until
+    # that module is defined, but JRuby removes autoload configuration as soon
+    # as the referenced file is attempted to be loaded, even if the module
+    # never ends up being defined.
+    if BSON::Environment.jruby?
+      module Mongo
+        module Crypt
+          autoload :Binding, 'mongo/crypt/binding'
+        end
       end
     end
-  end
 
-  # JRuby 9.3.2.0 replaces a LoadError with our custom message with a
-  # generic NameError, when this load is attempted as part of autoloading
-  # process. JRuby 9.2.20.0 propagates LoadError as expected.
-  raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
-      "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
+    # JRuby 9.3.2.0 replaces a LoadError with our custom message with a
+    # generic NameError, when this load is attempted as part of autoloading
+    # process. JRuby 9.2.20.0 propagates LoadError as expected.
+    raise LoadError, "Cannot load Mongo::Crypt::Binding because there is no path " +
+        "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
+        "and libmongocrypt-helper is not installed: #{e.class}: #{e}"
+  end
 end
 
 require 'ffi'
@@ -53,13 +58,24 @@ module Mongo
     class Binding
       extend FFI::Library
 
-      begin
-        ffi_lib ENV['LIBMONGOCRYPT_PATH']
-      rescue LoadError => e
-        Crypt.reset_autoload
-        raise LoadError, "Cannot load Mongo::Crypt::Binding because the path to " +
-          "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
-          "is invalid: #{ENV['LIBMONGOCRYPT_PATH']}\n\n#{e.class}: #{e.message}"
+      if ENV['LIBMONGOCRYPT_PATH']
+        begin
+          ffi_lib ENV['LIBMONGOCRYPT_PATH']
+        rescue LoadError => e
+          Crypt.reset_autoload
+          raise LoadError, "Cannot load Mongo::Crypt::Binding because the path to " +
+            "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
+            "is invalid: #{ENV['LIBMONGOCRYPT_PATH']}\n\n#{e.class}: #{e.message}"
+        end
+      else
+        begin
+          ffi_lib LibmongocryptHelper.libmongocrypt_path
+        rescue LoadError => e
+          Crypt.reset_autoload
+          raise LoadError, "Cannot load Mongo::Crypt::Binding because the path to " +
+            "libmongocrypt specified in libmongocrypt-helper " +
+            "is invalid: #{LibmongocryptHelper.libmongocrypt_path}\n\n#{e.class}: #{e.message}"
+        end
       end
 
       # @!method self.mongocrypt_version(len)

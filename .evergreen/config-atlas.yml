@@ -739,10 +739,14 @@ axes:
   - id: "fle"
     display_name: FLE
     values:
-      - id: "fle"
-        display_name: FLE
+      - id: "helper"
+        display_name: via LMC helper
         variables:
-          FLE: true
+          FLE: helper
+      - id: "path"
+        display_name: via LMC path
+        variables:
+          FLE: path
 
   - id: ocsp-algorithm
     display_name: OCSP Algorithm
