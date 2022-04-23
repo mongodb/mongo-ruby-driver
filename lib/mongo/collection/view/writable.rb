@@ -155,6 +155,8 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Boolean ] :unset_nil_values Converts $set operations
+        #   with nil values to $unset.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -171,6 +173,8 @@ module Mongo
             end
 
             QueryCache.clear_namespace(collection.namespace)
+
+            convert_set_nil_to_unset(spec) if opts.delete(:unset_nil_values)
 
             cmd = {
               findAndModify: collection.name,
@@ -340,6 +344,8 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Boolean ] :unset_nil_values Converts $set operations
+        #   with nil values to $unset.
         #
         # @return [ Result ] The response from the database.
         #
@@ -356,6 +362,8 @@ module Mongo
             end
 
             QueryCache.clear_namespace(collection.namespace)
+
+            convert_set_nil_to_unset(spec) if opts.delete(:unset_nil_values)
 
             update_doc = {
               Operation::Q => filter,
@@ -409,6 +417,8 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Boolean ] :unset_nil_values Converts $set operations
+        #   with nil values to $unset.
         #
         # @return [ Result ] The response from the database.
         #
@@ -425,6 +435,8 @@ module Mongo
             end
 
             QueryCache.clear_namespace(collection.namespace)
+
+            convert_set_nil_to_unset(spec) if opts.delete(:unset_nil_values)
 
             update_doc = {
               Operation::Q => filter,
@@ -478,6 +490,8 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Boolean ] :unset_nil_values Converts $set operations
+        #   with nil values to $unset.
         #
         # @return [ Result ] The response from the database.
         #
@@ -494,6 +508,8 @@ module Mongo
             end
 
             QueryCache.clear_namespace(collection.namespace)
+
+            convert_set_nil_to_unset(spec) if opts.delete(:unset_nil_values)
 
             update_doc = {
               Operation::Q => filter,
@@ -520,6 +536,24 @@ module Mongo
                 comment: opts[:comment],
               ).execute_with_connection(connection, context: context)
             end
+          end
+        end
+
+        private
+
+        def convert_set_nil_to_unset(spec)
+          sets = spec['$set']
+          unsets = {}
+
+          sets.each do |key, value|
+            next unless value.nil?
+            sets.delete(key)
+            unsets[value] = true
+          end
+
+          if unsets.any?
+            spec['$unset'] ||= {}
+            spec['$unset'].merge!(unsets)
           end
         end
       end
