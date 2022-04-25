@@ -27,7 +27,7 @@ describe "AWS Lambda examples in Ruby" do
   end
 
   context "when using AWS IAM authentication" do
-    require_aws_auth
+    require_auth 'aws-assume-role'
 
     it "connects to the deployment" do
       allow(ENV).to receive(:fetch).and_call_original
