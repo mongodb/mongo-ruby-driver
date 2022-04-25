@@ -33,6 +33,7 @@ describe "AWS Lambda examples in Ruby" do
     allow(ENV).to receive(:fetch).with("AWS_ACCESS_KEY_ID").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"))
     allow(ENV).to receive(:fetch).with("AWS_SECRET_ACCESS_KEY").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY"))
     allow(ENV).to receive(:fetch).with("AWS_SESSION_TOKEN").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN"))
+    allow(ENV).to receive(:fetch).with("MONGODB_DATABASE").and_return("test")
 
     # Start AWS Lambda Example 2
 
@@ -48,7 +49,8 @@ describe "AWS Lambda examples in Ruby" do
                                password: ENV.fetch("AWS_SECRET_ACCESS_KEY"),
                                auth_mech_properties: {
                                  aws_session_token: ENV.fetch("AWS_SESSION_TOKEN"),
-                               })
+                               },
+                               database: ENV.fetch("MONGODB_DATABASE"))
 
     def lambda_handler(event:, context:)
       # Use the client to return the name of the connected database.
