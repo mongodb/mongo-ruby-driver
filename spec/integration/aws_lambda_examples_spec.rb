@@ -28,12 +28,12 @@ describe "AWS Lambda examples in Ruby" do
   end
 
   it "to the deployment using AWS IAM authentication" do
-    allow(ENV).to receive(:[]).and_call_original
-    allow(ENV).to receive(:[]).with("MONGODB_HOST").and_return(SpecConfig.instance.addresses.first)
-    allow(ENV).to receive(:[]).with("AWS_ACCESS_KEY_ID").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"))
-    allow(ENV).to receive(:[]).with("AWS_SECRET_ACCESS_KEY").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY"))
-    allow(ENV).to receive(:[]).with("AWS_SESSION_TOKEN").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN"))
-    allow(ENV).to receive(:[]).with("MONGODB_DATABASE").and_return("test")
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with("MONGODB_HOST").and_return(SpecConfig.instance.addresses.first)
+    allow(ENV).to receive(:fetch).with("AWS_ACCESS_KEY_ID").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"))
+    allow(ENV).to receive(:fetch).with("AWS_SECRET_ACCESS_KEY").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY"))
+    allow(ENV).to receive(:fetch).with("AWS_SESSION_TOKEN").and_return(ENV.fetch("MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN"))
+    allow(ENV).to receive(:fetch).with("MONGODB_DATABASE").and_return("test")
 
     # Start AWS Lambda Example 2
 
@@ -43,7 +43,7 @@ describe "AWS Lambda examples in Ruby" do
     # Create a Mongo::Client instance using AWS IAM authentication.
     # CRITICAL: You must create the client instance outside the handler
     # so that the client can be reused across function invocations.
-    client = Mongo::Client.new([ENV.fetch("MONGODB_HOST"]),
+    client = Mongo::Client.new([ENV.fetch("MONGODB_HOST"),
                                auth_mech: :aws,
                                user: ENV.fetch("AWS_ACCESS_KEY_ID"),
                                password: ENV.fetch("AWS_SECRET_ACCESS_KEY"),
