@@ -280,6 +280,7 @@ module Unified
           filter: spec.use('filter'),
           update: spec.use('update'),
           upsert: spec.use('upsert'),
+          array_filters: spec.use('arrayFilters'),
           hint: spec.use('hint'),
         }
       when 'replaceOne'
