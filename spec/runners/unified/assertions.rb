@@ -243,9 +243,7 @@ module Unified
         case operator
         when '$$unsetOrMatches'
           if actual
-            unless actual == expected_v
-              raise Error::ResultMismatch, "Mismatch for #{msg}: expected #{expected}, have #{actual}"
-            end
+            assert_value_matches(actual, expected_v, msg)
           end
         when '$$matchesHexBytes'
           expected_data = decode_hex_bytes(expected_v)
