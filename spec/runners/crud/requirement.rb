@@ -76,7 +76,7 @@ module Mongo
         cc = ClusterConfig.instance
         ok = true
         if min_server_version
-          ok &&= Gem::Version.new(cc.server_version) >= Gem::Version.new(min_server_version)
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(min_server_version)
         end
         if max_server_version
           ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(max_server_version)
