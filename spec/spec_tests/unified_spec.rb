@@ -6,10 +6,12 @@ require 'spec_helper'
 require 'runners/unified'
 
 base = "#{CURRENT_PATH}/spec_tests/data/unified"
+INVALID_UNIFIED_TESTS = Dir.glob("#{base}/invalid/**/*.yml").sort
 PASS_UNIFIED_TESTS = Dir.glob("#{base}/valid-pass/**/*.yml").sort
 FAIL_UNIFIED_TESTS = Dir.glob("#{base}/valid-fail/**/*.yml").sort
 
 describe 'Unified spec tests' do
+  define_unified_spec_tests(base, INVALID_UNIFIED_TESTS)
   define_unified_spec_tests(base, PASS_UNIFIED_TESTS)
 end
 

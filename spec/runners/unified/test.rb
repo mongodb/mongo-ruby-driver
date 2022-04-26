@@ -156,6 +156,8 @@ module Unified
                   raise NotImplementedError, "Unknown event #{event}"
                 end
               end
+            else
+              subscriber = (@subscribers[client] ||= EventSubscriber.new)
             end
           end
         when 'database'
