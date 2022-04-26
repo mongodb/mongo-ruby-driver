@@ -179,7 +179,8 @@ module Mongo
       #
       # @api private
       def get(**opts)
-        limit = opts[:limit]
+        limit = normalized_limit(opts[:limit])
+
         _namespace_key = namespace_key(**opts)
         _cache_key = cache_key(**opts)
 
@@ -189,7 +190,7 @@ module Mongo
         caching_cursor = namespace_hash[_cache_key]
         return nil unless caching_cursor
 
-        caching_cursor_limit = caching_cursor.view.limit
+        caching_cursor_limit = normalized_limit(caching_cursor.view.limit)
 
         # There are two scenarios in which a caching cursor could fulfill the
         # query:
@@ -199,6 +200,7 @@ module Mongo
         #
         # Otherwise, return nil because the stored cursor will not satisfy
         # the query.
+
         if limit && (caching_cursor_limit.nil? || caching_cursor_limit >= limit)
           caching_cursor
         elsif limit.nil? && caching_cursor_limit.nil?
@@ -206,6 +208,14 @@ module Mongo
         else
           nil
         end
+      end
+
+      def normalized_limit(limit)
+        return nil unless limit
+        # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
+        return nil if limit == 0
+        # For the purposes of caching, a negative limit is the same as as a positive limit.
+        limit.abs
       end
 
       private
@@ -269,6 +279,21 @@ module Mongo
         end
       ensure
         QueryCache.clear
+      end
+
+      # ActiveJob middleware that activates the query cache for each job.
+      module ActiveJob
+        def self.included(base)
+          base.class_eval do
+            around_perform do |_job, block|
+              QueryCache.cache do
+                block.call
+              end
+            ensure
+              QueryCache.clear
+            end
+          end
+        end
       end
     end
   end

@@ -502,6 +502,14 @@ axes:
         display_name: "latest"
         variables:
           MONGODB_VERSION: "latest"
+      - id: "6.0"
+        display_name: "6.0"
+        variables:
+          MONGODB_VERSION: "6.0"
+      - id: "5.2"
+        display_name: "5.2"
+        variables:
+          MONGODB_VERSION: "5.2"
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -892,6 +900,32 @@ buildvariants:
     display_name: "Docker ${os} ${mongodb-version} ${topology} ${ruby} ${preload}"
     tasks:
       - name: "test-docker"
+
+  - matrix_name: "mongo-6.0"
+    matrix_spec:
+      auth-and-ssl: noauth-and-nossl
+      ruby: ["ruby-3.1"]
+      mongodb-version: ['6.0']
+      # Only standalone until mlaunch issue is resolved with replace sets.
+      topology: standalone
+      #topology: ["standalone", "replica-set", "sharded-cluster"]
+      os: ubuntu2004
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "mongo-5.2"
+    matrix_spec:
+      auth-and-ssl: noauth-and-nossl
+      ruby: ["ruby-3.1"]
+      mongodb-version: ['5.2']
+      # Only standalone until mlaunch issue is resolved with replace sets.
+      topology: standalone
+      #topology: ["standalone", "replica-set", "sharded-cluster"]
+      os: ubuntu2004
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
 
   - matrix_name: "mongo-4.2"
     matrix_spec:

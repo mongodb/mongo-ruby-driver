@@ -70,7 +70,7 @@ module Mongo
             # If a query with a limit is performed, the query cache will
             # re-use results from an earlier query with the same or larger
             # limit, and then impose the lower limit during iteration.
-            limit_for_cached_query = respond_to?(:limit) ? limit : nil
+            limit_for_cached_query = respond_to?(:limit) ? QueryCache.normalized_limit(limit) : nil
           end
 
           if block_given?

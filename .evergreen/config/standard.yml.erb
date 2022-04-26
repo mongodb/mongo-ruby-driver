@@ -23,6 +23,34 @@ buildvariants:
     tasks:
       - name: "test-docker"
 
+  - matrix_name: "mongo-6.0"
+    matrix_spec:
+      auth-and-ssl: noauth-and-nossl
+      ruby: ["ruby-3.1"]
+      mongodb-version: ['6.0']
+      # Only standalone until mlaunch issue is resolved with replica sets,
+      # see RUBY-2947.
+      topology: standalone
+      #topology: <%= tt %>
+      os: ubuntu2004
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "mongo-5.2"
+    matrix_spec:
+      auth-and-ssl: noauth-and-nossl
+      ruby: ["ruby-3.1"]
+      mongodb-version: ['5.2']
+      # Only standalone until mlaunch issue is resolved with replica sets,
+      # see RUBY-2947.
+      topology: standalone
+      #topology: <%= tt %>
+      os: ubuntu2004
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
   - matrix_name: "mongo-4.2"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
