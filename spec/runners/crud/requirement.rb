@@ -75,11 +75,11 @@ module Mongo
       def satisfied?
         cc = ClusterConfig.instance
         ok = true
-        if short_min_server_version
-          ok &&= cc.fcv_ish >= short_min_server_version
+        if min_server_version
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(min_server_version)
         end
         if max_server_version
-          ok &&= cc.short_server_version <= max_server_version
+          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(max_server_version)
         end
         if topologies
           ok &&= topologies.include?(cc.topology)
