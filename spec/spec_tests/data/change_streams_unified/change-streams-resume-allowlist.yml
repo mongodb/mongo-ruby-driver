@@ -3,7 +3,9 @@ description: "change-streams-resume-allowlist"
 schemaVersion: "1.7"
 runOnRequirements:
   - minServerVersion: "3.6"
-    topologies: [ replicaset, sharded-replicaset, load-balanced ]
+    # Removed load balanced tests as per RUBY-2952 because they were causing
+    # failures.
+    topologies: [ replicaset, sharded-replicaset ] #, load-balanced ]
 createEntities:
   - client:
       id: &client0 client0
