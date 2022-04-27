@@ -11,6 +11,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          allow_disk_use: args.use('allowDiskUse')
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
