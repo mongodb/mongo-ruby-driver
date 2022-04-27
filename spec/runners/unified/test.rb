@@ -132,11 +132,11 @@ module Unified
 
           create_client(**opts).tap do |client|
             @observe_sensitive = spec.use('observeSensitiveCommands')
+            subscriber = (@subscribers[client] ||= EventSubscriber.new)
             if oe = spec.use('observeEvents')
               oe.each do |event|
                 case event
                 when 'commandStartedEvent', 'commandSucceededEvent', 'commandFailedEvent'
-                  subscriber = (@subscribers[client] ||= EventSubscriber.new)
                   unless client.send(:monitoring).subscribers[Mongo::Monitoring::COMMAND].include?(subscriber)
                     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
                   end
@@ -146,7 +146,6 @@ module Unified
                     subscriber.ignore_commands(ignore_events)
                   end
                 when /\A(?:pool|connection)/
-                  subscriber = (@subscribers[client] ||= EventSubscriber.new)
                   unless client.send(:monitoring).subscribers[Mongo::Monitoring::CONNECTION_POOL]&.include?(subscriber)
                     client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
                   end

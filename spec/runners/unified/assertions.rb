@@ -99,6 +99,12 @@ module Unified
         client = entities.get(:client, client_id)
         subscriber = @subscribers.fetch(client)
         expected_events = spec.use!('events')
+        ignore_extra_events = if ignore = spec.use('ignoreExtraEvents')
+          # Ruby treats 0 as truthy, whereas the spec tests use it as falsy.
+          ignore == 0 ? false : ignore
+        else
+          false
+        end
         actual_events = subscriber.wanted_events(@observe_sensitive)
         case spec.use('eventType')
         when nil, 'command'
@@ -110,7 +116,9 @@ module Unified
             event.class.name.sub(/.*::/, '') =~ /^(?:Pool|Connection)/
           end
         end
-        unless actual_events.length == expected_events.length
+
+        if (!ignore_extra_events && actual_events.length != expected_events.length) ||
+           (ignore_extra_events && actual_events.length < expected_events.length)
           raise Error::ResultMismatch, "Event count mismatch: expected #{expected_events.length}, actual #{actual_events.length}\nExpected: #{expected_events}\nActual: #{actual_events}"
         end
         expected_events.each_with_index do |event, i|
@@ -235,9 +243,7 @@ module Unified
         case operator
         when '$$unsetOrMatches'
           if actual
-            unless actual == expected_v
-              raise Error::ResultMismatch, "Mismatch for #{msg}: expected #{expected}, have #{actual}"
-            end
+            assert_value_matches(actual, expected_v, msg)
           end
         when '$$matchesHexBytes'
           expected_data = decode_hex_bytes(expected_v)
