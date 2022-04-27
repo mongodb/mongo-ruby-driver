@@ -2390,4 +2390,42 @@ describe Mongo::BulkWrite do
       end
     end
   end
+
+  describe ".acknowledged?" do
+    let(:requests) { [ { insert_one: { x: 1 } } ] }
+    let(:options) { {} }
+    let(:bulk_write) do
+      described_class.new(
+        collection,
+        requests,
+        options
+      )
+    end
+    let(:result) { bulk_write.execute }
+
+    context "when using unacknowledged writes with one request" do
+     let(:options) { { write_concern: { w: 0 } } }
+
+      it 'acknowledged? returns false' do
+        expect(result.acknowledged?).to be false
+      end
+    end
+
+    context "when using unacknowledged writes with multiple requests" do
+     let(:options) { { write_concern: { w: 0 } } }
+     let(:requests) { [ { insert_one: { x: 1 } }, { insert_one: { x: 1 } } ] }
+
+      it 'acknowledged? returns false' do
+        expect(result.acknowledged?).to be false
+      end
+    end
+
+    context "when not using unacknowledged writes" do
+      let(:options) { { write_concern: { w: 1 } } }
+
+      it 'acknowledged? returns true' do
+        expect(result.acknowledged?).to be true
+      end
+    end
+  end
 end

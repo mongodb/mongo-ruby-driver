@@ -23,6 +23,11 @@ module Mongo
     # @since 2.0.6
     class Result
 
+      # @return [ Boolean ] Is the result acknowledged?
+      def acknowledged?
+        @acknowledged
+      end
+
       # Constant for number removed.
       #
       # @since 2.1.0
@@ -96,8 +101,11 @@ module Mongo
       # @param [ BSON::Document, Hash ] results The results document.
       #
       # @since 2.1.0
-      def initialize(results)
+      #
+      # @api private
+      def initialize(results, acknowledged)
         @results = results
+        @acknowledged = acknowledged
       end
 
       # Returns the number of documents inserted.
