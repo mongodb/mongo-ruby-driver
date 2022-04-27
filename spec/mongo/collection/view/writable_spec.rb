@@ -976,7 +976,7 @@ describe Mongo::Collection::View::Writable do
 
           it 'raises a client-side error' do
             expect do
-              view.delete_many(hint: '_id_')
+              view.delete_one(hint: '_id_')
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
           end
         end
@@ -986,7 +986,7 @@ describe Mongo::Collection::View::Writable do
 
           it 'raises a client-side error' do
             expect do
-              view.delete_many(hint: '_id_')
+              view.delete_one(hint: '_id_')
             end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
           end
         end
@@ -1173,22 +1173,22 @@ describe Mongo::Collection::View::Writable do
           client[authorized_collection.name]
         end
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
+        context "on 4.2+ servers" do
+          min_server_version '4.2'
 
           it 'raises a client-side error' do
             expect do
-              view.delete_many(hint: '_id_')
+              view.replace_one({ field: 'testing' }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
           end
         end
 
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
+        context "on <=4.0 servers" do
+          max_server_version '4.0'
 
           it 'raises a client-side error' do
             expect do
-              view.delete_many(hint: '_id_')
+              view.replace_one({ field: 'testing' }, { hint: '_id_' })
             end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
           end
         end
@@ -1444,23 +1444,22 @@ describe Mongo::Collection::View::Writable do
           client[authorized_collection.name]
         end
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
+        context "on 4.2+ servers" do
+          min_server_version '4.2'
 
           it 'raises a client-side error' do
             expect do
-              bulk_write.execute
-              view.delete_many(hint: '_id_')
+              view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
           end
         end
 
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
+        context "on <=4.0 servers" do
+          max_server_version '4.0'
 
           it 'raises a client-side error' do
             expect do
-              view.delete_many(hint: '_id_')
+              view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
             end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
           end
         end
@@ -1722,8 +1721,8 @@ describe Mongo::Collection::View::Writable do
           client[authorized_collection.name]
         end
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
+        context "on 4.2+ servers" do
+          min_server_version '4.2'
 
           it 'raises a client-side error' do
             expect do
@@ -1732,8 +1731,8 @@ describe Mongo::Collection::View::Writable do
           end
         end
 
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
+        context "on <=4.0 servers" do
+          max_server_version '4.0'
 
           it 'raises a client-side error' do
             expect do
