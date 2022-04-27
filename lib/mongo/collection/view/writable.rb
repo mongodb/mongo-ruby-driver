@@ -196,6 +196,7 @@ module Mongo
               if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
                 raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
               end
+
               Operation::WriteCommand.new(
                 selector: cmd,
                 db_name: database.name,
@@ -295,9 +296,6 @@ module Mongo
             else
               write_concern_with_session(session)
             end
-            if opts[:hint] && write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -310,6 +308,11 @@ module Mongo
 
             context = Operation::Context.new(client: client, session: session)
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+              gte_4_4 = connection.server.description.server_version_gte?('4.4')
+              if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+              end
+
               Operation::Delete.new(
                 deletes: [ delete_doc ],
                 db_name: collection.database.name,
@@ -358,9 +361,6 @@ module Mongo
             else
               write_concern_with_session(session)
             end
-            if opts[:hint] && write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -377,6 +377,11 @@ module Mongo
 
             context = Operation::Context.new(client: client, session: session)
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+              gte_4_2 = connection.server.description.server_version_gte?('4.2')
+              if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+              end
+
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -427,9 +432,6 @@ module Mongo
             else
               write_concern_with_session(session)
             end
-            if opts[:hint] && write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -447,6 +449,11 @@ module Mongo
 
             context = Operation::Context.new(client: client, session: session)
             nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+              gte_4_2 = connection.server.description.server_version_gte?('4.2')
+              if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+              end
+
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -496,9 +503,6 @@ module Mongo
             else
               write_concern_with_session(session)
             end
-            if opts[:hint] && write_concern && !write_concern.acknowledged?
-              raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -515,6 +519,11 @@ module Mongo
 
             context = Operation::Context.new(client: client, session: session)
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+              gte_4_2 = connection.server.description.server_version_gte?('4.2')
+              if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+              end
+
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,

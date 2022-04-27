@@ -199,7 +199,12 @@ module Unified
               if k.start_with?('$$')
                 assert_value_matches(actual, expected, k)
               else
-                actual_v = actual[k]
+                actual_v = if Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
+                  fun_map = { "acknowledged" => :acknowledged? }
+                  actual.send(fun_map.fetch(k, k))
+                else
+                  actual[k]
+                end
                 if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
                   assert_value_matches(actual_v, expected_v, k)
                 else
@@ -231,7 +236,7 @@ module Unified
       ok = case type
       when 'object'
         Hash === object
-      when %w(int long)
+      when 'int', 'long'
         Integer === object || BSON::Int32 === object || BSON::Int64 === object
       when 'objectId'
         BSON::ObjectId === object
@@ -254,7 +259,7 @@ module Unified
         case operator
         when '$$unsetOrMatches'
           if actual
-            assert_value_matches(actual, expected_v, msg)
+            assert_matches(actual, expected_v, msg)
           end
         when '$$matchesHexBytes'
           expected_data = decode_hex_bytes(expected_v)
