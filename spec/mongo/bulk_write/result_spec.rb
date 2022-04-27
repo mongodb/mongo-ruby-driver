@@ -125,7 +125,7 @@ describe Mongo::BulkWrite::Result do
     end
   end
 
-  describe ".acknowledged?" do
+  describe "#acknowledged?" do
 
     [true, false].each do |b|
       context "when acknowledged is passed as #{b}" do

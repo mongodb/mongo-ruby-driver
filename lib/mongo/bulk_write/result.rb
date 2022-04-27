@@ -99,6 +99,7 @@ module Mongo
       #   Result.new({ 'n_inserted' => 10 })
       #
       # @param [ BSON::Document, Hash ] results The results document.
+      # @param [ Boolean ] acknowledged Is the result acknowledged?
       #
       # @since 2.1.0
       #

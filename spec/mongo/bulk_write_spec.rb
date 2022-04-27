@@ -2391,7 +2391,7 @@ describe Mongo::BulkWrite do
     end
   end
 
-  describe ".acknowledged?" do
+  describe "#acknowledged?" do
     let(:requests) { [ { insert_one: { x: 1 } } ] }
     let(:options) { {} }
     let(:bulk_write) do
