@@ -160,7 +160,7 @@ module Mongo
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
-        # @return [ BSON::Document ] The document.
+        # @return [ BSON::Document | nil ] The document or nil if none is found.
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})

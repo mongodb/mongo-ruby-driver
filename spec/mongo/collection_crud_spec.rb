@@ -4380,7 +4380,7 @@ describe Mongo::Collection do
     end
 
     it 'does not raise an exception' do
-      expect(result.inserted_count).to be(0)
+      expect(result).to be_nil
     end
   end
 end
