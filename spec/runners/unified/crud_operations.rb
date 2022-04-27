@@ -77,6 +77,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym
@@ -96,6 +97,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -111,6 +113,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -154,6 +157,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -168,6 +172,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         collection.update_many(args.use!('filter'), args.use!('update'), **opts)
       end
@@ -181,7 +186,8 @@ module Unified
           args.use!('replacement'),
           comment: args.use('comment'),
           upsert: args.use('upsert'),
-          let: args.use('let')
+          let: args.use('let'),
+          hint: args.use('hint')
         )
       end
     end
@@ -192,6 +198,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -206,6 +213,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          hint: args.use('hint'),
         }
         collection.delete_many(args.use!('filter'), **opts)
       end
@@ -272,16 +280,19 @@ module Unified
           filter: spec.use('filter'),
           update: spec.use('update'),
           upsert: spec.use('upsert'),
+          hint: spec.use('hint'),
         }
       when 'replaceOne'
         {
           filter: spec.use('filter'),
           replacement: spec.use('replacement'),
           upsert: spec.use('upsert'),
+          hint: spec.use('hint'),
         }
       when 'deleteOne', 'deleteMany'
         {
           filter: spec.use('filter'),
+          hint: spec.use('hint'),
         }
       else
         raise NotImplementedError, "Unknown operation #{op}"

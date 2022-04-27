@@ -276,7 +276,8 @@ module Mongo
 
     def validate_hint!(connection)
       if op_combiner.has_hint?
-        if write_concern && !write_concern.acknowledged?
+        gte_4_4 = connection.server.description.server_version_gte?('4.4')
+        if !gte_4_4 && write_concern && !write_concern.acknowledged?
           raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
         elsif !connection.features.update_delete_option_validation_enabled?
           raise Error::UnsupportedOption.hint_error

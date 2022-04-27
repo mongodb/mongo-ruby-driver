@@ -163,8 +163,12 @@ module Unified
     end
 
     def assert_matches(actual, expected, msg)
-      if actual.nil? && !expected.nil?
-        raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
+      if actual.nil?
+        if expected_result.key?("$$unsetOrMatches")
+          return
+        elsif !expected.nil?
+          raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
+        end
       end
 
       case expected
@@ -216,6 +220,14 @@ module Unified
     end
 
     def assert_type(object, type)
+      ok = [*type].reduce(false) { |acc, x| acc || assert_single_type(object, x) }
+
+      unless ok
+        raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
+      end
+    end
+
+    def assert_single_type(object, type)
       ok = case type
       when 'object'
         Hash === object
@@ -227,11 +239,10 @@ module Unified
         Time === object
       when 'double'
         Float === object
+      when 'string'
+        String === object
       else
         raise NotImplementedError, "Unhandled type #{type}"
-      end
-      unless ok
-        raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
       end
     end
 

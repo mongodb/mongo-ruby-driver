@@ -333,8 +333,10 @@ module Unified
         else
           result = send(method_name, op)
           if expected_result = op.use('expectResult')
-            if result.nil? && !expected_result.empty?
-              raise Error::ResultMismatch, "Actual result nil but expected result #{expected_result}"
+            if result.nil? && expected_result.key?("$$unsetOrMatches")
+              return
+            elsif result.nil? && !expected_result.empty?
+              raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
             elsif Array === expected_result
               assert_documents_match(result, expected_result)
             else
