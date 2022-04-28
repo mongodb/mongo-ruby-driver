@@ -11,6 +11,7 @@ module Unified
         opts = {
           let: args.use('let'),
           comment: args.use('comment'),
+          allow_disk_use: args.use('allowDiskUse'),
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -280,6 +281,7 @@ module Unified
           filter: spec.use('filter'),
           update: spec.use('update'),
           upsert: spec.use('upsert'),
+          array_filters: spec.use('arrayFilters'),
           hint: spec.use('hint'),
         }
       when 'replaceOne'
