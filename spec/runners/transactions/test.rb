@@ -43,7 +43,7 @@ module Mongo
       def initialize(crud_spec, data, test)
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
-        @data = data
+        @data = data || []
         @description = test['description']
         @client_options = {
           # Disable legacy read & write retries, so that when spec tests
