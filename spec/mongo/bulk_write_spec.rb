@@ -434,8 +434,8 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                context "on 4.4+ servers" do
-                  min_server_version '4.4'
+                context "on 4.2+ servers" do
+                  min_server_version '4.2'
 
                   it 'raises a client-side error' do
                     expect do
@@ -445,7 +445,7 @@ describe Mongo::BulkWrite do
                 end
 
                 context "on <=4.2 servers" do
-                  max_server_version '4.2'
+                  max_server_version '4.0'
 
                   it 'raises a client-side error' do
                     expect do
@@ -530,8 +530,8 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                context "on 4.4+ servers" do
-                  min_server_version '4.4'
+                context "on 4.2+ servers" do
+                  min_server_version '4.2'
 
                   it 'raises a client-side error' do
                     expect do
@@ -540,8 +540,8 @@ describe Mongo::BulkWrite do
                   end
                 end
 
-                context "on <=4.2 servers" do
-                  max_server_version '4.2'
+                context "on <=4.0 servers" do
+                  max_server_version '4.0'
 
                   it 'raises a client-side error' do
                     expect do
@@ -1161,8 +1161,8 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              context "on 4.4+ servers" do
-                min_server_version '4.4'
+              context "on 4.2+ servers" do
+                min_server_version '4.2'
 
                 it 'raises a client-side error' do
                   expect do
@@ -1171,8 +1171,8 @@ describe Mongo::BulkWrite do
                 end
               end
 
-              context "on <=4.2 servers" do
-                max_server_version '4.2'
+              context "on <=4.0 servers" do
+                max_server_version '4.0'
 
                 it 'raises a client-side error' do
                   expect do
