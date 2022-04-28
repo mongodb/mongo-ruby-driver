@@ -164,7 +164,7 @@ module Unified
 
     def assert_matches(actual, expected, msg)
       if actual.nil?
-        if expected_result.key?("$$unsetOrMatches")
+        if expected.keys == ["$$unsetOrMatches"]
           return
         elsif !expected.nil?
           raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"

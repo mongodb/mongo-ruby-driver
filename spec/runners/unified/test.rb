@@ -333,7 +333,7 @@ module Unified
         else
           result = send(method_name, op)
           if expected_result = op.use('expectResult')
-            if result.nil? && expected_result.key?("$$unsetOrMatches")
+            if result.nil? && expected_result.keys == ["$$unsetOrMatches"]
               return
             elsif result.nil? && !expected_result.empty?
               raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
