@@ -52,7 +52,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.4+ servers" do
           min_server_version '4.4'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.find_one_and_delete(hint: '_id_')
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -286,7 +286,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.4+ servers" do
           min_server_version '4.4'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -543,7 +543,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.4+ servers" do
           min_server_version '4.4'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -773,7 +773,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.4+ servers" do
           min_server_version '4.4'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.delete_many(hint: '_id_')
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -974,7 +974,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.4+ servers" do
           min_server_version '4.4'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.delete_one(hint: '_id_')
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -1176,7 +1176,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.2+ servers" do
           min_server_version '4.2'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.replace_one({ field: 'testing' }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -1447,7 +1447,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.2+ servers" do
           min_server_version '4.2'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -1724,7 +1724,7 @@ describe Mongo::Collection::View::Writable do
         context "on 4.2+ servers" do
           min_server_version '4.2'
 
-          it 'raises a client-side error' do
+          it "doesn't raise an error" do
             expect do
               view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
             end.to_not raise_error(Mongo::Error::UnsupportedOption)

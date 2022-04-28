@@ -276,7 +276,7 @@ module Mongo
 
     def validate_hint!(connection)
       if op_combiner.has_hint?
-        if !can_hint(connection) && write_concern && !write_concern.acknowledged?
+        if !can_hint?(connection) && write_concern && !write_concern.acknowledged?
           raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
         elsif !connection.features.update_delete_option_validation_enabled?
           raise Error::UnsupportedOption.hint_error
@@ -297,7 +297,7 @@ module Mongo
     #
     # @return [ true | false ] Whether the request is able to send hints for
     #   the current server version.
-    def can_hint(connection)
+    def can_hint?(connection)
       gte_4_2 = connection.server.description.server_version_gte?('4.2')
       gte_4_4 = connection.server.description.server_version_gte?('4.4')
       op_combiner.requests.all? do |req|

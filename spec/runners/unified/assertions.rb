@@ -225,14 +225,14 @@ module Unified
     end
 
     def assert_type(object, type)
-      ok = [*type].reduce(false) { |acc, x| acc || assert_single_type(object, x) }
+      ok = [*type].reduce(false) { |acc, x| acc || check_single_type(object, x) }
 
       unless ok
         raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
       end
     end
 
-    def assert_single_type(object, type)
+    def check_single_type(object, type)
       ok = case type
       when 'object'
         Hash === object

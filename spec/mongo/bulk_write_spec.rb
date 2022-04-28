@@ -260,7 +260,7 @@ describe Mongo::BulkWrite do
               context "on 4.4+ servers" do
                 min_server_version '4.4'
 
-                it 'raises a client-side error' do
+                it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
                   end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -437,7 +437,7 @@ describe Mongo::BulkWrite do
                 context "on 4.2+ servers" do
                   min_server_version '4.2'
 
-                  it 'raises a client-side error' do
+                  it "doesn't raises an error" do
                     expect do
                       bulk_write.execute
                     end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -533,7 +533,7 @@ describe Mongo::BulkWrite do
                 context "on 4.2+ servers" do
                   min_server_version '4.2'
 
-                  it 'raises a client-side error' do
+                  it "doesn't raises an error" do
                     expect do
                       bulk_write.execute
                     end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -832,7 +832,7 @@ describe Mongo::BulkWrite do
               context "on 4.4+ servers" do
                 min_server_version '4.4'
 
-                it 'raises a client-side error' do
+                it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
                   end.to_not raise_error(Mongo::Error::UnsupportedOption)
@@ -1164,7 +1164,7 @@ describe Mongo::BulkWrite do
               context "on 4.2+ servers" do
                 min_server_version '4.2'
 
-                it 'raises a client-side error' do
+                it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
                   end.to_not raise_error(Mongo::Error::UnsupportedOption)
