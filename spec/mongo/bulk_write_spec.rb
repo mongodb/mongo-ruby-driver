@@ -257,10 +257,24 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              it 'raises a client-side error' do
-                expect do
-                  bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+              context "on 4.4+ servers" do
+                min_server_version '4.4'
+
+                it "doesn't raises an error" do
+                  expect do
+                    bulk_write.execute
+                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                end
+              end
+
+              context "on <=4.2 servers" do
+                max_server_version '4.2'
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                end
               end
             end
 
@@ -420,10 +434,24 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                it 'raises a client-side error' do
-                  expect do
-                    bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                context "on 4.2+ servers" do
+                  min_server_version '4.2'
+
+                  it "doesn't raises an error" do
+                    expect do
+                      bulk_write.execute
+                    end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end
+                end
+
+                context "on <=4.2 servers" do
+                  max_server_version '4.0'
+
+                  it 'raises a client-side error' do
+                    expect do
+                      bulk_write.execute
+                    end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                  end
                 end
               end
             end
@@ -502,10 +530,24 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                it 'raises a client-side error' do
-                  expect do
-                    bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                context "on 4.2+ servers" do
+                  min_server_version '4.2'
+
+                  it "doesn't raises an error" do
+                    expect do
+                      bulk_write.execute
+                    end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end
+                end
+
+                context "on <=4.0 servers" do
+                  max_server_version '4.0'
+
+                  it 'raises a client-side error' do
+                    expect do
+                      bulk_write.execute
+                    end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                  end
                 end
               end
             end
@@ -787,10 +829,24 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              it 'raises a client-side error' do
-                expect do
-                  bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+              context "on 4.4+ servers" do
+                min_server_version '4.4'
+
+                it "doesn't raises an error" do
+                  expect do
+                    bulk_write.execute
+                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                end
+              end
+
+              context "on <=4.2 servers" do
+                max_server_version '4.2'
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                end
               end
             end
           end
@@ -1105,10 +1161,24 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              it 'raises a client-side error' do
-                expect do
-                  bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+              context "on 4.2+ servers" do
+                min_server_version '4.2'
+
+                it "doesn't raises an error" do
+                  expect do
+                    bulk_write.execute
+                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                end
+              end
+
+              context "on <=4.0 servers" do
+                max_server_version '4.0'
+
+                it 'raises a client-side error' do
+                  expect do
+                    bulk_write.execute
+                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                end
               end
             end
           end

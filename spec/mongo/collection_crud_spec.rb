@@ -4362,4 +4362,25 @@ describe Mongo::Collection do
       end
     end
   end
+
+  context 'when unacknowledged writes is used on find_one_and_update' do
+
+    let(:selector) do
+      { name: 'BANG' }
+    end
+
+    let(:collection_with_unacknowledged_write_concern) do
+      authorized_collection.with(write: { w: 0 })
+    end
+
+    let(:result) do
+      collection_with_unacknowledged_write_concern.find_one_and_update(selector,
+        { '$set' => { field: 'testing' }},
+        write_concern: { w: 0 })
+    end
+
+    it 'does not raise an exception' do
+      expect(result).to be_nil
+    end
+  end
 end

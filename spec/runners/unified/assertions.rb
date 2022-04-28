@@ -163,8 +163,12 @@ module Unified
     end
 
     def assert_matches(actual, expected, msg)
-      if actual.nil? && !expected.nil?
-        raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
+      if actual.nil?
+        if expected.keys == ["$$unsetOrMatches"]
+          return
+        elsif !expected.nil?
+          raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
+        end
       end
 
       case expected
@@ -195,7 +199,12 @@ module Unified
               if k.start_with?('$$')
                 assert_value_matches(actual, expected, k)
               else
-                actual_v = actual[k]
+                actual_v = if Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
+                  fun_map = { "acknowledged" => :acknowledged? }
+                  actual.send(fun_map.fetch(k, k))
+                else
+                  actual[k]
+                end
                 if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
                   assert_value_matches(actual_v, expected_v, k)
                 else
@@ -216,10 +225,18 @@ module Unified
     end
 
     def assert_type(object, type)
+      ok = [*type].reduce(false) { |acc, x| acc || type_matches?(object, x) }
+
+      unless ok
+        raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
+      end
+    end
+
+    def type_matches?(object, type)
       ok = case type
       when 'object'
         Hash === object
-      when %w(int long)
+      when 'int', 'long'
         Integer === object || BSON::Int32 === object || BSON::Int64 === object
       when 'objectId'
         BSON::ObjectId === object
@@ -227,11 +244,10 @@ module Unified
         Time === object
       when 'double'
         Float === object
+      when 'string'
+        String === object
       else
         raise NotImplementedError, "Unhandled type #{type}"
-      end
-      unless ok
-        raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
       end
     end
 
@@ -243,7 +259,7 @@ module Unified
         case operator
         when '$$unsetOrMatches'
           if actual
-            assert_value_matches(actual, expected_v, msg)
+            assert_matches(actual, expected_v, msg)
           end
         when '$$matchesHexBytes'
           expected_data = decode_hex_bytes(expected_v)
