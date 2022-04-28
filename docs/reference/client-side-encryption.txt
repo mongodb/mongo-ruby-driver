@@ -170,7 +170,7 @@ in order to perform automatic encryption.
   # Use an instance of Mongo::ClientEncryption to create a new data key
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
-    key_vault_namespace: 'admin.datakeys',
+    key_vault_namespace: 'encryption.__keyVault',
     kms_providers: kms_providers
   )
 
@@ -201,7 +201,7 @@ in order to perform automatic encryption.
   client = Mongo::Client.new(
     ['localhost:27017'],
     auto_encryption_options: {
-      key_vault_namespace: 'admin.datakeys',
+      key_vault_namespace: 'encryption.__keyVault',
       kms_providers: kms_providers,
       schema_map: schema_map
     }
@@ -278,7 +278,7 @@ in order to perform explicit encryption.
   # Use an instance of Mongo::ClientEncryption to create a new data key
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
-    key_vault_namespace: 'admin.datakeys',
+    key_vault_namespace: 'encryption.__keyVault',
     kms_providers: kms_providers
   )
 
@@ -391,7 +391,7 @@ key with the following code snippet:
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
     # Replace with the database and collection names for your key vault collection
-    key_vault_namespace: 'admin.datakeys',
+    key_vault_namespace: 'encryption.__keyVault',
     kms_providers: {
       local: {
         key: local_master_key
@@ -445,7 +445,7 @@ certificate and private key to authenticate to KMIP server.
   client_encryption = Mongo::ClientEncryption.new(
     key_vault_client,
     # Replace with the database and collection names for your key vault collection
-    key_vault_namespace: 'admin.datakeys',
+    key_vault_namespace: 'encryption.__keyVault',
     kms_providers: {
       aws: {
         access_key_id: 'IAM-ACCESS-KEY-ID',
@@ -558,13 +558,13 @@ to insert and fetch data keys.
 The key vault namespace is a ``String`` in the format ``"database_name.collection_name"``,
 where ``database_name`` and ``collection_name`` are the name of the database and
 collection in which you would like to store your data keys. For example, if your data
-keys are stored in the ``admin`` database in the ``datakeys`` collection:
+keys are stored in the ``encryption`` database in the ``__keyVault`` collection:
 
 .. code-block:: ruby
 
   Mongo::Client.new(['localhost:27017],
     auto_encryption_options: {
-      key_vault_namespace: 'admin.datakeys',
+      key_vault_namespace: 'encryption.__keyVault',
       # ... (Fill in other options here)
     }
   )
@@ -579,7 +579,7 @@ A Hash that contains KMP provider names as keys, and provider options as values.
 
   Mongo::Client.new(['localhost:27017],
     auto_encryption_options: {
-      key_vault_namespace: 'admin.datakeys',
+      key_vault_namespace: 'encryption.__keyVault',
       kms_providers: {
         aws: {
           access_key_id: 'IAM-ACCESS-KEY-ID',
@@ -598,7 +598,7 @@ corresponding providers.
 
   Mongo::Client.new(['localhost:27017],
     auto_encryption_options: {
-      key_vault_namespace: 'admin.datakeys',
+      key_vault_namespace: 'encryption.__keyVault',
       kms_providers: {
         kmip: {
           endpoint: 'KMIP-SERVER-HOST'
