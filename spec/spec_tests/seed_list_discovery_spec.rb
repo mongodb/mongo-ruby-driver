@@ -5,6 +5,7 @@ require 'lite_spec_helper'
 
 require 'support/using_hash'
 require 'runners/connection_string'
+require 'mrss/lite_constraints'
 
 SEED_LIST_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/seed_list_discovery/**/*.yml").sort
 
@@ -23,6 +24,7 @@ describe 'DNS Seedlist Discovery' do
 
       if test.raise_error?
         context 'the uri is invalid' do
+          retry_test
 
           let(:valid_errors) do
             [
@@ -43,6 +45,7 @@ describe 'DNS Seedlist Discovery' do
             ex
           end
 
+          # In Evergreen sometimes this test fails intermittently.
           it 'raises an error' do
             expect(valid_errors).to include(error.class)
           end
@@ -51,7 +54,8 @@ describe 'DNS Seedlist Discovery' do
       else
 
         context 'the uri is valid' do
-
+          retry_test
+          # In Evergreen sometimes this test fails intermittently.
           it 'does not raise an exception' do
             expect(test.uri).to be_a(Mongo::URI::SRVProtocol)
           end

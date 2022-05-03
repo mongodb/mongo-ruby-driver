@@ -5,7 +5,8 @@ require 'spec_helper'
 
 # this test performs direct network connections without retries.
 # In case of intermittent network issues, retry the entire failing test.
-describe Mongo::Socket::SSL, retry: 3 do
+describe Mongo::Socket::SSL do
+  retry_test
   clean_slate_for_all
   require_tls
 

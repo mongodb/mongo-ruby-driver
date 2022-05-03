@@ -447,7 +447,8 @@ describe Mongo::Client do
             end.should_not raise_error
           end
 
-          it 'fails operations due to very small timeout', retry: 3 do
+          retry_test
+          it 'fails operations due to very small timeout' do
             lambda do
               client.database.command(ping: 1)
             end.should raise_error(Mongo::Error::SocketTimeoutError)
