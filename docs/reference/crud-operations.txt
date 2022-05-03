@@ -360,6 +360,15 @@ Additional Query Operations
   Note that unlike ``count_documents``, ``estimated_document_count`` does not
   accept a filter.
 
+  The ``count`` server command is used to implement ``estimated_document_count``.
+  More information can be found via `Count: Behavior <https://www.mongodb.com/docs/manual/reference/command/count/#behavior>`_.
+
+  Due to an oversight in MongoDB versions 5.0.0-5.0.7, the ``count`` command,
+  which ``estimated_document_count`` uses in its implementation, was not
+  included in v1 of the Stable API. Therefore, users of the Stable API with
+  ``estimated_document_count`` are recommended to upgrade their server version to
+  5.0.8+ or set ``api_strict: false`` to avoid encountering errors.
+
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')

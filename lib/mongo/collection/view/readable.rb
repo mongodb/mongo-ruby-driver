@@ -265,24 +265,11 @@ module Mongo
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
               context = Operation::Context.new(client: client, session: session)
-              if server.description.server_version_gte?('5.0')
-                pipeline = [
-                  {'$collStats' => {'count' => {}}},
-                  {'$group' => {'_id' => 1, 'n' => {'$sum' => '$count'}}},
-                ]
-                spec = Builder::Aggregation.new(
-                  pipeline,
-                  self,
-                  options.merge(session: session)
-                ).specification
-                result = Operation::Aggregate.new(spec).execute(server, context: context)
-                result.documents.first.fetch('n')
-              else
-                cmd = { count: collection.name }
-                cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-                if read_concern
-                  cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
-                    read_concern)
+              cmd = { count: collection.name }
+              cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
+              if read_concern
+                cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+                  read_concern)
                 end
                 result = Operation::Count.new(
                   selector: cmd,
@@ -294,7 +281,6 @@ module Mongo
                 result.n.to_i
               end
             end
-          end
         rescue Error::OperationFailure => exc
           if exc.code == 26
             # NamespaceNotFound
