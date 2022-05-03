@@ -1,5 +1,10 @@
 description: "change-streams-errors"
+
 schemaVersion: "1.7"
+
+runOnRequirements:
+  - serverless: forbid
+
 createEntities:
   - client:
       id: &client0 client0
@@ -69,7 +74,9 @@ tests:
   - description: Change Stream should error when _id is projected out
     runOnRequirements:
       - minServerVersion: "4.1.11"
-        topologies: [ replicaset, sharded-replicaset ]
+        # Removed load balanced tests as per RUBY-2952 because they were causing
+        # failures.
+        topologies: [ replicaset, sharded-replicaset ] #, load-balanced ]
     operations:
       - name: createChangeStream
         object: *collection0
