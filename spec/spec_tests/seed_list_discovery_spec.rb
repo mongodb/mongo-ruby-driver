@@ -82,8 +82,6 @@ describe 'DNS Seedlist Discovery' do
           end
 
           if test.expected_options
-            # In Evergreen sometimes this test fails intermittently.
-            retry_test
             it 'creates a client with the correct uri options' do
               mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
               # Connection string spec tests do not use canonical URI option names
