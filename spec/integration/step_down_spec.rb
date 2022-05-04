@@ -166,7 +166,6 @@ describe 'Step down behavior' do
 
         expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
 
-
         expect do
           collection.insert_one(test: 1)
         end.to_not raise_error
