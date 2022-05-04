@@ -134,10 +134,14 @@ describe 'Step down behavior' do
     end
 
     let(:fail_point) do
-      { configureFailPoint: 'failCommand', data: {
-        # There is currently no way to turn write retries on not master
-        # errors off - therefore set the number of fails to 2
-        failCommands: ['insert'], errorCode: fail_point_code, }, mode: {times: 2} }
+      {
+        configureFailPoint: 'failCommand',
+        data: {
+          failCommands: ['insert'],
+          errorCode: fail_point_code,
+        },
+        mode: { times: 1 }
+      }
     end
 
     before do
@@ -165,6 +169,10 @@ describe 'Step down behavior' do
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
         expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
+
+        expect do
+          collection.insert_one(test: 1)
+        end.to_not raise_error
       end
     end
 
@@ -184,6 +192,10 @@ describe 'Step down behavior' do
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
         expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+
+        expect do
+          collection.insert_one(test: 1)
+        end.to_not raise_error
       end
     end
 
@@ -201,6 +213,10 @@ describe 'Step down behavior' do
         end.to raise_error(Mongo::Error::OperationFailure, /11600/)
 
         expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+
+        expect do
+          collection.insert_one(test: 1)
+        end.to_not raise_error
       end
     end
   end
