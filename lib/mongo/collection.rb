@@ -101,6 +101,8 @@ module Mongo
     #   after how many seconds old time-series data should be deleted.
     # @options clustered_index [ Hash ] :clustered_index Create a clustered index.
     #   This option specifies how this collection should be clustered on _id.
+    #   See https://www.mongodb.com/docs/v5.3/reference/method/db.createCollection/#std-label-db.createCollection.clusteredIndex
+    #   for more information about this option.
     #
     # @since 2.0.0
     def initialize(database, name, options = {})
