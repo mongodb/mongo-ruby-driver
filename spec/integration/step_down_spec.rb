@@ -134,10 +134,14 @@ describe 'Step down behavior' do
     end
 
     let(:fail_point) do
-      { configureFailPoint: 'failCommand', data: {
-        # There is currently no way to turn write retries on not master
-        # errors off - therefore set the number of fails to 2
-        failCommands: ['insert'], errorCode: fail_point_code, }, mode: {times: 1} }
+      {
+        configureFailPoint: 'failCommand',
+        data: {
+          failCommands: ['insert'],
+          errorCode: fail_point_code,
+        },
+        mode: { times: 1 }
+      }
     end
 
     before do
