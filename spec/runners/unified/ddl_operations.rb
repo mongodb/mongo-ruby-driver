@@ -30,6 +30,9 @@ module Unified
         if expire_after_seconds = args.use('expireAfterSeconds')
           collection_opts[:expire_after] = expire_after_seconds
         end
+        if clustered_index = args.use('clusteredIndex')
+          collection_opts[:clustered_index] = clustered_index
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
@@ -40,6 +43,9 @@ module Unified
         opts = {}
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
+        end
+        if filter = args.use('filter')
+          opts[:filter] = filter
         end
         database.list_collections(**opts)
       end
