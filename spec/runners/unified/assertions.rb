@@ -139,6 +139,9 @@ module Unified
       if spec.use('hasServiceId')
         actual.service_id.should_not be nil
       end
+      if spec.use('hasServerConnectionId')
+        actual.server_connection_id.should_not be nil
+      end
       if db_name = spec.use('databaseName')
         assert_eq(actual.database_name, db_name, 'Database names differ')
       end
