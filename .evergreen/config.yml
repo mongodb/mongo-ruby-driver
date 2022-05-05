@@ -906,7 +906,8 @@ buildvariants:
       auth-and-ssl: noauth-and-nossl
       ruby: ["ruby-3.1"]
       mongodb-version: ['6.0']
-      # Only standalone until mlaunch issue is resolved with replace sets.
+      # Only standalone until mlaunch issue is resolved with replica sets,
+      # see RUBY-2947.
       topology: standalone
       #topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
@@ -919,7 +920,8 @@ buildvariants:
       auth-and-ssl: noauth-and-nossl
       ruby: ["ruby-3.1"]
       mongodb-version: ['5.2']
-      # Only standalone until mlaunch issue is resolved with replace sets.
+      # Only standalone until mlaunch issue is resolved with replica sets,
+      # see RUBY-2947.
       topology: standalone
       #topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
