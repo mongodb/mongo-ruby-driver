@@ -11,13 +11,8 @@ set_env_ruby
 
 bundle_install
 
-SINGLE_HOST_URI=${SERVERLESS_URI%%,*}
+export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb:\/\//mongodb:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
 
-if test -n "$SINGLE_MONGOS"; then
-    export MONGODB_URI=`echo ${SINGLE_ATLASPROXY_SERVERLESS_URI} | sed -r 's/mongodb:\/\//mongodb:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
-else
-    export MONGODB_URI=`echo ${MULTI_ATLASPROXY_SERVERLESS_URI} | sed -r 's/mongodb\+srv:\/\//mongodb\+srv:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
-fi
 export TOPOLOGY="load-balanced"
 
 echo "Running specs"

@@ -849,20 +849,10 @@ buildvariants:
     tasks:
        - name: test-atlas
 
-  - matrix_name: "serverless single mongos"
+  - matrix_name: "serverless"
     matrix_spec:
       ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
-      single-mongos: single-mongos
     display_name: "Atlas serverless ${ruby} single mongos"
-    run_on:
-      - ubuntu1804-small
-    tasks:
-       - name: test-serverless
-
-  - matrix_name: "serverless multiple mongos"
-    matrix_spec:
-      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
-    display_name: "Atlas serverless tests ${ruby}"
     run_on:
       - ubuntu1804-small
     tasks:
