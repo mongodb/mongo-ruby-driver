@@ -86,8 +86,7 @@ module Mongo
       unless closed?
         register
         ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
-          cluster,
-          @session))
+          cluster))
       end
     end
 
@@ -102,18 +101,16 @@ module Mongo
     #
     # @param [ Cursor::KillSpec ] kill_spec The KillCursor operation specification.
     # @param [ Mongo::Cluster ] cluster The cluster associated with this cursor and its server.
-    # @param [ Mongo::Server ] server The server to send the killCursors operation to.
     #
     # @return [ Proc ] The Finalizer.
     #
     # @api private
-    def self.finalize(kill_spec, cluster, session)
+    def self.finalize(kill_spec, cluster)
       unless KillSpec === kill_spec
         raise ArgumentError, "First argument must be a KillSpec: #{kill_spec.inspect}"
       end
       proc do
         cluster.schedule_kill_cursor(kill_spec)
-        session.end_session if session && session.implicit?
       end
     end
 
@@ -374,6 +371,7 @@ module Mongo
         db_name: database.name,
         connection_global_id: connection_global_id,
         server_address: server.address,
+        session: @session,
       )
     end
 

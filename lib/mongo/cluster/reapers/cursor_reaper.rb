@@ -169,6 +169,12 @@ module Mongo
           # look for another spec.
           next unless kill_spec
 
+          if session = kill_spec.session
+            if session.implicit? && !session.ended?
+              session.end_session
+            end
+          end
+
           # We could also pass kill_spec directly into the KillCursors
           # operation, though this would make that operation have a
           # different API from all of the other ones which accept hashes.
