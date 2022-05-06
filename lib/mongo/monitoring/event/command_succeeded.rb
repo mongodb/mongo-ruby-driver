@@ -46,7 +46,7 @@ module Mongo
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
 
-        # @api private
+        # @return [ Integer ] server_connection_id The server connection id.
         attr_reader :server_connection_id
 
         # @return [ nil | Object ] The service id, if any.

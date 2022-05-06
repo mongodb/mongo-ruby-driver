@@ -60,7 +60,7 @@ module Mongo
         # @api private
         attr_reader :connection_id
 
-        # @api private
+        # @return [ Integer ] server_connection_id The server connection id.
         attr_reader :server_connection_id
 
         # @return [ true | false ] Whether the event contains sensitive data.
