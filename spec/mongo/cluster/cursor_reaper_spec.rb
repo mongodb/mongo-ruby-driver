@@ -219,7 +219,7 @@ describe Mongo::Cluster::CursorReaper do
     it 'schedules the kill cursor op' do
       expect {
         cursor.to_a
-      }.to raise_exception(Mongo::Error::OperationFailure)
+      }.to raise_exception(Mongo::Error::SessionEnded)
     end
   end
 end

@@ -353,7 +353,7 @@ describe Mongo::Cursor do
         cluster.instance_variable_get(:@periodic_executor).flush
         expect do
           cursor.to_a
-        end.to raise_exception(Mongo::Error::OperationFailure, /[cC]ursor.*not found/)
+        end.to raise_exception(Mongo::Error::SessionEnded)
       end
 
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
