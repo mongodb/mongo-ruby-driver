@@ -216,7 +216,20 @@ describe Mongo::Cluster::CursorReaper do
       periodic_executor.run!
     end
 
-    it 'schedules the kill cursor op' do
+    it 'kills the cursor' do
+      expect {
+        spec = {
+          db_name: cursor.database.name,
+          coll_name: cursor.collection_name,
+          cursor_id: cursor.id,
+        }
+        get_more_op = Mongo::Operation::GetMore.new(spec)
+        context = Mongo::Operation::Context.new(client: cursor.client, connection_global_id: cursor.instance_variable_get(:@connection_global_id))
+        get_more_op.execute(cursor.server, context: context)
+      }.to raise_exception(Mongo::Error::OperationFailure, /[cC]ursor.*not found/)
+    end
+
+    it 'ends the session' do
       expect {
         cursor.to_a
       }.to raise_exception(Mongo::Error::SessionEnded)
