@@ -349,25 +349,11 @@ describe Mongo::Cursor do
         view.instance_variable_get(:@cursor)
       end
 
-      it 'kills the cursors' do
+      it 'schedules a kill cursors op' do
         cluster.instance_variable_get(:@periodic_executor).flush
         expect do
-          spec = {
-            db_name: cursor.database.name,
-            coll_name: cursor.collection_name,
-            cursor_id: cursor.id,
-          }
-          get_more_op = Mongo::Operation::GetMore.new(spec)
-          context = Mongo::Operation::Context.new(client: cursor.client, connection_global_id: cursor.instance_variable_get(:@connection_global_id))
-          get_more_op.execute(cursor.server, context: context)
-        end.to raise_exception(Mongo::Error::OperationFailure, /[cC]ursor.*not found/)
-      end
-
-      it 'ends the session' do
-        cluster.instance_variable_get(:@periodic_executor).flush
-        expect {
           cursor.to_a
-        }.to raise_exception(Mongo::Error::SessionEnded)
+        end.to raise_exception(Mongo::Error::SessionEnded)
       end
 
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
