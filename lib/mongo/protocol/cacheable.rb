@@ -32,7 +32,8 @@ module Mongo
         buffer = super
         @bytes = buffer.get_bytes(buffer.length)
       elsif needs_validation?(validating_keys)
-        super
+        @validated = true
+        return super
       end
       @validated ||= validating_keys
       buffer.put_bytes(@bytes)
