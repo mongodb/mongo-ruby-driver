@@ -86,6 +86,7 @@ module Mongo
           options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
 
+        # @return [ Integer ] server_connection_id The server connection id.
         attr_reader :server_connection_id
 
         # Sends a message and returns the result.

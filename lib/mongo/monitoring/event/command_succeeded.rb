@@ -46,6 +46,9 @@ module Mongo
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
 
+        # @return [ Integer ] server_connection_id The server connection id.
+        attr_reader :server_connection_id
+
         # @return [ nil | Object ] The service id, if any.
         attr_reader :service_id
 
@@ -73,7 +76,8 @@ module Mongo
         # @since 2.1.0
         # @api private
         def initialize(command_name, database_name, address, request_id,
-          operation_id, reply, duration, started_event:, service_id: nil
+          operation_id, reply, duration, started_event:,
+          server_connection_id: nil, service_id: nil
         )
           @command_name = command_name.to_s
           @database_name = database_name
@@ -84,6 +88,7 @@ module Mongo
           @started_event = started_event
           @reply = redacted(command_name, reply)
           @duration = duration
+          @server_connection_id = server_connection_id
         end
 
         # Returns a concise yet useful summary of the event.
@@ -116,7 +121,8 @@ module Mongo
         # @since 2.1.0
         # @api private
         def self.generate(address, operation_id, command_payload,
-          reply_payload, duration, started_event:, service_id: nil
+          reply_payload, duration, started_event:, server_connection_id: nil,
+          service_id: nil
         )
           new(
             command_payload[:command_name],
@@ -127,6 +133,7 @@ module Mongo
             generate_reply(command_payload, reply_payload),
             duration,
             started_event: started_event,
+            server_connection_id: server_connection_id,
             service_id: service_id,
           )
         end

@@ -64,24 +64,26 @@ module Mongo
       end
 
       def command_completed(result, address, operation_id, payload, duration,
-        started_event:, service_id: nil
+        started_event:, server_connection_id: nil, service_id: nil
       )
         document = result ? (result.documents || []).first : nil
         if document && (document['ok'] && document['ok'] != 1 || document.key?('$err'))
           parser = Error::Parser.new(document)
           command_failed(document, address, operation_id,
             payload, parser.message, duration,
-            started_event: started_event, service_id: service_id,
+            started_event: started_event, server_connection_id: server_connection_id,
+            service_id: service_id,
           )
         else
           command_succeeded(result, address, operation_id, payload, duration,
-            started_event: started_event, service_id: service_id,
+            started_event: started_event, server_connection_id: server_connection_id,
+            service_id: service_id,
           )
         end
       end
 
       def command_succeeded(result, address, operation_id, payload, duration,
-        started_event:, service_id: nil
+        started_event:, server_connection_id: nil, service_id: nil
       )
         monitoring.succeeded(
           Monitoring::COMMAND,
@@ -92,19 +94,21 @@ module Mongo
             result ? result.payload : nil,
             duration,
             started_event: started_event,
+            server_connection_id: server_connection_id,
             service_id: service_id,
           )
         )
       end
 
       def command_failed(failure, address, operation_id, payload, message, duration,
-        started_event:, service_id: nil
+        started_event:, server_connection_id: nil, service_id: nil
       )
         monitoring.failed(
           Monitoring::COMMAND,
           Event::CommandFailed.generate(address, operation_id, payload,
             message, failure, duration,
             started_event: started_event,
+            server_connection_id: server_connection_id,
             service_id: service_id,
           )
         )
