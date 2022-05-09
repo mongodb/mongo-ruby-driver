@@ -35,12 +35,13 @@ module Mongo
       # @param [ String ] input The data to be encrypted/decrypted
       # @param [ true | false ] decrypt Whether this method is decrypting. Default is
       #   false, which means the method will create an encryption cipher by default
+      # @param [ Symbol ] mode AES mode of operation
       #
       # @return [ String ] Output
       # @raise [ Exception ] Exceptions raised during encryption are propagated
       #   to caller.
-      def aes(key, iv, input, decrypt: false)
-        cipher = OpenSSL::Cipher::AES.new(256, :CBC)
+      def aes(key, iv, input, decrypt: false, mode: :CBC)
+        cipher = OpenSSL::Cipher::AES.new(256, mode)
 
         decrypt ? cipher.decrypt : cipher.encrypt
         cipher.key = key

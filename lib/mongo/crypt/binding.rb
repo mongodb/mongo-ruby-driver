@@ -1192,6 +1192,110 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_setopt_encrypted_field_config_map(crypt, efc_map)
+      #   @api private
+      #
+      # Set a local EncryptedFieldConfigMap for encryption.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      # @param [ FFI::Pointer ] efc_map A pointer to mongocrypt_binary_t object that
+      # references a BSON document representing the EncryptedFieldConfigMap
+      # supplied by the user. The keys are collection namespaces and values are
+      # EncryptedFieldConfigMap documents. The viewed data copied. It is valid to
+      # destroy efc_map with mongocrypt_binary_destroy immediately after.
+      #
+      # @return [ Boolean ] Whether the operation succeeded.
+      attach_function(
+        :mongocrypt_setopt_encrypted_field_config_map,
+        [
+          :pointer,
+          :pointer
+        ],
+        :bool
+      )
+
+      # Set a local EncryptedFieldConfigMap for encryption.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ BSON::Document ] efc_map A BSON document representing
+      #   the EncryptedFieldConfigMap supplied by the user.
+      #   The keys are collection namespaces and values are
+      #   EncryptedFieldConfigMap documents.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed.
+      def self.setopt_encrypted_field_config_map(handle, efc_map)
+        validate_document(efc_map)
+        data = efc_map.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_status(handle) do
+            mongocrypt_setopt_encrypted_field_config_map(
+              handle.ref,
+              data_p
+            )
+          end
+        end
+      end
+
+      # @!method self.mongocrypt_setopt_bypass_query_analysis(crypt)
+      #   @api private
+      #
+      # Opt-into skipping query analysis.
+      #
+      # If opted in:
+      # - The csfle shared library will not attempt to be loaded.
+      # - A mongocrypt_ctx_t will never enter the MONGOCRYPT_CTX_NEED_MARKINGS state.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      attach_function(:mongocrypt_setopt_bypass_query_analysis, [:pointer])
+
+      # Opt-into skipping query analysis.
+      #
+      # If opted in:
+      # - The csfle shared library will not attempt to be loaded.
+      # - A mongocrypt_ctx_t will never enter the MONGOCRYPT_CTX_NEED_MARKINGS state.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      def self.setopt_bypass_query_analysis(handle)
+        mongocrypt_setopt_bypass_query_analysis(handle.ref)
+      end
+
+      # @!method self.mongocrypt_setopt_aes_256_ctr(crypt, aes_256_ctr_encrypt, aes_256_ctr_decrypt, ctx=nil)
+      #   @api private
+      #
+      #   Set a crypto hook for the AES256-CTR operations.
+      #
+      #   @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      #   @param [ Proc ] aes_enc_fn An AES-CTR encryption method.
+      #   @param [ Proc ] aes_dec_fn An AES-CTR decryption method.
+      #   @param [ FFI::Pointer | nil ] ctx An optional pointer to a context object
+      #     that may have been set when hooks were enabled.
+      #   @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_setopt_aes_256_ctr,
+        [
+          :pointer,
+          :mongocrypt_crypto_fn,
+          :mongocrypt_crypto_fn,
+          :pointer
+        ],
+        :bool
+      )
+
+      # Set a crypto hook for the AES256-CTR operations.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ Method ] aes_encrypt_cb An AES-CTR encryption method
+      # @param [ Method ] aes_decrypt_cb A AES-CTR decryption method
+      #
+      # @raise [ Mongo::Error::CryptError ] If the callbacks aren't set successfully
+      def self.setopt_aes_256_ctr(handle, aes_ctr_encrypt_cb, aes_ctr_decrypt_cb)
+        check_status(handle) do
+          mongocrypt_setopt_crypto_hooks(handle.ref,
+            aes_ctr_encrypt_cb, aes_ctr_decrypt_cb, nil
+          )
+        end
+      end
+
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_t object.
       #

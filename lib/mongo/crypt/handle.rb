@@ -150,13 +150,13 @@ module Mongo
       # Perform AES encryption or decryption and write the output to the
       # provided mongocrypt_binary_t object.
       def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
-        response_length_p, status_p, decrypt: false)
+        response_length_p, status_p, decrypt: false, mode: :CBC)
         key = Binary.from_pointer(key_binary_p).to_s
         iv = Binary.from_pointer(iv_binary_p).to_s
         input = Binary.from_pointer(input_binary_p).to_s
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
-          output = Hooks.aes(key, iv, input, decrypt: decrypt)
+          output = Hooks.aes(key, iv, input, decrypt: decrypt, mode: mode)
           response_length_p.write_int(output.bytesize)
 
           output
@@ -252,6 +252,39 @@ module Mongo
           @hmac_sha_512,
           @hmac_sha_256,
           @hmac_hash,
+        )
+
+        @aes_ctr_encrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+          output_binary_p, response_length_p, status_p|
+          do_aes(
+            key_binary_p,
+            iv_binary_p,
+            input_binary_p,
+            output_binary_p,
+            response_length_p,
+            status_p,
+            mode: :CTR,
+          )
+        end
+
+        @aes_ctr_decrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+          output_binary_p, response_length_p, status_p|
+          do_aes(
+            key_binary_p,
+            iv_binary_p,
+            input_binary_p,
+            output_binary_p,
+            response_length_p,
+            status_p,
+            decrypt: true,
+            mode: :CTR,
+          )
+        end
+
+        Binding.setopt_aes_256_ctr(
+          self,
+          @aes_ctr_encrypt,
+          @aes_ctr_decrypt,
         )
 
         @rsaes_pkcs_signature_cb = Proc.new do |_, key_binary_p, input_binary_p,
