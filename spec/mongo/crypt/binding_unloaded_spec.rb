@@ -6,6 +6,12 @@ require 'lite_spec_helper'
 describe 'Mongo::Crypt::Binding' do
   require_no_libmongocrypt
 
+  before(:all) do
+    if ENV['FLE'] == 'helper'
+      skip 'FLE=helper is incompatible with unloaded binding tests'
+    end
+  end
+
   context 'when load fails' do
 
     # JRuby 9.3.2.0 converts our custom LoadErrors to generic NameErrors

@@ -58,4 +58,8 @@ def standard_dependencies
     gem 'erubi'
     gem 'tilt'
   end
+
+  if ENV['FLE'] == 'helper'
+    gem 'libmongocrypt-helper'
+  end
 end

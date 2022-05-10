@@ -214,7 +214,7 @@ if test -n "$FLE"; then
         exit 1
       fi
       cp $path .
-      LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
+      export LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
       
       gem uni libmongocrypt-helper
     fi
