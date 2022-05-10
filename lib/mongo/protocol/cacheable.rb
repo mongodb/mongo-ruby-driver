@@ -29,9 +29,7 @@ module Mongo
     # @return [ BSON::ByteBuffer ] The buffer with the encoded object.
     def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
       if !@bytes
-        buffer = super
-        @bytes = buffer.get_bytes(buffer.length)
-        buffer = BSON::ByteBuffer.new
+        @bytes = super(BSON::ByteBuffer.new, validating_keys).to_s
       elsif needs_validation?(validating_keys)
         @validated = true
         return super
