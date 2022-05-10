@@ -88,6 +88,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
               test.create_entities
               test.set_initial_data
               test.run
+              skip test.skip_reason if test.skip?
               test.assert_outcome
               test.assert_events
               test.cleanup
