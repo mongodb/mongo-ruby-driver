@@ -89,7 +89,7 @@ module Mongo
         ] + @sequences.map do |section|
           {type: 1, payload: {
             identifier: section.identifier,
-            sequence: section.documents.each { |d| d.extend(Mongo::Cacheable) },
+            sequence: section.documents.each { |d| d.extend(Mongo::Protocol::Cacheable) },
           }}
         end
         @request_id = nil

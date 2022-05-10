@@ -16,46 +16,51 @@
 # limitations under the License.
 
 module Mongo
-  module Cacheable
+  module Protocol
 
-    # Caches the result of to_bson and writes it to the given buffer on subsequent
-    # calls to this method. If this method is originally called without validation,
-    # and then is subsequently called with validation, we will want to recalculate
-    # the to_bson to trigger the validations.
-    #
-    # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
-    # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
-    #
-    # @return [ BSON::ByteBuffer ] The buffer with the encoded object.
-    def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
-      if !@bytes
-        @bytes = super(BSON::ByteBuffer.new, validating_keys).to_s
-      elsif needs_validation?(validating_keys)
-        @validated = true
-        return super
+    # A module used to cache the results of to_bson to be reused on subsequent
+    # calls.
+    module Cacheable
+
+      # Caches the result of to_bson and writes it to the given buffer on subsequent
+      # calls to this method. If this method is originally called without validation,
+      # and then is subsequently called with validation, we will want to recalculate
+      # the to_bson to trigger the validations.
+      #
+      # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
+      # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
+      #
+      # @return [ BSON::ByteBuffer ] The buffer with the encoded object.
+      def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
+        if !@bytes
+          @bytes = super(BSON::ByteBuffer.new, validating_keys).to_s
+        elsif needs_validation?(validating_keys)
+          @validated = true
+          return super
+        end
+        @validated ||= validating_keys
+        buffer.put_bytes(@bytes)
       end
-      @validated ||= validating_keys
-      buffer.put_bytes(@bytes)
-    end
 
-    def []=(key, value)
-      @bytes = nil
-      @validated = false
-      super
-    end
+      def []=(key, value)
+        @bytes = nil
+        @validated = false
+        super
+      end
 
-    private
+      private
 
-    # Checks the current value for validating keys, and whether or not this
-    # bson has been validated in the past, and decides if we need to recalculate
-    # the to_bson to check the validations.
-    #
-    # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
-    #
-    # @return [ true, false ] Whether or not the bson needs to be recalculated
-    #   with validation.
-    def needs_validation?(validating_keys)
-      !@validated && validating_keys
+      # Checks the current value for validating keys, and whether or not this
+      # bson has been validated in the past, and decides if we need to recalculate
+      # the to_bson to check the validations.
+      #
+      # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
+      #
+      # @return [ true, false ] Whether or not the bson needs to be recalculated
+      #   with validation.
+      def needs_validation?(validating_keys)
+        !@validated && validating_keys
+      end
     end
   end
 end

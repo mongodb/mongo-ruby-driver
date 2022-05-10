@@ -3,7 +3,7 @@
 
 require 'spec_helper'
 
-describe Mongo::Cacheable do
+describe Mongo::Protocol::Cacheable do
 
   let(:hash) { {x:1}.extend(described_class) }
   let(:bson_reg) { {x:1}.to_bson }
