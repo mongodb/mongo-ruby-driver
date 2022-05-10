@@ -31,6 +31,7 @@ module Mongo
       if !@bytes
         buffer = super
         @bytes = buffer.get_bytes(buffer.length)
+        buffer = BSON::ByteBuffer.new
       elsif needs_validation?(validating_keys)
         @validated = true
         return super
