@@ -353,6 +353,11 @@ describe Mongo::Cursor do
         cluster.instance_variable_get(:@periodic_executor).flush
         expect do
           cursor.to_a
+        # Mongo::Error::SessionEnded is raised here because the periodic executor
+        # called above kills the cursor and closes the session.
+        # This code is normally scheduled in cursor finalizer, so the cursor object
+        # is garbage collected when the code is executed. So, a user won't get
+        # this exception.
         end.to raise_exception(Mongo::Error::SessionEnded)
       end
 
