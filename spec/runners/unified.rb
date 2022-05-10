@@ -63,6 +63,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                 test.set_initial_data
                 lambda do
                   test.run
+                  skip test.skip_reason if test.skip?
                   test.assert_outcome
                   test.assert_events
                 # HACK: other errors are possible and likely will need to

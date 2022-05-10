@@ -277,6 +277,12 @@ module Unified
         if name.to_s == 'loop'
           method_name = "_#{name}"
         end
+
+        if ["unsupported_operation"].include?(name.to_s)
+          @skip_reason = "Mongo Ruby Driver does not support #{name.to_s}"
+          return
+        end
+
         if expected_error = op.use('expectError')
           begin
             public_send(method_name, op)
