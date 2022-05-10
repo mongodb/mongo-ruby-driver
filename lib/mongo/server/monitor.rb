@@ -170,6 +170,25 @@ module Mongo
         end
       end
 
+      def create_push_monitor!(topology_version)
+        @update_mutex.synchronize do
+          if @push_monitor && !@push_monitor.running?
+            @push_monitor = nil
+          end
+
+          @push_monitor ||= PushMonitor.new(
+            self,
+            topology_version,
+            monitoring,
+            **Utils.shallow_symbolize_keys(options.merge(
+              socket_timeout: heartbeat_interval + connection.socket_timeout,
+              app_metadata: options[:push_monitor_app_metadata],
+              check_document: @connection.check_document
+            )),
+          )
+        end
+      end
+
       def stop_push_monitor!
         @update_mutex.synchronize do
           if @push_monitor
@@ -300,20 +319,9 @@ module Mongo
             connection.handshake!
           end
           @connection = connection
-          if result['topologyVersion']
+          if tv_doc = result['topologyVersion']
             # Successful response, server 4.4+
-            @update_mutex.synchronize do
-              @push_monitor ||= PushMonitor.new(
-                self,
-                TopologyVersion.new(result['topologyVersion']),
-                monitoring,
-                **Utils.shallow_symbolize_keys(options.merge(
-                  socket_timeout: heartbeat_interval + connection.socket_timeout,
-                  app_metadata: options[:push_monitor_app_metadata],
-                  check_document: @connection.check_document
-                )),
-              )
-            end
+            create_push_monitor!(TopologyVersion.new(tv_doc))
             push_monitor.run!
           else
             # Failed response or pre-4.4 server
