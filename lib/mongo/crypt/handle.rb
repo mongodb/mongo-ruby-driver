@@ -31,14 +31,21 @@ module Mongo
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Crypt::KMS::Credentials ] kms_providers Credentials for KMS providers.
-      # @param [ Hash ] options A hash of options
       #
-      # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
-      #   of the collection that stores auto encrypted documents.
       # @param [ Hash ] kms_tls_options TLS options to connect to KMS
       #   providers. Keys of the hash should be KSM provider names; values
       #   should be hashes of TLS connection options. The options are equivalent
       #   to TLS connection options of Mongo::Client.
+      #
+      # @param [ Hash ] options A hash of options.
+      # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
+      #   of the collection that stores auto encrypted documents.
+      # @option options [ Hash | nil ] :encrypted_fields_map maps a collection
+      #   namespace to an encryptedFields.
+      #   - Note: If a collection is present on both the encryptedFieldsMap
+      #     and schemaMap, an error will be raised.
+      # @option options [ Boolean | nil ] :bypass_query_analysis When true
+      #   disables automatic analysis of outgoing commands.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       def initialize(kms_providers, kms_tls_options, options={})
@@ -53,6 +60,12 @@ module Mongo
 
         @schema_map = options[:schema_map]
         set_schema_map if @schema_map
+
+        @encrypted_fields_map = options[:encrypted_fields_map]
+        set_encrypted_fields_map if @encrypted_fields_map
+
+        @bypass_query_analysis = options[:bypass_query_analysis]
+        set_bypass_query_analysis if @bypass_query_analysis
 
         @logger = options[:logger]
         set_logger_callback if @logger
@@ -91,6 +104,26 @@ module Mongo
         end
 
         Binding.setopt_schema_map(self, @schema_map)
+      end
+
+      def set_encrypted_fields_map
+        unless @encrypted_fields_map.is_a?(Hash)
+          raise ArgumentError.new(
+            "#{@encrypted_fields_map} is an invalid encrypted_fields_map; must be a Hash or nil"
+          )
+        end
+
+        Binding.setopt_encrypted_field_config_map(self, @encrypted_fields_map)
+      end
+
+      def set_bypass_query_analysis
+        unless [true, false].include?(@bypass_query_analysis)
+          raise ArgumentError.new(
+            "#{@bypass_query_analysis} is an invalid bypass_query_analysis value; must be a Boolean or nil"
+          )
+        end
+
+        Binding.setopt_bypass_query_analysis(self, @bypass_query_analysis)
       end
 
       # Send the logs from libmongocrypt to the Mongo::Logger

@@ -1246,7 +1246,7 @@ module Mongo
       # - A mongocrypt_ctx_t will never enter the MONGOCRYPT_CTX_NEED_MARKINGS state.
       #
       # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
-      attach_function(:mongocrypt_setopt_bypass_query_analysis, [:pointer])
+      attach_function(:mongocrypt_setopt_bypass_query_analysis, [:pointer], :void)
 
       # Opt-into skipping query analysis.
       #
@@ -1290,7 +1290,7 @@ module Mongo
       # @raise [ Mongo::Error::CryptError ] If the callbacks aren't set successfully
       def self.setopt_aes_256_ctr(handle, aes_ctr_encrypt_cb, aes_ctr_decrypt_cb)
         check_status(handle) do
-          mongocrypt_setopt_crypto_hooks(handle.ref,
+          mongocrypt_setopt_aes_256_ctr(handle.ref,
             aes_ctr_encrypt_cb, aes_ctr_decrypt_cb, nil
           )
         end
