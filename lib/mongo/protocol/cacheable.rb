@@ -39,6 +39,12 @@ module Mongo
       buffer.put_bytes(@bytes)
     end
 
+    def []=(key, value)
+      @bytes = nil
+      @validated = false
+      super
+    end
+
     private
 
     # Checks the current value for validating keys, and whether or not this
