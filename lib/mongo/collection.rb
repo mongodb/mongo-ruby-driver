@@ -59,6 +59,8 @@ module Mongo
     CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :write_concern ].freeze
 
     # Options map to transform create collection options.
+    #
+    # @api private
     CREATE_COLLECTION_OPTIONS = {
       :time_series => :timeseries,
       :expire_after => :expireAfterSeconds,
