@@ -1201,8 +1201,7 @@ module Mongo
       # @param [ FFI::Pointer ] efc_map A pointer to mongocrypt_binary_t object that
       # references a BSON document representing the EncryptedFieldConfigMap
       # supplied by the user. The keys are collection namespaces and values are
-      # EncryptedFieldConfigMap documents. The viewed data copied. It is valid to
-      # destroy efc_map with mongocrypt_binary_destroy immediately after.
+      # EncryptedFieldConfigMap documents.
       #
       # @return [ Boolean ] Whether the operation succeeded.
       attach_function(
@@ -1239,7 +1238,7 @@ module Mongo
       # @!method self.mongocrypt_setopt_bypass_query_analysis(crypt)
       #   @api private
       #
-      # Opt-into skipping query analysis.
+      # Opt into skipping query analysis.
       #
       # If opted in:
       # - The csfle shared library will not attempt to be loaded.
@@ -1259,7 +1258,7 @@ module Mongo
         mongocrypt_setopt_bypass_query_analysis(handle.ref)
       end
 
-      # @!method self.mongocrypt_setopt_aes_256_ctr(crypt, aes_256_ctr_encrypt, aes_256_ctr_decrypt, ctx=nil)
+      # @!method self.mongocrypt_setopt_aes_256_ctr(crypt, aes_256_ctr_encrypt, aes_256_ctr_decrypt, ctx)
       #   @api private
       #
       #   Set a crypto hook for the AES256-CTR operations.
