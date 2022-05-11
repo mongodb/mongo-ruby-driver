@@ -279,12 +279,16 @@ module Unified
           method_name = "_#{name}"
         end
 
-        if ["unsupported_operation"].include?(name.to_s)
+        if [].include?(name.to_s)
           skip "Mongo Ruby Driver does not support #{name.to_s}"
         end
 
         if expected_error = op.use('expectError')
           begin
+            unless respond_to?(method_name)
+              raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name.to_s}"
+            end
+
             public_send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
@@ -337,6 +341,10 @@ module Unified
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
         else
+          unless respond_to?(method_name, true)
+            raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name.to_s}"
+          end
+
           result = send(method_name, op)
           if expected_result = op.use('expectResult')
             if result.nil? && expected_result.keys == ["$$unsetOrMatches"]
