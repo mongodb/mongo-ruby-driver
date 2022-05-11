@@ -36,6 +36,7 @@ module Mongo
         # -  9 => 4.4
         # - 13 => 5.0
         # - 14 => 5.1
+        # - 17 => 6.0
         #
         # @since 2.0.0
         MAPPINGS = {
@@ -81,7 +82,7 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = (6..15).freeze
+        DRIVER_WIRE_VERSIONS = (6..17).freeze
 
         # Create the methods for each mapping to tell if they are supported.
         #
