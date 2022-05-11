@@ -143,7 +143,7 @@ describe Mongo::Operation::Insert::OpMsg do
           authorized_client.command(ping:1)
           RSpec::Mocks.with_temporary_scope do
             expect(Mongo::Protocol::Msg).to receive(:new).with([],
-                                                               { validating_keys: true },
+                                                               {},
                                                                expected_global_args,
                                                                expected_payload_1)
             op.send(:message, connection)
@@ -163,7 +163,7 @@ describe Mongo::Operation::Insert::OpMsg do
           RSpec::Mocks.with_temporary_scope do
             authorized_client.command(ping:1)
             expect(Mongo::Protocol::Msg).to receive(:new).with([],
-                                                               { validating_keys: true },
+                                                               {},
                                                                expected_global_args,
                                                                expected_payload_1)
             op.send(:message, connection)
@@ -190,7 +190,7 @@ describe Mongo::Operation::Insert::OpMsg do
 
               expect(expected_global_args).not_to have_key(:lsid)
               expect(Mongo::Protocol::Msg).to receive(:new).with([],
-                                                                 { validating_keys: true },
+                                                                 {},
                                                                  expected_global_args,
                                                                  expected_payload_1)
               op.send(:message, connection)
@@ -229,7 +229,7 @@ describe Mongo::Operation::Insert::OpMsg do
               authorized_client.command(ping:1)
               RSpec::Mocks.with_temporary_scope do
                 expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come],
-                                                                   { validating_keys: true },
+                                                                   {},
                                                                    expected_global_args,
                                                                    expected_payload_1)
                 op.send(:message, connection)
@@ -251,7 +251,7 @@ describe Mongo::Operation::Insert::OpMsg do
               authorized_client.command(ping:1)
               RSpec::Mocks.with_temporary_scope do
                 expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come],
-                                                                   { validating_keys: true },
+                                                                   {},
                                                                    expected_global_args,
                                                                    expected_payload_1)
                 op.send(:message, connection)
@@ -283,7 +283,7 @@ describe Mongo::Operation::Insert::OpMsg do
             authorized_client.command(ping:1)
             RSpec::Mocks.with_temporary_scope do
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come],
-                                                                 { validating_keys: true },
+                                                                 {},
                                                                  expected_global_args,
                                                                  expected_payload_1)
               op.send(:message, connection)

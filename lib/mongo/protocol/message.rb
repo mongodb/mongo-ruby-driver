@@ -459,7 +459,6 @@ module Mongo
 
       def validating_keys?
         @options[:validating_keys] if @options
-        false
       end
     end
   end
