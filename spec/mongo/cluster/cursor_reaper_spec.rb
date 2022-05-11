@@ -38,6 +38,9 @@ describe Mongo::Cluster::CursorReaper do
         allow(server).to receive(:address).and_return(address)
       end
     end
+    let(:session) do
+      double(Mongo::Session)
+    end
     let(:cursor_id) { 1 }
     let(:cursor_kill_spec_1) do
       Mongo::Cursor::KillSpec.new(
@@ -45,7 +48,8 @@ describe Mongo::Cluster::CursorReaper do
         coll_name: 'c',
         db_name: 'd',
         server_address: address,
-        connection_global_id: 1
+        connection_global_id: 1,
+        session: session,
       )
     end
     let(:cursor_kill_spec_2) do
@@ -54,7 +58,8 @@ describe Mongo::Cluster::CursorReaper do
         coll_name: 'c',
         db_name: 'q',
         server_address: address,
-        connection_global_id: 1
+        connection_global_id: 1,
+        session: session,
       )
     end
     let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
@@ -214,7 +219,12 @@ describe Mongo::Cluster::CursorReaper do
     it 'schedules the kill cursor op' do
       expect {
         cursor.to_a
-      }.to raise_exception(Mongo::Error::OperationFailure)
+        # Mongo::Error::SessionEnded is raised here because the periodic executor
+        # called in around block kills the cursor and closes the session.
+        # This code is normally scheduled in cursor finalizer, so the cursor object
+        # is garbage collected when the code is executed. So, a user won't get
+        # this exception.
+      }.to raise_exception(Mongo::Error::SessionEnded)
     end
   end
 end
