@@ -19,6 +19,7 @@ module Unified
     include ChangeStreamOperations
     include SupportOperations
     include Assertions
+    include RSpec::Core::Pending
 
     def initialize(spec, **opts)
       @spec = spec
@@ -279,8 +280,7 @@ module Unified
         end
 
         if ["unsupported_operation"].include?(name.to_s)
-          @skip_reason = "Mongo Ruby Driver does not support #{name.to_s}"
-          return
+          skip "Mongo Ruby Driver does not support #{name.to_s}"
         end
 
         if expected_error = op.use('expectError')
