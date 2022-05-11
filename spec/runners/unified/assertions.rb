@@ -51,6 +51,31 @@ module Unified
             end
           end
 
+          %w(acknowledged).each do |k|
+            expected_v = expected.use(k)
+            next unless expected_v
+            actual_v = case actual
+            when Mongo::BulkWrite::Result, Mongo::Operation::Result
+              if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
+                expected_v = expected_v.values.first
+              end
+              actual.send("#{k}?")
+            else
+              actual[k]
+            end
+            if expected_v
+              if expected_v.empty?
+                if actual_v && !actual_v.empty?
+                  raise Error::ResultMismatch, "Actual not empty"
+                end
+              else
+                if actual_v != expected_v
+                  raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                end
+              end
+            end
+          end
+
           assert_matches(actual, expected, 'result')
           expected.clear
         end
@@ -202,12 +227,7 @@ module Unified
               if k.start_with?('$$')
                 assert_value_matches(actual, expected, k)
               else
-                actual_v = if Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
-                  fun_map = { "acknowledged" => :acknowledged? }
-                  actual.send(fun_map.fetch(k, k))
-                else
-                  actual[k]
-                end
+                actual_v = actual[k]
                 if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
                   assert_value_matches(actual_v, expected_v, k)
                 else
@@ -262,7 +282,11 @@ module Unified
         case operator
         when '$$unsetOrMatches'
           if actual
-            assert_matches(actual, expected_v, msg)
+            if Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
+              assert_result_matches(actual, UsingHash[expected_v])
+            else
+              assert_matches(actual, expected_v, msg)
+            end
           end
         when '$$matchesHexBytes'
           expected_data = decode_hex_bytes(expected_v)
