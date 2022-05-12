@@ -198,9 +198,10 @@ module Mongo
 
           if session = kill_spec.session
             if session.ended?
-              raise Error::LintError, "Ended session for a garbage collected cursor"
-            end
-            if session.implicit?
+              if Lint.enabled?
+                raise Error::LintError, "Ended session for a garbage collected cursor"
+              end
+            elsif session.implicit?
               session.end_session
             end
           end
