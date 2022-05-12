@@ -89,7 +89,6 @@ module Mongo
 
         # Set the algorithm option on the mongocrypt_ctx_t object and raises
         # an exception if the algorithm is invalid.
-        Binding.ctx_setopt_algorithm(self, options[:algorithm])
         if options[:algorithm] == 'Indexed'
           if options[:contention_factor]
             Binding.ctx_setopt_contention_factor(self, options[:contention_factor])
@@ -107,6 +106,8 @@ module Mongo
           end
           if options[:algorithm] == 'Unindexed'
             Binding.ctx_setopt_index_type(self, :none)
+          else
+            Binding.ctx_setopt_algorithm(self, options[:algorithm])
           end
         end
 
