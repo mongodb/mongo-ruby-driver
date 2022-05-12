@@ -410,16 +410,22 @@ describe Mongo::Collection do
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
 
-    context 'when a document contains invalid keys' do
+    context 'when a document contains dotted keys' do
 
       let(:docs) do
         [ { 'first.name' => 'test1' }, { name: 'test2' } ]
       end
 
-      it 'does not raise a BSON::String::IllegalKey exception' do
+      let(:view) { authorized_collection.find({}, { sort: { name: 1 } }) }
+
+      it 'inserts the documents correctly' do
         expect {
           authorized_collection.insert_many(docs)
-        }.to_not raise_exception(BSON::String::IllegalKey)
+        }.to_not raise_error
+
+        expect(view.count).to eq(2)
+        expect(view.first['first.name']).to eq('test1')
+        expect(view.to_a[1]['name']).to eq('test2')
       end
     end
 
@@ -714,16 +720,19 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the document contains invalid keys' do
+    context 'when the document contains dotted keys' do
 
       let(:doc) do
         { 'testing.test' => 'value' }
       end
 
-      it 'does not raise a BSON::String::IllegalKey exception' do
+      it 'inserts the document correctly' do
         expect {
           authorized_collection.insert_one(doc)
-        }.to_not raise_exception(BSON::String::IllegalKey)
+        }.to_not raise_error
+
+        expect(authorized_collection.count).to eq(1)
+        expect(authorized_collection.find.first['testing.test']).to eq('value')
       end
     end
 
