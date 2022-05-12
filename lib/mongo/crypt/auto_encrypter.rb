@@ -71,6 +71,12 @@ module Mongo
       #   should be hashes of TLS connection options. The options are equivalent
       #   to TLS connection options of Mongo::Client.
       #   @see Mongo::Client#initialize for list of TLS options.
+      # @option options [ Hash | nil ] :encrypted_fields_map maps a collection
+      #   namespace to an encryptedFields.
+      #   - Note: If a collection is present on both the encryptedFieldsMap
+      #     and schemaMap, an error will be raised.
+      # @option options [ Boolean | nil ] :bypass_query_analysis When true
+      #   disables automatic analysis of outgoing commands.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
