@@ -109,6 +109,14 @@ module Crypt
         ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
       }
     end
+
+    let(:encrypted_fields) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/encryptedFields.json'))
+    end
+
+    let(:key1_document) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/keys/key1-document.json'))
+    end
   end
 
   # For tests that require local KMS to be configured
