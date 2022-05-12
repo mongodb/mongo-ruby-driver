@@ -76,14 +76,24 @@ module Mongo
       # @option options [ String ] :key_alt_name The alternate name for the
       #   encryption key.
       # @option options [ String ] :algorithm The algorithm used to encrypt the value.
-      #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-      #   or "AEAD_AES_256_CBC_HMAC_SHA_512-Random".
+      #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
+      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed".
+      # @option options [ Integer | nil ] :contention_factor Contention factor
+      #   to be applied if encryption algorithm is set to "Indexed". If not
+      #   provided, it defaults to a value of 0. Contention factor should be set
+      #   only if encryption algorithm is set to "Indexed".
+      # @option options [ Symbol ] query_type Query type to be applied
+      # if encryption algorithm is set to "Indexed". Query type should be set
+      #   only if encryption algorithm is set to "Indexed". The only allowed
+      #   value is :equality.
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
       #   one is required to perform explicit encryption.
       #
       # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
       #   representing the encrypted value
+      # @raise [ ArgumentError ] if either contention_factor or query_type
+      #   is set, and algorithm is not "Indexed".
       def encrypt(value, options)
         Crypt::ExplicitEncryptionContext.new(
           @crypt_handle,

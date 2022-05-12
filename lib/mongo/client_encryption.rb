@@ -99,7 +99,8 @@ module Mongo
     #   only if encryption algorithm is set to "Indexed".
     # @option options [ Symbol ] query_type Query type to be applied
     # if encryption algorithm is set to "Indexed". Query type should be set
-    #   only if encryption algorithm is set to "Indexed".
+    #   only if encryption algorithm is set to "Indexed". The only allowed
+    #   value is :equality.
     #
     # @note The :key_id and :key_alt_name options are mutually exclusive. Only
     #   one is required to perform explicit encryption.
@@ -107,7 +108,7 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value.
     #
-    # @raise [ Mongo::Error::CryptError ] if either contention_factor or query_type
+    # @raise [ ArgumentError ] if either contention_factor or query_type
     #   is set, and algorithm is not "Indexed".
     def encrypt(value, options={})
       @encrypter.encrypt(value, options)
