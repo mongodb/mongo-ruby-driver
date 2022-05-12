@@ -1295,6 +1295,113 @@ module Mongo
         end
       end
 
+      enum :mongocrypt_index_type, [
+        :none, 1,
+        :equality
+      ]
+
+      # @!method self.mongocrypt_ctx_setopt_index_type(ctx, mongocrypt_index_type)
+      #   @api private
+      #
+      # Set the index type used for explicit encryption.
+      # The index type is only used for FLE 2 encryption.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param[ mongocrypt_index_type ] index_type Type of the index.
+      #
+      # @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_ctx_setopt_index_type,
+        [
+          :pointer,
+          :mongocrypt_index_type
+        ],
+        :bool
+      )
+
+      # Set the index type used for explicit encryption.
+      # The index type is only used for FLE 2 encryption.
+      #
+      # @param [ Mongo::Crypt::Context ] context Explicit encryption context.
+      # @param [ Symbol ] :mongocrypt_index_type index_type Type of the index.
+      #   Allowed values are :none, :equality.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed.
+      def self.ctx_setopt_index_type(context, index_type)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_index_type(context.ctx_p, index_type)
+        end
+      end
+
+      enum :mongocrypt_query_type, [
+        :equality, 1
+      ]
+
+      # @!method self.mongocrypt_ctx_setopt_query_type(ctx, mongocrypt_query_type)
+      #   @api private
+      #
+      # Set the query type to use for FLE 2 explicit encryption.
+      # The query type is only used for indexed FLE 2 encryption.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ mongocrypt_query_type ] query_type Type of the query.
+      #
+      # @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_ctx_setopt_query_type,
+        [
+          :pointer,
+          :mongocrypt_query_type
+        ],
+        :bool
+      )
+
+      # Set the query type to use for FLE 2 explicit encryption.
+      # The query type is only used for indexed FLE 2 encryption.
+      #
+      # @param [ Mongo::Crypt::Context ] context Explicit encryption context.
+      # @param [ Symbol ] :mongocrypt_query_type query_type Type of the query.
+      #   Allowed value is :equality.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed.
+      def self.ctx_setopt_query_type(context, query_type)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_query_type(context.ctx_p, query_type)
+        end
+      end
+
+      # @!method self.mongocrypt_ctx_setopt_contention_factor(ctx, contention_factor)
+      #   @api private
+      #
+      # Set the contention factor used for explicit encryption.
+      # The contention factor is only used for indexed FLE 2 encryption.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ int64 ] contention_factor
+      #
+      # @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_ctx_setopt_contention_factor,
+        [
+          :pointer,
+          :int64
+        ],
+        :bool
+      )
+
+      # Set the contention factor used for explicit encryption.
+      # The contention factor is only used for indexed FLE 2 encryption.
+      #
+      # @param [ Mongo::Crypt::Context ] context Explicit encryption context.
+      # @param [ Integer ] factor Contention factor used for explicit encryption.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed.
+      def self.ctx_setopt_contention_factor(context, factor)
+        check_ctx_status(context) do
+          mongocrypt_ctx_setopt_contention_factor(context.ctx_p, factor)
+        end
+      end
+
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_t object.
       #
