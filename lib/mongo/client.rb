@@ -446,14 +446,14 @@ module Mongo
     #       JSON Schemas obtained from the server. It protects against a
     #       malicious server advertising a false JSON Schema, which could trick
     #       the client into sending unencrypted data that should be encrypted.
-    #     - Note: If a collection is present on both the encryptedFieldsMap
-    #       and schemaMap, an error will be raised.
+    #     - Note: If a collection is present on both the :encrypted_fields_map
+    #       and :schema_map, an error will be raised.
     #   - :bypass_auto_encryption => Boolean, when true, disables auto encryption;
     #     defaults to false.
     #   - :extra_options => Hash | nil, options related to spawning mongocryptd
     #     (this part of the API is subject to change).
     #   - :encrypted_fields_map => Hash | nil, maps a collection namespace to
-    #     an encryptedFields.
+    #     a hash describing FLE2 encrypted fields.
     #     - Note: If a collection is present on both the encryptedFieldsMap
     #       and schemaMap, an error will be raised.
     #   - :bypass_query_analysis => Boolean | nil, when true disables automatic

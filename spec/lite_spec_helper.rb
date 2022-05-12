@@ -53,6 +53,8 @@ autoload :IceNine, 'ice_nine'
 autoload :Timecop, 'timecop'
 autoload :ChildProcess, 'childprocess'
 
+require 'rspec/retry'
+
 if BSON::Environment.jruby?
   require 'concurrent-ruby'
   PossiblyConcurrentArray = Concurrent::Array

@@ -109,7 +109,7 @@ module Mongo
       def set_encrypted_fields_map
         unless @encrypted_fields_map.is_a?(Hash)
           raise ArgumentError.new(
-            "#{@encrypted_fields_map} is an invalid encrypted_fields_map; must be a Hash or nil"
+            "#{@encrypted_fields_map} is an invalid encrypted_fields_map: must be a Hash or nil"
           )
         end
 
