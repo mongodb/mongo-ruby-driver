@@ -59,6 +59,7 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       operations = op_combiner.combine
+      validate_requests!
 
       client.send(:with_session, @options) do |session|
         context = Operation::Context.new(client: client, session: session)
@@ -312,6 +313,32 @@ module Mongo
           true
         end
       end
+    end
+
+    def validate_requests!
+      @requests.each do |req|
+        if op = req.keys.first
+          if [:update_one, :update_many].include?(op)
+            if doc = wrap(req.dig(op, :update))&.first
+              if key = doc.keys&.first
+                unless key.start_with?("$")
+                  raise Error::InvalidUpdateDocument.new(key)
+                end
+              end
+            end
+          elsif op == :replace_one
+            if key = req.dig(op, :replacement)&.keys&.first
+              if key.start_with?("$")
+                raise Error::InvalidReplacementDocument.new(key)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def wrap(elt)
+      elt.is_a?(Array) ? elt : [elt]
     end
   end
 end
