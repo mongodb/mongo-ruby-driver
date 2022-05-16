@@ -78,6 +78,13 @@ module Mongo
         end
       end
 
+      # Minimum version of libmongocrypt required by this version of the driver.
+      # An attempt to use the driver with any previous version of libmongocrypt
+      # will cause a `LoadError`.
+      #
+      # @api private
+      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.5.0.pre.alpha0")
+
       # @!method self.mongocrypt_version(len)
       #   @api private
       #
@@ -86,6 +93,11 @@ module Mongo
       #     uint8 that will reference the length of the returned string.
       #   @return [ String ] A version string for libmongocrypt.
       attach_function :mongocrypt_version, [:pointer], :string
+
+      if Gem::Version.new(mongocrypt_version(nil)) < MIN_LIBMONGOCRYPT_VERSION
+        raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is reauired, " +
+          "but version #{Gem::Version.new(mongocrypt_version(nil))} was found."
+      end
 
       # @!method self.mongocrypt_binary_new
       #   @api private
