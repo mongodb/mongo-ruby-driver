@@ -59,8 +59,11 @@ module Unified
 
     def assert_session_dirty(op)
       consume_test_runner(op)
-      # https://jira.mongodb.org/browse/RUBY-1813
-      true
+      use_arguments(op) do |args|
+        session = entities.get(:session, args.use!('session'))
+        # https://jira.mongodb.org/browse/RUBY-1813
+        true
+      end
     end
 
     def assert_session_not_dirty(op)
