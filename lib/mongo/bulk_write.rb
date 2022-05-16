@@ -315,11 +315,19 @@ module Mongo
       end
     end
 
+    # Checks the request documents to make sure they are valid. For update
+    # documents this means they only contain atomic modifiers, and for
+    # replacement documents this means they don't contain modifiers.
+    # Note that as per the spec, we only have to examine the first element
+    # in the update document.
+    #
+    # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument ]
+    #   if the document is invalid.
     def validate_requests!
       @requests.each do |req|
         if op = req.keys.first
           if [:update_one, :update_many].include?(op)
-            if doc = wrap(req.dig(op, :update))&.first
+            if doc = maybe_first(req.dig(op, :update))
               if key = doc.keys&.first
                 unless key.start_with?("$")
                   raise Error::InvalidUpdateDocument.new(key)
@@ -337,8 +345,14 @@ module Mongo
       end
     end
 
-    def wrap(elt)
-      elt.is_a?(Array) ? elt : [elt]
+    # If the given object is an array return the first element, otherwise
+    # return the given object.
+    #
+    # @param [ Object ] obj The given object.
+    #
+    # @return [ Object ] The first element of the array or the given object.
+    def maybe_first(obj)
+      obj.is_a?(Array) ? obj.first : obj
     end
   end
 end

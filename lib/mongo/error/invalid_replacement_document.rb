@@ -25,8 +25,8 @@ module Mongo
       #
       # @param [ String ] key The invalid key.
       def initialize(key)
-        message = "Invalid replace document provided. Replace documents must not "
-        message += "contain atomic modifiers. The \"#{key}\" key is invalid."
+        message = "Invalid replacement document provided. Replacement documents "
+        message += "must not contain atomic modifiers. The \"#{key}\" key is invalid."
         super(message)
       end
     end
