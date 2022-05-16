@@ -23,19 +23,13 @@ module Mongo
     # @since 2.0.0
     class InvalidUpdateDocument < Error
 
-      # The error message.
-      #
-      # @since 2.0.0
-      MESSAGE = 'Invalid update document provided'.freeze
-
       # Instantiate the new exception.
       #
-      # @example Instantiate the exception.
-      #   Mongo::Error::InvalidUpdateDocument.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
+      # @param [ String ] key The invalid key.
+      def initialize(key)
+        message = "Invalid update document provided. Updates documents must only "
+        message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
+        super(message)
       end
     end
   end

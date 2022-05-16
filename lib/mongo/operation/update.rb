@@ -32,7 +32,24 @@ module Mongo
       include Specifiable
       include Write
 
+      def initialize(spec)
+        validate_update_documents!(spec[:updates])
+        super
+      end
+
       private
+
+      def validate_update_documents!(updates)
+        if update = updates.first
+          # As per the spec, we only have to examine the first element in the
+          # update document.
+          if key = update["u"]&.keys&.first
+            unless key.start_with?("$")
+              raise Error::InvalidUpdateDocument.new(key)
+            end
+          end
+        end
+      end
 
       IDENTIFIER = 'updates'.freeze
     end
