@@ -329,14 +329,14 @@ module Mongo
           if [:update_one, :update_many].include?(op)
             if doc = maybe_first(req.dig(op, :update))
               if key = doc.keys&.first
-                unless key.start_with?("$")
+                unless key.to_s.start_with?("$")
                   raise Error::InvalidUpdateDocument.new(key)
                 end
               end
             end
           elsif op == :replace_one
             if key = req.dig(op, :replacement)&.keys&.first
-              if key.start_with?("$")
+              if key.to_s.start_with?("$")
                 raise Error::InvalidReplacementDocument.new(key)
               end
             end
