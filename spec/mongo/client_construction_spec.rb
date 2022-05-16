@@ -138,7 +138,7 @@ describe Mongo::Client do
   describe '#initialize' do
     context 'when providing options' do
       context 'with auto_encryption_options' do
-        require_libmongocrypt
+        min_libmongocrypt_version("1.5")
 
         include_context 'define shared FLE helpers'
 
