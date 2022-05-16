@@ -19,23 +19,15 @@ module Mongo
   class Error
 
     # Exception raised if the object is not a valid replacement document.
-    #
-    # @since 2.0.0
     class InvalidReplacementDocument < Error
-
-      # The error message.
-      #
-      # @since 2.0.0
-      MESSAGE = 'Invalid replacement document provided'.freeze
 
       # Instantiate the new exception.
       #
-      # @example Instantiate the exception.
-      #   Mongo::Error::InvalidReplacementDoc.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
+      # @param [ String ] key The invalid key.
+      def initialize(key)
+        message = "Invalid replace document provided. Replace documents must not "
+        message += "contain atomic modifiers. The \"#{key}\" key is invalid."
+        super(message)
       end
     end
   end
