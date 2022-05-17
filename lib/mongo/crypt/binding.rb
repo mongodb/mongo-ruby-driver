@@ -83,7 +83,7 @@ module Mongo
       # will cause a `LoadError`.
       #
       # @api private
-      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.5.0.pre.alpha0")
+      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.5.0.alpha")
 
       # @!method self.mongocrypt_version(len)
       #   @api private
@@ -94,10 +94,22 @@ module Mongo
       #   @return [ String ] A version string for libmongocrypt.
       attach_function :mongocrypt_version, [:pointer], :string
 
-      if Gem::Version.new(mongocrypt_version(nil)) < MIN_LIBMONGOCRYPT_VERSION
-        raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is reauired, " +
-          "but version #{Gem::Version.new(mongocrypt_version(nil))} was found."
+      # Validates if provided version of libmongocrypt is valid, i.e. equal or
+      # greater than minimum required version. Raises a LoadError if not.
+      #
+      # @param [ String ] lmc_version String representing libmongocrypt version.
+      #
+      # @raise [ LoadError ] if given version is lesser than minimum required version.
+      #
+      # @api private
+      def self.validate_version(lmc_version)
+        if (actual_version = Gem::Version.new(lmc_version)) < MIN_LIBMONGOCRYPT_VERSION
+          raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is required, " +
+            "but version #{actual_version} was found."
+        end
       end
+
+      validate_version(mongocrypt_version(nil))
 
       # @!method self.mongocrypt_binary_new
       #   @api private
