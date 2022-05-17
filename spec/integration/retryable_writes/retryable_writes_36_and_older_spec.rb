@@ -731,7 +731,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:operation) do
-      collection.bulk_write([{ update_many: { filter: { a: 0 }, update: { a: 1 } } }])
+      collection.bulk_write([{ update_many: { filter: { a: 0 }, update: { "$set" => { a: 1 } } } }])
     end
 
     let(:expectation) do
