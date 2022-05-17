@@ -58,11 +58,14 @@ module Mongo
     # @since 2.1.0
     CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :write_concern ].freeze
 
-    # Options that can be used for creating a time-series collection.
-    TIME_SERIES_OPTIONS = {
+    # Options map to transform create collection options.
+    #
+    # @api private
+    CREATE_COLLECTION_OPTIONS = {
       :time_series => :timeseries,
       :expire_after => :expireAfterSeconds,
       :clustered_index => :clusteredIndex,
+      :change_stream_pre_and_post_images => :changeStreamPreAndPostImages,
     }
 
     # Check if a collection is equal to another object. Will check the name and
@@ -246,6 +249,8 @@ module Mongo
     # @option opts [ Hash ] :time_series Create a time-series collection.
     # @option opts [ Integer ] :expire_after Number indicating
     #   after how many seconds old time-series data should be deleted.
+    # @option opts [ Hash ] :change_stream_pre_and_post_images Used to enable
+    #   pre- and post-images on the created collection.
     #
     # @return [ Result ] The result of the command.
     #
@@ -258,9 +263,9 @@ module Mongo
       options = Hash[self.options.reject do |key, value|
         %w(read read_preference read_concern).include?(key.to_s)
       end]
-      options.update(opts.slice(*TIME_SERIES_OPTIONS.keys))
-      # Converting Ruby spelled time series options to server style.
-      TIME_SERIES_OPTIONS.each do |ruby_key, server_key|
+      options.update(opts.slice(*CREATE_COLLECTION_OPTIONS.keys))
+      # Converting Ruby options to server style.
+      CREATE_COLLECTION_OPTIONS.each do |ruby_key, server_key|
         if options.key?(ruby_key)
           options[server_key] = options.delete(ruby_key)
         end

@@ -23,6 +23,7 @@ module Unified
     class InvalidTest < Error
     end
 
+    class UnsupportedOperation < Error
+    end
   end
-
 end

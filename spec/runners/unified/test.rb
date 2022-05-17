@@ -19,6 +19,7 @@ module Unified
     include ChangeStreamOperations
     include SupportOperations
     include Assertions
+    include RSpec::Core::Pending
 
     def initialize(spec, **opts)
       @spec = spec
@@ -277,8 +278,17 @@ module Unified
         if name.to_s == 'loop'
           method_name = "_#{name}"
         end
+
+        if ["modify_collection"].include?(name.to_s)
+          skip "Mongo Ruby Driver does not support #{name.to_s}"
+        end
+
         if expected_error = op.use('expectError')
           begin
+            unless respond_to?(method_name)
+              raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name.to_s}"
+            end
+
             public_send(method_name, op)
           rescue Mongo::Error, BSON::String::IllegalKey => e
             if expected_error.use('isClientError')
@@ -331,6 +341,10 @@ module Unified
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
         else
+          unless respond_to?(method_name, true)
+            raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name.to_s}"
+          end
+
           result = send(method_name, op)
           if expected_result = op.use('expectResult')
             if result.nil? && expected_result.keys == ["$$unsetOrMatches"]

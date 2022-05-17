@@ -46,10 +46,6 @@ module Mongo
             ordered: ordered? }
         end
 
-        def options(server)
-          super.merge(validating_keys: true)
-        end
-
         def message(connection)
           Protocol::Query.new(db_name, Database::COMMAND, command(connection), options(connection))
         end
