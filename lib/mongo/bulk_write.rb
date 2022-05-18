@@ -315,11 +315,14 @@ module Mongo
       end
     end
 
-    # Checks the request documents to make sure they are valid. For update
-    # documents this means they only contain atomic modifiers, and for
-    # replacement documents this means they don't contain modifiers.
-    # Note that as per the spec, we only have to examine the first element
-    # in the update document.
+    # Perform the request document validation required by driver specifications.
+    # This method validates the first key of each update request document to be
+    # an operator (i.e. start with $) and the first key of each replacement
+    # document to not be an operator (i.e. not start with $). The request document
+    # may be invalid without this method flagging it as such (for example an
+    # update or replacement document containing some keys which are operators
+    # and some which are not), in which case the driver expects the server to
+    # fail the operation with an error.
     #
     # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument ]
     #   if the document is invalid.
@@ -330,14 +333,14 @@ module Mongo
             if doc = maybe_first(req.dig(op, :update))
               if key = doc.keys&.first
                 unless key.to_s.start_with?("$")
-                  raise Error::InvalidUpdateDocument.new(key)
+                  raise Error::InvalidUpdateDocument.new(key: key)
                 end
               end
             end
           elsif op == :replace_one
             if key = req.dig(op, :replacement)&.keys&.first
               if key.to_s.start_with?("$")
-                raise Error::InvalidReplacementDocument.new(key)
+                raise Error::InvalidReplacementDocument.new(key: key)
               end
             end
           end

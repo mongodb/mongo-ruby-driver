@@ -30,8 +30,8 @@ module Mongo
 
       # Instantiate the new exception.
       #
-      # @param [ String ] key The invalid key.
-      def initialize(key)
+      # @param [ String ] :key The invalid key.
+      def initialize(key: nil)
         message = "Invalid update document provided. Updates documents must only "
         message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
         super(message)
