@@ -56,7 +56,7 @@ module Mongo
         results = repetitions.times.collect do
           Benchmark.realtime do
             10_000.times do
-              monitor.connection.ismaster
+              client.database.command(hello: true)
             end
           end
         end
