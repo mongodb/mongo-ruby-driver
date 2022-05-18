@@ -27,12 +27,19 @@ tests:
           filter: { _id: 1 }
         result: *doc0
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -68,12 +75,19 @@ tests:
           filter: { _id: 1 }
         result: *doc1
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -109,12 +123,19 @@ tests:
           filter: { _id: 1 }
         result: *doc2
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -146,12 +167,12 @@ tests:
         arguments:
           document: &doc4 { _id: 1, encrypted_double: {"$numberDouble": "1.23"} }
         result:
-            # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
-            # "Cannot use deterministic encryption for element of type: double"
-            # After it is:
-            # "Cannot encrypt element of type: double"
-            # Only check for the common suffix.
-            errorContains: "element of type: double"
+          # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+          # "Cannot use deterministic encryption for element of type: double"
+          # After it is:
+          # "Cannot encrypt element of type: double"
+          # Only check for the common suffix.
+          errorContains: "element of type: double"
   - description: "type=decimal"
     clientOptions:
       autoEncryptOpts:
@@ -164,12 +185,12 @@ tests:
         arguments:
           document: &doc5 { _id: 1, encrypted_decimal: {"$numberDecimal": "1.23"} }
         result:
-            # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
-            # "Cannot use deterministic encryption for element of type: decimal"
-            # After it is:
-            # "Cannot encrypt element of type: decimal"
-            # Only check for the common suffix.
-            errorContains: "element of type: decimal"
+          # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+          # "Cannot use deterministic encryption for element of type: decimal"
+          # After it is:
+          # "Cannot encrypt element of type: decimal"
+          # Only check for the common suffix.
+          errorContains: "element of type: decimal"
   - description: "type=binData"
     clientOptions:
       autoEncryptOpts:
@@ -186,12 +207,19 @@ tests:
           filter: { _id: 1 }
         result: *doc6
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -227,12 +255,19 @@ tests:
           filter: { _id: 1 }
         result: *doc7
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -304,12 +339,19 @@ tests:
           filter: { _id: 1 }
         result: *doc10
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -345,12 +387,19 @@ tests:
           filter: { _id: 1 }
         result: *doc11
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -386,12 +435,19 @@ tests:
           filter: { _id: 1 }
         result: *doc13
     expectations:
+      - command_started_event:
+          command:
+            listCollections: 1
+            filter:
+              name: "datakeys"
+            $db: admin
+          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: keyvault
+            $db: admin
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
