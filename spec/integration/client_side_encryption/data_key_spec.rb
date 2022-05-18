@@ -172,7 +172,7 @@ describe 'Client-Side Encryption' do
 
         expect do
           client_encrypted['coll'].insert_one(encrypted_placeholder: encrypted)
-        end.to raise_error(Mongo::Error::OperationFailure, /Cannot encrypt element of type binData/)
+        end.to raise_error(Mongo::Error::OperationFailure, /Cannot encrypt element of type(: encrypted binary data| binData)/)
       end
     end
 
