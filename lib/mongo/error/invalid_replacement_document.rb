@@ -28,7 +28,7 @@ module Mongo
 
       # Instantiate the new exception.
       #
-      # @param [ String ] key The invalid key.
+      # @param [ String ] :key The invalid key.
       def initialize(key: nil)
         message = "Invalid replacement document provided. Replacement documents "
         message += "must not contain atomic modifiers. The \"#{key}\" key is invalid."
