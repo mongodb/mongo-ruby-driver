@@ -86,7 +86,9 @@ module Mongo
         @crypt_handle = Crypt::Handle.new(
           Crypt::KMS::Credentials.new(@options[:kms_providers]),
           Crypt::KMS::Validations.validate_tls_options(@options[:kms_tls_options]),
-          schema_map: @options[:schema_map]
+          schema_map: @options[:schema_map],
+          encrypted_fields_map: @options[:encrypted_fields_map],
+          bypass_query_analysis: @options[:bypass_query_analysis]
         )
 
         @key_vault_client = @options[:key_vault_client]

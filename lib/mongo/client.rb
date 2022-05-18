@@ -1141,6 +1141,10 @@ module Mongo
       end
     end
 
+    def encrypted_fields_map
+      @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
+    end
+
     private
 
     # Create a new encrypter object using the client's auto encryption options

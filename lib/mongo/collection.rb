@@ -17,6 +17,7 @@
 
 require 'mongo/bulk_write'
 require 'mongo/collection/view'
+require 'mongo/collection/indexed_encrypted_fields'
 
 module Mongo
 
@@ -27,6 +28,7 @@ module Mongo
   class Collection
     extend Forwardable
     include Retryable
+    include IndexedEncryptedFields
 
     # The capped option.
     #
@@ -47,8 +49,8 @@ module Mongo
     # @return [ Hash ] The collection options.
     attr_reader :options
 
-    # Get client, cluster, read preference, and write concern from client.
-    def_delegators :database, :client, :cluster
+    # Get client, cluster, read preference, write concern, and encrypted_fields_map from client.
+    def_delegators :database, :client, :cluster, :encrypted_fields_map
 
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
@@ -66,6 +68,7 @@ module Mongo
       :expire_after => :expireAfterSeconds,
       :clustered_index => :clusteredIndex,
       :change_stream_pre_and_post_images => :changeStreamPreAndPostImages,
+      :encrypted_fields => :encryptedFields
     }
 
     # Check if a collection is equal to another object. Will check the name and
@@ -251,6 +254,7 @@ module Mongo
     #   after how many seconds old time-series data should be deleted.
     # @option opts [ Hash ] :change_stream_pre_and_post_images Used to enable
     #   pre- and post-images on the created collection.
+    # @option opts [ Hash ] :encrypted_fields
     #
     # @return [ Result ] The result of the command.
     #
@@ -281,6 +285,7 @@ module Mongo
         end
 
         context = Operation::Context.new(client: client, session: session)
+        maybe_create_emm_collections(opts[:encrypted_fields], client, session)
         Operation::Create.new(
           selector: operation,
           db_name: database.name,
@@ -310,27 +315,32 @@ module Mongo
     #
     # @since 2.0.0
     def drop(opts = {})
-      client.send(:with_session, opts) do |session|
-        temp_write_concern = write_concern
-        write_concern = if opts[:write_concern]
-          WriteConcern.get(opts[:write_concern])
-        else
-          temp_write_concern
-        end
-        Operation::Drop.new({
-                              selector: { :drop => name },
-                              db_name: database.name,
-                              write_concern: write_concern,
-                              session: session,
-                              }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+        client.send(:with_session, opts) do |session|
+          maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
+            temp_write_concern = write_concern
+            write_concern = if opts[:write_concern]
+              WriteConcern.get(opts[:write_concern])
+            else
+              temp_write_concern
+            end
+            begin
+              Operation::Drop.new({
+                                    selector: { :drop => name },
+                                    db_name: database.name,
+                                    write_concern: write_concern,
+                                    session: session,
+                                    }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+            rescue Error::OperationFailure => ex
+              # NamespaceNotFound
+              if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
+                false
+              else
+                raise
+              end
+            end
+          end
       end
-    rescue Error::OperationFailure => ex
-      # NamespaceNotFound
-      if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
-        false
-      else
-        raise
-      end
+
     end
 
     # Find documents in the collection.

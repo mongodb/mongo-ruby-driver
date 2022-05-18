@@ -202,6 +202,10 @@ module Utils
       auto_encrypt_opts[:schema_map] = BSON::ExtJSON.parse_obj(opts['schemaMap'])
     end
 
+    if opts['encryptedFieldsMap']
+      auto_encrypt_opts[:encrypted_fields_map] = BSON::ExtJSON.parse_obj(opts['encryptedFieldsMap'])
+    end
+
     auto_encrypt_opts
   end
   module_function :convert_auto_encryption_client_options
