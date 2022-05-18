@@ -23,6 +23,11 @@ module Mongo
     # @since 2.0.0
     class InvalidUpdateDocument < Error
 
+      # The error message.
+      #
+      # @deprecated
+      MESSAGE = 'Invalid update document provided'.freeze
+
       # Instantiate the new exception.
       #
       # @param [ String ] key The invalid key.

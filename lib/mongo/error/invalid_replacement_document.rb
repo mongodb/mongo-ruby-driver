@@ -21,6 +21,11 @@ module Mongo
     # Exception raised if the object is not a valid replacement document.
     class InvalidReplacementDocument < Error
 
+      # The error message.
+      #
+      # @deprecated
+      MESSAGE = 'Invalid replacement document provided'.freeze
+
       # Instantiate the new exception.
       #
       # @param [ String ] key The invalid key.
