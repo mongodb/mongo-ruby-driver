@@ -27,7 +27,9 @@ module Mongo
         else
           {}
         end
-        return if encrypted_fields.empty?
+        if encrypted_fields.empty?
+          return yield
+        end
 
         emm_collections(encrypted_fields).each do |coll|
           context = Operation::Context.new(client: client, session: session)
@@ -36,7 +38,9 @@ module Mongo
             db_name: database.name,
           ).execute(next_primary(nil, session), context: context)
         end
-        indexes.create_one("__safeContent__" => 1)
+        yield(encrypted_fields).tap do |result|
+          indexes.create_one("__safeContent__" => 1) if result
+        end
       end
 
       def maybe_drop_emm_collections(encrypted_fields, client, session)

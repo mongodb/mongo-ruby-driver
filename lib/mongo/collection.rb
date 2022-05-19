@@ -285,17 +285,18 @@ module Mongo
         end
 
         context = Operation::Context.new(client: client, session: session)
-        maybe_create_emm_collections(opts[:encrypted_fields], client, session)
-        Operation::Create.new(
-          selector: operation,
-          db_name: database.name,
-          write_concern: write_concern,
-          session: session,
-          # Note that these are collection options, collation isn't
-          # taken from options passed to the create method.
-          collation: options[:collation] || options['collation'],
-        ).execute(next_primary(nil, session), context: context)
-        maybe_create_emm_collections(opts[:encrypted_fields], client, session)
+        maybe_create_emm_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
+          Operation::Create.new(
+            selector: operation,
+            db_name: database.name,
+            write_concern: write_concern,
+            session: session,
+            # Note that these are collection options, collation isn't
+            # taken from options passed to the create method.
+            collation: options[:collation] || options['collation'],
+            encrypted_fields: encrypted_fields,
+          ).execute(next_primary(nil, session), context: context)
+        end
       end
     end
 
@@ -316,28 +317,30 @@ module Mongo
     #
     # @since 2.0.0
     def drop(opts = {})
-        client.send(:with_session, opts) do |session|
-          maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
-            temp_write_concern = write_concern
-            write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              temp_write_concern
-            end
+      client.send(:with_session, opts) do |session|
+        maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
+          temp_write_concern = write_concern
+          write_concern = if opts[:write_concern]
+            WriteConcern.get(opts[:write_concern])
+          else
+            temp_write_concern
+          end
+          begin
             Operation::Drop.new({
                                   selector: { :drop => name },
                                   db_name: database.name,
                                   write_concern: write_concern,
                                   session: session,
                                   }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+          rescue Error::OperationFailure => ex
+            # NamespaceNotFound
+            if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
+              false
+            else
+              raise
+            end
           end
-      end
-    rescue Error::OperationFailure => ex
-      # NamespaceNotFound
-      if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
-        false
-      else
-        raise
+        end
       end
     end
 

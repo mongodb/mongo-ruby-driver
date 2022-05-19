@@ -2,7 +2,7 @@ runOn:
   - minServerVersion: "6.0.0"
     # FLE 2 Encrypted collections are not supported on standalone.
     topology: [ "replicaset", "sharded" ]
-    
+
 database_name: &database_name "default"
 collection_name: &collection_name "default"
 
@@ -178,7 +178,7 @@ tests:
           database: *database_name
           collection: "encryptedCollection"
           index: __safeContent___1
-      
+
     expectations:
         # events from dropCollection ... begin
         - command_started_event:
@@ -319,7 +319,7 @@ tests:
           database: *database_name
           collection: "encryptedCollection"
           index: __safeContent___1
-      
+
     expectations:
         # events from dropCollection ... begin
         - command_started_event:
