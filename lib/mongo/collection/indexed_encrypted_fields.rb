@@ -34,7 +34,12 @@ module Mongo
         emm_collections(encrypted_fields).each do |coll|
           context = Operation::Context.new(client: client, session: session)
           Operation::Create.new(
-            selector: { create: coll },
+            selector: {
+              create: coll,
+              clusteredIndex: {
+                key: {_id: 1}, unique: true
+              }
+            },
             db_name: database.name,
           ).execute(next_primary(nil, session), context: context)
         end
@@ -55,10 +60,9 @@ module Mongo
         else
           {}
         end
-
-        yield
-
-        return if encrypted_fields.empty?
+        if encrypted_fields.empty?
+          return yield
+        end
         emm_collections(encrypted_fields).each do |coll|
           begin
             context = Operation::Context.new(client: client, session: session)
@@ -74,6 +78,7 @@ module Mongo
             end
           end
         end
+        yield
       end
 
       private
