@@ -295,6 +295,7 @@ module Mongo
           # taken from options passed to the create method.
           collation: options[:collation] || options['collation'],
         ).execute(next_primary(nil, session), context: context)
+        maybe_create_emm_collections(opts[:encrypted_fields], client, session)
       end
     end
 
@@ -323,24 +324,21 @@ module Mongo
             else
               temp_write_concern
             end
-            begin
-              Operation::Drop.new({
-                                    selector: { :drop => name },
-                                    db_name: database.name,
-                                    write_concern: write_concern,
-                                    session: session,
-                                    }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
-            rescue Error::OperationFailure => ex
-              # NamespaceNotFound
-              if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
-                false
-              else
-                raise
-              end
-            end
+            Operation::Drop.new({
+                                  selector: { :drop => name },
+                                  db_name: database.name,
+                                  write_concern: write_concern,
+                                  session: session,
+                                  }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
           end
       end
-
+    rescue Error::OperationFailure => ex
+      # NamespaceNotFound
+      if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
+        false
+      else
+        raise
+      end
     end
 
     # Find documents in the collection.
