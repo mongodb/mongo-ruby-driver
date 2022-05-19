@@ -59,12 +59,6 @@ describe 'Mongo::Crypt::Binding' do
         end
       end
 
-      context 'without binding crypto hooks' do
-        it 'returns false' do
-          expect(Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)).to be false
-        end
-      end
-
       context 'with invalid kms option' do
         before do
           MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)

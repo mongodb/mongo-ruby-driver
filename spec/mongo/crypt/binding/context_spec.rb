@@ -254,5 +254,84 @@ describe 'Mongo::Crypt::Binding' do
         end
       end
     end
+
+    describe '#mongocrypt_ctx_setopt_index_type' do
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_setopt_index_type(
+          context,
+          index_type
+        )
+      end
+
+      before do
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      context 'with equality index type' do
+        let(:index_type) do
+          :equality
+        end
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+
+      context 'with none index type' do
+        let(:index_type) do
+          :none
+        end
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+    end
+
+    describe '#mongocrypt_ctx_setopt_query_type' do
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_setopt_query_type(
+          context,
+          query_type
+        )
+      end
+
+      before do
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      context 'with equality query type' do
+        let(:query_type) do
+          :equality
+        end
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+    end
+
+    describe '#mongocrypt_ctx_setopt_contention_factor' do
+      let(:result) do
+        Mongo::Crypt::Binding.mongocrypt_ctx_setopt_contention_factor(
+          context,
+          contention_factor
+        )
+      end
+
+      before do
+        Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)
+      end
+
+      context 'with non zero contention factor' do
+        let(:contention_factor) do
+          10
+        end
+
+        it 'returns true' do
+          expect(result).to be true
+        end
+      end
+    end
   end
 end
