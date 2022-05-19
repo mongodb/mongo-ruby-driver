@@ -33,6 +33,9 @@ module Unified
         if clustered_index = args.use('clusteredIndex')
           collection_opts[:clustered_index] = clustered_index
         end
+        if change_stream_pre_and_post_images = args.use('changeStreamPreAndPostImages')
+          collection_opts[:change_stream_pre_and_post_images] = change_stream_pre_and_post_images
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end

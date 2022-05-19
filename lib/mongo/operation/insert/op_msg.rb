@@ -49,7 +49,7 @@ module Mongo
 
         def message(connection)
           section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
-          Protocol::Msg.new(flags, { validating_keys: true }, command(connection), section)
+          Protocol::Msg.new(flags, {}, command(connection), section)
         end
       end
     end

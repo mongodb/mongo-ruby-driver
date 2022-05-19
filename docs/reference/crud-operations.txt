@@ -973,6 +973,16 @@ Note that writeConcern here is part of the operation rather than options,
 and the syntax is the camel case one that MongoDB server recognizes, not the
 underscore one that Ruby driver uses.
 
+Field Names with Dots/Periods (.) and Dollar Signs ($)
+======================================================
+
+Starting in Mongo Ruby Driver version 2.18.0, the ability to work with fields
+that begin with dollar signs ($) and fields with dots/periods (.) in them is available.
+In Driver version 2.17.0 and earlier, any attempt to work with dotted or dollared
+fields would result in an ``IllegalKey`` error being raised. See the MongoDB docs
+on `Field Names with Periods (.) and Dollar Signs ($) <https://www.mongodb.com/docs/manual/core/dot-dollar-considerations/>`_
+for more information on working with these types of fields.
+
 A Note about the BSON Symbol type
 =================================
 

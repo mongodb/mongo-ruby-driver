@@ -30,23 +30,6 @@ initialData:
     documents: []
 
 tests:
-  - description: "Client side error in command starting transaction"
-    operations:
-      - name: startTransaction
-        object: *session0
-      - name: insertOne
-        object: *collection0
-        arguments:
-          session: *session0
-          document: { _id: { .: . } }
-        # Original test only asserted a generic error
-        expectError: { isClientError: true }
-      - name: assertSessionTransactionState
-        object: testRunner
-        arguments:
-          session: *session0
-          state: starting
-
   - description: "explicitly create collection using create command"
     runOnRequirements:
       - minServerVersion: "4.3.4"
