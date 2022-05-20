@@ -693,7 +693,7 @@ describe 'QueryCache' do
     end
 
     [:find_one_and_delete, :find_one_and_replace, :find_one_and_update,
-      :update_one, :replace_one].each do |method|
+      :replace_one].each do |method|
       context "when updating with #{method}" do
         context 'when updating and querying from same collection' do
           before do
@@ -721,28 +721,30 @@ describe 'QueryCache' do
       end
     end
 
-    context 'when updating with #update_many' do
-      context 'when updating and querying from same collection' do
-        before do
-          authorized_collection.find.to_a
-          authorized_collection.update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
+    [:update_one, :update_many].each do |method|
+      context "when updating with ##{method}" do
+        context 'when updating and querying from same collection' do
+          before do
+            authorized_collection.find.to_a
+            authorized_collection.send(method, { field: 'value' }, { "$inc" => { :field =>  1 } })
+          end
+
+          it 'queries again' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(2)
+          end
         end
 
-        it 'queries again' do
-          authorized_collection.find.to_a
-          expect(events.length).to eq(2)
-        end
-      end
+        context 'when updating and querying from different collections' do
+          before do
+            authorized_collection.find.to_a
+            authorized_client['different_collection'].send(method, { field: 'value' }, { "$inc" => { :field =>  1 } })
+          end
 
-      context 'when updating and querying from different collections' do
-        before do
-          authorized_collection.find.to_a
-          authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
-        end
-
-        it 'uses the cached query' do
-          authorized_collection.find.to_a
-          expect(events.length).to eq(1)
+          it 'uses the cached query' do
+            authorized_collection.find.to_a
+            expect(events.length).to eq(1)
+          end
         end
       end
     end
@@ -1072,7 +1074,7 @@ describe 'QueryCache' do
     end
 
     [:find_one_and_delete, :find_one_and_replace, :find_one_and_update,
-      :update_one, :replace_one].each do |method|
+      :replace_one].each do |method|
       context "when #{method} is performed on another collection" do
         before do
           aggregation.to_a
@@ -1086,15 +1088,17 @@ describe 'QueryCache' do
       end
     end
 
-    context 'when update_many is performed on another collection' do
-      before do
-        aggregation.to_a
-        authorized_client['different_collection'].update_many({ field: 'value' }, { "$inc" => { :field =>  1 } })
-        aggregation.to_a
-      end
+    [:update_one, :update_many].each do |method|
+      context 'when update_many is performed on another collection' do
+        before do
+          aggregation.to_a
+          authorized_client['different_collection'].send(method, { field: 'value' }, { "$inc" => { :field =>  1 } })
+          aggregation.to_a
+        end
 
-      it 'queries again' do
-        expect(events.length).to eq(2)
+        it 'queries again' do
+          expect(events.length).to eq(2)
+        end
       end
     end
 
