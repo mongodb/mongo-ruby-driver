@@ -17,7 +17,8 @@
 
 require 'mongo/bulk_write'
 require 'mongo/collection/view'
-require 'mongo/collection/indexed_encrypted_fields'
+require 'mongo/collection/helpers'
+require 'mongo/collection/queryable_encryption'
 
 module Mongo
 
@@ -28,7 +29,8 @@ module Mongo
   class Collection
     extend Forwardable
     include Retryable
-    include IndexedEncryptedFields
+    include QueryableEncryption
+    include Helpers
 
     # The capped option.
     #
@@ -254,7 +256,8 @@ module Mongo
     #   after how many seconds old time-series data should be deleted.
     # @option opts [ Hash ] :change_stream_pre_and_post_images Used to enable
     #   pre- and post-images on the created collection.
-    # @option opts [ Hash ] :encrypted_fields
+    # @option opts [ Hash ] :encrypted_fields Hash describing encrypted fields
+    #   for queryable encryption.
     #
     # @return [ Result ] The result of the command.
     #
@@ -285,7 +288,7 @@ module Mongo
         end
 
         context = Operation::Context.new(client: client, session: session)
-        maybe_create_emm_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
+        maybe_create_qe_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
           Operation::Create.new(
             selector: operation,
             db_name: database.name,
@@ -301,7 +304,7 @@ module Mongo
     end
 
     # Drop the collection. Will also drop all indexes associated with the
-    # collection.
+    # collection, as well as associated queryable encryption collections.
     #
     # @note An error returned if the collection doesn't exist is suppressed.
     #
@@ -325,21 +328,14 @@ module Mongo
           else
             temp_write_concern
           end
-          begin
-            Operation::Drop.new({
-                                  selector: { :drop => name },
-                                  db_name: database.name,
-                                  write_concern: write_concern,
-                                  session: session,
-                                  }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
-          rescue Error::OperationFailure => ex
-            # NamespaceNotFound
-            if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
-              false
-            else
-              raise
-            end
-          end
+          context = Operation::Context.new(client: client, session: session)
+          operation = Operation::Drop.new({
+            selector: { :drop => name },
+            db_name: database.name,
+            write_concern: write_concern,
+            session: session,
+          })
+          do_drop(operation, session, context)
         end
       end
     end

@@ -17,9 +17,21 @@
 
 module Mongo
   class Collection
-    module IndexedEncryptedFields
+    # This module contains methods for creating and dropping auxiliary collections
+    # for queryable encryption.
+    #
+    # @api private
+    module QueryableEncryption
 
-      def maybe_create_emm_collections(encrypted_fields, client, session)
+      # Creates auxiliary collections and indices for queryable encryption if necessary.
+      #
+      # @param [ Hash | nil ] encrypted_fields Encrypted fields hash that was
+      #   provided to `create` collection helper.
+      # @param [ Client ] client Mongo client to be used to create auxiliary collections.
+      # @param [ Session ] session Session to be used to create auxiliary collections.
+      #
+      # @return [ Result ] The result of provided block.
+      def maybe_create_qe_collections(encrypted_fields, client, session)
         encrypted_fields = if encrypted_fields
           encrypted_fields
         elsif encrypted_fields_map
@@ -37,17 +49,28 @@ module Mongo
             selector: {
               create: coll,
               clusteredIndex: {
-                key: {_id: 1}, unique: true
+                key: {
+                  _id: 1
+                },
+                unique: true
               }
             },
             db_name: database.name,
           ).execute(next_primary(nil, session), context: context)
         end
         yield(encrypted_fields).tap do |result|
-          indexes.create_one("__safeContent__" => 1) if result
+          indexes.create_one(__safeContent__: 1) if result
         end
       end
 
+      # Drops auxiliary collections and indices for queryable encryption if necessary.
+      #
+      # @param [ Hash | nil ] encrypted_fields Encrypted fields hash that was
+      #   provided to `create` collection helper.
+      # @param [ Client ] client Mongo client to be used to drop auxiliary collections.
+      # @param [ Session ] session Session to be used to drop auxiliary collections.
+      #
+      # @return [ Result ] The result of provided block.
       def maybe_drop_emm_collections(encrypted_fields, client, session)
         encrypted_fields = if encrypted_fields
           encrypted_fields
@@ -64,25 +87,25 @@ module Mongo
           return yield
         end
         emm_collections(encrypted_fields).each do |coll|
-          begin
-            context = Operation::Context.new(client: client, session: session)
-            Operation::Drop.new(
-              selector: { drop: coll },
-              db_name: database.name,
-              session: session,
-            ).execute(next_primary(nil, session), context: context)
-          rescue Error::OperationFailure => ex
-            # NamespaceNotFound
-            unless ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
-              raise
-            end
-          end
+          context = Operation::Context.new(client: client, session: session)
+          operation = Operation::Drop.new(
+            selector: { drop: coll },
+            db_name: database.name,
+            session: session,
+          )
+          do_drop(operation, session, context)
         end
         yield
       end
 
       private
 
+      # Checks is names for auxiliary collections are set and returns them,
+      # otherwise returns default names.
+      #
+      # @param [ Hash ] encrypted_fields Encrypted fields hash.
+      #
+      # @return [ Array <String> ] Array of auxiliary collections names.
       def emm_collections(encrypted_fields)
         [
           encrypted_fields['escCollection'] || "enxcol_.#{name}.esc",

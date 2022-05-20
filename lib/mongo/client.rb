@@ -453,7 +453,7 @@ module Mongo
     #   - :extra_options => Hash | nil, options related to spawning mongocryptd
     #     (this part of the API is subject to change).
     #   - :encrypted_fields_map => Hash | nil, maps a collection namespace to
-    #     a hash describing FLE2 encrypted fields.
+    #     a hash describing encrypted fields for queryable encryption.
     #     - Note: If a collection is present on both the encryptedFieldsMap
     #       and schemaMap, an error will be raised.
     #   - :bypass_query_analysis => Boolean | nil, when true disables automatic
@@ -1141,6 +1141,10 @@ module Mongo
       end
     end
 
+    # Returns encrypted field map has if provided when creating the client.
+    #
+    # @return [ Hash | nil ] Encrypted field map hash, or nil if not set.
+    # @api private
     def encrypted_fields_map
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
     end
