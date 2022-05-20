@@ -78,7 +78,10 @@ module Mongo
           if encrypted_fields_map[namespace]
             encrypted_fields_map[namespace]
           else
-            database.list_collections(filter: { name: name }).first&.fetch(:options, {})&.fetch(:encryptedFields, {}) || {}
+            database.list_collections(filter: { name: name })
+              .first
+              &.fetch(:options, {})
+              &.fetch(:encryptedFields, {}) || {}
           end
         else
           {}
