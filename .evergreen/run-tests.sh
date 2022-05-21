@@ -219,6 +219,7 @@ if test -n "$FLE"; then
       gem uni libmongocrypt-helper
     fi
     test -f "$LIBMONGOCRYPT_PATH"
+    ldd "$LIBMONGOCRYPT_PATH"
   else
     echo "Unknown FLE value: $FLE" 1>&2
     exit 1
