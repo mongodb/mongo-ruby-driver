@@ -76,9 +76,10 @@ describe Mongo::Operation::Create::OpMsg do
     min_server_fcv '3.6'
 
     it 'does not mutate user input' do
-      user_input = spec.dup
-      described_class.new(user_input).send(:selector, connection)
-      expect(user_input).to eq(spec)
+      user_input = IceNine.deep_freeze(spec.dup)
+      expect do
+        described_class.new(user_input).send(:selector, connection)
+      end.not_to raise_error
     end
 
     context 'with encryptedFields' do
