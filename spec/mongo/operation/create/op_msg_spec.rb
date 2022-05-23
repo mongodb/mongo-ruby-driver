@@ -77,8 +77,9 @@ describe Mongo::Operation::Create::OpMsg do
 
     it 'does not mutate user input' do
       user_input = IceNine.deep_freeze(spec.dup)
-      described_class.new(user_input).send(:selector, connection)
-      expect(user_input).to eq(spec)
+      expect do
+        described_class.new(user_input).send(:selector, connection)
+      end.not_to raise_error
     end
 
     context 'with encryptedFields' do
