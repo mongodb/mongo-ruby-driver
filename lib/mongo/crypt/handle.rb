@@ -123,7 +123,7 @@ module Mongo
           )
         end
 
-        Binding.setopt_bypass_query_analysis(self, @bypass_query_analysis)
+        Binding.setopt_bypass_query_analysis(self) if @bypass_query_analysis
       end
 
       # Send the logs from libmongocrypt to the Mongo::Logger
