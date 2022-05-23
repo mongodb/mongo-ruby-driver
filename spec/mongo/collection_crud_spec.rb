@@ -2105,16 +2105,16 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the replace fails' do
+    context 'when the replace has an invalid key' do
 
       let(:result) do
         authorized_collection.replace_one(selector, { '$s' => 'test1' })
       end
 
-      it 'raises an OperationFailure' do
+      it 'raises an InvalidReplacementDocument error' do
         expect {
           result
-        }.to raise_exception(Mongo::Error::OperationFailure)
+        }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
       end
     end
 

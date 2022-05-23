@@ -361,6 +361,7 @@ module Mongo
             else
               write_concern_with_session(session)
             end
+            validate_replacement_documents!(replacement)
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -432,6 +433,7 @@ module Mongo
             else
               write_concern_with_session(session)
             end
+            validate_update_documents!(spec)
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -503,6 +505,7 @@ module Mongo
             else
               write_concern_with_session(session)
             end
+            validate_update_documents!(spec)
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -535,6 +538,44 @@ module Mongo
                 let: opts[:let],
                 comment: opts[:comment],
               ).execute_with_connection(connection, context: context)
+            end
+          end
+        end
+
+        private
+
+        # Checks the update documents to make sure they only have atomic modifiers.
+        # Note that as per the spec, we only have to examine the first element
+        # in the update document.
+        #
+        # @param [ Hash | Array<Hash> ] spec The update document or pipeline.
+        #
+        # @raise [ Error::InvalidUpdateDocument ] if the first key in the
+        #   document does not start with a $.
+        def validate_update_documents!(spec)
+          if update = spec.is_a?(Array) ? spec&.first : spec
+            if key = update.keys&.first
+              unless key.to_s.start_with?("$")
+                raise Error::InvalidUpdateDocument.new(key: key)
+              end
+            end
+          end
+        end
+
+        # Check the replacement documents to make sure they don't have atomic
+        # modifiers. Note that as per the spec, we only have to examine the
+        # first element in the replacement document.
+        #
+        # @param [ Hash | Array<Hash> ] spec The replacement document or pipeline.
+        #
+        # @raise [ Error::InvalidUpdateDocument ] if the first key in the
+        #   document does not start with a $.
+        def validate_replacement_documents!(spec)
+          if replace = spec.is_a?(Array) ? spec&.first : spec
+            if key = replace.keys&.first
+              if key.to_s.start_with?("$")
+                raise Error::InvalidReplacementDocument.new(key: key)
+              end
             end
           end
         end

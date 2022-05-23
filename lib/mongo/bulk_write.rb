@@ -59,6 +59,7 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       operations = op_combiner.combine
+      validate_requests!
 
       client.send(:with_session, @options) do |session|
         context = Operation::Context.new(client: client, session: session)
@@ -312,6 +313,49 @@ module Mongo
           true
         end
       end
+    end
+
+    # Perform the request document validation required by driver specifications.
+    # This method validates the first key of each update request document to be
+    # an operator (i.e. start with $) and the first key of each replacement
+    # document to not be an operator (i.e. not start with $). The request document
+    # may be invalid without this method flagging it as such (for example an
+    # update or replacement document containing some keys which are operators
+    # and some which are not), in which case the driver expects the server to
+    # fail the operation with an error.
+    #
+    # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument ]
+    #   if the document is invalid.
+    def validate_requests!
+      @requests.each do |req|
+        if op = req.keys.first
+          if [:update_one, :update_many].include?(op)
+            if doc = maybe_first(req.dig(op, :update))
+              if key = doc.keys&.first
+                unless key.to_s.start_with?("$")
+                  raise Error::InvalidUpdateDocument.new(key: key)
+                end
+              end
+            end
+          elsif op == :replace_one
+            if key = req.dig(op, :replacement)&.keys&.first
+              if key.to_s.start_with?("$")
+                raise Error::InvalidReplacementDocument.new(key: key)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    # If the given object is an array return the first element, otherwise
+    # return the given object.
+    #
+    # @param [ Object ] obj The given object.
+    #
+    # @return [ Object ] The first element of the array or the given object.
+    def maybe_first(obj)
+      obj.is_a?(Array) ? obj.first : obj
     end
   end
 end
