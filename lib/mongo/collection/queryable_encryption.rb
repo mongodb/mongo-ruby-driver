@@ -103,7 +103,7 @@ module Mongo
 
       private
 
-      # Checks is names for auxiliary collections are set and returns them,
+      # Checks if names for auxiliary collections are set and returns them,
       # otherwise returns default names.
       #
       # @param [ Hash ] encrypted_fields Encrypted fields hash.
