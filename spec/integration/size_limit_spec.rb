@@ -75,7 +75,7 @@ describe 'BSON & command size limits' do
   end
 
   it 'fails on the driver when an update larger than 16MiB is performed' do
-    document = { key: 'a' * (max_document_size - 14) }
+    document = { "$set" => { key: 'a' * (max_document_size - 25) } }
     expect(document.to_bson.length).to eq(max_document_size+1)
 
     lambda do
