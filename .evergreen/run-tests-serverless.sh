@@ -7,6 +7,7 @@ set -ex
 . `dirname "$0"`/functions.sh
 
 set_env_vars
+set_env_python
 set_env_ruby
 
 bundle_install

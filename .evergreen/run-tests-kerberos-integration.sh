@@ -15,6 +15,7 @@ arch=`host_distro`
 show_local_instructions
 
 set_env_vars
+set_env_python
 set_env_ruby
 
 # Note that:
