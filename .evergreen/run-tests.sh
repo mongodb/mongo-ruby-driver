@@ -96,6 +96,11 @@ if test "$TOPOLOGY" = sharded-cluster; then
   else
     hosts=localhost:27017,localhost:27018
   fi
+elif test "$TOPOLOGY" = replica-set; then
+  # To set FCV we use mongo shell, it needs to be placed in replica set topology
+  # or it can try to send the commands to secondaries.
+  hosts=localhost:27017,localhost:27018
+  uri_options="$uri_options&replicaSet=test-rs"
 else
   hosts=localhost:27017
 fi
@@ -219,6 +224,7 @@ if test -n "$FLE"; then
       gem uni libmongocrypt-helper
     fi
     test -f "$LIBMONGOCRYPT_PATH"
+    ldd "$LIBMONGOCRYPT_PATH"
   else
     echo "Unknown FLE value: $FLE" 1>&2
     exit 1

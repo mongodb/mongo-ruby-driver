@@ -195,7 +195,7 @@ describe Mongo::Operation::Create::OpMsg do
               expect(connection.features).to receive(:sessions_enabled?).and_return(false)
 
               expect(expected_global_args[:session]).to be nil
-              expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
               op.send(:message, connection)
             end
           end

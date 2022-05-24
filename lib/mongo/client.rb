@@ -1141,7 +1141,7 @@ module Mongo
       end
     end
 
-    # Returns encrypted field map has if provided when creating the client.
+    # Returns encrypted field map hash if provided when creating the client.
     #
     # @return [ Hash | nil ] Encrypted field map hash, or nil if not set.
     # @api private
