@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/protocol/cacheable'
-
 module Mongo
   module Protocol
 
@@ -89,7 +87,9 @@ module Mongo
         ] + @sequences.map do |section|
           {type: 1, payload: {
             identifier: section.identifier,
-            sequence: section.documents.each { |d| d.extend(Mongo::Protocol::Cacheable) },
+            sequence: section.documents.map do |doc|
+              CachingHash[doc]
+            end,
           }}
         end
         @request_id = nil

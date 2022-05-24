@@ -18,9 +18,8 @@
 module Mongo
   module Protocol
 
-    # A module used to cache the results of to_bson to be reused on subsequent
-    # calls.
-    module Cacheable
+    # A subclass of Hash that caches the results of #to_bson.
+    class CachingHash < Hash
 
       # Caches the result of to_bson and writes it to the given buffer on subsequent
       # calls to this method. If this method is originally called without validation,
