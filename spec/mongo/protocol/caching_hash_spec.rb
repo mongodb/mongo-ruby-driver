@@ -3,9 +3,9 @@
 
 require 'spec_helper'
 
-describe Mongo::Protocol::Cacheable do
+describe Mongo::Protocol::CachingHash do
 
-  let(:hash) { {x:1}.extend(described_class) }
+  let(:hash) { described_class.new(x:1) }
   let(:bson_reg) { {x:1}.to_bson }
 
   describe "#to_bson" do
@@ -14,16 +14,6 @@ describe Mongo::Protocol::Cacheable do
       it "caches the results" do
         hash.to_bson
         expect(hash.instance_variable_get("@bytes")).to eq(bson_reg.to_s)
-      end
-    end
-
-    context "when modifying the hash" do
-      it "clears the cache" do
-        hash.to_bson
-        expect(hash.instance_variable_get("@bytes")).to eq(bson_reg.to_s)
-        hash[:y] = 1
-        expect(hash.instance_variable_get("@bytes")).to be nil
-        expect(hash.instance_variable_get("@validated")).to be false
       end
     end
 
