@@ -240,6 +240,18 @@ describe 'CRUD operations' do
   end
 
   describe 'insert' do
+    context 'user documents' do
+      let(:doc) do
+        IceNine.deep_freeze(test: 42)
+      end
+
+      it 'does not mutate user documents' do
+        lambda do
+          collection.insert_one(doc)
+        end.should_not raise_error
+      end
+    end
+
     context 'inserting a BSON::Int64' do
       before do
         collection.insert_one(int64: BSON::Int64.new(42))
