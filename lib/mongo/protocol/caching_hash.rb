@@ -18,8 +18,14 @@
 module Mongo
   module Protocol
 
-    # A subclass of Hash that caches the results of #to_bson.
-    class CachingHash < Hash
+    # A Hash that caches the results of #to_bson.
+    #
+    # @api private
+    class CachingHash
+
+      def initialize(hash)
+        @hash = hash
+      end
 
       # Caches the result of to_bson and writes it to the given buffer on subsequent
       # calls to this method. If this method is originally called without validation,
@@ -32,19 +38,13 @@ module Mongo
       # @return [ BSON::ByteBuffer ] The buffer with the encoded object.
       def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
         if !@bytes
-          @bytes = super(BSON::ByteBuffer.new, validating_keys).to_s
+          @bytes = @hash.to_bson(BSON::ByteBuffer.new, validating_keys).to_s
         elsif needs_validation?(validating_keys)
           @validated = true
-          return super
+          return @hash.to_bson(buffer, validating_keys)
         end
         @validated ||= validating_keys
         buffer.put_bytes(@bytes)
-      end
-
-      def []=(key, value)
-        @bytes = nil
-        @validated = false
-        super
       end
 
       private

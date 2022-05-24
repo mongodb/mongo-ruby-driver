@@ -88,7 +88,7 @@ module Mongo
           {type: 1, payload: {
             identifier: section.identifier,
             sequence: section.documents.map do |doc|
-              CachingHash[doc]
+              CachingHash.new(doc)
             end,
           }}
         end
