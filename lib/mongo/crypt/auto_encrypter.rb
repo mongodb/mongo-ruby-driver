@@ -196,6 +196,9 @@ module Mongo
         Options::Redacted.new(opts).merge(extra_options: extra_options)
       end
 
+      # Create additional clients for auto encryption, if necessary
+      #
+      # @param [ Hash ] options Auto encryption options.
       def set_or_create_clients(options)
         client = options[:client]
         @key_vault_client = if options[:key_vault_client]
@@ -221,6 +224,14 @@ module Mongo
         end
       end
 
+      # Creates or return already created internal client to be used for
+      # auto encryption.
+      #
+      # @param [ Mongo::Client ] client  A client connected to the
+      #   encrypted collection.
+      #
+      # @return [ Mongo::Client ] Client to be used as internal client for
+      # auto encryption.
       def internal_client(client)
         @internal_client ||= client.with(
           auto_encryption_options: nil,
