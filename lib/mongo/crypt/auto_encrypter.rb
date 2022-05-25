@@ -200,6 +200,9 @@ module Mongo
         client = options[:client]
         @key_vault_client = if options[:key_vault_client]
           options[:key_vault_client]
+        # Specification requires to use existing client when connection pool
+        # size is unlimited (0). Ruby driver does not support unlimited pool
+        # size.
         # elsif client.options[:max_pool_size] == 0
         #   client
         else
@@ -208,6 +211,9 @@ module Mongo
 
         @metadata_client = if options[:bypass_auto_encryption]
           nil
+        # Specification requires to use existing client when connection pool
+        # size is unlimited (0). Ruby driver does not support unlimited pool
+        # size.
         # elsif client.options[:max_pool_size] == 0
         #   client
         else

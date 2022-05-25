@@ -603,6 +603,10 @@ module Mongo
       end
     end
 
+    # Auxiliary method that is called by interpreter when cloning the client.
+    #
+    # @param [ Mongo::Client ] other Client that is being cloned.
+    #
     # @api private
     def initialize_clone(other)
       super(other)
