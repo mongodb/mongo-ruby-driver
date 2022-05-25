@@ -604,6 +604,12 @@ module Mongo
     end
 
     # @api private
+    def initialize_clone(other)
+      super(other)
+      @connect_lock = Mutex.new
+    end
+
+    # @api private
     def cluster_options
       # We share clusters when a new client with different CRUD_OPTIONS
       # is requested; therefore, cluster should not be getting any of these
@@ -758,7 +764,6 @@ module Mongo
     # @since 2.0.0
     def with(new_options = nil)
       clone.tap do |client|
-        client.instance_variable_set(:@connect_lock, Mutex.new)
         opts = client.update_options(new_options || Options::Redacted.new)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
