@@ -53,7 +53,7 @@ describe 'Client-Side Encryption' do
           SpecConfig.instance.test_options.merge(
             auto_encryption_options: {
               kms_providers: local_kms_providers,
-              key_vault_namespace: 'admin.datakeys',
+              key_vault_namespace: 'keyvault.datakeys',
               schema_map: test_schema_map,
               # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: extra_options,
@@ -68,7 +68,7 @@ describe 'Client-Side Encryption' do
           client,
           {
             kms_providers: local_kms_providers,
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
           }
         )
       end
@@ -101,7 +101,7 @@ describe 'Client-Side Encryption' do
           SpecConfig.instance.test_options.merge(
             auto_encryption_options: {
               kms_providers: local_kms_providers,
-              key_vault_namespace: 'admin.datakeys',
+              key_vault_namespace: 'keyvault.datakeys',
               schema_map: test_schema_map,
               key_vault_client: external_key_vault_client,
               # Spawn mongocryptd on non-default port for sharded cluster tests
@@ -117,7 +117,7 @@ describe 'Client-Side Encryption' do
           external_key_vault_client,
           {
             kms_providers: local_kms_providers,
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
           }
         )
       end

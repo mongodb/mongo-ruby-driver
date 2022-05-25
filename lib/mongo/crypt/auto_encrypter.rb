@@ -91,8 +91,6 @@ module Mongo
           bypass_query_analysis: @options[:bypass_query_analysis]
         )
 
-        @key_vault_client = @options[:key_vault_client]
-
         # Set server selection timeout to 1 to prevent the client waiting for a
         # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
@@ -107,6 +105,7 @@ module Mongo
             mongocryptd_client: @mongocryptd_client,
             key_vault_namespace: @options[:key_vault_namespace],
             key_vault_client: @key_vault_client,
+            metadata_client: @metadata_client,
             mongocryptd_options: @options[:extra_options]
           )
         rescue
@@ -192,9 +191,35 @@ module Mongo
         end
 
         opts[:bypass_auto_encryption] ||= false
-        opts[:key_vault_client] ||= opts[:client]
+        set_or_create_clients(opts)
 
         Options::Redacted.new(opts).merge(extra_options: extra_options)
+      end
+
+      def set_or_create_clients(options)
+        client = options[:client]
+        @key_vault_client = if options[:key_vault_client]
+          options[:key_vault_client]
+        # elsif client.options[:max_pool_size] == 0
+        #   client
+        else
+          internal_client(client)
+        end
+
+        @metadata_client = if options[:bypass_auto_encryption]
+          nil
+        # elsif client.options[:max_pool_size] == 0
+        #   client
+        else
+          internal_client(client)
+        end
+      end
+
+      def internal_client(client)
+        @internal_client ||= client.with(
+          auto_encryption_options: nil,
+          # max_pool_size: 0
+        )
       end
     end
   end

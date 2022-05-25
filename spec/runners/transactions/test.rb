@@ -237,7 +237,7 @@ module Mongo
         # the tests.
         if @spec.key_vault_data && !@spec.key_vault_data.empty?
           key_vault_coll = support_client
-            .use(:admin)[:datakeys]
+            .use(:keyvault)[:datakeys]
             .with(write: { w: :majority })
 
           key_vault_coll.drop

@@ -23,7 +23,7 @@ describe 'Client-Side Encryption' do
         client,
         {
           kms_providers: aws_kms_providers,
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end

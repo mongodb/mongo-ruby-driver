@@ -758,6 +758,7 @@ module Mongo
     # @since 2.0.0
     def with(new_options = nil)
       clone.tap do |client|
+        client.instance_variable_set(:@connect_lock, Mutex.new)
         opts = client.update_options(new_options || Options::Redacted.new)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it

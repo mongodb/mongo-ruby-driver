@@ -70,7 +70,7 @@ describe 'Client-Side Encryption' do
                 ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
               }
             },
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
             schema_map: test_schema_map,
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
@@ -110,7 +110,7 @@ describe 'Client-Side Encryption' do
               ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end

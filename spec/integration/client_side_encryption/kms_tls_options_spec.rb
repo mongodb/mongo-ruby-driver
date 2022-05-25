@@ -56,7 +56,7 @@ describe 'Client-Side Encryption' do
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -107,7 +107,7 @@ describe 'Client-Side Encryption' do
               ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -150,7 +150,7 @@ describe 'Client-Side Encryption' do
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -193,7 +193,7 @@ describe 'Client-Side Encryption' do
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
