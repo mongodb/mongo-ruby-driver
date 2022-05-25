@@ -655,7 +655,7 @@ describe 'Auto Encryption' do
       include_context 'encrypted document in collection'
 
       let(:result) do
-        encryption_client['users'].update_one({ ssn: ssn }, { ssn: '098-765-4321' })
+        encryption_client['users'].replace_one({ ssn: ssn }, { ssn: '098-765-4321' })
       end
 
       it 'encrypts the ssn field' do
