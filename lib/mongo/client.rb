@@ -603,6 +603,16 @@ module Mongo
       end
     end
 
+    # Auxiliary method that is called by interpreter when cloning the client.
+    #
+    # @param [ Mongo::Client ] other Client that is being cloned.
+    #
+    # @api private
+    def initialize_clone(other)
+      super(other)
+      @connect_lock = Mutex.new
+    end
+
     # @api private
     def cluster_options
       # We share clusters when a new client with different CRUD_OPTIONS

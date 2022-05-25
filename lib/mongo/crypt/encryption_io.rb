@@ -38,6 +38,8 @@ module Mongo
       #   defaults to nil.
       # @param [ Mongo::Client ] key_vault_client The client connected to the
       #   key vault collection.
+      # @param [ Mongo::Client ] metadata_client The client to be used to
+      #   obtain collection metadata.
       # @param [ String ] key_vault_namespace The key vault namespace in the format
       #   db_name.collection_name.
       # @param [ Hash ] mongocryptd_options Options related to mongocryptd.
@@ -54,7 +56,7 @@ module Mongo
       #   options are not nil and are in the correct format.
       def initialize(
         client: nil, mongocryptd_client: nil, key_vault_namespace:,
-        key_vault_client:, mongocryptd_options: {}
+        key_vault_client:, metadata_client:, mongocryptd_options: {}
       )
         validate_key_vault_client!(key_vault_client)
         validate_key_vault_namespace!(key_vault_namespace)
@@ -63,6 +65,7 @@ module Mongo
         @mongocryptd_client = mongocryptd_client
         @key_vault_db_name, @key_vault_collection_name = key_vault_namespace.split('.')
         @key_vault_client = key_vault_client
+        @metadata_client = metadata_client
         @options = mongocryptd_options
       end
 
@@ -91,11 +94,11 @@ module Mongo
       #
       # @return [ Hash ] The collection information
       def collection_info(db_name, filter)
-        unless @client
-          raise ArgumentError, 'collection_info requires client to have been passed to the constructor, but it was not'
+        unless @metadata_client
+          raise ArgumentError, 'collection_info requires metadata_client to have been passed to the constructor, but it was not'
         end
 
-        @client.use(db_name).database.list_collections(filter: filter).first
+        @metadata_client.use(db_name).database.list_collections(filter: filter).first
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings

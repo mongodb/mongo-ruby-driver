@@ -31,19 +31,12 @@ tests:
             filter:
               name: *collection_name
           command_name: listCollections
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -52,9 +45,6 @@ tests:
             updates:
               - q: { encrypted_string: { $eq: {'$binary': {'base64': 'AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==', 'subType': '06'}} } }
                 u: { encrypted_string: {'$binary': {'base64': 'AQAAAAAAAAAAAAAAAAAAAAACDdw4KFz3ZLquhsbt7RmDjD0N67n0uSXx7IGnQNCLeIKvot6s/ouI21Eo84IOtb6lhwUNPlSEBNY0/hbszWAKJg==', 'subType': '06'}}, random: { $$type: "binData" } }
-                # DRIVERS-976: mongocryptd adds upsert and multi fields to all update commands, so these fields should be added to spec tests
-                upsert: false
-                multi: false
             ordered: true
           command_name: update
     outcome:

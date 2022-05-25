@@ -91,8 +91,6 @@ module Mongo
           bypass_query_analysis: @options[:bypass_query_analysis]
         )
 
-        @key_vault_client = @options[:key_vault_client]
-
         # Set server selection timeout to 1 to prevent the client waiting for a
         # long timeout before spawning mongocryptd
         @mongocryptd_client = Client.new(
@@ -107,6 +105,7 @@ module Mongo
             mongocryptd_client: @mongocryptd_client,
             key_vault_namespace: @options[:key_vault_namespace],
             key_vault_client: @key_vault_client,
+            metadata_client: @metadata_client,
             mongocryptd_options: @options[:extra_options]
           )
         rescue
@@ -192,9 +191,52 @@ module Mongo
         end
 
         opts[:bypass_auto_encryption] ||= false
-        opts[:key_vault_client] ||= opts[:client]
+        set_or_create_clients(opts)
 
         Options::Redacted.new(opts).merge(extra_options: extra_options)
+      end
+
+      # Create additional clients for auto encryption, if necessary
+      #
+      # @param [ Hash ] options Auto encryption options.
+      def set_or_create_clients(options)
+        client = options[:client]
+        @key_vault_client = if options[:key_vault_client]
+          options[:key_vault_client]
+        # Specification requires to use existing client when connection pool
+        # size is unlimited (0). Ruby driver does not support unlimited pool
+        # size.
+        # elsif client.options[:max_pool_size] == 0
+        #   client
+        else
+          internal_client(client)
+        end
+
+        @metadata_client = if options[:bypass_auto_encryption]
+          nil
+        # Specification requires to use existing client when connection pool
+        # size is unlimited (0). Ruby driver does not support unlimited pool
+        # size.
+        # elsif client.options[:max_pool_size] == 0
+        #   client
+        else
+          internal_client(client)
+        end
+      end
+
+      # Creates or return already created internal client to be used for
+      # auto encryption.
+      #
+      # @param [ Mongo::Client ] client  A client connected to the
+      #   encrypted collection.
+      #
+      # @return [ Mongo::Client ] Client to be used as internal client for
+      # auto encryption.
+      def internal_client(client)
+        @internal_client ||= client.with(
+          auto_encryption_options: nil,
+          # max_pool_size: 0
+        )
       end
     end
   end
