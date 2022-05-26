@@ -32,6 +32,7 @@ module Mongo
 
       attr_reader :mongocryptd_client
       attr_reader :key_vault_client
+      attr_reader :metadata_client
       attr_reader :options
 
       # A Hash of default values for the :extra_options option
