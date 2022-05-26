@@ -106,6 +106,10 @@ describe Mongo::Index::View do
         min_server_fcv '3.4'
 
         it 'applies the write concern' do
+          if ClusterConfig.instance.short_server_version.to_f >= 6 && ClusterConfig.instance.topology == :sharded
+            skip 'Fails on 6.0 sharded clusters - see SERVER-66811'
+          end
+
           expect {
             result
           }.to raise_exception(Mongo::Error::OperationFailure)
@@ -220,6 +224,10 @@ describe Mongo::Index::View do
           min_server_fcv '3.4'
 
           it 'applies the write concern' do
+            if ClusterConfig.instance.short_server_version.to_f >= 6 && ClusterConfig.instance.topology == :sharded
+              skip 'Fails on 6.0 sharded clusters - see SERVER-66811'
+            end
+
             expect {
               result
             }.to raise_exception(Mongo::Error::OperationFailure)
