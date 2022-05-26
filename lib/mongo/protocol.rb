@@ -6,6 +6,7 @@ require 'mongo/protocol/serializers'
 require 'mongo/protocol/registry'
 require 'mongo/protocol/bit_vector'
 require 'mongo/protocol/message'
+require 'mongo/protocol/caching_hash'
 
 # Client Requests
 require 'mongo/protocol/compressed'
