@@ -38,7 +38,7 @@ module Mongo
       #   defaults to nil.
       # @param [ Mongo::Client ] key_vault_client The client connected to the
       #   key vault collection.
-      # @param [ Mongo::Client ] metadata_client The client to be used to
+      # @param [ Mongo::Client | nil ] metadata_client The client to be used to
       #   obtain collection metadata.
       # @param [ String ] key_vault_namespace The key vault namespace in the format
       #   db_name.collection_name.

@@ -192,6 +192,7 @@ module Mongo
 
         opts[:bypass_auto_encryption] ||= false
         set_or_create_clients(opts)
+        opts[:key_vault_client] = @key_vault_client
 
         Options::Redacted.new(opts).merge(extra_options: extra_options)
       end
