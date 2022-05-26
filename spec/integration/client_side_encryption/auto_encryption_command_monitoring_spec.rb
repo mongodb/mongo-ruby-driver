@@ -274,7 +274,7 @@ describe 'Auto Encryption' do
     let(:command_name) { 'update' }
 
     before do
-      encryption_client['users'].update_one({ ssn: ssn }, { ssn: '555-555-5555' })
+      encryption_client['users'].replace_one({ ssn: ssn }, { ssn: '555-555-5555' })
     end
 
     it 'has encrypted data in command monitoring' do
