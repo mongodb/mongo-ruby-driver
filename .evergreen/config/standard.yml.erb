@@ -25,7 +25,7 @@ buildvariants:
 
   - matrix_name: "mongo-latest"
     matrix_spec:
-      auth-and-ssl: noauth-and-nossl
+      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-3.1"]
       mongodb-version: ['latest']
       topology: <%= tt %>
