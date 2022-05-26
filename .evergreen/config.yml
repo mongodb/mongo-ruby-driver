@@ -914,7 +914,7 @@ buildvariants:
 
   - matrix_name: "mongo-6.0"
     matrix_spec:
-      auth-and-ssl: noauth-and-nossl
+      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-3.1"]
       mongodb-version: ['6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
