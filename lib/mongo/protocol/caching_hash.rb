@@ -27,6 +27,10 @@ module Mongo
         @hash = hash
       end
 
+      def bson_type
+        Hash::BSON_TYPE
+      end
+
       # Caches the result of to_bson and writes it to the given buffer on subsequent
       # calls to this method. If this method is originally called without validation,
       # and then is subsequently called with validation, we will want to recalculate
