@@ -12,7 +12,7 @@ set_env_ruby
 
 bundle_install
 
-export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb:\/\//mongodb:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
+export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb\+srv:\/\//mongodb\+srv:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
 
 export TOPOLOGY="load-balanced"
 
