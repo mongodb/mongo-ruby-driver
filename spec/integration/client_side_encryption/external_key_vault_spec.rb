@@ -39,11 +39,11 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.use('admin')['datakeys'].drop
+      client.use('keyvault')['datakeys'].drop
       client.use('db')['coll'].drop
 
       data_key = BSON::ExtJSON.parse(File.read('spec/support/crypt/external/external-key.json'))
-      client.use('admin')['datakeys', write_concern: { w: :majority }].insert_one(data_key)
+      client.use('keyvault')['datakeys', write_concern: { w: :majority }].insert_one(data_key)
     end
 
     context 'with default key vault client' do

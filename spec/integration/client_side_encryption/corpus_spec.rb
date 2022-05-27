@@ -15,7 +15,7 @@ describe 'Client-Side Encryption' do
 
     let(:key_vault_client) do
       client.with(
-        database: 'admin',
+        database: 'keyvault',
         write_concern: { w: :majority }
       )['datakeys']
     end
@@ -179,7 +179,7 @@ describe 'Client-Side Encryption' do
     before do
       client.use('db')['coll'].drop
 
-      key_vault_collection = client.use('admin')['datakeys', write_concern: { w: :majority }]
+      key_vault_collection = client.use('keyvault')['datakeys', write_concern: { w: :majority }]
       key_vault_collection.drop
       key_vault_collection.insert_one(local_data_key)
       key_vault_collection.insert_one(aws_data_key)
