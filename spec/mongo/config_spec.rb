@@ -4,7 +4,6 @@ require "spec_helper"
 
 describe Mongo::Config do
 
-
   shared_examples "a config option" do
 
     before do
