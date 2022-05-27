@@ -24,22 +24,22 @@ describe Mongo::Config::Options do
       end
 
       it "defines a getter" do
-        expect(config.validate_update).to be false
+        expect(config.validate_update_replace).to be false
       end
 
       it "defines a setter" do
-        expect(config.validate_update = true).to be true
-        expect(config.validate_update).to be true
+        expect(config.validate_update_replace = true).to be true
+        expect(config.validate_update_replace).to be true
       end
 
       it "defines a presence check" do
-        expect(config.validate_update?).to be false
+        expect(config.validate_update_replace?).to be false
       end
     end
 
     context 'when option is not a boolean' do
       before do
-        config.validate_update = 'foo'
+        config.validate_update_replace = 'foo'
       end
 
       after do
@@ -48,7 +48,7 @@ describe Mongo::Config::Options do
 
       context 'presence check' do
         it 'is a boolean' do
-          expect(config.validate_update?).to be true
+          expect(config.validate_update_replace?).to be true
         end
       end
     end
@@ -57,12 +57,12 @@ describe Mongo::Config::Options do
   describe "#reset" do
 
     before do
-      config.validate_update = true
+      config.validate_update_replace = true
       config.reset
     end
 
     it "resets the settings to the defaults" do
-      expect(config.validate_update).to be false
+      expect(config.validate_update_replace).to be false
     end
   end
 

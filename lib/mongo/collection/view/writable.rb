@@ -553,10 +553,12 @@ module Mongo
         # @raise [ Error::InvalidUpdateDocument ] if the first key in the
         #   document does not start with a $.
         def validate_update_documents!(spec)
-          if update = spec.is_a?(Array) ? spec&.first : spec
-            if key = update.keys&.first
-              unless key.to_s.start_with?("$")
-                raise Error::InvalidUpdateDocument.new(key: key)
+          if Mongo.validate_update_replace
+            if update = spec.is_a?(Array) ? spec&.first : spec
+              if key = update.keys&.first
+                unless key.to_s.start_with?("$")
+                  raise Error::InvalidUpdateDocument.new(key: key)
+                end
               end
             end
           end
@@ -571,10 +573,12 @@ module Mongo
         # @raise [ Error::InvalidUpdateDocument ] if the first key in the
         #   document does not start with a $.
         def validate_replacement_documents!(spec)
-          if replace = spec.is_a?(Array) ? spec&.first : spec
-            if key = replace.keys&.first
-              if key.to_s.start_with?("$")
-                raise Error::InvalidReplacementDocument.new(key: key)
+          if Mongo.validate_update_replace
+            if replace = spec.is_a?(Array) ? spec&.first : spec
+              if key = replace.keys&.first
+                if key.to_s.start_with?("$")
+                  raise Error::InvalidReplacementDocument.new(key: key)
+                end
               end
             end
           end

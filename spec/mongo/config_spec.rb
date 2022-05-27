@@ -41,8 +41,8 @@ describe Mongo::Config do
   end
 
 
-  context 'when setting the validate_update option in the config' do
-    let(:option) { :validate_update }
+  context 'when setting the validate_update_replace option in the config' do
+    let(:option) { :validate_update_replace }
     let(:default) { false }
 
     it_behaves_like "a config option"
@@ -57,7 +57,7 @@ describe Mongo::Config do
       end
 
       it "does not try to assign options" do
-        expect(described_class.validate_update).to be false
+        expect(described_class.validate_update_replace).to be false
       end
     end
 

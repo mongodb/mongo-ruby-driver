@@ -9,5 +9,7 @@ base = "#{CURRENT_PATH}/spec_tests/data/crud_unified"
 CRUD_UNIFIED_TESTS = Dir.glob("#{base}/**/*.yml").sort
 
 describe 'CRUD unified spec tests' do
+  config_override :validate_update_replace, true
+
   define_unified_spec_tests(base, CRUD_UNIFIED_TESTS)
 end

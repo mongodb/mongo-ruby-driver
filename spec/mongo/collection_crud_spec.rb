@@ -2107,14 +2107,34 @@ describe Mongo::Collection do
 
     context 'when the replace has an invalid key' do
 
-      let(:result) do
-        authorized_collection.replace_one(selector, { '$s' => 'test1' })
+      context "when validate_update_replace is true" do
+
+        config_override :validate_update_replace, true
+
+        let(:result) do
+          authorized_collection.replace_one(selector, { '$s' => 'test1' })
+        end
+
+        it 'raises an InvalidReplacementDocument error' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
+        end
       end
 
-      it 'raises an InvalidReplacementDocument error' do
-        expect {
-          result
-        }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
+      context "when validate_update_replace is false" do
+
+        config_override :validate_update_replace, false
+
+        let(:result) do
+          authorized_collection.replace_one(selector, { '$set' => { 'test1' => 1 } })
+        end
+
+        it 'does not raise an error' do
+          expect {
+            result
+          }.to_not raise_exception
+        end
       end
     end
 
