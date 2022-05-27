@@ -1311,17 +1311,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "3.6-with-3.4-fcv"
-    matrix_spec:
-      fcv: '3.4'
-      ruby: ["ruby-2.5"]
-      mongodb-version: '3.6'
-      topology: replica-set
-      os: ubuntu1604
-    display_name: "3.6 Replica Set with 3.4 FCV"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "kerberos-integration-ubuntu"
     matrix_spec:
       # Other Rubies segfault

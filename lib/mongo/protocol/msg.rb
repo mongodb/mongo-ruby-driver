@@ -87,7 +87,9 @@ module Mongo
         ] + @sequences.map do |section|
           {type: 1, payload: {
             identifier: section.identifier,
-            sequence: section.documents,
+            sequence: section.documents.map do |doc|
+              CachingHash.new(doc)
+            end,
           }}
         end
         @request_id = nil

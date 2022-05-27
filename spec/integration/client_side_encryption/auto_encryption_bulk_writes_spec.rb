@@ -132,8 +132,8 @@ describe 'Bulk writes with auto-encryption enabled' do
       context 'when total request size does not exceed 2MiB' do
         let(:requests) do
           [
-            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit/2) } } },
-            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit/2) } } },
+            { replace_one: { filter: { _id: 1 }, replacement: { ssn: 'a' * (size_limit/2) } } },
+            { replace_one: { filter: { _id: 2 }, replacement: { ssn: 'a' * (size_limit/2) } } },
           ]
         end
 
@@ -143,8 +143,8 @@ describe 'Bulk writes with auto-encryption enabled' do
       context 'when each operation is smaller than 2MiB, but the total request size is greater than 2MiB' do
         let(:requests) do
           [
-            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit - 2000) } } },
-            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit - 2000) } } },
+            { replace_one: { filter: { _id: 1 }, replacement: { ssn: 'a' * (size_limit - 2000) } } },
+            { replace_one: { filter: { _id: 2 }, replacement: { ssn: 'a' * (size_limit - 2000) } } },
           ]
         end
 
@@ -154,8 +154,8 @@ describe 'Bulk writes with auto-encryption enabled' do
       context 'when each operation is larger than 2MiB' do
         let(:requests) do
           [
-            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (size_limit * 2) } } },
-            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * (size_limit * 2) } } },
+            { replace_one: { filter: { _id: 1 }, replacement: { ssn: 'a' * (size_limit * 2) } } },
+            { replace_one: { filter: { _id: 2 }, replacement: { ssn: 'a' * (size_limit * 2) } } },
           ]
         end
 
@@ -165,8 +165,8 @@ describe 'Bulk writes with auto-encryption enabled' do
       context 'when one operation is larger than 16MiB' do
         let(:requests) do
           [
-            { update_one: { filter: { _id: 1 }, update: { ssn: 'a' * (Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE) } } },
-            { update_one: { filter: { _id: 2 }, update: { ssn: 'a' * size_limit } } },
+            { replace_one: { filter: { _id: 1 }, replacement: { ssn: 'a' * (Mongo::Server::ConnectionBase::DEFAULT_MAX_BSON_OBJECT_SIZE) } } },
+            { replace_one: { filter: { _id: 2 }, replacement: { ssn: 'a' * size_limit } } },
           ]
         end
 
@@ -272,7 +272,7 @@ describe 'Bulk writes with auto-encryption enabled' do
         let(:requests) do
           [
             { insert_one: { _id: 1, ssn: 'a' * (size_limit/3) } },
-            { update_one: { filter: { _id: 1 }, update: { ssn: 'b' * (size_limit/3) } } },
+            { replace_one: { filter: { _id: 1 }, replacement: { ssn: 'b' * (size_limit/3) } } },
             { delete_one: { filter: { ssn: 'b' * (size_limit/3) } } }
           ]
         end

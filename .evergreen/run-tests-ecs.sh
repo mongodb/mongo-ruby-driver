@@ -13,6 +13,7 @@ show_local_instructions
 
 set_home
 set_env_vars
+set_env_python
 set_env_ruby
 
 bundle install --quiet

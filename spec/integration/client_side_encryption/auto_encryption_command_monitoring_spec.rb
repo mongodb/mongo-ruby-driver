@@ -32,7 +32,7 @@ describe 'Auto Encryption' do
         database: db_name
       ),
     ).tap do |client|
-      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      client.encrypter.key_vault_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
 
@@ -62,10 +62,9 @@ describe 'Auto Encryption' do
     end
   end
 
-  shared_examples 'it has an encrypted key_vault_client' do
-    it 'registers a listCollections event on the key vault client' do
-      expect(key_vault_list_collections_event).not_to be_nil
-      expect(key_vault_list_collections_event.command['$db']).to eq(key_vault_db)
+  shared_examples 'it has a non-encrypted key_vault_client' do
+    it 'does not register a listCollections event on the key vault client' do
+      expect(key_vault_list_collections_event).to be_nil
     end
   end
 
@@ -86,7 +85,7 @@ describe 'Auto Encryption' do
       expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#count' do
@@ -102,7 +101,7 @@ describe 'Auto Encryption' do
       expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#distinct' do
@@ -118,7 +117,7 @@ describe 'Auto Encryption' do
       expect(succeeded_event.reply["values"].first).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#delete_one' do
@@ -134,7 +133,7 @@ describe 'Auto Encryption' do
       expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#delete_many' do
@@ -150,7 +149,7 @@ describe 'Auto Encryption' do
       expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#find' do
@@ -168,7 +167,7 @@ describe 'Auto Encryption' do
       expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#find_one_and_delete' do
@@ -186,7 +185,7 @@ describe 'Auto Encryption' do
       expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#find_one_and_replace' do
@@ -208,7 +207,7 @@ describe 'Auto Encryption' do
       expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#find_one_and_update' do
@@ -231,7 +230,7 @@ describe 'Auto Encryption' do
       expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#insert_one' do
@@ -247,7 +246,7 @@ describe 'Auto Encryption' do
       expect(started_event.command["documents"].first["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#replace_one' do
@@ -267,14 +266,14 @@ describe 'Auto Encryption' do
       expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#update_one' do
     let(:command_name) { 'update' }
 
     before do
-      encryption_client['users'].update_one({ ssn: ssn }, { ssn: '555-555-5555' })
+      encryption_client['users'].replace_one({ ssn: ssn }, { ssn: '555-555-5555' })
     end
 
     it 'has encrypted data in command monitoring' do
@@ -284,7 +283,7 @@ describe 'Auto Encryption' do
       expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#update_many' do
@@ -301,6 +300,6 @@ describe 'Auto Encryption' do
       expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
 
-    it_behaves_like 'it has an encrypted key_vault_client'
+    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 end

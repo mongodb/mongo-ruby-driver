@@ -39,6 +39,7 @@ module Mongo
         @crypt_handle = Handle.new(kms_providers, kms_tls_options)
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,
+          metadata_client: nil,
           key_vault_namespace: key_vault_namespace
         )
       end

@@ -32,6 +32,7 @@ module Mongo
 
       attr_reader :mongocryptd_client
       attr_reader :key_vault_client
+      attr_reader :metadata_client
       attr_reader :options
 
       # A Hash of default values for the :extra_options option
@@ -192,6 +193,7 @@ module Mongo
 
         opts[:bypass_auto_encryption] ||= false
         set_or_create_clients(opts)
+        opts[:key_vault_client] = @key_vault_client
 
         Options::Redacted.new(opts).merge(extra_options: extra_options)
       end
@@ -203,6 +205,8 @@ module Mongo
         client = options[:client]
         @key_vault_client = if options[:key_vault_client]
           options[:key_vault_client]
+        # https://jira.mongodb.org/browse/RUBY-3010
+        # https://jira.mongodb.org/browse/RUBY-3011
         # Specification requires to use existing client when connection pool
         # size is unlimited (0). Ruby driver does not support unlimited pool
         # size.
@@ -217,6 +221,8 @@ module Mongo
         # Specification requires to use existing client when connection pool
         # size is unlimited (0). Ruby driver does not support unlimited pool
         # size.
+        # https://jira.mongodb.org/browse/RUBY-3010
+        # https://jira.mongodb.org/browse/RUBY-3011
         # elsif client.options[:max_pool_size] == 0
         #   client
         else
@@ -235,6 +241,11 @@ module Mongo
       def internal_client(client)
         @internal_client ||= client.with(
           auto_encryption_options: nil,
+          # Specification requires that the internal client's connection pool
+          # size is unlimited (0). Ruby driver does not support unlimited pool
+          # size.
+          # https://jira.mongodb.org/browse/RUBY-3010
+          # https://jira.mongodb.org/browse/RUBY-3011
           # max_pool_size: 0
         )
       end

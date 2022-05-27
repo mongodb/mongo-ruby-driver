@@ -565,13 +565,8 @@ Ruby Options
 
    * - ``:min_pool_size``
      - The minimum number of connections in the connection pool for each
-       server. The driver does not create connections eagerly - a connection
-       is only created when a MongoDB operation is to be executed and there
-       are no available connections, and the total number of established
-       connections to the target server is below ``:max_pool_size``.
-       However, once connections to a particular server are created, up to
-       ``:min_pool_size`` connections will be kept in the connection pool
-       by the driver.
+       server. The driver will establish connections in the background until
+       the pool contains this many connections.
      - ``Integer``
      - 0
 
