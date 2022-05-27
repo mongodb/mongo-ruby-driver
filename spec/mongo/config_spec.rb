@@ -7,7 +7,7 @@ describe Mongo::Config do
 
   shared_examples "a config option" do
 
-    around do |example|
+    before do
       Mongo::Config.reset
     end
 
