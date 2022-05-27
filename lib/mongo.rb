@@ -75,8 +75,16 @@ require 'mongo/uri'
 require 'mongo/version'
 require 'mongo/write_concern'
 require 'mongo/utils'
+require 'mongo/config'
 
 module Mongo
+  extend Forwardable
+  extend self
+
+  # Take all the public instance methods from the Config singleton and allow
+  # them to be accessed through the Mongo module directly.
+  def_delegators Config, *(Config.public_instance_methods(false))
+
   # Clears the driver's OCSP response cache.
   module_function def clear_ocsp_cache
     Socket::OcspCache.clear
