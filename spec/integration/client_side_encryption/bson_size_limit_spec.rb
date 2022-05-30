@@ -33,7 +33,7 @@ describe 'Client-Side Encryption' do
             kms_providers: {
               local: { key: local_master_key },
             },
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },

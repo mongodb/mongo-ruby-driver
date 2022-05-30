@@ -195,7 +195,7 @@ module Utils
     if opts['keyVaultNamespace']
       auto_encrypt_opts[:key_vault_namespace] = opts['keyVaultNamespace']
     else
-      auto_encrypt_opts[:key_vault_namespace] = 'admin.datakeys'
+      auto_encrypt_opts[:key_vault_namespace] = 'keyvault.datakeys'
     end
 
     if opts['schemaMap']

@@ -70,7 +70,7 @@ describe 'Client-Side Encryption' do
                 ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
               }
             },
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
             schema_map: test_schema_map,
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
@@ -110,13 +110,13 @@ describe 'Client-Side Encryption' do
               ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
 
     before do
-      client.use('admin')['datakeys'].drop
+      client.use('keyvault')['datakeys'].drop
       client.use('db')['coll'].drop
     end
 
@@ -129,7 +129,7 @@ describe 'Client-Side Encryption' do
 
         expect(data_key_id).to be_uuid
 
-        keys = client.use('admin')['datakeys'].find(_id: data_key_id)
+        keys = client.use('keyvault')['datakeys'].find(_id: data_key_id)
 
         expect(keys.count).to eq(1)
         expect(keys.first['masterKey']['provider']).to eq(kms_provider_name)

@@ -1219,8 +1219,15 @@ module Mongo
       Session.new(server_session, self, options)
     end
 
+    # Auxiliary method that is called by interpreter when copying the client
+    # via dup or clone.
+    #
+    # @param [ Mongo::Client ] original Client that is being cloned.
+    #
+    # @api private
     def initialize_copy(original)
       @options = original.options.dup
+      @connect_lock = Mutex.new
       @monitoring = @cluster ? monitoring : Monitoring.new(options)
       @database = nil
       @read_preference = nil
