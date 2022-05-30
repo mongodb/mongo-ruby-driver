@@ -438,7 +438,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" MULTI_ATLASPROXY_SERVERLESS_URI="${MULTI_ATLASPROXY_SERVERLESS_URI}" SINGLE_ATLASPROXY_SERVERLESS_URI="${SINGLE_ATLASPROXY_SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"
