@@ -35,10 +35,10 @@ module Mongo
             collation: spec[:collation],
             encryptedFields: spec[:encrypted_fields],
           ).compact.tap do |sel|
-            if sel[:encryptedFields] && sel[:encryptedFields].key?(:fields)
-              sel[:encryptedFields][:fields] = sel[:encryptedFields][:fields].map do |field|
-                if field[:queries] && field[:queries].key?(:contention)
-                  field[:queries][:contention] = BSON::Int64.new(field[:queries][:contention])
+            if sel[:encryptedFields] && sel[:encryptedFields].key?('fields')
+              sel[:encryptedFields]['fields'] = sel[:encryptedFields]['fields'].map do |field|
+                if field['queries'] && field['queries'].key?('contention')
+                  field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
                 end
                 field
               end

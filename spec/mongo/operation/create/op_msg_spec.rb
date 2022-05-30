@@ -90,13 +90,13 @@ describe Mongo::Operation::Create::OpMsg do
           :write_concern => write_concern,
           :session       => session,
           :encrypted_fields => {
-            :fields => [
+            'fields' => [
               {
-                :path => "name",
-                :bsonType => "string",
-                :queries => {
-                  :queryType => "equality",
-                  :contention => 10
+                'path' => "name",
+                'bsonType' => "string",
+                'queries' => {
+                  'queryType' => "equality",
+                  'contention' => 10
                 }
               }
             ]
@@ -109,13 +109,13 @@ describe Mongo::Operation::Create::OpMsg do
         expect(selector).to eq({
           :create => authorized_collection.name,
           :encryptedFields => {
-            :fields => [
+            'fields' => [
               {
-                :path => "name",
-                :bsonType => "string",
-                :queries => {
-                  :queryType => "equality",
-                  :contention => BSON::Int64.new(10)
+                'path' => "name",
+                'bsonType' => "string",
+                'queries' => {
+                  'queryType' => "equality",
+                  'contention' => BSON::Int64.new(10)
                 }
               }
             ]
