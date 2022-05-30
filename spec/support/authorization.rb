@@ -23,7 +23,7 @@ TEST_COLL = 'test'.freeze
 # An invalid write concern.
 #
 # @since 2.4.2
-INVALID_WRITE_CONCERN = { w: 4 }
+INVALID_WRITE_CONCERN = { w: 4000 }
 
 module Authorization
 

@@ -1222,7 +1222,7 @@ module Mongo
     # Auxiliary method that is called by interpreter when copying the client
     # via dup or clone.
     #
-    # @param [ Mongo::Client ] other Client that is being cloned.
+    # @param [ Mongo::Client ] original Client that is being cloned.
     #
     # @api private
     def initialize_copy(original)
