@@ -6,7 +6,7 @@ require 'spec_helper'
 describe 'Explicit Queryable Encryption' do
   require_libmongocrypt
   min_server_version '6.0'
-  require_topology :single, :replica_set, :sharded, :load_balanced
+  require_topology :replica_set, :sharded, :load_balanced
 
   include_context 'define shared FLE helpers'
 
@@ -38,6 +38,11 @@ describe 'Explicit Queryable Encryption' do
     client[encrypted_coll].create(encrypted_fields: encrypted_fields)
     client[key_vault_coll].drop
     client[key_vault_coll, write_concern: {w: :majority}].insert_one(key1_document)
+  end
+
+  after do
+    client[encrypted_coll].drop
+    client[key_vault_coll].drop
   end
 
   let(:key_vault_client) do
