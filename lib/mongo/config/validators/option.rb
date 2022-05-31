@@ -5,6 +5,8 @@ module Mongo
     module Validators
 
       # Validator for configuration options.
+      #
+      # @api private
       module Option
         extend self
 

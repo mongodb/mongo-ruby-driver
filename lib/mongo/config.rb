@@ -6,6 +6,8 @@ require "mongo/config/validators/option"
 module Mongo
 
   # This module defines configuration options for Mongo.
+  #
+  # @api private
   module Config
     extend Forwardable
     extend Options
