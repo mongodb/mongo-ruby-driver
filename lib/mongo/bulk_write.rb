@@ -327,21 +327,27 @@ module Mongo
     # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument ]
     #   if the document is invalid.
     def validate_requests!
-      if Mongo.validate_update_replace
-        @requests.each do |req|
-          if op = req.keys.first
-            if [:update_one, :update_many].include?(op)
-              if doc = maybe_first(req.dig(op, :update))
-                if key = doc.keys&.first
-                  unless key.to_s.start_with?("$")
+      @requests.each do |req|
+        if op = req.keys.first
+          if [:update_one, :update_many].include?(op)
+            if doc = maybe_first(req.dig(op, :update))
+              if key = doc.keys&.first
+                unless key.to_s.start_with?("$")
+                  if Mongo.validate_update_replace
                     raise Error::InvalidUpdateDocument.new(key: key)
+                  else
+                    Logger.logger.warn(Error::InvalidUpdateDocument.message(key))
                   end
                 end
               end
-            elsif op == :replace_one
-              if key = req.dig(op, :replacement)&.keys&.first
-                if key.to_s.start_with?("$")
+            end
+          elsif op == :replace_one
+            if key = req.dig(op, :replacement)&.keys&.first
+              if key.to_s.start_with?("$")
+                if Mongo.validate_update_replace
                   raise Error::InvalidReplacementDocument.new(key: key)
+                else
+                  Logger.logger.warn(Error::InvalidReplacementDocument.message(key))
                 end
               end
             end
