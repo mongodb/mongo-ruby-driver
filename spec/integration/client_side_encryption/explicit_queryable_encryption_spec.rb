@@ -26,14 +26,14 @@ describe 'Explicit Queryable Encryption' do
     "encrypted unindexed value"
   end
 
-  before do
+  before(:each) do
     authorized_client[encrypted_coll].drop
     authorized_client[encrypted_coll].create(encrypted_fields: encrypted_fields)
     authorized_client.use(key_vault_db)[key_vault_coll].drop
     authorized_client.use(key_vault_db)[key_vault_coll, write_concern: {w: :majority}].insert_one(key1_document)
   end
 
-  after do
+  after(:each) do
     authorized_client[encrypted_coll].drop
     authorized_client.use(key_vault_db)[key_vault_coll].drop
   end
