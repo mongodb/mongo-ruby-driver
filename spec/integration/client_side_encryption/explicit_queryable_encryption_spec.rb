@@ -26,18 +26,6 @@ describe 'Explicit Queryable Encryption' do
     "encrypted unindexed value"
   end
 
-  before(:each) do
-    authorized_client[encrypted_coll].drop
-    authorized_client[encrypted_coll].create(encrypted_fields: encrypted_fields)
-    authorized_client.use(key_vault_db)[key_vault_coll].drop
-    authorized_client.use(key_vault_db)[key_vault_coll, write_concern: {w: :majority}].insert_one(key1_document)
-  end
-
-  after(:each) do
-    authorized_client[encrypted_coll].drop
-    authorized_client.use(key_vault_db)[key_vault_coll].drop
-  end
-
   let(:key_vault_client) do
     ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses)
   end
@@ -67,6 +55,18 @@ describe 'Explicit Queryable Encryption' do
       },
       database: SpecConfig.instance.test_db
     )
+  end
+
+  before(:each) do
+    encrypted_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
+    encrypted_client[encrypted_coll].create(encrypted_fields: encrypted_fields)
+    authorized_client.use(key_vault_db)[key_vault_coll].drop
+    authorized_client.use(key_vault_db)[key_vault_coll, write_concern: {w: :majority}].insert_one(key1_document)
+  end
+
+  after(:all) do
+    encrypted_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
+    authorized_client.use(key_vault_db)[key_vault_coll].drop
   end
 
   it 'can insert encrypted indexed and find' do
