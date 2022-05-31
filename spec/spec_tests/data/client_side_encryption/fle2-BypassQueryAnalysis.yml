@@ -18,7 +18,7 @@ tests:
     operations:
       - name: insertOne
         arguments:
-          document: &doc0_encrypted {
+          document: &doc0_encrypted { 
               "_id": 1,
               "encryptedIndexed": {
                 "$binary": {
