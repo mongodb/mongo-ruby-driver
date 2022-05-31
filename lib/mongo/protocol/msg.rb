@@ -229,11 +229,11 @@ module Mongo
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
-          if schema = enc_cmd.fetch('encryptionInformation', {}).fetch('schema', nil)
+          if schema = enc_cmd.dig('encryptionInformation', 'schema')
             enc_cmd['encryptionInformation']['schema'] = schema.map do |coll, params|
               if params['fields']
                 params['fields'] = params['fields'].map do |field|
-                  if contention = field.fetch('queries', {}).fetch('contention', nil)
+                  if contention = field.dig('queries', 'contention')
                     field['queries']['contention'] = BSON::Int64.new(contention)
                   end
                   field
