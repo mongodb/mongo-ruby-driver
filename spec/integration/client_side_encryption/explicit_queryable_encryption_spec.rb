@@ -58,14 +58,14 @@ describe 'Explicit Queryable Encryption' do
   end
 
   before(:each) do
-    encrypted_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
-    encrypted_client[encrypted_coll].create(encrypted_fields: encrypted_fields)
+    authorized_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
+    authorized_client[encrypted_coll].create(encrypted_fields: encrypted_fields)
     authorized_client.use(key_vault_db)[key_vault_coll].drop
     authorized_client.use(key_vault_db)[key_vault_coll, write_concern: {w: :majority}].insert_one(key1_document)
   end
 
   after(:all) do
-    encrypted_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
+    authorized_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
     authorized_client.use(key_vault_db)[key_vault_coll].drop
   end
 
