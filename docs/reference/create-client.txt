@@ -2050,3 +2050,29 @@ driver in production:
   <https://devcenter.heroku.com/articles/request-timeout>`_ is 30 seconds and
   is not configurable; if deploying a Ruby application using MongoDB to Heroku,
   consider lowering server selection timeout to 20 or 15 seconds.
+
+Feature Flags
+=============
+
+The following is a list of feature flags that the Mongo Ruby Driver provides:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 60
+
+   * - Flag
+     - Description
+   * - ``validate_update_replace``
+     - Validates that there are no atomic operators (those that start with $)
+       in the root of a replacement document, and that there are only atomic
+       operators at the root of an update document. If this feature flag is on,
+       an error will be raised on an invalid update or replacement document,
+       if not, a warning will be output to the logs. (default: false)
+
+These feature flags can be set directly on the ``Mongo`` module or using
+the ``options`` method:
+
+.. code::
+
+  Mongo.validate_update_replace = true
+  Mongo.options = { validate_update_replace: true }
