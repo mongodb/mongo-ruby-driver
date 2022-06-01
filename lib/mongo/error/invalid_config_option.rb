@@ -10,6 +10,8 @@ module Mongo
       # Create the new error.
       #
       # @param [ Symbol, String ] name The attempted config option name.
+      #
+      # @api private
       def initialize(name)
         super("Invalid config option #{name}.")
       end

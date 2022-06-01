@@ -88,8 +88,7 @@ module Mongo
     # @param [ Object ] obj The object to delegate to.
     # @param [ Symbol ] opt The method to delegate.
     def self.delegate_option(obj, opt)
-      o = opt.to_s
-      def_delegators obj, opt, :"#{o}=", :"#{o}?"
+      def_delegators obj, opt, "#{opt}=", "#{opt}?"
     end
 
     # Take all the public instance methods from the Config singleton and allow

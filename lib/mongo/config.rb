@@ -22,11 +22,9 @@ module Mongo
     #
     # @param [ Hash ] options The configuration options.
     def options=(options)
-      if options
-        options.each_pair do |option, value|
-          Validators::Option.validate(option)
-          send("#{option}=", value)
-        end
+      options.each_pair do |option, value|
+        Validators::Option.validate(option)
+        send("#{option}=", value)
       end
     end
   end
