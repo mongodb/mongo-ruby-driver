@@ -39,6 +39,16 @@ module Mongo
         message
       end
 
+      # Send and cache the warning.
+      #
+      # @api private
+      def self.warn(logger, key)
+        @warned ||= begin
+          logger.warn(message(key))
+          true
+        end
+      end
+
       # Instantiate the new exception.
       #
       # @param [ String ] :key The invalid key.

@@ -336,7 +336,7 @@ module Mongo
                   if Mongo.validate_update_replace
                     raise Error::InvalidUpdateDocument.new(key: key)
                   else
-                    Logger.logger.warn(Error::InvalidUpdateDocument.message(key))
+                    Error::InvalidUpdateDocument.warn(Logger.logger, key)
                   end
                 end
               end
@@ -347,7 +347,7 @@ module Mongo
                 if Mongo.validate_update_replace
                   raise Error::InvalidReplacementDocument.new(key: key)
                 else
-                  Logger.logger.warn(Error::InvalidReplacementDocument.message(key))
+                  Error::InvalidReplacementDocument.warn(Logger.logger, key)
                 end
               end
             end
