@@ -73,24 +73,28 @@ describe 'Explicit Encryption' do
 
     context 'with AWS KMS provider' do
       include_context 'with AWS kms_providers'
+      retry_test
 
       it_behaves_like 'an explicit encrypter'
     end
 
     context 'with Azure KMS provider' do
       include_context 'with Azure kms_providers'
+      retry_test
 
       it_behaves_like 'an explicit encrypter'
     end
 
     context 'with GCP KMS provider' do
       include_context 'with GCP kms_providers'
+      retry_test
 
       it_behaves_like 'an explicit encrypter'
     end
 
     context 'with KMIP KMS provider' do
       include_context 'with KMIP kms_providers'
+      retry_test
 
       it_behaves_like 'an explicit encrypter'
     end

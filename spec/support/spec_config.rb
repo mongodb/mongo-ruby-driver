@@ -671,6 +671,10 @@ EOT
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-writes-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'ts-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'ts-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'ci-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'ci-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'papi-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'papi-tests' },
       ]
     )
   end
