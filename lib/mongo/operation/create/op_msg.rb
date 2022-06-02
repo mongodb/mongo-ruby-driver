@@ -35,6 +35,8 @@ module Mongo
             collation: spec[:collation],
             encryptedFields: spec[:encrypted_fields],
           ).compact.tap do |sel|
+            # This code MUST be removed as soon as server starts accepting
+            # contention as int32.
             if sel[:encryptedFields] && sel[:encryptedFields].key?('fields')
               sel[:encryptedFields]['fields'] = sel[:encryptedFields]['fields'].map do |field|
                 if field['queries'] && field['queries'].key?('contention')
@@ -43,6 +45,7 @@ module Mongo
                 field
               end
             end
+            # End of code to be removed
           end
         end
       end

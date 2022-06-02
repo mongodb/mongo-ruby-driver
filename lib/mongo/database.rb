@@ -225,8 +225,33 @@ module Mongo
 
       client.send(:with_session, opts) do |session|
         server = selector.select_server(cluster, nil, session)
+        # This code MUST be removed as soon as server starts accepting
+        # contention as int32.
+        _operation = operation.dup
+        if _operation['encryptedFields'] && _operation['encryptedFields'].key?('fields')
+          _operation['encryptedFields']['fields'] = _operation['encryptedFields']['fields'].map do |field|
+            if field['queries'] && field['queries'].key?('contention')
+              field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
+            end
+            field
+          end
+        end
+        if schema = _operation.dig('encryptionInformation', 'schema')
+          _operation['encryptionInformation']['schema'] = schema.map do |coll, params|
+            if params['fields']
+              params['fields'] = params['fields'].map do |field|
+                if contention = field.dig('queries', 'contention')
+                  field['queries']['contention'] = BSON::Int64.new(contention)
+                end
+                field
+              end
+            end
+            [coll, params]
+          end.to_h
+        end
+        # End of code to be removed
         op = Operation::Command.new(
-          :selector => operation.dup,
+          :selector => _operation,
           :db_name => name,
           :read => selector,
           :session => session

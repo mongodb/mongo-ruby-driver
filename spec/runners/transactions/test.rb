@@ -262,6 +262,8 @@ module Mongo
         }
         if @spec.encrypted_fields
           encrypted_fields = @spec.encrypted_fields.dup
+          # This code MUST be removed as soon as server starts accepting
+          # contention as int32.
           if encrypted_fields.key?('fields')
             encrypted_fields['fields'] = encrypted_fields['fields'].dup.map do |field|
               if field['queries'] && field['queries'].key?('contention')
@@ -274,6 +276,7 @@ module Mongo
               end
             end
           end
+          # End of code to be removed
           create_collection_spec[:encryptedFields] = encrypted_fields
         end
         support_client.command(create_collection_spec)
