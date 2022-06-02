@@ -50,14 +50,14 @@ describe Mongo::Config do
 
   describe "#options=" do
 
-    context "when there are no options" do
+    context "when an option" do
 
       before do
-        described_class.options = nil
+        described_class.options = { validate_update_replace: true }
       end
 
-      it "does not try to assign options" do
-        expect(described_class.validate_update_replace).to be false
+      it "assigns the option correctly" do
+        expect(described_class.validate_update_replace).to be true
       end
     end
 
