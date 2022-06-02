@@ -255,11 +255,28 @@ module Mongo
           {}
         end
 
-        support_client.command(
+        create_collection_spec = {
           create: @spec.collection_name,
           validator: collection_validator,
           writeConcern: { w: 'majority' }
-        )
+        }
+        if @spec.encrypted_fields
+          encrypted_fields = @spec.encrypted_fields.dup
+          if encrypted_fields.key?('fields')
+            encrypted_fields['fields'] = encrypted_fields['fields'].dup.map do |field|
+              if field['queries'] && field['queries'].key?('contention')
+                new_field = field.dup
+                new_field['queries'] = field['queries'].dup
+                new_field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
+                new_field
+              else
+                field
+              end
+            end
+          end
+          create_collection_spec[:encryptedFields] = encrypted_fields
+        end
+        support_client.command(create_collection_spec)
 
         coll.insert_many(@data) unless @data.empty?
 

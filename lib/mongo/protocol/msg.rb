@@ -229,6 +229,19 @@ module Mongo
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
+          if schema = enc_cmd.dig('encryptionInformation', 'schema')
+            enc_cmd['encryptionInformation']['schema'] = schema.map do |coll, params|
+              if params['fields']
+                params['fields'] = params['fields'].map do |field|
+                  if contention = field.dig('queries', 'contention')
+                    field['queries']['contention'] = BSON::Int64.new(contention)
+                  end
+                  field
+                end
+              end
+              [coll, params]
+            end.to_h
+          end
 
           Msg.new(@flags, @options, enc_cmd)
         else
