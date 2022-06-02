@@ -51,7 +51,6 @@ describe 'Auto Encryption' do
         .with(
           hash_including(
             'insert' => 'users',
-            '$db' => 'auto_encryption',
             'ordered' => true,
             'lsid' => kind_of(Hash),
             'documents' => kind_of(Array),

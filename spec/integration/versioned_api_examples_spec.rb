@@ -70,7 +70,7 @@ describe 'Versioned API examples' do
 
   # See also RUBY-2922 for count in versioned api v1.
   context 'servers that exclude count from versioned api' do
-    max_server_version '5.2'
+    max_server_version '5.0.8'
 
     it "Versioned API Strict Migration Example" do
       client = Mongo::Client.new(uri_string, server_api: {version: "1", strict: true})
