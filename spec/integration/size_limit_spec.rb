@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe 'BSON & command size limits' do
+  # https://jira.mongodb.org/browse/RUBY-3016
   retry_test
 
   let(:max_document_size) { 16*1024*1024 }
