@@ -20,6 +20,7 @@ require 'runners/transactions/spec'
 require 'runners/transactions/test'
 
 def define_transactions_spec_tests(test_paths)
+  config_override :validate_update_replace, true
 
   test_paths.each do |file|
 

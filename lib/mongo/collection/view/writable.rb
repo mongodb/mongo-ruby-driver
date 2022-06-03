@@ -556,7 +556,11 @@ module Mongo
           if update = spec.is_a?(Array) ? spec&.first : spec
             if key = update.keys&.first
               unless key.to_s.start_with?("$")
-                raise Error::InvalidUpdateDocument.new(key: key)
+                if Mongo.validate_update_replace
+                  raise Error::InvalidUpdateDocument.new(key: key)
+                else
+                  Error::InvalidUpdateDocument.warn(Logger.logger, key)
+                end
               end
             end
           end
@@ -574,7 +578,11 @@ module Mongo
           if replace = spec.is_a?(Array) ? spec&.first : spec
             if key = replace.keys&.first
               if key.to_s.start_with?("$")
-                raise Error::InvalidReplacementDocument.new(key: key)
+                if Mongo.validate_update_replace
+                  raise Error::InvalidReplacementDocument.new(key: key)
+                else
+                  Error::InvalidReplacementDocument.warn(Logger.logger, key)
+                end
               end
             end
           end

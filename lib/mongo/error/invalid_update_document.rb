@@ -28,13 +28,34 @@ module Mongo
       # @deprecated
       MESSAGE = 'Invalid update document provided'.freeze
 
+      # Construct the error message.
+      #
+      # @param [ String ] key The invalid key.
+      #
+      # @return [ String ] The error message.
+      #
+      # @api private
+      def self.message(key)
+        message = "Invalid update document provided. Updates documents must only "
+        message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
+        message
+      end
+
+      # Send and cache the warning.
+      #
+      # @api private
+      def self.warn(logger, key)
+        @warned ||= begin
+          logger.warn(message(key))
+          true
+        end
+      end
+
       # Instantiate the new exception.
       #
       # @param [ String ] :key The invalid key.
       def initialize(key: nil)
-        message = "Invalid update document provided. Updates documents must only "
-        message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
-        super(message)
+        super(self.class.message(key))
       end
     end
   end

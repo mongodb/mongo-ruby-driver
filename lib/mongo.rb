@@ -75,8 +75,28 @@ require 'mongo/uri'
 require 'mongo/version'
 require 'mongo/write_concern'
 require 'mongo/utils'
+require 'mongo/config'
 
 module Mongo
+
+  class << self
+    extend Forwardable
+
+    # Delegate the given option along with its = and ? methods to the given
+    # object.
+    #
+    # @param [ Object ] obj The object to delegate to.
+    # @param [ Symbol ] opt The method to delegate.
+    def self.delegate_option(obj, opt)
+      def_delegators obj, opt, "#{opt}=", "#{opt}?"
+    end
+
+    # Take all the public instance methods from the Config singleton and allow
+    # them to be accessed through the Mongo module directly.
+    def_delegators Config, :options=
+    delegate_option Config, :validate_update_replace
+  end
+
   # Clears the driver's OCSP response cache.
   module_function def clear_ocsp_cache
     Socket::OcspCache.clear
