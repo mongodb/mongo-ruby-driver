@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe 'BSON & command size limits' do
+  retry_test
+
   let(:max_document_size) { 16*1024*1024 }
 
   before do
