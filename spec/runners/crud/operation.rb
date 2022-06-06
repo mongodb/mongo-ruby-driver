@@ -275,7 +275,13 @@ module Mongo
       def create_collection(database, context)
         opts = transformed_options(context)
         database[arguments.fetch('collection')]
-          .create(session: opts[:session], encrypted_fields: opts[:encrypted_fields])
+          .create(
+            {
+              session: opts[:session],
+              encrypted_fields: opts[:encrypted_fields],
+              validator: opts[:validator],
+            }.compact
+          )
       end
 
       def rename(collection, context)

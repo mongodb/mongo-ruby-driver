@@ -408,14 +408,13 @@ module Utils
 
       actual.is_a?(expected_class) || actual.key?(expected_key)
     elsif expected.is_a?(Hash) && actual.is_a?(Hash)
-      same_keys = (expected.keys - actual.keys).empty? &&
-        (actual.keys - expected.keys).empty?
+      has_all_keys = (expected.keys - actual.keys).empty?
 
       same_values = expected.keys.all? do |key|
         match_with_type?(expected[key], actual[key])
       end
 
-      same_keys && same_values
+      has_all_keys && same_values
     elsif expected.is_a?(Array) && actual.is_a?(Array)
       same_length = expected.length == actual.length
 

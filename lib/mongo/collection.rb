@@ -70,7 +70,8 @@ module Mongo
       :expire_after => :expireAfterSeconds,
       :clustered_index => :clusteredIndex,
       :change_stream_pre_and_post_images => :changeStreamPreAndPostImages,
-      :encrypted_fields => :encryptedFields
+      :encrypted_fields => :encryptedFields,
+      :validator => :validator,
     }
 
     # Check if a collection is equal to another object. Will check the name and
@@ -258,6 +259,8 @@ module Mongo
     #   pre- and post-images on the created collection.
     # @option opts [ Hash ] :encrypted_fields Hash describing encrypted fields
     #   for queryable encryption.
+    # @option opts [ Hash ] :validator Hash describing document validation
+    #   options for the collection.
     #
     # @return [ Result ] The result of the command.
     #
@@ -298,6 +301,7 @@ module Mongo
             # taken from options passed to the create method.
             collation: options[:collation] || options['collation'],
             encrypted_fields: encrypted_fields,
+            validator: options[:validator],
           ).execute(next_primary(nil, session), context: context)
         end
       end
