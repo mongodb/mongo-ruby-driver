@@ -111,9 +111,7 @@ module Crypt
     end
 
     let(:encrypted_fields) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/encryptedFields.json')).tap do |ef|
-
-      end
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/encryptedFields.json'))
     end
 
     let(:key1_document) do
