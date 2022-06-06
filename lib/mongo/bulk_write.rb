@@ -333,14 +333,22 @@ module Mongo
             if doc = maybe_first(req.dig(op, :update))
               if key = doc.keys&.first
                 unless key.to_s.start_with?("$")
-                  raise Error::InvalidUpdateDocument.new(key: key)
+                  if Mongo.validate_update_replace
+                    raise Error::InvalidUpdateDocument.new(key: key)
+                  else
+                    Error::InvalidUpdateDocument.warn(Logger.logger, key)
+                  end
                 end
               end
             end
           elsif op == :replace_one
             if key = req.dig(op, :replacement)&.keys&.first
               if key.to_s.start_with?("$")
-                raise Error::InvalidReplacementDocument.new(key: key)
+                if Mongo.validate_update_replace
+                  raise Error::InvalidReplacementDocument.new(key: key)
+                else
+                  Error::InvalidReplacementDocument.warn(Logger.logger, key)
+                end
               end
             end
           end

@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+module Mongo
+  module Macros
+
+    def config_override(key, value)
+      around do |example|
+        existing = Mongo.send(key)
+
+        Mongo.send("#{key}=", value)
+
+        example.run
+
+        Mongo.send("#{key}=", existing)
+      end
+    end
+  end
+end
