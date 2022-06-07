@@ -46,6 +46,9 @@ module Unified
         if content_type = args.use('contentType')
           opts[:content_type] = content_type
         end
+        if disable_md5 = args.use('disableMD5')
+          opts[:disable_md5] = disable_md5
+        end
         contents = transform_contents(args.use!('source'))
         file_id = nil
         bucket.open_upload_stream(args.use!('filename'), **opts) do |stream|
