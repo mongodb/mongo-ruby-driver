@@ -334,9 +334,10 @@ options should be considered as experimental:
 - ``:encrypted_fields_map`` and ``:bypass_query_analysis`` in auto encryption options.
 - ``:contention_factor`` and ``:query_type`` in client encryption options.
 
-Usage of automatic queryable encryption is very similar to previously
-known client-side Encryption. Below is an example of automatic queryable
-encryption.
+You can find more information about queryable encryption in `MongoDB Manual
+<https://www.mongodb.com/docs/upcoming/core/queryable-encryption/queryable-encryption/>`_
+
+Below is an example of automatic queryable encryption using Ruby driver.
 
 .. code-block:: ruby
 
@@ -360,8 +361,8 @@ encryption.
     }
   }
 
-  # The key vault client is a Mongo::Client instance connected to the collection
-  # that will store your data keys.
+  # The key vault client is a Mongo::Client instance
+  # that will be used to store your data keys.
   key_vault_client = Mongo::Client.new(['localhost:27017'])
 
   # Use an instance of Mongo::ClientEncryption to create a new data key
@@ -401,14 +402,15 @@ encryption.
       key_vault_namespace: 'encryption.__keyVault',
       kms_providers: kms_providers,
       encrypted_fields_map: encrypted_fields_map,
-    }
+    },
+    database: 'encryption_db'
   )
 
   # Make sure there is no data in the collection.
   client.use('encryption_db').database.drop
 
   # Create encrypted collection explicitly.
-  collection = client.use('encryption_db')['encryption_coll'].create
+  collection = client['encryption_coll'].create
 
   # The string "sensitive data" will be encrypted and stored in the database
   # as ciphertext
@@ -419,8 +421,8 @@ encryption.
   # => "sensitive data"
 
   # A client with no auto_encryption_options is unable to decrypt the data
-  client_no_encryption = Mongo::Client.new(['localhost:27017'])
-  client_no_encryption.use('encryption_db')['encryption_coll'].find.first['encrypted_field']
+  client_no_encryption = Mongo::Client.new(['localhost:27017'], database: 'encryption_db')
+  client_no_encryption['encryption_coll'].find.first['encrypted_field']
   # => <BSON::Binary... type=ciphertext...>
 
 The example above demonstrates using automatic encryption with a local master key.
@@ -454,8 +456,8 @@ Below is an example of explicit queryable encryption.
     }
   }
 
-  # The key vault client is a Mongo::Client instance connected to the collection
-  # that will store your data keys.
+  # The key vault client is a Mongo::Client instance
+  # that will be used to store your data keys.
   key_vault_client = Mongo::Client.new(['localhost:27017'])
 
   # Use an instance of Mongo::ClientEncryption to create a new data key
@@ -473,7 +475,7 @@ Below is an example of explicit queryable encryption.
   ##########################################
 
   # Create the client you will use to read and write the data to MongoDB
-  client = Mongo::Client.new(['localhost:27017'])
+  client = Mongo::Client.new(['localhost:27017'], database: 'encryption_db')
 
   encrypted_fields = {
     fields: [
@@ -489,7 +491,7 @@ Below is an example of explicit queryable encryption.
   }
 
   # Make sure there is no data in the collection.
-  client.use('encryption_db')['encryption_coll'].drop(encrypted_field: encrypted_fields)
+  client['encryption_coll'].drop(encrypted_field: encrypted_fields)
   # Create encrypted collection explicitly.
   collection = client.use('encryption_db')['encryption_coll'].create(encrypted_fields: encrypted_fields)
 

@@ -13,7 +13,7 @@ describe 'Queryable encryption examples' do
   it 'uses queryable encryption' do
     #  Drop data from prior test runs.
     authorized_client.use('docs_examples').database.drop
-    authorized_client.use(key_vault_db)[key_vault_coll].drop
+    authorized_client.use('keyvault')['datakeys'].drop
 
     # Create two data keys.
     key_vault_client = ClientRegistry.instance.new_local_client(
@@ -93,6 +93,6 @@ describe 'Queryable encryption examples' do
 
     # Cleanup
     authorized_client.use('docs_examples').database.drop
-    authorized_client.use(key_vault_db)[key_vault_coll].drop
+    authorized_client.use('keyvault')['datakeys'].drop
   end
 end
