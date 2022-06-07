@@ -204,10 +204,11 @@ in order to perform automatic encryption.
       key_vault_namespace: 'encryption.__keyVault',
       kms_providers: kms_providers,
       schema_map: schema_map
-    }
+    },
+    database: 'encryption_db',
   )
 
-  collection = client.use('encryption_db')['encryption_coll']
+  collection = client['encryption_coll']
   collection.drop # Make sure there is no data in the collection
 
   # The string "sensitive data" will be encrypted and stored in the database
@@ -219,8 +220,11 @@ in order to perform automatic encryption.
   # => "sensitive data"
 
   # A client with no auto_encryption_options is unable to decrypt the data
-  client_no_encryption = Mongo::Client.new(['localhost:27017'])
-  client_no_encryption.use('encryption_db')['encryption_coll'].find.first['encrypted_field']
+  client_no_encryption = Mongo::Client.new(
+    ['localhost:27017'],
+    database: 'encryption_db',
+  )
+  client_no_encryption.['encryption_coll'].find.first['encrypted_field']
   # => <BSON::Binary... type=ciphertext...>
 
 The example above demonstrates using automatic encryption with a local master key.
@@ -303,8 +307,11 @@ in order to perform explicit encryption.
   )
 
   # Create the client you will use to read and write the data to MongoDB
-  client = Mongo::Client.new(['localhost:27017'])
-  collection = client.use('encryption_db')['encryption_coll']
+  client = Mongo::Client.new(
+    ['localhost:27017'],
+    database: 'encryption_db',
+  )
+  collection = client['encryption_coll']
   collection.drop # Make sure there is no data in the collection
 
   # Insert the encrypted value into the collection
@@ -499,7 +506,7 @@ Below is an example of explicit queryable encryption.
   # Make sure there is no data in the collection.
   client['encryption_coll'].drop(encrypted_field: encrypted_fields)
   # Create encrypted collection explicitly.
-  collection = client.use('encryption_db')['encryption_coll'].create(encrypted_fields: encrypted_fields)
+  collection = client['encryption_coll'].create(encrypted_fields: encrypted_fields)
 
   #####################################################
   # Step 4: Encrypt a string with explicit encryption #
