@@ -232,6 +232,7 @@ master key and create data keys, see the following sections of this tutorial:
 
 Explicit Encryption
 ===================
+
 Explicit encryption is a feature that allows users to encrypt and decrypt
 individual pieces of data such as strings, integers, or symbols. Explicit
 encryption is a community feature and does not require an enterprise build
@@ -326,6 +327,7 @@ master key and create data keys, see the following sections of this tutorial:
 
 Queryable Encryption
 ====================
+
 Queryable encryption is a new feature in MongoDB 6.0. It also requires
 libmongocrypt version 1.5.0-rc1 or above. Please note that queryable
 encryption feature is in public technical preview. Therefore, the following
@@ -539,6 +541,7 @@ Google Cloud Key Management (GCP KMS).
 
 Local Master Key
 ~~~~~~~~~~~~~~~~
+
 A local master key is a 96-byte binary string. It should be persisted
 on your machine as an environment variable or in a text file.
 
@@ -567,6 +570,7 @@ section of the MongoDB manual.
 
 Creating a Data Key
 ===================
+
 Once you have created a master key, create a data key by calling the
 ``#create_data_key`` method on an instance of the ``Mongo::ClientEncryption``
 class. This method generates a new data key and inserts it into the key vault
@@ -637,7 +641,6 @@ Protocol (KMIP) compatible key management server, note the server host and port,
 and key id. You will use that information to generate a data key. You may also
 need certificate authority certificate(s), as well as  and your client
 certificate and private key to authenticate to KMIP server.
-
 
 .. code-block:: ruby
 
@@ -731,6 +734,7 @@ see :manual:`create client reference </reference/config-database/>`.
 
 Auto-Encryption Options
 =======================
+
 Automatic encryption can be configured on a ``Mongo::Client`` using the
 ``auto_encryption_options`` option ``Hash``. This section provides an overview
 of the fields inside ``auto_encryption_options`` and explains how to choose their
@@ -738,6 +742,7 @@ values.
 
 ``:key_vault_client``
 ~~~~~~~~~~~~~~~~~~~~~
+
 The key vault client is a ``Mongo::Client`` instance that will be used to connect
 to the MongoDB collection containing your encryption data keys. For example, if
 your key vault was hosted on a MongoDB instance at ``localhost:30000``:
@@ -759,6 +764,7 @@ to insert and fetch data keys.
 
 ``:key_vault_namespace``
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 The key vault namespace is a ``String`` in the format ``"database_name.collection_name"``,
 where ``database_name`` and ``collection_name`` are the name of the database and
 collection in which you would like to store your data keys. For example, if your data
@@ -777,6 +783,7 @@ There is no default key vault namespace, and this option must be provided.
 
 ``:kms_providers``
 ~~~~~~~~~~~~~~~~~~
+
 A Hash that contains KMP provider names as keys, and provider options as values.
 
 .. code-block:: ruby
@@ -795,6 +802,7 @@ A Hash that contains KMP provider names as keys, and provider options as values.
 
 ``:kms_tls_options``
 ~~~~~~~~~~~~~~~~~~~~
+
 A Hash that contains KMP provider names as keys, and TLS options to connect to
 corresponding providers.
 
@@ -821,6 +829,7 @@ corresponding providers.
 
 ``:schema_map``
 ~~~~~~~~~~~~~~~
+
 A schema map is a Hash with information about which fields to automatically
 encrypt and decrypt.
 
@@ -901,6 +910,7 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
 
 ``:bypass_auto_encryption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The ``:bypass_auto_encryption`` option is a ``Boolean`` that specifies whether the
 ``Mongo::Client`` should skip encryption when writing to the database. If
 ``:bypass_auto_encryption`` is ``true``, the client will still perform automatic
@@ -917,6 +927,7 @@ decryption of any previously-encrypted data.
 
 ``:extra_options``
 ~~~~~~~~~~~~~~~~~~
+
 ``:extra_options`` is a ``Hash`` of options related to spawning mongocryptd.
 Every option in this ``Hash`` has a default value, so it is only necessary to
 provide the options whose defaults you want to override.
