@@ -379,7 +379,7 @@ Below is an example of automatic queryable encryption using Ruby driver.
   # Step 3: Configure Mongo::Client for auto-encryption #
   #######################################################
 
-  # Create am encrypted fields map, which tells the Mongo::Client which fields to encrypt.
+  # Create an encrypted fields map, which tells the Mongo::Client which fields to encrypt.
   encrypted_fields_map = {
       'encryption_db.encryption_coll' => {
         fields: [
