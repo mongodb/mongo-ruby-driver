@@ -259,6 +259,9 @@ tests:
         arguments:
           command:
             collMod: *collection0
+          # Added here to fix our tests as we require a commandName but don't
+          # do anything with it.
+          commandName: modify_collection
       - name: iterateUntilDocumentOrError
         object: *changeStream0
         expectResult:
