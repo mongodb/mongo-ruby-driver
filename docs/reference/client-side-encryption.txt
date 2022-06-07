@@ -324,6 +324,203 @@ master key and create data keys, see the following sections of this tutorial:
 - `Creating A Master Key`_,
 - `Creating A Data Key`_,
 
+Queryable Encryption
+====================
+Queryable encryption is a new feature in MongoDB 6.0. It also requires
+libmongocrypt version 1.5.0-rc1 or above.
+
+Usage of automatic queryable encryption is very similar to previously
+known client-side Encryption. Below is an example of automatic queryable
+encryption.
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  #####################################
+  # Step 1: Create a local master key #
+  #####################################
+
+  # A local master key is a 96-byte binary blob.
+  local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
+
+  #############################
+  # Step 2: Create a data key #
+  #############################
+
+  kms_providers = {
+    local: {
+      key: local_master_key
+    }
+  }
+
+  # The key vault client is a Mongo::Client instance connected to the collection
+  # that will store your data keys.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  # Use an instance of Mongo::ClientEncryption to create a new data key
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    key_vault_namespace: 'encryption.__keyVault',
+    kms_providers: kms_providers
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
+
+  #######################################################
+  # Step 3: Configure Mongo::Client for auto-encryption #
+  #######################################################
+
+  # Create am encrypted fields map, which tells the Mongo::Client which fields to encrypt.
+  encrypted_fields_map = {
+      'encryption_db.encryption_coll' => {
+        fields: [
+          {
+            path: 'encrypted_field',
+            bsonType: 'string',
+            keyId: data_key_id,
+            queries: {
+              queryType: 'equality'
+            }
+          }
+        ]
+      }
+    }
+
+  # Configure the client for automatic encryption
+  client = Mongo::Client.new(
+    ['localhost:27017'],
+    auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: kms_providers,
+      encrypted_fields_map: encrypted_fields_map,
+    }
+  )
+
+  # Make sure there is no data in the collection.
+  client.use('encryption_db').database.drop
+
+  # Create encrypted collection explicitly.
+  collection = client.use('encryption_db')['encryption_coll'].create
+
+  # The string "sensitive data" will be encrypted and stored in the database
+  # as ciphertext
+  collection.insert_one(encrypted_field: 'sensitive data')
+
+  # The data is decrypted before being returned to the user
+  collection.find(encrypted_field: 'sensitive data').first['encrypted_field']
+  # => "sensitive data"
+
+  # A client with no auto_encryption_options is unable to decrypt the data
+  client_no_encryption = Mongo::Client.new(['localhost:27017'])
+  client_no_encryption.use('encryption_db')['encryption_coll'].find.first['encrypted_field']
+  # => <BSON::Binary... type=ciphertext...>
+
+The example above demonstrates using automatic encryption with a local master key.
+For more information about using other key management services to create a
+master key and create data keys, see the following sections of this tutorial:
+
+- `Creating A Master Key`_
+- `Creating A Data Key`_
+
+Below is an example of explicit queryable encryption.
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  #####################################
+  # Step 1: Create a local master key #
+  #####################################
+
+  # A local master key is a 96-byte binary blob.
+  local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
+
+  #############################
+  # Step 2: Create a data key #
+  #############################
+
+  kms_providers = {
+    local: {
+      key: local_master_key
+    }
+  }
+
+  # The key vault client is a Mongo::Client instance connected to the collection
+  # that will store your data keys.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  # Use an instance of Mongo::ClientEncryption to create a new data key
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    key_vault_namespace: 'encryption.__keyVault',
+    kms_providers: kms_providers
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
+
+  ##########################################
+  # Step 3: Create an encrypted collection #
+  ##########################################
+
+  # Create the client you will use to read and write the data to MongoDB
+  client = Mongo::Client.new(['localhost:27017'])
+
+  encrypted_fields = {
+    fields: [
+      {
+        path: 'encrypted_field',
+        bsonType: 'string',
+        keyId: data_key_id,
+        queries: {
+          queryType: 'equality'
+        }
+      }
+    ]
+  }
+
+  # Make sure there is no data in the collection.
+  client.use('encryption_db')['encryption_coll'].drop(encrypted_field: encrypted_fields)
+  # Create encrypted collection explicitly.
+  collection = client.use('encryption_db')['encryption_coll'].create(encrypted_fields: encrypted_fields)
+
+  #####################################################
+  # Step 4: Encrypt a string with explicit encryption #
+  #####################################################
+
+  # The value to encrypt
+  value = 'sensitive data'
+
+  # Encrypt the value
+  insert_payload = client_encryption.encrypt(
+    'sensitive data',
+    {
+      key_id: data_key_id,
+      algorithm: "Indexed"
+    }
+  )
+
+  # Insert the encrypted value into the collection
+  collection.insert_one(encrypted_field: insert_payload)
+
+  # Use the client to read the encrypted value from the database, then
+  # use the ClientEncryption object to decrypt it
+  find_payload = client_encryption.encrypt(
+    'sensitive data',
+    {
+      key_id: data_key_id,
+      algorithm: "Indexed",
+      query_type: :equality
+    }
+  )
+  find_result = collection.find(encrypted_field: find_payload).first['encrypted_field']
+  # => 'sensitive data'
+
+
 Creating a Master Key
 =====================
 Both automatic encryption and explicit encryption require an encryption master key.
