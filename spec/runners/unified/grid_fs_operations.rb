@@ -20,12 +20,31 @@ module Unified
       end
     end
 
+    def download_by_name(op)
+      bucket = entities.get(:bucket, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if revision = args.use('revision')
+          opts[:revision] = revision
+        end
+        io = StringIO.new.set_encoding(BSON::BINARY)
+        stream = bucket.download_to_stream_by_name(args.use!('filename'), io, opts)
+        io.string
+      end
+    end
+
     def upload(op)
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
         if chunk_size = args.use('chunkSizeBytes')
           opts[:chunk_size] = chunk_size
+        end
+        if metadata = args.use('metadata')
+          opts[:metadata] = metadata
+        end
+        if content_type = args.use('contentType')
+          opts[:content_type] = content_type
         end
         contents = transform_contents(args.use!('source'))
         file_id = nil
