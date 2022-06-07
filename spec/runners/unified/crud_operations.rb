@@ -237,7 +237,7 @@ module Unified
         end
         opts = {}
         if args.key?('ordered')
-          opts[:ordered] = args.use('ordered')
+          opts[:ordered] = args.use!('ordered')
         end
         if comment = args.use('comment')
           opts[:comment] = comment
