@@ -36,6 +36,9 @@ module Unified
         if change_stream_pre_and_post_images = args.use('changeStreamPreAndPostImages')
           collection_opts[:change_stream_pre_and_post_images] = change_stream_pre_and_post_images
         end
+        if view_on = args.use('viewOn')
+          collection_opts[:view_on] = view_on
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end

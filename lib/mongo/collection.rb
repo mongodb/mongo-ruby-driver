@@ -72,6 +72,7 @@ module Mongo
       :change_stream_pre_and_post_images => :changeStreamPreAndPostImages,
       :encrypted_fields => :encryptedFields,
       :validator => :validator,
+      :view_on => :viewOn
     }
 
     # Check if a collection is equal to another object. Will check the name and
