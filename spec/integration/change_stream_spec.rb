@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 describe 'Change stream integration' do
-  retry_test 4
+  retry_test n: 4
   require_mri
   max_example_run_time 7
   min_server_fcv '3.6'
