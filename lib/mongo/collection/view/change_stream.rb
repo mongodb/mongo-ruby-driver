@@ -348,7 +348,7 @@ module Mongo
               doc[:fullDocumentBeforeChange] = @options[:full_document_before_change]
             end
 
-            if @options[:show_expanded_events]
+            if @options.key?(:show_expanded_events)
               doc[:showExpandedEvents] = @options[:show_expanded_events]
             end
 
