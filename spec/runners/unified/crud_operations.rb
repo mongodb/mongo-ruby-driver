@@ -236,8 +236,8 @@ module Unified
           convert_bulk_write_spec(req)
         end
         opts = {}
-        if ordered = args.use('ordered')
-          opts[:ordered] = true
+        if args.key?('ordered')
+          opts[:ordered] = args.use('ordered')
         end
         if comment = args.use('comment')
           opts[:comment] = comment
