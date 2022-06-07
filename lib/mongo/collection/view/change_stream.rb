@@ -115,6 +115,11 @@ module Mongo
         #   dropped and recreated or newly renamed collections without missing any notifications.
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Boolean ] :show_expanded_events Enables the server to
+        #   send the 'expanded' list of change stream events. The list of additional
+        #   events included with this flag set are: createIndexes, dropIndexes,
+        #   modify, create, shardCollection, reshardCollection,
+        #   refineCollectionShardKey.
         #
         #   The server will report an error if `startAfter` and `resumeAfter` are both specified.
         #
@@ -341,6 +346,10 @@ module Mongo
 
             if @options[:full_document_before_change]
               doc[:fullDocumentBeforeChange] = @options[:full_document_before_change]
+            end
+
+            if @options[:show_expanded_events]
+              doc[:showExpandedEvents] = @options[:show_expanded_events]
             end
 
             if resuming?

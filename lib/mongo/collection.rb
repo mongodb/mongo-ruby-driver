@@ -482,6 +482,11 @@ module Mongo
     #   Only recognized by server versions 4.0+.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Boolean ] :show_expanded_events Enables the server to
+    #   send the 'expanded' list of change stream events. The list of additional
+    #   events included with this flag set are: createIndexes, dropIndexes,
+    #   modify, create, shardCollection, reshardCollection,
+    #   refineCollectionShardKey.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
