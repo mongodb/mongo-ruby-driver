@@ -413,7 +413,7 @@ Below is an example of using automatic queryable encryption using the Ruby drive
   )
 
   # Make sure there is no data in the collection.
-  client.use('encryption_db').database.drop
+  client.database.drop
 
   # Create encrypted collection explicitly.
   collection = client['encryption_coll'].create
