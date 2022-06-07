@@ -329,17 +329,21 @@ Queryable Encryption
 ====================
 
 Queryable encryption is a new feature in MongoDB 6.0. It also requires
-libmongocrypt version 1.5.0-rc1 or above. Please note that queryable
-encryption feature is in public technical preview. Therefore, the following
-options should be considered as experimental:
-
-- ``:encrypted_fields_map`` and ``:bypass_query_analysis`` in auto encryption options.
-- ``:contention_factor`` and ``:query_type`` in client encryption options.
+libmongocrypt version 1.5.0-rc1 or above.
 
 You can find more information about queryable encryption in `MongoDB Manual
 <https://www.mongodb.com/docs/upcoming/core/queryable-encryption/queryable-encryption/>`_
 
-Below is an example of automatic queryable encryption using Ruby driver.
+.. note::
+
+  The queryable encryption feature is in public technical preview.
+  Therefore, the following options should be considered experimental
+  and are subject to change:
+
+  - ``:encrypted_fields_map`` and ``:bypass_query_analysis`` in auto encryption options.
+  - ``:contention_factor`` and ``:query_type`` in client encryption options.
+
+Below is an example of using automatic queryable encryption using the Ruby driver:
 
 .. code-block:: ruby
 
