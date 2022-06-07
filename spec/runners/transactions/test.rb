@@ -233,19 +233,37 @@ module Mongo
           end
         end
 
+        key_vault_coll = support_client
+        .use(:keyvault)[:datakeys]
+        .with(write: { w: :majority })
+
+        key_vault_coll.drop
         # Insert data into the key vault collection if required to do so by
         # the tests.
         if @spec.key_vault_data && !@spec.key_vault_data.empty?
-          key_vault_coll = support_client
-            .use(:keyvault)[:datakeys]
-            .with(write: { w: :majority })
-
-          key_vault_coll.drop
           key_vault_coll.insert_many(@spec.key_vault_data)
         end
 
+        if @spec.encrypted_fields
+          encrypted_fields = @spec.encrypted_fields.dup
+          # This code MUST be removed as soon as server starts accepting
+          # contention as int32.
+          if encrypted_fields.key?('fields')
+            encrypted_fields['fields'] = encrypted_fields['fields'].dup.map do |field|
+              if field['queries'] && field['queries'].key?('contention')
+                new_field = field.dup
+                new_field['queries'] = field['queries'].dup
+                new_field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
+                new_field
+              else
+                field
+              end
+            end
+          end
+          # End of code to be removed
+        end
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
-        coll.drop
+        coll.drop(encrypted_fields: encrypted_fields)
 
         # Place a jsonSchema validator on the collection if required to do so
         # by the tests.
@@ -260,22 +278,8 @@ module Mongo
           validator: collection_validator,
           writeConcern: { w: 'majority' }
         }
-        if @spec.encrypted_fields
-          encrypted_fields = @spec.encrypted_fields.dup
-          if encrypted_fields.key?('fields')
-            encrypted_fields['fields'] = encrypted_fields['fields'].dup.map do |field|
-              if field['queries'] && field['queries'].key?('contention')
-                new_field = field.dup
-                new_field['queries'] = field['queries'].dup
-                new_field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
-                new_field
-              else
-                field
-              end
-            end
-          end
-          create_collection_spec[:encryptedFields] = encrypted_fields
-        end
+
+        create_collection_spec[:encryptedFields] = encrypted_fields if encrypted_fields
         support_client.command(create_collection_spec)
 
         coll.insert_many(@data) unless @data.empty?

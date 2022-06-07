@@ -52,7 +52,7 @@ describe 'Client-Side Encryption' do
         }
       ].create
 
-      key_vault_collection = client.use('admin')['datakeys', write_concern: { w: :majority }]
+      key_vault_collection = client.use('keyvault')['datakeys', write_concern: { w: :majority }]
 
       key_vault_collection.drop
       key_vault_collection.insert_one(

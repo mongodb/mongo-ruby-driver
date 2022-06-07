@@ -98,6 +98,7 @@ module Mongo
           @options[:extra_options][:mongocryptd_uri],
           monitoring_io: @options[:client].options[:monitoring_io],
           server_selection_timeout: 10,
+          database: @options[:client].options[:database]
         )
 
         begin

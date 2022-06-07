@@ -229,6 +229,8 @@ module Mongo
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
+          # This code MUST be removed as soon as server starts accepting
+          # contention as int32.
           if schema = enc_cmd.dig('encryptionInformation', 'schema')
             enc_cmd['encryptionInformation']['schema'] = schema.map do |coll, params|
               if params['fields']
@@ -242,6 +244,7 @@ module Mongo
               [coll, params]
             end.to_h
           end
+          # End of code to be removed
 
           Msg.new(@flags, @options, enc_cmd)
         else

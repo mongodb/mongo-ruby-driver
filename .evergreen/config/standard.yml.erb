@@ -471,7 +471,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: [ruby-3.1, ruby-3.0, ruby-2.7]
-      topology: standalone
+      topology: [replica-set, sharded-cluster]
       mongodb-version: ['6.0']
       os: ubuntu2004
       fle: helper
