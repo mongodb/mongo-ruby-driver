@@ -122,6 +122,22 @@ module Unified
       end
     end
 
+    def drop_index(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+
+        collection.indexes.drop_one(
+          args.use!('name'),
+          **opts,
+        )
+      end
+    end
+
+
     def assert_index_exists(op)
       consume_test_runner(op)
       use_arguments(op) do |args|
