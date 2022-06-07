@@ -2,8 +2,11 @@
 
 set -ex
 
-. `dirname "$0"`/../spec/shared/shlib/distro.sh
-. `dirname "$0"`/../spec/shared/shlib/set_env.sh
+MRSS_ROOT=`dirname "$0"`/../spec/shared
+
+. $MRSS_ROOT/shlib/distro.sh
+. $MRSS_ROOT/shlib/set_env.sh
+. $MRSS_ROOT/shlib/config.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-config.sh
 
