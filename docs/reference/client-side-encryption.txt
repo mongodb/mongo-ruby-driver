@@ -327,7 +327,12 @@ master key and create data keys, see the following sections of this tutorial:
 Queryable Encryption
 ====================
 Queryable encryption is a new feature in MongoDB 6.0. It also requires
-libmongocrypt version 1.5.0-rc1 or above.
+libmongocrypt version 1.5.0-rc1 or above. Please note that queryable
+encryption feature is in public technical preview. Therefore, the following
+options should be considered as experimental:
+
+- ``:encrypted_fields_map`` and ``:bypass_query_analysis`` in auto encryption options.
+- ``:contention_factor`` and ``:query_type`` in client encryption options.
 
 Usage of automatic queryable encryption is very similar to previously
 known client-side Encryption. Below is an example of automatic queryable
@@ -787,7 +792,7 @@ A Hash that contains KMP provider names as keys, and provider options as values.
   )
 
 ``:kms_tls_options``
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 A Hash that contains KMP provider names as keys, and TLS options to connect to
 corresponding providers.
 
