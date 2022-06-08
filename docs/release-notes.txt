@@ -20,11 +20,11 @@ its test suite.
 2.18
 ====
 
-This release of the Ruby driver supports MongoDB version 5.2.
+This release of the Ruby driver supports MongoDB version 5.2 and 6.0.
 
 This release includes the following new features:
 
-- Added support for queryable encryption.
+- Added support for `queryable encryption <https://www.mongodb.com/docs/upcoming/core/queryable-encryption/queryable-encryption/>`_.
 - Added support for Azure Key Vault, Google Cloud Key Management, and any
   KMIP compliant Key Management System to be used as master key storage for
   client side encryption.

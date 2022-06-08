@@ -38,6 +38,7 @@ version.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - MongoDB 6.0
      - MongoDB 5.2
      - MongoDB 5.1
      - MongoDB 5.0
@@ -58,12 +59,14 @@ version.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      -
      -
      -
      -
 
    * - 2.17
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -77,6 +80,7 @@ version.
      -
 
    * - 2.16
+     -
      -
      -
      - |checkmark|
@@ -93,6 +97,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -106,6 +111,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -116,6 +122,7 @@ version.
      - |checkmark|
 
    * - 2.13
+     -
      -
      -
      -
@@ -133,6 +140,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -146,6 +154,7 @@ version.
      -
      -
      -
+     -
      - |checkmark| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -155,6 +164,7 @@ version.
      - |checkmark|
 
    * - 2.10
+     -
      -
      -
      -
@@ -173,6 +183,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -181,6 +192,7 @@ version.
      - |checkmark|
 
    * - 2.8
+     -
      -
      -
      -
@@ -199,6 +211,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -207,6 +220,7 @@ version.
      - |checkmark|
 
    * - 2.6
+     -
      -
      -
      -
@@ -226,6 +240,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -233,6 +248,7 @@ version.
      - |checkmark|
 
    * - 2.4
+     -
      -
      -
      -
@@ -254,6 +270,7 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -267,11 +284,13 @@ version.
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
 
    * - 2.0
+     -
      -
      -
      -
