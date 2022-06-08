@@ -27,9 +27,8 @@ module Unified
         if revision = args.use('revision')
           opts[:revision] = revision
         end
-        io = StringIO.new.set_encoding(BSON::BINARY)
-        stream = bucket.download_to_stream_by_name(args.use!('filename'), io, opts)
-        io.string
+        stream = bucket.open_download_stream_by_name(args.use!('filename'), opts)
+        stream.read
       end
     end
 
