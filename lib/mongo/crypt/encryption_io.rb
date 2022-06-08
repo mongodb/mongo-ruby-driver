@@ -232,7 +232,7 @@ module Mongo
           Process.spawn(
             mongocryptd_spawn_path,
             *mongocryptd_spawn_args,
-            [:out, :err]=>'/dev/null'
+            #[:out, :err]=>'/dev/null'
           )
         rescue Errno::ENOENT => e
           raise Error::MongocryptdSpawnError.new(
