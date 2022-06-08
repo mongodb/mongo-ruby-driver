@@ -5,7 +5,7 @@ require 'spec_helper'
 
 describe 'Explicit Queryable Encryption' do
   require_libmongocrypt
-  min_server_version '6.0'
+  min_server_version '6.0.0-rc8'
   require_topology :replica_set, :sharded, :load_balanced
 
   include_context 'define shared FLE helpers'
