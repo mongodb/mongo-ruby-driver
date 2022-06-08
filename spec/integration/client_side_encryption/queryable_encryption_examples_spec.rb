@@ -70,6 +70,10 @@ describe 'Queryable encryption examples' do
             }
           },
           encrypted_fields_map: encrypted_fields_map,
+          # Spawn mongocryptd on non-default port for sharded cluster tests
+          # Note for docs team: remove the extra_options argument when copying
+          # this example into public documentation.
+          extra_options: extra_options,
         },
         database: 'docs_examples'
       )
