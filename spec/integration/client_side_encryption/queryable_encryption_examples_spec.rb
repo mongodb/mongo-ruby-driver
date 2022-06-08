@@ -7,6 +7,7 @@ describe 'Queryable encryption examples' do
   require_libmongocrypt
   min_server_version '6.0.0-rc8'
   require_topology :replica_set, :sharded, :load_balanced
+  require_enterprise
 
   include_context 'define shared FLE helpers'
 
@@ -16,8 +17,11 @@ describe 'Queryable encryption examples' do
     authorized_client.use('keyvault')['datakeys'].drop
 
     # Create two data keys.
+    # Note for docs team: remove the test_options argument when copying
+    # this example into public documentation.
     key_vault_client = ClientRegistry.instance.new_local_client(
-      SpecConfig.instance.addresses
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.test_options
     )
     client_encryption = Mongo::ClientEncryption.new(
       key_vault_client,
@@ -52,20 +56,25 @@ describe 'Queryable encryption examples' do
       }
     }
 
-    # Create collection with queryable encryption enabled.
+    # Create client with automatic queryable encryption enabled.
+    # Note for docs team: remove the test_options argument when copying
+    # this example into public documentation.
     encrypted_client = ClientRegistry.instance.new_local_client(
       SpecConfig.instance.addresses,
-      auto_encryption_options: {
-        key_vault_namespace: "keyvault.datakeys",
-        kms_providers: {
-          local: {
-            key: local_master_key
-          }
+      SpecConfig.instance.test_options.merge(
+        auto_encryption_options: {
+          key_vault_namespace: "keyvault.datakeys",
+          kms_providers: {
+            local: {
+              key: local_master_key
+            }
+          },
+          encrypted_fields_map: encrypted_fields_map,
         },
-        encrypted_fields_map: encrypted_fields_map,
-      },
-      database: 'docs_examples'
+        database: 'docs_examples'
+      )
     )
+    # Create collection with queryable encryption enabled.
     encrypted_client['encrypted'].create
 
     # Auto encrypt an insert and find.
