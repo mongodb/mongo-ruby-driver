@@ -79,13 +79,19 @@ module Mongo
             ensure_readable!
             info = file_info
             num_chunks = (info.length + info.chunk_size - 1) / info.chunk_size
+            num_read = 0
             if block_given?
               view.each_with_index.reduce(0) do |length_read, (doc, index)|
                 chunk = Grid::File::Chunk.new(doc)
                 validate!(index, num_chunks, chunk, length_read)
                 data = chunk.data.data
                 yield data
+                num_read += 1
                 length_read += data.size
+              end.tap do
+                if num_read < num_chunks
+                  raise Error::MissingFileChunk.new(num_chunks, num_read)
+                end
               end
             else
               view.to_enum
