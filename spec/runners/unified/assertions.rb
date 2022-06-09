@@ -192,7 +192,7 @@ module Unified
 
     def assert_matches(actual, expected, msg)
       if actual.nil?
-        if expected&.keys == ["$$unsetOrMatches"]
+        if Hash === expected && expected&.keys == ["$$unsetOrMatches"]
           return
         elsif !expected.nil?
           raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
@@ -269,6 +269,8 @@ module Unified
         Float === object
       when 'string'
         String === object
+      when 'array'
+        Array === object
       else
         raise NotImplementedError, "Unhandled type #{type}"
       end
