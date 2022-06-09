@@ -375,7 +375,6 @@ describe Mongo::Socket::SSL do
           end
 
           let(:ssl_options) do
-            byebug
             super().merge(
               :ssl_cert => CRUD_TESTS.first,
               :ssl_key => nil,
