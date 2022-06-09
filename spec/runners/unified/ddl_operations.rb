@@ -69,16 +69,16 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         to = args.use!('to')
-        opts = {
+        cmd = {
           renameCollection: "#{collection.database.name}.#{collection.name}",
           to: "#{collection.database.name}.#{to}"
         }
 
         if args.key?("dropTarget")
-          opts[:dropTarget] = args.use("dropTarget")
+          cmd[:dropTarget] = args.use("dropTarget")
         end
 
-        collection.client.use(:admin).command(**opts)
+        collection.client.use(:admin).command(**cmd)
       end
     end
 
