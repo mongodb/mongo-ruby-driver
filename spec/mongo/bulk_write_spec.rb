@@ -64,7 +64,7 @@ describe Mongo::BulkWrite do
         it 'raises an exception' do
           expect {
             bulk_write.execute
-          }.to raise_error(ArgumentError)
+          }.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
         end
       end
 
