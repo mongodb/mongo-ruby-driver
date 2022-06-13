@@ -331,7 +331,7 @@ module Mongo
     #   if the document is invalid.
     def validate_requests!
       if @requests.empty?
-        raise ArgumentError, "Bulk write requests cannot be empty."
+        raise ArgumentError, "Bulk write requests cannot be empty"
       end
       @requests.each do |req|
         if op = req.keys.first
