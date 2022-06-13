@@ -71,6 +71,10 @@ module Mongo
     #     will not be properly parsed.
     # @option options [ Array<String> ] :key_alt_names An optional array of
     #   strings specifying alternate names for the new data key.
+    # @option options [ String | nil ] :key_material An optional string of
+    #   96 bytes to use as custom key material for the data key being created.
+    #   If :key_material option is given, the custom key material is used
+    #   for encrypting and decrypting data.
     #
     # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
     #   BSON::Binary object with type :uuid.
@@ -79,6 +83,8 @@ module Mongo
       key_alt_names = options[:key_alt_names]
       @encrypter.create_and_insert_data_key(key_document, key_alt_names)
     end
+
+    alias create_key create_data_key
 
     # Encrypts a value using the specified encryption key and algorithm.
     #

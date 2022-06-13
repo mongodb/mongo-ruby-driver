@@ -9,6 +9,7 @@ require 'runners/unified/change_stream_operations'
 require 'runners/unified/support_operations'
 require 'runners/unified/assertions'
 require 'support/utils'
+require 'support/crypt'
 
 module Unified
 
@@ -193,6 +194,53 @@ module Unified
           end
 
           client.start_session(**opts)
+        when 'clientEncryption'
+          client_encryption_opts = spec.use!('clientEncryptionOpts')
+          key_vault_client = entities.get(:client, client_encryption_opts['keyVaultClient'])
+          opts = {
+            key_vault_namespace: client_encryption_opts['keyVaultNamespace'],
+            kms_providers: Utils.snakeize_hash(client_encryption_opts['kmsProviders']),
+          }
+          opts[:kms_providers] = opts[:kms_providers].map do |provider, options|
+            converted_options = options.map do |key, value|
+              converted_value = if value == { '$$placeholder'.to_sym => 1 }
+                case provider
+                when :aws
+                  case key
+                  when :access_key_id then SpecConfig.instance.fle_aws_key
+                  when :secret_access_key then SpecConfig.instance.fle_aws_secret
+                  end
+                when :azure
+                  case key
+                  when :tenant_id then SpecConfig.instance.fle_azure_tenant_id
+                  when :client_id then SpecConfig.instance.fle_azure_client_id
+                  when :client_secret then SpecConfig.instance.fle_azure_client_secret
+                  end
+                when :gcp
+                  case key
+                  when :email then SpecConfig.instance.fle_gcp_email
+                  when :private_key then SpecConfig.instance.fle_gcp_private_key
+                  end
+                when :kmip
+                  case key
+                  when :endpoint then SpecConfig.instance.fle_kmip_endpoint
+                  end
+                when :local
+                  case key
+                  when :key then Crypt::LOCAL_MASTER_KEY
+                  end
+                end
+              else
+                value
+              end
+              [key, converted_value]
+            end.to_h
+            [provider, converted_options]
+          end.to_h
+          Mongo::ClientEncryption.new(
+            key_vault_client,
+            opts
+          )
         else
           raise NotImplementedError, "Unknown type #{type}"
         end
