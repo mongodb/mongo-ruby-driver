@@ -126,6 +126,10 @@ module Mongo
       def delete_key(id)
         @encryption_io.delete_key(id)
       end
+
+      def get_key(id)
+        @encryption_io.get_key(id)
+      end
     end
   end
 end

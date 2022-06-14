@@ -141,5 +141,9 @@ module Mongo
     def delete_key(id)
       @encrypter.delete_key(id)
     end
+
+    def get_key(id)
+      @encrypter.get_key(id)
+    end
   end
 end

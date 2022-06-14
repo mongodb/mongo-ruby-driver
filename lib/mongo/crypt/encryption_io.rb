@@ -169,6 +169,10 @@ module Mongo
         key_vault_collection.delete_one(_id: id)
       end
 
+      def get_key(id)
+        key_vault_collection.find(_id: id).first
+      end
+
       private
 
       def validate_key_vault_client!(key_vault_client)

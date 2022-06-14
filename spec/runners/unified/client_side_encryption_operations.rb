@@ -33,5 +33,14 @@ module Unified
         )
       end
     end
+
+    def get_key(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        client_encryption.get_key(
+          args.use!('id')
+        )
+      end
+    end
   end
 end
