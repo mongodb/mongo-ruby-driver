@@ -23,6 +23,9 @@ module Unified
         if full_document_before_change = args.use('fullDocumentBeforeChange')
           opts[:full_document_before_change] = full_document_before_change
         end
+        if args.key?('showExpandedEvents')
+          opts[:show_expanded_events] = args.use!('showExpandedEvents')
+        end
         cs = object.watch(pipeline, **opts)
         name = op.use!('saveResultAsEntity')
         entities.set(:change_stream, name, cs)
