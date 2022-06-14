@@ -137,5 +137,9 @@ module Mongo
     def add_key_alt_name(id, key_alt_name)
       @encrypter.add_key_alt_name(id, key_alt_name)
     end
+
+    def delete_key(id)
+      @encrypter.delete_key(id)
+    end
   end
 end

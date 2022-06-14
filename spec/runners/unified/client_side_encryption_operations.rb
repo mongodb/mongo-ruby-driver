@@ -24,5 +24,14 @@ module Unified
         )
       end
     end
+
+    def delete_key(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        client_encryption.delete_key(
+          args.use!('id')
+        )
+      end
+    end
   end
 end

@@ -165,6 +165,10 @@ module Mongo
         )
       end
 
+      def delete_key(id)
+        key_vault_collection.delete_one(_id: id)
+      end
+
       private
 
       def validate_key_vault_client!(key_vault_client)
