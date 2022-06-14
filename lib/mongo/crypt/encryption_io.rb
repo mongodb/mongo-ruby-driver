@@ -158,6 +158,13 @@ module Mongo
         end
       end
 
+      def add_key_alt_name(id, key_alt_name)
+        key_vault_collection.find_one_and_update(
+          { _id: id },
+          { '$addToSet' => { keyAltNames: key_alt_name } }
+        )
+      end
+
       private
 
       def validate_key_vault_client!(key_vault_client)

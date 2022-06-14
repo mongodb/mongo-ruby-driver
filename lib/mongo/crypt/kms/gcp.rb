@@ -143,10 +143,9 @@ module Mongo
         #
         # @raise [ ArgumentError ] If required options are missing or incorrectly.
           def initialize(opts)
-            unless opts.is_a?(Hash)
-              raise ArgumentError.new(
-                'Key document options must contain a key named :master_key with a Hash value'
-              )
+            if opts.empty?
+              @empty = true
+              return
             end
             @project_id = validate_param(:project_id, opts, FORMAT_HINT)
             @location = validate_param(:location, opts, FORMAT_HINT)
@@ -160,6 +159,7 @@ module Mongo
           #
           # @return [ BSON::Document ] GCP KMS credentials in libmongocrypt format.
           def to_document
+            return BSON::Document.new({}) if @empty
             BSON::Document.new({
               provider: 'gcp',
               projectId: project_id,

@@ -34,10 +34,11 @@ module Mongo
       #   key document that contains master encryption key parameters.
       # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
-      def initialize(mongocrypt, io, master_key_document, key_alt_names = nil)
+      def initialize(mongocrypt, io, master_key_document, key_alt_names = nil, key_material = nil)
         super(mongocrypt, io)
         Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)
         set_key_alt_names(key_alt_names) if key_alt_names
+        Binding.ctx_setopt_key_material(self, key_material) if key_material
         initialize_ctx
       end
 

@@ -26,6 +26,9 @@ module Unified
         if limit = args.use('limit')
           req = req.limit(limit)
         end
+        if projection = args.use('projection')
+          req = req.projection(projection)
+        end
         result = req.to_a
       end
     end

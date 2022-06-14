@@ -53,6 +53,10 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
+            if opts.empty?
+              @empty = true
+              return
+            end
             @tenant_id = validate_param(:tenant_id, opts, FORMAT_HINT)
             @client_id = validate_param(:client_id, opts, FORMAT_HINT)
             @client_secret = validate_param(:client_secret, opts, FORMAT_HINT)
@@ -65,6 +69,7 @@ module Mongo
           #
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
+            return BSON::Document.new({}) if @empty
             BSON::Document.new({
               tenantId: @tenant_id,
               clientId: @client_id,

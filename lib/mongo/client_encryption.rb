@@ -80,8 +80,10 @@ module Mongo
     #   BSON::Binary object with type :uuid.
     def create_data_key(kms_provider, options={})
       key_document = Crypt::KMS::MasterKeyDocument.new(kms_provider, options)
+
       key_alt_names = options[:key_alt_names]
-      @encrypter.create_and_insert_data_key(key_document, key_alt_names)
+      key_material = options[:key_material]
+      @encrypter.create_and_insert_data_key(key_document, key_alt_names, key_material)
     end
 
     alias create_key create_data_key
@@ -128,6 +130,12 @@ module Mongo
     # @return [ Object ] The decrypted value.
     def decrypt(value)
       @encrypter.decrypt(value)
+    end
+
+    # Adds a keyAltName to the keyAltNames array of the key document in the key vault collection with the given UUID (BSON binary subtype 0x04).
+    # Returns the previous version of the key document.
+    def add_key_alt_name(id, key_alt_name)
+      @encrypter.add_key_alt_name(id, key_alt_name)
     end
   end
 end

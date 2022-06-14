@@ -41,6 +41,10 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
+            if opts.empty?
+              @empty = true
+              return
+            end
             @endpoint = validate_param(:endpoint, opts, FORMAT_HINT)
           end
 
@@ -48,6 +52,7 @@ module Mongo
           #
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
+            return BSON::Document.new({}) if @empty
             BSON::Document.new({
               endpoint: endpoint,
             })
@@ -81,7 +86,7 @@ module Mongo
           #
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
-          def initialize(opts)
+          def initialize(opts = {})
             @key_id = validate_param(
               :key_id, opts, FORMAT_HINT, required: false
             ) || SecureRandom.alphanumeric(96)

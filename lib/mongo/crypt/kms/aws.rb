@@ -49,6 +49,10 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
+            if opts.empty?
+              @empty = true
+              return
+            end
             @access_key_id = validate_param(:access_key_id, opts, FORMAT_HINT)
             @secret_access_key = validate_param(:secret_access_key, opts, FORMAT_HINT)
             @session_token = validate_param(:session_token, opts, FORMAT_HINT, required: false)
@@ -58,6 +62,7 @@ module Mongo
           #
           # @return [ BSON::Document ] AWS KMS credentials in libmongocrypt format.
           def to_document
+            return BSON::Document.new({}) if @empty
             BSON::Document.new({
               accessKeyId: access_key_id,
               secretAccessKey: secret_access_key,

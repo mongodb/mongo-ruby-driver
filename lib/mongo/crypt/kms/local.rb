@@ -40,11 +40,16 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
+            if opts.empty?
+              @empty = true
+              return
+            end
             @key = validate_param(:key, opts, FORMAT_HINT)
           end
 
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
+            return BSON::Document.new({}) if @empty
             BSON::Document.new({
               key: BSON::Binary.new(@key, :generic),
             })

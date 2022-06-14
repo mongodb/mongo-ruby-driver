@@ -271,6 +271,8 @@ module Unified
         String === object
       when 'binData'
         BSON::Binary === object
+      when 'array'
+        Array === object
       else
         raise NotImplementedError, "Unhandled type #{type}"
       end

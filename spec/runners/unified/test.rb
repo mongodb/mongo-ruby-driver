@@ -340,7 +340,7 @@ module Unified
             end
 
             public_send(method_name, op)
-          rescue Mongo::Error, BSON::String::IllegalKey => e
+          rescue Mongo::Error, BSON::String::IllegalKey, Mongo::Error::CryptError => e
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.
               # It means anything other than OperationFailure. DRIVERS-1799
