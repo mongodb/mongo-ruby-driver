@@ -56,5 +56,15 @@ module Unified
       client_encryption = entities.get(:clientEncryption, op.use!('object'))
       client_encryption.get_keys
     end
+
+    def remove_key_alt_name(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        client_encryption.remove_key_alt_name(
+          args.use!('id'),
+          args.use!('keyAltName')
+        )
+      end
+    end
   end
 end

@@ -161,7 +161,7 @@ module Mongo
       def add_key_alt_name(id, key_alt_name)
         key_vault_collection.find_one_and_update(
           { _id: id },
-          { '$addToSet' => { keyAltNames: key_alt_name } }
+          { '$addToSet' => { keyAltNames: key_alt_name } },
         )
       end
 
@@ -173,12 +173,26 @@ module Mongo
         key_vault_collection.find(_id: id).first
       end
 
-      def get_key_by_alt_name(alt_name)
-        key_vault_collection.find(keyAltNames: alt_name).first
+      def get_key_by_alt_name(key_alt_name)
+        key_vault_collection.find(keyAltNames: key_alt_name).first
       end
 
       def get_keys
         key_vault_collection.find.to_a
+      end
+
+      def remove_key_alt_name(id, key_alt_name)
+        result = key_vault_collection.find_one_and_update(
+          { _id: id },
+          { '$pull' => { keyAltNames: key_alt_name } },
+        )
+        if result && result['keyAltNames'].size == 1
+          key_vault_collection.update_one(
+            { _id: id },
+            { '$unset' => { keyAltNames: true } },
+          )
+        end
+        result
       end
 
       private

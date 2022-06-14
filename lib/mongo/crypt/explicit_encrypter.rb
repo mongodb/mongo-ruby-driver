@@ -131,12 +131,16 @@ module Mongo
         @encryption_io.get_key(id)
       end
 
-      def get_key_by_alt_name(alt_name)
-        @encryption_io.get_key_by_alt_name(alt_name)
+      def get_key_by_alt_name(key_alt_name)
+        @encryption_io.get_key_by_alt_name(key_alt_name)
       end
 
       def get_keys
         @encryption_io.get_keys
+      end
+
+      def remove_key_alt_name(id, key_alt_name)
+        @encryption_io.remove_key_alt_name(id, key_alt_name)
       end
     end
   end

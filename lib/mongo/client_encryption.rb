@@ -85,7 +85,6 @@ module Mongo
       key_material = options[:key_material]
       @encrypter.create_and_insert_data_key(key_document, key_alt_names, key_material)
     end
-
     alias create_key create_data_key
 
     # Encrypts a value using the specified encryption key and algorithm.
@@ -146,14 +145,17 @@ module Mongo
       @encrypter.get_key(id)
     end
 
-    def get_key_by_alt_name(alt_name)
-      @encrypter.get_key_by_alt_name(alt_name)
+    def get_key_by_alt_name(key_alt_name)
+      @encrypter.get_key_by_alt_name(key_alt_name)
     end
 
     def get_keys
       @encrypter.get_keys
     end
-
     alias keys get_keys
+
+    def remove_key_alt_name(id, key_alt_name)
+      @encrypter.remove_key_alt_name(id, key_alt_name)
+    end
   end
 end
