@@ -42,5 +42,14 @@ module Unified
         )
       end
     end
+
+    def get_key_by_alt_name(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        client_encryption.get_key_by_alt_name(
+          args.use!('keyAltName')
+        )
+      end
+    end
   end
 end

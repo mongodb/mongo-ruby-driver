@@ -130,6 +130,10 @@ module Mongo
       def get_key(id)
         @encryption_io.get_key(id)
       end
+
+      def get_key_by_alt_name(alt_name)
+        @encryption_io.get_key_by_alt_name(alt_name)
+      end
     end
   end
 end
