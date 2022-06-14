@@ -51,5 +51,10 @@ module Unified
         )
       end
     end
+
+    def get_keys(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      client_encryption.get_keys
+    end
   end
 end

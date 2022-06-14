@@ -134,6 +134,10 @@ module Mongo
       def get_key_by_alt_name(alt_name)
         @encryption_io.get_key_by_alt_name(alt_name)
       end
+
+      def get_keys
+        @encryption_io.get_keys
+      end
     end
   end
 end

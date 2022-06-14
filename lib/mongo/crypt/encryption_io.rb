@@ -177,6 +177,10 @@ module Mongo
         key_vault_collection.find(keyAltNames: alt_name).first
       end
 
+      def get_keys
+        key_vault_collection.find.to_a
+      end
+
       private
 
       def validate_key_vault_client!(key_vault_client)
