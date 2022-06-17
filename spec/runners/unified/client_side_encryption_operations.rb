@@ -66,5 +66,15 @@ module Unified
         )
       end
     end
+
+    def rewrap_many_data_key(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        client_encryption.rewrap_many_data_key(
+          args.use!('filter'),
+          args.use('opts')
+        )
+      end
+    end
   end
 end

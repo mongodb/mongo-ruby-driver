@@ -40,7 +40,7 @@ module Mongo
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,
           metadata_client: nil,
-          key_vault_namespace: key_vault_namespace
+          key_vault_namespace: key_vault_namespace,
         )
       end
 
@@ -141,6 +141,30 @@ module Mongo
 
       def remove_key_alt_name(id, key_alt_name)
         @encryption_io.remove_key_alt_name(id, key_alt_name)
+      end
+
+      def rewrap_many_data_key(filter, opts = {})
+        data_key_documents = Crypt::RewrapManyDataKeyContext.new(
+          @crypt_handle,
+          @encryption_io,
+          filter
+        ).run_state_machine['v']
+        updates = data_key_documents.map do |doc|
+          {
+            update_one: {
+              filter: { _id: doc[:_id] },
+              update: {
+                '$set' => {
+                  masterKey: doc[:masterKey],
+                  keyMaterial: doc[:keyMaterial]
+                }
+              }
+            }
+          }
+        end
+        {
+          'bulkWriteResult' => @encryption_io.update_data_keys(updates)
+        }
       end
     end
   end

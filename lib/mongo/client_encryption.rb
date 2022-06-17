@@ -157,5 +157,10 @@ module Mongo
     def remove_key_alt_name(id, key_alt_name)
       @encrypter.remove_key_alt_name(id, key_alt_name)
     end
+
+    def rewrap_many_data_key(filter, opts = {})
+      @encrypter.rewrap_many_data_key(filter, opts)
+    end
+
   end
 end

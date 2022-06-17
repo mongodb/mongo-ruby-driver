@@ -227,7 +227,11 @@ module Unified
               if k.start_with?('$$')
                 assert_value_matches(actual, expected, k)
               else
-                actual_v = actual[k]
+                actual_v = if Mongo::BulkWrite::Result === actual
+                    actual.send(Utils.underscore(k)) || 0
+                  else
+                    actual[k]
+                  end
                 if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
                   assert_value_matches(actual_v, expected_v, k)
                 else

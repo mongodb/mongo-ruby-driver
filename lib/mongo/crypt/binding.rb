@@ -594,6 +594,21 @@ module Mongo
         end
       end
 
+      attach_function(
+        :mongocrypt_ctx_rewrap_many_datakey_init,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      def self.ctx_rewrap_many_datakey_init(context, filter)
+        filter_data = filter.to_bson.to_s
+        Binary.wrap_string(filter_data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_rewrap_many_datakey_init(context.ctx_p, data_p)
+          end
+        end
+      end
+
       # @!method self.mongocrypt_ctx_encrypt_init(ctx, db, db_len, cmd)
       #   @api private
       #

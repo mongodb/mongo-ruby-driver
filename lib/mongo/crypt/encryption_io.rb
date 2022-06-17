@@ -195,6 +195,10 @@ module Mongo
         result
       end
 
+      def update_data_keys(updates)
+        key_vault_collection.bulk_write(updates)
+      end
+
       private
 
       def validate_key_vault_client!(key_vault_client)
