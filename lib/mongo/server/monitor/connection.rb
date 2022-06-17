@@ -227,15 +227,21 @@ module Mongo
         # @api private
         def check_document
           server_api = @app_metadata.server_api || options[:server_api]
-          if hello_ok? || server_api
-            doc = HELLO_DOC
+          doc = if hello_ok? || server_api
+            _doc = HELLO_DOC
             if server_api
-              doc = doc.merge(Utils.transform_server_api(server_api))
+              _doc = _doc.merge(Utils.transform_server_api(server_api))
             end
-            doc
+            _doc
           else
             LEGACY_HELLO_DOC
           end
+          # compressors must be set to maintain correct compression status
+          # in the server description. See RUBY-2427
+          if compressors = options[:compressors]
+            doc = doc.merge(compression: compressors)
+          end
+          doc
         end
 
         private
