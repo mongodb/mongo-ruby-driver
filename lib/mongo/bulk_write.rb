@@ -115,7 +115,7 @@ module Mongo
     #   )
     #
     # @param [ Mongo::Collection ] collection The collection.
-    # @param [ Array<Hash, BSON::Document> ] requests The requests.
+    # @param [ Array<Hash, BSON::Document> ] requests The requests, cannot be empty.
     # @param [ Hash, BSON::Document ] options The options.
     #
     # @since 2.1.0
@@ -324,9 +324,15 @@ module Mongo
     # and some which are not), in which case the driver expects the server to
     # fail the operation with an error.
     #
-    # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument ]
+    # Raise an ArgumentError if requests is empty.
+    #
+    # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument,
+    #   ArgumentError ]
     #   if the document is invalid.
     def validate_requests!
+      if @requests.empty?
+        raise ArgumentError, "Bulk write requests cannot be empty"
+      end
       @requests.each do |req|
         if op = req.keys.first
           if [:update_one, :update_many].include?(op)

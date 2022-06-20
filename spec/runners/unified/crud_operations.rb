@@ -76,6 +76,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if comment = args.use('comment')
+          opts[:comment] = comment
+        end
         req = collection.find(args.use!('filter'), **opts).distinct(args.use!('fieldName'), **opts)
         result = req.to_a
       end
