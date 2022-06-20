@@ -202,8 +202,7 @@ module Mongo
     # @option options [ Hash | nil ] :master_key Document describing master key
     #   to encrypt keys.
     #
-    # @return [ Hash ] Hash contains result of a bulk write operation that updates
-    #   keys as :bulk_write_result.
+    # @return [ Crypt::RewrapManyDataKeyResult ] Result of the operation.
     def rewrap_many_data_key(filter, opts = {})
       @encrypter.rewrap_many_data_key(filter, opts)
     end

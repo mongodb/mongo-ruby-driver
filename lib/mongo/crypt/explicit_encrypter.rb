@@ -193,14 +193,17 @@ module Mongo
       # @option options [ Hash | nil ] :master_key Document describing master key
       #   to encrypt keys.
       #
-      # @return [ Hash ] Hash contains result of a bulk write operation that updates
-      #   keys as :bulk_write_result.
+      # @return [ Crypt::RewrapManyDataKeyResult ] Result of the operation.
       def rewrap_many_data_key(filter, opts = {})
-        data_key_documents = Crypt::RewrapManyDataKeyContext.new(
+        rewrap_result = Crypt::RewrapManyDataKeyContext.new(
           @crypt_handle,
           @encryption_io,
           filter
-        ).run_state_machine['v']
+        ).run_state_machine
+        if rewrap_result.nil?
+          return  RewrapManyDataKeyResult.new({})
+        end
+        data_key_documents = rewrap_result['v']
         updates = data_key_documents.map do |doc|
           {
             update_one: {
@@ -214,9 +217,9 @@ module Mongo
             }
           }
         end
-        {
-          'bulkWriteResult' => @encryption_io.update_data_keys(updates)
-        }
+        RewrapManyDataKeyResult.new(
+          @encryption_io.update_data_keys(updates)
+        )
       end
     end
   end

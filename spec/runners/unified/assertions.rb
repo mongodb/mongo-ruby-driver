@@ -76,6 +76,25 @@ module Unified
             end
           end
 
+          %w(bulkWriteResult).each do |k|
+            expected_v = expected.use(k)
+            next unless expected_v
+            actual_v = case actual
+            when Mongo::Crypt::RewrapManyDataKeyResult
+              actual.send(Utils.underscore(k))
+            else
+              raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+            end
+            if expected_v
+              if expected_v.empty?
+                if actual_v && !actual_v.empty?
+                  raise Error::ResultMismatch, "Actual not empty"
+                end
+              else
+                assert_matches(actual_v, expected_v)
+              end
+            end
+          end
           assert_matches(actual, expected, 'result')
           expected.clear
         end
@@ -219,7 +238,7 @@ module Unified
           if expected.empty?
             # This needs to be a match assertion. Check type only
             # and allow BulkWriteResult and generic operation result.
-            unless Hash === actual || Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
+            unless Hash === actual || Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual || Mongo::Crypt::RewrapManyDataKeyResult === actual
               raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
             end
           else
@@ -227,11 +246,7 @@ module Unified
               if k.start_with?('$$')
                 assert_value_matches(actual, expected, k)
               else
-                actual_v = if Mongo::BulkWrite::Result === actual
-                    actual.send(Utils.underscore(k)) || 0
-                  else
-                    actual[k]
-                  end
+                actual_v = actual[k]
                 if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
                   assert_value_matches(actual_v, expected_v, k)
                 else
