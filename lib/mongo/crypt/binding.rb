@@ -594,12 +594,31 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_ctx_datakey_init(ctx, filter)
+      #   @api private
+      #
+      # Initialize a context to rewrap datakeys.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ FFI::Pointer ] filter A pointer to a  mongocrypt_binary_t object
+      #   that represents filter to use for the find command on the key vault
+      #   collection to retrieve datakeys to rewrap.
+      #
+      # @return [ Boolean ] Whether the initialization was successful.
       attach_function(
         :mongocrypt_ctx_rewrap_many_datakey_init,
         [:pointer, :pointer],
         :bool
       )
 
+      # Initialize a context to rewrap datakeys.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ BSON::Document ] filter BSON Document
+      #   that represents filter to use for the find command on the key vault
+      #   collection to retrieve datakeys to rewrap.
+      #
+      # @return [ Boolean ] Whether the initialization was successful.
       def self.ctx_rewrap_many_datakey_init(context, filter)
         filter_data = filter.to_bson.to_s
         Binary.wrap_string(filter_data) do |data_p|

@@ -34,6 +34,10 @@ module Mongo
       #   key document that contains master encryption key parameters.
       # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
+      # @param [ BSON::Binary | nil ] :key_material Optional
+      #   96 bytes to use as custom key material for the data key being created.
+      #   If :key_material option is given, the custom key material is used
+      #   for encrypting and decrypting data.
       def initialize(mongocrypt, io, master_key_document, key_alt_names = nil, key_material = nil)
         super(mongocrypt, io)
         Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)

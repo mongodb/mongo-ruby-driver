@@ -158,6 +158,8 @@ module Mongo
         end
       end
 
+      # Adds a key_alt_name to the key_alt_names array of the key document
+      # in the key vault collection with the given id.
       def add_key_alt_name(id, key_alt_name)
         key_vault_collection.find_one_and_update(
           { _id: id },
@@ -165,22 +167,30 @@ module Mongo
         )
       end
 
+      # Removes the key document with the given id
+      # from the key vault collection.
       def delete_key(id)
         key_vault_collection.delete_one(_id: id)
       end
 
+      # Finds a single key document with the given id.
       def get_key(id)
         key_vault_collection.find(_id: id).first
       end
 
+      # Returns a key document in the key vault collection with
+      # the given key_alt_name.
       def get_key_by_alt_name(key_alt_name)
         key_vault_collection.find(keyAltNames: key_alt_name).first
       end
 
+      # Finds all documents in the key vault collection.
       def get_keys
         key_vault_collection.find.to_a
       end
 
+      #Removes a key_alt_name from the key_alt_names array of the key document
+      # in the key vault collection with the given id.
       def remove_key_alt_name(id, key_alt_name)
         result = key_vault_collection.find_one_and_update(
           { _id: id },
@@ -195,6 +205,11 @@ module Mongo
         result
       end
 
+      # Apply given requests to the key vault collection using bulk write.
+      #
+      # @param [ Array<Hash> ] requests The bulk write requests.
+      #
+      # @return [ BulkWrite::Result ] The result of the operation.
       def update_data_keys(updates)
         key_vault_collection.bulk_write(updates)
       end
