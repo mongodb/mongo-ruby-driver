@@ -202,6 +202,11 @@ module Unified
           opts = {
             key_vault_namespace: client_encryption_opts['keyVaultNamespace'],
             kms_providers: Utils.snakeize_hash(client_encryption_opts['kmsProviders']),
+            kms_tls_options: {
+              kmip: {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
+              }
+            }
           }
           opts[:kms_providers] = opts[:kms_providers].map do |provider, options|
             converted_options = options.map do |key, value|
@@ -239,6 +244,7 @@ module Unified
             end.to_h
             [provider, converted_options]
           end.to_h
+
           Mongo::ClientEncryption.new(
             key_vault_client,
             opts
