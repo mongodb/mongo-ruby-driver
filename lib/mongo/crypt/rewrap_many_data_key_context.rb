@@ -30,12 +30,15 @@ module Mongo
       #   wraps a mongocrypt_t object used to create a new mongocrypt_ctx_t
       # @param [ Mongo::Crypt::EncryptionIO ] io An object that performs all
       #   driver I/O on behalf of libmongocrypt
-      # @param [ Mongo::Crypt::KMS::MasterKeyDocument ] master_key_document The master
-      #   key document that contains master encryption key parameters.
-      # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
+      # @param [ Hash ] filter Filter used to find keys to be updated.
       #   alternate names for the new data key.
-      def initialize(mongocrypt, io, filter)
+      # @param [ Mongo::Crypt::KMS::MasterKeyDocument | nil ] master_key_document The optional master
+      #   key document that contains master encryption key parameters.
+      def initialize(mongocrypt, io, filter, master_key_document)
         super(mongocrypt, io)
+        if master_key_document
+          Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)
+        end
         Binding.ctx_rewrap_many_datakey_init(self, filter)
       end
     end

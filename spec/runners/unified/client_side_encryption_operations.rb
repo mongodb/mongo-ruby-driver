@@ -70,9 +70,11 @@ module Unified
     def rewrap_many_data_key(op)
       client_encryption = entities.get(:clientEncryption, op.use!('object'))
       use_arguments(op) do |args|
+        opts = Utils.shallow_snakeize_hash(args.use('opts')) || {}
+        opts[:master_key] = Utils.shallow_snakeize_hash(opts[:master_key]) if opts[:master_key]
         client_encryption.rewrap_many_data_key(
           args.use!('filter'),
-          args.use('opts')
+          opts
         )
       end
     end

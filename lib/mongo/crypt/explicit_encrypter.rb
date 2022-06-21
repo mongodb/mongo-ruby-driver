@@ -195,10 +195,17 @@ module Mongo
       #
       # @return [ Crypt::RewrapManyDataKeyResult ] Result of the operation.
       def rewrap_many_data_key(filter, opts = {})
+        master_key_document = if opts[:provider]
+          options = opts.dup
+          provider = options.delete(:provider)
+          KMS::MasterKeyDocument.new(provider, options)
+        end
+
         rewrap_result = Crypt::RewrapManyDataKeyContext.new(
           @crypt_handle,
           @encryption_io,
-          filter
+          filter,
+          master_key_document
         ).run_state_machine
         if rewrap_result.nil?
           return  RewrapManyDataKeyResult.new({})
@@ -212,8 +219,10 @@ module Mongo
                 '$set' => {
                   masterKey: doc[:masterKey],
                   keyMaterial: doc[:keyMaterial]
-                }
-              }
+                },
+                '$currentDate' => { updateDate: true },
+              },
+              upsert: true,
             }
           }
         end

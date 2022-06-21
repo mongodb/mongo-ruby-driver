@@ -91,7 +91,14 @@ module Unified
                   raise Error::ResultMismatch, "Actual not empty"
                 end
               else
-                assert_matches(actual_v, expected_v)
+                %w(deleted inserted matched modified upserted).each do |k|
+                  if count = expected_v.use("#{k}Count")
+                    if Hash === count || count > 0
+                      actual_count = actual_v.send("#{k}_count")
+                      assert_value_matches(actual_count, count, "#{k} count")
+                    end
+                  end
+                end
               end
             end
           end
