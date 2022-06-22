@@ -43,16 +43,9 @@ describe 'Client-Side Encryption' do
             }
           },
           kms_tls_options: {
-            aws: {
-              ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
-            },
-            azure: {
-              ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
-            },
-            gcp: {
-              ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
-            },
             kmip: {
+              ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },

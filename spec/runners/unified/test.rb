@@ -204,6 +204,8 @@ module Unified
             kms_providers: Utils.snakeize_hash(client_encryption_opts['kmsProviders']),
             kms_tls_options: {
               kmip: {
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
                 ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
               }
             }
