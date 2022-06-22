@@ -974,7 +974,7 @@ module Mongo
           status = Status.new
 
           mongocrypt_kms_ctx_status(kms_context.kms_ctx_p, status.ref)
-          status.raise_crypt_error
+          status.raise_crypt_error(kms: true)
         end
       end
 
