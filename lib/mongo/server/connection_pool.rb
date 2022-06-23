@@ -29,7 +29,7 @@ module Mongo
       # The default max size for the connection pool.
       #
       # @since 2.9.0
-      DEFAULT_MAX_SIZE = 5.freeze
+      DEFAULT_MAX_SIZE = 20.freeze
 
       # The default min size for the connection pool.
       #

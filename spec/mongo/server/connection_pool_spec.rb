@@ -83,11 +83,11 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when min size exceeds default max size' do
       let (:options) do
-        { min_pool_size: 10 }
+        { min_pool_size: 50 }
       end
 
       it 'sets max size to equal provided min size' do
-        expect(pool.max_size).to eq(10)
+        expect(pool.max_size).to eq(50)
       end
     end
 
@@ -165,7 +165,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when no pool size option is provided' do
       it 'returns the default size' do
-        expect(pool.max_size).to eq(5)
+        expect(pool.max_size).to eq(20)
       end
     end
 
@@ -175,7 +175,7 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'returns max size' do
-        expect(pool.max_size).to eq(5)
+        expect(pool.max_size).to eq(20)
       end
     end
   end
