@@ -97,13 +97,19 @@ module Mongo
 
       # Set the schema map option on the underlying mongocrypt_t object
       def set_schema_map
-        unless @schema_map.is_a?(Hash)
+        case @schema_map
+        when Hash
+          Binding.setopt_schema_map(self, @schema_map)
+        when String
+          @schema_map = BSON::ExtJSON.parse(File.read(@schema_map))
+          Binding.setopt_schema_map(self, @schema_map)
+        when nil
+          return
+        else
           raise ArgumentError.new(
-            "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil"
+            "#{@schema_map} is an invalid schema_map; schema_map must a Hash, nil, or String containing path to a file."
           )
         end
-
-        Binding.setopt_schema_map(self, @schema_map)
       end
 
       def set_encrypted_fields_map
