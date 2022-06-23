@@ -110,6 +110,10 @@ module Mongo
             "#{@schema_map} is an invalid schema_map; schema_map must a Hash, nil, or String containing path to a file."
           )
         end
+      rescue Errno::ENOENT
+        raise ArgumentError.new(
+          "#{@schema_map} is an invalid path to a file contains schema_map."
+        )
       end
 
       def set_encrypted_fields_map
