@@ -196,18 +196,6 @@ describe Mongo::Crypt::KMS::Credentials do
       Mongo::Crypt::KMS::GCP::Credentials.new(kms_provider)
     end
 
-    context 'with empty GCP kms_provider' do
-      let(:kms_provider) do
-        {}
-      end
-
-      it 'raises an exception' do
-        expect do
-          params
-        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. GCP KMS provider options must be in the format: { email: 'EMAIL', private_key: 'PRIVATE-KEY' }/)
-      end
-    end
-
     %i(email private_key).each do |key|
       context "with nil GCP #{key}" do
         let(:kms_provider) do
