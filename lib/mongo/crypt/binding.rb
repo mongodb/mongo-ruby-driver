@@ -499,7 +499,7 @@ module Mongo
       #
       # @raise [ Mongo::Error::CryptError ] If the key material is not 96 bytes.
       def self.ctx_setopt_key_material(context, key_material)
-        data = BSON::Document.new({'keyMaterial' => key_material}).to_bson.to_s
+        data = {'keyMaterial' => key_material}.to_bson.to_s
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
             mongocrypt_ctx_setopt_key_material(context.ctx_p, data_p)

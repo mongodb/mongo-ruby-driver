@@ -54,7 +54,7 @@ module Unified
 
     def get_keys(op)
       client_encryption = entities.get(:clientEncryption, op.use!('object'))
-      client_encryption.get_keys
+      client_encryption.get_keys.to_a
     end
 
     def remove_key_alt_name(op)

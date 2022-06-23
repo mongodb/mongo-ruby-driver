@@ -38,7 +38,7 @@ module Mongo
       #   96 bytes to use as custom key material for the data key being created.
       #   If :key_material option is given, the custom key material is used
       #   for encrypting and decrypting data.
-      def initialize(mongocrypt, io, master_key_document, key_alt_names = nil, key_material = nil)
+      def initialize(mongocrypt, io, master_key_document, key_alt_names, key_material)
         super(mongocrypt, io)
         Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)
         set_key_alt_names(key_alt_names) if key_alt_names

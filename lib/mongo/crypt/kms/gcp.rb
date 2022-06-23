@@ -24,6 +24,7 @@ module Mongo
         #
         # @api private
         class Credentials
+          extend Forwardable
           include KMS::Validations
 
           # @return [ String ] GCP email to authenticate with.
@@ -34,6 +35,9 @@ module Mongo
 
           # @return [ String | nil ] GCP KMS endpoint.
           attr_reader :endpoint
+
+          # @api private
+          def_delegator :@opts, :empty?
 
           FORMAT_HINT = "GCP KMS provider options must be in the format: " +
               "{ email: 'EMAIL', private_key: 'PRIVATE-KEY' }"
@@ -50,8 +54,10 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
-            @email = validate_param(:email, opts, FORMAT_HINT)
+            @opts = opts
+            return if empty?
 
+            @email = validate_param(:email, opts, FORMAT_HINT)
             @private_key = begin
               private_key_opt = validate_param(:private_key, opts, FORMAT_HINT)
               if BSON::Environment.jruby?
@@ -91,6 +97,7 @@ module Mongo
           #
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
+            return BSON::Document.new if empty?
             BSON::Document.new({
               email: email,
               privateKey: BSON::Binary.new(private_key, :generic),

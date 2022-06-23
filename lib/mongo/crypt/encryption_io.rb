@@ -186,10 +186,10 @@ module Mongo
 
       # Finds all documents in the key vault collection.
       def get_keys
-        key_vault_collection.find.to_a
+        key_vault_collection.find
       end
 
-      #Removes a key_alt_name from the key_alt_names array of the key document
+      # Removes a key_alt_name from the key_alt_names array of the key document
       # in the key vault collection with the given id.
       def remove_key_alt_name(id, key_alt_name)
         result = key_vault_collection.find_one_and_update(
@@ -197,6 +197,7 @@ module Mongo
           { '$pull' => { keyAltNames: key_alt_name } },
         )
         if result && result['keyAltNames'].size == 1
+          # We removed the only key alt name, so we delete the  field.
           key_vault_collection.update_one(
             { _id: id },
             { '$unset' => { keyAltNames: true } },

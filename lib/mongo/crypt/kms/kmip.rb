@@ -24,10 +24,14 @@ module Mongo
         #
         # @api private
         class Credentials
+          extend Forwardable
           include KMS::Validations
 
           # @return [ String ] KMIP KMS endpoint with optional port.
           attr_reader :endpoint
+
+          # @api private
+          def_delegator :@opts, :empty?
 
           FORMAT_HINT = "KMIP KMS provider options must be in the format: " +
                         "{ endpoint: 'ENDPOINT' }"
@@ -41,18 +45,17 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
-            if opts.empty?
-              @empty = true
-              return
+            @opts = opts
+            unless empty?
+              @endpoint = validate_param(:endpoint, opts, FORMAT_HINT)
             end
-            @endpoint = validate_param(:endpoint, opts, FORMAT_HINT)
           end
 
           # Convert credentials object to a BSON document in libmongocrypt format.
           #
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
-            return BSON::Document.new({}) if @empty
+            return BSON::Document.new({}) if empty?
             BSON::Document.new({
               endpoint: endpoint,
             })

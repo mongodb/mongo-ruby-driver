@@ -23,6 +23,7 @@ module Mongo
         #
         # @api private
         class Credentials
+          extend Forwardable
           include KMS::Validations
 
           # @return [ String ] Azure tenant id.
@@ -36,6 +37,9 @@ module Mongo
 
           # @return [ String | nil ] Azure identity platform endpoint.
           attr_reader :identity_platform_endpoint
+
+          # @api private
+          def_delegator :@opts, :empty?
 
           FORMAT_HINT = "Azure KMS provider options must be in the format: " +
               "{ tenant_id: 'TENANT-ID', client_id: 'TENANT_ID', client_secret: 'CLIENT_SECRET' }"
@@ -53,23 +57,22 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
-            if opts.empty?
-              @empty = true
-              return
+            @opts = opts
+            unless empty?
+              @tenant_id = validate_param(:tenant_id, opts, FORMAT_HINT)
+              @client_id = validate_param(:client_id, opts, FORMAT_HINT)
+              @client_secret = validate_param(:client_secret, opts, FORMAT_HINT)
+              @identity_platform_endpoint = validate_param(
+                :identity_platform_endpoint, opts, FORMAT_HINT, required: false
+              )
             end
-            @tenant_id = validate_param(:tenant_id, opts, FORMAT_HINT)
-            @client_id = validate_param(:client_id, opts, FORMAT_HINT)
-            @client_secret = validate_param(:client_secret, opts, FORMAT_HINT)
-            @identity_platform_endpoint = validate_param(
-              :identity_platform_endpoint, opts, FORMAT_HINT, required: false
-            )
           end
 
           # Convert credentials object to a BSON document in libmongocrypt format.
           #
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
-            return BSON::Document.new({}) if @empty
+            return BSON::Document.new if empty?
             BSON::Document.new({
               tenantId: @tenant_id,
               clientId: @client_id,

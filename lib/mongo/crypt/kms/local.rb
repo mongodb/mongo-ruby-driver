@@ -23,10 +23,14 @@ module Mongo
         #
         # @api private
         class Credentials
+          extend Forwardable
           include KMS::Validations
 
           # @return [ String ] Master key.
           attr_reader :key
+
+          # @api private
+          def_delegator :@opts, :empty?
 
           FORMAT_HINT = "Local KMS provider options must be in the format: " +
                         "{ key: 'MASTER-KEY' }"
@@ -40,16 +44,15 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
-            if opts.empty?
-              @empty = true
-              return
+            @opts = opts
+            unless empty?
+              @key = validate_param(:key, opts, FORMAT_HINT)
             end
-            @key = validate_param(:key, opts, FORMAT_HINT)
           end
 
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
-            return BSON::Document.new({}) if @empty
+            return BSON::Document.new({}) if empty?
             BSON::Document.new({
               key: BSON::Binary.new(@key, :generic),
             })

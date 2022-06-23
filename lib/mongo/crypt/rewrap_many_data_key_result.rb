@@ -19,7 +19,7 @@ module Mongo
   module Crypt
     # Represent result of the rewrap many data ke operation.
     #
-    # @api private
+    # @api semiprivate
     class RewrapManyDataKeyResult
 
       # @returns [ BulkWrite::Result ] the result of the bulk write operation

@@ -43,7 +43,7 @@ module Mongo
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
-    def initialize(key_vault_client, options={})
+    def initialize(key_vault_client, options = {})
       @encrypter = Crypt::ExplicitEncrypter.new(
         key_vault_client,
         options[:key_vault_namespace],
@@ -136,8 +136,8 @@ module Mongo
     # @param [ BSON::Binary ] id Id of the key to add new key alt name.
     # @param [ String ] key_alt_name New key alt name to add.
     #
-    # @return [ BSON::Document ] Document describing the identified key
-    #   before adding the key alt name.
+    # @return [ BSON::Document | nil ] Document describing the identified key
+    #   before adding the key alt name, or nil if no such key.
     def add_key_alt_name(id, key_alt_name)
       @encrypter.add_key_alt_name(id, key_alt_name)
     end
@@ -146,7 +146,7 @@ module Mongo
     #
     # @param [ BSON::Binary ] id Id of the key to delete.
     #
-    # @return [ Result ] The response from the database for the delete_one
+    # @return [ Operation::Result ] The response from the database for the delete_one
     #   operation that deletes the key.
     def delete_key(id)
       @encrypter.delete_key(id)
@@ -156,8 +156,8 @@ module Mongo
     #
     # @param [ BSON::Binary ] id Id of the key to get.
     #
-    # @return [ Result ] The response from the database for the find
-    #   operation that is used to find a key.
+    # @return [ BSON::Document | nil ] The found key document or nil
+    #   if not found.
     def get_key(id)
       @encrypter.get_key(id)
     end
@@ -166,16 +166,15 @@ module Mongo
     #
     # @param [ String ] key_alt_name Key alt name to find a key.
     #
-    # @return [ Result ] The response from the database for the find
-    #   operation that is used to find a key.
+    # @return [ BSON::Document | nil ] The found key document or nil
+    #   if not found.
     def get_key_by_alt_name(key_alt_name)
       @encrypter.get_key_by_alt_name(key_alt_name)
     end
 
     # Returns all keys in the key vault collection.
     #
-    # @return [ CollectionView ] The response from the database for the find
-    #   operation that is used to find keys.
+    # @return [ Collection::View ] Keys in the key vault collection.
     def get_keys
       @encrypter.get_keys
     end
@@ -186,8 +185,8 @@ module Mongo
     # @param [ BSON::Binary ] id Id of the key to remove key alt name.
     # @param [ String ] key_alt_name Key alt name to remove.
     #
-    # @return [ BSON::Document ] Document describing the identified key
-    #   before removing the key alt name.
+    # @return [ BSON::Document | nil ] Document describing the identified key
+    #   before removing the key alt name, or nil if no such key.
     def remove_key_alt_name(id, key_alt_name)
       @encrypter.remove_key_alt_name(id, key_alt_name)
     end

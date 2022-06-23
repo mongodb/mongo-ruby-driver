@@ -24,6 +24,7 @@ module Mongo
         #
         # @api private
         class Credentials
+          extend Forwardable
           include KMS::Validations
 
           # @return [ String ] AWS access key.
@@ -34,6 +35,9 @@ module Mongo
 
           # @return [ String | nil ] AWS session token.
           attr_reader :session_token
+
+          # @api private
+          def_delegator :@opts, :empty?
 
           FORMAT_HINT = "AWS KMS provider options must be in the format: " +
                         "{ access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }"
@@ -49,20 +53,19 @@ module Mongo
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
           def initialize(opts)
-            if opts.empty?
-              @empty = true
-              return
+            @opts = opts
+            unless empty?
+              @access_key_id = validate_param(:access_key_id, opts, FORMAT_HINT)
+              @secret_access_key = validate_param(:secret_access_key, opts, FORMAT_HINT)
+              @session_token = validate_param(:session_token, opts, FORMAT_HINT, required: false)
             end
-            @access_key_id = validate_param(:access_key_id, opts, FORMAT_HINT)
-            @secret_access_key = validate_param(:secret_access_key, opts, FORMAT_HINT)
-            @session_token = validate_param(:session_token, opts, FORMAT_HINT, required: false)
           end
 
           # Convert credentials object to a BSON document in libmongocrypt format.
           #
           # @return [ BSON::Document ] AWS KMS credentials in libmongocrypt format.
           def to_document
-            return BSON::Document.new({}) if @empty
+            return BSON::Document.new if empty?
             BSON::Document.new({
               accessKeyId: access_key_id,
               secretAccessKey: secret_access_key,

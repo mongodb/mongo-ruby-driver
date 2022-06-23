@@ -146,20 +146,20 @@ tests:
                 updates:
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: aws, <<: *new_aws_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: aws, <<: *new_aws_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: aws, <<: *new_aws_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: aws, <<: *new_aws_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                 writeConcern: { w: majority }
 
   - description: "rewrap with new Azure KMS provider"
@@ -198,20 +198,20 @@ tests:
                 updates:
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: azure, <<: *new_azure_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: azure, <<: *new_azure_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: azure, <<: *new_azure_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: azure, <<: *new_azure_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                 writeConcern: { w: majority }
 
   - description: "rewrap with new GCP KMS provider"
@@ -252,20 +252,20 @@ tests:
                 updates:
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: gcp, <<: *new_gcp_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: gcp, <<: *new_gcp_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: gcp, <<: *new_gcp_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: gcp, <<: *new_gcp_masterkey }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                 writeConcern: { w: majority }
 
   - description: "rewrap with new KMIP KMS provider"
@@ -301,20 +301,20 @@ tests:
                 updates:
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: kmip, keyId: { $$type: string } }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: kmip, keyId: { $$type: string } }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: kmip, keyId: { $$type: string } }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: kmip, keyId: { $$type: string } }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                 writeConcern: { w: majority }
 
   - description: "rewrap with new local KMS provider"
@@ -350,20 +350,20 @@ tests:
                 updates:
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: local }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: local }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: local }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { provider: local }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                 writeConcern: { w: majority }
 
   - description: "rewrap with current KMS provider"
@@ -409,23 +409,23 @@ tests:
                 updates:
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { $$type: object }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { $$type: object }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { $$type: object }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { $$type: object }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                   - q: { _id: { $$type: binData } }
                     u: { $set: { masterKey: { $$type: object }, keyMaterial: { $$type: binData } }, $currentDate: { updateDate: true } }
-                    upsert: false
-                    multi: false
+                    multi: { $$unsetOrMatches: false }
+                    upsert: { $$unsetOrMatches: false }
                 writeConcern: { w: majority }
           - commandStartedEvent: { commandName: find }
