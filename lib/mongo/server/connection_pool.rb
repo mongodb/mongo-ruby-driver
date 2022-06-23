@@ -59,7 +59,8 @@ module Mongo
       # @param [ Server ] server The server which this connection pool is for.
       # @param [ Hash ] options The connection pool options.
       #
-      # @option options [ Integer ] :max_size The maximum pool size.
+      # @option options [ Integer ] :max_size The maximum pool size. Setting
+      #   this option to zero creates an unlimited connection pool.
       # @option options [ Integer ] :max_pool_size Deprecated.
       #   The maximum pool size. If max_size is also given, max_size and
       #   max_pool_size must be identical.
@@ -98,7 +99,7 @@ module Mongo
         options[:max_size] ||= options[:max_pool_size]
         options.delete(:max_pool_size)
         if options[:min_size] && options[:max_size] &&
-          options[:min_size] > options[:max_size]
+          (options[:max_size] != 0 && options[:min_size] > options[:max_size])
         then
           raise ArgumentError, "Cannot have min size #{options[:min_size]} exceed max size #{options[:max_size]}"
         end
@@ -377,7 +378,7 @@ module Mongo
                 #
                 # Ruby does not allow a thread to lock a mutex which it already
                 # holds.
-                if unsynchronized_size < max_size
+                if max_size == 0 || unsynchronized_size < max_size
                   connection = create_connection
                   @pending_connections << connection
                   throw(:done)

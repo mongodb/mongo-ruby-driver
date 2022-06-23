@@ -91,6 +91,16 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
+    context 'when min size is provided and max size is zero (unlimited)' do
+      let (:options) do
+        { min_size: 10, max_size: 0 }
+      end
+
+      it 'sets max size to zero (unlimited)' do
+        expect(pool.max_size).to eq(0)
+      end
+    end
+
     context 'when no min size is provided' do
 
       it 'creates the pool with no connections' do
@@ -458,6 +468,18 @@ describe Mongo::Server::ConnectionPool do
   describe '#check_out' do
     let!(:pool) do
       server.pool
+    end
+
+    context 'when max_size is zero (unlimited)' do
+      let(:options) do
+        { max_size: 0 }
+      end
+
+      it 'checks out a connection' do
+        expect do
+          pool.check_out
+        end.not_to raise_error
+      end
     end
 
     context 'when a connection is checked out on a different thread' do
