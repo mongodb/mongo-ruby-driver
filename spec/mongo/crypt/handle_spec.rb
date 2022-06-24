@@ -22,11 +22,21 @@ describe Mongo::Crypt::Handle do
         end
       end
 
+      context 'with valid schema map in a file' do
+        let(:schema_map) do
+          schema_map_file_path
+        end
+
+        it 'does not raise an exception' do
+          expect { handle }.not_to raise_error
+        end
+      end
+
       context 'with invalid schema map' do
         let(:schema_map) { '' }
 
         it 'raises an exception' do
-          expect { handle }.to raise_error(ArgumentError, /schema_map must be a Hash or nil/)
+          expect { handle }.to raise_error(ArgumentError, /an invalid path to a file contains schema_map/)
         end
       end
 
