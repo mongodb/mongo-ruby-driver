@@ -19,7 +19,7 @@ require 'runners/transactions/operation'
 require 'runners/transactions/spec'
 require 'runners/transactions/test'
 
-def define_transactions_spec_tests(test_paths)
+def define_transactions_spec_tests(test_paths, bson_types: true)
   config_override :validate_update_replace, true
 
   test_paths.each do |file|
@@ -30,7 +30,7 @@ def define_transactions_spec_tests(test_paths)
 
       define_spec_tests_with_requirements(spec) do |req|
 
-        spec.tests.each do |test|
+        spec.tests(bson_types: bson_types).each do |test|
 
           context(test.description) do
 

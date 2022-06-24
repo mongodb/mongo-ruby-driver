@@ -40,7 +40,7 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.6.0
-      def initialize(crud_spec, data, test)
+      def initialize(crud_spec, data, test, bson_types: true)
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
         @data = data || []
@@ -71,10 +71,11 @@ module Mongo
           Operation.new(self, op)
         end
 
-        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
+        mode = if bson_types then :bson else nil end
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
 
         if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
+          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: mode))
         end
 
         @expected_results = operations.map do |o|
