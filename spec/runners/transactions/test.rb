@@ -244,24 +244,7 @@ module Mongo
           key_vault_coll.insert_many(@spec.key_vault_data)
         end
 
-        if @spec.encrypted_fields
-          encrypted_fields = @spec.encrypted_fields.dup
-          # This code MUST be removed as soon as server starts accepting
-          # contention as int32.
-          if encrypted_fields.key?('fields')
-            encrypted_fields['fields'] = encrypted_fields['fields'].dup.map do |field|
-              if field['queries'] && field['queries'].key?('contention')
-                new_field = field.dup
-                new_field['queries'] = field['queries'].dup
-                new_field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
-                new_field
-              else
-                field
-              end
-            end
-          end
-          # End of code to be removed
-        end
+        encrypted_fields = @spec.encrypted_fields if @spec.encrypted_fields
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
         coll.drop(encrypted_fields: encrypted_fields)
 
