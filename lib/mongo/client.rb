@@ -1073,8 +1073,10 @@ module Mongo
     def watch(pipeline = [], options = {})
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
+      view_options = { await_data: true }.merge(options) if options[:max_await_time_ms]
+
       Mongo::Collection::View::ChangeStream.new(
-        Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"]),
+        Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"], {}, view_options),
         pipeline,
         Mongo::Collection::View::ChangeStream::CLUSTER,
         options)

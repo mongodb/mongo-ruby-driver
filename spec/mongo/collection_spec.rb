@@ -798,6 +798,29 @@ describe Mongo::Collection do
             expect(change_doc['updateDescription']['updatedFields']['a']).to eq(2)
           end
         end
+
+        context 'when full_document is updateLookup' do
+          before do
+            Thread.new do
+              sleep 1
+              authorized_collection.insert_one(a: 2)
+              authorized_collection.insert_one(a: 3)
+            end
+          end
+
+          let(:change_stream) do
+            authorized_collection.watch([], max_await_time_ms: 1500)
+          end
+
+          it 'returns the documents in the batch size specified' do
+            expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more_operation).once.and_wrap_original do |m, *args, &block|
+              m.call(*args).tap do |op|
+                expect(op.max_time_ms).to eq(1500)
+              end
+            end
+            enum.next
+          end
+        end
       end
     end
   end
