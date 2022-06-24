@@ -548,8 +548,9 @@ Ruby Options
 
    * - ``:max_pool_size``
      - The maximum size of the connection pool for each server.
+       Setting this option to zero removes the max size limit from the connection pool, permitting it to grow to any number of connections.
      - ``Integer``
-     - 5
+     - 20
 
    * - ``:max_read_retries``
      - The maximum number of read retries, when legacy read retries are used.
@@ -1505,7 +1506,8 @@ the pool and uses it for the operation. If there are no connections available
 and the size of the pool is less than the ``max_pool_size``, a new connection
 will be created. If all connections are in use and the pool has reached its
 maximum size, the thread waits for a connection to be returned to the pool by
-another thread.
+another thread. If ``max_pool_size`` is set to zero, there is no limit for the
+maximum number of connections in the pool.
 
 The number of seconds the thread will wait for a connection to become available
 is configurable. This setting, called ``wait_queue_timeout``, is defined in

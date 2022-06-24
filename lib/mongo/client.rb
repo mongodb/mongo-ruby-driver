@@ -268,7 +268,7 @@ module Mongo
     # @option options [ Integer ] :max_idle_time The maximum seconds a socket can remain idle
     #   since it has been checked in to the pool.
     # @option options [ Integer ] :max_pool_size The maximum size of the
-    #   connection pool.
+    #   connection pool. Setting this option to zero creates an unlimited connection pool.
     # @option options [ Integer ] :max_read_retries The maximum number of read
     #   retries when legacy read retries are in use.
     # @option options [ Integer ] :max_write_retries The maximum number of write
@@ -1549,7 +1549,9 @@ module Mongo
     def validate_max_min_pool_size!(option, opts)
       if option == :min_pool_size && opts[:min_pool_size]
         max = opts[:max_pool_size] || Server::ConnectionPool::DEFAULT_MAX_SIZE
-        raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max) unless opts[:min_pool_size] <= max
+        if max != 0 && opts[:min_pool_size] > max
+          raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max)
+        end
       end
       true
     end
