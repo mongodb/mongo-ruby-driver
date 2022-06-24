@@ -844,6 +844,20 @@ describe Mongo::Client do
               expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
             end
           end
+
+          context 'when max_pool_size is zero (unlimited)' do
+            let(:options) do
+              {
+                  :min_pool_size => 10,
+                  :max_pool_size => 0
+              }
+            end
+
+            it 'sets the option' do
+              expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
+              expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
+            end
+          end
         end
 
         context 'when max_pool_size is not provided' do
@@ -852,7 +866,7 @@ describe Mongo::Client do
 
             let(:options) do
               {
-                  :min_pool_size => 10
+                  :min_pool_size => 30
               }
             end
 
@@ -887,6 +901,24 @@ describe Mongo::Client do
             it 'sets the option' do
               expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
             end
+          end
+        end
+      end
+
+      context 'when max_pool_size is provided' do
+        let(:client) do
+          new_local_client_nmio(['127.0.0.1:27017'], options)
+        end
+
+        context 'when max_pool_size is 0 (unlimited)' do
+          let(:options) do
+            {
+                :max_pool_size => 0
+            }
+          end
+
+          it 'sets the option' do
+            expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
           end
         end
       end
@@ -1081,6 +1113,17 @@ describe Mongo::Client do
                 expect(client.options[:max_pool_size]).to eq(10)
               end
             end
+
+            context 'when max_pool_size is 0 (unlimited)' do
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=10&maxPoolSize=0'
+              end
+
+              it 'sets the option' do
+                expect(client.options[:min_pool_size]).to eq(10)
+                expect(client.options[:max_pool_size]).to eq(0)
+              end
+            end
           end
 
           context 'when max_pool_size is not provided' do
@@ -1088,7 +1131,7 @@ describe Mongo::Client do
             context 'when the min_pool_size is greater than the default max_pool_size' do
 
               let(:uri) do
-                'mongodb://127.0.0.1:27017/?minPoolSize=10'
+                'mongodb://127.0.0.1:27017/?minPoolSize=30'
               end
 
               it 'raises an Exception' do
