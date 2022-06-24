@@ -16,15 +16,19 @@
 # limitations under the License.
 
 module Crypt
+  LOCAL_MASTER_KEY_B64 = 'Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3' +
+  'YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk'.freeze
+
+  LOCAL_MASTER_KEY = Base64.decode64(LOCAL_MASTER_KEY_B64)
+
   # For all FLE-related tests
   shared_context 'define shared FLE helpers' do
     # 96-byte binary string, base64-encoded local master key
     let(:local_master_key_b64) do
-      "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3" +
-        "YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk"
+      Crypt::LOCAL_MASTER_KEY_B64
     end
 
-    let(:local_master_key) { Base64.decode64(local_master_key_b64) }
+    let(:local_master_key) { Crypt::LOCAL_MASTER_KEY }
 
     # Data key id as a binary string
     let(:key_id) { data_key['_id'] }

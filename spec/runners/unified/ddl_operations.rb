@@ -36,6 +36,9 @@ module Unified
         if change_stream_pre_and_post_images = args.use('changeStreamPreAndPostImages')
           collection_opts[:change_stream_pre_and_post_images] = change_stream_pre_and_post_images
         end
+        if view_on = args.use('viewOn')
+          collection_opts[:view_on] = view_on
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
@@ -66,10 +69,16 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         to = args.use!('to')
-        collection.client.use(:admin).command({
+        cmd = {
           renameCollection: "#{collection.database.name}.#{collection.name}",
           to: "#{collection.database.name}.#{to}"
-        })
+        }
+
+        if args.key?("dropTarget")
+          cmd[:dropTarget] = args.use("dropTarget")
+        end
+
+        collection.client.use(:admin).command(**cmd)
       end
     end
 
@@ -121,6 +130,22 @@ module Unified
         )
       end
     end
+
+    def drop_index(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+
+        collection.indexes.drop_one(
+          args.use!('name'),
+          **opts,
+        )
+      end
+    end
+
 
     def assert_index_exists(op)
       consume_test_runner(op)

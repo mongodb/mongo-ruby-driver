@@ -506,10 +506,10 @@ axes:
         display_name: "6.0"
         variables:
           MONGODB_VERSION: "6.0"
-      - id: "5.2"
-        display_name: "5.2"
+      - id: "5.3"
+        display_name: "5.3"
         variables:
-          MONGODB_VERSION: "5.2"
+          MONGODB_VERSION: "5.3"
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -923,11 +923,11 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-5.2"
+  - matrix_name: "mongo-5.3"
     matrix_spec:
       auth-and-ssl: noauth-and-nossl
       ruby: ["ruby-3.1"]
-      mongodb-version: ['5.2']
+      mongodb-version: ['5.3']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"

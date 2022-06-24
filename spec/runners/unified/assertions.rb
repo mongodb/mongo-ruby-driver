@@ -76,6 +76,32 @@ module Unified
             end
           end
 
+          %w(bulkWriteResult).each do |k|
+            expected_v = expected.use(k)
+            next unless expected_v
+            actual_v = case actual
+            when Mongo::Crypt::RewrapManyDataKeyResult
+              actual.send(Utils.underscore(k))
+            else
+              raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+            end
+            if expected_v
+              if expected_v.empty?
+                if actual_v && !actual_v.empty?
+                  raise Error::ResultMismatch, "Actual not empty"
+                end
+              else
+                %w(deleted inserted matched modified upserted).each do |k|
+                  if count = expected_v.use("#{k}Count")
+                    if Hash === count || count > 0
+                      actual_count = actual_v.send("#{k}_count")
+                      assert_value_matches(actual_count, count, "#{k} count")
+                    end
+                  end
+                end
+              end
+            end
+          end
           assert_matches(actual, expected, 'result')
           expected.clear
         end
@@ -192,7 +218,7 @@ module Unified
 
     def assert_matches(actual, expected, msg)
       if actual.nil?
-        if expected&.keys == ["$$unsetOrMatches"]
+        if expected.is_a?(Hash) && expected.keys == ["$$unsetOrMatches"]
           return
         elsif !expected.nil?
           raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
@@ -219,7 +245,7 @@ module Unified
           if expected.empty?
             # This needs to be a match assertion. Check type only
             # and allow BulkWriteResult and generic operation result.
-            unless Hash === actual || Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual
+            unless Hash === actual || Mongo::BulkWrite::Result === actual || Mongo::Operation::Result === actual || Mongo::Crypt::RewrapManyDataKeyResult === actual
               raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
             end
           else
@@ -269,6 +295,10 @@ module Unified
         Float === object
       when 'string'
         String === object
+      when 'binData'
+        BSON::Binary === object
+      when 'array'
+        Array === object
       else
         raise NotImplementedError, "Unhandled type #{type}"
       end

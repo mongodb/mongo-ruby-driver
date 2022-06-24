@@ -96,7 +96,7 @@ module Mongo
         elsif @data.is_a?(Array)
           collection = client[spec.collection_name, write_concern: {w: :majority}]
           collection.delete_many
-          collection.insert_many(@data)
+          collection.insert_many(@data) unless @data.empty?
         elsif @data.is_a?(Hash)
           converter = DataConverter.new
           @data.each do |collection_name, data|

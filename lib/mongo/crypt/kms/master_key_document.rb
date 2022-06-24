@@ -41,7 +41,7 @@ module Mongo
           if options.nil?
             raise ArgumentError.new('Key document options must not be nil')
           end
-          master_key = options[:master_key]
+          master_key = options.fetch(:master_key, {})
           @key_document = case kms_provider.to_s
             when 'aws' then KMS::AWS::MasterKeyDocument.new(master_key)
             when 'azure' then KMS::Azure::MasterKeyDocument.new(master_key)

@@ -30,11 +30,17 @@ module Mongo
       #   Mongo::Error::MissingFileChunk.new(expected_n, chunk)
       #
       # @param [ Integer ] expected_n The expected index value.
-      # @param [ Grid::File::Chunk ] chunk The chunk read from GridFS.
+      # @param [ Grid::File::Chunk | Integer ] chunk The chunk read from GridFS.
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize(expected_n, chunk)
-        super("Unexpected chunk in sequence. Expected next chunk to have index #{expected_n} but it has index #{chunk.n}")
+        if chunk.is_a?(Integer)
+          super("Missing chunk(s). Expected #{expected_n} chunks but got #{chunk}.")
+        else
+          super("Unexpected chunk in sequence. Expected next chunk to have index #{expected_n} but it has index #{chunk.n}")
+        end
       end
     end
   end

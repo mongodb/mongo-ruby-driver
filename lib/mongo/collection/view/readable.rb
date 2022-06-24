@@ -305,6 +305,8 @@ module Mongo
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
+        # @option options [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
@@ -315,7 +317,8 @@ module Mongo
           end
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
-                  :query => filter }
+                  :query => filter,
+                  :comment => opts[:comment] }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           if read_concern
             cmd[:readConcern] = Options::Mapper.transform_values_to_strings(

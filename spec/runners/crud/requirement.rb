@@ -4,7 +4,7 @@
 module Mongo
   module CRUD
     class Requirement
-      YAML_KEYS = %w(auth minServerVersion maxServerVersion topology topologies serverParameters serverless).freeze
+      YAML_KEYS = %w(auth minServerVersion maxServerVersion topology topologies serverParameters serverless csfle).freeze
 
       def initialize(spec)
         spec = spec.dup
@@ -49,6 +49,7 @@ module Mongo
           nil
         end
         @auth = spec['auth']
+        @csfle = !!spec['csfle'] if spec['csfle']
       end
 
       attr_reader :min_server_version
@@ -111,6 +112,9 @@ module Mongo
           ok &&= cc.auth_enabled?
         elsif @auth == false
           ok &&= !cc.auth_enabled?
+        end
+        if @csfle
+          ok &&= !!(ENV['LIBMONGOCRYPT_PATH'] || ENV['FLE'])
         end
         ok
       end

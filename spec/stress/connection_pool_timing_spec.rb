@@ -169,7 +169,7 @@ describe 'Connection pool timing test' do
     # On JRuby, sometimes the following error is produced indicating
     # possible data corruption or an interpreter bug:
     # RSpec::Expectations::ExpectationNotMetError: expected no Exception, got #<Mongo::Error::OperationFailure: Invalid ns [ruby-driver.] (73) (on localhost:27018, modern retry, attempt 1) (on localhost:27018, modern retry, attempt 1)>
-    retry_test (BSON::Environment.jruby? ? 3 : 1)
+    retry_test tries: (BSON::Environment.jruby? ? 3 : 1)
     it 'does not error' do
       threads
       start = Time.now

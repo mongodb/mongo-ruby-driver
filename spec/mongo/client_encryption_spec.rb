@@ -148,16 +148,6 @@ describe Mongo::ClientEncryption do
         end
       end
 
-      context 'with empty options' do
-        let(:options) { {} }
-
-        it 'raises an exception' do
-          expect do
-            data_key_id
-          end.to raise_error(ArgumentError, /Key document options must contain a key named :master_key with a Hash value/)
-        end
-      end
-
       context 'with nil master key' do
         let(:options) { { master_key: nil } }
 

@@ -43,7 +43,7 @@ module Mongo
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
-    def initialize(key_vault_client, options={})
+    def initialize(key_vault_client, options = {})
       @encrypter = Crypt::ExplicitEncrypter.new(
         key_vault_client,
         options[:key_vault_namespace],
@@ -71,14 +71,21 @@ module Mongo
     #     will not be properly parsed.
     # @option options [ Array<String> ] :key_alt_names An optional array of
     #   strings specifying alternate names for the new data key.
+    # @option options [ BSON::Binary | nil ] :key_material Optional
+    #   96 bytes to use as custom key material for the data key being created.
+    #   If :key_material option is given, the custom key material is used
+    #   for encrypting and decrypting data.
     #
     # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
     #   BSON::Binary object with type :uuid.
     def create_data_key(kms_provider, options={})
       key_document = Crypt::KMS::MasterKeyDocument.new(kms_provider, options)
+
       key_alt_names = options[:key_alt_names]
-      @encrypter.create_and_insert_data_key(key_document, key_alt_names)
+      key_material = options[:key_material]
+      @encrypter.create_and_insert_data_key(key_document, key_alt_names, key_material)
     end
+    alias :create_key :create_data_key
 
     # Encrypts a value using the specified encryption key and algorithm.
     #
@@ -123,5 +130,81 @@ module Mongo
     def decrypt(value)
       @encrypter.decrypt(value)
     end
+
+    # Adds a key_alt_name for the key in the key vault collection with the given id.
+    #
+    # @param [ BSON::Binary ] id Id of the key to add new key alt name.
+    # @param [ String ] key_alt_name New key alt name to add.
+    #
+    # @return [ BSON::Document | nil ] Document describing the identified key
+    #   before adding the key alt name, or nil if no such key.
+    def add_key_alt_name(id, key_alt_name)
+      @encrypter.add_key_alt_name(id, key_alt_name)
+    end
+
+    # Removes the key with the given id from the key vault collection.
+    #
+    # @param [ BSON::Binary ] id Id of the key to delete.
+    #
+    # @return [ Operation::Result ] The response from the database for the delete_one
+    #   operation that deletes the key.
+    def delete_key(id)
+      @encrypter.delete_key(id)
+    end
+
+    # Finds a single key with the given id.
+    #
+    # @param [ BSON::Binary ] id Id of the key to get.
+    #
+    # @return [ BSON::Document | nil ] The found key document or nil
+    #   if not found.
+    def get_key(id)
+      @encrypter.get_key(id)
+    end
+
+    # Returns a key in the key vault collection with the given key_alt_name.
+    #
+    # @param [ String ] key_alt_name Key alt name to find a key.
+    #
+    # @return [ BSON::Document | nil ] The found key document or nil
+    #   if not found.
+    def get_key_by_alt_name(key_alt_name)
+      @encrypter.get_key_by_alt_name(key_alt_name)
+    end
+
+    # Returns all keys in the key vault collection.
+    #
+    # @return [ Collection::View ] Keys in the key vault collection.
+    def get_keys
+      @encrypter.get_keys
+    end
+    alias :keys :get_keys
+
+    # Removes a key_alt_name from a key in the key vault collection with the given id.
+    #
+    # @param [ BSON::Binary ] id Id of the key to remove key alt name.
+    # @param [ String ] key_alt_name Key alt name to remove.
+    #
+    # @return [ BSON::Document | nil ] Document describing the identified key
+    #   before removing the key alt name, or nil if no such key.
+    def remove_key_alt_name(id, key_alt_name)
+      @encrypter.remove_key_alt_name(id, key_alt_name)
+    end
+
+    # Decrypts multiple data keys and (re-)encrypts them with a new master_key,
+    #   or with their current master_key if a new one is not given.
+    #
+    # @param [ Hash ] filter Filter used to find keys to be updated.
+    # @param [ Hash ] options
+    #
+    # @option options [ String ] :provider KMS provider to encrypt keys.
+    # @option options [ Hash | nil ] :master_key Document describing master key
+    #   to encrypt keys.
+    #
+    # @return [ Crypt::RewrapManyDataKeyResult ] Result of the operation.
+    def rewrap_many_data_key(filter, opts = {})
+      @encrypter.rewrap_many_data_key(filter, opts)
+    end
+
   end
 end
