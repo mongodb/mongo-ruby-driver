@@ -29,6 +29,8 @@ module Mongo
     autoload(:AutoEncryptionContext, 'mongo/crypt/auto_encryption_context')
     autoload(:ExplicitDecryptionContext, 'mongo/crypt/explicit_decryption_context')
     autoload(:AutoDecryptionContext, 'mongo/crypt/auto_decryption_context')
+    autoload(:RewrapManyDataKeyContext, 'mongo/crypt/rewrap_many_data_key_context')
+    autoload(:RewrapManyDataKeyResult, 'mongo/crypt/rewrap_many_data_key_result')
     autoload(:EncryptionIO, 'mongo/crypt/encryption_io')
     autoload(:ExplicitEncrypter, 'mongo/crypt/explicit_encrypter')
     autoload(:AutoEncrypter, 'mongo/crypt/auto_encrypter')

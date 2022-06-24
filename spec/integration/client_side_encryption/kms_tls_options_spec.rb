@@ -292,14 +292,25 @@ describe 'Client-Side Encryption' do
 
       context 'with valid certificate' do
         it 'TLS handshake passes' do
-          expect do
-            client_encryption_with_tls.create_data_key(
-              kms_provider,
-              {
-                master_key: master_key
-             }
-            )
-          end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
+          if should_raise_with_tls
+            expect do
+              client_encryption_with_tls.create_data_key(
+                kms_provider,
+                {
+                  master_key: master_key
+              }
+              )
+            end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
+          else
+            expect do
+              client_encryption_with_tls.create_data_key(
+                kms_provider,
+                {
+                  master_key: master_key
+              }
+              )
+            end.not_to raise_error
+          end
         end
       end
 
@@ -358,6 +369,10 @@ describe 'Client-Side Encryption' do
         }
       end
 
+      let(:should_raise_with_tls) do
+        true
+      end
+
       it_behaves_like 'it respect KMS TLS options'
     end
 
@@ -375,6 +390,10 @@ describe 'Client-Side Encryption' do
         }
       end
 
+      let(:should_raise_with_tls) do
+        true
+      end
+
       it_behaves_like 'it respect KMS TLS options'
     end
 
@@ -385,6 +404,10 @@ describe 'Client-Side Encryption' do
 
       let(:master_key) do
         {}
+      end
+
+      let(:should_raise_with_tls) do
+        false
       end
 
       it_behaves_like 'it respect KMS TLS options'
