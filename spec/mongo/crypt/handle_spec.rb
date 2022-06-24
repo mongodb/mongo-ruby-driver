@@ -12,8 +12,22 @@ describe Mongo::Crypt::Handle do
   describe '#initialize' do
     let(:credentials) { Mongo::Crypt::KMS::Credentials.new(kms_providers) }
     let(:kms_tls_options) { {} }
-    let(:handle) { described_class.new(credentials, kms_tls_options, schema_map: schema_map) }
-    let(:schema_map) { nil }
+    let(:handle) do
+      described_class.new(
+        credentials,
+        kms_tls_options,
+        schema_map: schema_map,
+        schema_map_file: schema_map_file,
+      )
+    end
+
+    let(:schema_map) do
+      nil
+    end
+
+    let(:schema_map_file) do
+      nil
+    end
 
     shared_examples 'a functioning Mongo::Crypt::Handle' do
       context 'with valid schema map' do
@@ -23,12 +37,24 @@ describe Mongo::Crypt::Handle do
       end
 
       context 'with valid schema map in a file' do
-        let(:schema_map) do
+        let(:schema_map_file) do
           schema_map_file_path
         end
 
-        it 'does not raise an exception' do
-          expect { handle }.not_to raise_error
+        context 'without schema_map set' do
+          let(:schema_map) do
+            nil
+          end
+
+          it 'does not raise an exception' do
+            expect { handle }.not_to raise_error
+          end
+        end
+
+        context 'with schema_map set' do
+          it 'raises an exception' do
+            expect { handle }.git adto raise_error(ArgumentError, /Cannot set both schema_map and schema_map_file options/)
+          end
         end
       end
 
@@ -36,7 +62,7 @@ describe Mongo::Crypt::Handle do
         let(:schema_map) { '' }
 
         it 'raises an exception' do
-          expect { handle }.to raise_error(ArgumentError, /an invalid path to a file contains schema_map/)
+          expect { handle }.to raise_error(ArgumentError, /invalid schema_map; schema_map must a Hash or nil/)
         end
       end
 
