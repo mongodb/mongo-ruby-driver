@@ -32,7 +32,7 @@ else
   begin
     require 'byebug'
   rescue LoadError
-    require 'ruby-debug'
+    require 'ruby-debug' rescue LoadError
   end
 end
 
@@ -88,7 +88,7 @@ require 'support/background_thread_registry'
 require 'mrss/session_registry'
 require 'support/local_resource_registry'
 
-if SpecConfig.instance.mri?
+if SpecConfig.instance.mri? && !SpecConfig.instance.windows?
   require 'timeout_interrupt'
 else
   require 'timeout'

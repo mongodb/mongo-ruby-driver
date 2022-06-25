@@ -126,6 +126,10 @@ class SpecConfig
     !!(RbConfig::CONFIG['host_os'].downcase =~ /\bdarwin/)
   end
 
+  def windows?
+    ENV['OS'] == 'Windows_NT' && !RUBY_PLATFORM.match?(/cygwin/)
+  end
+
   def platform
     RUBY_PLATFORM
   end
