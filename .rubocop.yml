@@ -1,0 +1,29 @@
+AllCops:
+  TargetRubyVersion: 2.5
+  NewCops: disable
+  Include:
+    - 'lib/**/*'
+
+Bundler:
+  Enabled: false
+
+Gemspec:
+  Enabled: false
+
+Layout:
+  Enabled: false
+
+Lint:
+  Enabled: false
+
+Metrics:
+  Enabled: false
+
+Naming:
+  Enabled: false
+
+Security:
+  Enabled: true
+
+Style:
+  Enabled: false

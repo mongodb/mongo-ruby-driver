@@ -29,6 +29,9 @@ def standard_dependencies
     gem 'yajl-ruby', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
 
+    # for static analysis
+    gem 'rubocop', '~> 1.27.0'
+
     platform :mri do
       # Debugger for VSCode.
       if !ENV['CI'] && !ENV['DOCKER'] && RUBY_VERSION < '3.0'

@@ -440,6 +440,16 @@ functions:
           ${PREPARE_SHELL}
           SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
 
+  "run static analysis":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake rubocop" .evergreen/run-tests.sh
+
 pre:
   - func: "fetch source"
   - func: "fetch egos"
@@ -483,6 +493,10 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
+  - name: "rubocop"
+    commands:
+      - func: "run static analysis"
+
 axes:
 
   - id: preload
@@ -1637,3 +1651,13 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
+
+  - matrix_name: "rubocop"
+    matrix_spec:
+      ruby: ["ruby-3.0"]
+      mongodb-version: '5.0'
+      topology: standalone
+      os: ubuntu1604
+    display_name: "Rubocop"
+    tasks:
+      - name: "rubocop"
