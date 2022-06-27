@@ -44,13 +44,15 @@ describe 'Decryption events' do
   let(:encrypted_client) do
     ClientRegistry.instance.new_local_client(
       SpecConfig.instance.addresses,
-      auto_encryption_options: {
-        key_vault_namespace: "#{key_vault_db}.#{key_vault_coll}",
-        kms_providers: local_kms_providers
-      },
-      database: SpecConfig.instance.test_db,
-      retry_reads: false,
-      max_read_retries: 0
+      SpecConfig.instance.test_options.merge(
+        auto_encryption_options: {
+          key_vault_namespace: "#{key_vault_db}.#{key_vault_coll}",
+          kms_providers: local_kms_providers
+        },
+        database: SpecConfig.instance.test_db,
+        retry_reads: false,
+        max_read_retries: 0
+      )
     )
   end
 
