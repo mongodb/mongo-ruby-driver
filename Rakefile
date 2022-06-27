@@ -284,6 +284,3 @@ namespace :benchmark do
     end
   end
 end
-
-require 'rubocop/rake_task'
-RuboCop::RakeTask.new
