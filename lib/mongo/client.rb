@@ -1074,6 +1074,7 @@ module Mongo
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
       view_options = { await_data: true }.merge(options) if options[:max_await_time_ms]
+      view_options ||= options
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"], {}, view_options),

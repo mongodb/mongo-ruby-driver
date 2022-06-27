@@ -471,6 +471,7 @@ module Mongo
     # @since 2.6.0
     def watch(pipeline = [], options = {})
       view_options = { await_data: true }.merge(options) if options[:max_await_time_ms]
+      view_options ||= options
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),
