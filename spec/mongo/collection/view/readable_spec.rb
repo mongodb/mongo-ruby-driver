@@ -603,6 +603,68 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
+
+    context "when using methods to set count options" do
+      shared_examples "a count option" do
+
+        it "sets the option correctly" do
+          expect_any_instance_of(Mongo::Operation::Count).to receive(:execute).once.and_wrap_original do |m, *args|
+            byebug
+            opts = args[1]
+            expect(opts[opt]).to eq(param)
+            m.call(*args)
+          end
+          view.send(opt, param).count(options)
+        end
+      end
+
+      context "when a :hint is given" do
+        let(:opt) { :hint }
+        let(:param) { "_id_" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :limit is given" do
+        let(:opt) { :limit }
+        let(:param) { 1 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :skip is given" do
+        let(:opt) { :skip }
+        let(:param) { 1 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when also including in options" do
+
+        it "gives option higher precedence" do
+          expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+            pipeline, opts = args
+            expect(pipeline[1][:'$limit']).to eq(2)
+            m.call(*args)
+          end
+          view.limit(1).count_documents({ limit: 2 })
+        end
+      end
+    end
   end
 
   describe "#estimated_document_count" do
@@ -673,10 +735,6 @@ describe Mongo::Collection::View::Readable do
 
   describe '#count_documents' do
 
-    let(:result) do
-      new_view.count_documents(options)
-    end
-
     context 'when session is given' do
       min_server_fcv '3.6'
 
@@ -701,6 +759,77 @@ describe Mongo::Collection::View::Readable do
 
           event = subscriber.single_command_started_event('aggregate')
           event.command['lsid'].should == session_id
+        end
+      end
+    end
+
+    context "when using methods to set count options" do
+      shared_examples "a count option" do
+
+        it "sets the option correctly" do
+          expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+            opts = args[1]
+            expect(opts[opt]).to eq(param)
+            m.call(*args)
+          end
+          view.send(opt, param).count_documents(options)
+        end
+      end
+
+      context "when a :hint is given" do
+        let(:opt) { :hint }
+        let(:param) { "_id_" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :limit is given" do
+
+        it "gives option higher precedence" do
+          expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+            pipeline, opts = args
+            expect(pipeline[1][:'$limit']).to eq(1)
+            m.call(*args)
+          end
+          view.limit(1).count_documents(options)
+        end
+      end
+
+      context "when a :skip is given" do
+
+        it "gives option higher precedence" do
+          expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+            pipeline, opts = args
+            expect(pipeline[1][:'$skip']).to eq(1)
+            m.call(*args)
+          end
+          view.skip(1).count_documents(options)
+        end
+      end
+
+      context "when also including in options" do
+
+        it "gives option higher precedence" do
+          expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+            pipeline, opts = args
+            expect(pipeline[1][:'$limit']).to eq(2)
+            m.call(*args)
+          end
+          view.limit(1).count_documents({ limit: 2 })
         end
       end
     end

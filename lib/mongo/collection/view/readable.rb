@@ -24,6 +24,12 @@ module Mongo
       # @since 2.0.0
       module Readable
 
+        # The count options potentially included in the options hash, using the
+        # configure method.
+        #
+        # @api private
+        COUNT_OPTIONS = ["hint", "limit", "max_time_ms", "skip", "comment"]
+
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.
@@ -167,6 +173,7 @@ module Mongo
         #     * $near should be replaced with $geoWithin with $center
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
+          # opts = options.slice(*COUNT_OPTIONS).merge(opts)
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
@@ -219,12 +226,13 @@ module Mongo
         #
         # @since 2.6.0
         def count_documents(opts = {})
+          opts = options.slice(*COUNT_OPTIONS).merge(opts)
           pipeline = [:'$match' => filter]
           pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
           pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
-          opts = opts.select { |k, _| [:hint, :max_time_ms, :read, :collation, :session, :comment].include?(k) }
+          opts = opts.slice(:hint, :max_time_ms, :read, :collation, :session, :comment)
           opts[:collation] ||= collation
 
           first = aggregate(pipeline, opts).first
