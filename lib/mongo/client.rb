@@ -437,7 +437,8 @@ module Mongo
     #     are :aws, :azure, :gcp, :kmip, :local. There may be more than one
     #     kms provider specified.
     #   - :schema_map => Hash | nil, JSONSchema for one or more collections
-    #     specifying which fields should be encrypted.
+    #     specifying which fields should be encrypted. This option is
+    #     mutually exclusive with :schema_map_file.
     #     - Note: Schemas supplied in the schema_map only apply to configuring
     #       automatic encryption for client side encryption. Other validation
     #       rules in the JSON schema will not be enforced by the driver and will
@@ -448,6 +449,9 @@ module Mongo
     #       the client into sending unencrypted data that should be encrypted.
     #     - Note: If a collection is present on both the :encrypted_fields_map
     #       and :schema_map, an error will be raised.
+    #   - :schema_map_file => String | nil A path to a file contains the JSON schema
+    #   of the collection that stores auto encrypted documents. This option is
+    #   mutually exclusive with :schema_map.
     #   - :bypass_auto_encryption => Boolean, when true, disables auto encryption;
     #     defaults to false.
     #   - :extra_options => Hash | nil, options related to spawning mongocryptd
