@@ -109,7 +109,7 @@ module Mongo
         elsif options[:schema_map]
           unless options[:schema_map].is_a?(Hash)
             raise ArgumentError.new(
-              "#{@schema_map} is an invalid schema_map; schema_map must a Hash or nil."
+              "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil."
             )
           end
           @schema_map = options[:schema_map]

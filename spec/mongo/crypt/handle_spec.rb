@@ -62,7 +62,7 @@ describe Mongo::Crypt::Handle do
         let(:schema_map) { '' }
 
         it 'raises an exception' do
-          expect { handle }.to raise_error(ArgumentError, /invalid schema_map; schema_map must a Hash or nil/)
+          expect { handle }.to raise_error(ArgumentError, /invalid schema_map; schema_map must be a Hash or nil/)
         end
       end
 
