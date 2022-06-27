@@ -81,48 +81,6 @@ describe Mongo::Operation::Create::OpMsg do
         described_class.new(user_input).send(:selector, connection)
       end.not_to raise_error
     end
-
-    context 'with encryptedFields' do
-      let(:spec) do
-        {
-          :selector       => { :create => authorized_collection.name },
-          :db_name       => authorized_collection.database.name,
-          :write_concern => write_concern,
-          :session       => session,
-          :encrypted_fields => {
-            'fields' => [
-              {
-                'path' => "name",
-                'bsonType' => "string",
-                'queries' => {
-                  'queryType' => "equality",
-                  'contention' => 10
-                }
-              }
-            ]
-          }
-        }
-      end
-
-      it 'converts contention values to BSON::Int64' do
-        selector = op.send(:selector, connection)
-        expect(selector).to eq({
-          :create => authorized_collection.name,
-          :encryptedFields => {
-            'fields' => [
-              {
-                'path' => "name",
-                'bsonType' => "string",
-                'queries' => {
-                  'queryType' => "equality",
-                  'contention' => BSON::Int64.new(10)
-                }
-              }
-            ]
-          }
-        })
-      end
-    end
   end
 
   describe '#message' do

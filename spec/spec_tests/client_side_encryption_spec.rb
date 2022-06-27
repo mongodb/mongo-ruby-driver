@@ -10,5 +10,5 @@ describe 'Client-Side Encryption' do
   require_libmongocrypt
   require_enterprise
 
-  define_transactions_spec_tests(CLIENT_SIDE_ENCRYPTION_TESTS)
+  define_transactions_spec_tests(CLIENT_SIDE_ENCRYPTION_TESTS, expectations_bson_types: false)
 end
