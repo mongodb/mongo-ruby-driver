@@ -19,9 +19,9 @@ module Mongo
   module Transactions
 
     class Spec < Mongo::CRUD::Spec
-      def tests(bson_types: true)
+      def tests(expectations_bson_types: true)
         @tests.map do |test|
-          Mongo::Transactions::TransactionsTest.new(self, @data, test, bson_types: bson_types)
+          Mongo::Transactions::TransactionsTest.new(self, @data, test, expectations_bson_types: expectations_bson_types)
         end
       end
     end
