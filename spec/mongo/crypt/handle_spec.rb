@@ -53,7 +53,7 @@ describe Mongo::Crypt::Handle do
 
         context 'with schema_map set' do
           it 'raises an exception' do
-            expect { handle }.git adto raise_error(ArgumentError, /Cannot set both schema_map and schema_map_file options/)
+            expect { handle }.to raise_error(ArgumentError, /Cannot set both schema_map and schema_map_file options/)
           end
         end
       end
