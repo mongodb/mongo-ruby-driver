@@ -83,11 +83,21 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when min size exceeds default max size' do
       let (:options) do
-        { min_pool_size: 10 }
+        { min_pool_size: 50 }
       end
 
       it 'sets max size to equal provided min size' do
-        expect(pool.max_size).to eq(10)
+        expect(pool.max_size).to eq(50)
+      end
+    end
+
+    context 'when min size is provided and max size is zero (unlimited)' do
+      let (:options) do
+        { min_size: 10, max_size: 0 }
+      end
+
+      it 'sets max size to zero (unlimited)' do
+        expect(pool.max_size).to eq(0)
       end
     end
 
@@ -155,7 +165,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when no pool size option is provided' do
       it 'returns the default size' do
-        expect(pool.max_size).to eq(5)
+        expect(pool.max_size).to eq(20)
       end
     end
 
@@ -165,7 +175,7 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'returns max size' do
-        expect(pool.max_size).to eq(5)
+        expect(pool.max_size).to eq(20)
       end
     end
   end
@@ -458,6 +468,18 @@ describe Mongo::Server::ConnectionPool do
   describe '#check_out' do
     let!(:pool) do
       server.pool
+    end
+
+    context 'when max_size is zero (unlimited)' do
+      let(:options) do
+        { max_size: 0 }
+      end
+
+      it 'checks out a connection' do
+        expect do
+          pool.check_out
+        end.not_to raise_error
+      end
     end
 
     context 'when a connection is checked out on a different thread' do
