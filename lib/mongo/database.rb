@@ -471,8 +471,8 @@ module Mongo
     # @since 2.6.0
     def watch(pipeline = [], options = {})
       # TODO remove await_data: true when RUBY-3041 is done
-      view_options = { await_data: true }.merge(options) if options[:max_await_time_ms]
-      view_options ||= options
+      view_options = options.dup
+      view_options[:await_data] = true if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),

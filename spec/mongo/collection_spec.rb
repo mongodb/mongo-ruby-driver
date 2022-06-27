@@ -799,26 +799,27 @@ describe Mongo::Collection do
           end
         end
 
-        context 'when full_document is updateLookup' do
-          before do
-            Thread.new do
-              sleep 1
-              authorized_collection.insert_one(a: 2)
-              authorized_collection.insert_one(a: 3)
-            end
-          end
-
+        context 'when setting the max_await_time_ms' do
           let(:change_stream) do
-            authorized_collection.watch([], max_await_time_ms: 1500)
+            authorized_collection.watch([], max_await_time_ms: 3000)
           end
 
-          it 'returns the documents in the batch size specified' do
+          it 'sets the option correctly' do
             expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more_operation).once.and_wrap_original do |m, *args, &block|
               m.call(*args).tap do |op|
-                expect(op.max_time_ms).to eq(1500)
+                expect(op.max_time_ms).to eq(3000)
               end
             end
             enum.next
+          end
+
+          it "waits the appropriate amount of time" do
+            enum.next
+            start_time = Time.now
+            enum.try_next
+            end_time = Time.now
+
+            expect(end_time-start_time).to be >= 3
           end
         end
       end
