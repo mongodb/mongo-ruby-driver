@@ -71,7 +71,7 @@ module Mongo
     #     will not be properly parsed.
     # @option options [ Array<String> ] :key_alt_names An optional array of
     #   strings specifying alternate names for the new data key.
-    # @option options [ BSON::Binary | nil ] :key_material Optional
+    # @option options [ String | nil ] :key_material Optional
     #   96 bytes to use as custom key material for the data key being created.
     #   If :key_material option is given, the custom key material is used
     #   for encrypting and decrypting data.
