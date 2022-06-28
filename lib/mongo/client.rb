@@ -1073,7 +1073,6 @@ module Mongo
     def watch(pipeline = [], options = {})
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
-      # TODO remove await_data: true when RUBY-3041 is done
       view_options = options.dup
       view_options[:await_data] = true if options[:max_await_time_ms]
 

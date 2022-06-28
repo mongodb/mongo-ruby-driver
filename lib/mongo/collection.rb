@@ -497,7 +497,6 @@ module Mongo
     #
     # @since 2.5.0
     def watch(pipeline = [], options = {})
-      # TODO remove await_data: true when RUBY-3041 is done
       view_options = options.dup
       view_options[:await_data] = true if options[:max_await_time_ms]
       View::ChangeStream.new(View.new(self, {}, view_options), pipeline, nil, options)
