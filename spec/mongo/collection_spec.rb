@@ -798,29 +798,34 @@ describe Mongo::Collection do
             expect(change_doc['updateDescription']['updatedFields']['a']).to eq(2)
           end
         end
+      end
+    end
 
-        context 'when setting the max_await_time_ms' do
-          let(:change_stream) do
-            authorized_collection.watch([], max_await_time_ms: 3000)
-          end
+    context 'when the change stream is empty' do
 
-          it 'sets the option correctly' do
-            expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more_operation).once.and_wrap_original do |m, *args, &block|
-              m.call(*args).tap do |op|
-                expect(op.max_time_ms).to eq(3000)
-              end
+      context 'when setting the max_await_time_ms' do
+
+        let(:change_stream) do
+          authorized_collection.watch([], max_await_time_ms: 3000)
+        end
+
+        let(:enum) { change_stream.to_enum }
+
+        it 'sets the option correctly' do
+          expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more_operation).once.and_wrap_original do |m, *args, &block|
+            m.call(*args).tap do |op|
+              expect(op.max_time_ms).to eq(3000)
             end
-            enum.next
           end
+          enum.next
+        end
 
-          it "waits the appropriate amount of time" do
-            enum.next
-            start_time = Time.now
-            enum.try_next
-            end_time = Time.now
+        it "waits the appropriate amount of time" do
+          start_time = Time.now
+          enum.try_next
+          end_time = Time.now
 
-            expect(end_time-start_time).to be >= 3
-          end
+          expect(end_time-start_time).to be >= 3
         end
       end
     end
