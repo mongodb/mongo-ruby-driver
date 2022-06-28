@@ -314,19 +314,21 @@ describe 'Client-Side Encryption' do
         end
 
         it 'raises KmsError directly without wrapping CryptError' do
-          begin
-            client_encryption_with_tls.create_data_key(
-              kms_provider,
-              {
-                master_key: master_key
-             }
-            )
-          rescue Mongo::Error::KmsError => exc
-            exc.message.should =~ /Error when connecting to KMS provider/
-            exc.message.should =~ /libmongocrypt error code/
-            exc.message.should_not =~ /CryptError/
-          else
-            fail 'Expected to raise KmsError'
+          if should_raise_with_tls
+            begin
+              client_encryption_with_tls.create_data_key(
+                kms_provider,
+                {
+                  master_key: master_key
+              }
+              )
+            rescue Mongo::Error::KmsError => exc
+              exc.message.should =~ /Error when connecting to KMS provider/
+              exc.message.should =~ /libmongocrypt error code/
+              exc.message.should_not =~ /CryptError/
+            else
+              fail 'Expected to raise KmsError'
+            end
           end
         end
       end

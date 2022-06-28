@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 require 'spec_helper'
+require 'tempfile'
 
 describe Mongo::Crypt::AutoEncrypter do
   require_libmongocrypt
@@ -107,6 +108,59 @@ describe Mongo::Crypt::AutoEncrypter do
         kms_tls_options: kms_tls_options,
         key_vault_namespace: key_vault_namespace,
         schema_map: { "#{db_name}.#{collection_name}": schema_map },
+      }
+    end
+
+    context 'with AWS KMS providers' do
+      include_context 'with AWS kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
+    context 'with Azure KMS providers' do
+      include_context 'with Azure kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
+    context 'with GCP KMS providers' do
+      include_context 'with GCP kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
+    context 'with KMIP KMS providers' do
+      include_context 'with KMIP kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+
+    context 'with local KMS providers' do
+      include_context 'with local kms_providers'
+      it_behaves_like 'a functioning auto encrypter'
+    end
+  end
+
+  context 'with schema map file in auto encryption commands' do
+    include_context 'without jsonSchema validator'
+
+    let(:schema_map_file) do
+      file = Tempfile.new('schema_map.json')
+      file.write(JSON.dump(
+        {
+          "#{db_name}.#{collection_name}" => schema_map
+        }
+      ))
+      file.flush
+      file
+    end
+
+    after do
+      schema_map_file.close
+    end
+
+    let(:auto_encryption_options) do
+      {
+        kms_providers: kms_providers,
+        kms_tls_options: kms_tls_options,
+        key_vault_namespace: key_vault_namespace,
+        schema_map_path: schema_map_file.path
       }
     end
 

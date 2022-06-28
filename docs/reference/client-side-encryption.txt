@@ -919,6 +919,22 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
   :drivers:`Specify Encrypted Fields Using JSON Schema</security/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
   :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
 
+``:schema_map_path``
+~~~~~~~~~~~~~~~~~~~~
+
+It is also possible to load schema map from a file. Prepare the schema map as
+described above, save it to file, and then pass path to the file using
+``:schema_map_path`` option.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      schema_map_path: '/path/to/your/file.json',
+      # ... (Fill in other options here)
+    }
+  )
+
 ``:bypass_auto_encryption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
