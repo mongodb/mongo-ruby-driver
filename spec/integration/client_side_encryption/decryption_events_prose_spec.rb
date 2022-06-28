@@ -8,6 +8,7 @@ describe 'Decryption events' do
   min_server_fcv '4.2'
   require_libmongocrypt
   include_context 'define shared FLE helpers'
+  require_topology :replica_set
 
 
   let(:setup_client) do
