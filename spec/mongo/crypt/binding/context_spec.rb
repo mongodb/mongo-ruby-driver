@@ -302,7 +302,7 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'with equality query type' do
         let(:query_type) do
-          :equality
+          "Equality"
         end
 
         it 'returns true' do
