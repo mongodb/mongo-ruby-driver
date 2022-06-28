@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe 'Decryption events' do
+  require_enterprise
+  min_server_fcv '4.2'
   require_libmongocrypt
   include_context 'define shared FLE helpers'
 
@@ -57,11 +59,12 @@ describe 'Decryption events' do
       SpecConfig.instance.test_options.merge(
         auto_encryption_options: {
           key_vault_namespace: "#{key_vault_db}.#{key_vault_coll}",
-          kms_providers: local_kms_providers
+          kms_providers: local_kms_providers,
+          extra_options: extra_options,
         },
         database: SpecConfig.instance.test_db,
         retry_reads: false,
-        max_read_retries: 0
+        max_read_retries: 0,
       )
     )
   end
