@@ -605,13 +605,14 @@ describe Mongo::Collection::View::Readable do
     end
 
     context "when using methods to set count options" do
+      let(:obj_path) { [:selector, opt] }
+
       shared_examples "a count option" do
 
         it "sets the option correctly" do
-          expect_any_instance_of(Mongo::Operation::Count).to receive(:execute).once.and_wrap_original do |m, *args|
-            byebug
-            opts = args[1]
-            expect(opts[opt]).to eq(param)
+          expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(*args.first.keys - [:session])
+            expect(opts.dig(*obj_path)).to eq(param)
             m.call(*args)
           end
           view.send(opt, param).count(options)
@@ -628,6 +629,7 @@ describe Mongo::Collection::View::Readable do
       context "when a :max_time_ms is given" do
         let(:opt) { :max_time_ms }
         let(:param) { 5000 }
+        let(:obj_path) { [:selector, :maxTimeMS] }
 
         it_behaves_like "a count option"
       end
@@ -635,6 +637,7 @@ describe Mongo::Collection::View::Readable do
       context "when a :comment is given" do
         let(:opt) { :comment }
         let(:param) { "comment" }
+        let(:obj_path) { opt }
 
         it_behaves_like "a count option"
       end
@@ -656,12 +659,12 @@ describe Mongo::Collection::View::Readable do
       context "when also including in options" do
 
         it "gives option higher precedence" do
-          expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-            pipeline, opts = args
-            expect(pipeline[1][:'$limit']).to eq(2)
+          expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(:selector)
+            expect(opts.dig(:selector, :limit)).to eq(2)
             m.call(*args)
           end
-          view.limit(1).count_documents({ limit: 2 })
+          view.limit(1).count({ limit: 2 })
         end
       end
     end

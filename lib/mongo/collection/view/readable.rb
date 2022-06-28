@@ -173,7 +173,7 @@ module Mongo
         #     * $near should be replaced with $geoWithin with $center
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
-          # opts = options.slice(*COUNT_OPTIONS).merge(opts)
+          opts = options.slice(*COUNT_OPTIONS).merge(opts)
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
