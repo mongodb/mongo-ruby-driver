@@ -7,13 +7,23 @@ describe 'Decryption events' do
   require_libmongocrypt
   include_context 'define shared FLE helpers'
 
+
+  let(:setup_client) do
+    ClientRegistry.instance.new_local_client(
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.test_options.merge(
+        database: SpecConfig.instance.test_db,
+      )
+    )
+  end
+
   let(:collection_name) do
     'decryption_event'
   end
 
   let(:client_encryption) do
     Mongo::ClientEncryption.new(
-      authorized_client,
+      setup_client,
       key_vault_namespace: "#{key_vault_db}.#{key_vault_coll}",
       kms_providers: local_kms_providers
     )
@@ -63,14 +73,14 @@ describe 'Decryption events' do
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   before(:each) do
-    authorized_client[collection_name].drop
-    authorized_client[collection_name].create
+    setup_client[collection_name].drop
+    setup_client[collection_name].create
 
     encrypted_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
   end
 
   it 'tests command error' do
-    authorized_client.use(:admin).command(
+    setup_client.use(:admin).command(
       {
         "configureFailPoint" => "failCommand",
         "mode" => {
@@ -92,7 +102,7 @@ describe 'Decryption events' do
   end
 
   it 'tests network error' do
-    authorized_client.use(:admin).command(
+    setup_client.use(:admin).command(
       {
         "configureFailPoint" => "failCommand",
         "mode" => {
