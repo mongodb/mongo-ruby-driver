@@ -34,7 +34,7 @@ module Mongo
       #   key document that contains master encryption key parameters.
       # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
-      # @param [ BSON::Binary | nil ] :key_material Optional
+      # @param [ String | nil ] :key_material Optional
       #   96 bytes to use as custom key material for the data key being created.
       #   If :key_material option is given, the custom key material is used
       #   for encrypting and decrypting data.
@@ -42,7 +42,7 @@ module Mongo
         super(mongocrypt, io)
         Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)
         set_key_alt_names(key_alt_names) if key_alt_names
-        Binding.ctx_setopt_key_material(self, key_material) if key_material
+        Binding.ctx_setopt_key_material(self, BSON::Binary.new(key_material)) if key_material
         initialize_ctx
       end
 

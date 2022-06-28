@@ -8,6 +8,7 @@ module Unified
       use_arguments(op) do |args|
         opts = Utils.shallow_snakeize_hash(args.use('opts')) || {}
         opts[:master_key] = Utils.shallow_snakeize_hash(opts[:master_key]) if opts[:master_key]
+        opts[:key_material] = opts[:key_material].data if opts[:key_material]
         client_encryption.create_key(
           args.use!('kmsProvider'),
           opts,
