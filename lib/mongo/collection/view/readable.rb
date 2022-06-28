@@ -262,11 +262,12 @@ module Mongo
           end
 
           %i[limit skip].each do |opt|
-            if @options.key?(opt)
+            if options.key?(opt) || opts.key?(opt)
               raise ArgumentError, "Cannot call estimated_document_count when querying with #{opt}"
             end
           end
 
+          opts = options.slice(:max_time_ms, :comment).merge(opts)
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -323,6 +324,7 @@ module Mongo
           if field_name.nil?
             raise ArgumentError, 'Field name for distinct operation must be not nil'
           end
+          opts = options.slice(:max_time_ms, :comment).merge(opts)
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
                   :query => filter, }

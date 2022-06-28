@@ -658,7 +658,7 @@ describe Mongo::Collection::View::Readable do
 
       context "when also including in options" do
 
-        it "gives option higher precedence" do
+        it "gives options higher precedence" do
           expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
             opts = args.first.slice(:selector)
             expect(opts.dig(:selector, :limit)).to eq(2)
@@ -688,6 +688,22 @@ describe Mongo::Collection::View::Readable do
       it 'raises an error' do
         expect {
           view.skip(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+      end
+    end
+
+    context 'when limit passed as an option' do
+      it 'raises an error' do
+        expect {
+          view.estimated_document_count(options.merge(limit: 5))
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+      end
+    end
+
+    context 'when skip passed as an option' do
+      it 'raises an error' do
+        expect {
+          view.estimated_document_count(options.merge(skip: 5))
         }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
       end
     end
@@ -732,6 +748,50 @@ describe Mongo::Collection::View::Readable do
 
       it 'returns 0' do
         view.estimated_document_count.should == 0
+      end
+    end
+
+    context "when using methods to set options" do
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+
+        it "sets the option correctly" do
+          expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(*args.first.keys - [:session])
+            expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
+            m.call(*args)
+          end
+          view.send(opt, param).estimated_document_count(options)
+        end
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+        let(:obj_path) { opt }
+
+        it "sets the option correctly" do
+          expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(*args.first.keys - [:session])
+            expect(opts[opt]).to eq(param)
+            m.call(*args)
+          end
+          view.send(opt, param).estimated_document_count(options)
+        end
+      end
+
+      context "when also including in options" do
+
+        it "gives options higher precedence" do
+          expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(:selector)
+            expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
+            m.call(*args)
+          end
+          view.max_time_ms(1500).estimated_document_count({ max_time_ms: 2000 })
+        end
       end
     end
   end
@@ -802,7 +862,7 @@ describe Mongo::Collection::View::Readable do
 
       context "when a :limit is given" do
 
-        it "gives option higher precedence" do
+        it "gives options higher precedence" do
           expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
             pipeline, opts = args
             expect(pipeline[1][:'$limit']).to eq(1)
@@ -814,7 +874,7 @@ describe Mongo::Collection::View::Readable do
 
       context "when a :skip is given" do
 
-        it "gives option higher precedence" do
+        it "gives options higher precedence" do
           expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
             pipeline, opts = args
             expect(pipeline[1][:'$skip']).to eq(1)
@@ -826,7 +886,7 @@ describe Mongo::Collection::View::Readable do
 
       context "when also including in options" do
 
-        it "gives option higher precedence" do
+        it "gives options higher precedence" do
           expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
             pipeline, opts = args
             expect(pipeline[1][:'$limit']).to eq(2)
@@ -1235,6 +1295,50 @@ describe Mongo::Collection::View::Readable do
 
       it 'does not apply the collation to the distinct' do
         expect(result).to match_array(['bang', 'BANG'])
+      end
+    end
+
+    context "when using methods to set options" do
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+
+        it "sets the option correctly" do
+          expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(*args.first.keys - [:session])
+            expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
+            m.call(*args)
+          end
+          view.send(opt, param).distinct(:name, options)
+        end
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+        let(:obj_path) { opt }
+
+        it "sets the option correctly" do
+          expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(*args.first.keys - [:session])
+            expect(opts[opt]).to eq(param)
+            m.call(*args)
+          end
+          view.send(opt, param).distinct(:name, options)
+        end
+      end
+
+      context "when also including in options" do
+
+        it "gives options higher precedence" do
+          expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+            opts = args.first.slice(:selector)
+            expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
+            m.call(*args)
+          end
+          view.max_time_ms(1500).distinct(:name, { max_time_ms: 2000 })
+        end
       end
     end
   end
