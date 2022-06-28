@@ -91,7 +91,7 @@ module Mongo
       # @option options [ String | nil ] query_type Query type to be applied
       # if encryption algorithm is set to "Indexed". Query type should be set
       #   only if encryption algorithm is set to "Indexed". The only allowed
-      #   value is "Equality".
+      #   value is "equality".
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
       #   one is required to perform explicit encryption.

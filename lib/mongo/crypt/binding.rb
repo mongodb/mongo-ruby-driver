@@ -1393,13 +1393,15 @@ module Mongo
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
       # @param [ String ] query_type Type of the query.
+      # @param [ Integer ] len The length of the query type string.
       #
       # @return [ Boolean ] Whether setting this option succeeded.
       attach_function(
         :mongocrypt_ctx_setopt_query_type,
         [
           :pointer,
-          :string
+          :string,
+          :int
         ],
         :bool
       )
@@ -1413,7 +1415,7 @@ module Mongo
       # @raise [ Mongo::Error::CryptError ] If the operation failed.
       def self.ctx_setopt_query_type(context, query_type)
         check_ctx_status(context) do
-          mongocrypt_ctx_setopt_query_type(context.ctx_p, query_type)
+          mongocrypt_ctx_setopt_query_type(context.ctx_p, query_type, -1)
         end
       end
 

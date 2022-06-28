@@ -47,7 +47,7 @@ module Mongo
       # @option options [ String | nil ] query_type Query type to be applied
       # if encryption algorithm is set to "Indexed". Query type should be set
       #   only if encryption algorithm is set to "Indexed".  The only allowed
-      #   value is "Equality".
+      #   value is "equality".
       #
       # @raise [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
       def initialize(mongocrypt, io, doc, options={})
