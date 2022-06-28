@@ -160,7 +160,7 @@ describe Mongo::Crypt::AutoEncrypter do
         kms_providers: kms_providers,
         kms_tls_options: kms_tls_options,
         key_vault_namespace: key_vault_namespace,
-        schema_map_file: schema_map_file.path
+        schema_map_path: schema_map_file.path
       }
     end
 

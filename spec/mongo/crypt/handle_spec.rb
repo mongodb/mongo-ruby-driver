@@ -17,7 +17,7 @@ describe Mongo::Crypt::Handle do
         credentials,
         kms_tls_options,
         schema_map: schema_map,
-        schema_map_file: schema_map_file,
+        schema_map_path: schema_map_path,
       )
     end
 
@@ -25,7 +25,7 @@ describe Mongo::Crypt::Handle do
       nil
     end
 
-    let(:schema_map_file) do
+    let(:schema_map_path) do
       nil
     end
 
@@ -37,7 +37,7 @@ describe Mongo::Crypt::Handle do
       end
 
       context 'with valid schema map in a file' do
-        let(:schema_map_file) do
+        let(:schema_map_path) do
           schema_map_file_path
         end
 
@@ -53,7 +53,7 @@ describe Mongo::Crypt::Handle do
 
         context 'with schema_map set' do
           it 'raises an exception' do
-            expect { handle }.to raise_error(ArgumentError, /Cannot set both schema_map and schema_map_file options/)
+            expect { handle }.to raise_error(ArgumentError, /Cannot set both schema_map and schema_map_path options/)
           end
         end
       end

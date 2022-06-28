@@ -40,8 +40,8 @@ module Mongo
       # @param [ Hash ] options A hash of options.
       # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
       #   of the collection that stores auto encrypted documents. This option is
-      #   mutually exclusive with :schema_map_file.
-      # @option options [ String | nil ] :schema_map_file A path to a file contains the JSON schema
+      #   mutually exclusive with :schema_map_path.
+      # @option options [ String | nil ] :schema_map_path A path to a file contains the JSON schema
       #   of the collection that stores auto encrypted documents. This option is
       #   mutually exclusive with :schema_map.
       # @option options [ Hash | nil ] :encrypted_fields_map maps a collection
@@ -100,11 +100,11 @@ module Mongo
 
       # Set the schema map option on the underlying mongocrypt_t object
       def maybe_set_schema_map(options)
-        if !options[:schema_map] && !options[:schema_map_file]
+        if !options[:schema_map] && !options[:schema_map_path]
           @schema_map = nil
-        elsif options[:schema_map] && options[:schema_map_file]
+        elsif options[:schema_map] && options[:schema_map_path]
           raise ArgumentError.new(
-            "Cannot set both schema_map and schema_map_file options."
+            "Cannot set both schema_map and schema_map_path options."
           )
         elsif options[:schema_map]
           unless options[:schema_map].is_a?(Hash)
@@ -114,13 +114,13 @@ module Mongo
           end
           @schema_map = options[:schema_map]
           Binding.setopt_schema_map(self, @schema_map)
-        elsif options[:schema_map_file]
-          @schema_map = BSON::ExtJSON.parse(File.read(options[:schema_map_file]))
+        elsif options[:schema_map_path]
+          @schema_map = BSON::ExtJSON.parse(File.read(options[:schema_map_path]))
           Binding.setopt_schema_map(self, @schema_map)
         end
       rescue Errno::ENOENT
         raise ArgumentError.new(
-          "#{@schema_map_file} is an invalid path to a file contains schema_map."
+          "#{@schema_map_path} is an invalid path to a file contains schema_map."
         )
       end
 

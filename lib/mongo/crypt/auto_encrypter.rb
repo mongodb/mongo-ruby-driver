@@ -57,8 +57,8 @@ module Mongo
       # @option options [ String ] :key_vault_namespace The namespace of the key
       #   vault in the format database.collection.
       # @option options [ Hash | nil ] :schema_map The JSONSchema of the collection(s)
-      #   with encrypted fields. This option is mutually exclusive with :schema_map_file.
-      # @option options [ String | nil ] :schema_map_file A path to a file contains the JSON schema
+      #   with encrypted fields. This option is mutually exclusive with :schema_map_path.
+      # @option options [ String | nil ] :schema_map_path A path to a file contains the JSON schema
       #   of the collection that stores auto encrypted documents. This option is
       #   mutually exclusive with :schema_map.
       # @option options [ Boolean | nil ] :bypass_auto_encryption When true, disables
@@ -91,7 +91,7 @@ module Mongo
           Crypt::KMS::Credentials.new(@options[:kms_providers]),
           Crypt::KMS::Validations.validate_tls_options(@options[:kms_tls_options]),
           schema_map: @options[:schema_map],
-          schema_map_file: @options[:schema_map_file],
+          schema_map_path: @options[:schema_map_path],
           encrypted_fields_map: @options[:encrypted_fields_map],
           bypass_query_analysis: @options[:bypass_query_analysis]
         )
