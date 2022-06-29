@@ -158,7 +158,6 @@ describe Mongo::Collection::View::Readable do
         view.send(opt, param).aggregate(pipeline, options)
       end
 
-
       context "when a :allow_disk_use is given" do
         let(:aggregate) do
           view.allow_disk_use.aggregate(pipeline, options)
