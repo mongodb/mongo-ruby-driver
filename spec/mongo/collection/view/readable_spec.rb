@@ -214,6 +214,17 @@ describe Mongo::Collection::View::Readable do
           expect(aggregate.options[opt]).to eq(param)
         end
       end
+
+      context "when also including in options" do
+
+        let(:aggregate) do
+          view.limit(1).aggregate(pipeline, { limit: 2 })
+        end
+
+        it "sets the option correctly" do
+          expect(aggregate.options[:limit]).to eq(2)
+        end
+      end
     end
   end
 
@@ -291,6 +302,42 @@ describe Mongo::Collection::View::Readable do
       it 'yields to each document' do
         map_reduce.each do |doc|
           expect(doc[:_id]).to_not be_nil
+        end
+      end
+    end
+
+    context "when using methods to set map_reduce options" do
+
+      let(:map_reduce) do
+        view.send(opt, param).map_reduce(map, reduce, options)
+      end
+
+      context "when a :limit is given" do
+        let(:opt) { :limit }
+        let(:param) { 1 }
+
+        it "sets the option correctly" do
+          expect(map_reduce.options[opt]).to eq(param)
+        end
+      end
+
+      context "when a :sort is given" do
+        let(:opt) { :sort }
+        let(:param) { { 'x' => Mongo::Index::ASCENDING } }
+
+        it "sets the option correctly" do
+          expect(map_reduce.options[opt]).to eq(param)
+        end
+      end
+
+      context "when also including in options" do
+
+        let(:map_reduce) do
+          view.limit(1).map_reduce(map, reduce, { limit: 2})
+        end
+
+        it "sets the option correctly" do
+          expect(map_reduce.options[:limit]).to eq(2)
         end
       end
     end

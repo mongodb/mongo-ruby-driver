@@ -402,7 +402,8 @@ module Mongo
         #
         # @since 2.0.0
         def map_reduce(map, reduce, options = {})
-          MapReduce.new(self, map, reduce, @options.merge(options))
+          options = @options.slice(:limit, :sort).merge(options)
+          MapReduce.new(self, map, reduce, options)
         end
 
         # Set the max number of documents to scan.
