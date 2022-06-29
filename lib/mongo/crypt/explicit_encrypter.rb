@@ -88,10 +88,10 @@ module Mongo
       #   to be applied if encryption algorithm is set to "Indexed". If not
       #   provided, it defaults to a value of 0. Contention factor should be set
       #   only if encryption algorithm is set to "Indexed".
-      # @option options [ Symbol ] query_type Query type to be applied
+      # @option options [ String | nil ] query_type Query type to be applied
       # if encryption algorithm is set to "Indexed". Query type should be set
       #   only if encryption algorithm is set to "Indexed". The only allowed
-      #   value is :equality.
+      #   value is "equality".
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
       #   one is required to perform explicit encryption.

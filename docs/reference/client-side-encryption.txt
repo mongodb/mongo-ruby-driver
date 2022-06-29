@@ -534,7 +534,7 @@ Below is an example of explicit queryable encryption.
     {
       key_id: data_key_id,
       algorithm: "Indexed",
-      query_type: :equality
+      query_type: "equality"
     }
   )
   find_result = collection.find(encrypted_field: find_payload).first['encrypted_field']

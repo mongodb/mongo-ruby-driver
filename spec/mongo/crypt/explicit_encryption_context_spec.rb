@@ -137,7 +137,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
               mongocrypt,
               io,
               value,
-              options.merge(query_type: :equality)
+              options.merge(query_type: "equality")
             )
           end.to raise_error(ArgumentError, /query_type is allowed only for "Indexed" algorithm/)
         end
@@ -180,7 +180,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
                 mongocrypt,
                 io,
                 value,
-                options.merge(query_type: :equality)
+                options.merge(query_type: "equality")
               )
             end.not_to raise_error
           end
