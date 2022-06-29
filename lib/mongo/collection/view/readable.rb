@@ -24,19 +24,6 @@ module Mongo
       # @since 2.0.0
       module Readable
 
-        # The count options potentially included in the options hash, using the
-        # configure method.
-        #
-        # @api private
-        COUNT_OPTIONS = ["hint", "limit", "max_time_ms", "skip", "comment"]
-
-        # The aggregate options potentially included in the options hash, using the
-        # configure method.
-        #
-        # @api private
-        AGGREGATE_OPTIONS = ["allow_disk_use", "batch_size", "max_time_ms",
-          "max_await_time_ms", "comment", "hint"]
-
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.
@@ -71,8 +58,7 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate(pipeline, options = {})
-          options = @options.slice(*AGGREGATE_OPTIONS).merge(options)
-          aggregation = Aggregation.new(self, pipeline, options)
+          aggregation = Aggregation.new(self, pipeline, @options.merge(options))
 
           # Because the $merge and $out pipeline stages write documents to the
           # collection, it is necessary to clear the cache when they are performed.
@@ -181,7 +167,7 @@ module Mongo
         #     * $near should be replaced with $geoWithin with $center
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
-          opts = options.slice(*COUNT_OPTIONS).merge(opts)
+          opts = @options.merge(opts)
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
@@ -234,7 +220,7 @@ module Mongo
         #
         # @since 2.6.0
         def count_documents(opts = {})
-          opts = options.slice(*COUNT_OPTIONS).merge(opts)
+          opts = @options.merge(opts)
           pipeline = [:'$match' => filter]
           pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
@@ -275,7 +261,7 @@ module Mongo
             end
           end
 
-          opts = options.slice(:max_time_ms, :comment).merge(opts)
+          opts = @options.merge(opts)
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -332,7 +318,7 @@ module Mongo
           if field_name.nil?
             raise ArgumentError, 'Field name for distinct operation must be not nil'
           end
-          opts = options.slice(:max_time_ms, :comment).merge(opts)
+          opts = @options.merge(opts)
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
                   :query => filter, }
@@ -402,8 +388,7 @@ module Mongo
         #
         # @since 2.0.0
         def map_reduce(map, reduce, options = {})
-          options = @options.slice(:limit, :sort).merge(options)
-          MapReduce.new(self, map, reduce, options)
+          MapReduce.new(self, map, reduce, @options.merge(options))
         end
 
         # Set the max number of documents to scan.
