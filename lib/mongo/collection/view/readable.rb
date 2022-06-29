@@ -30,6 +30,13 @@ module Mongo
         # @api private
         COUNT_OPTIONS = ["hint", "limit", "max_time_ms", "skip", "comment"]
 
+        # The aggregate options potentially included in the options hash, using the
+        # configure method.
+        #
+        # @api private
+        AGGREGATE_OPTIONS = ["allow_disk_use", "batch_size", "max_time_ms",
+          "max_await_time_ms", "comment", "hint"]
+
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.
@@ -64,6 +71,7 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate(pipeline, options = {})
+          options = @options.slice(*AGGREGATE_OPTIONS).merge(options)
           aggregation = Aggregation.new(self, pipeline, options)
 
           # Because the $merge and $out pipeline stages write documents to the

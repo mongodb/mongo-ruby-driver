@@ -87,7 +87,7 @@ describe Mongo::Collection::View::Readable do
 
   describe '#aggregate' do
 
-     let(:documents) do
+    let(:documents) do
       [
         { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
         { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
@@ -149,6 +149,70 @@ describe Mongo::Collection::View::Readable do
 
       it 'passes the option to the Aggregation object' do
         expect(aggregation.options[:max_time_ms]).to eq(agg_options[:max_time_ms])
+      end
+    end
+
+    context "when using methods to set aggregate options" do
+
+      let(:aggregate) do
+        view.send(opt, param).aggregate(pipeline, options)
+      end
+
+
+      context "when a :allow_disk_use is given" do
+        let(:aggregate) do
+          view.allow_disk_use.aggregate(pipeline, options)
+        end
+        let(:opt) { :allow_disk_use }
+
+        it "sets the option correctly" do
+          expect(aggregate.options[opt]).to eq(true)
+        end
+      end
+
+      context "when a :batch_size is given" do
+        let(:opt) { :batch_size }
+        let(:param) { 2 }
+
+        it "sets the option correctly" do
+          expect(aggregate.options[opt]).to eq(param)
+        end
+      end
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 2 }
+
+        it "sets the option correctly" do
+          expect(aggregate.options[opt]).to eq(param)
+        end
+      end
+
+      context "when a :max_await_time_ms is given" do
+        let(:opt) { :max_await_time_ms }
+        let(:param) { 2 }
+
+        it "sets the option correctly" do
+          expect(aggregate.options[opt]).to eq(param)
+        end
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+
+        it "sets the option correctly" do
+          expect(aggregate.options[opt]).to eq(param)
+        end
+      end
+
+      context "when a :hint is given" do
+        let(:opt) { :hint }
+        let(:param) { "_id_" }
+
+        it "sets the option correctly" do
+          expect(aggregate.options[opt]).to eq(param)
+        end
       end
     end
   end
