@@ -317,8 +317,7 @@ module Mongo
           end
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
-                  :query => filter,
-                  :comment => opts[:comment] }
+                  :query => filter, }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           if read_concern
             cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
@@ -335,6 +334,7 @@ module Mongo
                 options: {:limit => -1},
                 read: read_pref,
                 session: session,
+                comment: opts[:comment],
                 # For some reason collation was historically accepted as a
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
