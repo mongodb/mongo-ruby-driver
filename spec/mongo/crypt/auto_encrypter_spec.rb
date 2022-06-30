@@ -99,6 +99,62 @@ describe Mongo::Crypt::AutoEncrypter do
     auto_encrypter.close
   end
 
+  describe '#initialize' do
+    include_context 'with local kms_providers'
+
+    let(:auto_encryption_options) do
+      {
+        kms_providers: local_kms_providers,
+        key_vault_namespace: key_vault_namespace,
+        schema_map: { "#{db_name}.#{collection_name}": schema_map },
+      }
+    end
+
+    let(:auto_encrypter) do
+      described_class.new(
+        auto_encryption_options.merge(
+          client: client,
+          # Spawn mongocryptd on non-default port for sharded cluster tests
+          extra_options: extra_options
+        )
+      )
+    end
+
+    context 'when client has an unlimited pool' do
+      let(:client) do
+        new_local_client(
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.test_options.merge(
+            max_pool_size: 0,
+            database: 'auto_encryption'
+          ),
+        )
+      end
+
+      it 'reuses the client as key_vault_client and metadata_client' do
+        expect(auto_encrypter.key_vault_client).to eq(client)
+        expect(auto_encrypter.metadata_client).to eq(client)
+      end
+    end
+
+    context 'when client has a limited pool' do
+      let(:client) do
+        new_local_client(
+          SpecConfig.instance.addresses,
+          SpecConfig.instance.test_options.merge(
+            max_pool_size: 20,
+            database: 'auto_encryption'
+          ),
+        )
+      end
+
+      it 'creates new client for key_vault_client and metadata_client' do
+        expect(auto_encrypter.key_vault_client).not_to eq(client)
+        expect(auto_encrypter.metadata_client).not_to eq(client)
+      end
+    end
+  end
+
   context 'with schema map in auto encryption commands' do
     include_context 'without jsonSchema validator'
 

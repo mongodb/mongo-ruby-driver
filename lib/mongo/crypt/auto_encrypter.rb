@@ -210,26 +210,16 @@ module Mongo
         client = options[:client]
         @key_vault_client = if options[:key_vault_client]
           options[:key_vault_client]
-        # https://jira.mongodb.org/browse/RUBY-3010
-        # https://jira.mongodb.org/browse/RUBY-3011
-        # Specification requires to use existing client when connection pool
-        # size is unlimited (0). Ruby driver does not support unlimited pool
-        # size.
-        # elsif client.options[:max_pool_size] == 0
-        #   client
+        elsif client.options[:max_pool_size] == 0
+          client
         else
           internal_client(client)
         end
 
         @metadata_client = if options[:bypass_auto_encryption]
           nil
-        # Specification requires to use existing client when connection pool
-        # size is unlimited (0). Ruby driver does not support unlimited pool
-        # size.
-        # https://jira.mongodb.org/browse/RUBY-3010
-        # https://jira.mongodb.org/browse/RUBY-3011
-        # elsif client.options[:max_pool_size] == 0
-        #   client
+        elsif client.options[:max_pool_size] == 0
+          client
         else
           internal_client(client)
         end
@@ -246,12 +236,7 @@ module Mongo
       def internal_client(client)
         @internal_client ||= client.with(
           auto_encryption_options: nil,
-          # Specification requires that the internal client's connection pool
-          # size is unlimited (0). Ruby driver does not support unlimited pool
-          # size.
-          # https://jira.mongodb.org/browse/RUBY-3010
-          # https://jira.mongodb.org/browse/RUBY-3011
-          # max_pool_size: 0
+          max_pool_size: 0
         )
       end
     end
