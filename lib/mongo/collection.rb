@@ -497,7 +497,9 @@ module Mongo
     #
     # @since 2.5.0
     def watch(pipeline = [], options = {})
-      View::ChangeStream.new(View.new(self, {}, options), pipeline, nil, options)
+      view_options = options.dup
+      view_options[:await_data] = true if options[:max_await_time_ms]
+      View::ChangeStream.new(View.new(self, {}, view_options), pipeline, nil, options)
     end
 
     # Gets an estimated number of matching documents in the collection.
