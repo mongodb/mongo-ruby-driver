@@ -16,7 +16,7 @@ createEntities:
         keyVaultClient: *client0
         keyVaultNamespace: keyvault.datakeys
         kmsProviders:
-          local: {}
+          local: { key: { $$placeholder: 1 } }
   - database:
       id: &database0 database0
       client: *client0
@@ -58,7 +58,7 @@ tests:
               command:
                 findAndModify: *collection0Name
                 query: { _id: *non_existent_id }
-                update: { $pull: { keyAltNames: does_not_exist } }
+                update: [{ $set: { keyAltNames: { $cond: [{ $eq: [$keyAltNames, [does_not_exist]] }, $$REMOVE, { $filter: { input: $keyAltNames, cond: { $ne: [$$this, does_not_exist] } } }] } } }]
                 writeConcern: { w: majority }
     outcome:
       - collectionName: *collection0Name
@@ -82,7 +82,7 @@ tests:
               command:
                 findAndModify: *collection0Name
                 query: { _id: *local_key_id }
-                update: { $pull: { keyAltNames: does_not_exist } }
+                update: [{ $set: { keyAltNames: { $cond: [{ $eq: [$keyAltNames, [does_not_exist]] }, $$REMOVE, { $filter: { input: $keyAltNames, cond: { $ne: [$$this, does_not_exist] } } }] } } }]
                 writeConcern: { w: majority }
     outcome:
       - collectionName: *collection0Name
@@ -113,7 +113,7 @@ tests:
               command:
                 findAndModify: *collection0Name
                 query: { _id: *local_key_id }
-                update: { $pull: { keyAltNames: alternate_name } }
+                update: [{ $set: { keyAltNames: { $cond: [{ $eq: [$keyAltNames, [alternate_name]] }, $$REMOVE, { $filter: { input: $keyAltNames, cond: { $ne: [$$this, alternate_name] } } }] } } }]
                 writeConcern: { w: majority }
           - commandStartedEvent: { commandName: find }
 
@@ -147,19 +147,11 @@ tests:
               command:
                 findAndModify: *collection0Name
                 query: { _id: *local_key_id }
-                update: { $pull: { keyAltNames: alternate_name } }
+                update: [{ $set: { keyAltNames: { $cond: [{ $eq: [$keyAltNames, [alternate_name]] }, $$REMOVE, { $filter: { input: $keyAltNames, cond: { $ne: [$$this, alternate_name] } } }] } } }]
                 writeConcern: { w: majority }
           - commandStartedEvent:
               databaseName: *database0Name
               command:
                 findAndModify: *collection0Name
                 query: { _id: *local_key_id }
-                update: { $pull: { keyAltNames: local_key } }
-                writeConcern: { w: majority }
-          # The keyAltNames field should be unset if it would otherwise be empty to preserve keyAltNames unique index invariants.
-          - commandStartedEvent:
-              databaseName: *database0Name
-              command:
-                update: *collection0Name
-                updates: [{ q: { _id: *local_key_id }, u: { $unset: { keyAltNames: true } } }]
-                writeConcern: { w: majority }
+                update: [{ $set: { keyAltNames: { $cond: [{ $eq: [$keyAltNames, [local_key]] }, $$REMOVE, { $filter: { input: $keyAltNames, cond: { $ne: [$$this, local_key] } } }] } } }]
