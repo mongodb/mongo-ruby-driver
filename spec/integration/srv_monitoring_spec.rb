@@ -5,6 +5,7 @@ require 'spec_helper'
 
 describe 'SRV Monitoring' do
   clean_slate_for_all
+  require_external_connectivity
 
   context 'with SRV lookups mocked at Resolver' do
     let(:srv_result) do

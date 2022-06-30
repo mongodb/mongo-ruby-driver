@@ -12,6 +12,8 @@ describe 'Clean exit' do
   end
 
   context 'with SRV URI' do
+    require_external_connectivity
+
     let(:uri) do
       'mongodb+srv://test1.test.build.10gen.cc/?tls=false'
     end

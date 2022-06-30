@@ -5,6 +5,7 @@ require 'spec_helper'
 
 describe 'SRV lookup' do
   context 'end to end' do
+    require_external_connectivity
 
     # JRuby apparently does not implement non-blocking UDP I/O which is used
     # by RubyDNS:
