@@ -94,6 +94,7 @@ module Mongo
     # Take all the public instance methods from the Config singleton and allow
     # them to be accessed through the Mongo module directly.
     def_delegators Config, :options=
+    delegate_option Config, :broken_view_options
     delegate_option Config, :validate_update_replace
   end
 

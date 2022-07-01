@@ -58,7 +58,8 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate(pipeline, options = {})
-          aggregation = Aggregation.new(self, pipeline, @options.merge(options))
+          options = @options.merge(options) unless Mongo.broken_view_options
+          aggregation = Aggregation.new(self, pipeline, options)
 
           # Because the $merge and $out pipeline stages write documents to the
           # collection, it is necessary to clear the cache when they are performed.
@@ -167,7 +168,7 @@ module Mongo
         #     * $near should be replaced with $geoWithin with $center
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
-          opts = @options.merge(opts)
+          opts = @options.merge(opts) unless Mongo.broken_view_options
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
@@ -220,7 +221,7 @@ module Mongo
         #
         # @since 2.6.0
         def count_documents(opts = {})
-          opts = @options.merge(opts)
+          opts = @options.merge(opts) unless Mongo.broken_view_options
           pipeline = [:'$match' => filter]
           pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
@@ -261,7 +262,7 @@ module Mongo
             end
           end
 
-          opts = @options.merge(opts)
+          opts = @options.merge(opts) unless Mongo.broken_view_options
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -318,7 +319,7 @@ module Mongo
           if field_name.nil?
             raise ArgumentError, 'Field name for distinct operation must be not nil'
           end
-          opts = @options.merge(opts)
+          opts = @options.merge(opts) unless Mongo.broken_view_options
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
                   :query => filter, }
