@@ -9,10 +9,13 @@ describe 'Clean exit' do
     unless %w(1 true yes).include?(ENV['SOLO'])
       skip 'Set SOLO=1 in environment to run solo tests'
     end
+
+    if %w(1 true yes).include?(ENV['EXTERNAL_DISABLED'])
+      skip "Test requires external connectivity"
+    end
   end
 
   context 'with SRV URI' do
-    require_external_connectivity
 
     let(:uri) do
       'mongodb+srv://test1.test.build.10gen.cc/?tls=false'
