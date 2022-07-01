@@ -73,6 +73,7 @@ describe 'Client after reconnect' do
   end
 
   context 'SRV monitor thread' do
+    require_external_connectivity
 
     let(:uri) do
       "mongodb+srv://test1.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}"
@@ -140,6 +141,7 @@ describe 'Client after reconnect' do
     end
 
     context 'in unknown topology' do
+      require_external_connectivity
 
       # JRuby apparently does not implement non-blocking UDP I/O which is used
       # by RubyDNS:
