@@ -97,6 +97,7 @@ module Mongo
         def initialize(view, pipeline, options = {})
           @view = view
           @pipeline = pipeline.dup
+          @pipeline.unshift(:$match => view.filter) unless view.filter.blank?
           @options = BSON::Document.new(options).freeze
         end
 
