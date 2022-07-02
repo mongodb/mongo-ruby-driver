@@ -32,7 +32,10 @@ else
   begin
     require 'byebug'
   rescue LoadError
-    require 'ruby-debug' rescue LoadError
+    begin
+      require 'ruby-debug'
+    rescue LoadError
+    end
   end
 end
 
