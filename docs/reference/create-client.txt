@@ -2069,7 +2069,7 @@ The following is a list of feature flags that the Mongo Ruby Driver provides:
        propagated to the ``aggregate``, ``count``, ``count_documents``,
        ``distinct``, and ``estimated_document_count`` mehods. When this flag is
        switched on, the view options will be ignored in those methods.
-       (default: false)
+       (default: true)
    * - ``validate_update_replace``
      - Validates that there are no atomic operators (those that start with $)
        in the root of a replacement document, and that there are only atomic
