@@ -932,12 +932,8 @@ describe Mongo::Index::View do
     context 'when providing a valid wildcard projection' do
       min_server_fcv '4.2'
 
-      let(:expression) do
-        { 'rating' => 1 }
-      end
-
       let!(:result) do
-        view.create_one({ '$**' => 1 }, wildcard_projection: expression)
+        view.create_one({ '$**' => 1 }, wildcard_projection: { 'rating' => 1 })
       end
 
       let(:indexes) do
@@ -952,8 +948,20 @@ describe Mongo::Index::View do
         expect(indexes).to_not be_nil
       end
 
-      it 'passes wildcardProjection correctly' do
-        expect(indexes[:wildcardProjection]).to eq(expression)
+      context 'on server versions <= 4.4' do
+        max_server_fcv '4.4'
+
+        it 'passes wildcardProjection correctly' do
+          expect(indexes[:wildcardProjection]).to eq({ 'rating' => 1 })
+        end
+      end
+
+      context 'on server versions >= 5.0' do
+        min_server_fcv '5.0'
+
+        it 'passes wildcardProjection correctly' do
+          expect(indexes[:wildcardProjection]).to eq({ '_id' => false, 'rating' => true })
+        end
       end
     end
 
