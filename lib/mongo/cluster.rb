@@ -286,14 +286,16 @@ module Mongo
     #   Cluster.create(client)
     #
     # @param [ Client ] client The client to create on.
+    # @param [ Monitoring | nil ] monitoring. The monitoring instance we want to use
+    #   for the new cluster.
     #
     # @return [ Cluster ] The cluster.
     #
     # @since 2.0.0
-    def self.create(client)
+    def self.create(client, monitoring: nil)
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
-        Monitoring.new,
+        monitoring || Monitoring.new,
         client.cluster_options,
       )
       client.instance_variable_set(:@cluster, cluster)

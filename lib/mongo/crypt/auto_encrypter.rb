@@ -234,9 +234,9 @@ module Mongo
       # @return [ Mongo::Client ] Client to be used as internal client for
       # auto encryption.
       def internal_client(client)
-        @internal_client ||= client.with(
+        @internal_client ||= client.copy_with_monitoring(
           auto_encryption_options: nil,
-          max_pool_size: 0
+          min_pool_size: 0
         )
       end
     end
