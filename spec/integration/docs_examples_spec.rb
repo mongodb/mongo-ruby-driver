@@ -204,21 +204,4 @@ describe 'aggregation examples in Ruby' do
       example_code
     end
   end
-
-  context 'Index Example 3 - build index with wildcard projection' do
-
-    let(:example_code) do
-
-      # Start Index Example 3
-
-      client[:records].indexes.create_one({ '$**': 1 },
-                                          { wildcardProjection: { rating: 1 } })
-
-      # End Index Example 3
-    end
-
-    it 'successfully executes the command' do
-      example_code
-    end
-  end
 end
