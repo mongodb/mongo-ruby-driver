@@ -13,6 +13,11 @@ module Mongo
     extend Options
     extend self
 
+    # When this flag is off, an aggregation done on a view will be executed over
+    # the documents included in that view, instead of all documents in the
+    # collection. When this flag is on, the view fiter is ignored.
+    option :broken_view_aggregate, default: true
+
     # When this flag is set to false, the view options will be correctly
     # propagated to readable methods.
     option :broken_view_options, default: true
