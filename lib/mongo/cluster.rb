@@ -286,8 +286,8 @@ module Mongo
     #   Cluster.create(client)
     #
     # @param [ Client ] client The client to create on.
-    # @param [ Monitoring | nil ] monitoring. The monitoring instance we want to use
-    #   for the new cluster.
+    # @param [ Monitoring | nil ] monitoring. The monitoring instance we want to
+    #   copy subscribers from for the new cluster.
     #
     # @return [ Cluster ] The cluster.
     #
