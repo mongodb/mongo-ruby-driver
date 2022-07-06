@@ -48,6 +48,13 @@ This release includes the following new features:
   with ``estimated_document_count`` are recommended to upgrade their MongoDB clusters
   to 5.0.8 or 5.3.2 (if on Atlas) or set ``api_strict: false`` when constructing
   their MongoClients.
+- Added the ``validate_update_replace`` feature flag which validates the
+  parameters to update and replace operations. If this flag is turned on, an
+  error will be raised on an invalid update or replacement document.
+- Added the ``broken_view_options`` feature flag which allows the view options
+  to be correctly propagated to the ``aggregate``, ``count``, ``count_documents``,
+  ``distinct``, and ``estimated_document_count`` mehods. When this flag is
+  switched on, the view options will be ignored in those methods.
 
 2.17
 ====

@@ -87,7 +87,7 @@ describe Mongo::Collection::View::Readable do
 
   describe '#aggregate' do
 
-     let(:documents) do
+    let(:documents) do
       [
         { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
         { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
@@ -149,6 +149,159 @@ describe Mongo::Collection::View::Readable do
 
       it 'passes the option to the Aggregation object' do
         expect(aggregation.options[:max_time_ms]).to eq(agg_options[:max_time_ms])
+      end
+    end
+
+    context "when using methods to set aggregate options" do
+
+      context "when the broken_view_options flag is off" do
+        config_override :broken_view_options, false
+
+        let(:aggregate) do
+          view.send(opt, param).aggregate(pipeline, options)
+        end
+
+        context "when a :allow_disk_use is given" do
+          let(:aggregate) do
+            view.allow_disk_use.aggregate(pipeline, options)
+          end
+          let(:opt) { :allow_disk_use }
+
+          it "sets the option correctly" do
+            expect(aggregate.options[opt]).to eq(true)
+          end
+        end
+
+        context "when a :batch_size is given" do
+          let(:opt) { :batch_size }
+          let(:param) { 2 }
+
+          it "sets the option correctly" do
+            expect(aggregate.options[opt]).to eq(param)
+          end
+        end
+
+        context "when a :max_time_ms is given" do
+          let(:opt) { :max_time_ms }
+          let(:param) { 2 }
+
+          it "sets the option correctly" do
+            expect(aggregate.options[opt]).to eq(param)
+          end
+        end
+
+        context "when a :max_await_time_ms is given" do
+          let(:opt) { :max_await_time_ms }
+          let(:param) { 2 }
+
+          it "sets the option correctly" do
+            expect(aggregate.options[opt]).to eq(param)
+          end
+        end
+
+        context "when a :comment is given" do
+          let(:opt) { :comment }
+          let(:param) { "comment" }
+
+          it "sets the option correctly" do
+            expect(aggregate.options[opt]).to eq(param)
+          end
+        end
+
+        context "when a :hint is given" do
+          let(:opt) { :hint }
+          let(:param) { "_id_" }
+
+          it "sets the option correctly" do
+            expect(aggregate.options[opt]).to eq(param)
+          end
+        end
+
+        context "when also including in options" do
+
+          let(:aggregate) do
+            view.limit(1).aggregate(pipeline, { limit: 2 })
+          end
+
+          it "sets the option correctly" do
+            expect(aggregate.options[:limit]).to eq(2)
+          end
+        end
+      end
+
+      context "when the broken_view_options flag is on" do
+        config_override :broken_view_options, true
+
+        let(:aggregate) do
+          view.send(opt, param).aggregate(pipeline, options)
+        end
+
+        context "when a :allow_disk_use is given" do
+          let(:aggregate) do
+            view.allow_disk_use.aggregate(pipeline, options)
+          end
+          let(:opt) { :allow_disk_use }
+
+          it "doesn't set the option correctly" do
+            expect(aggregate.options[opt]).to be_nil
+          end
+        end
+
+        context "when a :batch_size is given" do
+          let(:opt) { :batch_size }
+          let(:param) { 2 }
+
+          it "doesn't set the option correctly" do
+            expect(aggregate.options[opt]).to be_nil
+          end
+        end
+
+        context "when a :max_time_ms is given" do
+          let(:opt) { :max_time_ms }
+          let(:param) { 2 }
+
+          it "doesn't set the option correctly" do
+            expect(aggregate.options[opt]).to be_nil
+          end
+        end
+
+        context "when a :max_await_time_ms is given" do
+          let(:opt) { :max_await_time_ms }
+          let(:param) { 2 }
+
+          it "doesn't set the option correctly" do
+            expect(aggregate.options[opt]).to be_nil
+          end
+        end
+
+        context "when a :comment is given" do
+          let(:opt) { :comment }
+          let(:param) { "comment" }
+
+          it "doesn't set the option correctly" do
+            expect(aggregate.options[opt]).to be_nil
+          end
+        end
+
+        context "when a :hint is given" do
+          let(:opt) { :hint }
+          let(:param) { "_id_" }
+
+          it "doesn't set the option correctly" do
+            expect(aggregate.options[opt]).to be_nil
+          end
+        end
+
+        context "when also including in options" do
+
+          let(:aggregate) do
+            view.limit(1).aggregate(pipeline, { limit: 2 })
+          end
+
+          it "sets the option correctly" do
+            expect(aggregate.options[:limit]).to eq(2)
+          end
+        end
       end
     end
   end
@@ -227,6 +380,42 @@ describe Mongo::Collection::View::Readable do
       it 'yields to each document' do
         map_reduce.each do |doc|
           expect(doc[:_id]).to_not be_nil
+        end
+      end
+    end
+
+    context "when using methods to set map_reduce options" do
+
+      let(:map_reduce) do
+        view.send(opt, param).map_reduce(map, reduce, options)
+      end
+
+      context "when a :limit is given" do
+        let(:opt) { :limit }
+        let(:param) { 1 }
+
+        it "sets the option correctly" do
+          expect(map_reduce.options[opt]).to eq(param)
+        end
+      end
+
+      context "when a :sort is given" do
+        let(:opt) { :sort }
+        let(:param) { { 'x' => Mongo::Index::ASCENDING } }
+
+        it "sets the option correctly" do
+          expect(map_reduce.options[opt]).to eq(param)
+        end
+      end
+
+      context "when also including in options" do
+
+        let(:map_reduce) do
+          view.limit(1).map_reduce(map, reduce, { limit: 2})
+        end
+
+        it "sets the option correctly" do
+          expect(map_reduce.options[:limit]).to eq(2)
         end
       end
     end
@@ -603,6 +792,90 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
+
+    context "when using methods to set count options" do
+      let(:obj_path) { [:selector, opt] }
+
+      shared_examples "a count option" do
+
+        context "when the broken_view_options flag is off" do
+          config_override :broken_view_options, false
+
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts.dig(*obj_path)).to eq(param)
+              m.call(*args)
+            end
+            view.send(opt, param).count(options)
+          end
+        end
+
+        context "when the broken_view_options flag is on" do
+          config_override :broken_view_options, true
+
+          it "doesn't set the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts.dig(*obj_path)).to be_nil
+              m.call(*args)
+            end
+            view.send(opt, param).count(options)
+          end
+        end
+      end
+
+      context "when a :hint is given" do
+        let(:opt) { :hint }
+        let(:param) { "_id_" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+        let(:obj_path) { [:selector, :maxTimeMS] }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+        let(:obj_path) { opt }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :limit is given" do
+        let(:opt) { :limit }
+        let(:param) { 1 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :skip is given" do
+        let(:opt) { :skip }
+        let(:param) { 1 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when also including in options" do
+
+        with_config_values :broken_view_options, true, false do
+          it "gives options higher precedence" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(:selector)
+              expect(opts.dig(:selector, :limit)).to eq(2)
+              m.call(*args)
+            end
+            view.limit(1).count({ limit: 2 })
+          end
+        end
+      end
+    end
   end
 
   describe "#estimated_document_count" do
@@ -623,6 +896,22 @@ describe Mongo::Collection::View::Readable do
       it 'raises an error' do
         expect {
           view.skip(5).estimated_document_count(options)
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+      end
+    end
+
+    context 'when limit passed as an option' do
+      it 'raises an error' do
+        expect {
+          view.estimated_document_count(options.merge(limit: 5))
+        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+      end
+    end
+
+    context 'when skip passed as an option' do
+      it 'raises an error' do
+        expect {
+          view.estimated_document_count(options.merge(skip: 5))
         }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
       end
     end
@@ -669,13 +958,92 @@ describe Mongo::Collection::View::Readable do
         view.estimated_document_count.should == 0
       end
     end
+
+    context "when using methods to set options" do
+
+      context "when the broken_view_options flag is on" do
+        config_override :broken_view_options, true
+
+        context "when a :max_time_ms is given" do
+          let(:opt) { :max_time_ms }
+          let(:param) { 5000 }
+
+          it "doesn't set the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts.dig(:selector, :maxTimeMS)).to be_nil
+              m.call(*args)
+            end
+            view.send(opt, param).estimated_document_count(options)
+          end
+        end
+
+        context "when a :comment is given" do
+          let(:opt) { :comment }
+          let(:param) { "comment" }
+          let(:obj_path) { opt }
+
+          it "doesn't set the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts[opt]).to be_nil
+              m.call(*args)
+            end
+            view.send(opt, param).estimated_document_count(options)
+          end
+        end
+      end
+
+      context "when the broken_view_options flag is off" do
+        config_override :broken_view_options, false
+
+        context "when a :max_time_ms is given" do
+          let(:opt) { :max_time_ms }
+          let(:param) { 5000 }
+
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
+              m.call(*args)
+            end
+            view.send(opt, param).estimated_document_count(options)
+          end
+        end
+
+        context "when a :comment is given" do
+          let(:opt) { :comment }
+          let(:param) { "comment" }
+          let(:obj_path) { opt }
+
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts[opt]).to eq(param)
+              m.call(*args)
+            end
+            view.send(opt, param).estimated_document_count(options)
+          end
+        end
+
+        context "when also including in options" do
+
+          with_config_values :broken_view_options, true, false do
+            it "gives options higher precedence" do
+              expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+                opts = args.first.slice(:selector)
+                expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
+                m.call(*args)
+              end
+              view.max_time_ms(1500).estimated_document_count({ max_time_ms: 2000 })
+            end
+          end
+        end
+      end
+    end
   end
 
   describe '#count_documents' do
-
-    let(:result) do
-      new_view.count_documents(options)
-    end
 
     context 'when session is given' do
       min_server_fcv '3.6'
@@ -701,6 +1069,127 @@ describe Mongo::Collection::View::Readable do
 
           event = subscriber.single_command_started_event('aggregate')
           event.command['lsid'].should == session_id
+        end
+      end
+    end
+
+    context "when using methods to set count options" do
+      shared_examples "a count option" do
+        context "when the broken_view_options flag is on" do
+          config_override :broken_view_options, true
+
+          it "doesn't set the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              opts = args[1]
+              expect(opts[opt]).to be_nil
+              m.call(*args)
+            end
+            view.send(opt, param).count_documents(options)
+          end
+        end
+
+        context "when the broken_view_options flag is off" do
+          config_override :broken_view_options, false
+
+          it "sets the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              opts = args[1]
+              expect(opts[opt]).to eq(param)
+              m.call(*args)
+            end
+            view.send(opt, param).count_documents(options)
+          end
+        end
+      end
+
+      context "when a :hint is given" do
+        let(:opt) { :hint }
+        let(:param) { "_id_" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+
+        it_behaves_like "a count option"
+      end
+
+      context "when a :limit is given" do
+        context "when the broken_view_options flag is false" do
+          config_override :broken_view_options, false
+
+          it "sets the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              pipeline, opts = args
+              expect(pipeline[1][:'$limit']).to eq(1)
+              m.call(*args)
+            end
+            view.limit(1).count_documents(options)
+          end
+        end
+
+        context "when the broken_view_options flag is on" do
+          config_override :broken_view_options, true
+
+          it "doesn't set the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              pipeline, opts = args
+              expect(pipeline[1][:'$limit']).to be_nil
+              m.call(*args)
+            end
+            view.limit(1).count_documents(options)
+          end
+        end
+      end
+
+      context "when a :skip is given" do
+        context "when the broken_view_options flag is on" do
+          config_override :broken_view_options, true
+
+          it "doesn't set the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              pipeline, opts = args
+              expect(pipeline[1][:'$skip']).to be_nil
+              m.call(*args)
+            end
+            view.skip(1).count_documents(options)
+          end
+        end
+
+        context "when the broken_view_options flag is off" do
+          config_override :broken_view_options, false
+
+          it "sets the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              pipeline, opts = args
+              expect(pipeline[1][:'$skip']).to eq(1)
+              m.call(*args)
+            end
+            view.skip(1).count_documents(options)
+          end
+        end
+      end
+
+      context "when also including in options" do
+
+        with_config_values :broken_view_options, true, false do
+          it "gives options higher precedence" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              pipeline, opts = args
+              expect(pipeline[1][:'$limit']).to eq(2)
+              m.call(*args)
+            end
+            view.limit(1).count_documents({ limit: 2 })
+          end
         end
       end
     end
@@ -1103,6 +1592,86 @@ describe Mongo::Collection::View::Readable do
 
       it 'does not apply the collation to the distinct' do
         expect(result).to match_array(['bang', 'BANG'])
+      end
+    end
+
+    context "when using methods to set options" do
+
+      context "when a :max_time_ms is given" do
+        let(:opt) { :max_time_ms }
+        let(:param) { 5000 }
+
+        context "when the broken_view_options flag is on" do
+          config_override :broken_view_options, true
+
+          it "doesn't set the option correctly" do
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts.dig(:selector, :maxTimeMS)).to be_nil
+              m.call(*args)
+            end
+            view.send(opt, param).distinct(:name, options)
+          end
+        end
+
+        context "when the broken_view_options flag is off" do
+          config_override :broken_view_options, false
+
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
+              m.call(*args)
+            end
+            view.send(opt, param).distinct(:name, options)
+          end
+        end
+      end
+
+      context "when a :comment is given" do
+        let(:opt) { :comment }
+        let(:param) { "comment" }
+        let(:obj_path) { opt }
+
+        context "when the broken_view_options flag is on" do
+          config_override :broken_view_options, true
+
+          it "doesn't set the option correctly" do
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts[opt]).to be_nil
+              m.call(*args)
+            end
+            view.send(opt, param).distinct(:name, options)
+          end
+        end
+
+        context "when the broken_view_options flag is off" do
+          config_override :broken_view_options, false
+
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(*args.first.keys - [:session])
+              expect(opts[opt]).to eq(param)
+              m.call(*args)
+            end
+            view.send(opt, param).distinct(:name, options)
+          end
+        end
+      end
+
+      context "when also including in options" do
+
+        with_config_values :broken_view_options, true, false do
+          it "gives options higher precedence" do
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+              opts = args.first.slice(:selector)
+              expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
+              m.call(*args)
+            end
+            view.max_time_ms(1500).distinct(:name, { max_time_ms: 2000 })
+          end
+        end
       end
     end
   end
