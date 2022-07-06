@@ -784,10 +784,10 @@ module Mongo
     #
     # @return [ Mongo::Client ] A new client instance.
     #
-    # @api semiprivate
+    # @api private
     def copy_with_monitoring(new_options)
       clone.tap do |client|
-        opts = client.update_options(new_options || Options::Redacted.new)
+        opts = client.update_options(new_options)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed. We want to reuse the same monitoring, though.

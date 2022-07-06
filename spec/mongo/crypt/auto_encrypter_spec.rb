@@ -100,6 +100,7 @@ describe Mongo::Crypt::AutoEncrypter do
   end
 
   describe '#initialize' do
+    clean_slate
     include_context 'with local kms_providers'
 
     let(:auto_encryption_options) do
