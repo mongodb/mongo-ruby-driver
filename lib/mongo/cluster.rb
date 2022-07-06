@@ -295,7 +295,7 @@ module Mongo
     def self.create(client, monitoring: nil)
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
-        monitoring || Monitoring.new,
+        monitoring&.clone || Monitoring.new,
         client.cluster_options,
       )
       client.instance_variable_set(:@cluster, cluster)
