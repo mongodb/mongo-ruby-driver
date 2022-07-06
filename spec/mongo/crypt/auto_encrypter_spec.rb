@@ -100,7 +100,6 @@ describe Mongo::Crypt::AutoEncrypter do
   end
 
   describe '#initialize' do
-    clean_slate
     include_context 'with local kms_providers'
 
     let(:auto_encryption_options) do
@@ -123,7 +122,7 @@ describe Mongo::Crypt::AutoEncrypter do
 
     context 'when client has an unlimited pool' do
       let(:client) do
-        new_local_client(
+        new_local_client_nmio(
           SpecConfig.instance.addresses,
           SpecConfig.instance.test_options.merge(
             max_pool_size: 0,
@@ -140,7 +139,7 @@ describe Mongo::Crypt::AutoEncrypter do
 
     context 'when client has a limited pool' do
       let(:client) do
-        new_local_client(
+        new_local_client_nmio(
           SpecConfig.instance.addresses,
           SpecConfig.instance.test_options.merge(
             max_pool_size: 20,
