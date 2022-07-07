@@ -915,7 +915,7 @@ describe Mongo::Index::View do
       it 'raises an exception' do
         expect {
           view.create_one({ '$**' => 1 }, wildcard_projection: 5)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        }.to raise_error(Mongo::Error::OperationFailure, /\[14:TypeMismatch]: Error in specification \{ key: \{ \$\*\*: 1 }, wildcardProjection: 5, name: "\$\*\*_1" } :: caused by :: The field 'wildcardProjection' must be a non-empty object/)
       end
     end
 
@@ -925,7 +925,7 @@ describe Mongo::Index::View do
       it 'raises an exception' do
         expect {
           view.create_one({ 'x' => 1 }, wildcard_projection: { rating: 1 })
-        }.to raise_error(Mongo::Error::OperationFailure)
+        }.to raise_error(Mongo::Error::OperationFailure, /\[14:TypeMismatch]: Error in specification \{ key: \{ \$\*\*: 1 }, wildcardProjection: 5, name: "\$\*\*_1" } :: caused by :: The field 'wildcardProjection' must be a non-empty object/)
       end
     end
 
