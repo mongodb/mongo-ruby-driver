@@ -2064,6 +2064,12 @@ The following is a list of feature flags that the Mongo Ruby Driver provides:
 
    * - Flag
      - Description
+   * - ``broken_view_aggregate``
+     - When this flag is off, an aggregation done on a view will be executed over
+       the documents included in that view, instead of all documents in the
+       collection. When this flag is on, the view fiter is ignored and the
+       aggregation is applied over all of the documents in the view's
+       collection. (default: true)
    * - ``broken_view_options``
      - When this flag is turned off, the view options will be correctly
        propagated to the ``aggregate``, ``count``, ``count_documents``,
