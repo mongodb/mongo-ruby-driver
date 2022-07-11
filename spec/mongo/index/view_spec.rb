@@ -912,34 +912,20 @@ describe Mongo::Index::View do
     context 'when providing an invalid wildcard projection expression' do
       min_server_fcv '4.2'
 
-      let(:err_msg) do
-        "[14:TypeMismatch]: Error in specification { key: { $**: 1 }, " \
-        "wildcardProjection: 5, name: \"$**_1\" } :: caused by :: " \
-        "The field 'wildcardProjection' must be a non-empty object"
-      end
-
       it 'raises an exception' do
         expect {
           view.create_one({ '$**' => 1 }, wildcard_projection: 5)
-        }.to raise_error(Mongo::Error::OperationFailure,
-                         Regexp.new(Regexp.escape(err_msg)))
+        }.to raise_error(Mongo::Error::OperationFailure, /Error in specification.*wildcardProjection|wildcardProjection.*must be a non-empty object/)
       end
     end
 
     context 'when providing a wildcard projection to an invalid base index' do
       min_server_fcv '4.2'
 
-      let(:err_msg) do
-        "[2:BadValue]: Error in specification { key: { x: 1 }, " \
-        "wildcardProjection: { rating: 1 }, name: \"x_1\" } :: caused by :: " \
-        "The field 'wildcardProjection' is only allowed in an 'wildcard' index"
-      end
-
       it 'raises an exception' do
         expect {
           view.create_one({ 'x' => 1 }, wildcard_projection: { rating: 1 })
-        }.to raise_error(Mongo::Error::OperationFailure,
-                         Regexp.new(Regexp.escape(err_msg)))
+        }.to raise_error(Mongo::Error::OperationFailure, /Error in specification.*wildcardProjection|wildcardProjection.*is only allowed/)
       end
     end
 
