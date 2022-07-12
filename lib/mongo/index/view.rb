@@ -71,6 +71,7 @@ module Mongo
         :weights => :weights,
         :collation => :collation,
         :comment => :comment,
+        :wildcard_projection => :wildcardProjection,
       }.freeze
 
       # Drop an index by its name.
