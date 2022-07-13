@@ -30,7 +30,8 @@ class BackgroundThreadRegistry
       @records << OpenStruct.new(
         thread: thread,
         object: object,
-        example: $current_example,
+        # When rake spec:prepare is run, the current_example method is not defined
+        example: RSpec.respond_to?(:current_example) ? RSpec.current_example : nil,
       )
     end
   end
@@ -46,7 +47,7 @@ class BackgroundThreadRegistry
             msg << "\n  with options: #{record.object.options}"
           end
           if record.example
-            msg << "\n  in #{record.example.id} #{record.example.full_description}"
+            msg << "\n  in #{record.example.id}: #{record.example.full_description}"
           else
             msg << "\n  not in an example"
           end
@@ -54,17 +55,6 @@ class BackgroundThreadRegistry
         raise msg
       end
       @records.clear
-    end
-  end
-end
-
-RSpec.configure do |config|
-  config.around do |example|
-    $current_example = example
-    begin
-      example.run
-    ensure
-      $current_example = nil
     end
   end
 end
