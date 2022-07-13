@@ -194,6 +194,18 @@ module Mongo
       def close
         @mongocryptd_client.close if @mongocryptd_client
 
+        if @key_vault_client && @key_vault_client != options[:client] &&
+          @key_vault_client.cluster != options[:client].cluster
+        then
+          @key_vault_client.close
+        end
+
+        if @metadata_client && @metadata_client != options[:client] &&
+          @metadata_client.cluster != options[:client].cluster
+        then
+          @metadata_client.close
+        end
+
         true
       end
 
