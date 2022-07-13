@@ -85,7 +85,6 @@ module Mongo
       key_material = options[:key_material]
       @encrypter.create_and_insert_data_key(key_document, key_alt_names, key_material)
     end
-    alias :create_key :create_data_key
 
     # Encrypts a value using the specified encryption key and algorithm.
     #
