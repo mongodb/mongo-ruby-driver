@@ -268,6 +268,10 @@ module Mongo
         end
       end
 
+      def to_s
+        "#<#{self.class.name}:#{object_id} #{server.address}>"
+      end
+
       private
 
       def pre_stop
