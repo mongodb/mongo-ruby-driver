@@ -123,6 +123,30 @@ module Mongo
           end
           raise
         end
+      rescue
+        if @key_vault_client && @key_vault_client != options[:client] &&
+          @key_vault_client.cluster != options[:client].cluster
+        then
+          begin
+            @key_vault_client.close
+          rescue => e
+            log_warn("Error closing key vault client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+        end
+
+        if @metadata_client && @metadata_client != options[:client] &&
+          @metadata_client.cluster != options[:client].cluster
+        then
+          begin
+            @metadata_client.close
+          rescue => e
+            log_warn("Error closing metadata client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+        end
+
+        raise
       end
 
       # Whether this encrypter should perform encryption (returns false if
