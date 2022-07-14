@@ -45,15 +45,11 @@ describe 'Auto Encryption' do
   end
 
   let(:started_event) do
-    subscriber.started_events.find do |event|
-      event.command_name == command_name && event.database_name == db_name
-    end
+    subscriber.single_command_started_event(command_name, database_name: db_name)
   end
 
   let(:succeeded_event) do
-    subscriber.succeeded_events.find do |event|
-      event.command_name == command_name && event.database_name == db_name
-    end
+    subscriber.single_command_succeeded_event(command_name, database_name: db_name)
   end
 
   let(:key_vault_list_collections_event) do
