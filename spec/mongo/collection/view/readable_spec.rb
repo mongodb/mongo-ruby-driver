@@ -1791,6 +1791,23 @@ describe Mongo::Collection::View::Readable do
       expect(new_view).not_to be(view)
     end
 
+    context 'when sending to server' do
+      let(:subscriber) { Mrss::EventSubscriber.new }
+
+      before do
+        authorized_collection.client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+
+      let(:event) do
+        subscriber.single_command_started_event('find')
+      end
+
+      it 'is sent to server' do
+        new_view.to_a
+        event.command.slice('noCursorTimeout').should == {'noCursorTimeout' => true}
+      end
+    end
+
     # The number of open cursors with the option set to prevent timeout.
     def current_no_timeout_count
       new_view
