@@ -1808,39 +1808,43 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    # The number of open cursors with the option set to prevent timeout.
-    def current_no_timeout_count
-      root_authorized_client
-        .command(serverStatus: 1)
-        .documents
-        .first
-        .fetch('metrics')
-        .fetch('cursor')
-        .fetch('open')
-        .fetch('noTimeout')
-    end
+    context 'integration test' do
+      require_topology :single
 
-    it 'is applied on the server' do
-      # Initialize collection with two documents.
-      new_view.collection.insert_many([{}, {}])
+      # The number of open cursors with the option set to prevent timeout.
+      def current_no_timeout_count
+        root_authorized_client
+          .command(serverStatus: 1)
+          .documents
+          .first
+          .fetch('metrics')
+          .fetch('cursor')
+          .fetch('open')
+          .fetch('noTimeout')
+      end
 
-      expect(new_view.count).to be == 2
+      it 'is applied on the server' do
+        # Initialize collection with two documents.
+        new_view.collection.insert_many([{}, {}])
 
-      # Initial "noTimeout" count should be zero.
-      states = [current_no_timeout_count]
+        expect(new_view.count).to be == 2
 
-      # The "noTimeout" count should be one while iterating.
-      new_view.batch_size(1).each { states << current_no_timeout_count }
+        # Initial "noTimeout" count should be zero.
+        states = [current_no_timeout_count]
 
-      # Final "noTimeout" count should be back to zero.
-      states << current_no_timeout_count
+        # The "noTimeout" count should be one while iterating.
+        new_view.batch_size(1).each { states << current_no_timeout_count }
 
-      # This succeeds on:
-      #   commit aab776ebdfb15ddb9765039f7300e15796de0c5c
-      #
-      # This starts failing with [0, 0, 0, 0] from:
-      #   commit 2d9f0217ec904a1952a1ada2136502eefbca562e
-      expect(states).to be == [0, 1, 1, 0]
+        # Final "noTimeout" count should be back to zero.
+        states << current_no_timeout_count
+
+        # This succeeds on:
+        #   commit aab776ebdfb15ddb9765039f7300e15796de0c5c
+        #
+        # This starts failing with [0, 0, 0, 0] from:
+        #   commit 2d9f0217ec904a1952a1ada2136502eefbca562e
+        expect(states).to be == [0, 1, 1, 0]
+      end
     end
   end
 
