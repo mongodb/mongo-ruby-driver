@@ -1810,8 +1810,7 @@ describe Mongo::Collection::View::Readable do
 
     # The number of open cursors with the option set to prevent timeout.
     def current_no_timeout_count
-      new_view
-        .client
+      root_authorized_client
         .command(serverStatus: 1)
         .documents
         .first
