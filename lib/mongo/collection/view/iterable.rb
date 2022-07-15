@@ -170,6 +170,7 @@ module Mongo
             max_time_ms: options[:max_time_ms],
             max_value: options[:max_value],
             min_value: options[:min_value],
+            no_cursor_timeout: options[:no_cursor_timeout],
             return_key: options[:return_key],
             show_disk_loc: options[:show_disk_loc],
             comment: options[:comment],
