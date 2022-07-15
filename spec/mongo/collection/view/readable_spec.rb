@@ -1804,7 +1804,7 @@ describe Mongo::Collection::View::Readable do
         .fetch('noTimeout')
     end
 
-    it 'works' do
+    it 'is applied on the server' do
       # Initialize collection with two documents.
       new_view.collection.insert_many([{}, {}])
 
