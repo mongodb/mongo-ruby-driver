@@ -32,7 +32,7 @@ describe 'Auto Encryption' do
         database: db_name
       ),
     ).tap do |client|
-      client.encrypter.key_vault_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
 
@@ -41,7 +41,6 @@ describe 'Auto Encryption' do
     key_vault_collection.insert_one(data_key)
 
     encryption_client['users'].drop
-    result = encryption_client['users'].insert_one(ssn: ssn, age: 23)
   end
 
   let(:started_event) do
@@ -64,169 +63,229 @@ describe 'Auto Encryption' do
     end
   end
 
-  describe '#aggregate' do
-    let(:command_name) { 'aggregate' }
-
+  context 'when performing operations that need a document in the database' do
     before do
-      encryption_client['users'].aggregate([{ '$match' => { 'ssn' => ssn } }]).first
+      result = encryption_client['users'].insert_one(ssn: ssn, age: 23)
     end
 
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      expect(
-        started_event.command["pipeline"].first["$match"]["ssn"]["$eq"]
-      ).to be_ciphertext
+    describe '#aggregate' do
+      let(:command_name) { 'aggregate' }
 
-      # Command succeeded event occurs before ssn is decrypted
-      expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
+      before do
+        encryption_client['users'].aggregate([{ '$match' => { 'ssn' => ssn } }]).first
+      end
+
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        expect(
+          started_event.command["pipeline"].first["$match"]["ssn"]["$eq"]
+        ).to be_ciphertext
+
+        # Command succeeded event occurs before ssn is decrypted
+        expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
+    describe '#count' do
+      let(:command_name) { 'count' }
 
-  describe '#count' do
-    let(:command_name) { 'count' }
+      before do
+        encryption_client['users'].count(ssn: ssn)
+      end
 
-    before do
-      encryption_client['users'].count(ssn: ssn)
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        # Command succeeded event does not contain any data to be decrypted
+        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+    describe '#distinct' do
+      let(:command_name) { 'distinct' }
+
+      before do
+        encryption_client['users'].distinct(:ssn)
+      end
+
+      it 'has encrypted data in command monitoring' do
+        # Command started event does not contain any data to be encrypted
+        # Command succeeded event occurs before ssn is decrypted
+        expect(succeeded_event.reply["values"].first).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
+    describe '#delete_one' do
+      let(:command_name) { 'delete' }
 
-  describe '#distinct' do
-    let(:command_name) { 'distinct' }
+      before do
+        encryption_client['users'].delete_one(ssn: ssn)
+      end
 
-    before do
-      encryption_client['users'].distinct(:ssn)
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        # Command succeeded event does not contain any data to be decrypted
+        expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it 'has encrypted data in command monitoring' do
-      # Command started event does not contain any data to be encrypted
-      # Command succeeded event occurs before ssn is decrypted
-      expect(succeeded_event.reply["values"].first).to be_ciphertext
+    describe '#delete_many' do
+      let(:command_name) { 'delete' }
+
+      before do
+        encryption_client['users'].delete_many(ssn: ssn)
+      end
+
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        # Command succeeded event does not contain any data to be decrypted
+        expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
+    describe '#find' do
+      let(:command_name) { 'find' }
 
-  describe '#delete_one' do
-    let(:command_name) { 'delete' }
+      before do
+        encryption_client['users'].find(ssn: ssn).first
+      end
 
-    before do
-      encryption_client['users'].delete_one(ssn: ssn)
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        expect(started_event.command["filter"]["ssn"]["$eq"]).to be_ciphertext
+
+        # Command succeeded event occurs before ssn is decrypted
+        expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+    describe '#find_one_and_delete' do
+      let(:command_name) { 'findAndModify' }
+
+      before do
+        encryption_client['users'].find_one_and_delete(ssn: ssn)
+      end
+
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+
+        # Command succeeded event occurs before ssn is decrypted
+        expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
+    describe '#find_one_and_replace' do
+      let(:command_name) { 'findAndModify' }
 
-  describe '#delete_many' do
-    let(:command_name) { 'delete' }
+      before do
+        encryption_client['users'].find_one_and_replace(
+          { ssn: ssn },
+          { ssn: '555-555-5555' }
+        )
+      end
 
-    before do
-      encryption_client['users'].delete_many(ssn: ssn)
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command["update"]["ssn"]).to be_ciphertext
+
+        # Command succeeded event occurs before ssn is decrypted
+        expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+    describe '#find_one_and_update' do
+      let(:command_name) { 'findAndModify' }
+
+      before do
+        encryption_client['users'].find_one_and_update(
+          { ssn: ssn },
+          { ssn: '555-555-5555' }
+        )
+      end
+
+      it 'has encrypted data in command monitoring' do
+
+        # Command started event occurs after ssn is encrypted
+        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command["update"]["ssn"]).to be_ciphertext
+
+        # Command succeeded event occurs before ssn is decrypted
+        expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
+    describe '#replace_one' do
+      let(:command_name) { 'update' }
 
-  describe '#find' do
-    let(:command_name) { 'find' }
+      before do
+        encryption_client['users'].replace_one(
+          { ssn: ssn },
+          { ssn: '555-555-5555' }
+        )
+      end
 
-    before do
-      encryption_client['users'].find(ssn: ssn).first
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        # Command succeeded event does not contain any data to be decrypted
+        expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      expect(started_event.command["filter"]["ssn"]["$eq"]).to be_ciphertext
+    describe '#update_one' do
+      let(:command_name) { 'update' }
 
-      # Command succeeded event occurs before ssn is decrypted
-      expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
+      before do
+        encryption_client['users'].replace_one({ ssn: ssn }, { ssn: '555-555-5555' })
+      end
+
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        # Command succeeded event does not contain any data to be decrypted
+        expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
 
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
+    describe '#update_many' do
+      let(:command_name) { 'update' }
 
-  describe '#find_one_and_delete' do
-    let(:command_name) { 'findAndModify' }
+      before do
+        # update_many does not support replacement-style updates
+        encryption_client['users'].update_many({ ssn: ssn }, { "$inc" => { :age => 1 } })
+      end
 
-    before do
-      encryption_client['users'].find_one_and_delete(ssn: ssn)
+      it 'has encrypted data in command monitoring' do
+        # Command started event occurs after ssn is encrypted
+        # Command succeeded event does not contain any data to be decrypted
+        expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+      end
+
+      it_behaves_like 'it has a non-encrypted key_vault_client'
     end
-
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
-
-      # Command succeeded event occurs before ssn is decrypted
-      expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
-    end
-
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
-
-  describe '#find_one_and_replace' do
-    let(:command_name) { 'findAndModify' }
-
-    before do
-      encryption_client['users'].find_one_and_replace(
-        { ssn: ssn },
-        { ssn: '555-555-5555' }
-      )
-    end
-
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
-      expect(started_event.command["update"]["ssn"]).to be_ciphertext
-
-      # Command succeeded event occurs before ssn is decrypted
-      expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
-    end
-
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
-
-  describe '#find_one_and_update' do
-    let(:command_name) { 'findAndModify' }
-
-    before do
-      encryption_client['users'].find_one_and_update(
-        { ssn: ssn },
-        { ssn: '555-555-5555' }
-      )
-    end
-
-    it 'has encrypted data in command monitoring' do
-
-      # Command started event occurs after ssn is encrypted
-      expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
-      expect(started_event.command["update"]["ssn"]).to be_ciphertext
-
-      # Command succeeded event occurs before ssn is decrypted
-      expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
-    end
-
-    it_behaves_like 'it has a non-encrypted key_vault_client'
   end
 
   describe '#insert_one' do
@@ -240,60 +299,6 @@ describe 'Auto Encryption' do
       # Command started event occurs after ssn is encrypted
       # Command succeeded event does not contain any data to be decrypted
       expect(started_event.command["documents"].first["ssn"]).to be_ciphertext
-    end
-
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
-
-  describe '#replace_one' do
-    let(:command_name) { 'update' }
-
-    before do
-      encryption_client['users'].replace_one(
-        { ssn: ssn },
-        { ssn: '555-555-5555' }
-      )
-    end
-
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
-      expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
-    end
-
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
-
-  describe '#update_one' do
-    let(:command_name) { 'update' }
-
-    before do
-      encryption_client['users'].replace_one({ ssn: ssn }, { ssn: '555-555-5555' })
-    end
-
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
-      expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
-    end
-
-    it_behaves_like 'it has a non-encrypted key_vault_client'
-  end
-
-  describe '#update_many' do
-    let(:command_name) { 'update' }
-
-    before do
-      # update_many does not support replacement-style updates
-      encryption_client['users'].update_many({ ssn: ssn }, { "$inc" => { :age => 1 } })
-    end
-
-    it 'has encrypted data in command monitoring' do
-      # Command started event occurs after ssn is encrypted
-      # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
     end
 
     it_behaves_like 'it has a non-encrypted key_vault_client'
