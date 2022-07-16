@@ -767,32 +767,7 @@ module Mongo
         # We can't use the same cluster if some options that would affect it
         # have changed.
         if cluster_modifying?(opts)
-          Cluster.create(client)
-        end
-      end
-    end
-
-    # Creates a new client with the passed options merged over the existing
-    # options of this client.
-    #
-    # @note Depending on options given, the returned client may share the
-    #   cluster with the original client or be created with a new cluster.
-    #   Event if a new cluster is created, the monitoring event subscribers on
-    #   the new client are kept the same.
-    #
-    # @param [ Hash ] new_options The new options to use.
-    #
-    # @return [ Mongo::Client ] A new client instance.
-    #
-    # @api private
-    def copy_with_monitoring(new_options)
-      clone.tap do |client|
-        opts = client.update_options(new_options)
-        Database.create(client)
-        # We can't use the same cluster if some options that would affect it
-        # have changed. We want to reuse the same monitoring, though.
-        if cluster_modifying?(opts)
-          Cluster.create(client, monitoring: monitoring)
+          Cluster.create(client, monitoring: opts[:monitoring])
         end
       end
     end
