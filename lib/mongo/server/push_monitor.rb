@@ -196,6 +196,10 @@ module Mongo
         end
       end
 
+      def to_s
+        "#<#{self.class.name}:#{object_id} #{server.address}>"
+      end
+
     end
   end
 end
