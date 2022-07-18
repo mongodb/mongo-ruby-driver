@@ -85,6 +85,8 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def initialize(options)
+        # Note that this call may eventually, via other method invocations,
+        # create additional clients which have to be cleaned up.
         @options = set_default_options(options).freeze
 
         @crypt_handle = Crypt::Handle.new(
@@ -123,6 +125,30 @@ module Mongo
           end
           raise
         end
+      rescue
+        if @key_vault_client && @key_vault_client != options[:client] &&
+          @key_vault_client.cluster != options[:client].cluster
+        then
+          begin
+            @key_vault_client.close
+          rescue => e
+            log_warn("Error closing key vault client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+        end
+
+        if @metadata_client && @metadata_client != options[:client] &&
+          @metadata_client.cluster != options[:client].cluster
+        then
+          begin
+            @metadata_client.close
+          rescue => e
+            log_warn("Error closing metadata client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+        end
+
+        raise
       end
 
       # Whether this encrypter should perform encryption (returns false if
@@ -168,6 +194,18 @@ module Mongo
       def close
         @mongocryptd_client.close if @mongocryptd_client
 
+        if @key_vault_client && @key_vault_client != options[:client] &&
+          @key_vault_client.cluster != options[:client].cluster
+        then
+          @key_vault_client.close
+        end
+
+        if @metadata_client && @metadata_client != options[:client] &&
+          @metadata_client.cluster != options[:client].cluster
+        then
+          @metadata_client.close
+        end
+
         true
       end
 
@@ -210,26 +248,16 @@ module Mongo
         client = options[:client]
         @key_vault_client = if options[:key_vault_client]
           options[:key_vault_client]
-        # https://jira.mongodb.org/browse/RUBY-3010
-        # https://jira.mongodb.org/browse/RUBY-3011
-        # Specification requires to use existing client when connection pool
-        # size is unlimited (0). Ruby driver does not support unlimited pool
-        # size.
-        # elsif client.options[:max_pool_size] == 0
-        #   client
+        elsif client.options[:max_pool_size] == 0
+          client
         else
           internal_client(client)
         end
 
         @metadata_client = if options[:bypass_auto_encryption]
           nil
-        # Specification requires to use existing client when connection pool
-        # size is unlimited (0). Ruby driver does not support unlimited pool
-        # size.
-        # https://jira.mongodb.org/browse/RUBY-3010
-        # https://jira.mongodb.org/browse/RUBY-3011
-        # elsif client.options[:max_pool_size] == 0
-        #   client
+        elsif client.options[:max_pool_size] == 0
+          client
         else
           internal_client(client)
         end
@@ -246,12 +274,8 @@ module Mongo
       def internal_client(client)
         @internal_client ||= client.with(
           auto_encryption_options: nil,
-          # Specification requires that the internal client's connection pool
-          # size is unlimited (0). Ruby driver does not support unlimited pool
-          # size.
-          # https://jira.mongodb.org/browse/RUBY-3010
-          # https://jira.mongodb.org/browse/RUBY-3011
-          # max_pool_size: 0
+          min_pool_size: 0,
+          monitoring: client.send(:monitoring),
         )
       end
     end

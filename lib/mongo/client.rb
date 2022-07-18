@@ -767,7 +767,7 @@ module Mongo
         # We can't use the same cluster if some options that would affect it
         # have changed.
         if cluster_modifying?(opts)
-          Cluster.create(client)
+          Cluster.create(client, monitoring: opts[:monitoring])
         end
       end
     end
