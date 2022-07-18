@@ -26,7 +26,7 @@ module Mongo
       #   used to update the key vault collection with rewrapped data keys.
       attr_reader :bulk_write_result
 
-      # @param [ BulkWrite::Result ] bulk_write_result The result of the
+      # @param [ BulkWrite::Result | nil ] bulk_write_result The result of the
       #   bulk write operation used to update the key vault collection
       #   with rewrapped data keys.
       def initialize(bulk_write_result)

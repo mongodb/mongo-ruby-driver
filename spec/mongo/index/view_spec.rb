@@ -909,6 +909,62 @@ describe Mongo::Index::View do
       end
     end
 
+    context 'when providing an invalid wildcard projection expression' do
+      min_server_fcv '4.2'
+
+      it 'raises an exception' do
+        expect {
+          view.create_one({ '$**' => 1 }, wildcard_projection: 5)
+        }.to raise_error(Mongo::Error::OperationFailure, /Error in specification.*wildcardProjection|wildcardProjection.*must be a non-empty object/)
+      end
+    end
+
+    context 'when providing a wildcard projection to an invalid base index' do
+      min_server_fcv '4.2'
+
+      it 'raises an exception' do
+        expect {
+          view.create_one({ 'x' => 1 }, wildcard_projection: { rating: 1 })
+        }.to raise_error(Mongo::Error::OperationFailure, /Error in specification.*wildcardProjection|wildcardProjection.*is only allowed/)
+      end
+    end
+
+    context 'when providing a valid wildcard projection' do
+      min_server_fcv '4.2'
+
+      let!(:result) do
+        view.create_one({ '$**' => 1 }, wildcard_projection: { 'rating' => 1 })
+      end
+
+      let(:indexes) do
+        authorized_collection.indexes.get('$**_1')
+      end
+
+      it 'returns ok' do
+        expect(result).to be_successful
+      end
+
+      it 'creates an index' do
+        expect(indexes).to_not be_nil
+      end
+
+      context 'on server versions <= 4.4' do
+        max_server_fcv '4.4'
+
+        it 'passes wildcardProjection correctly' do
+          expect(indexes[:wildcardProjection]).to eq({ 'rating' => 1 })
+        end
+      end
+
+      context 'on server versions >= 5.0' do
+        min_server_fcv '5.0'
+
+        it 'passes wildcardProjection correctly' do
+          expect(indexes[:wildcardProjection]).to eq({ '_id' => false, 'rating' => true })
+        end
+      end
+    end
+
     context 'when providing hidden option' do
       let(:index) { view.get('with_hidden_1') }
 

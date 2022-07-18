@@ -169,7 +169,12 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
 
         it 'initializes context' do
           expect do
-            context
+            described_class.new(
+              mongocrypt,
+              io,
+              value,
+              options.merge(contention_factor: 0)
+            )
           end.not_to raise_error
         end
 
@@ -180,7 +185,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
                 mongocrypt,
                 io,
                 value,
-                options.merge(query_type: "equality")
+                options.merge(query_type: "equality", contention_factor: 0)
               )
             end.not_to raise_error
           end

@@ -207,7 +207,7 @@ module Mongo
           master_key_document
         ).run_state_machine
         if rewrap_result.nil?
-          return RewrapManyDataKeyResult.new({})
+          return RewrapManyDataKeyResult.new(nil)
         end
         data_key_documents = rewrap_result.fetch('v')
         updates = data_key_documents.map do |doc|

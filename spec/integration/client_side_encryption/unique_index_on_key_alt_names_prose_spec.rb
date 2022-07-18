@@ -31,7 +31,7 @@ describe "Decryption events" do
   end
 
   let(:existing_key_id) do
-    client_encryption.create_key('local', key_alt_names: [existing_key_alt_name])
+    client_encryption.create_data_key('local', key_alt_names: [existing_key_alt_name])
   end
 
   before(:each) do
@@ -52,18 +52,18 @@ describe "Decryption events" do
     existing_key_id
   end
 
-  it 'tests create_key' do
+  it 'tests create_data_key' do
     expect do
-      client_encryption.create_key('local', key_alt_names: ['abc'])
+      client_encryption.create_data_key('local', key_alt_names: ['abc'])
     end.not_to raise_error
 
     expect do
-      client_encryption.create_key('local', key_alt_names: [existing_key_alt_name])
+      client_encryption.create_data_key('local', key_alt_names: [existing_key_alt_name])
     end.to raise_error(Mongo::Error::OperationFailure, /E11000/) # duplicate key error
   end
 
   it 'tests add_key_alt_name' do
-    key_id = client_encryption.create_key('local')
+    key_id = client_encryption.create_data_key('local')
     expect do
       client_encryption.add_key_alt_name(key_id, 'abc')
     end.not_to raise_error
