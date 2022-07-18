@@ -198,32 +198,54 @@ describe 'Client construction' do
           result = key_vault_client[:test].insert_one(test: 1)
           expect(result).to be_ok
         end
-
-        it 'uses max pool size 0 for key vault client' do
-          key_vault_client = client.encrypter.key_vault_client
-          key_vault_client.options[:max_pool_size].should be 0
-        end
       end
 
-      context 'when top-level max pool size is default' do
-        before do
-          client.options[:max_pool_size].should be nil
-        end
-
+      context 'when top-level max pool size is not 0' do
         include_examples 'creates a working key vault client'
 
-        it 'creates a key vault client with a different cluster than the existing client' do
-          key_vault_client = client.encrypter.key_vault_client
-          expect(key_vault_client.cluster).not_to eq(client.cluster)
+        shared_examples 'limited connection pool' do
+          it 'creates a key vault client with a different cluster than the existing client' do
+            key_vault_client = client.encrypter.key_vault_client
+            expect(key_vault_client.cluster).not_to eq(client.cluster)
+          end
+
+          # min pool size for the key vault client can be greater than 0
+          # when the key vault client is the same as the top-level client.
+          # This is OK because we aren't making any more connections for FLE,
+          # the minimum was requested by application for its own needs.
+          it 'uses min pool size 0 for key vault client' do
+            key_vault_client = client.encrypter.key_vault_client
+            key_vault_client.options[:min_pool_size].should be 0
+          end
         end
 
-        # min pool size for the key vault client can be greater than 0
-        # when the key vault client is the same as the top-level client.
-        # This is OK because we aren't making any more connections for FLE,
-        # the minimum was requested by application for its own needs.
-        it 'uses min pool size 0 for key vault client' do
-          key_vault_client = client.encrypter.key_vault_client
-          key_vault_client.options[:min_pool_size].should be 0
+        context 'when top-level max pool size is not specified' do
+          before do
+            client.options[:max_pool_size].should be nil
+          end
+
+          include_examples 'limited connection pool'
+
+          it 'uses unspecified max pool size for key vault client' do
+            key_vault_client = client.encrypter.key_vault_client
+            key_vault_client.options[:max_pool_size].should be nil
+          end
+        end
+
+        context 'when top-level max pool size is specified' do
+          let(:options) do
+            {
+              auto_encryption_options: auto_encryption_options,
+              max_pool_size: 42,
+            }
+          end
+
+          include_examples 'limited connection pool'
+
+          it 'uses the same max pool size for key vault client' do
+            key_vault_client = client.encrypter.key_vault_client
+            key_vault_client.options[:max_pool_size].should be 42
+          end
         end
       end
 
