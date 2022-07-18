@@ -101,7 +101,7 @@ describe 'Decryption events' do
 
     expect do
       collection.aggregate([]).to_a
-    end.to raise_error(Mongo::Error::OperationFailure, /Failing command via 'failCommand' failpoint/)
+    end.to raise_error(Mongo::Error::OperationFailure, /Failing command (?:via|due to) 'failCommand' failpoint/)
     expect(subscriber.failed_events.length).to eql(1)
   end
 
