@@ -18,6 +18,18 @@ describe 'Bulk writes' do
         authorized_collection.bulk_write(operations)
       end.not_to raise_error
     end
+
+    context 'in transaction' do
+      it 'succeeds' do
+        expect do
+          authorized_collection.client.start_session do |session|
+            session.with_transaction do
+              authorized_collection.bulk_write(operations, { session: session })
+            end
+          end
+        end.not_to raise_error
+      end
+    end
   end
 
   context 'when bulk write needs to be split' do
