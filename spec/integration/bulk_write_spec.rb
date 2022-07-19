@@ -20,6 +20,8 @@ describe 'Bulk writes' do
     end
 
     context 'in transaction' do
+      require_transaction_support
+
       it 'succeeds' do
         expect do
           authorized_collection.client.start_session do |session|
