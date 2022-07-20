@@ -17,6 +17,9 @@ comprehensive list of changes in each version of the driver and the
 for the complete list of changes, including those internal to the driver and
 its test suite.
 
+
+.. _release-notes-2.18:
+
 2.18
 ====
 
@@ -77,6 +80,8 @@ This release includes the following new features:
 This release adds supports for JRuby 9.3.
 
 
+.. _release-notes-2.17:
+
 2.17
 ====
 
@@ -100,6 +105,8 @@ The following non-breaking changes were made:
 - Avoid tight looping in push monitor
 
 
+.. _release-notes-2.16:
+
 2.16
 ====
 
@@ -116,6 +123,8 @@ The following minor improvement has been made:
 This release of the Ruby driver increases the minimum required Ruby version
 to 2.4 and deprecates support for MongoDB server versions below 3.6.
 
+
+.. _release-notes-2.15:
 
 2.15
 ====
@@ -165,6 +174,8 @@ The following smaller improvements have been made:
 - Server selection timeout for ``mongocryptd`` has been increased to 10 seconds.
 
 
+.. _release-notes-2.14:
+
 2.14
 ====
 
@@ -196,6 +207,8 @@ The following smaller improvements have been made:
 
 Support for Ruby versions 2.3 and 2.4 has been deprecated as of this release.
 
+
+.. _release-notes-2.13:
 
 2.13
 ====
@@ -239,6 +252,8 @@ The following smaller improvements have been made:
   can now be configured.
 
 
+.. _release-notes-2.12:
+
 2.12
 ====
 
@@ -252,6 +267,8 @@ The following smaller improvements have been made:
 - Authentication exceptions now include server information to aid in
   troubleshooting.
 
+
+.. _release-notes-2.11:
 
 2.11
 ====
@@ -282,6 +299,8 @@ This release of the Ruby driver increases the minimum required Ruby version
 to 2.3, as well as minimum supported JRuby version to 9.2.
 
 
+.. _release-notes-2.10:
+
 2.10
 ====
 
@@ -306,6 +325,8 @@ The following smaller improvements have been made:
 
 Support for Ruby versions less than 2.3 is deprecated in this release.
 
+
+.. _release-notes-2.9:
 
 2.9
 ===
