@@ -23,6 +23,7 @@ describe 'Bulk writes' do
       require_transaction_support
 
       it 'succeeds' do
+        authorized_collection.create
         expect do
           authorized_collection.client.start_session do |session|
             session.with_transaction do
