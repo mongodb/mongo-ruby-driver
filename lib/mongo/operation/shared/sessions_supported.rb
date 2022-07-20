@@ -257,10 +257,14 @@ module Mongo
         super.tap do |message|
           if session = context.session
             # Serialize the message to detect client-side problems,
-            # such as invalid BSON keys. The message will be serialized again
+            # such as invalid BSON keys or too large messages.
+            # The message will be serialized again
             # later prior to being sent to the connection.
-            message.serialize(BSON::ByteBuffer.new)
-
+            buf = BSON::ByteBuffer.new
+            message.serialize(buf)
+            if buf.length > connection.max_message_size
+              raise Error::MaxMessageSize.new(connection.max_message_size)
+            end
             session.update_state!
           end
         end
