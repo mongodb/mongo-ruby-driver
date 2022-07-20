@@ -973,6 +973,8 @@ Note that writeConcern here is part of the operation rather than options,
 and the syntax is the camel case one that MongoDB server recognizes, not the
 underscore one that Ruby driver uses.
 
+.. _dots-dollars-in-field-names:
+
 Field Names with Dots/Periods (.) and Dollar Signs ($)
 ======================================================
 

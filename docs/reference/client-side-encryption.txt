@@ -919,6 +919,8 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
   :drivers:`Specify Encrypted Fields Using JSON Schema</security/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
   :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
 
+.. _schema-map-path:
+
 ``:schema_map_path``
 ~~~~~~~~~~~~~~~~~~~~
 

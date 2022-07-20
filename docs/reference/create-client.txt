@@ -2053,6 +2053,9 @@ driver in production:
   is not configurable; if deploying a Ruby application using MongoDB to Heroku,
   consider lowering server selection timeout to 20 or 15 seconds.
 
+
+.. _feature-flags:
+
 Feature Flags
 =============
 

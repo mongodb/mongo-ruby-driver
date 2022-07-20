@@ -28,26 +28,12 @@ This release includes the following new features:
 - Added support for Azure Key Vault, Google Cloud Key Management, and any
   KMIP compliant Key Management System to be used as master key storage for
   client side encryption.
-- The DBRef class has been moved to bson-ruby and requires bson-ruby 4.13.0
-  or greater. For backwards compatibility, BSON::DBRef is aliased as Mongo::DBRef.
-  The BSON::DBRef class derives from BSON::Document, unlike Mongo::DBRef which
-  derived from Object. BSON::DBRef retains all fields, unlike Mongo::DBRef which
-  only allowed $ref, $id, and $db. BSON::DBRef also reorders the fields if
-  necessary to place $ref, $id, and $db first, in that order.
-- CRUD methods, methods for listing databases, collection, and indexes management
-  methods now support a new option ``comment``. This option enables users to
-  specify an arbitrary comment to help trace the operation through the
-  database profiler, currentOp and logs.
-- Ruby Driver version 2.6.0 accidentally broke ``estimated_document_count`` on views
-  by changing its implementation to use ``aggregate`` and a ``$collStats`` stage
-  instead of the ``count`` command.
-- Ruby Driver version 2.18.0 is fixing ``estimated_document_count`` on views by
-  reverting back to using ``count`` in its implementation.
-- Due to an oversight, the ``count`` command was omitted from the Stable API in
-  server versions 5.0.0 - 5.0.7 and 5.1.0 - 5.3.1, so users of the Stable API
-  with ``estimated_document_count`` are recommended to upgrade their MongoDB clusters
-  to 5.0.8 or 5.3.2 (if on Atlas) or set ``api_strict: false`` when constructing
-  their MongoClients.
+- It is now possible to provide the :ref:`path to a schema map file <schema-map-path>`
+  instead of the entire schema map as an object.
+- The driver now implements the :ref:`feature flag <feature-flags>` mechanism
+  for incompatible changes and bug fixes. Changes gated behind feature flags
+  for 2.18 are passing view filter and options to ``aggregate`` and validation
+  of correct usage of ``update`` vs ``replace`` methods, as described below.
 - Added the ``validate_update_replace`` feature flag which validates the
   parameters to update and replace operations. If this flag is turned on, an
   error will be raised on an invalid update or replacement document.
@@ -55,6 +41,41 @@ This release includes the following new features:
   to be correctly propagated to the ``aggregate``, ``count``, ``count_documents``,
   ``distinct``, and ``estimated_document_count`` mehods. When this flag is
   switched on, the view options will be ignored in those methods.
+- The driver now permits :ref:`inserting documents with dollar-prefixed and
+  dotted keys <dots-dollars-in-field-names>`.
+- CRUD methods, methods for listing databases, collection, and indexes management
+  methods now support a new option ``:comment``. This option enables users to
+  specify an arbitrary comment to help trace the operation through the
+  database profiler, currentOp and logs.
+- The ``estimated_document_count`` method is now using the ``count`` server
+  command instead of `$collStats`` aggregation pipeline stage, to support
+  operation on views. Applications using the Stable API should upgrade to
+  server versions 5.0.8 (if using MongoDB 5.0) or 5.3.2 (if using MongoDB
+  5.1/5.2/5.3) or newer to use the ``count`` command when API strict is enabled,
+  or avoid setting ``api_strict: true`` when constructing ``Mongo::Client``
+  instances with server versions 5.0.0-5.0.7 and 5.1.0-5.3.1.
+- The DBRef class has been moved to bson-ruby. For backwards compatibility,
+  ``BSON::DBRef`` is aliased as ``Mongo::DBRef``. The ``BSON::DBRef`` class
+  derives from ``BSON::Document``, unlike the legacy ``Mongo::DBRef`` which
+  derived from ``Object``. ``BSON::DBRef`` retains all attributes passed into
+  its constructor, unlike ``Mongo::DBRef`` which only allowed ``$ref``,
+  ``$id``, and ``$db``. ``BSON::DBRef`` also reorders the fields if
+  necessary to place ``$ref``, ``$id``, and ``$db`` first, in that order, as
+  required by the MongoDB server.
+- ``BulkWrite::Result`` class now has the ``acknowledged?`` attribute.
+- Providing an empty array of operations to the bulk write is now an error.
+- BSON serialization performance has been improved.
+- :ref:`ActiveJob middleware <query-cache-active-job-middleware>` was added to
+  the query cache.
+- ``:authorized_collections`` options is recognized when listing collections.
+- ``:wildcard_projection`` option was added to the allowed index specification.
+- Custom SRV service names are now supported with the ``srvServiceName`` URI option.
+- When 0 is given as the max connection pool size, it is now interpreted to
+  mean no limit.
+- The default maximum connection pool size has been increased to 20 from 5.
+
+This release adds supports for JRuby 9.3.
+
 
 2.17
 ====
@@ -77,6 +98,7 @@ The following non-breaking changes were made:
 
 - mapReduce command is now deprecated.
 - Avoid tight looping in push monitor
+
 
 2.16
 ====
