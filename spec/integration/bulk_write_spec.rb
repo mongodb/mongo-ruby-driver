@@ -21,6 +21,7 @@ describe 'Bulk writes' do
 
     context 'in transaction' do
       require_transaction_support
+      min_server_version "4.4"
 
       it 'succeeds' do
         authorized_collection.create
