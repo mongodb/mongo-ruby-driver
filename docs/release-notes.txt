@@ -72,7 +72,10 @@ This release includes the following new features:
   the query cache.
 - ``:authorized_collections`` options is recognized when listing collections.
 - ``:wildcard_projection`` option was added to the allowed index specification.
-- Custom SRV service names are now supported with the ``srvServiceName`` URI option.
+- Added ``:srv_max_hosts``/``srvMaxHosts`` Ruby and URI options to limit how
+  many mongos routers the driver will establish connections to.
+- Custom SRV service names are now supported with the ``:srv_service_name``
+  Ruby option and the ``srvServiceName`` URI option.
 - When 0 is given as the max connection pool size, it is now interpreted to
   mean no limit.
 - The default maximum connection pool size has been increased to 20 from 5.
