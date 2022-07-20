@@ -221,7 +221,7 @@ module Mongo
     def split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
       execute_operation(name, values.shift(values.size / 2), connection, context, operation_id, result_combiner, session, txn_num)
 
-      txn_num = session.next_txn_num if txn_num
+      txn_num = session.next_txn_num if txn_num && !session.in_transaction?
       execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num)
     end
 
