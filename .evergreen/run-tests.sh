@@ -161,7 +161,7 @@ fi
 if test -n "$FLE"; then
   # Downloading crypt shared lib
   crypt_shared_version=`${BINDIR}/mongod --version | grep -oP 'db version v\K.*'`
-  python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out `pwd`/csfle_lib  --target `host_distro`
+  python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out `pwd`/csfle_lib  --target `host_distro` || true
   if [ $? -eq 0 ]
   then
     export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
