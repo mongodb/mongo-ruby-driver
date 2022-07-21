@@ -81,6 +81,12 @@ module Mongo
       #     and schemaMap, an error will be raised.
       # @option options [ Boolean | nil ] :bypass_query_analysis When true
       #   disables automatic analysis of outgoing commands.
+      # @option options [ String | nil ] :crypt_shared_lib_path Path that should
+      #   be  the used to load the crypt shared library. Providing this option
+      #   overrides default crypt shared library load paths for libmongocrypt.
+      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      #   crypt shared library is required. If 'true', an error will be raised
+      #   if a crypt_shared library cannot be loaded by libmongocrypt.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
