@@ -36,7 +36,11 @@ module Mongo
       #   should be hashes of TLS connection options. The options are equivalent
       #   to TLS connection options of Mongo::Client.
       def initialize(key_vault_client, key_vault_namespace, kms_providers, kms_tls_options)
-        @crypt_handle = Handle.new(kms_providers, kms_tls_options)
+        @crypt_handle = Handle.new(
+          kms_providers,
+          kms_tls_options,
+          explicit_encryption_only: true
+        )
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,
           metadata_client: nil,

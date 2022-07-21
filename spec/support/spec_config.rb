@@ -471,6 +471,10 @@ EOT
     end
   end
 
+  def crypt_shared_lib_path
+    ENV['MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH']
+  end
+
   def auth?
     x509_auth? || user
   end

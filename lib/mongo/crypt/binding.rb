@@ -1385,6 +1385,50 @@ module Mongo
         end
       end
 
+      attach_function(
+        :mongocrypt_setopt_append_crypt_shared_lib_search_path,
+        [
+          :pointer,
+          :string,
+        ],
+        :void
+      )
+
+      def self.setopt_append_crypt_shared_lib_search_path(handle, path)
+        check_status(handle) do
+          mongocrypt_setopt_append_crypt_shared_lib_search_path(handle.ref, path)
+        end
+      end
+
+      attach_function(
+        :mongocrypt_setopt_set_crypt_shared_lib_path_override,
+        [
+          :pointer,
+          :string,
+        ],
+        :void
+      )
+
+      def self.setopt_set_crypt_shared_lib_path_override(handle, path)
+        check_status(handle) do
+          mongocrypt_setopt_set_crypt_shared_lib_path_override(handle.ref, path)
+        end
+      end
+
+      # MONGOCRYPT_EXPORT
+      # uint64_t
+      # mongocrypt_crypt_shared_lib_version (const mongocrypt_t *crypt);
+      attach_function(
+        :mongocrypt_crypt_shared_lib_version,
+        [ :pointer ],
+        :uint64
+      )
+
+      def self.crypt_shared_lib_version(handle)
+        mongocrypt_crypt_shared_lib_version(handle.ref)
+      end
+
+
       # @!method self.mongocrypt_ctx_setopt_query_type(ctx, mongocrypt_query_type)
       #   @api private
       #

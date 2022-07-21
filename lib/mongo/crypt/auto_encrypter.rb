@@ -95,17 +95,32 @@ module Mongo
           schema_map: @options[:schema_map],
           schema_map_path: @options[:schema_map_path],
           encrypted_fields_map: @options[:encrypted_fields_map],
-          bypass_query_analysis: @options[:bypass_query_analysis]
+          bypass_query_analysis: @options[:bypass_query_analysis],
+          crypt_shared_lib_path: @options[:extra_options][:crypt_shared_lib_path],
+          crypt_shared_lib_required: @options[:extra_options][:crypt_shared_lib_required],
         )
 
-        # Set server selection timeout to 1 to prevent the client waiting for a
-        # long timeout before spawning mongocryptd
-        @mongocryptd_client = Client.new(
-          @options[:extra_options][:mongocryptd_uri],
-          monitoring_io: @options[:client].options[:monitoring_io],
-          server_selection_timeout: 10,
-          database: @options[:client].options[:database]
+        @mongocryptd_options = @options[:extra_options].slice(
+          :mongocryptd_uri,
+          :mongocryptd_bypass_spawn,
+          :mongocryptd_spawn_path,
+          :mongocryptd_spawn_args
         )
+        @mongocryptd_options[:mongocryptd_bypass_spawn] = @options[:bypass_auto_encryption] ||
+          @options[:extra_options][:mongocryptd_bypass_spawn] ||
+          @crypt_handle.crypt_shared_lib_available? ||
+          @options[:extra_options][:crypt_shared_lib_required]
+
+        if !@options[:extra_options][:crypt_shared_lib_required]
+          # Set server selection timeout to 1 to prevent the client waiting for a
+          # long timeout before spawning mongocryptd
+          @mongocryptd_client = Client.new(
+            @options[:extra_options][:mongocryptd_uri],
+            monitoring_io: @options[:client].options[:monitoring_io],
+            server_selection_timeout: 10,
+            database: @options[:client].options[:database]
+          )
+        end
 
         begin
           @encryption_io = EncryptionIO.new(
@@ -118,7 +133,7 @@ module Mongo
           )
         rescue
           begin
-            @mongocryptd_client.close
+            @mongocryptd_client&.close
           rescue => e
             log_warn("Error closing mongocryptd client in auto encrypter's constructor: #{e.class}: #{e}")
             # Drop this exception so that the original exception is raised

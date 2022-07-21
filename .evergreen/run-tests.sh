@@ -159,13 +159,22 @@ elif test "$AUTH" = kerberos; then
 fi
 
 if test -n "$FLE"; then
+  # Downloading crypt shared lib
+  crypt_shared_version=`${BINDIR}/mongod --version | grep -oP 'db version v\K.*'`
+  python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out `pwd`/csfle_lib  --target `host_distro`
+  if [ $? -eq 0 ]
+  then
+    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
+  fi
+
+
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
     # We already have a virtualenv activated for mlaunch,
     # install kms dependencies into it.
     #. .evergreen/csfle/activate_venv.sh
-    
+
     # Adjusted package versions:
     # cryptography 3.4 requires rust, see
     # https://github.com/pyca/cryptography/issues/5771.
@@ -194,7 +203,7 @@ if test -n "$FLE"; then
     else
       # So, install the helper for the binary.
       gem install libmongocrypt-helper --pre
-      
+
       # https://stackoverflow.com/questions/19072070/how-to-find-where-gem-files-are-installed
       path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so |head -1 || true)
       if test -z "$path"; then
@@ -203,7 +212,7 @@ if test -n "$FLE"; then
       fi
       cp $path .
       export LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
-      
+
       gem uni libmongocrypt-helper
     fi
     test -f "$LIBMONGOCRYPT_PATH"

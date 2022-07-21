@@ -18,6 +18,10 @@ describe Mongo::Crypt::Handle do
         kms_tls_options,
         schema_map: schema_map,
         schema_map_path: schema_map_path,
+        bypass_query_analysis: bypass_query_analysis,
+        crypt_shared_lib_path: crypt_shared_lib_path,
+        crypt_shared_lib_required: crypt_shared_lib_required,
+        explicit_encryption_only: explicit_encryption_only,
       )
     end
 
@@ -26,6 +30,22 @@ describe Mongo::Crypt::Handle do
     end
 
     let(:schema_map_path) do
+      nil
+    end
+
+    let(:bypass_query_analysis) do
+      nil
+    end
+
+    let(:crypt_shared_lib_path) do
+      nil
+    end
+
+    let(:crypt_shared_lib_required) do
+      nil
+    end
+
+    let(:explicit_encryption_only) do
       nil
     end
 
@@ -71,6 +91,88 @@ describe Mongo::Crypt::Handle do
 
         it 'does not raise an exception' do
           expect { handle }.not_to raise_error
+        end
+      end
+
+      context 'with crypt_shared_lib_path' do
+        min_server_version '6.0.0'
+
+        context 'with correct path' do
+          let(:crypt_shared_lib_path) do
+            SpecConfig.instance.crypt_shared_lib_path
+          end
+
+          it 'loads the crypt shared lib' do
+            expect(handle.crypt_shared_lib_version).not_to eq(0)
+          end
+        end
+
+        context 'with incorrect path' do
+          let(:crypt_shared_lib_path) do
+            '/some/bad/path/mongo_crypt_v1.so'
+          end
+
+          it 'raises an exception' do
+            expect { handle }.to raise_error(Mongo::Error::CryptError)
+          end
+        end
+      end
+
+      context 'with crypt_shared_lib_required' do
+        min_server_version '6.0.0'
+
+        context 'set to true' do
+          let(:crypt_shared_lib_required) do
+            true
+          end
+
+          context 'when shared lib is available' do
+            let(:crypt_shared_lib_path) do
+              SpecConfig.instance.crypt_shared_lib_path
+            end
+
+            it 'does not raise an exception' do
+              expect { handle }.not_to raise_error
+            end
+          end
+
+          context 'when shared lib is not available' do
+            let(:crypt_shared_lib_path) do
+              '/some/bad/path/mongo_crypt_v1.so'
+            end
+
+            it 'raises an exception' do
+              expect { handle }.to raise_error(Mongo::Error::CryptError)
+            end
+          end
+        end
+      end
+
+      context 'if bypass_query_analysis is true' do
+        min_server_version '6.0.0'
+
+        let(:bypass_query_analysis) do
+          true
+        end
+
+        it 'does not load the crypt shared lib' do
+          expect_any_instance_of(Binding).not_to receive(:setopt_append_crypt_shared_lib_search_path)
+
+          expect(handle.crypt_shared_lib_version).to eq(0)
+        end
+      end
+
+      context 'if explicit_encryption_only is true' do
+        min_server_version '6.0.0'
+
+        let(:explicit_encryption_only) do
+          true
+        end
+
+        it 'does not load the crypt shared lib' do
+          expect_any_instance_of(Binding).not_to receive(:setopt_append_crypt_shared_lib_search_path)
+
+          expect(handle.crypt_shared_lib_version).to eq(0)
         end
       end
     end

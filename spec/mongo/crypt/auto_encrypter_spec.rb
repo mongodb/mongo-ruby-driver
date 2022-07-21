@@ -16,10 +16,14 @@ describe Mongo::Crypt::AutoEncrypter do
     described_class.new(
       auto_encryption_options.merge(
         client: authorized_client.use(:auto_encryption),
-        # Spawn mongocryptd on non-default port for sharded cluster tests
-        extra_options: extra_options
+        extra_options: auto_encrypter_extra_options
       )
     )
+  end
+
+  let(:auto_encrypter_extra_options) do
+    # Spawn mongocryptd on non-default port for sharded cluster tests
+    extra_options
   end
 
   let(:client) { authorized_client }
@@ -155,7 +159,7 @@ describe Mongo::Crypt::AutoEncrypter do
     end
   end
 
-  context 'with schema map in auto encryption commands' do
+  shared_examples 'with schema map in auto encryption commands' do
     include_context 'without jsonSchema validator'
 
     let(:auto_encryption_options) do
@@ -193,7 +197,7 @@ describe Mongo::Crypt::AutoEncrypter do
     end
   end
 
-  context 'with schema map file in auto encryption commands' do
+  shared_examples 'with schema map file in auto encryption commands' do
     include_context 'without jsonSchema validator'
 
     let(:schema_map_file) do
@@ -246,7 +250,7 @@ describe Mongo::Crypt::AutoEncrypter do
     end
   end
 
-  context 'with schema map collection validator' do
+  shared_examples 'with schema map collection validator' do
     include_context 'with jsonSchema validator'
 
     let(:auto_encryption_options) do
@@ -302,7 +306,7 @@ describe Mongo::Crypt::AutoEncrypter do
     end
   end
 
-  context 'with no validator or client option' do
+  shared_examples 'with no validator or client option' do
     include_context 'without jsonSchema validator'
 
     let(:auto_encryption_options) do
@@ -402,5 +406,36 @@ describe Mongo::Crypt::AutoEncrypter do
         end
       end
     end
+  end
+
+  context 'when using crypt shared library' do
+    min_server_version '6.0.0'
+
+    let(:auto_encrypter_extra_options) do
+      {
+        crypt_shared_lib_path: SpecConfig.instance.crypt_shared_lib_path
+      }
+    end
+
+    let(:auto_encryption_options) do
+      {
+        kms_providers: kms_providers,
+        kms_tls_options: kms_tls_options,
+        key_vault_namespace: key_vault_namespace,
+        schema_map: { "#{db_name}.#{collection_name}": schema_map },
+      }
+    end
+
+    it_behaves_like 'with schema map in auto encryption commands'
+    it_behaves_like 'with schema map file in auto encryption commands'
+    it_behaves_like 'with schema map collection validator'
+    it_behaves_like 'with no validator or client option'
+  end
+
+  context 'when using mongocryptd' do
+    it_behaves_like 'with schema map in auto encryption commands'
+    it_behaves_like 'with schema map file in auto encryption commands'
+    it_behaves_like 'with schema map collection validator'
+    it_behaves_like 'with no validator or client option'
   end
 end
