@@ -408,7 +408,8 @@ The client-side encryption tests require the mongocryptd binary to be in the
 system path.
 
 Download enterprise versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
-Read more about installing mongocryptd here: https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#mongocryptd
+Download the Automatic Encryption Shared Library https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/#std-label-qe-reference-shared-library-download
+Install and Configure mongocryptd: https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/
 
 Install libmongocrypt on your machine:
 
@@ -425,6 +426,9 @@ Option 1: Download a pre-built binary
 
 Option 2: Build from source
 - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
+
+Option 3: Use libmongocrypt-helper gem (Linux only)
+- Run command `FLE=helper bundle install`
 
 Create AWS KMS keys
 Many of the Client-Side Encryption tests require that you have an encryption

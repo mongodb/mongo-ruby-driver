@@ -99,7 +99,7 @@ module Mongo
         @crypt_shared_lib_required = !!options[:crypt_shared_lib_required]
         if @crypt_shared_lib_required && crypt_shared_lib_version == 0
           raise Mongo::Error::CryptError.new(
-            "Crypt shared library is required, but cannot be loaded"
+            "Crypt shared library is required, but cannot be loaded  according to libmongocrypt"
           )
         end
       end
