@@ -50,6 +50,15 @@ module Mongo
       #     and schemaMap, an error will be raised.
       # @option options [ Boolean | nil ] :bypass_query_analysis When true
       #   disables automatic analysis of outgoing commands.
+      # @option options [ String | nil ] :crypt_shared_lib_path Path that should
+      #   be  the used to load the crypt shared library. Providing this option
+      #   overrides default crypt shared library load paths for libmongocrypt.
+      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      #   crypt_shared library is required. If 'true', an error will be raised
+      #   if a crypt_shared library cannot be loaded by libmongocrypt.
+      # @option options [ Boolean | nil ] :explicit_encryption_only Whether this
+      #   handle is going to be used only for explicit encryption. If true,
+      #   libmongocrypt is instructed not to load crypt shared library.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       def initialize(kms_providers, kms_tls_options, options={})
@@ -70,13 +79,29 @@ module Mongo
         @bypass_query_analysis = options[:bypass_query_analysis]
         set_bypass_query_analysis if @bypass_query_analysis
 
+        @crypt_shared_lib_path = options[:crypt_shared_lib_path]
+        @explicit_encryption_only = options[:explicit_encryption_only]
+        if @crypt_shared_lib_path
+          Binding.setopt_set_crypt_shared_lib_path_override(self, @crypt_shared_lib_path)
+        elsif !@bypass_query_analysis && !@explicit_encryption_only
+          Binding.setopt_append_crypt_shared_lib_search_path(self, "$SYSTEM")
+        end
+
         @logger = options[:logger]
         set_logger_callback if @logger
 
         set_crypto_hooks
 
         Binding.setopt_kms_providers(self, kms_providers.to_document)
+
         initialize_mongocrypt
+
+        @crypt_shared_lib_required = !!options[:crypt_shared_lib_required]
+        if @crypt_shared_lib_required && crypt_shared_lib_version == 0
+          raise Mongo::Error::CryptError.new(
+            "Crypt shared library is required, but cannot be loaded  according to libmongocrypt"
+          )
+        end
       end
 
       # Return the reference to the underlying @mongocrypt object
@@ -94,6 +119,14 @@ module Mongo
       # @return [ Hash ] TLS options to connect to KMS provider.
       def kms_tls_options(provider)
         @kms_tls_options.fetch(provider, {})
+      end
+
+      def crypt_shared_lib_version
+        Binding.crypt_shared_lib_version(self)
+      end
+
+      def crypt_shared_lib_available?
+        crypt_shared_lib_version != 0
       end
 
       private

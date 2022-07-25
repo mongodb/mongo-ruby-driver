@@ -1385,6 +1385,80 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_setopt_append_crypt_shared_lib_search_path(crypt, path)
+      #   @api private
+      #
+      # Append an additional search directory to the search path for loading
+      #   the crypt_shared dynamic library.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      # @param [ String ] path A path to search for the crypt shared library. If the leading element of
+      #   the path is the literal string "$ORIGIN", that substring will be replaced
+      #   with the directory path containing the executable libmongocrypt module. If
+      #   the path string is literal "$SYSTEM", then libmongocrypt will defer to the
+      #   system's library resolution mechanism to find the crypt_shared library.
+      attach_function(
+        :mongocrypt_setopt_append_crypt_shared_lib_search_path,
+        [
+          :pointer,
+          :string,
+        ],
+        :void
+      )
+
+      # Append an additional search directory to the search path for loading
+      #   the crypt_shared dynamic library.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ String ] path A search path for the crypt shared library.
+      def self.setopt_append_crypt_shared_lib_search_path(handle, path)
+        check_status(handle) do
+          mongocrypt_setopt_append_crypt_shared_lib_search_path(handle.ref, path)
+        end
+      end
+
+      # @!method self.mongocrypt_setopt_set_crypt_shared_lib_path_override(crypt, path)
+      #   @api private
+      #
+      # Set a single override path for loading the crypt shared library.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      # @param [ String ] path A path to crypt shared library file. If the leading element of
+      #   the path is the literal string "$ORIGIN", that substring will be replaced
+      #   with the directory path containing the executable libmongocrypt module.
+      attach_function(
+        :mongocrypt_setopt_set_crypt_shared_lib_path_override,
+        [
+          :pointer,
+          :string,
+        ],
+        :void
+      )
+
+      # Set a single override path for loading the crypt shared library.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ String ] path A path to crypt shared library file.
+      def self.setopt_set_crypt_shared_lib_path_override(handle, path)
+        check_status(handle) do
+          mongocrypt_setopt_set_crypt_shared_lib_path_override(handle.ref, path)
+        end
+      end
+
+      # MONGOCRYPT_EXPORT
+      # uint64_t
+      # mongocrypt_crypt_shared_lib_version (const mongocrypt_t *crypt);
+      attach_function(
+        :mongocrypt_crypt_shared_lib_version,
+        [ :pointer ],
+        :uint64
+      )
+
+      def self.crypt_shared_lib_version(handle)
+        mongocrypt_crypt_shared_lib_version(handle.ref)
+      end
+
+
       # @!method self.mongocrypt_ctx_setopt_query_type(ctx, mongocrypt_query_type)
       #   @api private
       #

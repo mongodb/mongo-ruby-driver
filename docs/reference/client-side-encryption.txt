@@ -90,9 +90,34 @@ you add this variable to your rc files. For example:
   The binary referenced in this section can be a pre-release version of
   libmongocrypt which is not recommended for production environments.
 
+Automatic Encryption Shared Library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Automatic Encryption Shared Library is a dynamic library that enables your
+client application to perform automatic encryption. It is only required for
+automatic encryption, which is an enterprise-only feature.
+If you only intend to use explicit encryption, you may skip this step.
+The Automatic Encryption Shared Library provides the same functionality as
+mongocryptd (see below), but does not require you to spawn another process
+to perform automatic encryption.
+
+For installation instructions, see
+`the MongoDB manual <https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/#download-the-automatic-encryption-shared-library>`_.
+
+When automatic encryption is enabled, libmongocrypt will look for the shared
+library in the system library path, or try to load the library from a particular
+place if ``:crypt_shared_lib_path`` option is provided when creating a client.
+If the library can be loaded, then the driver will not try to spawn mongocryptd daemon.
+The daemon will be still spawned if the shared library cannot be found.
+
+It is also possible to require using the shared library by passing
+``crypt_shared_lib_required: true`` option when creating a client. In this case,
+an error will be raised if the shared library cannot be loaded.
+
 mongocryptd
 ~~~~~~~~~~~
 
+Mongocryptd is an alternative to the Automatic Encryption Shared Library.
 Mongocryptd is a daemon that tells the driver which fields to encrypt in a
 given operation. It is only required for automatic encryption, which is an
 enterprise-only feature. If you only intend to use explicit encryption, you may
