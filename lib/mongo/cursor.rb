@@ -253,7 +253,12 @@ module Mongo
     #
     # @since 2.2.0
     def batch_size
-      @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
+      value = @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
+      if value == 0
+        nil
+      else
+        value
+      end
     end
 
     # Is the cursor closed?
