@@ -167,9 +167,6 @@ if test -n "$FLE"; then
     export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
   fi
 
-  # Obtain temporary AWS credentials
-  PYTHON=python3 .evergreen/csfle/set-temp-creds.sh
-
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
@@ -188,6 +185,9 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
+
+  # Obtain temporary AWS credentials
+  PYTHON=python3 .evergreen/csfle/set-temp-creds.sh
 
   if test "$FLE" = helper; then
     echo "Using helper gem"
