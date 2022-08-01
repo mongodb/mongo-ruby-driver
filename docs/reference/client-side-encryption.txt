@@ -361,7 +361,7 @@ Queryable Encryption
 ====================
 
 Queryable encryption is a new feature in MongoDB 6.0. It also requires
-libmongocrypt version 1.5.0 or above.
+libmongocrypt version 1.5.2 or above.
 
 You can find more information about queryable encryption in `MongoDB Manual
 <https://www.mongodb.com/docs/upcoming/core/queryable-encryption/queryable-encryption/>`_
