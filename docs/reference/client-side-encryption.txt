@@ -178,7 +178,7 @@ in order to perform automatic encryption.
   internal ``Mongo::Client`` instance is created if any of the following are true:
 
   - ``auto_encryption_options[:key_vault_client]`` is not passed.
-  - ``auto_encryption_options[:bypass_automatic_encryption]`` is false.
+  - ``auto_encryption_options[:bypass_automatic_encryption]`` is not passed or false.
 
   If an internal ``Mongo::Client`` instance is created, it is configured with
   the same options as the parent client except ``:min_pool_size`` is set to 0
