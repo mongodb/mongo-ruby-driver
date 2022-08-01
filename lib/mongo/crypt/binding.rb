@@ -83,7 +83,7 @@ module Mongo
       # will cause a `LoadError`.
       #
       # @api private
-      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.5.0.alpha")
+      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.5.2")
 
       # @!method self.mongocrypt_version(len)
       #   @api private
@@ -104,6 +104,24 @@ module Mongo
       # @api private
       def self.validate_version(lmc_version)
         if (actual_version = Gem::Version.new(lmc_version)) < MIN_LIBMONGOCRYPT_VERSION
+          raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is required, " +
+            "but version #{actual_version} was found."
+        end
+      rescue ArgumentError => e
+        # Some lmc versions cannot be parsed with Gem::Version class,
+        # so we fall back to regex.
+        match = lmc_version.match(/\A(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)?(-[A-Za-z\+\d]+)?\z/)
+        if match.nil?
+          raise ArgumentError.new("Malformed version number string #{lmc_version}")
+        end
+        actual_version = Gem::Version.new(
+          [
+            match[:major],
+            match[:minor],
+            match[:patch]
+          ].join('.')
+        )
+        if actual_version < MIN_LIBMONGOCRYPT_VERSION
           raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is required, " +
             "but version #{actual_version} was found."
         end
