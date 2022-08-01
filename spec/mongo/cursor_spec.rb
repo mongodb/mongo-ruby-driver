@@ -734,4 +734,54 @@ describe Mongo::Cursor do
       end
     end
   end
+
+  describe '#batch_size' do
+    let(:subscriber) { Mrss::EventSubscriber.new }
+
+    let(:subscribed_client) do
+      authorized_client.tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+    end
+
+    let(:collection) do
+      subscribed_client[TEST_COLL]
+    end
+
+    let(:view) do
+      collection.find({}, limit: limit)
+    end
+
+    before do
+      collection.drop
+      collection.insert_many([].fill({ "bar": "baz" }, 0, 102))
+    end
+
+    context 'when limit is 0 and batch_size is not set' do
+      let(:limit) do
+        0
+      end
+
+      it 'does not set batch_size' do
+        view.to_a
+        get_more_commands = subscriber.started_events.select { |e| e.command_name == 'getMore' }
+        expect(get_more_commands.length).to eq(1)
+        expect(get_more_commands.first.command.keys).not_to include('batchSize')
+      end
+    end
+
+    context 'when limit is not zero and batch_size is not set' do
+      let(:limit) do
+        1000
+      end
+
+      it 'sets batch_size' do
+        view.to_a
+        get_more_commands = subscriber.started_events.select { |e| e.command_name == 'getMore' }
+
+        expect(get_more_commands.length).to eq(1)
+        expect(get_more_commands.first.command.keys).to include('batchSize')
+      end
+    end
+  end
 end
