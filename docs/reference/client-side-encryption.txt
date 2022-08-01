@@ -174,7 +174,7 @@ in order to perform automatic encryption.
 
   When using Automatic Encryption, and a ``Mongo::Client`` instance that is configured
   with ``:auto_encryption_options`` has a limited connection pool size
-  (i.e a non-zero ``:max_pool_size``, which is a default setting), a separate
+  (i.e a non-zero ``:max_pool_size``, which is the default setting), a separate
   internal ``Mongo::Client`` instance is created if any of the following are true:
 
   - ``auto_encryption_options[:key_vault_client]`` is not passed.
