@@ -462,6 +462,12 @@ module Mongo
     #       and schemaMap, an error will be raised.
     #   - :bypass_query_analysis => Boolean | nil, when true disables automatic
     #     analysis of outgoing commands.
+    #   - :crypt_shared_lib_path => [ String | nil ]  Path that should
+    #     be  the used to load the crypt shared library. Providing this option
+    #     overrides default crypt shared library load paths for libmongocrypt.
+    #   - :crypt_shared_lib_required => [ Boolean | nil ]  Whether
+    #     crypt shared library is required. If 'true', an error will be raised
+    #     if a crypt_shared library cannot be loaded by libmongocrypt.
     #
     #   Notes on automatic encryption:
     #   - Automatic encryption is an enterprise only feature that only applies

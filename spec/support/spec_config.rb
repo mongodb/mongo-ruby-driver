@@ -393,6 +393,21 @@ EOT
     ENV['MONGO_RUBY_DRIVER_AWS_ARN']
   end
 
+  # AWS temporary access key id (set by set-temp-creds.sh)
+  def fle_aws_temp_key
+    ENV['CSFLE_AWS_TEMP_ACCESS_KEY_ID']
+  end
+
+  # AWS temporary secret access key (set by set-temp-creds.sh)
+  def fle_aws_temp_secret
+    ENV['CSFLE_AWS_TEMP_SECRET_ACCESS_KEY']
+  end
+
+  # AWS temporary session token (set by set-temp-creds.sh)
+  def fle_aws_temp_session_token
+    ENV['CSFLE_AWS_TEMP_SESSION_TOKEN']
+  end
+
   def fle_azure_tenant_id
     ENV['MONGO_RUBY_DRIVER_AZURE_TENANT_ID']
   end

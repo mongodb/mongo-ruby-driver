@@ -167,6 +167,8 @@ if test -n "$FLE"; then
     export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
   fi
 
+  # Obtain temporary AWS credentials
+  PYTHON=python3 .evergreen/csfle/set-temp-creds.sh
 
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.

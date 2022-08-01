@@ -132,6 +132,36 @@ module Mongo
             test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
           end
 
+          if kms_providers = @client_options[:auto_encryption_options][:kms_providers]
+            @client_options[:auto_encryption_options][:kms_providers] = kms_providers.map do |provider, opts|
+              case provider
+              when :aws_temporary
+                [
+                  :aws,
+                  {
+                    access_key_id: SpecConfig.instance.fle_aws_temp_key,
+                    secret_access_key: SpecConfig.instance.fle_aws_temp_secret,
+                    session_token: SpecConfig.instance.fle_aws_temp_session_token,
+                  }
+                ]
+              when :aws_temporary_no_session_token
+                [
+                  :aws,
+                  {
+                    access_key_id: SpecConfig.instance.fle_aws_temp_key,
+                    secret_access_key: SpecConfig.instance.fle_aws_temp_secret,
+                  }
+                ]
+              else
+                [provider, opts]
+              end
+            end.to_h
+          end
+
+          if SpecConfig.instance.crypt_shared_lib_path
+            @client_options[:auto_encryption_options][:extra_options][:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+          end
+
           ClientRegistry.instance.new_local_client(
             SpecConfig.instance.addresses,
             SpecConfig.instance.authorized_test_options.merge(
