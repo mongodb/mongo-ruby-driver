@@ -547,7 +547,7 @@ Below is an example of explicit queryable encryption.
   # Please note that to insert or query with an "Indexed" encrypted payload,
   # you should use a ``Mongo::Client`` that is configured with ``:auto_encryption_options``.
   # ``auto_encryption_options[:bypass_query_analysis]`` may be true.
-  # ``auto_encryption_options[:bypass_auto_encryption]`` must be false.
+  # ``auto_encryption_options[:bypass_auto_encryption]`` must be not set or false.
   client = Mongo::Client.new(
     ['localhost:27017'],
     auto_encryption_options: {
