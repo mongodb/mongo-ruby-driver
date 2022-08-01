@@ -158,7 +158,8 @@ module Mongo
             end.to_h
           end
 
-          if SpecConfig.instance.crypt_shared_lib_path
+          if @client_options[:auto_encryption_options] && SpecConfig.instance.crypt_shared_lib_path
+            @client_options[:auto_encryption_options][:extra_options] ||= {}
             @client_options[:auto_encryption_options][:extra_options][:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
           end
 
