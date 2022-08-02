@@ -187,7 +187,7 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_kmip_server.py &
 
   # Obtain temporary AWS credentials
-  PYTHON=python3 .evergreen/csfle/set-temp-creds.sh
+  PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
 
   if test "$FLE" = helper; then
     echo "Using helper gem"
