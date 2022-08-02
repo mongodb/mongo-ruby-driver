@@ -37,5 +37,11 @@ module Unified
       object = entities.get(:change_stream, object_id)
       object.to_enum.next
     end
+
+    def close(op)
+      object_id = op.use!('object')
+      object = entities.get(:change_stream, object_id)
+      object.close
+    end
   end
 end
