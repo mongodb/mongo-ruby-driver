@@ -29,7 +29,8 @@ describe 'Auto Encryption' do
           # Spawn mongocryptd on non-default port for sharded cluster tests
           extra_options: extra_options,
         },
-        database: 'auto_encryption'
+        database: 'auto_encryption',
+        max_pool_size: max_pool_size
       ),
     )
   end
@@ -37,6 +38,10 @@ describe 'Auto Encryption' do
   let(:client) { authorized_client.use('auto_encryption') }
 
   let(:bypass_auto_encryption) { false }
+
+  let(:max_pool_size) do
+    Mongo::Server::ConnectionPool::DEFAULT_MAX_SIZE
+  end
 
   let(:encrypted_ssn_binary) do
     BSON::Binary.new(Base64.decode64(encrypted_ssn), :ciphertext)
@@ -79,6 +84,12 @@ describe 'Auto Encryption' do
     end
   end
 
+  shared_context 'limited connection pool' do
+    let(:max_pool_size) do
+      1
+    end
+  end
+
   before(:each) do
     client['users'].drop
     key_vault_collection.drop
@@ -97,6 +108,11 @@ describe 'Auto Encryption' do
       context 'with schema map' do
         include_context 'schema map in client options'
         it_behaves_like 'it performs an encrypted command'
+
+        context 'with limited connection pool' do
+          include_context 'limited connection pool'
+          it_behaves_like 'it performs an encrypted command'
+        end
       end
     end
 
@@ -111,6 +127,11 @@ describe 'Auto Encryption' do
       context 'with schema map' do
         include_context 'schema map in client options'
         it_behaves_like 'it performs an encrypted command'
+
+        context 'with limited connection pool' do
+          include_context 'limited connection pool'
+          it_behaves_like 'it performs an encrypted command'
+        end
       end
     end
 
@@ -125,6 +146,11 @@ describe 'Auto Encryption' do
       context 'with schema map' do
         include_context 'schema map in client options'
         it_behaves_like 'it performs an encrypted command'
+
+        context 'with limited connection pool' do
+          include_context 'limited connection pool'
+          it_behaves_like 'it performs an encrypted command'
+        end
       end
     end
 
@@ -139,6 +165,11 @@ describe 'Auto Encryption' do
       context 'with schema map' do
         include_context 'schema map in client options'
         it_behaves_like 'it performs an encrypted command'
+
+        context 'with limited connection pool' do
+          include_context 'limited connection pool'
+          it_behaves_like 'it performs an encrypted command'
+        end
       end
     end
 
@@ -153,6 +184,11 @@ describe 'Auto Encryption' do
       context 'with schema map' do
         include_context 'schema map in client options'
         it_behaves_like 'it performs an encrypted command'
+
+        context 'with limited connection pool' do
+          include_context 'limited connection pool'
+          it_behaves_like 'it performs an encrypted command'
+        end
       end
     end
   end
