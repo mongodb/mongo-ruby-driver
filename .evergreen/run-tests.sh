@@ -187,7 +187,7 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_kmip_server.py &
 
   # Obtain temporary AWS credentials
-  PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
+  AWS_ACCESS_KEY_ID="${MONGO_RUBY_DRIVER_AWS_KEY}" AWS_SECRET_ACCESS_KEY="${MONGO_RUBY_DRIVER_AWS_SECRET}" AWS_DEFAULT_REGION=us-east-1 PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
 
   if test "$FLE" = helper; then
     echo "Using helper gem"
