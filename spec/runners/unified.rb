@@ -71,7 +71,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                 # be added here later as the tests evolve.
                 rescue ArgumentError, Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation, Unified::Error::EntityMissing
                 rescue => e
-                  fail "Expected to raise ArgumenError, Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation or Unified::Error::EntityMissing, got #{e}"
+                  fail "Expected to raise ArgumentError, Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation or Unified::Error::EntityMissing, got #{e}"
                 else
                   fail "Expected to raise error, but none was raised"
                 end
