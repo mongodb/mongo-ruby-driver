@@ -184,6 +184,11 @@ functions:
           MONGO_RUBY_DRIVER_GCP_KEY_RING="${fle_gcp_key_ring}"
           MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
           MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
+
+          # Needed for generating temporary aws credentials.
+          AWS_ACCESS_KEY_ID="${fle_aws_key}"
+          AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+          AWS_DEFAULT_REGION=us-east-1
           EOT
 
   "export Kerberos credentials":
