@@ -3,7 +3,7 @@
 
 require 'spec_helper'
 
-describe Mongo::Server::Populator do
+describe Mongo::Server::ConnectionPool::Populator do
   let(:options) { {} }
 
   let(:client) do
