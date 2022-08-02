@@ -97,7 +97,6 @@ module Crypt
 
     let(:extra_options) do
       {
-        crypt_shared_lib_path: SpecConfig.instance.crypt_shared_lib_path,
         mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
         mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
       }
