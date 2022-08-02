@@ -270,6 +270,16 @@ functions:
           MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
           MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
           EOT
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          # Needed for generating temporary aws credentials.
+          export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+          export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+          export AWS_DEFAULT_REGION="${fle_aws_region}"
 
   "export Kerberos credentials":
     - command: shell.exec
