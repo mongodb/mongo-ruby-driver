@@ -55,7 +55,7 @@ describe "RewrapManyDataKey" do
             key_vault_namespace: 'keyvault.datakeys',
             kms_providers: kms_providers,
             kms_tls_options: {
-              aws: default_kms_tls_options_for_provider
+              kmip: default_kms_tls_options_for_provider
             },
           )
         end
@@ -70,7 +70,7 @@ describe "RewrapManyDataKey" do
             key_vault_namespace: 'keyvault.datakeys',
             kms_providers: kms_providers,
             kms_tls_options: {
-              aws: default_kms_tls_options_for_provider
+              kmip: default_kms_tls_options_for_provider
             },
           )
         end
