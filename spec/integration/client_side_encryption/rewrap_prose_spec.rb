@@ -3,7 +3,7 @@
 
 require "spec_helper"
 
-describe "Explicit Queryable Encryption" do
+describe "RewrapManyDataKey" do
   require_libmongocrypt
   min_server_version "6.0.0"
   require_topology :replica_set, :sharded, :load_balanced
@@ -53,7 +53,10 @@ describe "Explicit Queryable Encryption" do
           Mongo::ClientEncryption.new(
             key_vault_client,
             key_vault_namespace: 'keyvault.datakeys',
-            kms_providers: kms_providers
+            kms_providers: kms_providers,
+            kms_tls_options: {
+              aws: default_kms_tls_options_for_provider
+            },
           )
         end
 
@@ -65,7 +68,10 @@ describe "Explicit Queryable Encryption" do
           Mongo::ClientEncryption.new(
             key_vault_client,
             key_vault_namespace: 'keyvault.datakeys',
-            kms_providers: kms_providers
+            kms_providers: kms_providers,
+            kms_tls_options: {
+              aws: default_kms_tls_options_for_provider
+            },
           )
         end
 
