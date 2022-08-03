@@ -118,10 +118,20 @@ module Mongo
         begin
           response = @mongocryptd_client.database.command(cmd, options)
         rescue Error::NoServerAvailable => e
-          raise e if @options[:mongocryptd_bypass_spawn]
-
-          spawn_mongocryptd
-          response = @mongocryptd_client.database.command(cmd, options)
+          if @options[:mongocryptd_bypass_spawn]
+            raise Mongo::Error::CryptError.new(
+              "Cannot connect to a running mongocryptd instance, " +
+              "and spawning a new one is disabled: " + e.message
+            )
+          end
+          begin
+            spawn_mongocryptd
+            response = @mongocryptd_client.database.command(cmd, options)
+          rescue Error::NoServerAvailable => e
+            raise Mongo::Error::CryptError.new(
+              "Cannot spawn a mongocryptd instance: " + e.message
+            )
+          end
         end
 
         return response.first

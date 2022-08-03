@@ -121,6 +121,22 @@ describe Mongo::Crypt::EncryptionIO do
         expect(subject).to receive(:spawn_mongocryptd)
         subject.mark_command({})
       end
+
+      context 'when cannot spawn moncocryptd' do
+        let(:mock_client) do
+          double('mongocryptd client').tap do |client|
+            database = double('mock database')
+            allow(database).to receive(:command).and_raise(Mongo::Error::NoServerAvailable.new(Mongo::ServerSelector::Primary.new, nil, 'test message'))
+            expect(client).to receive(:database).at_least(:once).and_return(database)
+          end
+        end
+        it 'raises an error' do
+          expect(subject).to receive(:spawn_mongocryptd)
+          expect do
+            subject.mark_command({})
+          end.to raise_error(Mongo::Error::CryptError, /Cannot spawn a mongocryptd instance/)
+        end
+      end
     end
 
     context ':mongocryptd_bypass_spawn given' do
@@ -134,7 +150,7 @@ describe Mongo::Crypt::EncryptionIO do
         expect(subject).not_to receive(:spawn_mongocryptd)
         lambda do
           subject.mark_command({})
-        end.should raise_error(Mongo::Error::NoServerAvailable, /test message/)
+        end.should raise_error(Mongo::Error::CryptError, /Cannot connect to a running mongocryptd instance/)
       end
     end
   end
