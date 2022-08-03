@@ -17,43 +17,45 @@
 
 module Mongo
   class Server
-    # A manager that maintains the invariant that the
-    # size of a connection pool is at least minPoolSize.
-    #
-    # @api private
-    class Populator
-      include BackgroundThread
-
-      # @param [ Server::ConnectionPool ] pool The connection pool.
-      # @param [ Hash ] options The options.
+    class ConnectionPool
+      # A manager that maintains the invariant that the
+      # size of a connection pool is at least minPoolSize.
       #
-      # @option options [ Logger ] :logger A custom logger to use.
-      def initialize(pool, options = {})
-        @pool = pool
-        @thread = nil
-        @options = options
-      end
+      # @api private
+      class Populator
+        include BackgroundThread
 
-      attr_reader :options
+        # @param [ Server::ConnectionPool ] pool The connection pool.
+        # @param [ Hash ] options The options.
+        #
+        # @option options [ Logger ] :logger A custom logger to use.
+        def initialize(pool, options = {})
+          @pool = pool
+          @thread = nil
+          @options = options
+        end
 
-      def pre_stop
-        @pool.populate_semaphore.signal
-      end
+        attr_reader :options
 
-      private
+        def pre_stop
+          @pool.populate_semaphore.signal
+        end
 
-      def do_work
-        throw(:done) if @pool.closed?
+        private
 
-        begin
-          unless @pool.populate
-            @pool.populate_semaphore.wait
+        def do_work
+          throw(:done) if @pool.closed?
+
+          begin
+            unless @pool.populate
+              @pool.populate_semaphore.wait
+            end
+          rescue Error::AuthError, Error => e
+            # Errors encountered when trying to add connections to
+            # pool; try again later
+            log_warn("Populator failed to connect a connection for #{@pool.address}: #{e.class}: #{e}.")
+            @pool.populate_semaphore.wait(5)
           end
-        rescue Error::AuthError, Error => e
-          # Errors encountered when trying to add connections to
-          # pool; try again later
-          log_warn("Populator failed to connect a connection for #{@pool.address}: #{e.class}: #{e}.")
-          @pool.populate_semaphore.wait(5)
         end
       end
     end
