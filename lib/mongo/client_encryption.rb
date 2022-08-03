@@ -204,6 +204,5 @@ module Mongo
     def rewrap_many_data_key(filter, opts = {})
       @encrypter.rewrap_many_data_key(filter, opts)
     end
-
   end
 end
