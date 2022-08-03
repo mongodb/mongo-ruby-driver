@@ -157,6 +157,13 @@ describe Mongo::Crypt::AutoEncrypter do
         expect(auto_encrypter.metadata_client).not_to eq(client)
       end
     end
+
+    context 'when crypt shared library is available' do
+      it 'does not create a mongocryptd client' do
+        allow_any_instance_of(Mongo::Crypt::Handle).to receive(:"crypt_shared_lib_available?").and_return true
+        expect(auto_encrypter.mongocryptd_client).to be_nil
+      end
+    end
   end
 
   shared_examples 'with schema map in auto encryption commands' do
