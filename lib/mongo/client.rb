@@ -1576,7 +1576,7 @@ module Mongo
         # for custom classes implementing key access ([]).
         # Instead reject common cases of strings and symbols.
         if read.is_a?(String) || read.is_a?(Symbol)
-          raise Error::InvalidReadOption.new(read, 'must be a hash')
+          raise Error::InvalidReadOption.new(read, 'the read preference should be specified as a hash: { mode: <read-preference> }.')
         end
 
         if mode = read[:mode]
