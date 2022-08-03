@@ -117,7 +117,7 @@ module Mongo
           @crypt_handle.crypt_shared_lib_available? ||
           @options[:extra_options][:crypt_shared_lib_required]
 
-        if !@options[:extra_options][:crypt_shared_lib_required]
+        unless @options[:extra_options][:crypt_shared_lib_required] || @crypt_handle.crypt_shared_lib_available?
           # Set server selection timeout to 1 to prevent the client waiting for a
           # long timeout before spawning mongocryptd
           @mongocryptd_client = Client.new(
@@ -135,7 +135,7 @@ module Mongo
             key_vault_namespace: @options[:key_vault_namespace],
             key_vault_client: @key_vault_client,
             metadata_client: @metadata_client,
-            mongocryptd_options: @options[:extra_options]
+            mongocryptd_options: @mongocryptd_options
           )
         rescue
           begin
