@@ -69,11 +69,11 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                   test.assert_events
                 # HACK: other errors are possible and likely will need to
                 # be added here later as the tests evolve.
-                rescue ArgumentError, Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation, Unified::Error::EntityMissing
+                rescue Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation, UsingHash::UsingHashKeyError
                 rescue => e
-                  fail "Expected to raise ArgumentError, Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation or Unified::Error::EntityMissing, got #{e}"
+                  fail "Expected to raise Mongo::Error::OperationFailure or Unified::Error::UnsupportedOperation or UsingHash::UsingHashKeyError, got #{e}"
                 else
-                  fail "Expected to raise error, but none was raised"
+                  fail "Expected to raise Mongo::Error::OperationFailure or Unified::Error::UnsupportedOperation or UsingHash::UsingHashKeyError, but no error was raised"
                 end
               ensure
                 test.cleanup

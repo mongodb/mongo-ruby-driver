@@ -146,7 +146,7 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        collection.insert_one(args.use('document'), **opts)
+        collection.insert_one(args.use!('document'), **opts)
       end
     end
 
