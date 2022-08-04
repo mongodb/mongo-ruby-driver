@@ -37,5 +37,15 @@ module Unified
       object = entities.get(:change_stream, object_id)
       object.to_enum.next
     end
+
+    def close(op)
+      object_id = op.use!('object')
+      # The Ruby driver unified spec runner does not currently implement
+      # find cursors as created by createFindCursor. This will be done
+      # as part of CSOT implementation. When this is done, the line(s) below
+      # should be changed to retrieve such cursor instances and close them.
+      object = entities.get(:csot_cursor, object_id)
+      object.close
+    end
   end
 end

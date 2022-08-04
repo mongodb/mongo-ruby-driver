@@ -2,6 +2,9 @@
 # encoding: utf-8
 
 class UsingHash < Hash
+  class UsingHashKeyError < KeyError
+  end
+
   def use(key)
     wrap(self[key]).tap do
       delete(key)
@@ -9,7 +12,13 @@ class UsingHash < Hash
   end
 
   def use!(key)
-    wrap(fetch(key)).tap do
+    begin
+      value = fetch(key)
+    rescue KeyError => e
+      raise UsingHashKeyError, e.to_s
+    end
+
+    wrap(value).tap do
       delete(key)
     end
   end
