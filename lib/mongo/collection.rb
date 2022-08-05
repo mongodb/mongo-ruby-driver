@@ -318,8 +318,10 @@ module Mongo
     #
     # @param [ Hash ] opts The options for the drop operation.
     #
-    # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Session ] :session The session to use for the operation.
     # @option opts [ Hash ] :write_concern The write concern options.
+    # @option [ Hash | nil ] :encrypted_fields Encrypted fields hash that was
+    #   provided to `create` collection helper.
     #
     # @return [ Result ] The result of the command.
     #
@@ -643,6 +645,12 @@ module Mongo
     # @param [ Hash ] opts The insert options.
     #
     # @option opts [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    # @option opts [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
+    # @option opts [ Object ] :comment A user-provided comment to attach to
+    #   this command.
     #
     # @return [ Result ] The database response wrapper.
     #
@@ -690,6 +698,10 @@ module Mongo
     # @option options [ true | false ] :ordered Whether the operations
     #   should be executed in order.
     # @option options [ Session ] :session The session to use for the operation.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ Result ] The database response wrapper.
     #
