@@ -216,11 +216,15 @@ module Mongo
       wc
     end
 
-    # Provides a new collection with either a new read preference or new write concern
-    # merged over the existing read preference / write concern.
+    # Provides a new collection with either a new read preference, new read
+    # concern or new write concern merged over the existing read preference /
+    # read concern / write concern.
     #
     # @example Get a collection with a changed read preference.
     #   collection.with(read: { mode: :primary_preferred })
+
+    # @example Get a collection with a changed read concern.
+    #   collection.with(read_concern: { level: :majority })
     #
     # @example Get a collection with a changed write concern.
     #   collection.with(write_concern: { w:  3 })
