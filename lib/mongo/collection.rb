@@ -83,7 +83,7 @@ module Mongo
     #
     # @param [ Object ] other The object to check.
     #
-    # @return [ true, false ] If the objects are equal.
+    # @return [ true | false ] If the objects are equal.
     #
     # @since 2.0.0
     def ==(other)
@@ -237,7 +237,7 @@ module Mongo
     # @example Is the collection capped?
     #   collection.capped?
     #
-    # @return [ true, false ] If the collection is capped.
+    # @return [ true | false ] If the collection is capped.
     #
     # @since 2.0.0
     def capped?
@@ -358,11 +358,11 @@ module Mongo
     # @param [ Hash ] filter The filter to use in the find.
     # @param [ Hash ] options The options for the find.
     #
-    # @option options [ true, false ] :allow_disk_use When set to true, the
+    # @option options [ true | false ] :allow_disk_use When set to true, the
     #   server can write temporary data to disk while executing the find
     #   operation. This option is only available on MongoDB server versions
     #   4.4 and newer.
-    # @option options [ true, false ] :allow_partial_results Allows the query to get partial
+    # @option options [ true | false ] :allow_partial_results Allows the query to get partial
     #   results if some shards are down.
     # @option options [ Integer ] :batch_size The number of documents returned in each batch
     #   of results from MongoDB.
@@ -375,10 +375,10 @@ module Mongo
     #   The maximum amount of time to allow the query to run, in milliseconds.
     # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
     #   output or behavior of a query.
-    # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
+    # @option options [ true | false ] :no_cursor_timeout The server normally times out idle
     #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
     #   Set this option to prevent that.
-    # @option options [ true, false ] :oplog_replay For internal replication
+    # @option options [ true | false ] :oplog_replay For internal replication
     #   use only, applications should not set this option.
     # @option options [ Hash ] :projection The fields to include or exclude from each doc
     #   in the result set.
@@ -404,11 +404,11 @@ module Mongo
     # @param [ Array<Hash> ] pipeline The aggregation pipeline.
     # @param [ Hash ] options The aggregation options.
     #
-    # @option options [ true, false ] :allow_disk_use Set to true if disk
+    # @option options [ true | false ] :allow_disk_use Set to true if disk
     #   usage is allowed during the aggregation.
     # @option options [ Integer ] :batch_size The number of documents to return
     #   per batch.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Object ] :comment A user-provided
@@ -418,7 +418,7 @@ module Mongo
     #   See the server documentation for details.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
     #   milliseconds to allow the aggregation to run.
-    # @option options [ true, false ] :use_cursor Indicates whether the command
+    # @option options [ true | false ] :use_cursor Indicates whether the command
     #   will request that the server provide results using a cursor. Note that
     #   as of server version 3.6, aggregations always provide results using a
     #   cursor and this option is therefore not valid.
@@ -647,7 +647,7 @@ module Mongo
     # @option opts [ Session ] :session The session to use for the operation.
     # @option opts [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-    # @option opts [ true, false ] :bypass_document_validation Whether or
+    # @option opts [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option opts [ Object ] :comment A user-provided comment to attach to
     #   this command.
@@ -700,7 +700,7 @@ module Mongo
     # @option options [ Session ] :session The session to use for the operation.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Object ] :comment A user-provided comment to attach to
     #   this command.
@@ -723,11 +723,11 @@ module Mongo
     # @param [ Array<Hash> ] requests The bulk write requests.
     # @param [ Hash ] options The options.
     #
-    # @option options [ true, false ] :ordered Whether the operations
+    # @option options [ true | false ] :ordered Whether the operations
     #   should be executed in order.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Session ] :session The session to use for the set of operations.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -816,9 +816,9 @@ module Mongo
     # @param [ Hash ] replacement The replacement document..
     # @param [ Hash ] options The options.
     #
-    # @option options [ true, false ] :upsert Whether to upsert if the
+    # @option options [ true | false ] :upsert Whether to upsert if the
     #   document doesn't exist.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
@@ -843,9 +843,9 @@ module Mongo
     # @param [ Hash | Array<Hash> ] update The update document or pipeline.
     # @param [ Hash ] options The options.
     #
-    # @option options [ true, false ] :upsert Whether to upsert if the
+    # @option options [ true | false ] :upsert Whether to upsert if the
     #   document doesn't exist.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
@@ -872,9 +872,9 @@ module Mongo
     # @param [ Hash | Array<Hash> ] update The update document or pipeline.
     # @param [ Hash ] options The options.
     #
-    # @option options [ true, false ] :upsert Whether to upsert if the
+    # @option options [ true | false ] :upsert Whether to upsert if the
     #   document doesn't exist.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
@@ -941,8 +941,8 @@ module Mongo
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
     # @option options [ Symbol ] :return_document Either :before or :after.
-    # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :upsert Whether to upsert if the document doesn't exist.
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
@@ -981,8 +981,8 @@ module Mongo
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
     # @option options [ Symbol ] :return_document Either :before or :after.
-    # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
-    # @option options [ true, false ] :bypass_document_validation Whether or
+    # @option options [ true | false ] :upsert Whether to upsert if the document doesn't exist.
+    # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
