@@ -48,6 +48,9 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
             end
           end
 
+          if test.retry?
+            retry_test tries: 3
+          end
           if expect_failure
             it 'fails as expected' do
               if test.group_reqs

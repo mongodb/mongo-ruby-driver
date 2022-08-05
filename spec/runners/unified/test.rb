@@ -56,6 +56,10 @@ module Unified
     attr_reader :reqs, :group_reqs
     attr_reader :options
 
+    def retry?
+      @description =~ /KMS/i
+    end
+
     def skip?
       !!@skip_reason
     end
@@ -71,6 +75,7 @@ module Unified
     attr_reader :entities
 
     def create_entities
+      return if @entities_created
       @spec['createEntities'].each do |entity_spec|
         unless entity_spec.keys.length == 1
           raise NotImplementedError, "Entity must have exactly one key"
@@ -259,6 +264,7 @@ module Unified
         end
         entities.set(type.to_sym, id, entity)
       end
+      @entities_created = true
     end
 
     def set_initial_data
