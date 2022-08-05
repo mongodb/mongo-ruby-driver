@@ -650,7 +650,9 @@ describe Mongo::Collection do
         described_class.new(database, :specs, :capped => true, :size => 1024, :max => 512)
       end
 
-      let(:collstats) { database.read_command(:collstats => :specs).documents.first }
+      let(:collstats) do
+        database.read_command(:collstats => :specs).documents.first
+      end
 
       before do
         authorized_client[:specs].drop
