@@ -111,15 +111,13 @@ module Mongo
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
     #      are *:local*, *:majority*, and *:snapshot*
-    # @option options [ Hash ] :read_preference The read preference options.
+    # @option options [ Hash ] :read The read preference options.
     #   The hash may have the following items:
     #   - *:mode* -- read preference specified as a symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
-    # @option options [ Hash ] :read Deprecated. Equivalent to :read_preference
-    #   option.
     # @option options [ Integer ] :expire_after Number indicating
     #   after how many seconds old time-series data should be deleted.
     # @options clustered_index [ Hash ] :clustered_index Create a clustered index.
@@ -233,9 +231,11 @@ module Mongo
     #   option.
     # @option new_options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
-    # @option new_options [ Hash | nil ] :read_concern The read concern of the query
-    #   (e.g. { level: :majority }).
-    # @option options [ Hash ] :read The read preference options.
+    # @option new_options [ Hash ] :read_concern The read concern options hash,
+    #   with the following optional keys:
+    #   - *:level* -- the read preference level as a symbol; valid values
+    #      are *:local*, *:majority*, and *:snapshot*
+    # @option new_options [ Hash ] :read The read preference options.
     #   The hash may have the following items:
     #   - *:mode* -- read preference specified as a symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
