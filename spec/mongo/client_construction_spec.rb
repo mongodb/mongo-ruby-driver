@@ -1773,28 +1773,28 @@ describe Mongo::Client do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => {:mode => :bogus})
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read preference value: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
           end
 
           it 'rejects bogus read preference as string' do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => {:mode => 'bogus'})
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read preference value: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
           end
 
           it 'rejects read option specified as a string' do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => 'primary')
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read preference value: "primary": the read preference must be specified as a hash: { mode: "primary" }')
           end
 
           it 'rejects read option specified as a symbol' do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => :primary)
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+            end.to raise_error(Mongo::Error::InvalidReadOption, "Invalid read preference value: :primary: the read preference must be specified as a hash: { mode: :primary }")
           end
         end
       end
