@@ -107,12 +107,26 @@ module Mongo
     # @option options [ Hash ] :time_series Create a time-series collection.
     #   See https://mongodb.com/docs/manual/core/timeseries-collections/ for more
     #   information about time-series collection.
+    # @option options [ Hash ] :read_concern The read concern options hash,
+    #   with the following optional keys:
+    #   - *:level* -- the read preference level as a symbol; valid values
+    #      are *:local*, *:majority*, and *:snapshot*
+    # @option options [ Hash ] :read_preference The read preference options.
+    #   The hash may have the following items:
+    #   - *:mode* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
+    # @option options [ Hash ] :read Deprecated. Equivalent to :read_preference
+    #   option.
     # @option options [ Integer ] :expire_after Number indicating
     #   after how many seconds old time-series data should be deleted.
     # @options clustered_index [ Hash ] :clustered_index Create a clustered index.
     #   This option specifies how this collection should be clustered on _id.
     #   See https://www.mongodb.com/docs/v5.3/reference/method/db.createCollection/#std-label-db.createCollection.clusteredIndex
     #   for more information about this option.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @since 2.0.0
     def initialize(database, name, options = {})
@@ -212,8 +226,22 @@ module Mongo
     #
     # @example Get a collection with a changed write concern.
     #   collection.with(write_concern: { w:  3 })
-
+    #
     # @param [ Hash ] new_options The new options to use.
+    #
+    # @option new_options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option new_options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
+    # @option new_options [ Hash | nil ] :read_concern The read concern of the query
+    #   (e.g. { level: :majority }).
+    # @option options [ Hash ] :read The read preference options.
+    #   The hash may have the following items:
+    #   - *:mode* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
     #
     # @return [ Mongo::Collection ] A new collection instance.
     #
