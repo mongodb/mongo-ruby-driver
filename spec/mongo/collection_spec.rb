@@ -647,7 +647,7 @@ describe Mongo::Collection do
     context 'when the collection is capped' do
 
       let(:collection) do
-        described_class.new(database, :specs, :capped => true, :size => 1024)
+        described_class.new(database, :specs, :capped => true, :size => 1024, :max => 512)
       end
 
       before do
