@@ -367,8 +367,8 @@ module Mongo
     # @option options [ Integer ] :batch_size The number of documents returned in each batch
     #   of results from MongoDB.
     # @option options [ Hash ] :collation The collation to use.
-    # @option options [ Object ] :comment A user-provided
-    #   comment to attach to this command.
+    # @option options [ Object ] :comment A user-provided comment to attach to
+    #   this command.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
     # @option options [ Integer ] :max_time_ms
@@ -702,6 +702,8 @@ module Mongo
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Object ] :comment A user-provided comment to attach to
+    #   this command.
     #
     # @return [ Result ] The database response wrapper.
     #
