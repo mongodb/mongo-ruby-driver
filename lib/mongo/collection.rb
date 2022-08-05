@@ -320,8 +320,8 @@ module Mongo
     #
     # @option opts [ Session ] :session The session to use for the operation.
     # @option opts [ Hash ] :write_concern The write concern options.
-    # @option [ Hash | nil ] :encrypted_fields Encrypted fields hash that was
-    #   provided to `create` collection helper.
+    # @option opts [ Hash | nil ] :encrypted_fields Encrypted fields hash that
+    #   was provided to `create` collection helper.
     #
     # @return [ Result ] The result of the command.
     #
