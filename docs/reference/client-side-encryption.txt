@@ -647,6 +647,9 @@ collection, which is the MongoDB collection in which you choose to store your
 data keys. The ``#create_data_key`` method returns id of the newly-created
 data key in the form of a BSON::Binary object.
 
+For the BSON::Binary class documentation see :doc:`/bson-tutorials/`.
+
+
 Create a Data Key Using a Local Master Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
