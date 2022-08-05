@@ -650,6 +650,8 @@ describe Mongo::Collection do
         described_class.new(database, :specs, :capped => true, :size => 1024, :max => 512)
       end
 
+      let(:collstats) { database.read_command(:collstats => :specs).documents.first }
+
       before do
         authorized_client[:specs].drop
         collection.create
@@ -657,6 +659,11 @@ describe Mongo::Collection do
 
       it 'returns true' do
         expect(collection).to be_capped
+      end
+
+      it "applies the options" do
+        expect(collstats["max"]).to eq(512)
+        expect(collstats["maxSize"]).to eq(1024)
       end
     end
 
