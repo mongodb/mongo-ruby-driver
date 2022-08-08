@@ -141,7 +141,7 @@ module Mongo
       # @param [ Array<Hash> ] pipeline The aggregation pipeline.
       # @param [ Hash ] options The aggregation options.
       #
-      # @return [ Aggregation ] The aggregation object.
+      # @return [ Collection::View::Aggregation ] The aggregation object.
       #
       # @since 2.10.0
       # @api private
