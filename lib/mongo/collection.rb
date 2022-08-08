@@ -644,13 +644,13 @@ module Mongo
     # @param [ Hash ] document The document to insert.
     # @param [ Hash ] opts The insert options.
     #
-    # @option opts [ Session ] :session The session to use for the operation.
-    # @option opts [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     # @option opts [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option opts [ Object ] :comment A user-provided comment to attach to
     #   this command.
+    # @option opts [ Session ] :session The session to use for the operation.
+    # @option opts [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
     # @return [ Result ] The database response wrapper.
     #
@@ -695,15 +695,15 @@ module Mongo
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
+    # @option options [ true | false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
+    # @option options [ Object ] :comment A user-provided comment to attach to
+    #   this command.
     # @option options [ true | false ] :ordered Whether the operations
     #   should be executed in order.
     # @option options [ Session ] :session The session to use for the operation.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-    # @option options [ true | false ] :bypass_document_validation Whether or
-    #   not to skip document level validation.
-    # @option options [ Object ] :comment A user-provided comment to attach to
-    #   this command.
     #
     # @return [ Result ] The database response wrapper.
     #
