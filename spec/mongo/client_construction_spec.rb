@@ -2111,6 +2111,53 @@ describe Mongo::Client do
         it 'is closed after block' do
           expect(block_client.cluster.connected?).to eq(false)
         end
+
+        context 'with auto encryption options' do
+          require_libmongocrypt
+          min_server_fcv '4.2'
+          require_enterprise
+          clean_slate
+
+          include_context 'define shared FLE helpers'
+          include_context 'with local kms_providers'
+
+          let(:auto_encryption_options) do
+            {
+              key_vault_client: key_vault_client,
+              key_vault_namespace: key_vault_namespace,
+              kms_providers: kms_providers,
+              schema_map: schema_map,
+              extra_options: extra_options,
+            }
+          end
+
+          let(:key_vault_client) { new_local_client_nmio(SpecConfig.instance.addresses) }
+
+          let(:block_client) do
+            c = nil
+            Mongo::Client.new(
+              SpecConfig.instance.addresses,
+              SpecConfig.instance.test_options.merge(
+                auto_encryption_options: auto_encryption_options,
+                database: SpecConfig.instance.test_db
+              ),
+            ) do |client|
+              c = client
+            end
+            c
+          end
+
+          it 'closes all clients after block' do
+            expect(block_client.cluster.connected?).to eq(false)
+            [
+              block_client.encrypter.mongocryptd_client,
+              block_client.encrypter.key_vault_client,
+              block_client.encrypter.metadata_client
+            ].each do |crypt_client|
+              expect(crypt_client.cluster.connected?).to eq(false)
+            end
+          end
+        end
       end
 
       context 'when the block raises an error' do
