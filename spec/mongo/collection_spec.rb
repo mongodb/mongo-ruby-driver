@@ -647,7 +647,7 @@ describe Mongo::Collection do
     context 'when the collection is capped' do
 
       let(:collection) do
-        described_class.new(database, :specs, :capped => true, :size => 5120, :max => 512)
+        described_class.new(database, :specs, :capped => true, :size => 4096, :max => 512)
       end
 
       let(:collstats) do
@@ -666,7 +666,7 @@ describe Mongo::Collection do
       it "applies the options" do
         expect(collstats["capped"]).to be true
         expect(collstats["max"]).to eq(512)
-        expect(collstats["maxSize"]).to eq(5120)
+        expect(collstats["maxSize"]).to eq(4096)
       end
     end
 
