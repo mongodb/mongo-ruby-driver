@@ -486,4 +486,100 @@ describe Mongo::Auth::User::View do
       end
     end
   end
+
+  context "when the result is a write concern error" do
+
+    let(:admin_client) { authorized_client.use('admin') }
+    let(:users) { admin_client.database.users }
+    let(:user) do
+      Mongo::Auth::User.new({
+        user: 'user',
+        roles: [ Mongo::Auth::Roles::READ_WRITE ],
+        password: 'password'
+      })
+    end
+
+    before do
+      admin_client.database.command(
+        configureFailPoint: "failCommand",
+        mode: { times: 1 },
+        data: {
+          failCommands: [ failCommand ],
+          writeConcernError: {
+              code: 64,
+              codeName: "WriteConcernFailed",
+              errmsg: "waiting for replication timed out",
+              errInfo: { wtimeout: true }
+          }
+        }
+      )
+    end
+
+    shared_examples "raises the correct write concern error" do
+      let(:users) { admin_client.database.users }
+
+      it "raises a write concern error" do
+        expect do
+          users.send(method, input)
+        end.to raise_error(Mongo::Error::OperationFailure, /[64:WriteConcernFailed]/)
+      end
+
+      it "raises and reports the write concern error correctly" do
+        begin
+          users.send(method, input)
+        rescue Mongo::Error::OperationFailure => e
+          expect(e.write_concern_error?).to be true
+          expect(e.write_concern_error_document).to eq(
+            "code" => 64,
+            "codeName" => "WriteConcernFailed",
+            "errmsg" => "waiting for replication timed out",
+            "errInfo" => { "wtimeout" => true }
+          )
+        end
+      end
+    end
+
+    context "when creating a user" do
+
+      let(:failCommand) { "createUser" }
+      let(:method) { :create }
+      let(:input) { user }
+
+      after do
+        users.remove(user.name)
+      end
+
+      include_examples "raises the correct write concern error"
+    end
+
+    context "when updating a user" do
+
+      let(:failCommand) { "updateUser" }
+      let(:method) { :update }
+      let(:input) { user.name }
+
+      before do
+        users.create(user)
+      end
+
+      after do
+        users.remove(user.name)
+      end
+
+      include_examples "raises the correct write concern error"
+    end
+
+    context "when removing a user" do
+
+      let(:failCommand) { "dropUser" }
+      let(:method) { :remove }
+      let(:input) { user.name }
+
+      before do
+        users.create(user)
+      end
+
+      include_examples "raises the correct write concern error"
+    end
+  end
 end
