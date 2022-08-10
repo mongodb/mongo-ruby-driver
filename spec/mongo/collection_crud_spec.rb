@@ -362,6 +362,22 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
+    context 'when an enumerable is used instead of an array' do
+
+      let(:source_data) do
+        [{ name: 'test1' }, { name: 'test2' }]
+      end
+
+      let(:result) do
+        authorized_collection.insert_many(source_data.lazy)
+      end
+
+      it 'should accepts them without raising an error' do
+        expect { result }.to_not raise_error
+        expect(result.inserted_count).to eq(source_data.size)
+      end
+    end
+
     context 'when a session is provided' do
 
       let(:session) do
