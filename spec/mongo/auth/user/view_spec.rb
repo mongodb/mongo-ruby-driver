@@ -488,8 +488,9 @@ describe Mongo::Auth::User::View do
   end
 
   context "when the result is a write concern error" do
-
     require_topology :replica_set
+    min_server_version '4.0'
+
     let(:admin_client) { authorized_client.use('admin') }
     let(:users) { admin_client.database.users }
     let(:user) do
