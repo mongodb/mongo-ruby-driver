@@ -330,10 +330,9 @@ module Mongo
     #   ArgumentError ]
     #   if the document is invalid.
     def validate_requests!
-      if @requests.empty?
-        raise ArgumentError, "Bulk write requests cannot be empty"
-      end
+      requests_empty = true
       @requests.each do |req|
+        requests_empty = false
         if op = req.keys.first
           if [:update_one, :update_many].include?(op)
             if doc = maybe_first(req.dig(op, :update))
@@ -359,6 +358,8 @@ module Mongo
             end
           end
         end
+      end.tap do
+        raise ArgumentError, "Bulk write requests cannot be empty" if requests_empty
       end
     end
 
