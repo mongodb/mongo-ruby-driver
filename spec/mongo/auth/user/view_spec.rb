@@ -491,8 +491,6 @@ describe Mongo::Auth::User::View do
     require_topology :replica_set
     min_server_version '4.0'
 
-    let(:admin_client) { authorized_client.use('admin') }
-    let(:users) { admin_client.database.users }
     let(:user) do
       Mongo::Auth::User.new({
         user: 'user',
@@ -502,7 +500,7 @@ describe Mongo::Auth::User::View do
     end
 
     before do
-      admin_client.database.command(
+      authorized_client.use('admin').database.command(
         configureFailPoint: "failCommand",
         mode: { times: 1 },
         data: {
@@ -518,17 +516,16 @@ describe Mongo::Auth::User::View do
     end
 
     shared_examples "raises the correct write concern error" do
-      let(:users) { admin_client.database.users }
 
       it "raises a write concern error" do
         expect do
-          users.send(method, input)
+          view.send(method, input)
         end.to raise_error(Mongo::Error::OperationFailure, /[64:WriteConcernFailed]/)
       end
 
       it "raises and reports the write concern error correctly" do
         begin
-          users.send(method, input)
+          view.send(method, input)
         rescue Mongo::Error::OperationFailure => e
           expect(e.write_concern_error?).to be true
           expect(e.write_concern_error_document).to eq(
@@ -548,7 +545,7 @@ describe Mongo::Auth::User::View do
       let(:input) { user }
 
       after do
-        users.remove(user.name)
+        view.remove(user.name)
       end
 
       include_examples "raises the correct write concern error"
@@ -561,11 +558,11 @@ describe Mongo::Auth::User::View do
       let(:input) { user.name }
 
       before do
-        users.create(user)
+        view.create(user)
       end
 
       after do
-        users.remove(user.name)
+        view.remove(user.name)
       end
 
       include_examples "raises the correct write concern error"
@@ -578,7 +575,7 @@ describe Mongo::Auth::User::View do
       let(:input) { user.name }
 
       before do
-        users.create(user)
+        view.create(user)
       end
 
       include_examples "raises the correct write concern error"
