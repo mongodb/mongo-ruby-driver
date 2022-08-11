@@ -114,24 +114,24 @@ module Mongo
       #
       # @param [ Mongo::CachingCursor ] cursor The CachingCursor instance to store.
       #
-      # @option opts [ String | nil ] namespace The namespace of the query,
+      # @option opts [ String | nil ] :namespace The namespace of the query,
       #   in the format "database_name.collection_name".
-      # @option opts [ Array, Hash ] selector The selector passed to the query.
+      # @option opts [ Array, Hash ] :selector The selector passed to the query.
       #   For most queries, this will be a Hash, but for aggregations, this
       #   will be an Array representing the aggregation pipeline. May not be nil.
-      # @option opts [ Integer | nil ] skip The skip value of the query.
-      # @option opts [ Hash | nil ] sort The order of the query results
+      # @option opts [ Integer | nil ] :skip The skip value of the query.
+      # @option opts [ Hash | nil ] :sort The order of the query results
       #   (e.g. { name: -1 }).
-      # @option opts [ Integer | nil ] limit The limit value of the query.
-      # @option opts [ Hash | nil ] projection The projection of the query
+      # @option opts [ Integer | nil ] :limit The limit value of the query.
+      # @option opts [ Hash | nil ] :projection The projection of the query
       #   results (e.g. { name: 1 }).
-      # @option opts [ Hash | nil ] collation The collation of the query
+      # @option opts [ Hash | nil ] :collation The collation of the query
       #   (e.g. { "locale" => "fr_CA" }).
-      # @option opts [ Hash | nil ] read_concern The read concern of the query
+      # @option opts [ Hash | nil ] :read_concern The read concern of the query
       #   (e.g. { level: :majority }).
-      # @option opts [ Hash | nil ] read_preference The read preference of
+      # @option opts [ Hash | nil ] :read_preference The read preference of
       #   the query (e.g. { mode: :secondary }).
-      # @option opts [ Boolean | nil ] multi_collection Whether the query
+      # @option opts [ Boolean | nil ] :multi_collection Whether the query
       #   results could potentially come from multiple collections. When true,
       #   these results will be stored under the nil namespace key and cleared
       #   on every write command.
@@ -152,24 +152,24 @@ module Mongo
       # For the given query options, retrieve a cached cursor that can be used
       # to obtain the correct query results, if one exists in the cache.
       #
-      # @option opts [ String | nil ] namespace The namespace of the query,
+      # @option opts [ String | nil ] :namespace The namespace of the query,
       #   in the format "database_name.collection_name".
-      # @option opts [ Array, Hash ] selector The selector passed to the query.
+      # @option opts [ Array, Hash ] :selector The selector passed to the query.
       #   For most queries, this will be a Hash, but for aggregations, this
       #   will be an Array representing the aggregation pipeline. May not be nil.
-      # @option opts [ Integer | nil ] skip The skip value of the query.
-      # @option opts [ Hash | nil ] sort The order of the query results
+      # @option opts [ Integer | nil ] :skip The skip value of the query.
+      # @option opts [ Hash | nil ] :sort The order of the query results
       #   (e.g. { name: -1 }).
-      # @option opts [ Integer | nil ] limit The limit value of the query.
-      # @option opts [ Hash | nil ] projection The projection of the query
+      # @option opts [ Integer | nil ] :limit The limit value of the query.
+      # @option opts [ Hash | nil ] :projection The projection of the query
       #   results (e.g. { name: 1 }).
-      # @option opts [ Hash | nil ] collation The collation of the query
+      # @option opts [ Hash | nil ] :collation The collation of the query
       #   (e.g. { "locale" => "fr_CA" }).
-      # @option opts [ Hash | nil ] read_concern The read concern of the query
+      # @option opts [ Hash | nil ] :read_concern The read concern of the query
       #   (e.g. { level: :majority }).
-      # @option opts [ Hash | nil ] read_preference The read preference of
+      # @option opts [ Hash | nil ] :read_preference The read preference of
       #   the query (e.g. { mode: :secondary }).
-      # @option opts [ Boolean | nil ] multi_collection Whether the query
+      # @option opts [ Boolean | nil ] :multi_collection Whether the query
       #   results could potentially come from multiple collections. When true,
       #   these results will be stored under the nil namespace key and cleared
       #   on every write command.
