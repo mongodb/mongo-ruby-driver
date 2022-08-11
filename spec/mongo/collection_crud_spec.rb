@@ -4412,4 +4412,24 @@ describe Mongo::Collection do
       expect(result).to be_nil
     end
   end
+
+  context "when creating collection with view_on and pipeline" do
+    before do
+      authorized_client["my_view"].drop
+      authorized_collection.insert_one({ bar: "here!" })
+      authorized_client["my_view",
+        view_on: authorized_collection.name,
+        pipeline: [ { :'$project' => { "baz": "$bar" } } ]
+      ].create
+    end
+
+    it "the view has a document" do
+      expect(authorized_client["my_view"].find.to_a.length).to eq(1)
+    end
+
+    it "applies the pipeline" do
+      expect(authorized_client["my_view"].find.first).to have_key("baz")
+      expect(authorized_client["my_view"].find.first["baz"]).to eq("here!")
+    end
+  end
 end

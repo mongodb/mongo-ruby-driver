@@ -100,19 +100,59 @@ module Mongo
     # @param [ String, Symbol ] name The collection name.
     # @param [ Hash ] options The collection options.
     #
-    # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
-    #   option.
-    # @option options [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
-    # @option options [ Hash ] :time_series Create a time-series collection.
-    #   See https://mongodb.com/docs/manual/core/timeseries-collections/ for more
-    #   information about time-series collection.
-    # @option options [ Integer ] :expire_after Number indicating
-    #   after how many seconds old time-series data should be deleted.
-    # @options clustered_index [ Hash ] :clustered_index Create a clustered index.
+    # @option opts [ true | false ] :capped Create a fixed-sized collection.
+    # @option opts [ Hash ] :change_stream_pre_and_post_images Used to enable
+    #   pre- and post-images on the created collection.
+    #   The hash may have the following items:
+    #   - *:enabled* -- true or false.
+    # @option opts [ Hash ] :clustered_index Create a clustered index.
     #   This option specifies how this collection should be clustered on _id.
-    #   See https://www.mongodb.com/docs/v5.3/reference/method/db.createCollection/#std-label-db.createCollection.clusteredIndex
-    #   for more information about this option.
+    #   The hash may have the following items:
+    #   - *:key* -- The clustered index key field. Must be set to { _id: 1 }.
+    #   - *:unique* -- Must be set to true. The collection will not accept
+    #     inserted or updated documents where the clustered index key value
+    #     matches an existing value in the index.
+    #   - *:name* -- Optional. A name that uniquely identifies the clustered index.
+    # @option opts [ Hash ] :collation The collation to use.
+    # @option opts [ Hash ] :encrypted_fields Hash describing encrypted fields
+    #   for queryable encryption.
+    # @option opts [ Integer ] :expire_after Number indicating
+    #   after how many seconds old time-series data should be deleted.
+    # @option opts [ Integer ] :max The maximum number of documents in a
+    #   capped collection. The size limit takes precedents over max.
+    # @option opts [ Array<Hash> ] :pipeline An array of pipeline stages.
+    #   A view will be created by applying this pipeline to the view_on
+    #   collection or view.
+    # @option options [ Hash ] :read_concern The read concern options hash,
+    #   with the following optional keys:
+    #   - *:level* -- the read preference level as a symbol; valid values
+    #      are *:local*, *:majority*, and *:snapshot*
+    # @option options [ Hash ] :read The read preference options.
+    #   The hash may have the following items:
+    #   - *:mode* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
+    # @option opts [ Session ] :session The session to use for the operation.
+    # @option opts [ Integer ] :size The size of the capped collection.
+    # @option opts [ Hash ] :time_series Create a time-series collection.
+    #   The hash may have the following items:
+    #   - *:timeField* -- The name of the field which contains the date in each
+    #     time series document.
+    #   - *:metaField* -- The name of the field which contains metadata in each
+    #     time series document.
+    #   - *:granularity* -- Set the granularity to the value that is the closest
+    #     match to the time span between consecutive incoming measurements.
+    #     Possible values are "seconds" (default), "minutes", and "hours".
+    # @option opts [ Hash ] :validator Hash describing document validation
+    #   options for the collection.
+    # @option opts [ String ] :view_on The name of the source collection or
+    #   view from which to create a view.
+    # @option opts [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option opts [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
     # @since 2.0.0
     def initialize(database, name, options = {})
@@ -204,16 +244,36 @@ module Mongo
       wc
     end
 
-    # Provides a new collection with either a new read preference or new write concern
-    # merged over the existing read preference / write concern.
+    # Provides a new collection with either a new read preference, new read
+    # concern or new write concern merged over the existing read preference /
+    # read concern / write concern.
     #
     # @example Get a collection with a changed read preference.
     #   collection.with(read: { mode: :primary_preferred })
+
+    # @example Get a collection with a changed read concern.
+    #   collection.with(read_concern: { level: :majority })
     #
     # @example Get a collection with a changed write concern.
     #   collection.with(write_concern: { w:  3 })
-
+    #
     # @param [ Hash ] new_options The new options to use.
+    #
+    # @option new_options [ Hash ] :read The read preference options.
+    #   The hash may have the following items:
+    #   - *:mode* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
+    # @option new_options [ Hash ] :read_concern The read concern options hash,
+    #   with the following optional keys:
+    #   - *:level* -- the read preference level as a symbol; valid values
+    #      are *:local*, *:majority*, and *:snapshot*
+    # @option new_options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option new_options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
     # @return [ Mongo::Collection ] A new collection instance.
     #
@@ -251,17 +311,48 @@ module Mongo
     #
     # @param [ Hash ] opts The options for the create operation.
     #
-    # @option opts [ Session ] :session The session to use for the operation.
-    # @option opts [ Hash ] :write_concern The write concern options.
-    # @option opts [ Hash ] :time_series Create a time-series collection.
-    # @option opts [ Integer ] :expire_after Number indicating
-    #   after how many seconds old time-series data should be deleted.
+    # @option opts [ true | false ] :capped Create a fixed-sized collection.
     # @option opts [ Hash ] :change_stream_pre_and_post_images Used to enable
     #   pre- and post-images on the created collection.
+    #   The hash may have the following items:
+    #   - *:enabled* -- true or false.
+    # @option opts [ Hash ] :clustered_index Create a clustered index.
+    #   This option specifies how this collection should be clustered on _id.
+    #   The hash may have the following items:
+    #   - *:key* -- The clustered index key field. Must be set to { _id: 1 }.
+    #   - *:unique* -- Must be set to true. The collection will not accept
+    #     inserted or updated documents where the clustered index key value
+    #     matches an existing value in the index.
+    #   - *:name* -- Optional. A name that uniquely identifies the clustered index.
+    # @option opts [ Hash ] :collation The collation to use.
     # @option opts [ Hash ] :encrypted_fields Hash describing encrypted fields
     #   for queryable encryption.
+    # @option opts [ Integer ] :expire_after Number indicating
+    #   after how many seconds old time-series data should be deleted.
+    # @option opts [ Integer ] :max The maximum number of documents in a
+    #   capped collection. The size limit takes precedents over max.
+    # @option opts [ Array<Hash> ] :pipeline An array of pipeline stages.
+    #   A view will be created by applying this pipeline to the view_on
+    #   collection or view.
+    # @option opts [ Session ] :session The session to use for the operation.
+    # @option opts [ Integer ] :size The size of the capped collection.
+    # @option opts [ Hash ] :time_series Create a time-series collection.
+    #   The hash may have the following items:
+    #   - *:timeField* -- The name of the field which contains the date in each
+    #     time series document.
+    #   - *:metaField* -- The name of the field which contains metadata in each
+    #     time series document.
+    #   - *:granularity* -- Set the granularity to the value that is the closest
+    #     match to the time span between consecutive incoming measurements.
+    #     Possible values are "seconds" (default), "minutes", and "hours".
     # @option opts [ Hash ] :validator Hash describing document validation
     #   options for the collection.
+    # @option opts [ String ] :view_on The name of the source collection or
+    #   view from which to create a view.
+    # @option opts [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option opts [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
     # @return [ Result ] The result of the command.
     #
