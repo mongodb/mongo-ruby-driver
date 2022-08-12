@@ -528,7 +528,7 @@ module Mongo
     #   cursor and this option is therefore not valid.
     # @option options [ Session ] :session The session to use.
     #
-    # @return [ Aggregation ] The aggregation object.
+    # @return [ View::Aggregation ] The aggregation object.
     #
     # @since 2.1.0
     def aggregate(pipeline, options = {})
