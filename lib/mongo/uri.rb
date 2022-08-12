@@ -328,6 +328,16 @@ module Mongo
       @database ? @database : Database::ADMIN
     end
 
+    # Get the uri as a string.
+    #
+    # @example Get the uri as a string.
+    #   uri.to_s
+    #
+    # @return [ String ] The uri string.
+    def to_s
+      @string
+    end
+
     private
 
     def scheme

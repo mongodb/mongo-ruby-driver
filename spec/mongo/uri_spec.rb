@@ -363,6 +363,15 @@ describe Mongo::URI do
     end
   end
 
+  describe "#to_s" do
+    context "string is a uri" do
+      let(:string) { 'mongodb://localhost:27017' }
+      it "returns the original string" do
+        expect(uri.to_s).to eq(string)
+      end
+    end
+  end
+
   describe '#servers' do
     let(:string) { "#{scheme}#{servers}" }
 
