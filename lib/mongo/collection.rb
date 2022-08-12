@@ -173,7 +173,11 @@ module Mongo
       @options.freeze
     end
 
-    # Get the read concern for this collection instance.
+    # Get the effective read concern for this collection instance.
+    #
+    # If a read concern was provided in collection options, that read concern
+    # will be returned, otherwise the database's effective read concern will
+    # be returned.
     #
     # @example Get the read concern.
     #   collection.read_concern
@@ -185,7 +189,7 @@ module Mongo
       options[:read_concern] || database.read_concern
     end
 
-    # Get the server selector on this collection.
+    # Get the server selector for this collection.
     #
     # @example Get the server selector.
     #   collection.server_selector
@@ -197,7 +201,11 @@ module Mongo
       @server_selector ||= ServerSelector.get(read_preference || database.server_selector)
     end
 
-    # Get the read preference on this collection.
+    # Get the effective read preference for this collection.
+    #
+    # If a read preference was provided in collection options, that read
+    # preference will be returned, otherwise the database's effective read
+    # preference will be returned.
     #
     # @example Get the read preference.
     #   collection.read_preference
@@ -209,7 +217,11 @@ module Mongo
       @read_preference ||= options[:read] || database.read_preference
     end
 
-    # Get the write concern on this collection.
+    # Get the effective write concern on this collection.
+    #
+    # If a write concern was provided in collection options, that write
+    # concern will be returned, otherwise the database's effective write
+    # concern will be returned.
     #
     # @example Get the write concern.
     #   collection.write_concern
@@ -222,7 +234,8 @@ module Mongo
         options[:write_concern] || options[:write] || database.write_concern)
     end
 
-    # Get the write concern for the collection, given the session.
+    # Get the write concern to use for an operation on this collection,
+    # given a session.
     #
     # If the session is in a transaction and the collection
     # has an unacknowledged write concern, remove the write
