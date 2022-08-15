@@ -805,7 +805,7 @@ module Mongo
         unless @server.load_balancer?
           opts[:generation] = generation
         end
-        connection = Connection.new(@server, opts)
+        Connection.new(@server, opts)
       end
 
       # Create a connection, connect it, and add it to the pool.

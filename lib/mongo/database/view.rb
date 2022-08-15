@@ -172,7 +172,7 @@ module Mongo
             doc['name'].start_with?('system.') || doc['name'].include?('$')
           end
         else
-          docs = cursor.reject do |doc|
+          cursor.reject do |doc|
             doc['name'].start_with?("#{database.name}.system") || doc['name'].include?('$')
           end
         end
