@@ -41,7 +41,10 @@ logging subscriber used internally by the driver:
     include Mongo::Loggable
 
     def started(event)
-      log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
+      # The default inspection of a command which is a BSON document gets
+      # truncated in the middle. To get the full rendering of the command, the
+      # ``to_json`` method can be called on the document.
+      log_debug("#{prefix(event)} | STARTED | #{format_command(event.command.to_json)}")
     end
 
     def succeeded(event)
@@ -94,11 +97,6 @@ Sample output:
   D, [2018-09-23T13:47:31.258020 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.hello | STARTED | {"hello"=>1, "$readPreference"=>{"mode"=>"primary"}, "lsid"=>{"id"=><BSON::Binary:0x47111693353080 type=uuid data=0x730341e880dc40a2...>}}
   D, [2018-09-23T13:47:31.259145 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.hello | SUCCEEDED | 0.000791175s
 
-.. note::
-
-  The default inspection of a command which is a BSON document gets truncated
-  in the middle. To get the full rendering of the command, the ``to_json``
-  method can be called on the document: ``event.command.to_json``.
 
 .. _sdam:
 
