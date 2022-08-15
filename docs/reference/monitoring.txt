@@ -98,7 +98,6 @@ Sample output:
   D, [2018-09-23T13:47:31.259145 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.hello | SUCCEEDED | 0.000791175s
 
 
-
 .. _sdam:
 
 Server Discovery And Monitoring
