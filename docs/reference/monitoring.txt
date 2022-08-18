@@ -41,7 +41,10 @@ logging subscriber used internally by the driver:
     include Mongo::Loggable
 
     def started(event)
-      log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
+      # The default inspection of a command which is a BSON document gets
+      # truncated in the middle. To get the full rendering of the command, the
+      # ``to_json`` method can be called on the document.
+      log_debug("#{prefix(event)} | STARTED | #{format_command(event.command.to_json)}")
     end
 
     def succeeded(event)
@@ -137,35 +140,35 @@ can look like the following:
       format("SDAM | %s".freeze, message)
     end
   end
-  
+
   class TopologyOpeningLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Topology type '#{event.topology.display_name}' initializing."
     end
   end
-  
+
   class ServerOpeningLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Server #{event.address} initializing."
     end
   end
-  
+
   class ServerDescriptionChangedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Server description for #{event.address} changed from " +
       "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
     end
   end
-  
+
   class TopologyChangedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       if event.previous_topology != event.new_topology
         "Topology type '#{event.previous_topology.display_name}' changed to " +
@@ -176,18 +179,18 @@ can look like the following:
       end
     end
   end
-  
+
   class ServerClosedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Server #{event.address} connection closed."
     end
   end
-  
+
   class TopologyClosedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Topology type '#{event.topology.display_name}' closed."
     end
@@ -228,7 +231,7 @@ since the events may be published during the client's construction:
   topology_changed_subscriber = TopologyChangedLogSubscriber.new
   server_closed_subscriber = ServerClosedLogSubscriber.new
   topology_closed_subscriber = TopologyClosedLogSubscriber.new
-  
+
   sdam_proc = Proc.new do |client|
     client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING,
       topology_opening_subscriber)
@@ -316,9 +319,9 @@ The following is an example logging heartbeat event subscriber:
     def failed(event)
       log_debug("#{event.address} | FAILED | #{event.error.class}: #{event.error.message} | #{event.duration}s")
     end
-    
+
     private
-    
+
     def logger
       Mongo::Logger.logger
     end
