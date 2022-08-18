@@ -98,8 +98,6 @@ module Mongo
           end.first&.fetch('value', nil)
         end
 
-        # db['users'].bulk_write([{insert_one: {x: 1}}, {insert_one: {x: 2}}])
-
         # Finds a single document and replaces it.
         #
         # @example Find a document and replace it, returning the original.

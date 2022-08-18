@@ -692,7 +692,7 @@ module Mongo
     # @example Insert documents into the collection.
     #   collection.insert_many([{ name: 'test' }])
     #
-    # @param [ Array<Hash> ] documents The documents to insert.
+    # @param [ Array<Hash>, Enumerable ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
     # @option options [ true | false ] :bypass_document_validation Whether or

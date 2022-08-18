@@ -364,17 +364,37 @@ describe Mongo::Collection do
 
     context 'when an enumerable is used instead of an array' do
 
-      let(:source_data) do
-        [{ name: 'test1' }, { name: 'test2' }]
+      context 'when the enumerable is not empty' do
+
+        let(:source_data) do
+          [{ name: 'test1' }, { name: 'test2' }]
+        end
+
+        let(:result) do
+          authorized_collection.insert_many(source_data.lazy)
+        end
+
+        it 'should accepts them without raising an error' do
+          expect { result }.to_not raise_error
+          expect(result.inserted_count).to eq(source_data.size)
+        end
       end
 
-      let(:result) do
-        authorized_collection.insert_many(source_data.lazy)
-      end
+      context 'when the enumerable is empty' do
 
-      it 'should accepts them without raising an error' do
-        expect { result }.to_not raise_error
-        expect(result.inserted_count).to eq(source_data.size)
+        let(:source_data) do
+          []
+        end
+
+        let(:result) do
+          authorized_collection.insert_many(source_data.lazy)
+        end
+
+        it 'should accepts them without raising an error' do
+          expect do
+            result
+          end.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
+        end
       end
     end
 
