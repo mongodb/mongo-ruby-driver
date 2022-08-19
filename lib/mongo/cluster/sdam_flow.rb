@@ -365,7 +365,6 @@ class Mongo::Cluster
     #   This is the set of servers on which monitoring should be started.
     def add_servers_from_desc(updated_desc)
       added_servers = []
-      address_strs = servers_list.map(&:address).map(&:to_s)
       %w(hosts passives arbiters).each do |m|
         updated_desc.send(m).each do |address_str|
           if server = cluster.add(address_str, monitor: false)

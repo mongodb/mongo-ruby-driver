@@ -299,11 +299,6 @@ module Mongo
         @features
       end
 
-      # @return [ nil | Object ] The service id, if any.
-      def service_id
-        config['serviceId']
-      end
-
       # @return [ Float ] The moving average time the hello call took to complete.
       attr_reader :average_round_trip_time
 
@@ -844,6 +839,8 @@ module Mongo
         config['connectionId']
       end
 
+      # @return [ nil | Object ] The service id, if any.
+      #
       # @api experimental
       def service_id
         config['serviceId']

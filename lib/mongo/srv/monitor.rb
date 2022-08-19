@@ -70,8 +70,6 @@ module Mongo
       end
 
       def scan!
-        old_hosts = last_result.address_strs
-
         begin
           last_result = Timeout.timeout(timeout) do
             @resolver.get_records(@srv_uri.query_hostname)

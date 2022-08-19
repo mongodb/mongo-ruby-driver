@@ -235,7 +235,7 @@ module Mongo
         raise Error::InvalidURI.new(string, 'Cannot parse an empty URI.')
       end
 
-      scheme, _, remaining = string.partition(SCHEME_DELIM)
+      scheme, _, _ = string.partition(SCHEME_DELIM)
       case scheme
         when MONGODB_SCHEME
           URI.new(string, opts)

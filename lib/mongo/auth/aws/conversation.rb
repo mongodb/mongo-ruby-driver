@@ -65,10 +65,6 @@ module Mongo
         # @return [ Integer ] The conversation id.
         attr_reader :conversation_id
 
-        def client_first_payload
-          {payload: client_first_message}
-        end
-
         def client_first_data
           {
             r: BSON::Binary.new(client_nonce),

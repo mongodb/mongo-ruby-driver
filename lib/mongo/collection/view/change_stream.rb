@@ -164,7 +164,7 @@ module Mongo
             document = try_next
             yield document if document
           end
-        rescue StopIteration => e
+        rescue StopIteration
           return self
         end
 
