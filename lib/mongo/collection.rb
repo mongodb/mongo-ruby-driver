@@ -720,7 +720,7 @@ module Mongo
     # @example Execute a bulk write.
     #   collection.bulk_write(operations, options)
     #
-    # @param [ Array<Hash> ] requests The bulk write requests.
+    # @param [ Array<Hash>, Enumerable ] requests The bulk write requests.
     # @param [ Hash ] options The options.
     #
     # @option options [ true | false ] :ordered Whether the operations
