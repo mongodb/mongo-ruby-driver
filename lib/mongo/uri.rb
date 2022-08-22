@@ -335,10 +335,30 @@ module Mongo
     #
     # @return [ String ] The uri string.
     def to_s
-      @string
+      reconstruct_uri
     end
 
     private
+
+    # Reconstruct the URI from its parts.
+    #
+    # @return [ String ] the uri.
+    def reconstruct_uri
+      servers = @servers.join(',')
+      options = options_mapper.ruby_to_smc(@uri_options).map do |k, v|
+        "#{k}=#{v}"
+      end.join('&')
+
+      uri = "#{scheme}#{SCHEME_DELIM}"
+      uri += @user.to_s if @user
+      uri += "#{AUTH_USER_PWD_DELIM}#{@password}" if @password
+      uri += "@" if @user || @password
+      uri += @query_hostname || servers
+      uri += "/" if @database || !options.empty?
+      uri += @database.to_s if @database
+      uri += "?#{options}" unless options.empty?
+      uri
+    end
 
     def scheme
       MONGODB_SCHEME
@@ -390,15 +410,6 @@ module Mongo
       end
     rescue Error::InvalidAddress => e
       raise_invalid_error!(e.message)
-    end
-
-    def extract_db_opts!(string)
-      db_opts, _, creds_hosts = string.reverse.partition(DATABASE_DELIM)
-      db_opts, creds_hosts = creds_hosts, db_opts if creds_hosts.empty?
-      if db_opts.empty? && creds_hosts.include?(URI_OPTS_DELIM)
-        raise_invalid_error!(INVALID_OPTS_DELIM)
-      end
-      [ creds_hosts, db_opts ].map { |s| s.reverse }
     end
 
     def options_mapper

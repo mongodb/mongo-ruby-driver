@@ -115,7 +115,6 @@ module Mongo
           end
         end
 
-        #p uri_options
         uri_options
       end
 
@@ -134,8 +133,8 @@ module Mongo
             v = opts[spec[:name]]
           end
           unless v.nil?
-            if spec[:type]
-              v = send("revert_#{spec[:type]}", v)
+            if type = spec[:type]
+              v = send("revert_#{type}", v)
             end
             canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
             unless canonical_key
@@ -235,7 +234,7 @@ module Mongo
       uri_option 'w', :w, group: :write_concern, type: :w
       uri_option 'journal', :j, group: :write_concern, type: :bool
       uri_option 'fsync', :fsync, group: :write_concern, type: :bool
-      uri_option 'wTimeoutMS', :wtimeout, group: :write_concern, type: :integer
+      uri_option 'wtimeoutMS', :wtimeout, group: :write_concern, type: :integer
 
       # Read Options
       uri_option 'readPreference', :mode, group: :read, type: :read_mode
@@ -459,7 +458,7 @@ module Mongo
       #
       # @return [ Array<String> ] The passed value.
       def revert_array(value)
-        value
+        value.join(',')
       end
 
       # Authentication mechanism transformation.
@@ -515,7 +514,7 @@ module Mongo
       #
       # @return [ Hash | nil ] The passed value.
       def revert_auth_mech_props(value)
-        value
+        value.map { |k, v| "#{k}:#{v}" }.join(',')
       end
 
       # Parses the max staleness value, which must be either "0" or an integer
@@ -599,7 +598,7 @@ module Mongo
       #
       # @return [ Array<Hash> | nil ] The passed value.
       def revert_read_tags(value)
-        value
+        value.map { |ar| ar.map { |k, v| "#{k}:#{v}" }.join(',') }.join('&readPreferenceTags=')
       end
 
       # Read preference tag set extractor.
