@@ -268,6 +268,28 @@ module Unified
             key_vault_client,
             opts
           )
+        when 'thread'
+          thread_context = ThreadContext.new
+          thread = Thread.new do
+            loop do
+              begin
+                op_spec = thread_context.operations.pop(true)
+                execute_operation(op_spec)
+              rescue ThreadError
+                # Queue is empty
+              end
+              if thread_context.stop?
+                break
+              else
+                sleep 1
+              end
+            end
+          end
+          class << thread
+            attr_accessor :context
+          end
+          thread.context = thread_context
+          thread
         else
           raise NotImplementedError, "Unknown type #{type}"
         end

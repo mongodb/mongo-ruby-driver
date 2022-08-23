@@ -5,6 +5,22 @@ module Unified
 
   module ThreadOperations
 
+    class ThreadContext
+      def initialize
+        @operations = Queue.new
+      end
+
+      def stop?
+        !!@stop
+      end
+
+      def signal_stop
+        @stop = true
+      end
+
+      attr_reader :operations
+    end
+
     def wait(op)
       consume_test_runner(op)
       use_arguments(op) do |args|
@@ -34,6 +50,24 @@ module Unified
             sleep 0.1
           end
         end
+      end
+    end
+
+    def run_on_thread(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        thread = entities.get(:thread, args.use!('thread'))
+        operation = args.use!('operation')
+        thread.context.operations << operation
+      end
+    end
+
+    def wait_for_thread(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        thread = entities.get(:thread, args.use!('thread'))
+        thread.context.signal_stop
+        thread.join
       end
     end
   end
