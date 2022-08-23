@@ -118,7 +118,7 @@ module Unified
         spec = UsingHash[spec]
         collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         expected_docs = spec.use!('documents')
-        actual_docs = collection.find({}, order: :_id).to_a
+        actual_docs = collection.find({}, sort: { _id: 1 }).to_a
         assert_documents_match(actual_docs, expected_docs)
         unless spec.empty?
           raise NotImplementedError, "Unhandled keys: #{spec}"
@@ -207,40 +207,6 @@ module Unified
       end
       unless spec.empty?
         raise NotImplementedError, "Unhandled keys: #{spec}"
-      end
-    end
-
-    def assert_event_count(op)
-      consume_test_runner(op)
-      use_arguments(op) do |args|
-        client = entities.get(:client, args.use!('client'))
-        subscriber = @subscribers.fetch(client)
-        event = args.use!('event')
-        assert_eq(event.keys.length, 1, "Expected event must have one key: #{event}")
-        count = args.use!('count')
-
-        events = select_events(subscriber, event)
-        assert_eq(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
-      end
-    end
-
-    def select_events(subscriber, event)
-      expected_name, opts = event.first
-      expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
-      subscriber.wanted_events.filter do |wevent|
-        if wevent.class.name.sub(/.*::/, '') == expected_name
-          spec = UsingHash[opts]
-          result = true
-          if new_desc = spec.use('newDescription')
-            if type = new_desc.use('type')
-              result &&= wevent.new_description.server_type == type.downcase.to_sym
-            end
-          end
-          unless spec.empty?
-            raise NotImplementedError, "Unhandled keys: #{spec}"
-          end
-          result
-        end
       end
     end
 

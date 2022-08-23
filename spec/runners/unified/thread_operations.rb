@@ -36,16 +36,15 @@ module Unified
         event = args.use!('event')
         assert_eq(event.keys.length, 1, "Expected event must have one key: #{event}")
         count = args.use!('count')
-        timeout = args.use('timeout') || 5
 
-        deadline = Time.now + timeout
+        deadline = Time.now + 10
         loop do
           events = select_events(subscriber, event)
           if events.length >= count
             break
           end
           if Time.now >= deadline
-            raise "Did not receive an event matching #{event} in 5 seconds; received #{events.length} but expected #{count} events"
+            raise "Did not receive an event matching #{event} in 10 seconds; received #{events.length} but expected #{count} events"
           else
             sleep 0.1
           end

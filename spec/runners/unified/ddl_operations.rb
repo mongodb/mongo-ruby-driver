@@ -182,5 +182,51 @@ module Unified
         generate_entities(args.use!('entities'))
       end
     end
+
+    def record_topology_description(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        entities.set(:topology, args.use!('id'), client.cluster.topology)
+      end
+    end
+
+    def assert_topology_type(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        topology = entities.get(:topology, args.use!('topologyDescription'))
+        type = args.use!('topologyType')
+        unless topology.display_name == type
+          raise Error::ResultMismatch, "Expected topology type to be #{type}, but got #{topology.class}"
+        end
+      end
+    end
+
+    def retrieve_primary(topology)
+      topology.server_descriptions.detect { |k, desc| desc.primary? }&.first
+    end
+
+    def wait_for_primary_change(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        topology = entities.get(:topology, args.use!('priorTopologyDescription'))
+        timeout_ms = args.use('timeoutMS') || 10000
+        old_primary = retrieve_primary(topology)
+
+        deadline = Time.now + 10
+        loop do
+          new_primary = retrieve_primary(client.cluster.topology)
+          if new_primary && old_primary != new_primary
+            break
+          end
+          if Time.now >= deadline
+            raise "Did not receive a change in primary from #{old_primary} in 10 seconds"
+          else
+            sleep 0.1
+          end
+        end
+      end
+    end
   end
 end
