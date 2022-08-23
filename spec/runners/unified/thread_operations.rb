@@ -5,6 +5,13 @@ module Unified
 
   module ThreadOperations
 
+    def wait(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        sleep args.use!('ms') / 1000.0
+      end
+    end
+
     def wait_for_event(op)
       consume_test_runner(op)
       use_arguments(op) do |args|
