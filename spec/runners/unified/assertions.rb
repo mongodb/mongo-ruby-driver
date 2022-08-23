@@ -275,6 +275,10 @@ module Unified
           actual_v = actual.inserted_id
           expected_v = expected.values.first.values.first
           assert_value_matches(actual_v, expected_v, 'inserted_id')
+        elsif expected.keys == %w(insertedId)
+          actual_v = actual.inserted_id
+          expected_v = expected.values.first
+          assert_value_matches(actual_v, expected_v, 'inserted_id')
         else
           if expected.empty?
             # This needs to be a match assertion. Check type only
