@@ -219,7 +219,6 @@ module Unified
         assert_eq(event.keys.length, 1, "Expected event must have one key: #{event}")
         count = args.use!('count')
 
-        byebug
         events = select_events(subscriber, event)
         assert_eq(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
       end
