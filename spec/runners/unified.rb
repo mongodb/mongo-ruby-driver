@@ -64,7 +64,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                 end
               end
               begin
-                test.create_entities
+                test.create_spec_entities
                 test.set_initial_data
                 begin
                   test.run
@@ -94,7 +94,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                   skip "Requirements not satisfied"
                 end
               end
-              test.create_entities
+              test.create_spec_entities
               test.set_initial_data
               test.run
               test.assert_outcome

@@ -175,5 +175,12 @@ module Unified
         end
       end
     end
+
+    def create_entities(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        generate_entities(args.use!('entities'))
+      end
+    end
   end
 end

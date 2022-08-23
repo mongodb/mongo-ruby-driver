@@ -8,6 +8,7 @@ require 'runners/unified/grid_fs_operations'
 require 'runners/unified/ddl_operations'
 require 'runners/unified/change_stream_operations'
 require 'runners/unified/support_operations'
+require 'runners/unified/thread_operations'
 require 'runners/unified/assertions'
 require 'support/utils'
 require 'support/crypt'
@@ -21,6 +22,7 @@ module Unified
     include DdlOperations
     include ChangeStreamOperations
     include SupportOperations
+    include ThreadOperations
     include Assertions
     include RSpec::Core::Pending
 
@@ -74,9 +76,13 @@ module Unified
 
     attr_reader :entities
 
-    def create_entities
+    def create_spec_entities
       return if @entities_created
-      @spec['createEntities'].each do |entity_spec|
+      generate_entities(@spec['createEntities'])
+    end
+
+    def generate_entities(es)
+      es.each do |entity_spec|
         unless entity_spec.keys.length == 1
           raise NotImplementedError, "Entity must have exactly one key"
         end
@@ -159,6 +165,12 @@ module Unified
                     client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
                   end
                   kind = event.sub('Event', '').gsub(/([A-Z])/) { "_#{$1}" }.sub('pool', 'Pool').downcase.to_sym
+                  subscriber.add_wanted_events(kind)
+                when 'serverDescriptionChangedEvent'
+                  unless client.send(:monitoring).subscribers[Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED]&.include?(subscriber)
+                    client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+                  end
+                  kind = event.sub('Event', '').gsub(/([A-Z])/) { "_#{$1}" }.downcase.to_sym
                   subscriber.add_wanted_events(kind)
                 else
                   raise NotImplementedError, "Unknown event #{event}"
@@ -354,7 +366,7 @@ module Unified
             end
 
             public_send(method_name, op)
-          rescue Mongo::Error, BSON::String::IllegalKey, ArgumentError => e
+          rescue Mongo::Error, BSON::String::IllegalKey, Mongo::Auth::Unauthorized, ArgumentError => e
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.
               # It means anything other than OperationFailure. DRIVERS-1799

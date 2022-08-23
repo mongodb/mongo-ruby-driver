@@ -480,17 +480,14 @@ module Mongo
     rescue Mongo::Error::SocketTimeoutError
       # possibly cluster is slow, do not give up on it
       raise
-    rescue Mongo::Error::SocketError => e
-      # non-timeout network error
+    rescue Mongo::Error::SocketError, Auth::Unauthorized => e
+      # non-timeout network error or auth error, clear the pool and mark the
+      # topology as unknown
       unknown!(
         generation: e.generation,
         service_id: e.service_id,
         stop_push_monitor: true,
       )
-      raise
-    rescue Auth::Unauthorized
-      # auth error, keep server description and topology as they are
-      pool.disconnect!
       raise
     end
 
