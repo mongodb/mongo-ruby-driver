@@ -104,6 +104,8 @@ module Mongo
 
           if key == 'readConcernLevel'
             value = value.to_sym
+          elsif strategy[:type] == :ms
+            value = value / 1000
           end
 
           value = apply_transform(key, value, strategy[:type])
