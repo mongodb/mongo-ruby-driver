@@ -104,9 +104,11 @@ module Mongo
 
           if key == 'readConcernLevel'
             value = value.to_sym
+          elsif strategy[:type] == :ms
+            value = value / 1000
           end
 
-          #value = apply_transform(key, value, strategy[:type])
+          value = apply_transform(key, value, strategy[:type])
           # Sometimes the value here would be nil, for example if we are processing
           # read preference tags or auth mechanism properties and all of the
           # data within is invalid. Ignore such options.
@@ -371,20 +373,29 @@ module Mongo
       # options are always in MS so we provide an easy conversion type.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param [ Integer ] value The millisecond value.
+      # @param [ String | Integer ] value The millisecond value.
       #
       # @return [ Float ] The seconds value.
       #
       # @since 2.0.0
       def convert_ms(name, value)
-        unless /\A-?\d+(\.\d+)?\z/ =~ value
-          log_warn("Invalid ms value for #{name}: #{value}")
-          return nil
-        end
-
-        if value[0] == '-'
-          log_warn("#{name} cannot be a negative number")
-          return nil
+        case value
+        when String
+          if /\A-?\d+(\.\d+)?\z/ !~ value
+            log_warn("Invalid ms value for #{name}: #{value}")
+            return nil
+          end
+          if value.to_s[0] == '-'
+            log_warn("#{name} cannot be a negative number")
+            return nil
+          end
+        when Integer
+          if value < 0
+            log_warn("#{name} cannot be a negative number")
+            return nil
+          end
+        else
+          raise ArgumentError, "Can only convert Strings or Integers to ms. Given: #{value.class}"
         end
 
         value.to_f / 1000
