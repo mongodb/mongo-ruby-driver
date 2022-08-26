@@ -79,7 +79,6 @@ This release includes the following new features:
 - When 0 is given as the max connection pool size, it is now interpreted to
   mean no limit.
 - The default maximum connection pool size has been increased to 20 from 5.
-- Added support for enumerables in bulk write operations.
 
 This release adds supports for JRuby 9.3.
 
