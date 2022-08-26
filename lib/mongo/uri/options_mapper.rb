@@ -106,7 +106,7 @@ module Mongo
             value = value.to_sym
           end
 
-          #value = apply_transform(key, value, strategy[:type])
+          value = apply_transform(key, value, strategy[:type])
           # Sometimes the value here would be nil, for example if we are processing
           # read preference tags or auth mechanism properties and all of the
           # data within is invalid. Ignore such options.
@@ -290,14 +290,14 @@ module Mongo
       # Returns true for 'true', false for 'false', otherwise nil.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param value [ String | true | false ] URI option value.
       #
       # @return [ true | false | nil ] Converted value.
       def convert_bool(name, value)
         case value
-        when "true", 'TRUE'
+        when true, "true", 'TRUE'
           true
-        when "false", 'FALSE'
+        when false, "false", 'FALSE'
           false
         else
           log_warn("invalid boolean option for #{name}: #{value}")
@@ -327,7 +327,7 @@ module Mongo
       # Parses a boolean value and returns its inverse.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] The URI option value.
+      # @param value [ String | true | false ] The URI option value.
       #
       # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
       #   (and a warning will be logged).
@@ -350,11 +350,11 @@ module Mongo
       # If the value is not a valid integer, warns and returns nil.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param value [ String | Integer ] URI option value.
       #
       # @return [ nil | Integer ] Converted value.
       def convert_integer(name, value)
-        unless /\A\d+\z/ =~ value
+        if value.is_a?(String) && /\A\d+\z/ !~ value
           log_warn("#{value} is not a valid integer for #{name}")
           return nil
         end
@@ -371,20 +371,29 @@ module Mongo
       # options are always in MS so we provide an easy conversion type.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param [ Integer ] value The millisecond value.
+      # @param [ String | Integer ] value The millisecond value.
       #
       # @return [ Float ] The seconds value.
       #
       # @since 2.0.0
       def convert_ms(name, value)
-        unless /\A-?\d+(\.\d+)?\z/ =~ value
-          log_warn("Invalid ms value for #{name}: #{value}")
-          return nil
-        end
-
-        if value[0] == '-'
-          log_warn("#{name} cannot be a negative number")
-          return nil
+        case value
+        when String
+          if /\A-?\d+(\.\d+)?\z/ !~ value
+            log_warn("Invalid ms value for #{name}: #{value}")
+            return nil
+          end
+          if value.to_s[0] == '-'
+            log_warn("#{name} cannot be a negative number")
+            return nil
+          end
+        when Integer
+          if value < 0
+            log_warn("#{name} cannot be a negative number")
+            return nil
+          end
+        else
+          raise ArgumentError, "Can only convert Strings or Integers to ms. Given: #{value.class}"
         end
 
         value.to_f / 1000
