@@ -14,4 +14,10 @@ module MongosMacros
       direct_client.use(db_name)[collection].distinct('foo').to_a
     end
   end
+
+  def maybe_run_mongos_distincts(db_name, collection='test')
+    if ClusterConfig.instance.topology == :sharded
+      run_mongos_distincts(db_name, collection)
+    end
+  end
 end
