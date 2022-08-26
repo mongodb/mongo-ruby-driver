@@ -390,7 +390,7 @@ describe Mongo::Collection do
           authorized_collection.insert_many(source_data.lazy)
         end
 
-        it 'should accepts them without raising an error' do
+        it 'should raise ArgumentError' do
           expect do
             result
           end.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
