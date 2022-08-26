@@ -295,9 +295,9 @@ module Mongo
       # @return [ true | false | nil ] Converted value.
       def convert_bool(name, value)
         case value
-        when "true", 'TRUE'
+        when true, "true", 'TRUE'
           true
-        when "false", 'FALSE'
+        when false, "false", 'FALSE'
           false
         else
           log_warn("invalid boolean option for #{name}: #{value}")
@@ -354,7 +354,7 @@ module Mongo
       #
       # @return [ nil | Integer ] Converted value.
       def convert_integer(name, value)
-        unless /\A\d+\z/ =~ value
+        if value.is_a?(String) && /\A\d+\z/ !~ value
           log_warn("#{value} is not a valid integer for #{name}")
           return nil
         end
