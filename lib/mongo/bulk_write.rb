@@ -115,7 +115,7 @@ module Mongo
     #   )
     #
     # @param [ Mongo::Collection ] collection The collection.
-    # @param [ Array<Hash, BSON::Document>, Enumerable ] requests The requests,
+    # @param [ Enumerable<Hash, BSON::Document> ] requests The requests,
     #   cannot be empty.
     # @param [ Hash, BSON::Document ] options The options.
     #
