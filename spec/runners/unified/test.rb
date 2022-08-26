@@ -145,10 +145,12 @@ module Unified
             opts[:server_api] = server_api
           end
 
-          create_client(**opts).tap do |client|
-            @observe_sensitive = spec.use('observeSensitiveCommands')
-            subscriber = (@subscribers[client] ||= EventSubscriber.new)
-            if oe = spec.use('observeEvents')
+          observe_events = spec.use('observeEvents')
+          subscriber = EventSubscriber.new
+          current_proc = opts[:sdam_proc]
+          opts[:sdam_proc] = lambda do |client|
+            current_proc.call if current_proc
+            if oe = observe_events
               oe.each do |event|
                 case event
                 when 'commandStartedEvent', 'commandSucceededEvent', 'commandFailedEvent'
@@ -177,6 +179,10 @@ module Unified
                 end
               end
             end
+          end
+
+          create_client(**opts).tap do |client|
+            @subscribers[client] ||= subscriber
           end
         when 'database'
           client = entities.get(:client, spec.use!('client'))
