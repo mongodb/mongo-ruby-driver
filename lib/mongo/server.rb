@@ -552,10 +552,13 @@ module Mongo
         # However, this method also clears connection pool for the server
         # when the latter is marked unknown, and this part needs to happen
         # when the server is a load balancer.
+        #
+        # It is possible for a load balancer server to not have a service id,
+        # for example if there hasn't been any successful connections yet to
+        # this server, but the server can still be marked unknown if one
+        # of such connections failed midway through its establishment.
         if service_id = options[:service_id]
           pool.disconnect!(service_id: service_id)
-        elsif Lint.enabled?
-          raise Error::LintError, 'Load balancer was asked to be marked unknown without a service id'
         end
         return
       end
