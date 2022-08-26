@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/create/command'
 require 'mongo/operation/create/op_msg'
 
 module Mongo

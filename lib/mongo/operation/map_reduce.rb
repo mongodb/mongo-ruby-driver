@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/map_reduce/command'
 require 'mongo/operation/map_reduce/op_msg'
 require 'mongo/operation/map_reduce/result'
 

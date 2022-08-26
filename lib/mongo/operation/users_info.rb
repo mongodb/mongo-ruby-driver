@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/users_info/command'
 require 'mongo/operation/users_info/op_msg'
 require 'mongo/operation/users_info/result'
 

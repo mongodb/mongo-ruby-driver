@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/parallel_scan/command'
 require 'mongo/operation/parallel_scan/op_msg'
 require 'mongo/operation/parallel_scan/result'
 

@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/find/command'
 require 'mongo/operation/find/op_msg'
-require 'mongo/operation/find/legacy'
 require 'mongo/operation/find/result'
 require 'mongo/operation/find/builder'
 

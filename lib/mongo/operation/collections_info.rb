@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/collections_info/command'
 require 'mongo/operation/collections_info/result'
 
 module Mongo

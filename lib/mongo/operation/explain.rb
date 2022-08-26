@@ -17,8 +17,6 @@
 
 require 'mongo/operation/explain/result'
 require 'mongo/operation/explain/op_msg'
-require 'mongo/operation/explain/command'
-require 'mongo/operation/explain/legacy'
 
 module Mongo
   module Operation

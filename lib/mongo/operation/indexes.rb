@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/indexes/command'
 require 'mongo/operation/indexes/op_msg'
-require 'mongo/operation/indexes/legacy'
 require 'mongo/operation/indexes/result'
 
 module Mongo

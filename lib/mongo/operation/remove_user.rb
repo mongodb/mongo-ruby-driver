@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/remove_user/command'
 require 'mongo/operation/remove_user/op_msg'
 
 module Mongo

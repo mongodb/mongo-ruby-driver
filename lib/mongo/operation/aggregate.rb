@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/aggregate/command'
 require 'mongo/operation/aggregate/op_msg'
 require 'mongo/operation/aggregate/result'
 
