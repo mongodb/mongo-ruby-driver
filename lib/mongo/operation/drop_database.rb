@@ -27,7 +27,7 @@ module Mongo
     # @since 2.4.0
     class DropDatabase
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

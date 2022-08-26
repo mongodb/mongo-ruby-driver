@@ -25,7 +25,7 @@ module Mongo
     # @api private
     class WriteCommand
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

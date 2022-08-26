@@ -29,7 +29,7 @@ module Mongo
     # @since 2.0.0
     class Find
       include Specifiable
-      include OpMsgOrFindCommand
+      include OpMsgExecutable
     end
   end
 end

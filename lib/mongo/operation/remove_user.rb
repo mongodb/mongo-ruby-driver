@@ -27,7 +27,7 @@ module Mongo
     # @since 2.0.0
     class RemoveUser
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

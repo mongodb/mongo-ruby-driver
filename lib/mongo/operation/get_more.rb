@@ -29,7 +29,7 @@ module Mongo
     # @since 2.5.0
     class GetMore
       include Specifiable
-      include OpMsgOrFindCommand
+      include OpMsgExecutable
     end
   end
 end

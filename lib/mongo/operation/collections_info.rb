@@ -27,8 +27,7 @@ module Mongo
     # @since 2.0.0
     class CollectionsInfo
       include Specifiable
-      include PolymorphicOperation
-      include PolymorphicLookup
+      include OpMsgExecutable
 
       private
 

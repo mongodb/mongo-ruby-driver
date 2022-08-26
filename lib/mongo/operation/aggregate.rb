@@ -32,7 +32,7 @@ module Mongo
     # @since 2.0.0
     class Aggregate
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

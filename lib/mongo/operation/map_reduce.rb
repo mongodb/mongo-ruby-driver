@@ -28,7 +28,7 @@ module Mongo
     # @since 2.5.0
     class MapReduce
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end
