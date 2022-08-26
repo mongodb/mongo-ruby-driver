@@ -31,7 +31,7 @@ module Mongo
 
       private
 
-      def final_operation(connection)
+      def final_operation
         ListCollections::OpMsg.new(spec)
       end
     end
