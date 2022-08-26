@@ -554,7 +554,7 @@ module Mongo
         # when the server is a load balancer.
         #
         # It is possible for a load balancer server to not have a service id,
-        # for example if there hasn't been any successful connections yet to
+        # for example if there haven't been any successful connections yet to
         # this server, but the server can still be marked unknown if one
         # of such connections failed midway through its establishment.
         if service_id = options[:service_id]
