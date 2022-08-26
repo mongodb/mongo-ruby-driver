@@ -267,7 +267,7 @@ module Unified
     def select_events(subscriber, event)
       expected_name, opts = event.first
       expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
-      subscriber.wanted_events.filter do |wevent|
+      subscriber.wanted_events.select do |wevent|
         if wevent.class.name.sub(/.*::/, '') == expected_name
           spec = UsingHash[opts]
           result = true
