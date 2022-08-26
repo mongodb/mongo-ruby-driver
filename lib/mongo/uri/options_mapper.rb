@@ -327,7 +327,7 @@ module Mongo
       # Parses a boolean value and returns its inverse.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] The URI option value.
+      # @param value [ String | true | false ] The URI option value.
       #
       # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
       #   (and a warning will be logged).
