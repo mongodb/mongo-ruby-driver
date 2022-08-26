@@ -33,17 +33,7 @@ module Mongo
       private
 
       def final_operation(connection)
-         op_class = if connection.features.list_collections_enabled?
-          if connection.features.op_msg_enabled?
-            ListCollections::OpMsg
-          else
-            ListCollections::Command
-          end
-        else
-          CollectionsInfo::Command
-        end
-
-        op_class.new(spec)
+        ListCollections::OpMsg.new(spec)
       end
     end
   end
