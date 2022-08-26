@@ -290,7 +290,7 @@ module Mongo
       # Returns true for 'true', false for 'false', otherwise nil.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param value [ String | true | false ] URI option value.
       #
       # @return [ true | false | nil ] Converted value.
       def convert_bool(name, value)
@@ -350,7 +350,7 @@ module Mongo
       # If the value is not a valid integer, warns and returns nil.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param value [ String | Integer ] URI option value.
       #
       # @return [ nil | Integer ] Converted value.
       def convert_integer(name, value)
