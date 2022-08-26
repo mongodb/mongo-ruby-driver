@@ -214,7 +214,7 @@ module Unified
         timeout_ms = args.use('timeoutMS') || 10000
         old_primary = retrieve_primary(topology)
 
-        deadline = Time.now + 10
+        deadline = Time.now + timeout_ms / 1000
         loop do
           new_primary = retrieve_primary(client.cluster.topology)
           if new_primary && old_primary != new_primary
