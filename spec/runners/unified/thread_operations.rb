@@ -37,13 +37,13 @@ module Unified
         assert_eq(event.keys.length, 1, "Expected event must have one key: #{event}")
         count = args.use!('count')
 
-        deadline = Time.now + 10
+        deadline = Mongo::Utils.monotonic_time + 10
         loop do
           events = select_events(subscriber, event)
           if events.length >= count
             break
           end
-          if Time.now >= deadline
+          if Mongo::Utils.monotonic_time >= deadline
             raise "Did not receive an event matching #{event} in 10 seconds; received #{events.length} but expected #{count} events"
           else
             sleep 0.1

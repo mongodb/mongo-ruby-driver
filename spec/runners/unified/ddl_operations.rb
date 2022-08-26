@@ -214,13 +214,14 @@ module Unified
         timeout_ms = args.use('timeoutMS') || 10000
         old_primary = retrieve_primary(topology)
 
-        deadline = Time.now + timeout_ms / 1000
+        deadline = Mongo::Utils.monotonic_time + timeout_ms / 1000.0
         loop do
-          new_primary = retrieve_primary(client.cluster.topology)
+          client.cluster.scan!
+          new_primary = client.cluster.next_primary.address
           if new_primary && old_primary != new_primary
             break
           end
-          if Time.now >= deadline
+          if Mongo::Utils.monotonic_time >= deadline
             raise "Did not receive a change in primary from #{old_primary} in 10 seconds"
           else
             sleep 0.1
