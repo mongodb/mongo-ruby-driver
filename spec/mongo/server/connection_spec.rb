@@ -410,7 +410,7 @@ describe Mongo::Server::Connection do
           end
 
           #it_behaves_like 'disconnects connection pool'
-          it_behaves_like 'keeps server type and topology'
+          it_behaves_like 'marks server unknown'
         end
 
         # need a separate context here, otherwise disconnect expectation
