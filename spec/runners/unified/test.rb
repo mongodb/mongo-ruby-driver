@@ -182,6 +182,7 @@ module Unified
           end
 
           create_client(**opts).tap do |client|
+            @observe_sensitive = spec.use('observeSensitiveCommands')
             @subscribers[client] ||= subscriber
           end
         when 'database'
