@@ -480,17 +480,14 @@ module Mongo
     rescue Mongo::Error::SocketTimeoutError
       # possibly cluster is slow, do not give up on it
       raise
-    rescue Mongo::Error::SocketError => e
-      # non-timeout network error
+    rescue Mongo::Error::SocketError, Auth::Unauthorized => e
+      # non-timeout network error or auth error, clear the pool and mark the
+      # topology as unknown
       unknown!(
         generation: e.generation,
         service_id: e.service_id,
         stop_push_monitor: true,
       )
-      raise
-    rescue Auth::Unauthorized
-      # auth error, keep server description and topology as they are
-      pool.disconnect!
       raise
     end
 
@@ -555,10 +552,13 @@ module Mongo
         # However, this method also clears connection pool for the server
         # when the latter is marked unknown, and this part needs to happen
         # when the server is a load balancer.
+        #
+        # It is possible for a load balancer server to not have a service id,
+        # for example if there haven't been any successful connections yet to
+        # this server, but the server can still be marked unknown if one
+        # of such connections failed midway through its establishment.
         if service_id = options[:service_id]
           pool.disconnect!(service_id: service_id)
-        elsif Lint.enabled?
-          raise Error::LintError, 'Load balancer was asked to be marked unknown without a service id'
         end
         return
       end

@@ -118,7 +118,7 @@ module Unified
         spec = UsingHash[spec]
         collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         expected_docs = spec.use!('documents')
-        actual_docs = collection.find({}, order: :_id).to_a
+        actual_docs = collection.find({}, sort: { _id: 1 }).to_a
         assert_documents_match(actual_docs, expected_docs)
         unless spec.empty?
           raise NotImplementedError, "Unhandled keys: #{spec}"
@@ -240,6 +240,10 @@ module Unified
         if expected.keys == %w($$unsetOrMatches) && expected.values.first.keys == %w(insertedId)
           actual_v = actual.inserted_id
           expected_v = expected.values.first.values.first
+          assert_value_matches(actual_v, expected_v, 'inserted_id')
+        elsif expected.keys == %w(insertedId)
+          actual_v = actual.inserted_id
+          expected_v = expected.values.first
           assert_value_matches(actual_v, expected_v, 'inserted_id')
         else
           if expected.empty?
