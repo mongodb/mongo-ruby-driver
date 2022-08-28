@@ -796,7 +796,7 @@ module Mongo
     # @example Insert documents into the collection.
     #   collection.insert_many([{ name: 'test' }])
     #
-    # @param [ Array<Hash> ] documents The documents to insert.
+    # @param [ Enumerable<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
     # @option options [ true | false ] :bypass_document_validation Whether or
@@ -824,7 +824,7 @@ module Mongo
     # @example Execute a bulk write.
     #   collection.bulk_write(operations, options)
     #
-    # @param [ Array<Hash> ] requests The bulk write requests.
+    # @param [ Enumerable<Hash> ] requests The bulk write requests.
     # @param [ Hash ] options The options.
     #
     # @option options [ true | false ] :ordered Whether the operations
