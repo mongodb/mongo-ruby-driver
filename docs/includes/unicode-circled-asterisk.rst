@@ -1,0 +1,1 @@
+.. |circled-asterisk| unicode:: U+229B
