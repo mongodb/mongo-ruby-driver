@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write_command/command'
 require 'mongo/operation/write_command/op_msg'
 
 module Mongo
@@ -26,7 +25,7 @@ module Mongo
     # @api private
     class WriteCommand
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end
