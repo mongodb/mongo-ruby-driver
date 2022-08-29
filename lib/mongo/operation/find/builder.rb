@@ -17,5 +17,4 @@
 
 require 'mongo/operation/find/builder/command'
 require 'mongo/operation/find/builder/flags'
-require 'mongo/operation/find/builder/legacy'
 require 'mongo/operation/find/builder/modifiers'

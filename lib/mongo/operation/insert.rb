@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/insert/command'
 require 'mongo/operation/insert/op_msg'
 require 'mongo/operation/insert/result'
 require 'mongo/operation/insert/bulk_result'

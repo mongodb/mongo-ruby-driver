@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2021 MongoDB Inc.
+# Copyright (C) 2018-2020 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
 module Mongo
   module Operation
 
-    # Shared behavior of implementing an operation differently based on
-    # the server that will be executing the operation.
+    # Shared behavior of executing the operation as an OpMsg.
     #
     # @api private
-    module PolymorphicOperation
+    module OpMsgExecutable
+      include PolymorphicLookup
 
       # Execute the operation.
       #
@@ -46,8 +46,13 @@ module Mongo
       #
       # @return [ Mongo::Operation::Result ] The operation result.
       def execute_with_connection(connection, context:, options: {})
-        operation = final_operation(connection)
-        operation.execute(connection, context: context, options: options)
+        final_operation.execute(connection, context: context, options: options)
+      end
+
+      private
+
+      def final_operation
+        polymorphic_class(self.class.name, :OpMsg).new(spec)
       end
     end
   end

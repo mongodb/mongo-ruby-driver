@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/aggregate/command'
 require 'mongo/operation/aggregate/op_msg'
 require 'mongo/operation/aggregate/result'
 
@@ -33,7 +32,7 @@ module Mongo
     # @since 2.0.0
     class Aggregate
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end
