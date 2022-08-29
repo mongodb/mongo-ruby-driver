@@ -17,4 +17,4 @@ Compatibility Table Legend
    * - No mark
      - The Driver version is not tested with the MongoDB version.
    * - D
-     - Support for the MongoDB version is deprecated and will be removed in a future     Driver version.
+     - Support for the MongoDB version is deprecated and will be removed in a future Driver version.
