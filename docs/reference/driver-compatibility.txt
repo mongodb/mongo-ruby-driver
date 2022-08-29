@@ -28,9 +28,9 @@ particular version of the driver will generally work with newer versions of
 the server but may not take advantage of the functionality released in the
 newer version of the server.
 
-The first column lists the driver versions.“D” in other columns means support
-for that MongoDB version is deprecated and will be removed in a future driver
-version.
+The first column lists the driver versions.
+
+.. include:: /includes/compatibility-table-legend.rst
 
 .. list-table::
    :header-rows: 1
@@ -66,8 +66,8 @@ version.
      -
 
    * - 2.17
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -80,9 +80,9 @@ version.
      -
 
    * - 2.16
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -94,10 +94,10 @@ version.
      - D
 
    * - 2.15
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -108,10 +108,10 @@ version.
      - |checkmark|
 
    * - 2.14
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -122,11 +122,11 @@ version.
      - |checkmark|
 
    * - 2.13
-     -
-     -
-     -
-     -
-     - |checkmark| [#ocsp]_
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk| [#ocsp]_
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -136,11 +136,11 @@ version.
      - |checkmark|
 
    * - 2.12
-     -
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -150,12 +150,12 @@ version.
      - |checkmark|
 
    * - 2.11
-     -
-     -
-     -
-     -
-     -
-     - |checkmark| [#client-side-encryption]_
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -164,12 +164,12 @@ version.
      - |checkmark|
 
    * - 2.10
-     -
-     -
-     -
-     -
-     -
-     - |checkmark| [#srv-polling]_ [#client-side-encryption]_
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk| [#srv-polling]_ [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -178,12 +178,12 @@ version.
      - |checkmark|
 
    * - 2.9
-     -
-     -
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -192,12 +192,12 @@ version.
      - |checkmark|
 
    * - 2.8
-     -
-     -
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -206,12 +206,12 @@ version.
      - |checkmark|
 
    * - 2.7
-     -
-     -
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -220,12 +220,12 @@ version.
      - |checkmark|
 
    * - 2.6
-     -
-     -
-     -
-     -
-     -
-     -
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
+     - |circled-asterisk|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -648,6 +648,7 @@ obtaining Kerberos credentials as well.
 
 .. include:: /includes/unicode-checkmark.rst
 .. include:: /includes/unicode-nbsp.rst
+.. include:: /includes/unicode-circled-asterisk.rst
 
 
 JRuby and TLS Connections
