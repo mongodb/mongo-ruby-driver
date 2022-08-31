@@ -853,7 +853,7 @@ There is no default key vault namespace, and this option must be provided.
 ``:kms_providers``
 ~~~~~~~~~~~~~~~~~~
 
-A Hash that contains KMP provider names as keys, and provider options as values.
+A Hash that contains KMS provider names as keys, and provider options as values.
 
 .. code-block:: ruby
 
@@ -864,10 +864,51 @@ A Hash that contains KMP provider names as keys, and provider options as values.
         aws: {
           access_key_id: 'IAM-ACCESS-KEY-ID',
           secret_access_key: 'IAM-SECRET-ACCESS-KEY'
+        },
+        azure: {
+          tenant_id: 'AZURE-TENANT-ID',
+          client_id: 'AZURE-CLIENT-ID',
+          client_secret: 'AZURE-CLIENT-SECRET'
+        },
+        gcp: {
+          email: 'GCP-EMAIL',
+          # :private_key value should be GCP private key as base64 encoded
+          # DER RSA private key, or PEM RSA private key, if you are using MRI Ruby.
+          private_key: 'GCP-PRIVATE-KEY',
+        },
+        kmip: {
+          # KMIP server endpoint may include port.
+          endpoint: 'KMIP-SERVER-HOST'
+        },
+        # TLS options to connect to KMIP server.
+        kms_tls_options: {
+          kmip: {
+            ssl_ca_cert: 'PATH-TO-CA-FILE',
+            ssl_cert: 'PATH-TO-CLIENT-CERT-FILE',
+            ssl_key: 'PATH-TO-CLIENT-KEY-FILE'
+          }
         }
       }
     }
   )
+
+The client can retrieve AWS credentials from the environment or from EC2 or ECS
+metadata endpoints. To retrieve credentials automatically, specify an empty Hash
+as KMS provider options for AWS:
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017'],
+     auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: {
+        aws: {}
+      }
+    }
+  )
+
+See :ref:`"Automatically Retrieving Credentials" <auto-retrieve-aws-credentials>`
+for more detailed information about the credential retrieval.
 
 ``:kms_tls_options``
 ~~~~~~~~~~~~~~~~~~~~

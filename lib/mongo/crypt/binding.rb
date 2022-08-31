@@ -775,13 +775,14 @@ module Mongo
 
       # An enum labeling different libmognocrypt state machine states
       enum :mongocrypt_ctx_state, [
-        :error,               0,
-        :need_mongo_collinfo, 1,
-        :need_mongo_markings, 2,
-        :need_mongo_keys,     3,
-        :need_kms,            4,
-        :ready,               5,
-        :done,                6,
+        :error,                 0,
+        :need_mongo_collinfo,   1,
+        :need_mongo_markings,   2,
+        :need_mongo_keys,       3,
+        :need_kms,              4,
+        :ready,                 5,
+        :done,                  6,
+        :need_kms_credentials,  7,
       ]
 
       # @!method self.mongocrypt_ctx_state(ctx)
@@ -1463,19 +1464,129 @@ module Mongo
         end
       end
 
-      # MONGOCRYPT_EXPORT
-      # uint64_t
-      # mongocrypt_crypt_shared_lib_version (const mongocrypt_t *crypt);
+      # @!method self.mongocrypt_crypt_shared_lib_version(crypt)
+      #   @api private
+      #
+      # Obtain a 64-bit constant encoding the version of the loaded
+      # crypt_shared library, if available.
+      #
+      # The version is encoded as four 16-bit numbers, from high to low:
+      #
+      # - Major version
+      # - Minor version
+      # - Revision
+      # - Reserved
+      #
+      # For example, version 6.2.1 would be encoded as: 0x0006'0002'0001'0000
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      #
+      # @return [int64] A 64-bit encoded version number, with the version encoded as four
+      #   sixteen-bit integers, or zero if no crypt_shared library was loaded.
       attach_function(
         :mongocrypt_crypt_shared_lib_version,
         [ :pointer ],
         :uint64
       )
 
+      # Obtain a 64-bit constant encoding the version of the loaded
+      # crypt_shared library, if available.
+      #
+      # The version is encoded as four 16-bit numbers, from high to low:
+      #
+      # - Major version
+      # - Minor version
+      # - Revision
+      # - Reserved
+      #
+      # For example, version 6.2.1 would be encoded as: 0x0006'0002'0001'0000
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      #
+      # @return [ Integer ] A 64-bit encoded version number, with the version encoded as four
+      #   sixteen-bit integers, or zero if no crypt_shared library was loaded.
       def self.crypt_shared_lib_version(handle)
         mongocrypt_crypt_shared_lib_version(handle.ref)
       end
 
+      # @!method self.mongocrypt_setopt_use_need_kms_credentials_state(crypt)
+      #   @api private
+      #
+      # Opt-into handling the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state.
+      #
+      # If set, before entering the MONGOCRYPT_CTX_NEED_KMS state,
+      # contexts may enter the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state
+      # and then wait for credentials to be supplied through
+      # `mongocrypt_ctx_provide_kms_providers`.
+      #
+      # A context will only enter MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS
+      # if an empty document was set for a KMS provider in
+      # `mongocrypt_setopt_kms_providers`.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      attach_function(
+        :mongocrypt_setopt_use_need_kms_credentials_state,
+        [ :pointer ],
+        :void
+      )
+
+      # Opt-into handling the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state.
+      #
+      # If set, before entering the MONGOCRYPT_CTX_NEED_KMS state,
+      # contexts may enter the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state
+      # and then wait for credentials to be supplied through
+      # `mongocrypt_ctx_provide_kms_providers`.
+      #
+      # A context will only enter MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS
+      # if an empty document was set for a KMS provider in
+      # `mongocrypt_setopt_kms_providers`.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      def self.setopt_use_need_kms_credentials_state(handle)
+        mongocrypt_setopt_use_need_kms_credentials_state(handle.ref)
+      end
+
+      # @!method self.mongocrypt_ctx_provide_kms_providers(ctx, kms_providers)
+      #   @api private
+      #
+      # Call in response to the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state
+      # to set per-context KMS provider settings. These follow the same format
+      # as `mongocrypt_setopt_kms_providers``. If no keys are present in the
+      # BSON input, the KMS provider settings configured for the mongocrypt_t
+      # at initialization are used.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ FFI::Pointer ] kms_providers A pointer to a
+      #   mongocrypt_binary_t object that references a BSON document mapping
+      #   the KMS provider names to credentials.
+      #
+      # @returns [ true | false ] Returns whether the options was set successfully.
+      attach_function(
+        :mongocrypt_ctx_provide_kms_providers,
+        [ :pointer, :pointer ],
+        :bool
+      )
+
+      # Call in response to the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state
+      # to set per-context KMS provider settings. These follow the same format
+      # as `mongocrypt_setopt_kms_providers``. If no keys are present in the
+      # BSON input, the KMS provider settings configured for the mongocrypt_t
+      # at initialization are used.
+      #
+      # @param [ Mongo::Crypt::Context ] context Encryption context.
+      # @param [ BSON::Document ] kms_providers BSON document mapping
+      #   the KMS provider names to credentials.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully.
+      def self.ctx_provide_kms_providers(context, kms_providers)
+        validate_document(kms_providers)
+        data = kms_providers.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_provide_kms_providers(context.ctx_p, data_p)
+          end
+        end
+      end
 
       # @!method self.mongocrypt_ctx_setopt_query_type(ctx, mongocrypt_query_type)
       #   @api private
