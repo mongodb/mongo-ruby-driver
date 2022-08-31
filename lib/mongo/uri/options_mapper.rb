@@ -295,7 +295,6 @@ module Mongo
       # @return [ true | false | nil ] Converted value.
       def convert_bool(name, value)
         case value
-          # note do we want to include 1, 0, off, on etc? or is this good enough
         when true, "true", 'TRUE'
           true
         when false, "false", 'FALSE'
