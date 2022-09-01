@@ -554,7 +554,7 @@ module Mongo
         int
       end
 
-      # Reverts max stalenss.
+      # Reverts max staleness.
       #
       # @param [ Integer | nil ] value The max staleness.
       #
@@ -644,7 +644,7 @@ module Mongo
       # @return [ String ] The write concern as a string.
       def revert_w(value)
         case value
-        when Symbol, Integer
+        when Symbol
           value.to_s
         else
           value
