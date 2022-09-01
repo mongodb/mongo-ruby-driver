@@ -344,7 +344,7 @@ module Mongo
       #
       # @return [ Array<true | false> | nil ] The string.
       def stringify_repeated_bool(value)
-        revert_repeated_bool(value)&.to_s
+        revert_repeated_bool(value)&.join(",")
       end
 
       # Parses a boolean value and returns its inverse.
@@ -589,7 +589,8 @@ module Mongo
       #
       # @return [ String | nil ] The string.
       def stringify_auth_mech_props(value)
-        value&.map { |k, v| "#{k}:#{v}" }.join(',')
+        return if value.nil?
+        value.map { |k, v| "#{k}:#{v}" }.join(',')
       end
 
       # Parses the max staleness value, which must be either "0" or an integer
