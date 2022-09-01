@@ -458,7 +458,7 @@ module Mongo
       #
       # @return [ Array<String> ] The passed value.
       def revert_array(value)
-        value.join(',')
+        value
       end
 
       # Authentication mechanism transformation.
@@ -514,7 +514,7 @@ module Mongo
       #
       # @return [ Hash | nil ] The passed value.
       def revert_auth_mech_props(value)
-        value.map { |k, v| "#{k}:#{v}" }.join(',')
+        value
       end
 
       # Parses the max staleness value, which must be either "0" or an integer
@@ -598,7 +598,7 @@ module Mongo
       #
       # @return [ Array<Hash> | nil ] The passed value.
       def revert_read_tags(value)
-        value.map { |ar| ar.map { |k, v| "#{k}:#{v}" }.join(',') }.join('&readPreferenceTags=')
+        value
       end
 
       # Read preference tag set extractor.
