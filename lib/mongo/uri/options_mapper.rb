@@ -309,6 +309,15 @@ module Mongo
         value
       end
 
+      # Stringifies a boolean type.
+      #
+      # @param [ true | false | nil ] value The boolean.
+      #
+      # @return [ String | nil ] The string.
+      def stringify_bool(value)
+        revert_bool(value)&.to_s
+      end
+
       # Converts the value into a boolean and returns it wrapped in an array.
       #
       # @param [ String ] name Name of the URI option being processed.
@@ -327,6 +336,15 @@ module Mongo
       # @return [ Array<true | false> | nil ] The passed value.
       def revert_repeated_bool(value)
         value
+      end
+
+      # Stringifies a repeated boolean type.
+      #
+      # @param [ Array<true | false> | nil ] value The repeated boolean.
+      #
+      # @return [ Array<true | false> | nil ] The string.
+      def stringify_repeated_bool(value)
+        revert_repeated_bool(value)&.to_s
       end
 
       # Parses a boolean value and returns its inverse.
@@ -355,6 +373,15 @@ module Mongo
         value.nil? ? nil : !value
       end
 
+      # Inverts and stringifies a boolean.
+      #
+      # @param [ true | false | nil ] value The boolean.
+      #
+      # @return [ String | nil ] The string.
+      def stringify_inverse_bool(value)
+        revert_inverse_bool(value)&.to_s
+      end
+
       # Converts +value+ into an integer. Only converts positive integers.
       #
       # If the value is not a valid integer, warns and returns nil.
@@ -379,6 +406,15 @@ module Mongo
       # @return [ Integer | nil ] The passed value.
       def revert_integer(value)
         value
+      end
+
+      # Stringifies an integer.
+      #
+      # @param [ Integer | nil ] value The integer.
+      #
+      # @return [ String | nil ] The string.
+      def stringify_integer(value)
+        revert_integer(value)&.to_s
       end
 
       # Ruby's convention is to provide timeouts in seconds, not milliseconds and
@@ -423,6 +459,15 @@ module Mongo
         (value * 1000).round
       end
 
+      # Stringifies an ms.
+      #
+      # @param [ Float ] value The float.
+      #
+      # @return [ String ] The string.
+      def stringify_ms(value)
+        revert_ms(value).to_s
+      end
+
       # Converts +value+ into a symbol.
       #
       # @param [ String ] name Name of the URI option being processed.
@@ -441,6 +486,7 @@ module Mongo
       def revert_symbol(value)
         value.to_s
       end
+      alias :stringify_symbol :revert_symbol
 
       # Extract values from the string and put them into an array.
       #
@@ -461,6 +507,15 @@ module Mongo
         value
       end
 
+      # Stringifies an array.
+      #
+      # @param [ Array<String> ] value An array of strings.
+      #
+      # @return [ String ] The array joined by commas.
+      def stringify_array(value)
+        value.join(',')
+      end
+
       # Authentication mechanism transformation.
       #
       # @param [ String ] name Name of the URI option being processed.
@@ -479,6 +534,8 @@ module Mongo
       # @param [ Symbol ] value The auth mechanism.
       #
       # @return [ String ] The auth mechanism as a string.
+      #
+      # @raise [ ArgumentError ] if its an invalid auth mechanism.
       def revert_auth_mech(value)
         found = AUTH_MECH_MAP.detect do |k, v|
           v == value
@@ -488,6 +545,15 @@ module Mongo
         else
           raise ArgumentError, "Unknown auth mechanism #{value}"
         end
+      end
+
+      # Stringifies auth mechanism.
+      #
+      # @param [ Symbol ] value The auth mechanism.
+      #
+      # @return [ String | nil ] The auth mechanism as a string.
+      def stringify_auth_mech(value)
+        revert_auth_mech(value) rescue nil
       end
 
       # Auth mechanism properties extractor.
@@ -515,6 +581,15 @@ module Mongo
       # @return [ Hash | nil ] The passed value.
       def revert_auth_mech_props(value)
         value
+      end
+
+      # Stringifies auth mechanism properties.
+      #
+      # @param [ Hash | nil ] value The auth mech properties.
+      #
+      # @return [ String | nil ] The string.
+      def stringify_auth_mech_props(value)
+        value&.map { |k, v| "#{k}:#{v}" }.join(',')
       end
 
       # Parses the max staleness value, which must be either "0" or an integer
@@ -558,6 +633,15 @@ module Mongo
         value
       end
 
+      # Stringifies max staleness.
+      #
+      # @param [ Integer | nil ] value The max staleness.
+      #
+      # @return [ String | nil ] The string.
+      def stringify_max_staleness(value)
+        revert_max_staleness(value)&.to_s
+      end
+
       # Read preference mode transformation.
       #
       # @param [ String ] name Name of the URI option being processed.
@@ -576,6 +660,7 @@ module Mongo
       def revert_read_mode(value)
         value.to_s.gsub(/_(\w)/) { $1.upcase }
       end
+      alias :stringify_read_mode :revert_read_mode
 
       # Read preference tags transformation.
       #
@@ -599,6 +684,15 @@ module Mongo
       # @return [ Array<Hash> | nil ] The passed value.
       def revert_read_tags(value)
         value
+      end
+
+      # Stringifies read tags.
+      #
+      # @param [ Array<Hash> | nil ] value The read tags.
+      #
+      # @return [ String | nil ] The joined string of read tags.
+      def stringify_read_tags(value)
+        value&.map { |ar| ar.map { |k, v| "#{k}:#{v}" }.join(',') }
       end
 
       # Read preference tag set extractor.
@@ -636,7 +730,7 @@ module Mongo
       #
       # @param [ Integer | Symbol | String ] value The write concern.
       #
-      # @return [ String ] The write concern as a string.
+      # @return [ Integer | String ] The write concern as a string.
       def revert_w(value)
         case value
         when Symbol
@@ -644,6 +738,15 @@ module Mongo
         else
           value
         end
+      end
+
+      # Stringifies write concern.
+      #
+      # @param [ Integer | Symbol | String ] value The write concern.
+      #
+      # @return [ String ] The write concern as a string.
+      def stringify_w(value)
+        revert_w(value)&.to_s
       end
 
       # Parses the zlib compression level.
@@ -675,6 +778,15 @@ module Mongo
       # @return [ Integer | nil ] The passed value.
       def revert_zlib_compression_level(value)
         value
+      end
+
+      # Stringifies zlib compression level
+      #
+      # @param [ Integer | nil ] value The write concern.
+      #
+      # @return [ String | nil ] The string.
+      def stringify_zlib_compression_level(value)
+        revert_zlib_compression_level(value)&.to_s
       end
 
       # Extract values from the string and put them into a nested hash.
