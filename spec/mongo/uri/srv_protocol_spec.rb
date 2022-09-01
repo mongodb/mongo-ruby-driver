@@ -647,7 +647,7 @@ describe Mongo::URI::SRVProtocol do
       context 'read preference max staleness option provided' do
 
         let(:options) do
-          'readPreference=secondary&maxStalenessSeconds=120'
+          'readPreference=Secondary&maxStalenessSeconds=120'
         end
 
         let(:read) do
@@ -662,7 +662,9 @@ describe Mongo::URI::SRVProtocol do
           expect(client.options[:read]).to eq(read)
         end
 
-        include_examples "roundtrips string"
+        it "rountrips the string with lowercase values" do
+          expect(uri.to_s).to eq("mongodb+srv://test5.test.build.10gen.cc/?readPreference=secondary&maxStalenessSeconds=120")
+        end
 
         context 'when the read preference and max staleness combination is invalid' do
 
