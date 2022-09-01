@@ -1067,8 +1067,8 @@ describe Mongo::URI::OptionsMapper do
     context "when passing an integer" do
       let(:value) { 1 }
 
-      it "returns a string" do
-        expect(reverted).to eq("1")
+      it "returns an integer" do
+        expect(reverted).to eq(1)
       end
     end
 
