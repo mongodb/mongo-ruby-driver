@@ -171,9 +171,9 @@ module Mongo
       # Applies URI value transformation by either using the default cast
       # or a transformation appropriate for the given type.
       #
-      # @param key [String] URI option name.
-      # @param value [String] The value to be transformed.
-      # @param type [Symbol] The transform method.
+      # @param [ String ] key URI option name.
+      # @param [ String ] value The value to be transformed.
+      # @param [ Symbol ] type The transform method.
       def apply_transform(key, value, type)
         if type
           send("convert_#{type}", key, value)
@@ -190,9 +190,9 @@ module Mongo
       # Specifically required to append an additional tag set
       # to the array of tag sets without overwriting the original.
       #
-      # @param target [Hash] The destination.
-      # @param value [Object] The value to be merged.
-      # @param name [Symbol] The name of the option.
+      # @param [ Hash ] target The destination.
+      # @param [ Object ] value The value to be merged.
+      # @param [ Symbol ] name The name of the option.
       def merge_uri_option(target, value, name)
         if target.key?(name)
           if REPEATABLE_OPTIONS.include?(name)
@@ -214,11 +214,11 @@ module Mongo
 
       # Simple internal dsl to register a MongoDB URI option in the URI_OPTION_MAP.
       #
-      # @param uri_key [String] The MongoDB URI option to register.
-      # @param name [Symbol] The name of the option in the driver.
-      # @param extra [Hash] Extra options.
-      #   * :group [Symbol] Nested hash where option will go.
-      #   * :type [Symbol] Name of function to transform value.
+      # @param [ String ] uri_key The MongoDB URI option to register.
+      # @param [ Symbol ] name The name of the option in the driver.
+      # @param [ Hash ] extra Extra options.
+      #   * :group [ Symbol ] Nested hash where option will go.
+      #   * :type [ Symbol ] Name of function to transform value.
       def self.uri_option(uri_key, name, **extra)
         URI_OPTION_MAP[uri_key.downcase] = { name: name }.update(extra)
         URI_OPTION_CANONICAL_NAMES[uri_key.downcase] = uri_key
@@ -290,7 +290,7 @@ module Mongo
       # Returns true for 'true', false for 'false', otherwise nil.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String | true | false ] URI option value.
+      # @param [ String | true | false ] value URI option value.
       #
       # @return [ true | false | nil ] Converted value.
       def convert_bool(name, value)
@@ -305,21 +305,31 @@ module Mongo
         end
       end
 
+      # Reverts a boolean type.
+      #
+      # @param [ true | false | nil ] value The boolean to revert.
+      #
+      # @return [ true | false | nil ] The passed value.
       def revert_bool(value)
         value
       end
 
       # Converts the value into a boolean and returns it wrapped in an array.
       #
-      # @param name [ String ] Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param [ String ] name Name of the URI option being processed.
+      # @param [ String ] value URI option value.
       #
-      # @return [ Array<true | false> ] The boolean value parsed and wraped
+      # @return [ Array<true | false> | nil ] The boolean value parsed and wraped
       #   in an array.
       def convert_repeated_bool(name, value)
         [convert_bool(name, value)]
       end
 
+      # Reverts a repeated boolean type.
+      #
+      # @param [ Array<true | false> | nil ] value The repeated boolean to revert.
+      #
+      # @return [ Array<true | false> | nil ] The passed value.
       def revert_repeated_bool(value)
         value
       end
@@ -327,9 +337,9 @@ module Mongo
       # Parses a boolean value and returns its inverse.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String | true | false ] The URI option value.
+      # @param [ String | true | false ] value The URI option value.
       #
-      # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
+      # @return [ true | false | nil ] The inverse of the boolean value parsed out, otherwise nil
       #   (and a warning will be logged).
       def convert_inverse_bool(name, value)
         b = convert_bool(name, value)
@@ -341,16 +351,21 @@ module Mongo
         end
       end
 
+      # Reverts and inverts a boolean type.
+      #
+      # @param [ true | false | nil ] value The boolean to revert and invert.
+      #
+      # @return [ true | false | nil ] The inverted boolean.
       def revert_inverse_bool(value)
-        !value
+        value.nil? ? nil : !value
       end
 
-      # Converts +value+ into an integer.
+      # Converts +value+ into an integer. Only converts positive integers.
       #
       # If the value is not a valid integer, warns and returns nil.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String | Integer ] URI option value.
+      # @param [ String | Integer ] value URI option value.
       #
       # @return [ nil | Integer ] Converted value.
       def convert_integer(name, value)
@@ -362,6 +377,11 @@ module Mongo
         value.to_i
       end
 
+      # Reverts an integer.
+      #
+      # @param [ Integer | nil ] value The integer.
+      #
+      # @return [ Integer | nil ] The passed value.
       def revert_integer(value)
         value
       end
@@ -371,7 +391,7 @@ module Mongo
       # options are always in MS so we provide an easy conversion type.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param [ String | Integer ] value The millisecond value.
+      # @param [ String | Integer | Float ] value The millisecond value.
       #
       # @return [ Float ] The seconds value.
       #
@@ -387,18 +407,23 @@ module Mongo
             log_warn("#{name} cannot be a negative number")
             return nil
           end
-        when Integer
+        when Integer, Float
           if value < 0
             log_warn("#{name} cannot be a negative number")
             return nil
           end
         else
-          raise ArgumentError, "Can only convert Strings or Integers to ms. Given: #{value.class}"
+          raise ArgumentError, "Can only convert Strings, Integers, or Floats to ms. Given: #{value.class}"
         end
 
         value.to_f / 1000
       end
 
+      # Reverts an ms.
+      #
+      # @param [ Float ] value The float.
+      #
+      # @return [ Integer ] The number multiplied by 1000 as an integer.
       def revert_ms(value)
         (value * 1000).round
       end
@@ -406,13 +431,18 @@ module Mongo
       # Converts +value+ into a symbol.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param [ String | Symbol ] value URI option value.
       #
       # @return [ Symbol ] Converted value.
       def convert_symbol(name, value)
         value.to_sym
       end
 
+      # Reverts a symbol.
+      #
+      # @param [ Symbol ] value The symbol.
+      #
+      # @return [ String ] The passed value as a string.
       def revert_symbol(value)
         value.to_s
       end
@@ -422,11 +452,16 @@ module Mongo
       # @param [ String ] name Name of the URI option being processed.
       # @param [ String ] value The string to build an array from.
       #
-      # @return [ Array ] The array built from the string.
+      # @return [ Array<String> ] The array built from the string.
       def convert_array(name, value)
         value.split(',')
       end
 
+      # Reverts an array.
+      #
+      # @param [ Array<String> ] value An array of strings.
+      #
+      # @return [ Array<String> ] The passed value.
       def revert_array(value)
         value
       end
@@ -434,15 +469,21 @@ module Mongo
       # Authentication mechanism transformation.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [String] The authentication mechanism.
+      # @param [ String ] value The authentication mechanism.
       #
-      # @return [Symbol] The transformed authentication mechanism.
+      # @return [ Symbol ] The transformed authentication mechanism.
       def convert_auth_mech(name, value)
-        (AUTH_MECH_MAP[value.upcase] || value).tap do |mech|
-          log_warn("#{value} is not a valid auth mechanism") unless mech
+        auth_mech = AUTH_MECH_MAP[value.upcase]
+        (auth_mech || value).tap do |mech|
+          log_warn("#{value} is not a valid auth mechanism") unless auth_mech
         end
       end
 
+      # Reverts auth mechanism.
+      #
+      # @param [ Symbol ] value The auth mechanism.
+      #
+      # @return [ String ] The auth mechanism as a string.
       def revert_auth_mech(value)
         found = AUTH_MECH_MAP.detect do |k, v|
           v == value
@@ -457,9 +498,9 @@ module Mongo
       # Auth mechanism properties extractor.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] The auth mechanism properties string.
+      # @param [ String ] value The auth mechanism properties string.
       #
-      # @return [ Hash ] The auth mechanism properties hash.
+      # @return [ Hash | nil ] The auth mechanism properties hash.
       def convert_auth_mech_props(name, value)
         properties = hash_extractor('authMechanismProperties', value)
         if properties
@@ -472,6 +513,11 @@ module Mongo
         properties
       end
 
+      # Reverts auth mechanism properties.
+      #
+      # @param [ Hash | nil ] value The auth mech properties.
+      #
+      # @return [ Hash | nil ] The passed value.
       def revert_auth_mech_props(value)
         value
       end
@@ -480,30 +526,39 @@ module Mongo
       # greater or equal to 90.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] The max staleness string.
+      # @param [ String | Integer ] value The max staleness string.
       #
       # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
       #   (and a warning will be logged).
       def convert_max_staleness(name, value)
-        if /\A-?\d+\z/ =~ value
-          int = value.to_i
-
-          if int == -1
-            int = nil
-          end
-
-          if int && (int >= 0 && int < 90 || int < 0)
-            log_warn("max staleness should be either 0 or greater than 90: #{value}")
-            int = nil
-          end
-
-          return int
+        int = if value.is_a?(String) && /\A-?\d+\z/ =~ value
+          value.to_i
+        elsif value.is_a?(Integer)
+          value
         end
 
-        log_warn("Invalid max staleness value: #{value}")
-        nil
+        if int.nil?
+          log_warn("Invalid max staleness value: #{value}")
+          return nil
+        end
+
+        if int == -1
+          int = nil
+        end
+
+        if int && (int > 0 && int < 90 || int < 0)
+          log_warn("max staleness should be either 0 or greater than 90: #{value}")
+          int = nil
+        end
+
+        int
       end
 
+      # Reverts max staleness.
+      #
+      # @param [ Integer | nil ] value The max staleness.
+      #
+      # @return [ Integer | nil ] The passed value.
       def revert_max_staleness(value)
         value
       end
@@ -511,13 +566,18 @@ module Mongo
       # Read preference mode transformation.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [String] The read mode string value.
+      # @param [ String ] value The read mode string value.
       #
-      # @return [Symbol] The read mode symbol.
+      # @return [ Symbol | String ] The read mode.
       def convert_read_mode(name, value)
         READ_MODE_MAP[value.downcase] || value
       end
 
+      # Reverts read mode.
+      #
+      # @param [ Symbol | String ] value The read mode.
+      #
+      # @return [ String ] The read mode as a string.
       def revert_read_mode(value)
         value.to_s.gsub(/_(\w)/) { $1.upcase }
       end
@@ -525,9 +585,9 @@ module Mongo
       # Read preference tags transformation.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [String] The string representing tag set.
+      # @param [ String ] value The string representing tag set.
       #
-      # @return [Array<Hash>] Array with tag set.
+      # @return [ Array<Hash> | nil ] Array with tag set.
       def convert_read_tags(name, value)
         converted = convert_read_set(name, value)
         if converted
@@ -537,6 +597,11 @@ module Mongo
         end
       end
 
+      # Reverts read tags.
+      #
+      # @param [ Array<Hash> | nil ] value The read tags.
+      #
+      # @return [ Array<Hash> | nil ] The passed value.
       def revert_read_tags(value)
         value
       end
@@ -544,9 +609,9 @@ module Mongo
       # Read preference tag set extractor.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [String] The tag set string.
+      # @param [ String ] value The tag set string.
       #
-      # @return [Hash] The tag set hash.
+      # @return [ Hash ] The tag set hash.
       def convert_read_set(name, value)
         hash_extractor('readPreferenceTags', value)
       end
@@ -558,7 +623,7 @@ module Mongo
       # Otherwise returns the string +value+ unchanged.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] URI option value.
+      # @param [ String | Integer ] value URI option value.
       #
       # @return [ Integer | Symbol | String ] Converted value.
       def convert_w(name, value)
@@ -572,6 +637,11 @@ module Mongo
         end
       end
 
+      # Reverts write concern.
+      #
+      # @param [ Integer | Symbol | String ] value The write concern.
+      #
+      # @return [ String ] The write concern as a string.
       def revert_w(value)
         case value
         when Symbol
@@ -584,23 +654,30 @@ module Mongo
       # Parses the zlib compression level.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] The zlib compression level string.
+      # @param [ String | Integer ] value The zlib compression level string.
       #
       # @return [ Integer | nil ] The compression level value if it is between -1 and 9 (inclusive),
       #   otherwise nil (and a warning will be logged).
       def convert_zlib_compression_level(name, value)
-        if /\A-?\d+\z/ =~ value
-          i = value.to_i
-
-          if i >= -1 && i <= 9
-            return i
-          end
+        i = if value.is_a?(String) && /\A-?\d+\z/ =~ value
+          value.to_i
+        elsif value.is_a?(Integer)
+          value
         end
 
-        log_warn("#{value} is not a valid zlibCompressionLevel")
-        nil
+        if i && (i >= -1 && i <= 9)
+          i
+        else
+          log_warn("#{value} is not a valid zlibCompressionLevel")
+          nil
+        end
       end
 
+      # Reverts zlib compression level
+      #
+      # @param [ Integer | nil ] value The write concern.
+      #
+      # @return [ Integer | nil ] The passed value.
       def revert_zlib_compression_level(value)
         value
       end
@@ -608,7 +685,7 @@ module Mongo
       # Extract values from the string and put them into a nested hash.
       #
       # @param [ String ] name Name of the URI option being processed.
-      # @param value [ String ] The string to build a hash from.
+      # @param [ String ] value The string to build a hash from.
       #
       # @return [ Hash ] The hash built from the string.
       def hash_extractor(name, value)
@@ -628,8 +705,6 @@ module Mongo
           h
         end
       end
-
     end
-
   end
 end
