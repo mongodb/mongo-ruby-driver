@@ -345,9 +345,15 @@ module Mongo
     # @return [ String ] the uri.
     def reconstruct_uri
       servers = @servers.join(',')
-      options = options_mapper.ruby_to_smc(@uri_options).map do |k, v|
-        "#{k}=#{v}"
-      end.join('&')
+      options = options_mapper.ruby_to_string(@uri_options).map do |k, vs|
+        unless vs.nil?
+          if vs.is_a?(Array)
+            vs.map { |v| "#{k}=#{v}" }.join('&')
+          else
+            "#{k}=#{vs}"
+          end
+        end
+      end.compact.join('&')
 
       uri = "#{scheme}#{SCHEME_DELIM}"
       uri += @user.to_s if @user

@@ -516,7 +516,9 @@ describe Mongo::URI::SRVProtocol do
             expect(client.options[:write_concern]).to eq(concern)
           end
 
-          include_examples "roundtrips string"
+          it "roundtrips the string with camelCase" do
+            expect(uri.to_s).to eq("mongodb+srv://test5.test.build.10gen.cc/?w=2&wTimeoutMS=1234")
+          end
         end
       end
 

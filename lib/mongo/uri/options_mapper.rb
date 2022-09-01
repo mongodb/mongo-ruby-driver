@@ -161,6 +161,49 @@ module Mongo
         rv
       end
 
+      # Converts Ruby options provided to their representation in a URI string.
+      #
+      # @param [ Hash ] opts Ruby options to convert.
+      #
+      # @return [ Hash ] URI string hash.
+      def ruby_to_string(opts)
+        rv = {}
+        URI_OPTION_MAP.each do |uri_key, spec|
+          if spec[:group]
+            v = opts[spec[:group]]
+            v = v && v[spec[:name]]
+          else
+            v = opts[spec[:name]]
+          end
+          unless v.nil?
+            if type = spec[:type]
+              v = send("stringify_#{type}", v)
+            end
+            canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
+            unless canonical_key
+              raise ArgumentError, "Option #{uri_key} is not known"
+            end
+            rv[canonical_key] = v
+          end
+        end
+        # For options that default to true, remove the value if it is true.
+        %w(retryReads retryWrites).each do |k|
+          if rv[k]
+            rv.delete(k)
+          end
+        end
+        # Remove auth source when it is $external for mechanisms that default
+        # (or require) that auth source.
+        if %w(MONGODB-AWS).include?(rv['authMechanism']) && rv['authSource'] == '$external'
+          rv.delete('authSource')
+        end
+        # ssl and tls are aliases, remove ssl ones
+        rv.delete('ssl')
+        # TODO remove authSource if it is the same as the database,
+        # requires this method to know the database specified in the client.
+        rv
+      end
+
       private
 
       # Applies URI value transformation by either using the default cast
@@ -234,7 +277,7 @@ module Mongo
       uri_option 'w', :w, group: :write_concern, type: :w
       uri_option 'journal', :j, group: :write_concern, type: :bool
       uri_option 'fsync', :fsync, group: :write_concern, type: :bool
-      uri_option 'wtimeoutMS', :wtimeout, group: :write_concern, type: :integer
+      uri_option 'wTimeoutMS', :wtimeout, group: :write_concern, type: :integer
 
       # Read Options
       uri_option 'readPreference', :mode, group: :read, type: :read_mode
@@ -331,9 +374,9 @@ module Mongo
 
       # Reverts a repeated boolean type.
       #
-      # @param [ Array<true | false> | nil ] value The repeated boolean to revert.
+      # @param [ Array<true | false> | true | false | nil ] value The repeated boolean to revert.
       #
-      # @return [ Array<true | false> | nil ] The passed value.
+      # @return [ Array<true | false> | true | false | nil ] The passed value.
       def revert_repeated_bool(value)
         value
       end
@@ -344,7 +387,12 @@ module Mongo
       #
       # @return [ Array<true | false> | nil ] The string.
       def stringify_repeated_bool(value)
-        revert_repeated_bool(value)&.join(",")
+        rep = revert_repeated_bool(value)
+        if rep&.is_a?(Array)
+          rep.join(",")
+        else
+          rep
+        end
       end
 
       # Parses a boolean value and returns its inverse.

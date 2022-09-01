@@ -623,7 +623,9 @@ describe Mongo::URI do
           expect(client.options[:write_concern]).to eq(concern)
         end
 
-        include_examples "roundtrips string"
+        it "roundtrips the string with camelCase" do
+          expect(uri.to_s).to eq("mongodb://localhost/?w=2&wTimeoutMS=1234")
+        end
       end
     end
 
@@ -1394,14 +1396,16 @@ describe Mongo::URI do
     end
 
     context 'when an app name option is provided' do
-      let(:options) { "appName=uri_test" }
+      let(:options) { "appname=uri_test" }
 
       it 'sets the app name on the client' do
         client = new_local_client_nmio(string)
         expect(client.options[:app_name]).to eq('uri_test')
       end
 
-      include_examples "roundtrips string"
+      it "roundtrips the string with camelCase" do
+        expect(uri.to_s).to eq("mongodb://localhost/?appName=uri_test")
+      end
     end
 
     context 'when a supported compressors option is provided' do
