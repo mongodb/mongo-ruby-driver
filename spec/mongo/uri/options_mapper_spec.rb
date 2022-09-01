@@ -424,7 +424,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { [ "hello" ] }
 
       it "returns the value" do
-        expect(reverted).to eq("hello")
+        expect(reverted).to eq(value)
       end
     end
 
@@ -432,7 +432,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { [ "1", "2", "3" ] }
 
       it "returns the value" do
-        expect(reverted).to eq("1,2,3")
+        expect(reverted).to eq(value)
       end
     end
   end
@@ -685,7 +685,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { { key: "value" } }
 
       it "returns a one element hash" do
-        expect(reverted).to eq("key:value")
+        expect(reverted).to eq(value)
       end
     end
 
@@ -693,7 +693,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { { k1: "v1", k2: "v2" } }
 
       it "returns a multiple element hash" do
-        expect(reverted).to eq("k1:v1,k2:v2")
+        expect(reverted).to eq(value)
       end
     end
 
@@ -1002,7 +1002,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { [ { key: "value" } ] }
 
       it "returns a one element hash" do
-        expect(reverted).to eq([ "key:value" ])
+        expect(reverted).to eq(value)
       end
     end
 
@@ -1010,7 +1010,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { [ { k1: "v1", k2: "v2" } ] }
 
       it "returns a multiple element hash" do
-        expect(reverted).to eq([ "k1:v1,k2:v2" ])
+        expect(reverted).to eq(value)
       end
     end
 
@@ -1018,7 +1018,7 @@ describe Mongo::URI::OptionsMapper do
       let(:value) { [ { k1: "v1", k2: "v2" }, { k3: "v3", k4: "v4" } ] }
 
       it "returns a multiple element hash" do
-        expect(reverted).to eq([ "k1:v1,k2:v2", "k3:v3,k4:v4" ])
+        expect(reverted).to eq(value)
       end
     end
 
