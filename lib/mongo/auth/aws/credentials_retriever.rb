@@ -107,7 +107,7 @@ module Mongo
             return credentials
           end
 
-          raise Auth::InvalidConfiguration
+          raise Auth::Aws::CredentialsNotFound
         end
 
         private
