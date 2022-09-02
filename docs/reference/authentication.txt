@@ -328,6 +328,8 @@ The temporary credentials can also be provided via a URI:
   client = Mongo::Client.new(
     'mongodb://<AWS-ACCESS-KEY-ID>:<AWS-SECRET-ACCESS-KEY>@mongodb.example.com/mydb?authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:<AWS-SESSION-TOKEN>')
 
+.. _auto-retrieve-aws-credentials:
+
 Automatically Retrieving Credentials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -475,7 +477,7 @@ for more information.
 
   # Authenticate as appuser@MYREALM:
   client = Mongo::Client.new("mongodb://appuser%40MYREALM@myserver.mycompany.com:27017/mydb?authMechanism=GSSAPI")
-  
+
   # Authenticate as myapp/appuser@MYREALM:
   client = Mongo::Client.new("mongodb://myapp%2Fappuser%40MYREALM@myserver.mycompany.com:27017/mydb?authMechanism=GSSAPI")
 

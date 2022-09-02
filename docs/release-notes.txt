@@ -18,6 +18,17 @@ for the complete list of changes, including those internal to the driver and
 its test suite.
 
 
+.. _release-notes-2.19:
+
+2.19
+====
+
+This release includes the following new features:
+
+- Added support for automatic AWS credentials retrieval when AWS KMS is used for
+  client side encryption.
+
+
 .. _release-notes-2.18:
 
 2.18

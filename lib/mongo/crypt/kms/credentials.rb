@@ -24,6 +24,21 @@ module Mongo
       # @api private
       class Credentials
 
+        # @return [ Credentials::AWS | nil ] AWS KMS credentials.
+        attr_reader :aws
+
+        # @return [ Credentials::Azure | nil ] Azure KMS credentials.
+        attr_reader :azure
+
+        # @return [ Credentials::GCP | nil ] GCP KMS credentials.
+        attr_reader :gcp
+
+        # @return [ Credentials::KMIP | nil ] KMIP KMS credentials.
+        attr_reader :kmip
+
+        # @return [ Credentials::Local | nil ] Local KMS credentials.
+        attr_reader :local
+
         # Creates a KMS credentials object form a parameters hash.
         #
         # @param [ Hash ] kms_providers A hash that contains credential for
@@ -67,7 +82,7 @@ module Mongo
         #
         # @return [ BSON::Document ] Credentials as BSON document.
         def to_document
-          BSON::Document.new({}).tap do |bson|
+          BSON::Document.new.tap do |bson|
             bson[:aws] = @aws.to_document if @aws
             bson[:azure] = @azure.to_document if @azure
             bson[:gcp] = @gcp.to_document if @gcp

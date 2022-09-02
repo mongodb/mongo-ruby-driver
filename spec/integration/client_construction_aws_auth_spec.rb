@@ -125,7 +125,7 @@ describe 'Client construction with AWS auth' do
         it 'does not connect' do
           lambda do
             client['foo'].insert_one(test: true)
-          end.should raise_error(Mongo::Auth::InvalidConfiguration, /Could not locate AWS credentials/)
+          end.should raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
         end
       end
 
