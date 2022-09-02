@@ -19,6 +19,15 @@ module Mongo
   module Auth
     class Aws
 
+      # Raised when trying to authorize with an invalid configuration
+      #
+      # @api private
+      class CredentialsNotFound < Mongo::Error::AuthError
+        def initialize
+          super("Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata)")
+        end
+      end
+
       # Retrieves AWS credentials from a variety of sources.
       #
       # This class provides for AWS credentials retrieval from:
@@ -98,8 +107,7 @@ module Mongo
             return credentials
           end
 
-          raise Auth::InvalidConfiguration,
-            "Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata)"
+          raise Auth::InvalidConfiguration
         end
 
         private

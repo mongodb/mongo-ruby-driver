@@ -119,7 +119,7 @@ module Mongo
             if kms_providers.aws&.empty?
               begin
                 aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials
-              rescue Auth::InvalidConfiguration
+              rescue Auth::Aws::CredentialsNotFound
                 raise Error::CryptError.new(
                   "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
                 )
