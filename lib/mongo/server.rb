@@ -277,6 +277,9 @@ module Mongo
         # thus we are now closing the pool.
         _pool.close
       end
+      @pool_lock.synchronize do
+        @pool = nil
+      end
       true
     end
 
