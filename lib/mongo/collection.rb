@@ -375,10 +375,9 @@ module Mongo
       # Filter the read options out.
       # TODO put the list of read options in a class-level constant when
       # we figure out what the full set of them is.
-      options = Hash[self.options.reject do |key, value|
+      options = Hash[self.options.merge(opts).reject do |key, value|
         %w(read read_preference read_concern).include?(key.to_s)
       end]
-      options.update(opts.slice(*CREATE_COLLECTION_OPTIONS.keys))
       # Converting Ruby options to server style.
       CREATE_COLLECTION_OPTIONS.each do |ruby_key, server_key|
         if options.key?(ruby_key)
