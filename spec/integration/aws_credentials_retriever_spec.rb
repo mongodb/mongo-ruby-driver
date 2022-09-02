@@ -70,7 +70,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
         it 'raises an error' do
           lambda do
             credentials
-          end.should raise_error(Mongo::Auth::InvalidConfiguration, /Could not locate AWS credentials/)
+          end.should raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
         end
       end
 
