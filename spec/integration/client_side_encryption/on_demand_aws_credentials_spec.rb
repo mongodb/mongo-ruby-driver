@@ -38,7 +38,7 @@ describe 'On-demand AWS Credentials' do
       expect_any_instance_of(
         Mongo::Auth::Aws::CredentialsRetriever
       ).to receive(:credentials).with(no_args).once.and_raise(
-        Mongo::Auth::InvalidConfiguration
+        Mongo::Auth::Aws::CredentialsNotFound
       )
 
       expect do
