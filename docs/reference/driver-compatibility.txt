@@ -331,6 +331,7 @@ for that Ruby version is deprecated.
    :class: compatibility-large no-padding
 
    * - Ruby Driver
+     - Ruby 3.1
      - Ruby 3.0
      - Ruby 2.7
      - Ruby 2.6
@@ -350,6 +351,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      -
      -
      -
@@ -365,6 +367,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      -
      -
      -
@@ -376,6 +379,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.16
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -391,6 +395,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.15
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -407,6 +412,7 @@ for that Ruby version is deprecated.
 
    * - 2.14
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -421,6 +427,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.13
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -437,6 +444,7 @@ for that Ruby version is deprecated.
 
    * - 2.12
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -452,6 +460,7 @@ for that Ruby version is deprecated.
 
    * - 2.11
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -466,6 +475,7 @@ for that Ruby version is deprecated.
      -
 
    * - 2.10
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -483,6 +493,7 @@ for that Ruby version is deprecated.
    * - 2.9
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -496,6 +507,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.8
+     -
      -
      -
      - |checkmark|
@@ -513,6 +525,7 @@ for that Ruby version is deprecated.
    * - 2.7
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -526,6 +539,7 @@ for that Ruby version is deprecated.
      - |checkmark|
 
    * - 2.6
+     -
      -
      -
      - |checkmark|
