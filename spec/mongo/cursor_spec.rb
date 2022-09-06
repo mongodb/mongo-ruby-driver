@@ -93,10 +93,10 @@ describe Mongo::Cursor do
         Mongo::Collection::View.new(authorized_collection)
       end
 
-      it 'raises PoolClosedError' do
+      it 'raises ServerNotUsable' do
         lambda do
           cursor
-        end.should raise_error(Mongo::Error::PoolClosedError)
+        end.should raise_error(Mongo::Error::ServerNotUsable)
       end
     end
   end

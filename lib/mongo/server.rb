@@ -276,9 +276,9 @@ module Mongo
         # Given the current CMAP spec, clearing a pool makes it unusable,
         # thus we are now closing the pool.
         _pool.close
-      end
-      @pool_lock.synchronize do
-        @pool = nil
+        @pool_lock.synchronize do
+          @pool = nil
+        end
       end
       true
     end
@@ -395,6 +395,10 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool_lock.synchronize do
+        if @pool.nil? && unknown?
+          raise Error::ServerNotUsable, address
+        end
+
         @pool ||= ConnectionPool.new(self, options).tap do |pool|
           pool.ready
         end
