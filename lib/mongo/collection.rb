@@ -372,8 +372,10 @@ module Mongo
     # @since 2.0.0
     def create(opts = {})
       # Passing read options to create command causes it to break.
-      # Filter the read options out. The same is true with session
-      # since it gets passed to the operation and fails BSON serialization.
+      # Filter the read options out. Session is also excluded here as it gets
+      # used by the call to with_session and should not be part of the
+      # operation. If it gets passed to the operation it would fail BSON
+      # serialization.
       # TODO put the list of read options in a class-level constant when
       # we figure out what the full set of them is.
       options = Hash[self.options.merge(opts).reject do |key, value|
