@@ -613,9 +613,20 @@ module Mongo
         check_invariants
       end
 
+      # Disconnects the pool.
+      #
+      # Does everything that +clear+ does, except if the pool is closed
+      # this method does nothing but +clear+ would raise PoolClosedError.
+      #
       # @since 2.1.0
-      # @deprecated
-      alias :disconnect! :clear
+      # @api private
+      def disconnect!
+        clear
+      rescue Error::PoolClosedError
+        # The "disconnected" state is between closed and paused.
+        # When we are trying to disconnect the pool, permit the pool to be
+        # already closed.
+      end
 
       # Instructs the pool to create and return connections.
       def ready

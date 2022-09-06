@@ -967,6 +967,11 @@ describe Mongo::Server::Connection do
           )
         end
 
+        before do
+          allow(server).to receive(:unknown?).and_return(false)
+          allow(server2).to receive(:unknown?).and_return(false)
+        end
+
         it 'ids do not share namespace' do
           server.pool.with_connection do |conn|
             expect(conn.id).to eq(1)
@@ -1227,6 +1232,10 @@ describe Mongo::Server::Connection do
     context 'non-lb' do
       require_topology :single, :replica_set, :sharded
 
+      before do
+        allow(server).to receive(:unknown?).and_return(false)
+      end
+
       it 'is set' do
         server.with_connection do |conn|
           conn.service_id.should be nil
@@ -1236,6 +1245,10 @@ describe Mongo::Server::Connection do
 
       context 'clean slate' do
         clean_slate
+
+        before do
+          allow(server).to receive(:unknown?).and_return(false)
+        end
 
         it 'starts from 1' do
           server.with_connection do |conn|
