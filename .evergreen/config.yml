@@ -585,6 +585,10 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.1"
+        display_name: ruby-3.1
+        variables:
+          RVM_RUBY: "ruby-3.1"
       - id: "ruby-3.0"
         display_name: ruby-3.0
         variables:
@@ -893,7 +897,7 @@ buildvariants:
   - matrix_name: "mongo-5.0"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-2.7"]
+      ruby: ["ruby-3.1", "ruby-2.7"]
       mongodb-version: '5.0'
       topology: '*'
       os: ubuntu1804
