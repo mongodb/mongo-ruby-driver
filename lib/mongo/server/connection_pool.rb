@@ -620,8 +620,8 @@ module Mongo
       #
       # @since 2.1.0
       # @api private
-      def disconnect!
-        clear
+      def disconnect!(options = nil)
+        clear(options)
       rescue Error::PoolClosedError
         # The "disconnected" state is between closed and paused.
         # When we are trying to disconnect the pool, permit the pool to be
