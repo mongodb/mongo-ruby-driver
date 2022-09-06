@@ -693,6 +693,21 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#disconnect!' do
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'does nothing' do
+        expect do
+          pool.disconnect!
+        end.not_to raise_error
+      end
+    end
+  end
+
+  describe '#clear' do
     def create_pool(min_pool_size)
       opts = SpecConfig.instance.test_options.merge(max_pool_size: 3, min_pool_size: min_pool_size)
       described_class.new(server, opts).tap do |pool|
@@ -729,7 +744,7 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
 
-        pool.disconnect!
+        pool.clear
 
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
@@ -765,7 +780,7 @@ describe Mongo::Server::ConnectionPool do
 
       it 'raises PoolClosedError' do
         expect do
-          pool.disconnect!
+          pool.clear
         end.to raise_error(Mongo::Error::PoolClosedError)
       end
     end

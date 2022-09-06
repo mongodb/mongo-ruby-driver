@@ -272,13 +272,14 @@ module Mongo
         @pool
       end
       if _pool
-        # We used to disconnect/clear the pool rather than close it here.
-        # Given the current CMAP spec, clearing a pool makes it unusable,
-        # thus we are now closing the pool.
-        _pool.close
-        @pool_lock.synchronize do
-          @pool = nil
-        end
+        # The current CMAP spec requires a pool to be mostly unusable
+        # if its server is unknown (or, therefore, disconnected).
+        # However any outstanding operations should continue to completion,
+        # and their connections need to be checked into the pool to be
+        # torn down. Because of this cleanup requirement we cannot just
+        # close the pool and set it to nil here, to be recreated the next
+        # time the server is discovered.
+        _pool.disconnect!
       end
       true
     end
@@ -402,6 +403,20 @@ module Mongo
         @pool ||= ConnectionPool.new(self, options).tap do |pool|
           pool.ready
         end
+      end
+    end
+
+    # Internal driver method to retrieve the connection pool for this server.
+    #
+    # Unlike +pool+, +pool_internal+ will not create a pool if one does not
+    # already exist.
+    #
+    # @return [ Server::ConnectionPool | nil ] The connection pool, if one exists.
+    #
+    # @api private
+    def pool_internal
+      @pool_lock.synchronize do
+        @pool
       end
     end
 

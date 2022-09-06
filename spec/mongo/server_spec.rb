@@ -121,12 +121,24 @@ describe Mongo::Server do
       end
     end
 
-    it 'closes the connection pool' do
-      expect(server.pool).to receive(:close).once.and_call_original
-      server.disconnect!
+    context 'when server has a pool' do
+      before do
+        allow(server).to receive(:unknown?).and_return(false)
+        server.pool.ready
+      end
+
+      it 'disconnects the connection pool' do
+        expect(server.pool_internal).to receive(:disconnect!).once.and_call_original
+        server.disconnect!
+      end
     end
 
     context 'when server reconnects' do
+      before do
+        allow(server).to receive(:unknown?).and_return(false)
+        server.pool.ready
+      end
+
       it 'keeps the same pool' do
         pool = server.pool
         server.disconnect!
