@@ -395,11 +395,11 @@ module Mongo
     #
     # @since 2.0.0
     def pool
-      @pool_lock.synchronize do
-        if @pool.nil? && unknown?
-          raise Error::ServerNotUsable, address
-        end
+      if unknown?
+        raise Error::ServerNotUsable, address
+      end
 
+      @pool_lock.synchronize do
         @pool ||= ConnectionPool.new(self, options).tap do |pool|
           pool.ready
         end
