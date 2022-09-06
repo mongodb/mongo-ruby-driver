@@ -26,11 +26,11 @@ describe 'Server' do
           expect(server).not_to be_unknown
         end
 
-        it 'cannot be used for reads' do
+        it 'can be used for reads' do
           # See also RUBY-3102.
           lambda do
             view.send(:send_initial_query, server)
-          end.should raise_error(Mongo::Error::PoolClosedError)
+          end.should_not raise_error
         end
       end
 
@@ -43,11 +43,11 @@ describe 'Server' do
           expect(server).to be_unknown
         end
 
-        it 'can be used for reads' do
+        it 'is unusable' do
           # See also RUBY-3102.
           lambda do
             view.send(:send_initial_query, server)
-          end.should raise_error(Mongo::Error::PoolClosedError)
+          end.should raise_error(Mongo::Error::ServerNotUsable)
         end
       end
     end
