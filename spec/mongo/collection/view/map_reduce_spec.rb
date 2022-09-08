@@ -40,6 +40,10 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   let(:view) do
+    authorized_client.cluster.servers.map do |server|
+      server.pool.ready
+    end
+
     Mongo::Collection::View.new(authorized_collection, selector, view_options)
   end
 
@@ -615,6 +619,10 @@ describe Mongo::Collection::View::MapReduce do
           end
 
           let(:view) do
+            authorized_client.cluster.servers.map do |server|
+              server.pool.ready
+            end
+
             Mongo::Collection::View.new(collection, selector, view_options)
           end
 
