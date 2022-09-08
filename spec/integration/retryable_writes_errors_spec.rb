@@ -31,4 +31,60 @@ describe 'Retryable writes errors tests' do
       end
     end
   end
+
+  context "when encountering a WriteConcernError with a RetryableWriteError label" do
+    require_topology :replica_set
+
+    let(:failpoint1) do
+      {
+        configureFailPoint: "failCommand",
+        mode: { times: 1 },
+        data: {
+          writeConcernError: {
+            code: 91,
+            errorLabels: ["RetryableWriteError"],
+          },
+          failCommands: ["insert"],
+        }
+      }
+    end
+
+    let(:failpoint2) do
+      {
+        configureFailPoint: "failCommand",
+        mode: { times: 1 },
+        data: {
+          errorCode: 10107,
+          errorLabels: ["RetryableWriteError", "NoWritesPerformed"],
+          failCommands: ["insert"],
+        },
+      }
+    end
+
+    let(:subscriber) { Mrss::EventSubscriber.new }
+
+    before do
+      authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      authorized_client.use(:admin).command(failpoint1)
+
+      expect(authorized_collection).to receive(:retry_write).once.and_wrap_original do |m, *args, &block|
+        expect(args.first.code).to eq(91)
+        authorized_client.use(:admin).command(failpoint2)
+        m.call(*args, &block)
+      end
+    end
+
+    after do
+      authorized_client.use(:admin).command({
+        configureFailPoint: "failCommand",
+        mode: "off",
+      })
+    end
+
+    it "returns the original error" do
+      expect do
+        authorized_collection.insert_one(x: 1)
+      end.to raise_error(Mongo::Error::OperationFailure, /\[91\]/)
+    end
+  end
 end
