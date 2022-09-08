@@ -92,7 +92,7 @@ describe 'SDAM error handling' do
       generation = server.pool.generation
       RSpec::Mocks.with_temporary_scope do
         operation
-        new_generation = server.pool.generation
+        new_generation = server.pool_internal.generation
         expect(new_generation).to eq(generation + 1)
       end
     end
@@ -103,7 +103,7 @@ describe 'SDAM error handling' do
       generation = server.pool.generation
       RSpec::Mocks.with_temporary_scope do
         operation
-        new_generation = server.pool.generation
+        new_generation = server.pool_internal.generation
         expect(new_generation).to eq(generation)
       end
     end

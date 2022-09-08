@@ -17,14 +17,14 @@ describe 'Client' do
     it 'fails in connection pool' do
       lambda do
         client.database.command(ping: 1)
-      end.should raise_error(Mongo::Error::PoolClosedError)
+      end.should raise_error(Mongo::Error::PoolPausedError)
     end
 
     context 'operation that can use sessions' do
       it 'fails in connection pool' do
         lambda do
           client['collection'].insert_one(test: 1)
-        end.should raise_error(Mongo::Error::PoolClosedError)
+        end.should raise_error(Mongo::Error::PoolPausedError)
       end
     end
 
