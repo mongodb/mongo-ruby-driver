@@ -697,7 +697,11 @@ describe Mongo::Cursor do
 
   describe '#close' do
     let(:view) do
-      Mongo::Collection::View.new(authorized_collection)
+      Mongo::Collection::View.new(
+        authorized_collection,
+        {},
+        batch_size: 2,
+      )
     end
 
     let(:server) do
@@ -712,7 +716,17 @@ describe Mongo::Cursor do
       described_class.new(view, reply, server)
     end
 
+    let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.drop
+      authorized_collection.insert_many(documents)
+    end
+
     it 'closes' do
+      expect(cursor).not_to be_closed
       cursor.close
       expect(cursor).to be_closed
     end
@@ -720,17 +734,16 @@ describe Mongo::Cursor do
     context 'when there is a socket error during close' do
       clean_slate
 
-      before do
+      it 'does not raise an error' do
+        cursor
         server.with_connection do |conn|
           expect(conn).to receive(:deliver)
+            .at_least(:once)
             .and_raise(Mongo::Error::SocketError, "test error")
         end
-      end
-
-      it 'raises an error' do
         expect do
           cursor.close
-        end.to raise_error(Mongo::Error::SocketError, "test error")
+        end.not_to raise_error
       end
     end
   end
