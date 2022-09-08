@@ -26,11 +26,11 @@ describe 'Server' do
           expect(server).not_to be_unknown
         end
 
-        it 'can be used for reads' do
+        it 'fails in connection pool' do
           # See also RUBY-3102.
           lambda do
             view.send(:send_initial_query, server)
-          end.should_not raise_error
+          end.should raise_error(Mongo::Error::PoolPausedError)
         end
       end
 
