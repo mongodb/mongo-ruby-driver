@@ -73,10 +73,7 @@ module Mongo
           'exception' => e,
           'error' => true,
         }
-      # We do not have a base class for client side BSON-related errors.
-      # See https://jira.mongodb.org/browse/RUBY-1806.
-      # Rescue this particular exception for the time being.
-      rescue BSON::String::IllegalKey => e
+      rescue bson_error => e
         {
           'exception' => e,
           'clientError' => true,
@@ -322,6 +319,15 @@ module Mongo
             raise "Failed to change primary in #{timeout} seconds"
           end
         end
+      end
+
+      # The error to rescue BSON tests for. If we still define
+      # BSON::String::IllegalKey then we should rescue that particular error,
+      # otherwise, rescue an arbitrary BSON::Error
+      def bson_error
+        BSON::String.const_defined?(:IllegalKey) ?
+          BSON::String.const_get(:IllegalKey) :
+          BSON::Error
       end
     end
   end
