@@ -91,31 +91,6 @@ describe 'Connection pool timing test' do
     end
   end
 
-  context 'when clear is called periodically' do
-    let(:options) do
-      { max_pool_size: 10, min_pool_size: 5 }
-    end
-
-    let(:threads) do
-      threads = operation_threads
-      threads << Thread.new do
-        10.times do
-          sleep 0.1
-          client.cluster.next_primary.pool.clear
-        end
-      end
-      threads
-    end
-
-    it 'does not error' do
-      start = Time.now
-      expect {
-        threads.collect { |t| t.join }
-      }.not_to raise_error
-      puts "[Connection Pool Timing] Duration when clear is called periodically: #{Time.now - start}"
-    end
-  end
-
   context 'when primary is changed, then more operations are performed' do
     min_server_fcv '4.2'
     require_topology :replica_set
