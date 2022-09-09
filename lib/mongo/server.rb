@@ -562,6 +562,8 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
+      pool = pool_internal
+
       if load_balancer?
         # When the client is in load-balanced topology, servers (the one and
         # only that can be) starts out as a load balancer and stays as a
@@ -576,12 +578,12 @@ module Mongo
         # this server, but the server can still be marked unknown if one
         # of such connections failed midway through its establishment.
         if service_id = options[:service_id]
-          pool.disconnect!(service_id: service_id)
+          pool&.disconnect!(service_id: service_id)
         end
         return
       end
 
-      if options[:generation] && options[:generation] < pool.generation
+      if options[:generation] && options[:generation] < pool&.generation
         return
       end
 
