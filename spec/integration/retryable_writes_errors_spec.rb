@@ -34,6 +34,7 @@ describe 'Retryable writes errors tests' do
 
   context "when encountering a WriteConcernError with a RetryableWriteError label" do
     require_topology :replica_set
+    require_fail_command
 
     let(:failpoint1) do
       {
