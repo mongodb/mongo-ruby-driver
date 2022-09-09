@@ -32,7 +32,7 @@ describe 'Retryable writes errors tests' do
     end
   end
 
-  context "when encountering a WriteConcernError with a RetryableWriteError label" do
+  context "when encountering a NoWritesPerformed error after an error with a RetryableWriteError label" do
     require_topology :replica_set
     require_fail_command
 
