@@ -499,7 +499,7 @@ module Mongo
       raise e
     rescue Error::OperationFailure => e
       e.add_note('modern retry')
-      if e.label?('RetryableWriteError')
+      if e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')
         e.add_note('attempt 2')
         raise e
       else
