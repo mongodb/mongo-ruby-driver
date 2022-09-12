@@ -36,6 +36,7 @@ describe Mongo::Protocol::CachingHash do
   end
 
   describe "#needs_validation?" do
+    max_bson_version "4.99.99"
 
     before do
       hash.to_bson(BSON::ByteBuffer.new, validation)

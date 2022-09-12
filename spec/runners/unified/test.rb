@@ -395,7 +395,7 @@ module Unified
             end
 
             public_send(method_name, op)
-          rescue Mongo::Error, BSON::String::IllegalKey, Mongo::Auth::Unauthorized, ArgumentError => e
+          rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.
               # It means anything other than OperationFailure. DRIVERS-1799
@@ -553,6 +553,15 @@ module Unified
         max_write_retries: 0,
       ).update(opts)
       Mongo::Client.new(*args)
+    end
+
+    # The error to rescue BSON tests for. If we still define
+    # BSON::String::IllegalKey then we should rescue that particular error,
+    # otherwise, rescue an arbitrary BSON::Error
+    def bson_error
+      BSON::String.const_defined?(:IllegalKey) ?
+        BSON::String.const_get(:IllegalKey) :
+        BSON::Error
     end
   end
 end

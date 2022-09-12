@@ -35,6 +35,7 @@ describe 'Retryable writes errors tests' do
   context "when encountering a NoWritesPerformed error after an error with a RetryableWriteError label" do
     require_topology :replica_set
     require_fail_command
+    min_server_version '4.4'
 
     let(:failpoint1) do
       {

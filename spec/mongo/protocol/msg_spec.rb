@@ -390,6 +390,7 @@ describe Mongo::Protocol::Msg do
     end
 
     context 'when the validating_keys option is true with payload 1' do
+      max_bson_version '4.99.99'
 
       let(:sequences) do
         [ section ]
