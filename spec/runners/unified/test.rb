@@ -149,7 +149,7 @@ module Unified
           subscriber = EventSubscriber.new
           current_proc = opts[:sdam_proc]
           opts[:sdam_proc] = lambda do |client|
-            current_proc.call if current_proc
+            current_proc.call(client) if current_proc
             if oe = observe_events
               oe.each do |event|
                 case event
