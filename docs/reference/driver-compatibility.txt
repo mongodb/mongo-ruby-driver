@@ -39,8 +39,6 @@ version.
 
    * - Ruby Driver
      - MongoDB 6.0
-     - MongoDB 5.2
-     - MongoDB 5.1
      - MongoDB 5.0
      - MongoDB 4.4
      - MongoDB 4.2
@@ -58,8 +56,6 @@ version.
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
      -
      -
      -
@@ -67,8 +63,6 @@ version.
 
    * - 2.17
      -
-     -
-     - |checkmark|
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -80,8 +74,6 @@ version.
      -
 
    * - 2.16
-     -
-     -
      -
      - |checkmark|
      - |checkmark|
@@ -96,8 +88,6 @@ version.
    * - 2.15
      -
      -
-     -
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -110,8 +100,6 @@ version.
    * - 2.14
      -
      -
-     -
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -122,8 +110,6 @@ version.
      - |checkmark|
 
    * - 2.13
-     -
-     -
      -
      -
      - |checkmark| [#ocsp]_
@@ -139,8 +125,6 @@ version.
      -
      -
      -
-     -
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -153,8 +137,6 @@ version.
      -
      -
      -
-     -
-     -
      - |checkmark| [#client-side-encryption]_
      - |checkmark|
      - |checkmark|
@@ -164,8 +146,6 @@ version.
      - |checkmark|
 
    * - 2.10
-     -
-     -
      -
      -
      -
@@ -182,8 +162,6 @@ version.
      -
      -
      -
-     -
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -192,8 +170,6 @@ version.
      - |checkmark|
 
    * - 2.8
-     -
-     -
      -
      -
      -
@@ -210,8 +186,6 @@ version.
      -
      -
      -
-     -
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -220,8 +194,6 @@ version.
      - |checkmark|
 
    * - 2.6
-     -
-     -
      -
      -
      -
@@ -239,67 +211,9 @@ version.
      -
      -
      -
-     -
-     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
-
-   * - 2.4
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-
-   * - 2.3
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-
-   * - 2.2
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-
-   * - 2.0
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     -
      - |checkmark|
      - |checkmark|
 
@@ -647,7 +561,7 @@ the driver.
    * - Ruby Driver
      - mongo_kerberos |nbsp| 2.1
 
-   * - 2.7 - 2.16
+   * - 2.7 - 2.18
      - |checkmark|
 
 
