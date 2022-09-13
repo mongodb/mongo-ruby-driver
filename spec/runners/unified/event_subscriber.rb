@@ -31,6 +31,7 @@ module Unified
       else
         events.reject do |event|
           if event.respond_to?(:command_name)
+            # event could be a command started event or command succeeded event
             command = event.respond_to?(:command) ? event.command : event.started_event.command
             %w(authenticate getnonce saslStart saslContinue).include?(event.command_name) ||
               # if the command is empty that means we used speculativeAuth and we should
