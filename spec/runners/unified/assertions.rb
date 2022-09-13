@@ -156,7 +156,7 @@ module Unified
         else
           false
         end
-        actual_events = subscriber.wanted_events(@observe_sensitive)
+        actual_events = subscriber.wanted_events(@observe_sensitive[client])
         case spec.use('eventType')
         when nil, 'command'
           actual_events.select! do |event|
