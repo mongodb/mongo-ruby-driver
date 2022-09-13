@@ -48,6 +48,7 @@ module Unified
       @multiple_mongoses = mongoses.any? { |v| v }
       @test_spec.freeze
       @subscribers = {}
+      @observe_sensitive = {}
       @options = opts
     end
 
@@ -182,7 +183,7 @@ module Unified
           end
 
           create_client(**opts).tap do |client|
-            @observe_sensitive = spec.use('observeSensitiveCommands')
+            @observe_sensitive[client] = spec.use('observeSensitiveCommands')
             @subscribers[client] ||= subscriber
           end
         when 'database'
