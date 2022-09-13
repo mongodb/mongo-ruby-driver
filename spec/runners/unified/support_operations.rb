@@ -260,7 +260,16 @@ module Unified
         count = args.use!('count')
 
         events = select_events(subscriber, event)
-        assert_eq(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+        if event.keys.first == "serverDescriptionChangedEvent"
+          # We publish SDAM events from both regular and push monitors.
+          # This means sometimes there are two ServerMarkedUnknownEvent
+          # events published for the same server transition.
+          # Allow actual event count to be at least the expected event count
+          # in case there are multiple transitions in a single test.
+          assert_gte(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+        else
+          assert_eq(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+        end
       end
     end
 
