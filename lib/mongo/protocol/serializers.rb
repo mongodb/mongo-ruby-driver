@@ -51,9 +51,11 @@ module Mongo
         #
         # @param buffer [ String ] Buffer to receive the serialized value.
         # @param value [ String ] Header value to be serialized.
+        # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
+        #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_bytes(value.pack(HEADER_PACK))
         end
 
@@ -80,7 +82,7 @@ module Mongo
         # @param value [ String ] The string to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_cstring(value)
         end
       end
@@ -96,7 +98,7 @@ module Mongo
         # @param value [ Fixnum ] Ignored value.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_int32(ZERO)
         end
       end
@@ -112,7 +114,7 @@ module Mongo
         # @param value [ Integer | BSON::Int32 ] 32-bit integer to be serialized.
         #
         # @return [String] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           if value.is_a?(BSON::Int32)
             if value.respond_to?(:value)
               # bson-ruby >= 4.6.0
@@ -146,7 +148,7 @@ module Mongo
         # @param value [ Integer | BSON::Int64 ] 64-bit integer to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           if value.is_a?(BSON::Int64)
             if value.respond_to?(:value)
               # bson-ruby >= 4.6.0
@@ -182,19 +184,20 @@ module Mongo
         # @param [ Array<Hash, BSON::Document> ] value The sections to be serialized.
         # @param [ Fixnum ] max_bson_size The max bson size of documents in the sections.
         # @param [ true, false ] validating_keys Whether to validate document keys.
+        #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
-        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
           value.each do |section|
             case section[:type]
             when PayloadZero::TYPE
-              PayloadZero.serialize(buffer, section[:payload], max_bson_size, false)
+              PayloadZero.serialize(buffer, section[:payload], max_bson_size)
             when nil
-              PayloadZero.serialize(buffer, section[:payload], max_bson_size, false)
+              PayloadZero.serialize(buffer, section[:payload], max_bson_size)
             when PayloadOne::TYPE
-              PayloadOne.serialize(buffer, section[:payload], max_bson_size, validating_keys)
+              PayloadOne.serialize(buffer, section[:payload], max_bson_size)
             else
               raise Error::UnknownPayloadType.new(section[:type])
             end
@@ -259,13 +262,14 @@ module Mongo
           # @param [ BSON::Document, Hash ] value The object to serialize.
           # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
           # @param [ true, false ] validating_keys Whether to validate document keys.
+          #   This option is deprecated and will not be used. It will removed in version 3.0.
           #
           # @return [ BSON::ByteBuffer ] Buffer with serialized value.
           #
           # @since 2.5.0
-          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
             buffer.put_byte(TYPE_BYTE)
-            Serializers::Document.serialize(buffer, value, max_bson_size, validating_keys)
+            Serializers::Document.serialize(buffer, value, max_bson_size)
           end
 
           # Deserializes a section of payload type 0 of an OP_MSG from the IO stream.
@@ -307,17 +311,18 @@ module Mongo
           # @param [ BSON::Document, Hash ] value The object to serialize.
           # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
           # @param [ true, false ] validating_keys Whether to validate document keys.
+          #   This option is deprecated and will not be used. It will removed in version 3.0.
           #
           # @return [ BSON::ByteBuffer ] Buffer with serialized value.
           #
           # @since 2.5.0
-          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
             buffer.put_byte(TYPE_BYTE)
             start = buffer.length
             buffer.put_int32(0) # hold for size
             buffer.put_cstring(value[:identifier])
             value[:sequence].each do |document|
-              Document.serialize(buffer, document, max_bson_size, validating_keys)
+              Document.serialize(buffer, document, max_bson_size)
             end
             buffer.replace_int32(start, buffer.length - start)
           end
@@ -356,9 +361,9 @@ module Mongo
         # @param value [ Hash ] Document to serialize as BSON.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
           start_size = buffer.length
-          value.to_bson(buffer, validating_keys)
+          value.to_bson(buffer)
           serialized_size = buffer.length - start_size
           if max_bson_size && serialized_size > max_bson_size
             raise Error::MaxBSONSize,
@@ -401,11 +406,12 @@ module Mongo
         # @param [ BSON::ByteBuffer ] buffer Buffer to receive the single byte.
         # @param [ String ] value The byte to write to the buffer.
         # @param [ true, false ] validating_keys Whether to validate keys.
+        #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_byte(value)
         end
 
@@ -432,11 +438,12 @@ module Mongo
         # @param [ BSON::ByteBuffer ] buffer Buffer to receive the bytes.
         # @param [ String ] value The bytes to write to the buffer.
         # @param [ true, false ] validating_keys Whether to validate keys.
+        #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
-        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_bytes(value)
         end
 
