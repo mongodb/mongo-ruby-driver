@@ -260,7 +260,7 @@ module Unified
         count = args.use!('count')
 
         events = select_events(subscriber, event)
-        if event.keys.first == "serverDescriptionChangedEvent"
+        if %w(serverDescriptionChangedEvent poolClearedEvent).include?(event.keys.first)
           # We publish SDAM events from both regular and push monitors.
           # This means sometimes there are two ServerMarkedUnknownEvent
           # events published for the same server transition.
