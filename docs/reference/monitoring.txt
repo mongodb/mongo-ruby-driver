@@ -435,3 +435,35 @@ To turn off monitoring, set the client monitoring option to ``false``:
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :monitoring => false )
+
+
+Excluded and Redacted Events
+============================
+
+The Ruby driver does not pubish, and occasionaly redacts, some events via the
+command monitoring mechanism:
+
+1. If the command belongs to a particular subset of redacted commands, or
+   contains keys that trigger payload redaction, an empty payload will be
+   provided for security reasons. The full payload can be accessed by setting
+   the ``MONGO_RUBY_DRIVER_UNREDACT_EVENTS`` environment variable to ``1``, ``true`` or ``yes``. The
+   following commands are redacted:
+
+   - ``authenticate``
+   - ``saslStart``
+   - ``saslContinue``
+   - ``getnonce``
+   - ``createUser``
+   - ``updateUser``
+   - ``copydbgetnonce``
+   - ``copydbsaslstart``
+   - ``copydb``
+2. If the command is a handshake command, either ``ismaster`` or ``hello``, on
+   a non-monitoring connection, no event is published at all.
+3. Commands sent over monitoring connections (such as ismaster and hello) do 
+   not publish command monitoring events. Instead, every time a server is 
+   checked a server heartbeat event is published. The server heartbeat events 
+   do not include command or reply payloads.
+4. If the command is a handshake command, and the ``speculativeAuthenticate``
+   options is ``true``, the command will be redacted, and an empty payload will
+   be provided.
