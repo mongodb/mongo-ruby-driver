@@ -446,7 +446,7 @@ command monitoring mechanism:
 1. If the command belongs to a particular subset of redacted commands, or
    contains keys that trigger payload redaction, an empty payload will be
    provided for security reasons. The full payload can be accessed by setting
-   the MONGO_RUBY_DRIVER_UNREDACT_EVENTS environment variable to true. The
+   the ``MONGO_RUBY_DRIVER_UNREDACT_EVENTS`` environment variable to ``1``, ``true`` or ``yes``. The
    following commands are redacted:
 
    - ``authenticate``
