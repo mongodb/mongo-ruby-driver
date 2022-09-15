@@ -193,7 +193,13 @@ Client Certificate (X.509)
 
 The driver presents an X.509 certificate during TLS negotiation.
 The MONGODB-X509 authentication mechanism authenticates a username
-derived from the distinguished subject name of this certificate.
+retrieved from the distinguished subject name of this certificate.
+
+.. note::
+
+  Since the username is retrieved from the certificate, a username does not
+  need to be specified. If a username is specified, it will be sent to the
+  server verbatim. If a password is provided, an error will be raised.
 
 This authentication method requires the use of TLS connections with
 certificate validation.

@@ -109,7 +109,7 @@ Some users reported getting the following error:
   Mongo::Auth::Unauthorized: User ... is not authorized to access ...
 
 After upgrading to Ruby Driver version 2.5+, the driver was changed to use
-the scram authorization mechanism by default. This error might be happen if the
+the scram authorization mechanism by default. This error might happen if the
 authorization mechanism your user was created with does not match the
 authorization mechanism used by the driver. You can specify the preferred
 authorization mechanism using the ``auth_mech`` option in your ``mongoid.yml``
