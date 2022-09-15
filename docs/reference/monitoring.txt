@@ -462,7 +462,7 @@ command monitoring mechanism:
    a non-monitoring connection, no event is published at all.
 3. If the command is a handshake command on a monitoring connection, they will
    be published as heartbeat commands and not command monitoring events. These
-   commands do not include command or reply payloads.
+   events do not include command or reply payloads.
 4. If the command is a handshake command, and the ``speculativeAuthenticate``
    options is ``true``, the command will be redacted, and an empty payload will
    be provided.
