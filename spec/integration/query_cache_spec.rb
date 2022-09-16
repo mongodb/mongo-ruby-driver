@@ -1259,8 +1259,6 @@ describe 'QueryCache' do
       102.times { |i| authorized_collection.insert_one(_id: i) }
     end
 
-    let(:expected_results) { [*0..101].map { |id| { "_id" => id } } }
-
     # The query cache table is stored in thread local storage, so even though
     # we executed the same queries in the first thread (and waited for them to
     # finish), that query is going to be executed again (only once) in the
@@ -1302,9 +1300,9 @@ describe 'QueryCache' do
             first_thread_docs << doc
             expect(doc).to eq({ "_id" => i })
             if i == 50
-              # 2. check that there hasnt been a getmore
+              # 2. check that there hasn't been a getmore
               expect(subscriber.command_started_events('getMore').length).to eq(0)
-              # 3. mark done
+              # 3. mark second thread ready to start
               wait_for_first_thread = false
               # 4. wait for second thread
               true while wait_for_second_thread
@@ -1320,7 +1318,7 @@ describe 'QueryCache' do
 
       threads << Thread.new do
         Mongo::QueryCache.cache do
-          # 1. wait for the first thread to iterate
+          # 1. wait for the first thread to finish first batch iteration
           true while wait_for_first_thread
           # 2. iterate the entire result set
           authorized_collection.find.each_with_index do |doc, i|
@@ -1329,7 +1327,7 @@ describe 'QueryCache' do
           end
           # 4. verify get more
           expect(subscriber.command_started_events('getMore').length).to eq(1)
-          # 5. mark done
+          # 5. mark second thread done
           wait_for_second_thread = false
           # 6. verify that it still caches the query
           authorized_collection.find.to_a
