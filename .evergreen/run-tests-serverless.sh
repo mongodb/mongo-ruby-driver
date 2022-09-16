@@ -20,10 +20,18 @@ echo "Running specs"
 
 bundle exec rspec \
     spec/spec_tests/crud_spec.rb \
-    spec/spec_tests/crud_unified_spec.rb \
     spec/spec_tests/retryable_reads_spec.rb \
     spec/spec_tests/retryable_writes_spec.rb \
     spec/spec_tests/transactions_spec.rb \
+    spec/spec_tests/change_streams_unified_spec.rb \
+    spec/spec_tests/client_side_encryption_unified_spec.rb \
+    spec/spec_tests/command_monitoring_unified_spec.rb \
+    spec/spec_tests/crud_unified_spec.rb \
+    spec/spec_tests/gridfs_unified_spec.rb \
+    spec/spec_tests/retryable_reads_unified_spec.rb \
+    spec/spec_tests/retryable_writes_unified_spec.rb \
+    spec/spec_tests/sdam_unified_spec.rb \
+    spec/spec_tests/sessions_unified_spec.rb \
     spec/spec_tests/transactions_unified_spec.rb
 
 kill_jruby
