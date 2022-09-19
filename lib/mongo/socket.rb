@@ -414,11 +414,14 @@ module Mongo
 
     DEFAULT_TCP_KEEPIDLE = 120
 
+    DEFAULT_TCP_USER_TIMEOUT = 210
+
     def set_keepalive_opts(sock)
       sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, true)
       set_option(sock, :TCP_KEEPINTVL, DEFAULT_TCP_KEEPINTVL)
       set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
       set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
+      set_option(sock, :TCP_USER_TIMEOUT, DEFAULT_TCP_USER_TIMEOUT)
     rescue
       # JRuby 9.2.13.0 and lower do not define TCP_KEEPINTVL etc. constants.
       # JRuby 9.2.14.0 defines the constants but does not allow to get or
