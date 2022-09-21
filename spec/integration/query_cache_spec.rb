@@ -1305,7 +1305,7 @@ describe 'QueryCache' do
               # 3. mark second thread ready to start
               wait_for_first_thread = false
               # 4. wait for second thread
-              true while wait_for_second_thread
+              sleep 0.1 while wait_for_second_thread
               # 5. verify that the other thread sent a getmore
               expect(subscriber.command_started_events('getMore').length).to eq(1)
             end
@@ -1319,7 +1319,7 @@ describe 'QueryCache' do
       threads << Thread.new do
         Mongo::QueryCache.cache do
           # 1. wait for the first thread to finish first batch iteration
-          true while wait_for_first_thread
+          sleep 0.1 while wait_for_first_thread
           # 2. iterate the entire result set
           authorized_collection.find.each_with_index do |doc, i|
             # 3. verify documnents
