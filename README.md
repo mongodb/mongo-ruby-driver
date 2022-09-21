@@ -67,6 +67,28 @@ affects more than the driver alone (for example, a feature which requires
 MongoDB server support), please submit your idea through the
 [MongoDB Feedback Forum](https://feedback.mongodb.com/forums/924286-drivers).
 
+## Bug Fix and Maintenance Policy
+
+Starting with Ruby Driver 2.16.0 we will no longer be backporting bug fixes
+into earlier versions of the driver (i.e. 2.15, 2.14). Instead, bug fixes
+will be applied only to the latest stable branch and the upcoming feature
+branch.
+
+Exceptions can be made on a case-by-case basis, depending on the severity,
+customer impact, etc.
+
+This policy does not affect security vulnerability issues, which will be
+backported as far back as necessary.
+
+All development happens on the master branch, including new features, minor
+improvements and bug fixes.
+
+Feature branches are created from the master branch, and are created when the
+corresponding feature release is created.
+
+The Ruby driver is generally very stable and we recommend all customers use the
+most recent available stable release.
+
 ## Running Tests
 
 Please refer to [spec/README.md](spec/README.md) for instructions on how
