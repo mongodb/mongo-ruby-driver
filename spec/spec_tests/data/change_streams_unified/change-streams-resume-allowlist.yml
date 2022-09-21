@@ -5,9 +5,7 @@ schemaVersion: "1.7"
 
 runOnRequirements:
   - minServerVersion: "3.6"
-    # Removed load balanced tests as per RUBY-2952 because they were causing
-    # failures.
-    topologies: [ replicaset, sharded-replicaset ] #, load-balanced ]
+    topologies: [ replicaset, sharded-replicaset, load-balanced ]
     serverless: forbid
 
 createEntities:
