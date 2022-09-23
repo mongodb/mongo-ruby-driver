@@ -78,7 +78,7 @@ is officially supported. Customers should use the most recent driver release in
 their applications.
 
 All development happens on the master branch, including new features, minor
-improvements and bug fixes. Feature branches are created from the master branch, 
+improvements and bug fixes. Feature branches are created from the master branch,
 and are created when the corresponding feature release is created.
 
 ## Running Tests
