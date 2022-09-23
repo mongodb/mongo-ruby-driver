@@ -86,7 +86,6 @@ describe 'QueryCache' do
   end
 
   describe 'query with multiple batches' do
-    min_server_fcv '3.2'
 
     before do
       102.times { |i| authorized_collection.insert_one(_id: i) }
@@ -1251,6 +1250,94 @@ describe 'QueryCache' do
       end
 
       include_examples 'retrieves full result set on second iteration'
+    end
+  end
+
+  describe 'concurrent queries with multiple batches' do
+
+    before do
+      102.times { |i| authorized_collection.insert_one(_id: i) }
+    end
+
+    # The query cache table is stored in thread local storage, so even though
+    # we executed the same queries in the first thread (and waited for them to
+    # finish), that query is going to be executed again (only once) in the
+    # second thread.
+    it "uses separate cache tables per thread" do
+      thread1 = Thread.new do
+        Mongo::QueryCache.cache do
+          authorized_collection.find.to_a
+          authorized_collection.find.to_a
+          authorized_collection.find.to_a
+          authorized_collection.find.to_a
+        end
+      end
+      thread1.join
+      thread2 = Thread.new do
+        Mongo::QueryCache.cache do
+          authorized_collection.find.to_a
+          authorized_collection.find.to_a
+          authorized_collection.find.to_a
+          authorized_collection.find.to_a
+        end
+      end
+      thread2.join
+
+      expect(subscriber.command_started_events('find').length).to eq(2)
+      expect(subscriber.command_started_events('getMore').length).to eq(2)
+    end
+
+    it "is able to query concurrently" do
+      wait_for_first_thread = true
+      wait_for_second_thread = true
+      threads = []
+      first_thread_docs = []
+      threads << Thread.new do
+        Mongo::QueryCache.cache do
+          # 1. iterate first batch
+          authorized_collection.find.each_with_index do |doc, i|
+            # 2. verify that we're getting all of the correct documents
+            first_thread_docs << doc
+            expect(doc).to eq({ "_id" => i })
+            if i == 50
+              # 2. check that there hasn't been a getmore
+              expect(subscriber.command_started_events('getMore').length).to eq(0)
+              # 3. mark second thread ready to start
+              wait_for_first_thread = false
+              # 4. wait for second thread
+              sleep 0.1 while wait_for_second_thread
+              # 5. verify that the other thread sent a getmore
+              expect(subscriber.command_started_events('getMore').length).to eq(1)
+            end
+            # 6. finish iterating the batch
+          end
+          # 7. verify that it still caches the query
+          authorized_collection.find.to_a
+        end
+      end
+
+      threads << Thread.new do
+        Mongo::QueryCache.cache do
+          # 1. wait for the first thread to finish first batch iteration
+          sleep 0.1 while wait_for_first_thread
+          # 2. iterate the entire result set
+          authorized_collection.find.each_with_index do |doc, i|
+            # 3. verify documnents
+            expect(doc).to eq({ "_id" => i })
+          end
+          # 4. verify get more
+          expect(subscriber.command_started_events('getMore').length).to eq(1)
+          # 5. mark second thread done
+          wait_for_second_thread = false
+          # 6. verify that it still caches the query
+          authorized_collection.find.to_a
+        end
+      end
+
+      threads.map(&:join)
+      expect(first_thread_docs.length).to eq(102)
+      expect(subscriber.command_started_events('find').length).to eq(2)
+      expect(subscriber.command_started_events('getMore').length).to eq(2)
     end
   end
 end
