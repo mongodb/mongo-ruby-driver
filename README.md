@@ -69,25 +69,17 @@ MongoDB server support), please submit your idea through the
 
 ## Maintenance and Bug Fix Policy
 
-Starting with Ruby Driver 2.16.0 we will no longer be backporting bug fixes
-into earlier versions of the driver (i.e. 2.15, 2.14). Instead, bug fixes
-will be applied only to the latest stable branch and the upcoming feature
-branch.
-
-Exceptions can be made on a case-by-case basis, depending on the severity,
-customer impact, etc.
-
-This policy does not affect security vulnerability issues, which will be
-backported as far back as necessary.
+New driver functionality is generally added in a backwards-compatible manner
+and results in new minor driver releases (2.x). Bug fixes are generally made on
+master first and are backported to the current minor driver release. Exceptions
+may be made on a case-by-case basis, for example security fixes may be
+backported to older stable branches. Only the most recent minor driver release
+is officially supported. Customers should use the most recent driver release in
+their applications.
 
 All development happens on the master branch, including new features, minor
-improvements and bug fixes.
-
-Feature branches are created from the master branch, and are created when the
-corresponding feature release is created.
-
-The Ruby driver is generally very stable and we recommend all customers use the
-most recent available stable release.
+improvements and bug fixes. Feature branches are created from the master branch, 
+and are created when the corresponding feature release is created.
 
 ## Running Tests
 
