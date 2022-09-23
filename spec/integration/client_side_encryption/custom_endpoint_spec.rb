@@ -123,7 +123,7 @@ describe 'Client-Side Encryption' do
       end
 
       let(:error_regex) do
-        /parse error/
+        /Name or service not known/
       end
 
       it_behaves_like 'raising a KMS error'
