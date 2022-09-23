@@ -217,6 +217,34 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
+        context "when a :session is given on the view" do
+          let(:opt) { :session }
+          let(:param) { authorized_client.start_session }
+          let(:aggregate) do
+            authorized_collection.find({}, session: param).aggregate(pipeline, options)
+          end
+
+          after do
+            param.end_session
+          end
+
+          context "when broken_view_options is false" do
+            config_override :broken_view_options, false
+
+            it "sets the option correctly" do
+              expect(aggregate.options[opt]).to eq(param)
+            end
+          end
+
+          context "when broken_view_options is true" do
+            config_override :broken_view_options, true
+
+            it "does not set the option correctly" do
+              expect(aggregate.options[opt]).to be nil
+            end
+          end
+        end
+
         context "when also including in options" do
 
           let(:aggregate) do
@@ -416,6 +444,24 @@ describe Mongo::Collection::View::Readable do
 
         it "sets the option correctly" do
           expect(map_reduce.options[:limit]).to eq(2)
+        end
+      end
+
+      context "when a :session is given on the view" do
+        let(:opt) { :session }
+        let(:param) { authorized_client.start_session }
+        let(:map_reduce) do
+          authorized_collection.find({}, session: param).map_reduce(map, reduce, options)
+        end
+
+        after do
+          param.end_session
+        end
+
+        with_config_values :broken_view_options, true, false do
+          it "sets the option correctly" do
+            expect(map_reduce.options[opt]).to eq(param)
+          end
         end
       end
     end
@@ -862,6 +908,29 @@ describe Mongo::Collection::View::Readable do
         it_behaves_like "a count option"
       end
 
+      context "when a :session is given on the view" do
+
+        let(:opt) { :session }
+        let(:param) { authorized_client.start_session }
+        let(:aggregate) do
+          authorized_collection.find({}, session: param).aggregate(pipeline, options)
+        end
+
+        after do
+          param.end_session
+        end
+
+        with_config_values :broken_view_options, true, false do
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+              expect(args.first[opt]).to eq(param)
+              m.call(*args)
+            end
+            authorized_collection.find({}, session: param).count(options)
+          end
+        end
+      end
+
       context "when also including in options" do
 
         with_config_values :broken_view_options, true, false do
@@ -1026,6 +1095,25 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
+        context "when a :session is given on the view" do
+          let(:opt) { :session }
+          let(:param) { authorized_client.start_session }
+
+          after do
+            param.end_session
+          end
+
+          with_config_values :broken_view_options, true, false do
+            it "sets the option correctly" do
+              expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
+                expect(args.first[opt]).to eq(param)
+                m.call(*args)
+              end
+              authorized_collection.find({}, session: param).estimated_document_count(options)
+            end
+          end
+        end
+
         context "when also including in options" do
 
           with_config_values :broken_view_options, true, false do
@@ -1175,6 +1263,37 @@ describe Mongo::Collection::View::Readable do
               m.call(*args)
             end
             view.skip(1).count_documents(options)
+          end
+        end
+      end
+
+      context "when a :session is given on the view" do
+        let(:opt) { :session }
+        let(:param) { authorized_client.start_session }
+
+        after do
+          param.end_session
+        end
+
+        context "when broken_view_options is false" do
+          config_override :broken_view_options, false
+          it "sets the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              expect(args[1][opt]).to eq(param)
+              m.call(*args)
+            end
+            authorized_collection.find({}, session: param).count_documents(options)
+          end
+        end
+
+        context "when broken_view_options is true" do
+          config_override :broken_view_options, true
+          it "does not set the option correctly" do
+            expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
+              expect(args[1][opt]).to be nil
+              m.call(*args)
+            end
+            authorized_collection.find({}, session: param).count_documents(options)
           end
         end
       end
@@ -1656,6 +1775,25 @@ describe Mongo::Collection::View::Readable do
               m.call(*args)
             end
             view.send(opt, param).distinct(:name, options)
+          end
+        end
+      end
+
+      context "when a :session is given on the view" do
+        let(:opt) { :session }
+        let(:param) { authorized_client.start_session }
+
+        after do
+          param.end_session
+        end
+
+        with_config_values :broken_view_options, true, false do
+          it "sets the option correctly" do
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
+              expect(args.first[opt]).to eq(param)
+              m.call(*args)
+            end
+            authorized_collection.find({}, session: param).distinct(options)
           end
         end
       end
