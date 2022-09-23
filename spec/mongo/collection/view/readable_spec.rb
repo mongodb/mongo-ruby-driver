@@ -239,7 +239,7 @@ describe Mongo::Collection::View::Readable do
           context "when broken_view_options is true" do
             config_override :broken_view_options, true
 
-            it "does not set the option correctly" do
+            it "does not set the option" do
               expect(aggregate.options[opt]).to be nil
             end
           end
@@ -1288,7 +1288,7 @@ describe Mongo::Collection::View::Readable do
 
         context "when broken_view_options is true" do
           config_override :broken_view_options, true
-          it "does not set the option correctly" do
+          it "does not set the option" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
               expect(args[1][opt]).to be nil
               m.call(*args)
