@@ -123,7 +123,7 @@ describe 'Client-Side Encryption' do
       end
 
       let(:error_regex) do
-        /Name or service not known/
+        /SocketError: getaddrinfo:/
       end
 
       it_behaves_like 'raising a KMS error'
