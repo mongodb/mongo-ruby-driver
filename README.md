@@ -67,7 +67,7 @@ affects more than the driver alone (for example, a feature which requires
 MongoDB server support), please submit your idea through the
 [MongoDB Feedback Forum](https://feedback.mongodb.com/forums/924286-drivers).
 
-## Bug Fix and Maintenance Policy
+## Maintenance and Bug Fix Policy
 
 Starting with Ruby Driver 2.16.0 we will no longer be backporting bug fixes
 into earlier versions of the driver (i.e. 2.15, 2.14). Instead, bug fixes
