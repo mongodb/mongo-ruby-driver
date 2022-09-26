@@ -178,7 +178,7 @@ module Mongo
         loop do
           document = try_next
           if explicitly_closed?
-            raise Error::InvalidCursorOperation, 'Cursor was explicitly closed.'
+            raise Error::InvalidCursorOperation, 'Cursor was explicitly closed'
           end
           documents << document if document
         end
