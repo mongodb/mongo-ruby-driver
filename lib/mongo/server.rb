@@ -267,22 +267,16 @@ module Mongo
       if monitor
         monitor.stop!
       end
+      @connected = false
       _pool = @pool_lock.synchronize do
         @pool
       end
       if _pool
-        # For backwards compatibility we disconnect/clear the pool rather
-        # than close it here. We also stop the populator which allows the
-        # the pool to continue providing connections but stops it from
-        # connecting in background on clients/servers that are in fact
-        # intended to be closed and no longer used.
-        begin
-          _pool.disconnect!(stop_populator: true)
-        rescue Error::PoolClosedError
-          # If the pool was already closed, we don't need to do anything here.
-        end
+        # We used to disconnect/clear the pool rather than close it here.
+        # Given the current CMAP spec, clearing a pool makes it unusable,
+        # thus we are now closing the pool.
+        _pool.close
       end
-      @connected = false
       true
     end
 
@@ -398,7 +392,9 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.new(self, options)
+        @pool ||= ConnectionPool.new(self, options).tap do |pool|
+          pool.ready
+        end
       end
     end
 
@@ -596,6 +592,12 @@ module Mongo
     # @api private
     def update_description(description)
       @description = description
+      pool = @pool_lock.synchronize do
+        @pool
+      end
+      if pool && !unknown?
+        pool.ready
+      end
     end
 
     # @param [ Object ] :service_id Close connections with the specified
@@ -604,7 +606,11 @@ module Mongo
     # @api private
     def clear_connection_pool(service_id: nil)
       @pool_lock.synchronize do
-        if @pool
+        # A server being marked unknown after it is closed is technically
+        # incorrect but it does not meaningfully alter any state.
+        # Because historically the driver permitted servers to be marked
+        # unknown at any time, continue doing so even if the pool is closed.
+        if @pool && !@pool.closed?
           @pool.disconnect!(service_id: service_id)
         end
       end

@@ -23,6 +23,10 @@ describe 'Cursor pinning' do
     # When not in load-balanced topology, iterating a cursor creates
     # new connections as needed.
 
+    before do
+      client.reconnect
+    end
+
     it 'creates new connections for iteration' do
       server.pool.size.should == 0
 

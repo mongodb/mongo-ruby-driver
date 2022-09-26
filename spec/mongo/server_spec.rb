@@ -121,8 +121,8 @@ describe Mongo::Server do
       end
     end
 
-    it 'disconnects the connection pool' do
-      expect(server.pool).to receive(:disconnect!).once.and_call_original
+    it 'closes the connection pool' do
+      expect(server.pool).to receive(:close).once.and_call_original
       server.disconnect!
     end
 

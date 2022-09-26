@@ -319,6 +319,14 @@ module CommonShortcuts
       clients.each do |client|
         client.cluster.next_primary
         client.cluster.disconnect!
+        # We have tests that stop monitoring to reduce the noise happening in
+        # background. These tests perform operations which requires the pools
+        # to function. See also RUBY-3102.
+        client.cluster.servers_list.each do |server|
+          if pool = server.pool
+            pool.instance_variable_set('@closed', false)
+          end
+        end
       end
     end
 
@@ -391,6 +399,14 @@ module CommonShortcuts
         end
         raise
       end
+    end
+
+    # Make the server usable for operations after it was marked closed.
+    # Used for tests that e.g. mock network operations to avoid interference
+    # from server monitoring.
+    def reset_pool(server)
+      server.remove_instance_variable('@pool')
+      server.pool.ready
     end
   end
 end

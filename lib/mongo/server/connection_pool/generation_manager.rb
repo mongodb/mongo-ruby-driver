@@ -45,6 +45,19 @@ module Mongo
           end
         end
 
+        def generation_unlocked(service_id: nil)
+          if service_id
+            unless server.load_balancer?
+              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
+            end
+          else
+            if server.load_balancer?
+              raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
+            end
+          end
+          @map[service_id]
+        end
+
         def bump(service_id: nil)
           @lock.synchronize do
             if service_id

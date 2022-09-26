@@ -39,8 +39,8 @@ describe Mongo::Cursor do
         # Deal with this by pre-creating pools for all known servers.
         cluster = authorized_collection.client.cluster
         cluster.next_primary
-        cluster.servers_list.each do |server|
-          server.pool
+        cluster.servers.each do |server|
+          reset_pool(server)
         end
       end
     end
@@ -93,8 +93,10 @@ describe Mongo::Cursor do
         Mongo::Collection::View.new(authorized_collection)
       end
 
-      it 'works' do
-        cursor
+      it 'raises PoolClosedError' do
+        lambda do
+          cursor
+        end.should raise_error(Mongo::Error::PoolClosedError)
       end
     end
   end
@@ -746,6 +748,10 @@ describe Mongo::Cursor do
 
     context 'when there is a socket error during close' do
       clean_slate
+
+      before do
+        reset_pool(server)
+      end
 
       it 'does not raise an error' do
         cursor
