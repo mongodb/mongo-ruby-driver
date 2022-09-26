@@ -83,6 +83,8 @@ module Mongo
       @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
+      @explicitly_closed = false
+      @lock = Mutex.new
       unless closed?
         register
         ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
@@ -164,6 +166,9 @@ module Mongo
         # StopIteration raised by try_next ends this loop.
         loop do
           document = try_next
+          if explicitly_closed?
+            raise Error::InvalidCursorOperation, 'Cursor was explicitly closed.'
+          end
           yield document if document
         end
         self
@@ -172,6 +177,9 @@ module Mongo
         # StopIteration raised by try_next ends this loop.
         loop do
           document = try_next
+          if explicitly_closed?
+            raise Error::InvalidCursorOperation, 'Cursor was explicitly closed.'
+          end
           documents << document if document
         end
         documents
@@ -296,6 +304,9 @@ module Mongo
     ensure
       end_session
       @cursor_id = 0
+      @lock.synchronize do
+        @explicitly_closed = true
+      end
     end
 
     # Get the parsed collection name.
@@ -385,6 +396,12 @@ module Mongo
     end
 
     private
+
+    def explicitly_closed?
+      @lock.synchronize do
+        @explicitly_closed
+      end
+    end
 
     def batch_size_for_get_more
       if batch_size && use_limit?
