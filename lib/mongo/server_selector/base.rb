@@ -254,6 +254,14 @@ module Mongo
 =end
 
         loop do
+          if Lint.enabled?
+            cluster.servers.each do |server|
+              if !server.unknown? && !server.pool.ready?
+                raise Error::LintError, "Server #{server.summary} is known but has non-ready pool"
+              end
+            end
+          end
+
           server = try_select_server(cluster, write_aggregation: write_aggregation)
 
           if server
