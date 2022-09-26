@@ -94,7 +94,7 @@ describe 'Connection pool populator integration' do
       end
 
       it 'repopulates the pool periodically only up to min size' do
-        pool
+        pool.ready
 
         sleep 2
         expect(pool.size).to eq(1)
@@ -103,7 +103,9 @@ describe 'Connection pool populator integration' do
         pool.check_in(first_connection)
 
         pool.clear
+        expect(pool.size).to eq(0)
 
+        pool.ready
         sleep 2
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)

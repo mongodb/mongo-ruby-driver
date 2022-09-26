@@ -66,6 +66,8 @@ describe 'Cmap' do
           rescue Mongo::Error::PoolClosedError
           end
         end
+
+        spec.pool&.close
       end
 
       let!(:result) do

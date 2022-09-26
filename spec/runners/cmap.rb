@@ -53,17 +53,16 @@ module Mongo
         preprocess
       end
 
+      attr_reader :pool
+
       def setup(server, subscriber)
         @subscriber = subscriber
-        @pool = server.pool
-
-        # let pool populate
-        ([0.1, 0.15, 0.15] + [0.2] * 20).each do |t|
-          if @pool.size >= @pool.min_size
-            break
-          end
-          sleep t
-        end
+        # The driver always creates pools for known servers.
+        # There is a test which creates and destroys a pool and it only expects
+        # those two events, not the ready event.
+        # This situation cannot happen in normal driver operation, but to
+        # support this test, create the pool manually here.
+        @pool = Mongo::Server::ConnectionPool.new(server, server.options)
       end
 
       def run
@@ -142,9 +141,16 @@ module Mongo
                         'type' => 'ConnectionPoolCleared',
                         'address' => event.address,
                       }
+                    when Mongo::Monitoring::Event::Cmap::PoolReady
+                      {
+                        'type' => 'ConnectionPoolReady',
+                        'address' => event.address,
+                      }
+                    else
+                      raise "Unhandled event: #{event}"
                     end
 
-            events << event unless @ignore_events.include?(event['type'])
+            events << event unless @ignore_events.include?(event.fetch('type'))
             events
           end
         end
@@ -189,6 +195,11 @@ module Mongo
             opts[:wait_queue_size] = kv.last
           when 'waitQueueTimeoutMS'
             opts[:wait_queue_timeout] = kv.last / 1000.0
+          when 'backgroundThreadIntervalMS'
+            # The populator busy loops, this option doesn't apply to our driver.
+            #opts[:pool_background_thread_interval] = kv.last / 1000.0
+          when 'appName'
+            opts[:app_name] = kv.last
           else
             raise "Unknown option #{kv.first}"
           end
@@ -281,6 +292,8 @@ module Mongo
           run_clear_op(state)
         when 'close'
           run_close_op(state)
+        when 'ready'
+          run_ready_op(state)
         else
           raise "invalid operation: #{name}"
         end
@@ -373,6 +386,10 @@ module Mongo
 
       def run_close_op(state)
         pool.close
+      end
+
+      def run_ready_op(state)
+        pool.ready
       end
     end
   end

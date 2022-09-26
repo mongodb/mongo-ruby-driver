@@ -18,10 +18,8 @@
 module Mongo
   class Error
 
-    # Exception raised if an operation is attempted on a closed connection pool.
-    #
-    # @since 2.9.0
-    class PoolClosedError < PoolError
+    # Exception raised if an operation is attempted on a paused connection pool.
+    class PoolPausedError < PoolError
 
       # Instantiate the new exception.
       #
@@ -32,7 +30,7 @@ module Mongo
       # @api private
       def initialize(address, pool)
         super(address, pool,
-          "Attempted to use a connection pool which has been closed (for #{address} " +
+          "Attempted to use a connection pool which is paused (for #{address} " +
             "with pool 0x#{pool.object_id})")
       end
     end
