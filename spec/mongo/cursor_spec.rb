@@ -731,6 +731,19 @@ describe Mongo::Cursor do
       expect(cursor).to be_closed
     end
 
+    context 'when closed from another thread' do
+      it 'raises an error' do
+        Thread.new do
+          cursor.close
+        end
+        sleep(1)
+        expect(cursor).to be_closed
+        expect do
+          cursor.to_a
+        end.to raise_error Mongo::Error::InvalidCursorOperation
+      end
+    end
+
     context 'when there is a socket error during close' do
       clean_slate
 
