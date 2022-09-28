@@ -67,7 +67,8 @@ describe 'Step down behavior' do
 
     it 'continues through step down' do
 
-      subscribed_client.cluster.next_primary.pool.clear
+      subscribed_client.cluster.next_primary.pool.do_clear
+      subscribed_client.cluster.next_primary.pool.ready
       subscriber.clear_events!
 
       # get the first item

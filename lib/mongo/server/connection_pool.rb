@@ -197,6 +197,14 @@ module Mongo
       # @api private
       def_delegators :generation_manager, :generation, :generation_unlocked
 
+      def paused?
+        raise_if_closed!
+
+        @lock.synchronize do
+          !@ready
+        end
+      end
+
       # Size of the connection pool.
       #
       # Includes available and checked out connections.
@@ -547,6 +555,28 @@ module Mongo
         check_invariants
       end
 
+      def pause(options = nil)
+        raise_if_closed!
+
+        check_invariants
+
+        if Lint.enabled? && !@server.unknown?
+          raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
+        end
+
+        return if paused?
+
+        @lock.synchronize do
+          @ready = false
+        end
+
+        stop_populator
+
+        clear(options)
+      ensure
+        check_invariants
+      end
+
       # Closes all idle connections in the pool and schedules currently checked
       # out connections to be closed when they are checked back into the pool.
       # The pool is paused, it will not create new connections in background
@@ -564,13 +594,30 @@ module Mongo
       def clear(options = nil)
         raise_if_closed!
 
-        check_invariants
-
-        @lock.synchronize do
-          @ready = false
+        if Lint.enabled? && !@server.unknown?
+          raise Error::LintError, "Attempting to clear pool for server #{@server.summary} which is known"
         end
 
-        stop_populator
+        do_clear(options)
+      end
+
+      # Disconnects the pool.
+      #
+      # Does everything that +clear+ does, except if the pool is closed
+      # this method does nothing but +clear+ would raise PoolClosedError.
+      #
+      # @since 2.1.0
+      # @api private
+      def disconnect!(options = nil)
+        do_clear(options)
+      rescue Error::PoolClosedError
+        # The "disconnected" state is between closed and paused.
+        # When we are trying to disconnect the pool, permit the pool to be
+        # already closed.
+      end
+
+      def do_clear(options = nil)
+        check_invariants
 
         service_id = options && options[:service_id]
 
@@ -611,21 +658,6 @@ module Mongo
         true
       ensure
         check_invariants
-      end
-
-      # Disconnects the pool.
-      #
-      # Does everything that +clear+ does, except if the pool is closed
-      # this method does nothing but +clear+ would raise PoolClosedError.
-      #
-      # @since 2.1.0
-      # @api private
-      def disconnect!(options = nil)
-        clear(options)
-      rescue Error::PoolClosedError
-        # The "disconnected" state is between closed and paused.
-        # When we are trying to disconnect the pool, permit the pool to be
-        # already closed.
       end
 
       # Instructs the pool to create and return connections.

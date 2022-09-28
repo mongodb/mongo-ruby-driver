@@ -260,28 +260,47 @@ module Mongo
     # are returned to their respective connection pools. Stop the server's
     # background monitor.
     #
-    # @return [ true ] Always true.
+    # @return [ nil ] Always nil.
     #
     # @since 2.0.0
     def disconnect!
       if monitor
         monitor.stop!
       end
+
       @connected = false
+
       _pool = @pool_lock.synchronize do
         @pool
       end
-      if _pool
-        # The current CMAP spec requires a pool to be mostly unusable
-        # if its server is unknown (or, therefore, disconnected).
-        # However any outstanding operations should continue to completion,
-        # and their connections need to be checked into the pool to be
-        # torn down. Because of this cleanup requirement we cannot just
-        # close the pool and set it to nil here, to be recreated the next
-        # time the server is discovered.
-        _pool.disconnect!
+
+      # The current CMAP spec requires a pool to be mostly unusable
+      # if its server is unknown (or, therefore, disconnected).
+      # However any outstanding operations should continue to completion,
+      # and their connections need to be checked into the pool to be
+      # torn down. Because of this cleanup requirement we cannot just
+      # close the pool and set it to nil here, to be recreated the next
+      # time the server is discovered.
+      _pool&.pause
+
+      nil
+    end
+
+    def close
+      if monitor
+        monitor.stop!
       end
-      true
+
+      @connected = false
+
+      _pool = nil
+      @pool_lock.synchronize do
+        _pool, @pool = @pool, nil
+      end
+
+      _pool&.close
+
+      nil
     end
 
     # Whether the server is connected.

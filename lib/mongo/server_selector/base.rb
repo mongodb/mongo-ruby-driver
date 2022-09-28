@@ -256,6 +256,9 @@ module Mongo
         loop do
           if Lint.enabled?
             cluster.servers.each do |server|
+              if !server.unknown? && !server.connected?
+                raise Error::LintError, "Server #{server.summary} is known but is not connected"
+              end
               if !server.unknown? && !server.pool.ready?
                 raise Error::LintError, "Server #{server.summary} is known but has non-ready pool"
               end

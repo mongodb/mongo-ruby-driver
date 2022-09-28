@@ -497,13 +497,14 @@ module Mongo
     # events in the process. Stops SRV monitoring if it is active.
     # Marks the cluster disconnected.
     #
-    # @return [ true ] Always true.
+    # A closed cluster is no longer usable. If the client is reconnected,
+    # it will create a new cluster instance.
     #
-    # @since 2.1.0
-    def disconnect!
+    # @return [ nil ] Always nil.
+    def close
       @state_change_lock.synchronize do
         unless connecting? || connected?
-          return true
+          return nil
         end
         if options[:cleanup] != false
           session_pool.end_sessions
@@ -516,7 +517,7 @@ module Mongo
         end
         @servers.each do |server|
           if server.connected?
-            server.disconnect!
+            server.close
             publish_sdam_event(
               Monitoring::SERVER_CLOSED,
               Monitoring::Event::ServerClosed.new(server.address, topology)
@@ -531,7 +532,7 @@ module Mongo
           @connecting = @connected = false
         end
       end
-      true
+      nil
     end
 
     # Reconnect all servers.

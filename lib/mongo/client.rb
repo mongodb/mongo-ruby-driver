@@ -596,9 +596,9 @@ module Mongo
 
       rescue
         begin
-          @cluster.disconnect!
+          @cluster.close
         rescue => e
-          log_warn("Eror disconnecting cluster in client constructor's exception handler: #{e.class}: #{e}")
+          log_warn("Eror closing cluster in client constructor's exception handler: #{e.class}: #{e}")
           # Drop this exception so that the original exception is raised
         end
         raise
@@ -1195,7 +1195,7 @@ module Mongo
 
     # Implementation for #close, assumes the connect lock is already acquired.
     def do_close
-      @cluster.disconnect!
+      @cluster.close
       close_encrypter
     end
 
