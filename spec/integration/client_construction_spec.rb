@@ -107,6 +107,7 @@ describe 'Client construction' do
       let(:options) do
         SpecConfig.instance.test_options.tap do |opt|
           opt.delete(:connect)
+          opt.delete(:replica_set)
           opt.update(direct_connection: true)
         end
       end
