@@ -149,7 +149,10 @@ module Mongo
       attr_reader :options
 
       # @api private
-      def_delegators :@server, :address
+      attr_reader :server
+
+      # @api private
+      def_delegators :server, :address
 
       # Get the maximum size of the connection pool.
       #
