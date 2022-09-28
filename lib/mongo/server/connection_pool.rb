@@ -370,7 +370,10 @@ module Mongo
               end
 
               if @server.load_balancer? && connection_global_id
-                # We need a  particular connection, and if it is not available
+                unless @checked_out_connections.detect { |c| c.global_id == connection_global_id }
+                  raise Error::ConnectionUnavailable.new
+                end
+                # We need a particular connection, and if it is not available
                 # we can wait for an in-progress operation to return
                 # such a connection to the pool.
               else
