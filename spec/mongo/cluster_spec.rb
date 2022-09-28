@@ -329,7 +329,7 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#disconnect!' do
+  describe '#close' do
     let(:cluster) { cluster_with_semaphore }
 
     let(:known_servers) do
@@ -340,23 +340,23 @@ describe Mongo::Cluster do
       cluster.instance_variable_get(:@periodic_executor)
     end
 
-    describe 'disconnection' do
+    describe 'closing' do
       before do
         known_servers.each do |server|
-          expect(server).to receive(:disconnect!).and_call_original
+          expect(server).to receive(:close).and_call_original
         end
         expect(periodic_executor).to receive(:stop!).and_call_original
       end
 
-      it 'disconnects each server and the cursor reaper and returns true' do
-        expect(cluster.disconnect!).to be(true)
+      it 'disconnects each server and the cursor reaper and returns nil' do
+        expect(cluster.close).to be nil
       end
     end
 
-    describe 'repeated disconnection' do
+    describe 'repeated closing' do
       before do
         known_servers.each do |server|
-          expect(server).to receive(:disconnect!).and_call_original
+          expect(server).to receive(:close).and_call_original
         end
         expect(periodic_executor).to receive(:stop!).and_call_original
       end
@@ -366,10 +366,10 @@ describe Mongo::Cluster do
 
       it 'publishes server closed event once' do
         monitoring.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
-        expect(cluster.disconnect!).to be(true)
+        expect(cluster.close).to be nil
         expect(subscriber.first_event('server_closed_event')).not_to be nil
         subscriber.succeeded_events.clear
-        expect(cluster.disconnect!).to be(true)
+        expect(cluster.close).to be nil
         expect(subscriber.first_event('server_closed_event')).to be nil
       end
     end
