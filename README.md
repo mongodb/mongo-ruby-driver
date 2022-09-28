@@ -77,10 +77,6 @@ backported to older stable branches. Only the most recent minor driver release
 is officially supported. Customers should use the most recent driver release in
 their applications.
 
-All development happens on the master branch, including new features, minor
-improvements and bug fixes. Feature branches are created from the master branch,
-and are created when the corresponding feature release is created.
-
 ## Running Tests
 
 Please refer to [spec/README.md](spec/README.md) for instructions on how
