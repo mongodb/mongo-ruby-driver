@@ -1250,7 +1250,9 @@ describe Mongo::Client do
     context 'background threads killed' do
       let(:client) do
         authorized_client.tap do |client|
-          client.cluster.servers.map(&:disconnect!)
+          client.cluster.servers.map do |server|
+            server.monitor&.stop!
+          end
         end
       end
 
