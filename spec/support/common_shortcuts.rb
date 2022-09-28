@@ -281,7 +281,7 @@ module CommonShortcuts
 
     def register_cluster(cluster)
       finalizer = lambda do |cluster|
-        cluster.disconnect!
+        cluster.close
       end
       LocalResourceRegistry.instance.register(cluster, finalizer)
     end
@@ -289,7 +289,7 @@ module CommonShortcuts
     def register_server(server)
       finalizer = lambda do |server|
         if server.connected?
-          server.disconnect!
+          server.close
         end
       end
       LocalResourceRegistry.instance.register(server, finalizer)
