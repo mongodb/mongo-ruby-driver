@@ -859,6 +859,10 @@ module Mongo
       @write_concern ||= WriteConcern.get(options[:write_concern] || options[:write])
     end
 
+    def closed?
+      !!@closed
+    end
+
     # Close all connections.
     #
     # @return [ true ] Always true.
@@ -866,6 +870,7 @@ module Mongo
     # @since 2.1.0
     def close
       @connect_lock.synchronize do
+        @closed = true
         do_close
       end
       true
@@ -899,6 +904,8 @@ module Mongo
         if @options[:auto_encryption_options]
           build_encrypter
         end
+
+        @closed = false
       end
 
       true
@@ -1133,6 +1140,8 @@ module Mongo
     #
     # @api private
     def with_session(options = {}, &block)
+      assert_not_closed
+
       session = get_session(options)
 
       yield session
@@ -1587,6 +1596,12 @@ module Mongo
         end
       end
       true
+    end
+
+    def assert_not_closed
+      if closed?
+        raise Error::ClientClosed, "The client was closed and is not usable for operations. Call #reconnect to reset this client instance or create a new client instance"
+      end
     end
   end
 end
