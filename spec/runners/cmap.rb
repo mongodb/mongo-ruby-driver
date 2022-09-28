@@ -265,6 +265,8 @@ module Mongo
         case name
         when 'start'
           run_start_op(state)
+        when 'ready'
+          run_ready_op(state)
         when 'wait'
           run_wait_op(state)
         when 'waitForThread'
@@ -316,6 +318,10 @@ module Mongo
         if state[target].respond_to?(:report_on_exception)
           state[target].report_on_exception = false
         end
+      end
+
+      # Ruby driver does not have the concept of pausing and readying the pool.
+      def run_ready_op(_state)
       end
 
       def run_wait_op(_state)
