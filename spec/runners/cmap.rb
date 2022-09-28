@@ -227,6 +227,7 @@ module Mongo
 
     # Represents an operation in the spec. Operations are sequential.
     class Operation
+      include RSpec::Mocks::ExampleMethods
 
       # @return [ String ] command The name of the operation to run.
       attr_reader :name
@@ -381,7 +382,11 @@ module Mongo
       end
 
       def run_clear_op(state)
-        pool.clear(lazy: true)
+        RSpec::Mocks.with_temporary_scope do
+          allow(pool.server).to receive(:unknown?).and_return(true)
+
+          pool.pause(lazy: true)
+        end
       end
 
       def run_close_op(state)
