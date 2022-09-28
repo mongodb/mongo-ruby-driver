@@ -41,7 +41,9 @@ module Mongo
           end
         end
 
-        expect(actual_modified).to eq(expected)
+        expected.each do |k, v|
+          expect(actual_modified[k]).to eq(v)
+        end
       end
     end
   end
