@@ -67,6 +67,16 @@ affects more than the driver alone (for example, a feature which requires
 MongoDB server support), please submit your idea through the
 [MongoDB Feedback Forum](https://feedback.mongodb.com/forums/924286-drivers).
 
+## Maintenance and Bug Fix Policy
+
+New driver functionality is generally added in a backwards-compatible manner
+and results in new minor driver releases (2.x). Bug fixes are generally made on
+master first and are backported to the current minor driver release. Exceptions
+may be made on a case-by-case basis, for example security fixes may be
+backported to older stable branches. Only the most recent minor driver release
+is officially supported. Customers should use the most recent driver release in
+their applications.
+
 ## Running Tests
 
 Please refer to [spec/README.md](spec/README.md) for instructions on how
