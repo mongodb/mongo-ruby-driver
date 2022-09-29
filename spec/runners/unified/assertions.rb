@@ -216,6 +216,12 @@ module Unified
       end
     end
 
+    def assert_gte(actual, expected, msg)
+      unless actual >= expected
+        raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
+      end
+    end
+
     def assert_matches(actual, expected, msg)
       if actual.nil?
         if expected.is_a?(Hash) && expected.keys == ["$$unsetOrMatches"]
