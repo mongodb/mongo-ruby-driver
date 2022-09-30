@@ -6,8 +6,8 @@ Gem::Specification.new do |s|
   s.name              = 'mongo'
   s.version           = Mongo::VERSION
   s.platform          = Gem::Platform::RUBY
-
-  s.authors           = ['Tyler Brock', 'Emily Stolfo', 'Durran Jordan']
+  s.authors           = ["The MongoDB Ruby Team"]
+  s.email             = "dbx-ruby@mongodb.com"
   s.homepage          = 'https://mongodb.com/docs/ruby-driver/'
   s.summary           = 'Ruby driver for MongoDB'
   s.description       = 'A Ruby driver for MongoDB'
