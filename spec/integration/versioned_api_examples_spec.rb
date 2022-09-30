@@ -98,7 +98,7 @@ describe 'Versioned API examples' do
       # Start Versioned API Example 6
 
       # Mongo::Error::OperationFailure:
-      #   [323:APIStrictError]: Provided apiStrict:true, but the command count is not in API Version 1. Information on supported commands and migrations in API Version 1 can be found at https://dochub.mongodb.org/core/manual-versioned-api
+      #   [323:APIStrictError]: Provided apiStrict:true, but the command count is not in API Version 1. Information on supported commands and migrations in API Version 1 can be found at https://www.mongodb.com/docs/manual/reference/stable-api
 
       # End Versioned API Example 6
 
