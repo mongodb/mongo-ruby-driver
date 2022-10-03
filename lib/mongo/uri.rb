@@ -20,7 +20,7 @@ module Mongo
   # The URI class provides a way for users to parse the MongoDB uri as
   # defined in the connection string format spec.
   #
-  # http://docs.mongodb.org/manual/reference/connection-string/
+  # https://www.mongodb.com/docs/manual/reference/connection-string/
   #
   # @example Use the uri string to make a client connection.
   #   uri = Mongo::URI.new('mongodb://localhost:27017')
@@ -80,7 +80,7 @@ module Mongo
     # MongoDB URI (connection string) documentation url
     #
     # @since 2.0.0
-    HELP = 'http://docs.mongodb.org/manual/reference/connection-string/'.freeze
+    HELP = 'https://www.mongodb.com/docs/manual/reference/connection-string/'.freeze
 
     # Unsafe characters that must be urlencoded.
     #

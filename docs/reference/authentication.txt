@@ -466,7 +466,7 @@ via client configuration, or the path to a keytab file may be provided via
 configuration stored in the ``java.security.auth.login.config`` system property.
 Additionally, the Java runtime environment must be configured for Kerberos;
 please refer to the  `MongoDB Java Driver Kerberos documentation
-<http://mongodb.github.io/mongo-java-driver/4.0/driver/tutorials/authentication/#gssapi>`_
+<https://mongodb.github.io/mongo-java-driver/4.0/driver/tutorials/authentication/#gssapi>`_
 for more information.
 
 .. note::
