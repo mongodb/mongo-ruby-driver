@@ -502,7 +502,7 @@ module Utils
   end
 
   module_function def wait_for_instance_profile
-    deadline = Time.now + 15
+    deadline = Utils.monotonic_time + 15
     loop do
       begin
         ip = ec2_instance_profile
@@ -513,7 +513,7 @@ module Utils
       rescue => e
         puts "Problem retrieving instance profile: #{e.class}: #{e}"
       end
-      if Time.now >= deadline
+      if Utils.monotonic_time >= deadline
         raise 'Instance profile did not get assigned in 15 seconds'
       end
       sleep 3
@@ -521,7 +521,7 @@ module Utils
   end
 
   module_function def wait_for_no_instance_profile
-    deadline = Time.now + 15
+    deadline = Utils.monotonic_time + 15
     loop do
       begin
         ip = ec2_instance_profile
@@ -532,7 +532,7 @@ module Utils
       rescue => e
         puts "Problem retrieving instance profile: #{e.class}: #{e}"
       end
-      if Time.now >= deadline
+      if Utils.monotonic_time >= deadline
         raise 'Instance profile did not get cleared in 15 seconds'
       end
       sleep 3

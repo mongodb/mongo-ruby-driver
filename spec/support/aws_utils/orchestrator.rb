@@ -19,7 +19,7 @@ module AwsUtils
     )
       clear_instance_profile(instance_id)
 
-      deadline = Time.now + 30
+      deadline = Utils.monotonic_time + 30
       begin
         ec2_client.associate_iam_instance_profile(
           iam_instance_profile: {
@@ -29,7 +29,7 @@ module AwsUtils
           instance_id: instance_id,
         )
       rescue Aws::EC2::Errors::RequestLimitExceeded => e
-        if Time.now >= deadline
+        if Utils.monotonic_time >= deadline
           raise
         end
         STDERR.puts("AWS request limit exceeded: #{e.class}: #{e}, will retry")
@@ -43,13 +43,13 @@ module AwsUtils
         :iam_instance_profile_associations, :instance_id, instance_id)
 
       if assoc
-        deadline = Time.now + 30
+        deadline = Utils.monotonic_time + 30
         begin
           ec2_client.disassociate_iam_instance_profile(
             association_id: assoc.association_id,
           )
         rescue Aws::EC2::Errors::RequestLimitExceeded => e
-          if Time.now >= deadline
+          if Utils.monotonic_time >= deadline
             raise
           end
           STDERR.puts("AWS request limit exceeded: #{e.class}: #{e}, will retry")
@@ -288,7 +288,7 @@ CMD
       service_name: AWS_AUTH_ECS_SERVICE_NAME,
       timeout: 20
     )
-      deadline = Time.now + timeout
+      deadline = Utils.monotonic_time + timeout
 
       # The AWS SDK waiter seems to immediately fail sometimes right after
       # the service is created, so wait for the service to become active
@@ -313,8 +313,7 @@ CMD
           status = service.status
         end
 
-        now = Time.now
-        if now >= deadline
+        if Utils.monotonic_time >= deadline
           raise "Service #{service_name} in cluster #{cluster_name} did not become ready in #{timeout} seconds (current status: #{status})"
         end
 

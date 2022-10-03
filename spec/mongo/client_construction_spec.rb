@@ -13,7 +13,7 @@ describe Mongo::Client do
       it 'does not perform i/o' do
         allow_any_instance_of(Mongo::Server::Monitor).to receive(:run!)
         expect_any_instance_of(Mongo::Server::Monitor).not_to receive(:scan!)
-        start_time = Time.now
+
         # return should be instant
         c = Timeout.timeout(1) do
           ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
