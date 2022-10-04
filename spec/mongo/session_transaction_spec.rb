@@ -117,7 +117,7 @@ describe Mongo::Session do
       max_example_run_time 7
 
       it 'times out' do
-        start = Mongo::Mongo::Utils.monotonic_time
+        start = Mongo::Utils.monotonic_time
 
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start)
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 1)
@@ -150,7 +150,7 @@ describe Mongo::Session do
 
         retry_test
         it 'times out' do
-          start = Mongo::Mongo::Utils.monotonic_time
+          start = Mongo::Utils.monotonic_time
 
           10.times do |i|
             expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
