@@ -16,11 +16,11 @@ describe Mongo::Semaphore do
     # Context switch to start the thread
     sleep 0.1
 
-    start_time = Utils.monotonic_time
+    start_time = Mongo::Utils.monotonic_time
     semaphore.signal
     consumer.join
 
-    (Utils.monotonic_time - start_time).should < 1
+    (Mongo::Utils.monotonic_time - start_time).should < 1
   end
 
   it 'waits until broadcast' do
@@ -31,11 +31,11 @@ describe Mongo::Semaphore do
     # Context switch to start the thread
     sleep 0.1
 
-    start_time = Utils.monotonic_time
+    start_time = Mongo::Utils.monotonic_time
     semaphore.broadcast
     consumer.join
 
-    (Utils.monotonic_time - start_time).should < 1
+    (Mongo::Utils.monotonic_time - start_time).should < 1
   end
 
   it 'times out' do
@@ -46,9 +46,9 @@ describe Mongo::Semaphore do
     # Context switch to start the thread
     sleep 0.1
 
-    start_time = Utils.monotonic_time
+    start_time = Mongo::Utils.monotonic_time
     consumer.join
 
-    (Utils.monotonic_time - start_time).should > 1
+    (Mongo::Utils.monotonic_time - start_time).should > 1
   end
 end

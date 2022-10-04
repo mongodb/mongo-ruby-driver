@@ -80,7 +80,7 @@ describe Mongo::Server::PushMonitor do
       it 'stops the monitoring' do
         push_monitor
 
-        start = Mongo::Utils.monotonic_time
+        start = Mongo::Mongo::Utils.monotonic_time
 
         expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
         lambda do

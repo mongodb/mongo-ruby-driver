@@ -616,11 +616,11 @@ describe Mongo::Server::ConnectionPool do
 
             pool.check_out(connection_global_id: connection_global_id)
 
-            start_time = Mongo::Utils.monotonic_time
+            start_time = Mongo::Mongo::Utils.monotonic_time
             expect {
               pool.check_out(connection_global_id: connection_global_id)
             }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
-            elapsed_time = Mongo::Utils.monotonic_time - start_time
+            elapsed_time = Mongo::Mongo::Utils.monotonic_time - start_time
 
             elapsed_time.should > 1
           end

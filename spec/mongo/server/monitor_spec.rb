@@ -52,10 +52,10 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       it 'throttles the scans to minimum 500ms' do
-        start = Utils.monotonic_time
+        start = Mongo::Utils.monotonic_time
         monitor.scan!
         monitor.scan!
-        expect(Utils.monotonic_time - start).to be >= 0.5
+        expect(Mongo::Utils.monotonic_time - start).to be >= 0.5
       end
     end
 

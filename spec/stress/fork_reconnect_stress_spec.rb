@@ -27,20 +27,20 @@ describe 'fork reconnect' do
       client['foo'].insert_one(test: 1)
 
       pids = []
-      deadline = Utils.monotonic_time + 5
+      deadline = Mongo::Utils.monotonic_time + 5
       1.upto(10) do
         if pid = fork
           pids << pid
         else
           Utils.wrap_forked_child do
-            while Utils.monotonic_time < deadline
+            while Mongo::Utils.monotonic_time < deadline
               client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
             end
           end
         end
       end
 
-      while Utils.monotonic_time < deadline
+      while Mongo::Utils.monotonic_time < deadline
         # Use a read which is retried in case of an error
         client['foo'].find(test: 1).to_a
       end
@@ -78,20 +78,20 @@ describe 'fork reconnect' do
         end
 
         pids = []
-        deadline = Utils.monotonic_time + 5
+        deadline = Mongo::Utils.monotonic_time + 5
         10.times do
           if pid = fork
             pids << pid
           else
             Utils.wrap_forked_child do
-              while Utils.monotonic_time < deadline
+              while Mongo::Utils.monotonic_time < deadline
                 client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
               end
             end
           end
         end
 
-        while Utils.monotonic_time < deadline
+        while Mongo::Utils.monotonic_time < deadline
           sleep 0.1
         end
 
