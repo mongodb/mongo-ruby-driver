@@ -113,7 +113,7 @@ class ClusterTools
   # @param [ Mongo::Address ] address
   def step_up(address)
     client = direct_client(address)
-    start = Utils.monotonic_time
+    start = Mongo::Utils.monotonic_time
     loop do
       begin
         client.database.command(replSetStepUp: 1)
@@ -128,7 +128,7 @@ class ClusterTools
           raise
         end
 
-        if Utils.monotonic_time > start + 10
+        if Mongo::Utils.monotonic_time > start + 10
           raise e
         end
       end
