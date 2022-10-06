@@ -156,9 +156,9 @@ describe 'Connection pool timing test' do
         # when trying to perform operations during primary change
         sleep 1
 
-        @primary_change_start = Time.now
+        @primary_change_start = Mongo::Utils.monotonic_time
         ClusterTools.instance.change_primary
-        @primary_change_end = Time.now
+        @primary_change_end = Mongo::Utils.monotonic_time
 
         # Primary change is complete; execute more operations
         more_threads.collect { |t| t.join }
