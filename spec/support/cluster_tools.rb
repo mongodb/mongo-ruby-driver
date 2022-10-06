@@ -145,7 +145,7 @@ class ClusterTools
   # - call step down on the existing primary
   # - call step up on the target in a loop until it becomes the primary
   def change_primary
-    start = Utils.monotonic_time
+    start = Mongo::Utils.monotonic_time
     existing_primary = admin_client.cluster.next_primary
     existing_primary_address = existing_primary.address
 
@@ -175,11 +175,11 @@ class ClusterTools
     persistently_step_up(target.address)
 
     new_primary = admin_client.cluster.next_primary
-    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}. Time to change primaries: #{Utils.monotonic_time - start}"
+    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}. Time to change primaries: #{Mongo::Utils.monotonic_time - start}"
   end
 
   def persistently_step_up(address)
-    start = Utils.monotonic_time
+    start = Mongo::Utils.monotonic_time
     loop do
       puts "#{Time.now} [CT] Asking #{address} to step up"
 
@@ -189,7 +189,7 @@ class ClusterTools
         break
       end
 
-      if Utils.monotonic_time - start > 10
+      if Mongo::Utils.monotonic_time - start > 10
         raise "Unable to get #{address} instated as primary after 10 seconds"
       end
     end
