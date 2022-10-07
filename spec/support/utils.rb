@@ -436,12 +436,12 @@ module Utils
   # returns normally and does not raise an exception. The block is invoked
   # every second or so.
   module_function def wait_for_condition(timeout)
-    deadline = ::Mongo::Utils.monotonic_time + timeout
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
     loop do
       if yield
         break
       end
-      if ::Mongo::Utils.monotonic_time > deadline
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
         break
       end
       sleep 1
@@ -502,7 +502,7 @@ module Utils
   end
 
   module_function def wait_for_instance_profile
-    deadline = ::Mongo::Utils.monotonic_time + 15
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 15
     loop do
       begin
         ip = ec2_instance_profile
@@ -513,7 +513,7 @@ module Utils
       rescue => e
         puts "Problem retrieving instance profile: #{e.class}: #{e}"
       end
-      if ::Mongo::Utils.monotonic_time >= deadline
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
         raise 'Instance profile did not get assigned in 15 seconds'
       end
       sleep 3
@@ -521,7 +521,7 @@ module Utils
   end
 
   module_function def wait_for_no_instance_profile
-    deadline = ::Mongo::Utils.monotonic_time + 15
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 15
     loop do
       begin
         ip = ec2_instance_profile
@@ -532,7 +532,7 @@ module Utils
       rescue => e
         puts "Problem retrieving instance profile: #{e.class}: #{e}"
       end
-      if ::Mongo::Utils.monotonic_time >= deadline
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
         raise 'Instance profile did not get cleared in 15 seconds'
       end
       sleep 3
