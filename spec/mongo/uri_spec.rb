@@ -944,7 +944,9 @@ describe Mongo::URI do
               expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
             end
 
-            include_examples "roundtrips string"
+            it "roundtrips the string" do
+              expect(uri.to_s).to eq("mongodb://tyler:s3kr4t@localhost/?authMechanism=GSSAPI")
+            end
           end
 
           context 'when a mapping value is missing but another is present' do
@@ -954,7 +956,9 @@ describe Mongo::URI do
               expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'foo' })
             end
 
-            include_examples "roundtrips string"
+            it "roundtrips the string" do
+              expect(uri.to_s).to eq("mongodb://tyler:s3kr4t@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:foo")
+            end
           end
         end
       end

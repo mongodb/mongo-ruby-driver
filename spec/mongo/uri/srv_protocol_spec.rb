@@ -781,7 +781,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it "roundtrips the string" do
-            expect(uri.to_s).to eq("mongodb+srv://tyler@test5.test.build.10gen.cc/?authMechanism=MONGODB-X509&authSource=$external")
+            expect(uri.to_s).to eq("mongodb+srv://tyler:s3kr4t@test5.test.build.10gen.cc/?authSource=$external&authMechanism=GSSAPI")
           end
         end
 
