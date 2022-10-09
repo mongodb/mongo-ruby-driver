@@ -340,7 +340,7 @@ module Mongo
 
     private
 
-    # Reconstruct the URI from its parts. Invalid options are drops and options
+    # Reconstruct the URI from its parts. Invalid options are dropped and options
     # are converted to camelCase.
     #
     # @return [ String ] the uri.
