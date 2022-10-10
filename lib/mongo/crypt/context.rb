@@ -126,6 +126,23 @@ module Mongo
               end
               providers[:aws] = aws_credentials.to_h
             end
+            if kms_providers.azure&.empty?
+              begin
+                unless @azure_credentials&.valid?
+                  @azure_credentials = Mongo::Auth::Azure::CredentialsRetriever.new.credentials
+                end
+              rescue Auth::Azure::CredentialsNotFound => e
+                raise Error::CryptError.new(
+                  "Could not obtain Azure credentials: #{e.class}: #{e.message}"
+                )
+              end
+              unless @azure_credentials.valid?
+                raise Error::CryptError.new(
+                  "Could not obtain valid Azure credentials"
+                )
+              end
+              provider[:azure] = @azure_credentials.to_h
+            end
             Binding.ctx_provide_kms_providers(
               self,
               KMS::Credentials.new(providers).to_document
