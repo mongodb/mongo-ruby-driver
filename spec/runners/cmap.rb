@@ -198,7 +198,7 @@ module Mongo
       # This method only handles options used by spec tests at the time when
       # this method was written. Other options are silently dropped.
       def process_options(options)
-        (options || {}).reduce({}) do |opts, kv|
+        (options || {}).each_with_object({}) do |kv, opts|
           case kv.first
           when 'maxIdleTimeMS'
             opts[:max_idle_time] = kv.last / 1000.0
@@ -218,8 +218,6 @@ module Mongo
           else
             raise "Unknown option #{kv.first}"
           end
-
-          opts
         end
       end
 
