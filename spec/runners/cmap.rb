@@ -141,6 +141,7 @@ module Mongo
                       {
                         'type' => 'ConnectionPoolCleared',
                         'address' => event.address,
+                        'interruptInUseConnections' => event.options[:interrupt_in_use_connections]
                       }
                     when Mongo::Monitoring::Event::Cmap::PoolReady
                       {
@@ -290,6 +291,10 @@ module Mongo
       # @return [ String | nil ] label The label for the returned connection.
       attr_reader :label
 
+      # @return [ true | false ] interrupt_in_use_connections Whether or not
+      #   all connections should be closed on pool clear.
+      attr_reader :interrupt_in_use_connections
+
       # @return [ String | nil ] The binding for the connection which should run the operation.
       attr_reader :connection
 
@@ -311,6 +316,7 @@ module Mongo
         @connection = operation['connection']
         @event = operation['event']
         @count = operation['count']
+        @interrupt_in_use_connections = !!operation['interruptInUseConnections']
       end
 
       def run(pool, state, main_thread = true)
@@ -427,7 +433,7 @@ module Mongo
         RSpec::Mocks.with_temporary_scope do
           allow(pool.server).to receive(:unknown?).and_return(true)
 
-          pool.clear(lazy: true)
+          pool.clear(lazy: true, interrupt_in_use_connections: interrupt_in_use_connections)
         end
       end
 

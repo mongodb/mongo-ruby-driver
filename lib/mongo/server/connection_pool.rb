@@ -590,7 +590,10 @@ module Mongo
       #
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
-      #   subsequent check out operation.
+      #   subsequent check out operation. Defaults to false.
+      # @option options [ true | false ] :interrupt_in_use_connections If true,
+      #   close all checked out connections immediately. If it is false, do not
+      #   close any of the checked out connections. Defaults to true.
       # @option options [ Object ] :service_id Clear connections with
       #   the specified service id only.
       #
@@ -636,7 +639,8 @@ module Mongo
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
-              service_id: service_id
+              service_id: service_id,
+              interrupt_in_use_connections: options&.[](:interrupt_in_use_connections)
             )
           )
           pause unless @server.load_balancer?
@@ -662,6 +666,16 @@ module Mongo
                 connection = @available_connections.pop
                 connection.disconnect!(reason: :stale)
                 @populate_semaphore.signal
+              end
+            end
+          end
+
+          if options && options[:interrupt_in_use_connections]
+            @checked_out_connections.delete_if do |connection|
+              if connection.generation < @generation_manager.generation(service_id: service_id)
+                connection.disconnect!(reason: :stale)
+                @populate_semaphore.signal
+                true
               end
             end
           end
