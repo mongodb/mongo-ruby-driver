@@ -648,36 +648,12 @@ module Mongo
 
         @lock.synchronize do
           unless options && options[:lazy]
-            if @server.load_balancer? && service_id
-              loop do
-                conn = @available_connections.detect do |conn|
-                  conn.service_id == service_id
-                end
-                if conn
-                  @available_connections.delete(conn)
-                  conn.disconnect!(reason: :stale)
-                  @populate_semaphore.signal
-                else
-                  break
-                end
-              end
-            else
-              until @available_connections.empty?
-                connection = @available_connections.pop
-                connection.disconnect!(reason: :stale)
-                @populate_semaphore.signal
-              end
-            end
+            close_connections(@available_connections, service_id)
           end
 
           if options && options[:interrupt_in_use_connections]
-            @checked_out_connections.delete_if do |connection|
-              if connection.generation < @generation_manager.generation(service_id: service_id)
-                connection.disconnect!(reason: :stale)
-                @populate_semaphore.signal
-                true
-              end
-            end
+            close_connections(@checked_out_connections, service_id)
+            close_connections(@pending_connections, service_id)
           end
         end
 
@@ -1036,6 +1012,31 @@ module Mongo
           @pending_connections.each do |connection|
             if connection.closed?
               raise Error::LintError, "Pending connection is closed: #{connection} for #{server_summary}"
+            end
+          end
+        end
+      end
+
+      def close_connections(connections, service_id)
+        if @server.load_balancer? && service_id
+          loop do
+            conn = connections.detect do |conn|
+              conn.service_id == service_id
+            end
+            if conn
+              connections.delete(conn)
+              conn.disconnect!(reason: :stale)
+              @populate_semaphore.signal
+            else
+              break
+            end
+          end
+        else
+          connections.delete_if do |connection|
+            if connection.generation < @generation_manager.generation(service_id: service_id)
+              connection.disconnect!(reason: :stale)
+              @populate_semaphore.signal
+              true
             end
           end
         end

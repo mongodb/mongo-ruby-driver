@@ -212,7 +212,8 @@ module Mongo
         unless @socket
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
-          @socket, @description, @compressor = do_connect
+          @socket = create_socket
+          @description, @compressor = do_connect
 
           if server.load_balancer?
             if Lint.enabled?
@@ -232,17 +233,24 @@ module Mongo
         true
       end
 
-      # Separate method to permit easier mocking in the test suite.
+      # Creates the socket. The method is separate from do_connect, so that
+      # pending connections can be closed if they are interrupted during hello.
       #
-      # @return [ Array<Socket, Server::Description> ] Connected socket and
-      #   a server description instance from the hello response of the
-      #   returned socket.
-      private def do_connect
-        socket = add_server_diagnostics do
+      #
+      # @return [ Socket ] The created socket.
+      private def create_socket
+        add_server_diagnostics do
           address.socket(socket_timeout, ssl_options.merge(
             connection_address: address, connection_generation: generation))
         end
+      end
 
+      # Separate method to permit easier mocking in the test suite.
+      #
+      # @return [ Array<Server::Description, String | Symbol> ] A server
+      #   description instance from the hello response of the returned socket
+      #   and the compressor to use.
+      private def do_connect
         begin
           pending_connection = PendingConnection.new(
             socket, @server, monitoring, options.merge(id: id))
@@ -252,7 +260,7 @@ module Mongo
           raise
         end
 
-        [socket, pending_connection.description, pending_connection.compressor]
+        [pending_connection.description, pending_connection.compressor]
       end
 
       # Disconnect the connection.
