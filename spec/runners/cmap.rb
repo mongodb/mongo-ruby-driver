@@ -49,6 +49,15 @@ module Mongo
         @expected_error = @test['error']
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
+        @fail_point_command = @test['failPoint']
+        if run_on = @test['runOn']
+          @min_server_version = run_on.detect do |doc|
+            doc.keys.first == 'minServerVersion'
+          end&.values&.first
+          @max_server_version = run_on.detect do |doc|
+            doc.keys.first == 'maxServerVersion'
+          end&.values&.first
+        end
 
         process_run_on
         preprocess
@@ -64,6 +73,8 @@ module Mongo
         # This situation cannot happen in normal driver operation, but to
         # support this test, create the pool manually here.
         @pool = Mongo::Server::ConnectionPool.new(server, server.options)
+
+        configure_fail_point
       end
 
       def run
@@ -154,6 +165,29 @@ module Mongo
 
             events << event unless @ignore_events.include?(event.fetch('type'))
           end
+        end
+      ensure
+        disable_fail_points
+      end
+
+      def server_version_satisfied?
+        cc = ClusterConfig.instance
+        ok = true
+        if @min_server_version
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version)
+        end
+        if @max_server_version
+          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version)
+        end
+        ok
+      end
+
+      def disable_fail_points
+        if @fail_point_command
+          admin_client.command(
+            configureFailPoint: @fail_point_command['configureFailPoint'],
+            mode: 'off'
+          )
         end
       end
 
@@ -266,6 +300,14 @@ module Mongo
           end
         end
       end
+
+      def admin_client
+        @admin_client ||= ClientRegistry.instance.global_client('root_authorized').use('admin')
+      end
+
+      def configure_fail_point
+        admin_client.database.command(@fail_point_command) if @fail_point_command
+      end
     end
 
     # Represents an operation in the spec. Operations are sequential.
@@ -372,7 +414,9 @@ module Mongo
       def run_start_op(state)
         state[target] = Thread.start do
           Thread.current[:name] = @target
-          thread_ops.each { |op| op.run(pool, state, false) }
+          thread_ops.each do |op|
+            op.run(pool, state, false)
+          end
         end
 
         # Since we expect exceptions to occur in some cases, we disable the printing of error
