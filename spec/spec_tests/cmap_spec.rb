@@ -76,13 +76,6 @@ describe 'Cmap' do
       end
 
       let!(:result) do
-        socket = double('fake socket')
-        allow(socket).to receive(:close)
-        # When linting, connection pool ensures the connection returned
-        # is connected.
-        allow(socket).to receive(:alive?).and_return(true)
-
-        allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(socket)
         if @server.load_balancer?
           allow_any_instance_of(Mongo::Server::Connection).to receive(:service_id).and_return('very fake')
         end
