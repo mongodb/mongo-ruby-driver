@@ -100,6 +100,35 @@ describe Mongo::URI::OptionsMapper do
     end
   end
 
+  describe "#stringify_bool" do
+
+    let(:method) { :stringify_bool }
+
+    context "when passing a boolean" do
+      let(:value) { true }
+
+      it "returns a string" do
+        expect(reverted).to eq("true")
+      end
+    end
+
+    context "when passing false" do
+      let(:value) { false }
+
+      it "returns a string" do
+        expect(reverted).to eq("false")
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
   describe "#convert_repeated_bool" do
 
     let(:method) { :convert_repeated_bool }
@@ -119,6 +148,35 @@ describe Mongo::URI::OptionsMapper do
 
       it "returns the passed value" do
         expect(reverted).to eq(value)
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
+  describe "#stringify_repeated_bool" do
+
+    let(:method) { :stringify_repeated_bool }
+
+    context "when passing a boolean list" do
+      let(:value) { [ true ] }
+
+      it "returns a string" do
+        expect(reverted).to eq("true")
+      end
+    end
+
+    context "when passing a multi boolean list" do
+      let(:value) { [ true, false ] }
+
+      it "returns a string" do
+        expect(reverted).to eq("true,false")
       end
     end
 
@@ -229,6 +287,35 @@ describe Mongo::URI::OptionsMapper do
     end
   end
 
+  describe "#stringify_inverse_bool" do
+
+    let(:method) { :stringify_inverse_bool }
+
+    context "when passing true" do
+      let(:value) { true }
+
+      it "returns false string" do
+        expect(reverted).to eq("false")
+      end
+    end
+
+    context "when passing false" do
+      let(:value) { false }
+
+      it "returns true string" do
+        expect(reverted).to eq("true")
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
   describe "#convert_integer" do
 
     let(:method) { :convert_integer }
@@ -267,6 +354,27 @@ describe Mongo::URI::OptionsMapper do
 
       it "returns the passed value" do
         expect(reverted).to eq(value)
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
+  describe "#stringify_integer" do
+
+    let(:method) { :stringify_integer }
+
+    context "when passing an integer" do
+      let(:value) { 1 }
+
+      it "returns the passed value as a string" do
+        expect(reverted).to eq("1")
       end
     end
 
@@ -361,6 +469,19 @@ describe Mongo::URI::OptionsMapper do
     end
   end
 
+  describe "#stringify_ms" do
+
+    let(:method) { :stringify_ms }
+
+    context "when passing a float" do
+      let(:value) { 1.000005 }
+
+      it "returns a string" do
+        expect(reverted).to eq("1000")
+      end
+    end
+  end
+
   describe "#convert_symbol" do
 
     let(:method) { :convert_symbol }
@@ -385,6 +506,19 @@ describe Mongo::URI::OptionsMapper do
   describe "#revert_symbol" do
 
     let(:method) { :revert_symbol }
+
+    context "when passing a symbol" do
+      let(:value) { :hello }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("hello")
+      end
+    end
+  end
+
+  describe "#stringify_symbol" do
+
+    let(:method) { :stringify_symbol }
 
     context "when passing a symbol" do
       let(:value) { :hello }
@@ -433,6 +567,27 @@ describe Mongo::URI::OptionsMapper do
 
       it "returns the value" do
         expect(reverted).to eq(value)
+      end
+    end
+  end
+
+  describe "#stringify_array" do
+
+    let(:method) { :stringify_array }
+
+    context "when passing one value" do
+      let(:value) { [ "hello" ] }
+
+      it "returns a string" do
+        expect(reverted).to eq("hello")
+      end
+    end
+
+    context "when passing multiple value" do
+      let(:value) { [ "1", "2", "3" ] }
+
+      it "returns the joined string" do
+        expect(reverted).to eq("1,2,3")
       end
     end
   end
@@ -518,7 +673,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing GSSAPI" do
       let(:value) { :gssapi }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("GSSAPI")
       end
     end
@@ -526,7 +681,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing MONGODB-AWS" do
       let(:value) { :aws }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("MONGODB-AWS")
       end
     end
@@ -534,7 +689,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing MONGODB-CR" do
       let(:value) { :mongodb_cr }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("MONGODB-CR")
       end
     end
@@ -542,7 +697,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing MONGODB-X509" do
       let(:value) { :mongodb_x509 }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("MONGODB-X509")
       end
     end
@@ -550,7 +705,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing PLAIN" do
       let(:value) { :plain }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("PLAIN")
       end
     end
@@ -558,7 +713,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing SCRAM-SHA-1" do
       let(:value) { :scram }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("SCRAM-SHA-1")
       end
     end
@@ -566,7 +721,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing SCRAM-SHA-256" do
       let(:value) { :scram256 }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("SCRAM-SHA-256")
       end
     end
@@ -588,6 +743,83 @@ describe Mongo::URI::OptionsMapper do
         expect do
           reverted
         end.to raise_error(ArgumentError, "Unknown auth mechanism #{nil}")
+      end
+    end
+  end
+
+  describe "#stringify_auth_mech" do
+
+    let(:method) { :stringify_auth_mech }
+
+    context "when passing GSSAPI" do
+      let(:value) { :gssapi }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("GSSAPI")
+      end
+    end
+
+    context "when passing MONGODB-AWS" do
+      let(:value) { :aws }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("MONGODB-AWS")
+      end
+    end
+
+    context "when passing MONGODB-CR" do
+      let(:value) { :mongodb_cr }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("MONGODB-CR")
+      end
+    end
+
+    context "when passing MONGODB-X509" do
+      let(:value) { :mongodb_x509 }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("MONGODB-X509")
+      end
+    end
+
+    context "when passing PLAIN" do
+      let(:value) { :plain }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("PLAIN")
+      end
+    end
+
+    context "when passing SCRAM-SHA-1" do
+      let(:value) { :scram }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("SCRAM-SHA-1")
+      end
+    end
+
+    context "when passing SCRAM-SHA-256" do
+      let(:value) { :scram256 }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("SCRAM-SHA-256")
+      end
+    end
+
+    context "when passing a bogus value" do
+      let(:value) { "hello" }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
       end
     end
   end
@@ -694,6 +926,35 @@ describe Mongo::URI::OptionsMapper do
 
       it "returns a multiple element hash" do
         expect(reverted).to eq(value)
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
+  describe "#stringify_auth_mech_props" do
+
+    let(:method) { :stringify_auth_mech_props }
+
+    context "when including one item" do
+      let(:value) { { key: "value" } }
+
+      it "returns a string" do
+        expect(reverted).to eq("key:value")
+      end
+    end
+
+    context "when including multiple items" do
+      let(:value) { { k1: "v1", k2: "v2" } }
+
+      it "returns a string" do
+        expect(reverted).to eq("k1:v1,k2:v2")
       end
     end
 
@@ -830,6 +1091,27 @@ describe Mongo::URI::OptionsMapper do
     end
   end
 
+  describe "#stringify_max_staleness" do
+
+    let(:method) { :stringify_max_staleness }
+
+    context "when passing an integer" do
+      let(:value) { 1 }
+
+      it "returns the integer string" do
+        expect(reverted).to eq('1')
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
   describe "#convert_read_mode" do
 
     let(:method) { :convert_read_mode }
@@ -898,7 +1180,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing primary" do
       let(:value) { :primary }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("primary")
       end
     end
@@ -906,7 +1188,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing primarypreferred" do
       let(:value) { :primary_preferred }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("primaryPreferred")
       end
     end
@@ -914,7 +1196,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing secondary" do
       let(:value) { :secondary }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("secondary")
       end
     end
@@ -922,7 +1204,7 @@ describe Mongo::URI::OptionsMapper do
     context "when passing secondarypreferred" do
       let(:value) { :secondary_preferred }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
         expect(reverted).to eq("secondaryPreferred")
       end
     end
@@ -930,7 +1212,60 @@ describe Mongo::URI::OptionsMapper do
     context "when passing nearest" do
       let(:value) { :nearest }
 
-      it "returns it as a symbol" do
+      it "returns it as a string" do
+        expect(reverted).to eq("nearest")
+      end
+    end
+
+    context "when passing a bogus string" do
+      let(:value) { "hello" }
+
+      it "returns the string" do
+        expect(reverted).to eq("hello")
+      end
+    end
+  end
+
+  describe "#stringify_read_mode" do
+
+    let(:method) { :stringify_read_mode }
+
+    context "when passing primary" do
+      let(:value) { :primary }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("primary")
+      end
+    end
+
+    context "when passing primarypreferred" do
+      let(:value) { :primary_preferred }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("primaryPreferred")
+      end
+    end
+
+    context "when passing secondary" do
+      let(:value) { :secondary }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("secondary")
+      end
+    end
+
+    context "when passing secondarypreferred" do
+      let(:value) { :secondary_preferred }
+
+      it "returns it as a string" do
+        expect(reverted).to eq("secondaryPreferred")
+      end
+    end
+
+    context "when passing nearest" do
+      let(:value) { :nearest }
+
+      it "returns it as a string" do
         expect(reverted).to eq("nearest")
       end
     end
@@ -1001,7 +1336,7 @@ describe Mongo::URI::OptionsMapper do
     context "when including one item" do
       let(:value) { [ { key: "value" } ] }
 
-      it "returns a one element hash" do
+      it "returns the passed value" do
         expect(reverted).to eq(value)
       end
     end
@@ -1009,7 +1344,7 @@ describe Mongo::URI::OptionsMapper do
     context "when including multiple items" do
       let(:value) { [ { k1: "v1", k2: "v2" } ] }
 
-      it "returns a multiple element hash" do
+      it "returns the passed value" do
         expect(reverted).to eq(value)
       end
     end
@@ -1017,8 +1352,45 @@ describe Mongo::URI::OptionsMapper do
     context "when including multiple hashes" do
       let(:value) { [ { k1: "v1", k2: "v2" }, { k3: "v3", k4: "v4" } ] }
 
-      it "returns a multiple element hash" do
+      it "returns the passed value" do
         expect(reverted).to eq(value)
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
+  describe "#stringify_read_tags" do
+
+    let(:method) { :stringify_read_tags }
+
+    context "when including one item" do
+      let(:value) { [ { key: "value" } ] }
+
+      it "returns a one element string list" do
+        expect(reverted).to eq([ "key:value" ])
+      end
+    end
+
+    context "when including multiple items" do
+      let(:value) { [ { k1: "v1", k2: "v2" } ] }
+
+      it "returns a one element string list" do
+        expect(reverted).to eq([ "k1:v1,k2:v2" ])
+      end
+    end
+
+    context "when including multiple hashes" do
+      let(:value) { [ { k1: "v1", k2: "v2" }, { k3: "v3", k4: "v4" } ] }
+
+      it "returns a multiple element string list" do
+        expect(reverted).to eq([ "k1:v1,k2:v2", "k3:v3,k4:v4" ])
       end
     end
 
@@ -1069,6 +1441,35 @@ describe Mongo::URI::OptionsMapper do
 
       it "returns an integer" do
         expect(reverted).to eq(1)
+      end
+    end
+
+    context "when passing a symbol" do
+      let(:value) { :majority }
+
+      it "returns a string" do
+        expect(reverted).to eq("majority")
+      end
+    end
+
+    context "when passing a string" do
+      let(:value) { "hello" }
+
+      it "returns a string" do
+        expect(reverted).to eq(value)
+      end
+    end
+  end
+
+  describe "#stringify_w" do
+
+    let(:method) { :stringify_w }
+
+    context "when passing an integer" do
+      let(:value) { 1 }
+
+      it "returns a string" do
+        expect(reverted).to eq('1')
       end
     end
 
@@ -1169,6 +1570,27 @@ describe Mongo::URI::OptionsMapper do
 
       it "returns an integer" do
         expect(reverted).to eq(1)
+      end
+    end
+
+    context "when passing nil" do
+      let(:value) { nil }
+
+      it "returns nil" do
+        expect(reverted).to be nil
+      end
+    end
+  end
+
+  describe "#stringify_zlib_compression_level" do
+
+    let(:method) { :stringify_zlib_compression_level }
+
+    context "when passing an integer" do
+      let(:value) { 1 }
+
+      it "returns a string" do
+        expect(reverted).to eq('1')
       end
     end
 
