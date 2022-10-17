@@ -112,6 +112,9 @@ functions:
             export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
           EOT
           # See what we've done
           cat expansion.yml
@@ -421,7 +424,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"
@@ -444,6 +447,7 @@ tasks:
       - func: "run Atlas tests"
   - name: "test-serverless"
     commands:
+      - func: "export FLE credentials"
       - func: "run serverless tests"
 axes:
 
@@ -852,6 +856,7 @@ buildvariants:
   - matrix_name: "serverless"
     matrix_spec:
       ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+      fle: helper
     display_name: "Atlas serverless ${ruby} single mongos"
     run_on:
       - ubuntu1804-small

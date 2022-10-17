@@ -11,6 +11,7 @@ buildvariants:
   - matrix_name: "serverless"
     matrix_spec:
       ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+      fle: helper
     display_name: "Atlas serverless ${ruby} single mongos"
     run_on:
       - ubuntu1804-small
