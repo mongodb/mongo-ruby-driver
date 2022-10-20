@@ -11,11 +11,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-<% if @atlas %>
-exec_timeout_secs: 1800
-<% else %>
 exec_timeout_secs: 2700
-<% end %>
 
 <% egos_wrap = "./egos stdbuf -i0 -o0 -e0" %>
 
