@@ -223,10 +223,10 @@ module Mongo
         @mutex.synchronize do
           throttle_scan_frequency!
 
-          result = do_scan
-
-          if result.is_a?(Mongo::Error)
-            run_sdam_flow({}, scan_error: result)
+          begin
+            result = do_scan
+          rescue => e
+            run_sdam_flow({}, scan_error: e)
           else
             run_sdam_flow(result)
           end
@@ -294,7 +294,7 @@ module Mongo
             log_prefix: options[:log_prefix],
             bg_error_backtrace: options[:bg_error_backtrace],
           )
-          exc
+          raise exc
         end
       end
 
