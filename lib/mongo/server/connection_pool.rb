@@ -509,12 +509,6 @@ module Mongo
       def check_in(connection)
         check_invariants
 
-        # When a connection is interrupted it is checked back into the pool
-        # and closed. The operation that was using the connection before it was
-        # interrupted will attempt to check it back into the pool, and we
-        # should ignore it since its already been closed and removed from the pool.
-        return if connection.closed? && connection.interrupted?
-
         @lock.synchronize do
           do_check_in(connection)
         end
@@ -854,6 +848,12 @@ module Mongo
       #
       # @param [ Mongo::Server::Connection ] connection The connection.
       def do_check_in(connection)
+        # When a connection is interrupted it is checked back into the pool
+        # and closed. The operation that was using the connection before it was
+        # interrupted will attempt to check it back into the pool, and we
+        # should ignore it since its already been closed and removed from the pool.
+        return if connection.closed? && connection.interrupted?
+
         unless connection.connection_pool == self
           raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
         end
