@@ -98,7 +98,7 @@ module Mongo
 
         Binding.setopt_kms_providers(self, @kms_providers.to_document)
 
-        if @kms_providers.aws&.empty?
+        if @kms_providers.aws&.empty? || @kms_providers.gcp&.empty?
           Binding.setopt_use_need_kms_credentials_state(self)
         end
 

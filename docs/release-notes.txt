@@ -27,6 +27,8 @@ This release includes the following new features:
 
 - Added support for automatic AWS credentials retrieval when AWS KMS is used for
   client side encryption.
+- Added support for automatic GCP credentials retrieval when Google Cloud Key
+  Management is used for client side encryption.
 
 
 .. _release-notes-2.18:

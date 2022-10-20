@@ -289,6 +289,22 @@ describe Mongo::Crypt::KMS::Credentials do
         end
       end
     end
+
+    context 'with access token' do
+      let(:kms_provider) do
+        {
+          access_token: 'access_token'
+        }
+      end
+
+      it 'returns valid libmongocrypt credentials' do
+        expect(params.to_document).to eq(
+          BSON::Document.new({
+            accessToken: 'access_token'
+          })
+        )
+      end
+    end
   end
 
   context 'KMIP' do

@@ -910,6 +910,21 @@ as KMS provider options for AWS:
 See :ref:`"Automatically Retrieving Credentials" <auto-retrieve-aws-credentials>`
 for more detailed information about the credential retrieval.
 
+The client can retrieve GCP credentials from the Google Compute Engine
+metadata endpoints. To retrieve credentials automatically, specify an empty Hash
+as KMS provider options for GCP:
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017'],
+     auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: {
+        gcp: {}
+      }
+    }
+  )
+
 ``:kms_tls_options``
 ~~~~~~~~~~~~~~~~~~~~
 

@@ -300,7 +300,7 @@ module Crypt
         'MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY, ' +
         'MONGO_RUBY_DRIVER_GCP_PROJECT_ID, MONGO_RUBY_DRIVER_GCP_LOCATION, ' +
         'MONGO_RUBY_DRIVER_GCP_KEY_RING, MONGO_RUBY_DRIVER_GCP_KEY_NAME ' +
-        'environment variables to be set information from Azure.'
+        'environment variables to be set information from GCP.'
 
         if SpecConfig.instance.fle?
           fail(reason)
