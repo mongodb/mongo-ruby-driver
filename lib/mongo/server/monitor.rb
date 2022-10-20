@@ -225,11 +225,15 @@ module Mongo
 
           result = do_scan
 
-          run_sdam_flow(result)
+          if result.is_a?(Mongo::Error)
+            run_sdam_flow({}, scan_error: result)
+          else
+            run_sdam_flow(result)
+          end
         end
       end
 
-      def run_sdam_flow(result, awaited: false)
+      def run_sdam_flow(result, awaited: false, scan_error: nil)
         @sdam_mutex.synchronize do
           old_description = server.description
 
@@ -237,7 +241,7 @@ module Mongo
             average_round_trip_time: server.round_trip_time_averager.average_round_trip_time
           )
 
-          server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited)
+          server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited, scan_error: scan_error)
 
           server.description.tap do |new_description|
             unless awaited
@@ -290,7 +294,7 @@ module Mongo
             log_prefix: options[:log_prefix],
             bg_error_backtrace: options[:bg_error_backtrace],
           )
-          {}
+          exc
         end
       end
 

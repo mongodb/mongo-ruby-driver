@@ -625,10 +625,12 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
-    # @option aptions [ true | false ] :awaited Whether the updated description
+    # @option options [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
     # @option options [ Object ] :service_id Change state for the specified
     #   service id only.
+    # @option options [ Mongo::Error | nil ] :scan_error The error encountered
+    #   while scanning, or nil if no error was raised.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
@@ -659,7 +661,9 @@ module Mongo
           if flow.became_unknown?
             servers_list.each do |server|
               if server.address == updated_desc.address
-                server.clear_connection_pool
+                err = options[:scan_error]
+                interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
+                server.clear_connection_pool(interrupt_in_use_connections: interrupt)
               end
             end
           end
