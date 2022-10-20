@@ -728,7 +728,7 @@ module Mongo
         connection = check_out(connection_global_id: connection_global_id)
         yield(connection)
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        if connection.interrupted?
+        if connection&.interrupted?
           err = Error::PoolClearedError.new(connection.server.address).tap do |err|
             e.labels.each { |l| err.add_label(l) }
           end
