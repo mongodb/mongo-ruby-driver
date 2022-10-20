@@ -156,6 +156,23 @@ module Mongo
         !!@closed
       end
 
+      # Whether the connection was interrupted.
+      #
+      # Interrupted connections were already removed from the pool and should
+      # not be checked back into the pool.
+      #
+      # @return [ true | false ] Whether connection was closed.
+      #
+      # @since 2.9.0
+      def interrupted?
+        !!@interrupted
+      end
+
+      # Mark the connection as interrupted.
+      def interrupted!
+        @interrupted = true
+      end
+
       # @api private
       def error?
         !!@error
@@ -256,7 +273,7 @@ module Mongo
             socket, @server, monitoring, options.merge(id: id))
           pending_connection.handshake_and_authenticate!
         rescue Exception
-          socket.close
+          socket.close if socket
           raise
         end
 
@@ -290,6 +307,7 @@ module Mongo
           @socket = nil
         end
         @closed = true
+        interrupted! if options && options[:interrupted]
 
         # To satisfy CMAP spec tests, publish close events even if the
         # socket was never connected (and thus the ready event was never

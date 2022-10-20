@@ -131,7 +131,7 @@ module Mongo
         server = select_server(cluster, server_selector, session)
         begin
           yield server
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::OperationFailure => e
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -163,7 +163,7 @@ module Mongo
     # @since 2.2.6
     def read_with_one_retry(options = nil)
       yield
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
       retry_message = options && options[:retry_message]
       log_retry(e, message: retry_message)
       yield
@@ -243,7 +243,7 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Auth::Unauthorized => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
@@ -304,7 +304,7 @@ module Mongo
           server.with_connection(connection_global_id: context.connection_global_id) do |connection|
             yield connection, nil, context
           end
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::OperationFailure => e
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -367,7 +367,7 @@ module Mongo
       server = select_server(cluster, server_selector, session)
       begin
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ServerNotUsable => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Error::ServerNotUsable => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction?
@@ -390,7 +390,7 @@ module Mongo
       begin
         attempt += 1
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
         e.add_note('legacy retry')
         e.add_note("attempt #{attempt}")
         if attempt > client.max_read_retries || (session && session.in_transaction?)
@@ -445,7 +445,7 @@ module Mongo
 
       begin
         yield server, true
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
         e.add_note('modern retry')
         e.add_note("attempt 2")
         raise e
@@ -492,7 +492,7 @@ module Mongo
       server.with_connection(connection_global_id: context.connection_global_id) do |connection|
         yield(connection, txn_num, context)
       end
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
       e.add_note('modern retry')
       e.add_note('attempt 2')
       raise e

@@ -20,9 +20,9 @@ module Mongo
 
     # Exception raised if an operation is attempted connection that was
     # interrupted due to server monitor timeout.
-    class PoolClearedError < SocketError
-      # include WriteRetryable
-      # include ChangeStreamResumable
+    class PoolClearedError < Error
+      include WriteRetryable
+      include ChangeStreamResumable
 
       # @return [ Mongo::Address ] address The address of the server the
       # pool's connections connect to.

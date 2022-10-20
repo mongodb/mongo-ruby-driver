@@ -649,14 +649,14 @@ module Mongo
     #   service id only.
     #
     # @api private
-    def clear_connection_pool(service_id: nil)
+    def clear_connection_pool(service_id: nil, interrupt_in_use_connections: false)
       @pool_lock.synchronize do
         # A server being marked unknown after it is closed is technically
         # incorrect but it does not meaningfully alter any state.
         # Because historically the driver permitted servers to be marked
         # unknown at any time, continue doing so even if the pool is closed.
         if @pool && !@pool.closed?
-          @pool.disconnect!(service_id: service_id)
+          @pool.disconnect!(service_id: service_id, interrupt_in_use_connections: interrupt_in_use_connections)
         end
       end
     end
