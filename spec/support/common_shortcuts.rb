@@ -318,7 +318,7 @@ module CommonShortcuts
     def stop_monitoring(*clients)
       clients.each do |client|
         client.cluster.next_primary
-        client.cluster.disconnect!
+        client.cluster.close
         # We have tests that stop monitoring to reduce the noise happening in
         # background. These tests perform operations which requires the pools
         # to function. See also RUBY-3102.
