@@ -274,6 +274,7 @@ module Mongo
           pending_connection.handshake_and_authenticate!
         rescue Exception
           socket.close if socket
+          @socket = nil
           raise
         end
 
