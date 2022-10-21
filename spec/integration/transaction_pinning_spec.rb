@@ -24,6 +24,7 @@ describe 'Transaction pinning' do
     # Force each transaction to be on its own connection.
 
     before do
+      client.reconnect if client.closed?
       4.times do |i|
         # Collections cannot be created inside transactions.
         client["tx_pin_t#{i}"].drop
