@@ -306,7 +306,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      server.disconnect!
+      server.close
     end
 
     let(:options) do
@@ -819,8 +819,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      server.disconnect!
-      pool.close # this will no longer be needed after server disconnect kills bg thread
+      server.close
+      pool.close # this will no longer be needed after server close kills bg thread
     end
 
     it 'includes the object id' do
