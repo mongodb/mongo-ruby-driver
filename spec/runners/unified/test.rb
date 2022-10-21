@@ -289,7 +289,7 @@ module Unified
               if thread_context.stop?
                 break
               else
-                sleep 1
+                sleep 0.1
               end
             end
           end

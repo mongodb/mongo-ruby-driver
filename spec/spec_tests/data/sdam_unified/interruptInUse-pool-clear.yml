@@ -81,7 +81,7 @@ tests:
           failPoint:
             configureFailPoint: failCommand
             mode:
-              times: 4
+              times: 1
             data:
               failCommands:
                 - hello
@@ -291,7 +291,7 @@ tests:
           failPoint:
             configureFailPoint: failCommand
             mode:
-              times: 1 # change back to 4
+              times: 1
             data:
               failCommands:
                 - hello
