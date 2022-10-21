@@ -84,7 +84,7 @@ describe Mongo::Cursor do
 
       let(:server) do
         view.send(:server_selector).select_server(authorized_client.cluster).tap do |server|
-          authorized_client.cluster.disconnect!
+          authorized_client.cluster.close
           server.unknown!
         end
       end
