@@ -200,6 +200,11 @@ module Mongo
       # @api private
       def_delegators :generation_manager, :generation, :generation_unlocked
 
+      # A connection pool is paused if it is not closed and it is not ready.
+      #
+      # @return [ true | false ] whether the connection pool is paused.
+      #
+      # @raise [ Error::PoolClosedError ] If the pool has been closed.
       def paused?
         raise_if_closed!
 

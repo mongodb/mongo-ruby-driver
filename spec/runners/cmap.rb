@@ -79,7 +79,7 @@ module Mongo
           end
 
           result['error'] ||= nil
-          result['events'] = subscriber.published_events.reduce([]) do |events, event|
+          result['events'] = subscriber.published_events.each_with_object([]) do |event, events|
             next events unless event.is_a?(Mongo::Monitoring::Event::Cmap::Base)
 
             event = case event
@@ -151,7 +151,6 @@ module Mongo
                     end
 
             events << event unless @ignore_events.include?(event.fetch('type'))
-            events
           end
         end
       end

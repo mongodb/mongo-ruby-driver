@@ -270,10 +270,6 @@ module Mongo
 
       @connected = false
 
-      _pool = @pool_lock.synchronize do
-        @pool
-      end
-
       # The current CMAP spec requires a pool to be mostly unusable
       # if its server is unknown (or, therefore, disconnected).
       # However any outstanding operations should continue to completion,
@@ -281,7 +277,7 @@ module Mongo
       # torn down. Because of this cleanup requirement we cannot just
       # close the pool and set it to nil here, to be recreated the next
       # time the server is discovered.
-      _pool&.pause
+      pool_internal&.pause
 
       nil
     end
@@ -635,9 +631,7 @@ module Mongo
     # @api private
     def update_description(description)
       @description = description
-      pool = @pool_lock.synchronize do
-        @pool
-      end
+      pool = pool_internal
       if pool && !unknown?
         pool.ready
       end
