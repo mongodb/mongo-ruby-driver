@@ -744,7 +744,7 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
 
-        pool.clear
+        pool.disconnect!
 
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
@@ -1099,7 +1099,7 @@ describe Mongo::Server::ConnectionPool do
     before do
       # Disable the populator and clear the pool to isolate populate behavior
       pool.stop_populator
-      pool.clear
+      pool.disconnect!
       # Manually mark the pool ready.
       pool.instance_variable_set('@ready', true)
     end
