@@ -89,6 +89,8 @@ describe 'Connection pool populator integration' do
 
   describe '#clear' do
     context 'when a min size is provided' do
+      require_no_linting
+
        let(:options) do
         { min_pool_size: 1 }
       end

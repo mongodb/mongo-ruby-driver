@@ -21,6 +21,8 @@ describe 'Server' do
       end
 
       context 'known server in disconnected cluster' do
+        require_no_linting
+
         before do
           server.disconnect!
           expect(server).not_to be_unknown

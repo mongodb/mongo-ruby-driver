@@ -68,6 +68,7 @@ describe 'Transaction pinning' do
     context 'when no connection is available' do
 
       before do
+        client.reconnect if client.closed?
         client["tx_pin"].drop
         client["tx_pin"].create
       end
@@ -90,6 +91,10 @@ describe 'Transaction pinning' do
     end
 
     context 'when connection is available' do
+
+      before do
+        client.reconnect if client.closed?
+      end
 
       it 'uses the available connection' do
         sessions = []
