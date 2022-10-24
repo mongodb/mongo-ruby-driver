@@ -52,6 +52,7 @@ describe 'Client with auto encryption #reconnect' do
     it 'can perform a schemaRequiresEncryption command' do
       # A schemaRequiresEncryption command; mongocryptd should respond that
       # this command requires encryption.
+      byebug if mongocryptd_client.closed?
       response = mongocryptd_client.database.command(
         insert: 'users',
         ordered: true,
@@ -133,7 +134,9 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'after closing mongocryptd client and reconnecting' do
       before do
-        mongocryptd_client.close
+        # don't use the mongocryptd_client variable yet so that it will be computed
+        # after the client reconnects
+        client.encrypter.mongocryptd_client.close
         client.reconnect
       end
 
@@ -144,7 +147,9 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'after killing mongocryptd client monitor thread and reconnecting' do
       before do
-        thread = mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        # don't use the mongocryptd_client variable yet so that it will be computed
+        # after the client reconnects
+        thread = client.encrypter.mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
         expect(thread).to be_alive
 
         thread.kill
