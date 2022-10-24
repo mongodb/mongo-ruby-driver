@@ -175,13 +175,13 @@ module Mongo
       end
 
       def wait_for_event(client, context)
-        deadline = Time.now + 5
+        deadline = Utils.monotonic_time + 5
         loop do
           events = _select_events(context)
           if events.length >= arguments['count']
             break
           end
-          if Time.now >= deadline
+          if Utils.monotonic_time >= deadline
             raise "Did not receive an event matching #{arguments} in 5 seconds; received #{events.length} but expected #{arguments['count']} events"
           else
             sleep 0.1
@@ -309,13 +309,13 @@ module Mongo
         else
           10
         end
-        deadline = Time.now + timeout
+        deadline = Utils.monotonic_time + timeout
         loop do
           client.cluster.scan!
           if client.cluster.next_primary.address != context.primary_address
             break
           end
-          if Time.now >= deadline
+          if Utils.monotonic_time >= deadline
             raise "Failed to change primary in #{timeout} seconds"
           end
         end

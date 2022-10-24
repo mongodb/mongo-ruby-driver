@@ -886,13 +886,13 @@ describe Mongo::Server::Connection do
       end
 
       it 'times out and raises SocketTimeoutError' do
-        start = Time.now
+        start = Mongo::Utils.monotonic_time
         begin
           Timeout::timeout(1.5 + 15) do
             client[authorized_collection.name].find("$where" => "sleep(2000) || true").first
           end
         rescue => ex
-          end_time = Time.now
+          end_time = Mongo::Utils.monotonic_time
           expect(ex).to be_a(Mongo::Error::SocketTimeoutError)
           expect(ex.message).to match(/Took more than 1.5 seconds to receive data/)
         else

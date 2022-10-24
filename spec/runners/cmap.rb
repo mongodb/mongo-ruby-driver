@@ -335,7 +335,7 @@ module Mongo
       def run_wait_for_event_op(state)
         subscriber = @spec.subscriber
         looped = 0
-        deadline = Time.now + 3
+        deadline = Utils.monotonic_time + 3
         loop do
           actual_events = @spec.subscriber.published_events.select do |e|
             e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
@@ -346,7 +346,7 @@ module Mongo
           if looped == 1
             puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
           end
-          if Time.now > deadline
+          if Utils.monotonic_time > deadline
             raise "Did not receive #{@count} #{@event} events in time (have #{actual_events.length}): #{@spec.description}"
           end
           looped += 1

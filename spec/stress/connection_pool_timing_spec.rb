@@ -67,11 +67,11 @@ describe 'Connection pool timing test' do
     let(:threads) { operation_threads }
 
     it 'does not error' do
-      start = Time.now
+      start = Mongo::Utils.monotonic_time
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "[Connection Pool Timing] Duration with no max idle time: #{Time.now - start}"
+      puts "[Connection Pool Timing] Duration with no max idle time: #{Mongo::Utils.monotonic_time - start}"
     end
   end
 
@@ -83,11 +83,11 @@ describe 'Connection pool timing test' do
     let(:threads) { operation_threads }
 
     it 'does not error' do
-      start = Time.now
+      start = Mongo::Utils.monotonic_time
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "[Connection Pool Timing] Duration with low max idle time: #{Time.now - start}"
+      puts "[Connection Pool Timing] Duration with low max idle time: #{Mongo::Utils.monotonic_time - start}"
     end
   end
 
@@ -108,11 +108,11 @@ describe 'Connection pool timing test' do
     end
 
     it 'does not error' do
-      start = Time.now
+      start = Mongo::Utils.monotonic_time
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "[Connection Pool Timing] Duration when clear is called periodically: #{Time.now - start}"
+      puts "[Connection Pool Timing] Duration when clear is called periodically: #{Mongo::Utils.monotonic_time - start}"
     end
   end
 
@@ -156,9 +156,9 @@ describe 'Connection pool timing test' do
         # when trying to perform operations during primary change
         sleep 1
 
-        @primary_change_start = Time.now
+        @primary_change_start = Mongo::Utils.monotonic_time
         ClusterTools.instance.change_primary
-        @primary_change_end = Time.now
+        @primary_change_end = Mongo::Utils.monotonic_time
 
         # Primary change is complete; execute more operations
         more_threads.collect { |t| t.join }
@@ -172,14 +172,14 @@ describe 'Connection pool timing test' do
     retry_test tries: (BSON::Environment.jruby? ? 3 : 1)
     it 'does not error' do
       threads
-      start = Time.now
+      start = Mongo::Utils.monotonic_time
       expect do
         threads.each do |t|
           t.join
         end
       end.not_to raise_error
       puts "[Connection Pool Timing] Duration before primary change: #{@primary_change_start - start}. "\
-        "Duration after primary change: #{Time.now - @primary_change_end}"
+        "Duration after primary change: #{Mongo::Utils.monotonic_time - @primary_change_end}"
     end
   end
 end

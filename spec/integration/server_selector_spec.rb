@@ -29,11 +29,11 @@ describe 'Server selector' do
       end
 
       it 'does not wait for server selection timeout' do
-        start_time = Time.now
+        start_time = Mongo::Utils.monotonic_time
         expect do
           result
         end.to raise_error(Mongo::Error::NoServerAvailable)
-        time_passed = Time.now - start_time
+        time_passed = Mongo::Utils.monotonic_time - start_time
         expect(time_passed).to be < 1
       end
     end

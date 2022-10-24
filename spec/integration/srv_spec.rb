@@ -42,13 +42,13 @@ describe 'SRV lookup' do
       end
 
       it 'times out in connect_timeout' do
-        start_time = Time.now
+        start_time = Mongo::Utils.monotonic_time
 
         lambda do
           client
         end.should raise_error(Mongo::Error::NoSRVRecords)
 
-        elapsed_time = Time.now - start_time
+        elapsed_time = Mongo::Utils.monotonic_time - start_time
         elapsed_time.should > 4
         # The number of queries performed depends on local DNS search suffixes,
         # therefore we cannot reliably assert how long it would take for this

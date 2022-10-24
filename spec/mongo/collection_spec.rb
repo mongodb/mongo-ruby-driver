@@ -834,9 +834,9 @@ describe Mongo::Collection do
         end
 
         it "waits the appropriate amount of time" do
-          start_time = Time.now
+          start_time = Mongo::Utils.monotonic_time
           enum.try_next
-          end_time = Time.now
+          end_time = Mongo::Utils.monotonic_time
 
           expect(end_time-start_time).to be >= 3
         end
