@@ -76,5 +76,8 @@ bundle exec rspec \
     spec/spec_tests/transactions_unified_spec.rb
 
 kill_jruby
+# Terminate all kmip servers... and whatever else happens to be running
+# that is a python script.
+pkill python3
 
 exit ${test_status}
