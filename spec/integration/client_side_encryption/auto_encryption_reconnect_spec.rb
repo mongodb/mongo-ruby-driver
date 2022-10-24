@@ -52,7 +52,6 @@ describe 'Client with auto encryption #reconnect' do
     it 'can perform a schemaRequiresEncryption command' do
       # A schemaRequiresEncryption command; mongocryptd should respond that
       # this command requires encryption.
-      byebug if mongocryptd_client.closed?
       response = mongocryptd_client.database.command(
         insert: 'users',
         ordered: true,

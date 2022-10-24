@@ -17,10 +17,6 @@ describe Mongo::Session::SessionPool do
     end
   end
 
-  after do
-    authorized_client.reconnect if authorized_client.closed?
-  end
-
   describe '.create' do
 
     let!(:pool) do
