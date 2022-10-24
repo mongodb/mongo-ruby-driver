@@ -47,6 +47,7 @@ describe Mongo::Cursor do
 
     context 'cursor exhausted by initial result' do
       include_context 'with initialized pool'
+      require_no_linting
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
@@ -64,6 +65,7 @@ describe Mongo::Cursor do
 
     context 'cursor not exhausted by initial result' do
       include_context 'with initialized pool'
+      require_no_linting
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 2)
@@ -748,6 +750,7 @@ describe Mongo::Cursor do
 
     context 'when there is a socket error during close' do
       clean_slate
+      require_no_linting
 
       before do
         reset_pool(server)

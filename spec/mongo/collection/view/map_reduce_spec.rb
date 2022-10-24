@@ -597,6 +597,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the server is not valid for writing' do
         clean_slate
         require_warning_clean
+        require_no_linting
 
         before do
           stop_monitoring(authorized_client)
@@ -682,6 +683,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the server is a valid for writing' do
         clean_slate
         require_warning_clean
+        require_no_linting
 
         before do
           stop_monitoring(authorized_client)
