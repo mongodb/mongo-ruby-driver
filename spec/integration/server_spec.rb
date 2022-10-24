@@ -21,6 +21,7 @@ describe 'Server' do
       end
 
       context 'known server in disconnected cluster' do
+        require_topology :single, :replica_set, :sharded
         require_no_linting
 
         before do
@@ -38,6 +39,7 @@ describe 'Server' do
 
       context 'unknown server in disconnected cluster' do
         require_topology :single, :replica_set, :sharded
+        require_no_linting
 
         before do
           client.close
