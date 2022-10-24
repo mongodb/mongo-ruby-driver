@@ -28,17 +28,11 @@ describe 'Auto encryption client' do
       )
     end
 
-    shared_examples 'a functioning auto-encrypter' do
-      it 'can still perform encryption' do
-        result = client['users'].insert_one(ssn: '000-000-0000')
-        expect(result).to be_ok
-
-        encrypted_document = authorized_client
-          .use('auto_encryption')['users']
-          .find(_id: result.inserted_ids.first)
-          .first
-
-        expect(encrypted_document['ssn']).to be_ciphertext
+    shared_examples 'a non-functioning auto-encrypter' do
+      it 'raises a client closed error' do
+        expect do
+          client['users'].insert_one(ssn: '000-000-0000')
+        end.to raise_error(Mongo::Error::ClientClosed)
       end
     end
 
@@ -51,7 +45,7 @@ describe 'Auto encryption client' do
         client.close
       end
 
-      it_behaves_like 'a functioning auto-encrypter'
+      it_behaves_like 'a non-functioning auto-encrypter'
     end
 
     context 'after performing operation without auto encryption' do
@@ -60,7 +54,7 @@ describe 'Auto encryption client' do
         client.close
       end
 
-      it_behaves_like 'a functioning auto-encrypter'
+      it_behaves_like 'a non-functioning auto-encrypter'
     end
   end
 end
