@@ -66,9 +66,10 @@ describe 'Step down behavior' do
     let(:enum) { view.to_enum }
 
     it 'continues through step down' do
-
-      subscribed_client.cluster.next_primary.pool.do_clear
-      subscribed_client.cluster.next_primary.pool.ready
+      server = subscribed_client.cluster.next_primary
+      server.unknown!
+      server.pool_internal.do_clear
+      server.pool_internal.ready
       subscriber.clear_events!
 
       # get the first item
