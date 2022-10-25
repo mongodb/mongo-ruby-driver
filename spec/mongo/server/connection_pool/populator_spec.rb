@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool::Populator do
+  require_no_linting
+
   let(:options) { {} }
 
   let(:client) do

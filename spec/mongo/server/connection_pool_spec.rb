@@ -733,6 +733,7 @@ describe Mongo::Server::ConnectionPool do
       # require different setup and assertions because load balancers
       # do not have a single global generation.
       require_topology :single, :replica_set, :sharded
+      require_no_linting
 
       it 'disconnects and removes and bumps' do
         old_connections = []
@@ -1096,6 +1097,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#populate' do
+    require_no_linting
+
     before do
       # Disable the populator and clear the pool to isolate populate behavior
       pool.stop_populator
@@ -1107,6 +1110,7 @@ describe Mongo::Server::ConnectionPool do
     let(:options) { {min_pool_size: 2, max_pool_size: 3} }
 
     context 'when pool size is at least min_pool_size' do
+
       before do
         first_connection = pool.check_out
         second_connection = pool.check_out
