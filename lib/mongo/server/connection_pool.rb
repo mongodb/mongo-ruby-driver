@@ -639,7 +639,7 @@ module Mongo
               service_id: service_id
             )
           )
-          pause
+          pause unless @server.load_balancer?
         end
 
         @lock.synchronize do
