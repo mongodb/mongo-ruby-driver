@@ -188,7 +188,6 @@ class Mongo::Cluster
 
       verify_invariants
       commit_changes
-      disconnect_servers
     end
 
     # Transitions from unknown to single topology type, when a standalone
