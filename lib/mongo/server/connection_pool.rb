@@ -327,7 +327,7 @@ module Mongo
           raise Error::PoolClosedError.new(@server.address, self)
         end
 
-        if !ready?
+        if paused?
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
               @server.address,
@@ -563,7 +563,7 @@ module Mongo
         check_invariants
       end
 
-      def pause(options = nil)
+      def pause
         raise_if_closed!
 
         check_invariants
@@ -579,8 +579,6 @@ module Mongo
         end
 
         stop_populator
-
-        clear(options)
       ensure
         check_invariants
       end
@@ -630,15 +628,21 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
+          # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
+        end
 
+        unless paused?
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
               service_id: service_id
             )
           )
+          pause
+        end
 
+        @lock.synchronize do
           unless options && options[:lazy]
             if @server.load_balancer? && service_id
               loop do

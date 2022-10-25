@@ -384,7 +384,7 @@ module Mongo
         RSpec::Mocks.with_temporary_scope do
           allow(pool.server).to receive(:unknown?).and_return(true)
 
-          pool.pause(lazy: true)
+          pool.clear(lazy: true)
         end
       end
 

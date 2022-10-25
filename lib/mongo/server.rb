@@ -277,7 +277,7 @@ module Mongo
       # torn down. Because of this cleanup requirement we cannot just
       # close the pool and set it to nil here, to be recreated the next
       # time the server is discovered.
-      pool_internal&.pause
+      pool_internal&.clear
 
       nil
     end
