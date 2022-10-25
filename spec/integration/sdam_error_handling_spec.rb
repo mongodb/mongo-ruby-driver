@@ -254,7 +254,7 @@ describe 'SDAM error handling' do
           RSpec::Mocks.with_temporary_scope do
 
             Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
-            pool.should receive(:ready?).and_return(true)
+            allow(pool).to receive(:paused?).and_return(false)
             lambda do
               client.command(ping: 1)
             end.should raise_error(mapped_error_cls, /mocked failure/)
