@@ -516,6 +516,71 @@ module Mongo
         check_invariants
       end
 
+      # Executes the check in after having already acquired the lock.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection.
+      def do_check_in(connection)
+        # When a connection is interrupted it is checked back into the pool
+        # and closed. The operation that was using the connection before it was
+        # interrupted will attempt to check it back into the pool, and we
+        # should ignore it since its already been closed and removed from the pool.
+        return if connection.closed? && connection.interrupted?
+
+        unless connection.connection_pool == self
+          raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
+        end
+
+        unless @checked_out_connections.include?(connection)
+          raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection} (for #{self})"
+        end
+
+        # Note: if an event handler raises, resource will not be signaled.
+        # This means threads waiting for a connection to free up when
+        # the pool is at max size may time out.
+        # Threads that begin waiting after this method completes (with
+        # the exception) should be fine.
+
+        @checked_out_connections.delete(connection)
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id, self)
+        )
+
+        if connection.interrupted?
+          connection.disconnect!(reason: :stale)
+          return
+        end
+
+        if connection.error?
+          connection.disconnect!(reason: :error)
+          return
+        end
+
+        if closed?
+          connection.disconnect!(reason: :pool_closed)
+          return
+        end
+
+        if connection.closed?
+          # Connection was closed - for example, because it experienced
+          # a network error. Nothing else needs to be done here.
+          @populate_semaphore.signal
+        elsif connection.generation != generation(service_id: connection.service_id) && !connection.pinned?
+          # If connection is marked as pinned, it is used by a transaction
+          # or a series of cursor operations in a load balanced setup.
+          # In this case connection should not be disconnected until
+          # unpinned.
+          connection.disconnect!(reason: :stale)
+          @populate_semaphore.signal
+        else
+          connection.record_checkin!
+          @available_connections << connection
+
+          # Wake up only one thread waiting for an available connection,
+          # since only one connection was checked in.
+          @available_semaphore.signal
+        end
+      end
+
       def pause
         raise_if_closed!
 
@@ -843,71 +908,6 @@ module Mongo
       end
 
       private
-
-      # Executes the check in without acquiring the lock.
-      #
-      # @param [ Mongo::Server::Connection ] connection The connection.
-      def do_check_in(connection)
-        # When a connection is interrupted it is checked back into the pool
-        # and closed. The operation that was using the connection before it was
-        # interrupted will attempt to check it back into the pool, and we
-        # should ignore it since its already been closed and removed from the pool.
-        return if connection.closed? && connection.interrupted?
-
-        unless connection.connection_pool == self
-          raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
-        end
-
-        unless @checked_out_connections.include?(connection)
-          raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection} (for #{self})"
-        end
-
-        # Note: if an event handler raises, resource will not be signaled.
-        # This means threads waiting for a connection to free up when
-        # the pool is at max size may time out.
-        # Threads that begin waiting after this method completes (with
-        # the exception) should be fine.
-
-        @checked_out_connections.delete(connection)
-        publish_cmap_event(
-          Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id, self)
-        )
-
-        if connection.interrupted?
-          connection.disconnect!(reason: :stale)
-          return
-        end
-
-        if connection.error?
-          connection.disconnect!(reason: :error)
-          return
-        end
-
-        if closed?
-          connection.disconnect!(reason: :pool_closed)
-          return
-        end
-
-        if connection.closed?
-          # Connection was closed - for example, because it experienced
-          # a network error. Nothing else needs to be done here.
-          @populate_semaphore.signal
-        elsif connection.generation != generation(service_id: connection.service_id) && !connection.pinned?
-          # If connection is marked as pinned, it is used by a transaction
-          # or a series of cursor operations in a load balanced setup.
-          # In this case connection should not be disconnected until
-          # unpinned.
-          connection.disconnect!(reason: :stale)
-          @populate_semaphore.signal
-        else
-          connection.record_checkin!
-          @available_connections << connection
-
-          # Wake up only one thread waiting for an available connection,
-          # since only one connection was checked in.
-          @available_semaphore.signal
-        end
-      end
 
       # Returns the next available connection, optionally with given
       # global id. If no suitable connections are available,
