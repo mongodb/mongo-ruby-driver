@@ -48,6 +48,7 @@ describe 'Step down behavior' do
 
   describe 'getMore iteration' do
     min_server_fcv '4.2'
+    require_no_linting
 
     let(:subscribed_client) do
       test_client.tap do |client|
@@ -67,7 +68,6 @@ describe 'Step down behavior' do
 
     it 'continues through step down' do
       server = subscribed_client.cluster.next_primary
-      server.unknown!
       server.pool_internal.do_clear
       server.pool_internal.ready
       subscriber.clear_events!
