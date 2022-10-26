@@ -50,6 +50,7 @@ module Mongo
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
 
+        process_run_on
         preprocess
       end
 
@@ -155,6 +156,21 @@ module Mongo
         end
       end
 
+      def satisfied?
+        cc = ClusterConfig.instance
+        ok = true
+        if @min_server_version
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version)
+        end
+        if @max_server_version
+          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version)
+        end
+        if @topologies
+          ok &&= @topologies.include?(cc.topology)
+        end
+        ok
+      end
+
       private
 
       # Converts the options used by the Ruby driver to the spec test format.
@@ -204,6 +220,35 @@ module Mongo
           end
 
           opts
+        end
+      end
+
+      def process_run_on
+        if run_on = @test['runOn']
+          @min_server_version = run_on.detect do |doc|
+            doc.keys.first == 'minServerVersion'
+          end&.values&.first
+          @max_server_version = run_on.detect do |doc|
+            doc.keys.first == 'maxServerVersion'
+          end&.values&.first
+
+          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }['topology']
+            topologies.map do |topology|
+              {
+                'replicaset' => :replica_set,
+                'single' => :single,
+                'sharded' => :sharded,
+                'sharded-replicaset' => :sharded,
+                'load-balanced' => :load_balanced,
+              }[topology].tap do |v|
+                unless v
+                  raise "Unknown topology #{topology}"
+                end
+              end
+            end
+          else
+            nil
+          end
         end
       end
 
