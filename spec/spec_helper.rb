@@ -25,6 +25,10 @@ RSpec.configure do |config|
     end
   end
 
+  config.before do
+    Mongo.broken_view_options = defined?(RSpec) && RSpec.respond_to?(:current_example) ? RSpec.current_example : "none"
+  end
+
   config.after do
     LocalResourceRegistry.instance.close_all
     ClientRegistry.instance.close_local_clients
