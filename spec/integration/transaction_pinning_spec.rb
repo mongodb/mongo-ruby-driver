@@ -66,6 +66,7 @@ describe 'Transaction pinning' do
     # particular service.
 
     context 'when no connection is available' do
+      require_no_linting
 
       before do
         client.reconnect if client.closed?
