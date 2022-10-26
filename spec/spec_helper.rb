@@ -26,7 +26,7 @@ RSpec.configure do |config|
   end
 
   config.before do
-    Mongo.broken_view_options = defined?(RSpec) && RSpec.respond_to?(:current_example) ? RSpec.current_example : "none"
+    Mongo.last_example = defined?(RSpec) && RSpec.respond_to?(:current_example) ? RSpec.current_example : "none"
   end
 
   config.after do

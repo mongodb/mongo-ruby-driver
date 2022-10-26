@@ -32,7 +32,7 @@ module Mongo
         def initialize(pool, options = {})
           @pool = pool
           @thread = nil
-          @options = options.merge(example: Mongo.broken_view_options)
+          @options = options.merge(example: Mongo.last_example)
         end
 
         attr_reader :options

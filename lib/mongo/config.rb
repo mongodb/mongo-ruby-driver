@@ -26,6 +26,9 @@ module Mongo
     # validate the paramters and raise an error if they are invalid.
     option :validate_update_replace, default: false
 
+    # for debug use only, delete me
+    option :last_example, default: nil
+
     # Set the configuration options.
     #
     # @example Set the options.
