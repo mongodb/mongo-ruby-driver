@@ -698,12 +698,16 @@ module Mongo
     # @api private
     def set_server_list(server_address_strs)
       @sdam_flow_lock.synchronize do
+        # If one of the new addresses is not in the current servers list,
+        # add it to the servers list.
         server_address_strs.each do |address_str|
           unless servers_list.any? { |server| server.address.seed == address_str }
             add(address_str)
           end
         end
 
+        # If one of the servers' addresses are not in the new address list,
+        # remove that server from the servers list.
         servers_list.each do |server|
           unless server_address_strs.any? { |address_str| server.address.seed == address_str }
             remove(server.address.seed)
@@ -928,6 +932,7 @@ module Mongo
     # @api private
     def disconnect_server_if_connected(server)
       if server.connected?
+        server.clear_description
         server.disconnect!
         publish_sdam_event(
           Monitoring::SERVER_CLOSED,

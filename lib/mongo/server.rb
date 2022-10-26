@@ -637,6 +637,14 @@ module Mongo
       end
     end
 
+    # Clear the servers description so that it is considered unknown and can be
+    # safely disconnected.
+    #
+    # @api private
+    def clear_description
+      @description = Mongo::Server::Description.new(address, {})
+    end
+
     # @param [ Object ] :service_id Close connections with the specified
     #   service id only.
     #
