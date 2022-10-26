@@ -17,6 +17,8 @@
 
 module Mongo
   class Error
+    include WriteRetryable
+    include ChangeStreamResumable
 
     # Exception raised if an unknown server is attempted to be used for
     # an operation.
