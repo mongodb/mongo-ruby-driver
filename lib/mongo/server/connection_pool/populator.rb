@@ -32,7 +32,7 @@ module Mongo
         def initialize(pool, options = {})
           @pool = pool
           @thread = nil
-          @options = options
+          @options = options.merge(example: RSpec.respond_to?(:current_example) ? RSpec.current_example : "none")
         end
 
         attr_reader :options
