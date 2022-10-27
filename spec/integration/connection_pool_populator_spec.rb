@@ -289,6 +289,7 @@ describe 'Connection pool populator integration' do
 
         # force initialization of the pool
         client.cluster.servers.first.pool
+
         # let pool populate
         sleep 2
         server = client.cluster.next_primary
