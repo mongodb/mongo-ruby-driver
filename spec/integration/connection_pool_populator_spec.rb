@@ -286,6 +286,9 @@ describe 'Connection pool populator integration' do
       it 'populates the parent and child pools' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
           server_options.merge(min_pool_size: 2, max_pool_size: 5))
+
+        # force initialization of the pool
+        client.cluster.servers.first.pool
         # let pool populate
         sleep 2
         server = client.cluster.next_primary

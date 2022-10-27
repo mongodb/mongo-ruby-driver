@@ -48,7 +48,7 @@ module Mongo
       # @since 2.5.0
       def execute
         @cluster.servers.each do |server|
-          server.pool.close_idle_sockets
+          server.pool.close_idle_sockets unless server.unknown?
         end
         true
       end
