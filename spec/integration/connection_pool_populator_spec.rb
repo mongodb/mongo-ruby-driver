@@ -77,12 +77,12 @@ describe 'Connection pool populator integration' do
 
     context 'when min size is zero' do
 
-      it 'does not start the background thread' do
+      it 'does start the background thread' do
         pool
         sleep 2
 
         expect(pool.size).to eq(0)
-        expect(pool.instance_variable_get('@populator').running?).to be false
+        expect(pool.instance_variable_get('@populator').running?).to be true
       end
     end
   end

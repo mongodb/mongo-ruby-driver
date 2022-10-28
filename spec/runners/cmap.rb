@@ -265,8 +265,8 @@ module Mongo
             doc.keys.first == 'maxServerVersion'
           end&.values&.first
 
-          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }['topology']
-            topologies.map do |topology|
+          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }
+            (topologies['topology'] || {}).map do |topology|
               {
                 'replicaset' => :replica_set,
                 'single' => :single,

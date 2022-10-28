@@ -121,6 +121,7 @@ module Mongo
         @available_connections = available_connections = []
         @checked_out_connections = Set.new
         @pending_connections = Set.new
+        @interrupt_connections = []
 
         # Mutex used for synchronizing access to @available_connections and
         # @checked_out_connections. The pool object is thread-safe, thus
@@ -595,8 +596,6 @@ module Mongo
         @lock.synchronize do
           @ready = false
         end
-
-        stop_populator
       ensure
         check_invariants
       end
@@ -651,6 +650,15 @@ module Mongo
         @lock.synchronize do
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
+
+          unless options && options[:lazy]
+            close_connections(@available_connections, service_id)
+          end
+
+          if options && options[:interrupt_in_use_connections]
+            schedule_for_interruption(@checked_out_connections, service_id)
+            schedule_for_interruption(@pending_connections, service_id)
+          end
         end
 
         unless paused?
@@ -664,17 +672,9 @@ module Mongo
           pause unless @server.load_balancer?
         end
 
-        @lock.synchronize do
-          unless options && options[:lazy]
-            close_connections(@available_connections, service_id)
-          end
-
-          if options && options[:interrupt_in_use_connections]
-            close_connections(@checked_out_connections, service_id, checked_out_connections: true)
-            close_connections(@pending_connections, service_id)
-          end
-        end
-
+        # "Schedule the background thread" after clearing. This is responsible
+        # for cleaning up stale threads, and interrupting in use connections.
+        @populate_semaphore.signal
         true
       ensure
         check_invariants
@@ -702,7 +702,11 @@ module Mongo
           Monitoring::Event::Cmap::PoolReady.new(@server.address, options, self)
         )
 
-        @populator.run! if min_size > 0
+        if @populator.running?
+          @populate_semaphore.signal
+        else
+          @populator.run!
+        end
       end
 
       # Marks the pool closed, closes all idle connections in the pool and
@@ -947,18 +951,12 @@ module Mongo
         connection = nil
 
         @lock.synchronize do
-          if !closed? && unsynchronized_size < min_size
+          if !closed? && @ready && unsynchronized_size < min_size
             connection = create_connection
             @pending_connections << connection
           else
-            conn = @available_connections.detect do |conn|
-              connection_stale_unlocked?(conn)
-            end
-            if conn
-              conn.disconnect!(reason: :stale)
-              @available_connections.delete(conn)
-              return true
-            end
+            return true if remove_stale_connection
+            return true if remove_interrupted_connection
             return false
           end
         end
@@ -981,6 +979,29 @@ module Mongo
         end
 
         true
+      end
+
+      # Removes and disconnects all stale available connections.
+      def remove_stale_connection
+        if conn = @available_connections.detect(&method(:connection_stale_unlocked?))
+          conn.disconnect!(reason: :stale)
+          @available_connections.delete(conn)
+          return true
+        end
+      end
+
+      # Interrupt connections scheduled for interruption.
+      def remove_interrupted_connection
+        if conn = @interrupt_connections.pop
+          if @checked_out_connections.include?(conn)
+            conn.interrupted!
+            do_check_in(conn)
+          elsif @pending_connections.include?(conn)
+            conn.disconnect!(reason: :stale, interrupted: true)
+            @pending_connections.delete(conn)
+          end
+          return true
+        end
       end
 
       # Checks whether a connection is stale.
@@ -1048,47 +1069,36 @@ module Mongo
       #
       # @param [ Array<Connection> ] connections A list of connections.
       # @param [ Object ] service_id The service id.
-      # @param [ true | false ] checked_out_connections Whether or not the
-      #   passed connections are checked out connections. We should not delete
-      #   checked out connections from the list and we should mark them as
-      #   interrupted and check them back into the pool. Check in will close
-      #   them.
-      def close_connections(connections, service_id, checked_out_connections: false)
+      def close_connections(connections, service_id)
         if @server.load_balancer? && service_id
           loop do
             conn = connections.detect do |conn|
               conn.service_id == service_id
             end
             if conn
-              if checked_out_connections
-                conn.interrupted!
-                do_check_in(conn)
-              else
-                connections.delete(conn)
-                conn.disconnect!(reason: :stale, interrupted: true)
-                @populate_semaphore.signal
-              end
+              connections.delete(conn)
+              conn.disconnect!(reason: :stale, interrupted: true)
+              @populate_semaphore.signal
             else
               break
             end
           end
         else
-          if checked_out_connections
-            connections.each do |conn|
-              if conn.generation < @generation_manager.generation(service_id: service_id)
-                conn.interrupted!
-                do_check_in(conn)
-              end
-            end
-          else
-            connections.delete_if do |conn|
-              if conn.generation < @generation_manager.generation(service_id: service_id)
-                conn.disconnect!(reason: :stale, interrupted: true)
-                @populate_semaphore.signal
-                true
-              end
+          connections.delete_if do |conn|
+            if conn.generation < @generation_manager.generation(service_id: service_id)
+              conn.disconnect!(reason: :stale, interrupted: true)
+              @populate_semaphore.signal
+              true
             end
           end
+        end
+      end
+
+      # Interrupt in use connections and check them back into the pool.
+      def schedule_for_interruption(connections, service_id)
+        @interrupt_connections += connections.filter do |conn|
+          (!server.load_balancer? || conn.service_id == service_id) &&
+          conn.generation < @generation_manager.generation(service_id: service_id)
         end
       end
     end
