@@ -325,6 +325,8 @@ module CommonShortcuts
         client.cluster.servers_list.each do |server|
           if pool = server.pool
             pool.instance_variable_set('@closed', false)
+            # Stop the populator so that we don't have leftover threads.
+            pool.instance_variable_get('@populator').stop!
           end
         end
       end
