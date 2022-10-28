@@ -745,6 +745,7 @@ module Mongo
           # mark pool as closed before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
+          @ready = false
         end
 
         publish_cmap_event(
