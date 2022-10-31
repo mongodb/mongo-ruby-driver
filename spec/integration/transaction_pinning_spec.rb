@@ -32,6 +32,12 @@ describe 'Transaction pinning' do
       end
     end
 
+    after do
+      if pool = server.pool_internal
+        pool.close
+      end
+    end
+
     it 'works' do
       sessions = []
       connections = []
