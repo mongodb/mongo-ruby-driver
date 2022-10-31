@@ -32,7 +32,7 @@ module Mongo
         def initialize(pool, options = {})
           @pool = pool
           @thread = nil
-          @options = options
+          @options = options.merge(backtrace: caller(0))
         end
 
         attr_reader :options
