@@ -29,6 +29,10 @@ describe 'Server' do
           expect(server).not_to be_unknown
         end
 
+        after do
+          server.close
+        end
+
         it 'fails in connection pool' do
           # See also RUBY-3102.
           lambda do
@@ -45,6 +49,10 @@ describe 'Server' do
           client.close
           server.unknown!
           expect(server).to be_unknown
+        end
+
+        after do
+          server.close
         end
 
         it 'is unusable' do
