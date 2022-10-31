@@ -303,6 +303,8 @@ module Mongo
 
       def admin_client
         if @admin_client
+          # If this client is closed, it was closed by the call to clean_slate.
+          # Therefore, we need to re-register it.
           if @admin_client.closed?
             @admin_client.reconnect
             ClientRegistry.instance.register_local_client(admin_client)
