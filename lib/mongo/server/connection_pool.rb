@@ -139,6 +139,8 @@ module Mongo
         @populator = Populator.new(self, options)
         @populate_semaphore = Semaphore.new
 
+        @backtrace = caller(0)
+
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
         publish_cmap_event(
@@ -583,6 +585,7 @@ module Mongo
       end
 
       def pause
+        byebug
         raise_if_closed!
 
         check_invariants
@@ -708,10 +711,12 @@ module Mongo
           Monitoring::Event::Cmap::PoolReady.new(@server.address, options, self)
         )
 
-        if @populator.running?
-          @populate_semaphore.signal
-        else
-          @populator.run!
+        if options.fetch(:monitoring_io, true)
+          if @populator.running?
+            @populate_semaphore.signal
+          else
+            @populator.run!
+          end
         end
       end
 
