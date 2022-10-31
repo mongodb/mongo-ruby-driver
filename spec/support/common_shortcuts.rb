@@ -407,6 +407,9 @@ module CommonShortcuts
     # Used for tests that e.g. mock network operations to avoid interference
     # from server monitoring.
     def reset_pool(server)
+      if pool = server.pool_internal
+        pool.close
+      end
       server.remove_instance_variable('@pool')
       server.pool.ready
     end
