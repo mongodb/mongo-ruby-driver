@@ -835,6 +835,9 @@ module Mongo
       address = Address.new(host, options)
       if !addresses.include?(address)
         opts = options.merge(monitor: false)
+        # If we aren't starting the montoring threads, we also don't want to
+        # start the pool's populator thread.
+        opts.merge!(populator_io: false) unless options.fetch(:monitoring_io, true)
         # Note that in a load-balanced topology, every server must be a
         # load balancer (load_balancer: true is specified in the options)
         # but this option isn't set here because we are required by the

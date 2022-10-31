@@ -75,6 +75,15 @@ module Mongo
       #   are given, their values must be identical.
       # @option options [ Float ] :max_idle_time The time, in seconds,
       #   after which idle connections should be closed by the pool.
+      # @option options [ true, false ] :populator_io For internal driver
+      #   use only. Set to false to prevent the populator threads from being
+      #   created and started in the server's connection pool. It is intended
+      #   for use in tests that also turn off monitoring_io, unless the populator
+      #   is explicitly needed. If monitoring_io is off, but the populator_io
+      #   is on, the populator needs to be manually closed at the end of the
+      #   test, since a cluster without monitoring is considered not connected,
+      #   and thus will not clean up the connection pool populator threads on
+      #   close.
       # Note: Additionally, options for connections created by this pool should
       #   be included in the options passed here, and they will be forwarded to
       #   any connections created by the pool.
@@ -708,7 +717,7 @@ module Mongo
           Monitoring::Event::Cmap::PoolReady.new(@server.address, options, self)
         )
 
-        if options.fetch(:monitoring_io, true)
+        if options.fetch(:populator_io, true)
           if @populator.running?
             @populate_semaphore.signal
           else

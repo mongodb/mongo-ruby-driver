@@ -27,7 +27,7 @@ describe 'Cmap' do
   let(:options) do
     Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
       SpecConfig.instance.all_test_options,
-    )).update(monitoring_io: false).tap do |options|
+    )).update(monitoring_io: false, populator_io: true).tap do |options|
       # We have a wait queue timeout set in the test suite options, but having
       # this option set interferes with assertions in the cmap spec tests.
       options.delete(:wait_queue_timeout)
