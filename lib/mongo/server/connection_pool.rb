@@ -139,8 +139,6 @@ module Mongo
         @populator = Populator.new(self, options)
         @populate_semaphore = Semaphore.new
 
-        @backtrace = caller(0)
-
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
         publish_cmap_event(
@@ -585,7 +583,6 @@ module Mongo
       end
 
       def pause
-        byebug
         raise_if_closed!
 
         check_invariants
