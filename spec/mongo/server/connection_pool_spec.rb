@@ -733,6 +733,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context "when the pool is paused" do
+      require_no_linting
+
       before do
         pool.pause
       end
@@ -746,6 +748,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe "#ready" do
+    require_no_linting
+
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
@@ -799,6 +803,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe "#ready?" do
+    require_no_linting
+
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
@@ -857,6 +863,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe "#pause" do
+    require_no_linting
+
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
@@ -904,6 +912,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe "#paused?" do
+    require_no_linting
+
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
@@ -966,6 +976,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe "#closed?" do
+    require_no_linting
+
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
@@ -1115,6 +1127,8 @@ describe Mongo::Server::ConnectionPool do
 
     context "when interrupting in use connections" do
       context "when there's checked out connections" do
+        require_no_linting
+
         before do
           3.times { pool.check_out }
           connection = pool.check_out
