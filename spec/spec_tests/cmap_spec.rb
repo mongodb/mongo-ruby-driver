@@ -65,11 +65,8 @@ describe 'Cmap' do
       end
 
       after do
-        if @server && (pool = @server.instance_variable_get('@pool'))
-          begin
-            pool.disconnect!
-          rescue Mongo::Error::PoolClosedError
-          end
+        if pool = @server&.pool_internal
+          pool.disconnect!
         end
 
         spec.pool&.close

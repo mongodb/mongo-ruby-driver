@@ -302,7 +302,15 @@ module Mongo
       end
 
       def admin_client
-        @admin_client ||= ClientRegistry.instance.global_client('root_authorized').use('admin')
+        if @admin_client
+          if @admin_client.closed?
+            @admin_client.reconnect
+            ClientRegistry.instance.register_local_client(admin_client)
+          end
+        else
+          @admin_client = ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses)
+        end
+        @admin_client
       end
 
       def configure_fail_point

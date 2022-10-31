@@ -39,5 +39,4 @@ ignore:
   - ConnectionCheckedIn
   - ConnectionCheckedOut
   - ConnectionPoolCreated
-  # TODO: RUBY-2496
-  # - ConnectionPoolReady
+  - ConnectionPoolReady
