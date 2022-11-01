@@ -874,9 +874,13 @@ module Mongo
         end
       end
 
-      # Creates and adds a connection to the pool, if the pool's size is below
-      # min_size. Retries once if a socket-related error is encountered during
-      # this process and raises if a second error or a non socket-related error occurs.
+      # This method does three things:
+      # 1. Creates and adds a connection to the pool, if the pool's size is
+      #    below min_size. Retries once if a socket-related error is
+      #    encountered during this process and raises if a second error or a
+      #    non socket-related error occurs.
+      # 2. Removes stale connections from the connection pool.
+      # 3. Interrupts connections marked for interruption.
       #
       # Used by the pool populator background thread.
       #
