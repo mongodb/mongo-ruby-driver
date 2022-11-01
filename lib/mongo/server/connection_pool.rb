@@ -965,7 +965,8 @@ module Mongo
         Connection.new(@server, opts)
       end
 
-      # Create a connection, connect it, and add it to the pool.
+      # Create a connection, connect it, and add it to the pool. Also
+      # check for stale and interruptable connections and deal with them.
       #
       # @return [ true | false ] True if a connection was created and
       #    added to the pool, false otherwise
@@ -1016,6 +1017,7 @@ module Mongo
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connection
         if conn = @interrupt_connections.pop
+          # require 'byebug'; byebug
           if @checked_out_connections.include?(conn)
             conn.interrupted!
             do_check_in(conn)
