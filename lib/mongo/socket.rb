@@ -341,8 +341,8 @@ module Mongo
         end
         if deadline
           rv = nil
-          while rv.nil? && deadline > Utils.monotonic_time
-            rv = Kernel.select(*select_args, 0.5)
+          while rv.nil? && select_timeout > 0
+            rv = Kernel.select(*select_args, [0.5, select_timeout].min)
           end
         else
           rv = Kernel.select(*select_args, nil)
