@@ -105,6 +105,9 @@ describe 'Connection pool populator integration' do
         pool.check_in(first_connection)
 
         pool.clear
+        ::Utils.wait_for_condition(3) do
+          pool.size == 0
+        end
         expect(pool.size).to eq(0)
 
         pool.ready
