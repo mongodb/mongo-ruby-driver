@@ -335,19 +335,11 @@ module Mongo
           end
         end
         if exc.is_a?(IO::WaitReadable)
-          select_args = [[@socket], nil, [@socket]]
+          select_args = [[@socket], nil, [@socket], socket_timeout]
         else
-          select_args = [nil, [@socket], [@socket]]
+          select_args = [nil, [@socket], [@socket], socket_timeout]
         end
-        if deadline
-          rv = nil
-          while rv.nil? && deadline > Utils.monotonic_time
-            select_timeout = deadline - Utils.monotonic_time
-            rv = Kernel.select(*select_args, [0.5, select_timeout].min)
-          end
-        else
-          rv = Kernel.select(*select_args, nil)
-        end
+        rv = Kernel.select(*select_args)
 
         if BSON::Environment.jruby?
           # Ignore the return value of Kernel.select.

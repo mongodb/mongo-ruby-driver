@@ -51,14 +51,6 @@ module Mongo
         @ignore_events = @test['ignore'] || []
         @fail_point_command = @test['failPoint']
         @threads = Set.new
-        if run_on = @test['runOn']
-          @min_server_version = run_on.detect do |doc|
-            doc.keys.first == 'minServerVersion'
-          end&.values&.first
-          @max_server_version = run_on.detect do |doc|
-            doc.keys.first == 'maxServerVersion'
-          end&.values&.first
-        end
 
         process_run_on
         preprocess
@@ -175,18 +167,6 @@ module Mongo
         kill_remaining_threads
       end
 
-      def server_version_satisfied?
-        cc = ClusterConfig.instance
-        ok = true
-        if @min_server_version
-          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version)
-        end
-        if @max_server_version
-          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version)
-        end
-        ok
-      end
-
       def disable_fail_points
         if @fail_point_command
           @client.command(
@@ -211,6 +191,9 @@ module Mongo
         end
         if @topologies
           ok &&= @topologies.include?(cc.topology)
+        end
+        if @oses
+          ok &&= @oses.any? { |os| SpecConfig.instance.send("#{os.to_s}?")}
         end
         ok
       end
@@ -288,8 +271,20 @@ module Mongo
                 end
               end
             end
-          else
-            nil
+          end
+
+          @oses = if oses = run_on.detect { |doc| doc.keys.first == 'requireOs' }
+            (oses['requireOs'] || {}).map do |os|
+              {
+                'macos' => :macos,
+                'linux' => :linux,
+                'windows' => :windows,
+              }[os].tap do |v|
+                unless v
+                  raise "Unknown os #{os}"
+                end
+              end
+            end
           end
         end
       end
