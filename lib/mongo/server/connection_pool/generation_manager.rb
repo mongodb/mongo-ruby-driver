@@ -31,30 +31,16 @@ module Mongo
         attr_reader :server
 
         def generation(service_id: nil)
-          if service_id
-            unless server.load_balancer?
-              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
-            end
-          else
-            if server.load_balancer?
-              raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
-            end
-          end
+          validate_service_id!(service_id)
+
           @lock.synchronize do
             @map[service_id]
           end
         end
 
         def generation_unlocked(service_id: nil)
-          if service_id
-            unless server.load_balancer?
-              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
-            end
-          else
-            if server.load_balancer?
-              raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
-            end
-          end
+          validate_service_id!(service_id)
+
           @map[service_id]
         end
 
@@ -75,6 +61,20 @@ module Mongo
               @map.each do |k, v|
                 @map[k] += 1
               end
+            end
+          end
+        end
+
+        private
+
+        def validate_service_id!(service_id)
+          if service_id
+            unless server.load_balancer?
+              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
+            end
+          else
+            if server.load_balancer?
+              raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
             end
           end
         end
