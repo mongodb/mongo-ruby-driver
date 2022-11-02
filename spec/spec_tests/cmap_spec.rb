@@ -61,7 +61,10 @@ describe 'Cmap' do
             allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
           end
         )
-        spec.setup(@server, subscriber)
+
+        @client = ClusterTools.instance.direct_client(ClusterConfig.instance.primary_address,
+          database: 'admin')
+        spec.setup(@server, @client, subscriber)
       end
 
       after do

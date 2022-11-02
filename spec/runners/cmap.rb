@@ -50,6 +50,7 @@ module Mongo
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
         @fail_point_command = @test['failPoint']
+        @threads = Set.new
         if run_on = @test['runOn']
           @min_server_version = run_on.detect do |doc|
             doc.keys.first == 'minServerVersion'
@@ -65,8 +66,9 @@ module Mongo
 
       attr_reader :pool
 
-      def setup(server, subscriber)
+      def setup(server, client, subscriber)
         @subscriber = subscriber
+        @client = client
         # The driver always creates pools for known servers.
         # There is a test which creates and destroys a pool and it only expects
         # those two events, not the ready event.
@@ -87,6 +89,8 @@ module Mongo
             if err
               result['error'] = err
               break
+            elsif op.name == 'start'
+              @threads << state[op.target]
             end
           end
 
@@ -168,6 +172,7 @@ module Mongo
         end
       ensure
         disable_fail_points
+        kill_remaining_threads
       end
 
       def server_version_satisfied?
@@ -184,11 +189,15 @@ module Mongo
 
       def disable_fail_points
         if @fail_point_command
-          admin_client.command(
+          @client.command(
             configureFailPoint: @fail_point_command['configureFailPoint'],
             mode: 'off'
           )
         end
+      end
+
+      def kill_remaining_threads
+        @threads.each(&:kill)
       end
 
       def satisfied?
@@ -301,22 +310,8 @@ module Mongo
         end
       end
 
-      def admin_client
-        if @admin_client
-          # If this client is closed, it was closed by the call to clean_slate.
-          # Therefore, we need to re-register it.
-          if @admin_client.closed?
-            @admin_client.reconnect
-            ClientRegistry.instance.register_local_client(admin_client)
-          end
-        else
-          @admin_client = ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses)
-        end
-        @admin_client
-      end
-
       def configure_fail_point
-        admin_client.database.command(@fail_point_command) if @fail_point_command
+        @client.database.command(@fail_point_command) if @fail_point_command
       end
     end
 
@@ -429,6 +424,9 @@ module Mongo
           end
         end
 
+        # Allow the thread to begin running.
+        sleep 0.1
+
         # Since we expect exceptions to occur in some cases, we disable the printing of error
         # messages from the thread if the Ruby version supports it.
         if state[target].respond_to?(:report_on_exception)
@@ -446,6 +444,7 @@ module Mongo
 
       def run_wait_for_thread_op(state)
         state[target].join
+        @threads.delete(state[target])
       end
 
       def run_wait_for_event_op(state)
