@@ -335,9 +335,9 @@ module Mongo
           end
         end
         if exc.is_a?(IO::WaitReadable)
-          select_args = [[@socket], nil, [@socket], socket_timeout]
+          select_args = [[@socket], nil, [@socket], select_timeout]
         else
-          select_args = [nil, [@socket], [@socket], socket_timeout]
+          select_args = [nil, [@socket], [@socket], select_timeout]
         end
         rv = Kernel.select(*select_args)
 
