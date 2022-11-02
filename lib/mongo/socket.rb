@@ -335,11 +335,19 @@ module Mongo
           end
         end
         if exc.is_a?(IO::WaitReadable)
-          select_args = [[@socket], nil, [@socket], select_timeout]
+          select_args = [[@socket], nil, [@socket]]
         else
-          select_args = [nil, [@socket], [@socket], select_timeout]
+          select_args = [nil, [@socket], [@socket]]
         end
-        rv = Kernel.select(*select_args)
+        if deadline
+          rv = nil
+          while rv.nil? && deadline > Utils.monotonic_time
+            rv = Kernel.select(*select_args, 0.5)
+          end
+        else
+          rv = Kernel.select(*select_args, nil)
+        end
+
         if BSON::Environment.jruby?
           # Ignore the return value of Kernel.select.
           # On JRuby, select appears to return nil prior to timeout expiration
