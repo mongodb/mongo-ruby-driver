@@ -260,7 +260,7 @@ module Mongo
     # are returned to their respective connection pools. Stop the server's
     # background monitor.
     #
-    # @return [ nil ] Always nil.
+    # @return [ true ] Always true.
     #
     # @since 2.0.0
     def disconnect!
@@ -279,7 +279,7 @@ module Mongo
       # time the server is discovered.
       pool_internal&.clear
 
-      nil
+      true
     end
 
     def close
