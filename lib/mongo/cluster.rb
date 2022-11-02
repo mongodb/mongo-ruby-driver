@@ -501,6 +501,8 @@ module Mongo
     # it will create a new cluster instance.
     #
     # @return [ nil ] Always nil.
+    #
+    # @api private
     def close
       @state_change_lock.synchronize do
         unless connecting? || connected?
