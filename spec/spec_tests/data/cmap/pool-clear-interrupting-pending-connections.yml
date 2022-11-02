@@ -2,8 +2,8 @@ version: 1
 style: integration
 description: clear with interruptInUseConnections = true closes pending connections
 runOn:
-  -
-    minServerVersion: "4.9.0"
+  - minServerVersion: "4.9.0"
+  - requireOs: [ macos ]
 failPoint:
   configureFailPoint: failCommand
   mode: "alwaysOn"
