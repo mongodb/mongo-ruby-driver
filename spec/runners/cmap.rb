@@ -444,7 +444,6 @@ module Mongo
 
       def run_wait_for_thread_op(state)
         state[target].join
-        @threads.delete(state[target])
       end
 
       def run_wait_for_event_op(state)
