@@ -87,6 +87,9 @@ module Mongo
       # @param [ Mongo::Server ] server The server the connection is for.
       # @param [ Hash ] options The connection options.
       #
+      # @option options :fd [ IO ] The file descriptor for the read end of the
+      #   pipe to listen on during the select system call when reading from the
+      #   socket.
       # @option options [ Integer ] :generation The generation of this
       #   connection. The generation should only be specified in this option
       #   when not in load-balancing mode, and it should be the generation
@@ -258,7 +261,7 @@ module Mongo
       private def create_socket
         add_server_diagnostics do
           address.socket(socket_timeout, ssl_options.merge(
-            connection_address: address, connection_generation: generation))
+            connection_address: address, connection_generation: generation, fd: options[:fd]))
         end
       end
 

@@ -954,8 +954,10 @@ module Mongo
       end
 
       def create_connection
+        r, _ = @generation_manager.pipe_fds(service_id: server.description.service_id)
         opts = options.merge(
           connection_pool: self,
+          fd: r
           # Do not pass app metadata - this will be retrieved by the connection
           # based on the auth needs.
         )
@@ -1016,6 +1018,7 @@ module Mongo
 
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connections
+        gens = Set.new
         until @interrupt_connections.empty?
           if conn = @interrupt_connections.pop
             if @checked_out_connections.include?(conn)
@@ -1028,10 +1031,22 @@ module Mongo
               conn.disconnect!(reason: :stale, interrupted: true)
               @pending_connections.delete(conn)
             end
+            gens << [ conn.generation, conn.service_id ]
+          end
+
+          # Close the write side of the pipe. Pending connections might be
+          # hanging on the Kernel#select call, so in order to interrupt that,
+          # we also listen for the read side of the pipe in Kernel#select and
+          # close the write side of the pipe here, which will cause select to
+          # wake up and raise an IOError now that the socket is closed.
+          # We close both sides of the pipe since the read side is no longer
+          # needed.
+          if @interrupt_connections.empty?
+            gens.each do |gen, service_id|
+              @generation_manager.remove_pipe_fds(gen, service_id: service_id)
+            end
           end
         end
-
-        # Close the pipe here. 
       end
 
       # Checks whether a connection is stale.

@@ -24,6 +24,7 @@ module Mongo
 
         def initialize(server:)
           @map = Hash.new { |hash, key| hash[key] = 1 }
+          @pipe_fds = Hash.new { |hash, key| hash[key] = { 1 => IO.pipe } }
           @server = server
           @lock = Mutex.new
         end
@@ -44,10 +45,26 @@ module Mongo
           @map[service_id]
         end
 
+        def pipe_fds(service_id: nil)
+          validate_service_id!(service_id)
+
+          @pipe_fds[service_id][generation(service_id: service_id)]
+        end
+
+        def remove_pipe_fds(generation, service_id: nil)
+          validate_service_id!(service_id)
+
+          r, w = @pipe_fds[service_id].delete(generation)
+          w.close
+          r.close
+        end
+
         def bump(service_id: nil)
           @lock.synchronize do
             if service_id
-              @map[service_id] += 1
+              gen = @map[service_id] += 1
+              @pipe_fds[service_id] ||= {}
+              @pipe_fds[service_id][gen] = IO.pipe
             else
               # When service id is not supplied, one of two things may be
               # happening;
@@ -59,7 +76,9 @@ module Mongo
               #
               # Incrementing everything in the map accomplishes both tasks.
               @map.each do |k, v|
-                @map[k] += 1
+                gen = @map[k] += 1
+                @pipe_fds[service_id] ||= {}
+                @pipe_fds[service_id][gen] = IO.pipe
               end
             end
           end

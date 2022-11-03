@@ -334,12 +334,35 @@ module Mongo
             raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
           end
         end
+        fd = options[:fd]
         if exc.is_a?(IO::WaitReadable)
-          select_args = [[@socket], nil, [@socket], select_timeout]
+          if fd
+            select_args = [[@socket, fd], nil, [@socket, fd], select_timeout]
+          else
+            select_args = [[@socket], nil, [@socket], select_timeout]
+          end
         else
           select_args = [nil, [@socket], [@socket], select_timeout]
         end
+
         rv = Kernel.select(*select_args)
+        if Lint.enabled?
+          if fd && rv.include?(fd)
+            # If the return value of select is the read end of the pipe, and
+            # an IOError is not raised, then that means the socket is still
+            # open. Select is interrupted be closing the write end of the
+            # pipe, which either returns the fd if the socket is open, or
+            # raises an IOError if it isn't. Select is interrupted after all
+            # of the pending and checked out connections have been interrupted
+            # and closed, and this only happens once the pool is cleared with
+            # interrupt_in_use connections flag. This means that in order for
+            # the socket to still be open when the select is interrupted, and
+            # that socket is being read from, that means after clear was
+            # called, a connection from the previous generation was checked
+            # out of the pool, for reading on its socket. This should be impossible.
+            raise Mongo::LintError, "Select interrupted for live socket. This should be impossible."
+          end
+        end
 
         if BSON::Environment.jruby?
           # Ignore the return value of Kernel.select.
