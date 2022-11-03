@@ -979,8 +979,8 @@ module Mongo
             connection = create_connection
             @pending_connections << connection
           else
+            return true if remove_interrupted_connections
             return true if remove_stale_connection
-            return true if remove_interrupted_connection
             return false
           end
         end
@@ -1015,18 +1015,23 @@ module Mongo
       end
 
       # Interrupt connections scheduled for interruption.
-      def remove_interrupted_connection
-        if conn = @interrupt_connections.pop
-          # require 'byebug'; byebug
-          if @checked_out_connections.include?(conn)
-            conn.interrupted!
-            do_check_in(conn)
-          elsif @pending_connections.include?(conn)
-            conn.disconnect!(reason: :stale, interrupted: true)
-            @pending_connections.delete(conn)
+      def remove_interrupted_connections
+        until @interrupt_connections.empty?
+          if conn = @interrupt_connections.pop
+            if @checked_out_connections.include?(conn)
+              # If the connection has been checked out, mark it as interrupted and it will
+              # be disconnected on check in.
+              conn.interrupted!
+              do_check_in(conn)
+            elsif @pending_connections.include?(conn)
+              # If the connection is pending, disconnect with the interrupted flag.
+              conn.disconnect!(reason: :stale, interrupted: true)
+              @pending_connections.delete(conn)
+            end
           end
-          return true
         end
+
+        # Close the pipe here. 
       end
 
       # Checks whether a connection is stale.
