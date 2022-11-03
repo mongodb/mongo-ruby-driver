@@ -44,7 +44,7 @@ set_env_ruby
 prepare_server $arch
 
 if test "$DOCKER_PRELOAD" != 1; then
-  install_mlaunch_virtualenv
+  install_mlaunch_venv
 fi
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME

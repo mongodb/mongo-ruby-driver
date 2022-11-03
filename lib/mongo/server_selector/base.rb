@@ -175,6 +175,15 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil, write_aggregation: false)
+        select_server_impl(cluster, ping, session, write_aggregation).tap do |server|
+          if Lint.enabled? && !server.pool.ready?
+            raise Error::LintError, 'Server selector returning a server with a pool which is not ready'
+          end
+        end
+      end
+
+      # Parameters and return values are the same as for select_server.
+      private def select_server_impl(cluster, ping, session, write_aggregation)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
@@ -245,6 +254,17 @@ module Mongo
 =end
 
         loop do
+          if Lint.enabled?
+            cluster.servers.each do |server|
+              if !server.unknown? && !server.connected?
+                raise Error::LintError, "Server #{server.summary} is known but is not connected"
+              end
+              if !server.unknown? && !server.pool.ready?
+                raise Error::LintError, "Server #{server.summary} is known but has non-ready pool"
+              end
+            end
+          end
+
           server = try_select_server(cluster, write_aggregation: write_aggregation)
 
           if server

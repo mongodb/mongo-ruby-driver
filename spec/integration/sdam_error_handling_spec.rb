@@ -92,7 +92,7 @@ describe 'SDAM error handling' do
       generation = server.pool.generation
       RSpec::Mocks.with_temporary_scope do
         operation
-        new_generation = server.pool.generation
+        new_generation = server.pool_internal.generation
         expect(new_generation).to eq(generation + 1)
       end
     end
@@ -103,7 +103,7 @@ describe 'SDAM error handling' do
       generation = server.pool.generation
       RSpec::Mocks.with_temporary_scope do
         operation
-        new_generation = server.pool.generation
+        new_generation = server.pool_internal.generation
         expect(new_generation).to eq(generation)
       end
     end
@@ -248,12 +248,13 @@ describe 'SDAM error handling' do
 
         it 'marks server unknown' do
           server = client.cluster.next_primary
+          pool = client.cluster.pool(server)
           client.cluster.servers.map(&:disconnect!)
 
           RSpec::Mocks.with_temporary_scope do
 
             Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
-
+            allow(pool).to receive(:paused?).and_return(false)
             lambda do
               client.command(ping: 1)
             end.should raise_error(mapped_error_cls, /mocked failure/)

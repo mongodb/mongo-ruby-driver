@@ -55,7 +55,7 @@ class ClientRegistry
 
   class << self
     def client_perished?(client)
-      if !client.cluster.connected?
+      if !client.cluster.connected? || client.closed?
         true
       else
         perished = false

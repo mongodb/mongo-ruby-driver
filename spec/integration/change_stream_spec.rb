@@ -289,6 +289,11 @@ describe 'Change stream integration' do
           enum.next
         end.to raise_error(Mongo::Error::OperationFailure, /101\b.*Failing command (due to|via) 'failCommand' failpoint/)
       end
+
+      after do
+        # TODO see RUBY-3135.
+        clear_fail_point(authorized_collection)
+      end
     end
   end
 

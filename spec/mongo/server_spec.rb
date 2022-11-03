@@ -121,16 +121,44 @@ describe Mongo::Server do
       end
     end
 
-    it 'disconnects the connection pool' do
-      expect(server.pool).to receive(:disconnect!).once.and_call_original
-      server.disconnect!
+    context 'when server has a pool' do
+      before do
+        allow(server).to receive(:unknown?).and_return(false)
+        allow(cluster).to receive(:run_sdam_flow)
+        server.pool.ready
+      end
+
+      it 'pauses and clears the connection pool' do
+        expect(server.pool_internal).to receive(:pause).once.and_call_original
+        expect(server.pool_internal).to receive(:clear).once.and_call_original
+        RSpec::Mocks.with_temporary_scope do
+          # you can't disconnect from a known server, since this pauses the
+          # pool and we only want to pause the pools of unknown servers.
+          server.unknown!
+          allow(server).to receive(:unknown?).and_return(true)
+          server.disconnect!
+        end
+      end
     end
 
     context 'when server reconnects' do
+      before do
+        allow(server).to receive(:unknown?).and_return(false)
+        allow(cluster).to receive(:run_sdam_flow)
+        server.pool.ready
+      end
+
       it 'keeps the same pool' do
         pool = server.pool
-        server.disconnect!
+        RSpec::Mocks.with_temporary_scope do
+          # you can't disconnect from a known server, since this pauses the
+          # pool and we only want to pause the pools of unknown servers.
+          # server.unknown!
+          allow(server).to receive(:unknown?).and_return(true)
+          server.disconnect!
+        end
         server.reconnect!
+        allow(server).to receive(:unknown?).and_return(false)
         expect(server.pool).to eq(pool)
       end
     end

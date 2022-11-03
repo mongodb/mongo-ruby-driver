@@ -24,6 +24,7 @@ describe 'Transaction pinning' do
     # Force each transaction to be on its own connection.
 
     before do
+      client.reconnect if client.closed?
       4.times do |i|
         # Collections cannot be created inside transactions.
         client["tx_pin_t#{i}"].drop
@@ -65,8 +66,10 @@ describe 'Transaction pinning' do
     # particular service.
 
     context 'when no connection is available' do
+      require_no_linting
 
       before do
+        client.reconnect if client.closed?
         client["tx_pin"].drop
         client["tx_pin"].create
       end
@@ -89,6 +92,10 @@ describe 'Transaction pinning' do
     end
 
     context 'when connection is available' do
+
+      before do
+        client.reconnect if client.closed?
+      end
 
       it 'uses the available connection' do
         sessions = []

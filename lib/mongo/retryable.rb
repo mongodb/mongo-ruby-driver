@@ -131,7 +131,7 @@ module Mongo
         server = select_server(cluster, server_selector, session)
         begin
           yield server
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -163,7 +163,7 @@ module Mongo
     # @since 2.2.6
     def read_with_one_retry(options = nil)
       yield
-    rescue Error::SocketError, Error::SocketTimeoutError => e
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
       retry_message = options && options[:retry_message]
       log_retry(e, message: retry_message)
       yield
@@ -243,15 +243,14 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError, Auth::Unauthorized => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
-          # If we get an auth error, it was raised when connecting the connection
-          # and therefore we didn't have the connection yet to add labels.
-          # Therefore, check if it is retryable, and if it is, add the label
-          # and retry it. We also want to retry this if there was a Socket error
-          # when trying to create the connection.
+          # If there was an error before the connection was successfully
+          # checked out and connected, there was no connection present to use
+          # for adding labels. Therefore, we should check if it is retryable,
+          # and if it is, add the label and retry it.
           if !connection_succeeded && !session.in_transaction? && e.write_retryable?
             e.add_label('RetryableWriteError')
           else
@@ -305,7 +304,7 @@ module Mongo
           server.with_connection(connection_global_id: context.connection_global_id) do |connection|
             yield connection, nil, context
           end
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -368,7 +367,7 @@ module Mongo
       server = select_server(cluster, server_selector, session)
       begin
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ServerNotUsable => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction?
@@ -391,7 +390,7 @@ module Mongo
       begin
         attempt += 1
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
         e.add_note('legacy retry')
         e.add_note("attempt #{attempt}")
         if attempt > client.max_read_retries || (session && session.in_transaction?)
@@ -446,7 +445,7 @@ module Mongo
 
       begin
         yield server, true
-      rescue Error::SocketError, Error::SocketTimeoutError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
         e.add_note('modern retry')
         e.add_note("attempt 2")
         raise e
@@ -493,7 +492,7 @@ module Mongo
       server.with_connection(connection_global_id: context.connection_global_id) do |connection|
         yield(connection, txn_num, context)
       end
-    rescue Error::SocketError, Error::SocketTimeoutError => e
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
       e.add_note('modern retry')
       e.add_note('attempt 2')
       raise e

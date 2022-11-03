@@ -112,6 +112,7 @@ module Mongo
         @options = options.freeze
 
         @generation_manager = GenerationManager.new(server: server)
+        @ready = false
         @closed = false
 
         # A connection owned by this pool should be either in the
@@ -142,15 +143,16 @@ module Mongo
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options, self)
         )
-
-        @populator.run! if min_size > 0
       end
 
       # @return [ Hash ] options The pool options.
       attr_reader :options
 
       # @api private
-      def_delegators :@server, :address
+      attr_reader :server
+
+      # @api private
+      def_delegators :server, :address
 
       # Get the maximum size of the connection pool.
       #
@@ -196,7 +198,20 @@ module Mongo
       #   being used by the queue.
       #
       # @api private
-      def_delegator :generation_manager, :generation
+      def_delegators :generation_manager, :generation, :generation_unlocked
+
+      # A connection pool is paused if it is not closed and it is not ready.
+      #
+      # @return [ true | false ] whether the connection pool is paused.
+      #
+      # @raise [ Error::PoolClosedError ] If the pool has been closed.
+      def paused?
+        raise_if_closed!
+
+        @lock.synchronize do
+          !@ready
+        end
+      end
 
       # Size of the connection pool.
       #
@@ -244,14 +259,30 @@ module Mongo
         !!@closed
       end
 
+      # Whether the pool is ready.
+      #
+      # @return [ true | false ] Whether the pool is ready.
+      def ready?
+        @lock.synchronize do
+          @ready
+        end
+      end
+
       # @note This method is experimental and subject to change.
       #
       # @api experimental
       # @since 2.11.0
       def summary
         @lock.synchronize do
+          state = if closed?
+            'closed'
+          elsif !@ready
+            'paused'
+          else
+            'ready'
+          end
           "#<ConnectionPool size=#{unsynchronized_size} (#{min_size}-#{max_size}) " +
-            "used=#{@checked_out_connections.length} avail=#{@available_connections.length} pending=#{@pending_connections.length}>"
+            "used=#{@checked_out_connections.length} avail=#{@available_connections.length} pending=#{@pending_connections.length} #{state}>"
         end
       end
 
@@ -294,6 +325,18 @@ module Mongo
             ),
           )
           raise Error::PoolClosedError.new(@server.address, self)
+        end
+
+        if paused?
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              # CMAP spec decided to conflate pool paused with all the other
+              # possible non-timeout errors.
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
+            ),
+          )
+          raise Error::PoolPausedError.new(@server.address, self)
         end
 
         deadline = Utils.monotonic_time + wait_timeout
@@ -520,16 +563,34 @@ module Mongo
         check_invariants
       end
 
+      def pause
+        raise_if_closed!
+
+        check_invariants
+
+        if Lint.enabled? && !@server.unknown?
+          raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
+        end
+
+        return if paused?
+
+        @lock.synchronize do
+          @ready = false
+        end
+
+        stop_populator
+      ensure
+        check_invariants
+      end
+
       # Closes all idle connections in the pool and schedules currently checked
       # out connections to be closed when they are checked back into the pool.
-      # The pool remains operational and can create new connections when
-      # requested.
+      # The pool is paused, it will not create new connections in background
+      # and it will fail checkout requests until marked ready.
       #
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
-      # @option options [ true | false ] :stop_populator Whether to stop
-      #   the populator background thread. For internal driver use only.
       # @option options [ Object ] :service_id Clear connections with
       #   the specified service id only.
       #
@@ -539,24 +600,49 @@ module Mongo
       def clear(options = nil)
         raise_if_closed!
 
-        check_invariants
-
-        if options && options[:stop_populator]
-          stop_populator
+        if Lint.enabled? && !@server.unknown?
+          raise Error::LintError, "Attempting to clear pool for server #{@server.summary} which is known"
         end
+
+        do_clear(options)
+      end
+
+      # Disconnects the pool.
+      #
+      # Does everything that +clear+ does, except if the pool is closed
+      # this method does nothing but +clear+ would raise PoolClosedError.
+      #
+      # @since 2.1.0
+      # @api private
+      def disconnect!(options = nil)
+        do_clear(options)
+      rescue Error::PoolClosedError
+        # The "disconnected" state is between closed and paused.
+        # When we are trying to disconnect the pool, permit the pool to be
+        # already closed.
+      end
+
+      def do_clear(options = nil)
+        check_invariants
 
         service_id = options && options[:service_id]
 
         @lock.synchronize do
+          # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
+        end
 
+        unless paused?
           publish_cmap_event(
             Monitoring::Event::Cmap::PoolCleared.new(
               @server.address,
               service_id: service_id
             )
           )
+          pause unless @server.load_balancer?
+        end
 
+        @lock.synchronize do
           unless options && options[:lazy]
             if @server.load_balancer? && service_id
               loop do
@@ -586,9 +672,30 @@ module Mongo
         check_invariants
       end
 
-      # @since 2.1.0
-      # @deprecated
-      alias :disconnect! :clear
+      # Instructs the pool to create and return connections.
+      def ready
+        raise_if_closed!
+
+        @lock.synchronize do
+          return if @ready
+
+          @ready = true
+        end
+
+        # Note that the CMAP spec demands serialization of CMAP events for a
+        # pool. In order to implement this, event publication must be done into
+        # a queue which is synchronized, instead of subscribers being invoked
+        # from the trigger method like this one here inline. On MRI, assuming
+        # the threads yield to others when they stop having work to do, it is
+        # likely that the events would in practice always be published in the
+        # required order. JRuby, being truly concurrent with OS threads,
+        # would not offers such a guarantee.
+        publish_cmap_event(
+          Monitoring::Event::Cmap::PoolReady.new(@server.address, options, self)
+        )
+
+        @populator.run! if min_size > 0
+      end
 
       # Marks the pool closed, closes all idle connections in the pool and
       # schedules currently checked out connections to be closed when they are
@@ -647,6 +754,9 @@ module Mongo
         if closed?
           "#<Mongo::Server::ConnectionPool:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
             "wait_timeout=#{wait_timeout} closed>"
+        elsif !ready?
+          "#<Mongo::Server::ConnectionPool:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+            "wait_timeout=#{wait_timeout} paused>"
         else
           "#<Mongo::Server::ConnectionPool:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
             "wait_timeout=#{wait_timeout} current_size=#{size} available=#{available_count}>"
@@ -824,6 +934,14 @@ module Mongo
             connection = create_connection
             @pending_connections << connection
           else
+            conn = @available_connections.detect do |conn|
+              connection_stale_unlocked?(conn)
+            end
+            if conn
+              conn.disconnect!(reason: :stale)
+              @available_connections.delete(conn)
+              return true
+            end
             return false
           end
         end
@@ -846,6 +964,16 @@ module Mongo
         end
 
         true
+      end
+
+      # Checks whether a connection is stale.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection to check.
+      #
+      # @return [ true | false ] Whether the connection is stale.
+      def connection_stale_unlocked?(connection)
+        connection.generation != generation_unlocked(service_id: connection.service_id) &&
+        !connection.pinned?
       end
 
       # Asserts that the pool has not been closed.

@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool::Populator do
+  require_no_linting
+
   let(:options) { {} }
 
   let(:client) do
@@ -28,7 +30,7 @@ describe Mongo::Server::ConnectionPool::Populator do
     # We create our own populator to test; disable pool's background populator
     # and clear the pool, so ours can run
     pool.stop_populator
-    pool.clear
+    pool.disconnect!
   end
 
   describe '#log_warn' do

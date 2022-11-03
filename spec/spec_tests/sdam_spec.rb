@@ -47,6 +47,10 @@ describe 'Server Discovery and Monitoring' do
           heartbeat_frequency: 1000, connect_timeout: 0.1)
       end
 
+      before do
+        @client.reconnect if @client.closed?
+      end
+
       after(:all) do
         @client && @client.close
       end

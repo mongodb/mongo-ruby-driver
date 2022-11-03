@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe 'Server selector' do
+  require_no_linting
+
   let(:selector) { Mongo::ServerSelector::Primary.new }
   let(:client) { authorized_client }
   let(:cluster) { client.cluster }

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2019-2020 MongoDB Inc.
+# Copyright (C) 2022 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,23 +18,7 @@
 module Mongo
   class Error
 
-    # Exception raised if an operation is attempted on a closed connection pool.
-    #
-    # @since 2.9.0
-    class PoolClosedError < PoolError
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::Error::PoolClosedError.new(address, pool)
-      #
-      # @since 2.9.0
-      # @api private
-      def initialize(address, pool)
-        super(address, pool,
-          "Attempted to use a connection pool which has been closed (for #{address} " +
-            "with pool 0x#{pool.object_id})")
-      end
+    class ClientClosed < Error
     end
   end
 end

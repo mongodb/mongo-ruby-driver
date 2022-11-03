@@ -38,6 +38,11 @@ describe 'Cmap' do
     spec = Mongo::Cmap::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
+      unless spec.satisfied?
+        before(:all) do
+          skip "Requirements not satisfied"
+        end
+      end
 
       before do
         subscriber = Mrss::EventSubscriber.new
@@ -66,6 +71,8 @@ describe 'Cmap' do
           rescue Mongo::Error::PoolClosedError
           end
         end
+
+        spec.pool&.close
       end
 
       let!(:result) do

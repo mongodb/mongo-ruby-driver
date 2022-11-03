@@ -18,22 +18,27 @@
 module Mongo
   class Error
 
-    # Exception raised if an operation is attempted on a closed connection pool.
-    #
-    # @since 2.9.0
-    class PoolClosedError < PoolError
+    # Abstract base class for connection pool-related exceptions.
+    class PoolError < Error
+
+      # @return [ Mongo::Address ] address The address of the server the
+      # pool's connections connect to.
+      #
+      # @since 2.9.0
+      attr_reader :address
+
+      # @return [ Mongo::Server::ConnectionPool ] pool The connection pool.
+      #
+      # @since 2.11.0
+      attr_reader :pool
 
       # Instantiate the new exception.
       #
-      # @example Instantiate the exception.
-      #   Mongo::Error::PoolClosedError.new(address, pool)
-      #
-      # @since 2.9.0
       # @api private
-      def initialize(address, pool)
-        super(address, pool,
-          "Attempted to use a connection pool which has been closed (for #{address} " +
-            "with pool 0x#{pool.object_id})")
+      def initialize(address, pool, message)
+        @address = address
+        @pool = pool
+        super(message)
       end
     end
   end

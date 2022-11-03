@@ -51,6 +51,9 @@ describe 'Client after reconnect' do
   end
 
   context 'with min_pool_size > 0' do
+    # This test causes live threads errors in jruby in other tests.
+    fails_on_jruby
+
     let(:client) { authorized_client.with(min_pool_size: 1) }
 
     it 'recreates connection pool populator thread' do

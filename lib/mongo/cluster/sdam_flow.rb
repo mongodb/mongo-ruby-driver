@@ -413,6 +413,9 @@ class Mongo::Cluster
     def do_remove(address_str)
       servers = cluster.remove(address_str, disconnect: false)
       servers.each do |server|
+        # Clear the description so that the server is marked as unknown.
+        server.clear_description
+
         # We need to publish server closed event here, but we cannot close
         # the server because it could be the server owning the monitor in
         # whose thread this flow is presently executing, in which case closing

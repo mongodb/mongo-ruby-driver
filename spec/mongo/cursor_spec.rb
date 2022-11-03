@@ -39,14 +39,15 @@ describe Mongo::Cursor do
         # Deal with this by pre-creating pools for all known servers.
         cluster = authorized_collection.client.cluster
         cluster.next_primary
-        cluster.servers_list.each do |server|
-          server.pool
+        cluster.servers.each do |server|
+          reset_pool(server)
         end
       end
     end
 
     context 'cursor exhausted by initial result' do
       include_context 'with initialized pool'
+      require_no_linting
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
@@ -64,6 +65,7 @@ describe Mongo::Cursor do
 
     context 'cursor not exhausted by initial result' do
       include_context 'with initialized pool'
+      require_no_linting
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 2)
@@ -84,7 +86,7 @@ describe Mongo::Cursor do
 
       let(:server) do
         view.send(:server_selector).select_server(authorized_client.cluster).tap do |server|
-          authorized_client.cluster.disconnect!
+          authorized_client.cluster.close
           server.unknown!
         end
       end
@@ -93,8 +95,10 @@ describe Mongo::Cursor do
         Mongo::Collection::View.new(authorized_collection)
       end
 
-      it 'works' do
-        cursor
+      it 'raises ServerNotUsable' do
+        lambda do
+          cursor
+        end.should raise_error(Mongo::Error::ServerNotUsable)
       end
     end
   end
@@ -746,6 +750,11 @@ describe Mongo::Cursor do
 
     context 'when there is a socket error during close' do
       clean_slate
+      require_no_linting
+
+      before do
+        reset_pool(server)
+      end
 
       it 'does not raise an error' do
         cursor

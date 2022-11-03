@@ -71,6 +71,8 @@ describe 'Snapshot Query Examples' do
   end
 
   context "Snapshot Query Example 2" do
+    retry_test
+
     before do
       client = authorized_client.use('retail')
       client['sales'].delete_many

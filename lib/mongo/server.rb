@@ -267,23 +267,36 @@ module Mongo
       if monitor
         monitor.stop!
       end
-      _pool = @pool_lock.synchronize do
-        @pool
-      end
-      if _pool
-        # For backwards compatibility we disconnect/clear the pool rather
-        # than close it here. We also stop the populator which allows the
-        # the pool to continue providing connections but stops it from
-        # connecting in background on clients/servers that are in fact
-        # intended to be closed and no longer used.
-        begin
-          _pool.disconnect!(stop_populator: true)
-        rescue Error::PoolClosedError
-          # If the pool was already closed, we don't need to do anything here.
-        end
-      end
+
       @connected = false
+
+      # The current CMAP spec requires a pool to be mostly unusable
+      # if its server is unknown (or, therefore, disconnected).
+      # However any outstanding operations should continue to completion,
+      # and their connections need to be checked into the pool to be
+      # torn down. Because of this cleanup requirement we cannot just
+      # close the pool and set it to nil here, to be recreated the next
+      # time the server is discovered.
+      pool_internal&.clear
+
       true
+    end
+
+    def close
+      if monitor
+        monitor.stop!
+      end
+
+      @connected = false
+
+      _pool = nil
+      @pool_lock.synchronize do
+        _pool, @pool = @pool, nil
+      end
+
+      _pool&.close
+
+      nil
     end
 
     # Whether the server is connected.
@@ -397,8 +410,28 @@ module Mongo
     #
     # @since 2.0.0
     def pool
+      if unknown?
+        raise Error::ServerNotUsable, address
+      end
+
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.new(self, options)
+        @pool ||= ConnectionPool.new(self, options).tap do |pool|
+          pool.ready
+        end
+      end
+    end
+
+    # Internal driver method to retrieve the connection pool for this server.
+    #
+    # Unlike +pool+, +pool_internal+ will not create a pool if one does not
+    # already exist.
+    #
+    # @return [ Server::ConnectionPool | nil ] The connection pool, if one exists.
+    #
+    # @api private
+    def pool_internal
+      @pool_lock.synchronize do
+        @pool
       end
     end
 
@@ -544,6 +577,8 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
+      pool = pool_internal
+
       if load_balancer?
         # When the client is in load-balanced topology, servers (the one and
         # only that can be) starts out as a load balancer and stays as a
@@ -558,12 +593,12 @@ module Mongo
         # this server, but the server can still be marked unknown if one
         # of such connections failed midway through its establishment.
         if service_id = options[:service_id]
-          pool.disconnect!(service_id: service_id)
+          pool&.disconnect!(service_id: service_id)
         end
         return
       end
 
-      if options[:generation] && options[:generation] < pool.generation
+      if options[:generation] && options[:generation] < pool&.generation
         return
       end
 
@@ -596,6 +631,18 @@ module Mongo
     # @api private
     def update_description(description)
       @description = description
+      pool = pool_internal
+      if pool && !unknown?
+        pool.ready
+      end
+    end
+
+    # Clear the servers description so that it is considered unknown and can be
+    # safely disconnected.
+    #
+    # @api private
+    def clear_description
+      @description = Mongo::Server::Description.new(address, {})
     end
 
     # @param [ Object ] :service_id Close connections with the specified
@@ -604,7 +651,11 @@ module Mongo
     # @api private
     def clear_connection_pool(service_id: nil)
       @pool_lock.synchronize do
-        if @pool
+        # A server being marked unknown after it is closed is technically
+        # incorrect but it does not meaningfully alter any state.
+        # Because historically the driver permitted servers to be marked
+        # unknown at any time, continue doing so even if the pool is closed.
+        if @pool && !@pool.closed?
           @pool.disconnect!(service_id: service_id)
         end
       end

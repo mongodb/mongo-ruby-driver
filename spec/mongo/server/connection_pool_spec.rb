@@ -57,7 +57,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    register_pool(described_class.new(server, server_options))
+    register_pool(described_class.new(server, server_options)).tap do |pool|
+      pool.ready
+    end
   end
 
   describe '#initialize' do
@@ -304,7 +306,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      server.disconnect!
+      server.close
     end
 
     let(:options) do
@@ -666,7 +668,11 @@ describe Mongo::Server::ConnectionPool do
         client.cluster.next_primary.pool
       end
 
-       it 'raises an error and emits ConnectionCheckOutFailedEvent' do
+      before do
+        pool.ready
+      end
+
+      it 'raises an error and emits ConnectionCheckOutFailedEvent' do
         pool
 
         subscriber = Mrss::EventSubscriber.new
@@ -687,9 +693,25 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#disconnect!' do
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'does nothing' do
+        expect do
+          pool.disconnect!
+        end.not_to raise_error
+      end
+    end
+  end
+
+  describe '#clear' do
     def create_pool(min_pool_size)
       opts = SpecConfig.instance.test_options.merge(max_pool_size: 3, min_pool_size: min_pool_size)
       described_class.new(server, opts).tap do |pool|
+        pool.ready
         # kill background thread to test disconnect behavior
         pool.stop_populator
         expect(pool.instance_variable_get('@populator').running?).to be false
@@ -711,6 +733,7 @@ describe Mongo::Server::ConnectionPool do
       # require different setup and assertions because load balancers
       # do not have a single global generation.
       require_topology :single, :replica_set, :sharded
+      require_no_linting
 
       it 'disconnects and removes and bumps' do
         old_connections = []
@@ -726,6 +749,8 @@ describe Mongo::Server::ConnectionPool do
 
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
+
+        pool.ready
 
         new_connection = pool.check_out
         expect(old_connections).not_to include(new_connection)
@@ -756,7 +781,7 @@ describe Mongo::Server::ConnectionPool do
 
       it 'raises PoolClosedError' do
         expect do
-          pool.disconnect!
+          pool.clear
         end.to raise_error(Mongo::Error::PoolClosedError)
       end
     end
@@ -795,8 +820,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      server.disconnect!
-      pool.close # this will no longer be needed after server disconnect kills bg thread
+      server.close
+      pool.close # this will no longer be needed after server close kills bg thread
     end
 
     it 'includes the object id' do
@@ -1072,15 +1097,20 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#populate' do
+    require_no_linting
+
     before do
       # Disable the populator and clear the pool to isolate populate behavior
       pool.stop_populator
-      pool.clear
+      pool.disconnect!
+      # Manually mark the pool ready.
+      pool.instance_variable_set('@ready', true)
     end
 
     let(:options) { {min_pool_size: 2, max_pool_size: 3} }
 
     context 'when pool size is at least min_pool_size' do
+
       before do
         first_connection = pool.check_out
         second_connection = pool.check_out

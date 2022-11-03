@@ -50,20 +50,20 @@ module Mongo
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
 
+        process_run_on
         preprocess
       end
 
+      attr_reader :pool
+
       def setup(server, subscriber)
         @subscriber = subscriber
-        @pool = server.pool
-
-        # let pool populate
-        ([0.1, 0.15, 0.15] + [0.2] * 20).each do |t|
-          if @pool.size >= @pool.min_size
-            break
-          end
-          sleep t
-        end
+        # The driver always creates pools for known servers.
+        # There is a test which creates and destroys a pool and it only expects
+        # those two events, not the ready event.
+        # This situation cannot happen in normal driver operation, but to
+        # support this test, create the pool manually here.
+        @pool = Mongo::Server::ConnectionPool.new(server, server.options)
       end
 
       def run
@@ -80,7 +80,7 @@ module Mongo
           end
 
           result['error'] ||= nil
-          result['events'] = subscriber.published_events.reduce([]) do |events, event|
+          result['events'] = subscriber.published_events.each_with_object([]) do |event, events|
             next events unless event.is_a?(Mongo::Monitoring::Event::Cmap::Base)
 
             event = case event
@@ -142,12 +142,33 @@ module Mongo
                         'type' => 'ConnectionPoolCleared',
                         'address' => event.address,
                       }
+                    when Mongo::Monitoring::Event::Cmap::PoolReady
+                      {
+                        'type' => 'ConnectionPoolReady',
+                        'address' => event.address,
+                      }
+                    else
+                      raise "Unhandled event: #{event}"
                     end
 
-            events << event unless @ignore_events.include?(event['type'])
-            events
+            events << event unless @ignore_events.include?(event.fetch('type'))
           end
         end
+      end
+
+      def satisfied?
+        cc = ClusterConfig.instance
+        ok = true
+        if @min_server_version
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version)
+        end
+        if @max_server_version
+          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version)
+        end
+        if @topologies
+          ok &&= @topologies.include?(cc.topology)
+        end
+        ok
       end
 
       private
@@ -189,11 +210,45 @@ module Mongo
             opts[:wait_queue_size] = kv.last
           when 'waitQueueTimeoutMS'
             opts[:wait_queue_timeout] = kv.last / 1000.0
+          when 'backgroundThreadIntervalMS'
+            # The populator busy loops, this option doesn't apply to our driver.
+            #opts[:pool_background_thread_interval] = kv.last / 1000.0
+          when 'appName'
+            opts[:app_name] = kv.last
           else
             raise "Unknown option #{kv.first}"
           end
 
           opts
+        end
+      end
+
+      def process_run_on
+        if run_on = @test['runOn']
+          @min_server_version = run_on.detect do |doc|
+            doc.keys.first == 'minServerVersion'
+          end&.values&.first
+          @max_server_version = run_on.detect do |doc|
+            doc.keys.first == 'maxServerVersion'
+          end&.values&.first
+
+          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }['topology']
+            topologies.map do |topology|
+              {
+                'replicaset' => :replica_set,
+                'single' => :single,
+                'sharded' => :sharded,
+                'sharded-replicaset' => :sharded,
+                'load-balanced' => :load_balanced,
+              }[topology].tap do |v|
+                unless v
+                  raise "Unknown topology #{topology}"
+                end
+              end
+            end
+          else
+            nil
+          end
         end
       end
 
@@ -216,6 +271,7 @@ module Mongo
 
     # Represents an operation in the spec. Operations are sequential.
     class Operation
+      include RSpec::Mocks::ExampleMethods
 
       # @return [ String ] command The name of the operation to run.
       attr_reader :name
@@ -281,6 +337,8 @@ module Mongo
           run_clear_op(state)
         when 'close'
           run_close_op(state)
+        when 'ready'
+          run_ready_op(state)
         else
           raise "invalid operation: #{name}"
         end
@@ -368,11 +426,19 @@ module Mongo
       end
 
       def run_clear_op(state)
-        pool.clear(lazy: true)
+        RSpec::Mocks.with_temporary_scope do
+          allow(pool.server).to receive(:unknown?).and_return(true)
+
+          pool.clear(lazy: true)
+        end
       end
 
       def run_close_op(state)
         pool.close
+      end
+
+      def run_ready_op(state)
+        pool.ready
       end
     end
   end

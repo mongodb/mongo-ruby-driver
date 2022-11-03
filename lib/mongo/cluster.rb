@@ -497,13 +497,16 @@ module Mongo
     # events in the process. Stops SRV monitoring if it is active.
     # Marks the cluster disconnected.
     #
-    # @return [ true ] Always true.
+    # A closed cluster is no longer usable. If the client is reconnected,
+    # it will create a new cluster instance.
     #
-    # @since 2.1.0
-    def disconnect!
+    # @return [ nil ] Always nil.
+    #
+    # @api private
+    def close
       @state_change_lock.synchronize do
         unless connecting? || connected?
-          return true
+          return nil
         end
         if options[:cleanup] != false
           session_pool.end_sessions
@@ -516,7 +519,7 @@ module Mongo
         end
         @servers.each do |server|
           if server.connected?
-            server.disconnect!
+            server.close
             publish_sdam_event(
               Monitoring::SERVER_CLOSED,
               Monitoring::Event::ServerClosed.new(server.address, topology)
@@ -531,7 +534,7 @@ module Mongo
           @connecting = @connected = false
         end
       end
-      true
+      nil
     end
 
     # Reconnect all servers.
@@ -697,12 +700,16 @@ module Mongo
     # @api private
     def set_server_list(server_address_strs)
       @sdam_flow_lock.synchronize do
+        # If one of the new addresses is not in the current servers list,
+        # add it to the servers list.
         server_address_strs.each do |address_str|
           unless servers_list.any? { |server| server.address.seed == address_str }
             add(address_str)
           end
         end
 
+        # If one of the servers' addresses are not in the new address list,
+        # remove that server from the servers list.
         servers_list.each do |server|
           unless server_address_strs.any? { |address_str| server.address.seed == address_str }
             remove(server.address.seed)
@@ -927,6 +934,7 @@ module Mongo
     # @api private
     def disconnect_server_if_connected(server)
       if server.connected?
+        server.clear_description
         server.disconnect!
         publish_sdam_event(
           Monitoring::SERVER_CLOSED,

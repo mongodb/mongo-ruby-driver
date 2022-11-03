@@ -17,23 +17,19 @@
 
 module Mongo
   class Error
+    include WriteRetryable
+    include ChangeStreamResumable
 
-    # Exception raised if an operation is attempted on a closed connection pool.
-    #
-    # @since 2.9.0
-    class PoolClosedError < PoolError
+    # Exception raised if an unknown server is attempted to be used for
+    # an operation.
+    class ServerNotUsable < Error
 
       # Instantiate the new exception.
       #
-      # @example Instantiate the exception.
-      #   Mongo::Error::PoolClosedError.new(address, pool)
-      #
-      # @since 2.9.0
       # @api private
-      def initialize(address, pool)
-        super(address, pool,
-          "Attempted to use a connection pool which has been closed (for #{address} " +
-            "with pool 0x#{pool.object_id})")
+      def initialize(address)
+        @address = address
+        super("Attempted to use an unknown server at #{address}")
       end
     end
   end

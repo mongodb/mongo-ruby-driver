@@ -25,6 +25,8 @@ describe 'Retryable reads spec tests - legacy' do
   require_no_multi_mongos
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|
+    retry_test
+
     let(:client_options) do
       {
         max_read_retries: 1,

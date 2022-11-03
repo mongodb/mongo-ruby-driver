@@ -89,12 +89,14 @@ describe 'Connection pool populator integration' do
 
   describe '#clear' do
     context 'when a min size is provided' do
+      require_no_linting
+
        let(:options) do
         { min_pool_size: 1 }
       end
 
       it 'repopulates the pool periodically only up to min size' do
-        pool
+        pool.ready
 
         sleep 2
         expect(pool.size).to eq(1)
@@ -103,7 +105,9 @@ describe 'Connection pool populator integration' do
         pool.check_in(first_connection)
 
         pool.clear
+        expect(pool.size).to eq(0)
 
+        pool.ready
         sleep 2
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)
@@ -282,6 +286,10 @@ describe 'Connection pool populator integration' do
       it 'populates the parent and child pools' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
           server_options.merge(min_pool_size: 2, max_pool_size: 5))
+
+        # force initialization of the pool
+        client.cluster.servers.first.pool
+
         # let pool populate
         sleep 2
         server = client.cluster.next_primary
