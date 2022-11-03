@@ -46,9 +46,7 @@ module Mongo
         end
 
         def pipe_fds(service_id: nil)
-          validate_service_id!(service_id)
-
-          @pipe_fds[service_id][generation(service_id: service_id)]
+          @pipe_fds[service_id][@map[service_id]]
         end
 
         def remove_pipe_fds(generation, service_id: nil)
@@ -93,6 +91,8 @@ module Mongo
             end
           else
             if server.load_balancer?
+              byebug
+              server.load_balancer?
               raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
             end
           end
