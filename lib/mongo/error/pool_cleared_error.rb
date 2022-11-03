@@ -20,13 +20,9 @@ module Mongo
 
     # Exception raised if an operation is attempted connection that was
     # interrupted due to server monitor timeout.
-    class PoolClearedError < Error
+    class PoolClearedError < PoolError
       include WriteRetryable
       include ChangeStreamResumable
-
-      # @return [ Mongo::Address ] address The address of the server the
-      # pool's connections connect to.
-      attr_reader :address
 
       # Instantiate the new exception.
       #
@@ -34,9 +30,10 @@ module Mongo
       #   Mongo::Error::PoolClearedError.new(address)
       #
       # @api private
-      def initialize(address)
-        @address = address
-        super("Connection to #{address} interrupted due to server monitor timeout")
+      def initialize(address, pool)
+        super(address, pool,
+          "Connection to #{address} interrupted due to server monitor timeout " +
+            "(for pool 0x#{pool.object_id})")
       end
     end
   end
