@@ -91,8 +91,6 @@ module Mongo
             end
           else
             if server.load_balancer?
-              byebug
-              server.load_balancer?
               raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
             end
           end

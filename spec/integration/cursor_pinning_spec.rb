@@ -24,7 +24,7 @@ describe 'Cursor pinning' do
     # new connections as needed.
 
     before do
-      client.reconnect
+      client.reconnect if client.closed?
     end
 
     it 'creates new connections for iteration' do
