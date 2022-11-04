@@ -347,7 +347,7 @@ module Mongo
 
         rv = Kernel.select(*select_args)
         if Lint.enabled?
-          if fd && rv.include?(fd)
+          if fd && rv&.include?(fd)
             # If the return value of select is the read end of the pipe, and
             # an IOError is not raised, then that means the socket is still
             # open. Select is interrupted be closing the write end of the
