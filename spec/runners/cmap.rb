@@ -383,8 +383,6 @@ module Mongo
           run_clear_op(state)
         when 'close'
           run_close_op(state)
-        when 'ready'
-          run_ready_op(state)
         else
           raise "invalid operation: #{name}"
         end
