@@ -1032,8 +1032,8 @@ module Mongo
           # we also listen for the read side of the pipe in Kernel#select and
           # close the write side of the pipe here, which will cause select to
           # wake up and raise an IOError now that the socket is closed.
-          # We close both sides of the pipe since the read side is no longer
-          # needed.
+          # The read side of the pipe will be scheduled for closing on the next
+          # generation bump.
           if @interrupt_connections.empty?
             gens.each do |gen, service_id|
               @generation_manager.remove_pipe_fds(gen, service_id: service_id)

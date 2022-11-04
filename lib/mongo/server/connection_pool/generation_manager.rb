@@ -27,6 +27,7 @@ module Mongo
           @pipe_fds = Hash.new { |hash, key| hash[key] = { 1 => IO.pipe } }
           @server = server
           @lock = Mutex.new
+          @scheduled_for_close = []
         end
 
         attr_reader :server
@@ -54,11 +55,15 @@ module Mongo
 
           r, w = @pipe_fds[service_id].delete(generation)
           w.close
-          r.close
+          # Schedule the read end of the pipe to be closed. We cannot close it
+          # immediately since we need to wait for the Kernel#select call to
+          # return first.
+          @scheduled_for_close << r
         end
 
         def bump(service_id: nil)
           @lock.synchronize do
+            close_all_scheduled
             if service_id
               gen = @map[service_id] += 1
               @pipe_fds[service_id] ||= {}
@@ -93,6 +98,14 @@ module Mongo
             if server.load_balancer?
               raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
             end
+          end
+        end
+
+        # Close all fds scheduled for closing.
+        def close_all_scheduled
+          until @scheduled_for_close.empty?
+            fd = @scheduled_for_close.pop
+            fd.close
           end
         end
       end
