@@ -4,7 +4,11 @@
 require 'spec_helper'
 
 describe 'Cursor pinning' do
-  let(:client) { authorized_client }
+  let(:client) do
+    authorized_client.tap do |client|
+      client.reconnect if client.closed?
+    end
+  end
   let(:collection_name) { 'cursor_pinning' }
   let(:collection) { client[collection_name] }
 
@@ -15,10 +19,6 @@ describe 'Cursor pinning' do
   let(:server) { client.cluster.next_primary }
 
   clean_slate
-
-  before do
-    client.reconnect if client.closed?
-  end
 
   context 'non-lb' do
     require_topology :single, :replica_set, :sharded
