@@ -240,17 +240,25 @@ class Mongo::Cluster
         return
       end
 
-      max_election_id = topology.new_max_election_id(updated_desc)
-      max_set_version = topology.new_max_set_version(updated_desc)
-
-      if max_election_id != topology.max_election_id ||
-        max_set_version != topology.max_set_version
-      then
+      if updated_desc.max_wire_version >= 17
         @topology = Topology::ReplicaSetWithPrimary.new(
           topology.options.merge(
-            max_election_id: max_election_id,
-            max_set_version: max_set_version
+            max_election_id: updated_desc.election_id,
+            max_set_version: updated_desc.set_version
           ), topology.monitoring, self)
+      else
+        max_election_id = topology.new_max_election_id(updated_desc)
+        max_set_version = topology.new_max_set_version(updated_desc)
+
+        if max_election_id != topology.max_election_id ||
+          max_set_version != topology.max_set_version
+        then
+          @topology = Topology::ReplicaSetWithPrimary.new(
+            topology.options.merge(
+              max_election_id: max_election_id,
+              max_set_version: max_set_version
+            ), topology.monitoring, self)
+        end
       end
 
       # At this point we have accepted the updated server description
@@ -576,12 +584,29 @@ class Mongo::Cluster
 
     # Whether updated_desc is for a stale primary.
     def stale_primary?
-      if updated_desc.election_id && updated_desc.set_version
-        if topology.max_set_version && topology.max_election_id &&
-            (updated_desc.set_version < topology.max_set_version ||
-                (updated_desc.set_version == topology.max_set_version &&
-                    updated_desc.election_id < topology.max_election_id))
+      if updated_desc.max_wire_version >= 17
+        if updated_desc.election_id.nil? && !topology.max_election_id.nil?
           return true
+        end
+        if updated_desc.election_id && topology.max_election_id && updated_desc.election_id < topology.max_election_id
+          return true
+        end
+        if updated_desc.election_id == topology.max_election_id
+          if updated_desc.set_version.nil? && !topology.max_set_version.nil?
+            return true
+          end
+          if updated_desc.set_version && topology.max_set_version && updated_desc.set_version < topology.max_set_version
+            return true
+          end
+        end
+      else
+        if updated_desc.election_id && updated_desc.set_version
+          if topology.max_set_version && topology.max_election_id &&
+              (updated_desc.set_version < topology.max_set_version ||
+                  (updated_desc.set_version == topology.max_set_version &&
+                      updated_desc.election_id < topology.max_election_id))
+            return true
+          end
         end
       end
       false
