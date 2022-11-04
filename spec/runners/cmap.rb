@@ -427,10 +427,6 @@ module Mongo
         end
       end
 
-      # Ruby driver does not have the concept of pausing and readying the pool.
-      def run_ready_op(_state)
-      end
-
       def run_wait_op(_state)
         sleep(ms / 1000.0)
       end
