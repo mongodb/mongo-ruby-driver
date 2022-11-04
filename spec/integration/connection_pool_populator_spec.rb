@@ -97,6 +97,7 @@ describe 'Connection pool populator integration' do
 
       it 'repopulates the pool periodically only up to min size' do
         pool.ready
+        expect(pool.instance_variable_get('@populator').running?).to be true
 
         sleep 2
         expect(pool.size).to eq(1)
