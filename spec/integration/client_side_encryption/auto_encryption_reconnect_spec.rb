@@ -28,7 +28,8 @@ describe 'Client with auto encryption #reconnect' do
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
-          database: 'auto_encryption'
+          database: 'auto_encryption',
+          populator_io: false
         }
       )
     )
