@@ -82,7 +82,7 @@ describe 'Connection pool populator integration' do
         sleep 2
 
         expect(pool.size).to eq(0)
-        expect(pool.instance_variable_get('@populator').running?).to be true
+        expect(pool.instance_variable_get('@populator')).to be_running
       end
     end
   end
@@ -97,7 +97,7 @@ describe 'Connection pool populator integration' do
 
       it 'repopulates the pool periodically only up to min size' do
         pool.ready
-        expect(pool.instance_variable_get('@populator').running?).to be true
+        expect(pool.instance_variable_get('@populator')).to be_running
 
         sleep 2
         expect(pool.size).to eq(1)
@@ -266,7 +266,7 @@ describe 'Connection pool populator integration' do
           receive(:create_and_add_connection).twice.and_raise(Mongo::Error::SocketError)
         pool
         sleep 2
-        expect(pool.populator.running?).to be true
+        expect(pool.populator).to be_running
       end
     end
 
@@ -276,7 +276,7 @@ describe 'Connection pool populator integration' do
           receive(:create_and_add_connection).and_raise(Mongo::Error)
         pool
         sleep 2
-        expect(pool.populator.running?).to be true
+        expect(pool.populator).to be_running
       end
     end
   end
