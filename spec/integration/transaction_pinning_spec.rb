@@ -88,7 +88,8 @@ describe 'Transaction pinning' do
         session.pinned_connection_global_id.should_not be nil
 
         server.pool.size.should == 1
-        server.pool.clear
+        service_id = server.pool.instance_variable_get(:@available_connections).first.service_id
+        server.pool.clear(service_id: service_id)
         server.pool.size.should == 0
 
         lambda do

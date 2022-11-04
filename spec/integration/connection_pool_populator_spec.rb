@@ -105,7 +105,12 @@ describe 'Connection pool populator integration' do
         first_connection = pool.check_out
         pool.check_in(first_connection)
 
-        pool.clear
+        if server.load_balancer?
+          pool.clear(service_id: first_connection.service_id)
+        else
+          pool.clear
+        end
+
         ::Utils.wait_for_condition(3) do
           pool.size == 0
         end
