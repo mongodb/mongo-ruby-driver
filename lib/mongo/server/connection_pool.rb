@@ -811,7 +811,7 @@ module Mongo
         yield(connection)
       rescue Error::SocketError, Error::SocketTimeoutError => e
         if connection&.interrupted?
-          err = Error::PoolClearedError.new(connection.server.address).tap do |err|
+          err = Error::PoolClearedError.new(connection.server.address, connection.server.pool).tap do |err|
             e.labels.each { |l| err.add_label(l) }
           end
           raise err

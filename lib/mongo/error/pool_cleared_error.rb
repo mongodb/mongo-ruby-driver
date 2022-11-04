@@ -27,7 +27,7 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::PoolClearedError.new(address)
+      #   Mongo::Error::PoolClearedError.new(address, pool)
       #
       # @api private
       def initialize(address, pool)
