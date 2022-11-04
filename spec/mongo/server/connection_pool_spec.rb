@@ -1127,6 +1127,7 @@ describe Mongo::Server::ConnectionPool do
 
     context "when interrupting in use connections" do
       context "when there's checked out connections" do
+        require_topology :single, :replica_set, :sharded
         require_no_linting
 
         before do
