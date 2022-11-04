@@ -16,16 +16,16 @@ describe 'Cursor pinning' do
 
   clean_slate
 
+  before do
+    client.reconnect if client.closed?
+  end
+
   context 'non-lb' do
     require_topology :single, :replica_set, :sharded
     require_no_multi_mongos
 
     # When not in load-balanced topology, iterating a cursor creates
     # new connections as needed.
-
-    before do
-      client.reconnect if client.closed?
-    end
 
     it 'creates new connections for iteration' do
       server.pool.size.should == 0
