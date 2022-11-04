@@ -810,14 +810,7 @@ module Mongo
         connection = check_out(connection_global_id: connection_global_id)
         yield(connection)
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        if connection&.interrupted?
-          err = Error::PoolClearedError.new(connection.server.address, connection.server.pool).tap do |err|
-            e.labels.each { |l| err.add_label(l) }
-          end
-          raise err
-        else
-          raise e
-        end
+        raise_pool_cleared!(connection, e)
       ensure
         if connection
           check_in(connection)
@@ -1067,6 +1060,25 @@ module Mongo
       def raise_if_closed!
         if closed?
           raise Error::PoolClosedError.new(@server.address, self)
+        end
+      end
+
+      # If the connection was interrupted, raise a pool cleared error. If it
+      # wasn't interrupted raise the original error.
+      #
+      # @param [ Connection ] The connection.
+      # @param [ Mongo::Error ] The original error.
+      #
+      # @raise [ Mongo::Error | Mongo::Error::PoolClearedError ] A PoolClearedError
+      #   if the connection was interrupted, the original error if not.
+      def raise_pool_cleared!(connection, e)
+        if connection&.interrupted?
+          err = Error::PoolClearedError.new(connection.server.address, connection.server.pool).tap do |err|
+            e.labels.each { |l| err.add_label(l) }
+          end
+          raise err
+        else
+          raise e
         end
       end
 
