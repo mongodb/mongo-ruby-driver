@@ -125,6 +125,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if args.key?('unique')
+          opts[:unique] = args.use('unique')
+        end
 
         collection.indexes.create_one(
           args.use!('keys'),

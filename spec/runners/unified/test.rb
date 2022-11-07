@@ -433,9 +433,11 @@ module Unified
                 end
               end
             end
+            if error_response = expected_error.use("errorResponse")
+              assert_result_matches(e.document, error_response)
+            end
             if expected_result = expected_error.use('expectResult')
               assert_result_matches(e.result, expected_result)
-              #expected_result.clear
             # Important: this must be the last branch.
             elsif expected_error.use('isError')
               # Nothing but we consume the key.
