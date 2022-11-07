@@ -69,7 +69,6 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(address, cluster, monitoring, event_listeners, options = {})
-      @backtrace = caller(0)
       @address = address
       @cluster = cluster
       @monitoring = monitoring
