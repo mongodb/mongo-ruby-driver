@@ -596,8 +596,6 @@ module Mongo
       def pause
         raise_if_closed!
 
-        check_invariants
-
         if Lint.enabled? && !@server.unknown?
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
@@ -605,8 +603,6 @@ module Mongo
         return if !@ready
 
         @ready = false
-      ensure
-        check_invariants
       end
 
       # Closes all idle connections in the pool and schedules currently checked
