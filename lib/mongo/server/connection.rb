@@ -274,7 +274,7 @@ module Mongo
             socket, @server, monitoring, options.merge(id: id))
           pending_connection.handshake_and_authenticate!
         rescue Exception
-          socket.close if socket
+          socket&.close
           @socket = nil
           raise
         end
