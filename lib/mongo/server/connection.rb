@@ -297,6 +297,8 @@ module Mongo
       #
       # @option options [ Symbol ] :reason The reason why the connection is
       #   being closed.
+      # @option options [ true | false ] :interrupted Whether or not the
+      #   connection was interrupted.
       #
       # @return [ true ] If the disconnect succeeded.
       #

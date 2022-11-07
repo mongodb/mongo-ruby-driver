@@ -657,6 +657,8 @@ module Mongo
 
     # @param [ Object ] :service_id Close connections with the specified
     #   service id only.
+    # @param [ true | false ] :interrupt_in_use_connections Whether or not the
+    #   cleared connections should be interrupted as well.
     #
     # @api private
     def clear_connection_pool(service_id: nil, interrupt_in_use_connections: false)

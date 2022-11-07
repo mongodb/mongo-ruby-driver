@@ -56,8 +56,10 @@ module Mongo
           r, w = @pipe_fds[service_id].delete(generation)
           w.close
           # Schedule the read end of the pipe to be closed. We cannot close it
-          # immediately since we need to wait for the Kernel#select call to
-          # return first.
+          # immediately since we need to wait for any Kernel#select calls to
+          # notice that part of the pipe is closed, and check the socket. This
+          # all happens when attempting to read from the socket and waiting for
+          # it to become ready again.
           @scheduled_for_close << r
         end
 
