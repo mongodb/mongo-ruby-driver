@@ -1127,7 +1127,8 @@ module Mongo
         if @server.load_balancer? && service_id
           loop do
             conn = connections.detect do |conn|
-              conn.service_id == service_id
+              conn.service_id == service_id &&
+              conn.generation < @generation_manager.generation(service_id: service_id)
             end
             if conn
               connections.delete(conn)
@@ -1148,7 +1149,10 @@ module Mongo
         end
       end
 
-      # Interrupt in use connections and check them back into the pool.
+      # Schedule connections of previous generations for interruption.
+      #
+      # @param [ Array<Connection> ] connections A list of connections.
+      # @param [ Object ] service_id The service id.
       def schedule_for_interruption(connections, service_id)
         @interrupt_connections += connections.select do |conn|
           (!server.load_balancer? || conn.service_id == service_id) &&
