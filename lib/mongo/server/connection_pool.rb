@@ -1073,7 +1073,7 @@ module Mongo
       #   if the connection was interrupted, the original error if not.
       def raise_pool_cleared!(connection, e)
         if connection&.interrupted?
-          err = Error::PoolClearedError.new(connection.server.address, connection.server.pool).tap do |err|
+          err = Error::PoolClearedError.new(connection.server.address, connection.server.pool_internal).tap do |err|
             e.labels.each { |l| err.add_label(l) }
           end
           raise err
