@@ -213,7 +213,9 @@ describe Mongo::Crypt::Handle do
         end
 
         it 'instructs libmongocrypt to handle empty AWS credentials' do
-          expect(Mongo::Crypt::Binding).to receive(:setopt_use_need_kms_credentials_state).once
+          expect(Mongo::Crypt::Binding).to receive(
+            :setopt_use_need_kms_credentials_state
+          ).once.and_call_original
           handle
         end
       end
