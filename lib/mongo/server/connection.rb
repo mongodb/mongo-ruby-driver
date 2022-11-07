@@ -164,9 +164,7 @@ module Mongo
       # Interrupted connections were already removed from the pool and should
       # not be checked back into the pool.
       #
-      # @return [ true | false ] Whether connection was closed.
-      #
-      # @since 2.9.0
+      # @return [ true | false ] Whether connection was interrupted.
       def interrupted?
         !!@interrupted
       end
