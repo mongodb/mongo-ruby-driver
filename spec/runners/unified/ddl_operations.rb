@@ -39,6 +39,9 @@ module Unified
         if view_on = args.use('viewOn')
           collection_opts[:view_on] = view_on
         end
+        if pipeline = args.use('pipeline')
+          collection_opts[:pipeline] = pipeline
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
