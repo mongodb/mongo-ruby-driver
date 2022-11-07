@@ -1083,7 +1083,10 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
 
-        pool.disconnect!
+        RSpec::Mocks.with_temporary_scope do
+          pool.server.should receive(:unknown?).and_return(true)
+          pool.disconnect!
+        end
 
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
