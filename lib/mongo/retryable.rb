@@ -496,13 +496,18 @@ module Mongo
       server.with_connection(connection_global_id: context.connection_global_id) do |connection|
         yield(connection, txn_num, context)
       end
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolError => e
+      if e.write_retryable?
+        e.add_note('modern retry')
+        e.add_note('attempt 2')
+        raise e
+      else
+        original_error.add_note("later retry failed: #{e.class}: #{e}")
+        raise original_error
+      end
+    rescue Error::OperationFailure => e
       e.add_note('modern retry')
-      e.add_note('attempt 2')
-      raise e
-    rescue Error::OperationFailure, Error::PoolError => e
-      e.add_note('modern retry')
-      if (e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')) || e.write_retryable?
+      if e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')
         e.add_note('attempt 2')
         raise e
       else
