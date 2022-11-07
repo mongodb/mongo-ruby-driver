@@ -600,8 +600,6 @@ module Mongo
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
 
-        return if !@ready
-
         @ready = false
       end
 
