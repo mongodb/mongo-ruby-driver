@@ -591,14 +591,28 @@ module Mongo
         end
       end
 
-      # Mark the connection pool as paused. The lock must have already been
-      # acquired when this method is called.
+      # Mark the connection pool as paused.
       def pause
         raise_if_closed!
 
+        check_invariants
+
+        @lock.synchronize do
+          do_pause
+        end
+      ensure
+        check_invariants
+      end
+
+      # Mark the connection pool as paused without acquiring the lock
+      #
+      # @api private
+      def do_pause
         if Lint.enabled? && !@server.unknown?
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
+
+        return if !@ready
 
         @ready = false
       end
@@ -671,7 +685,7 @@ module Mongo
                 interrupt_in_use_connections: options&.[](:interrupt_in_use_connections)
               )
             )
-            pause unless @server.load_balancer?
+            do_pause unless @server.load_balancer?
           end
         end
 
