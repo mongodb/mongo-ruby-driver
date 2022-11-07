@@ -131,7 +131,7 @@ module Mongo
         server = select_server(cluster, server_selector, session)
         begin
           yield server
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Error::OperationFailure => e
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -163,10 +163,14 @@ module Mongo
     # @since 2.2.6
     def read_with_one_retry(options = nil)
       yield
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
-      retry_message = options && options[:retry_message]
-      log_retry(e, message: retry_message)
-      yield
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolError => e
+      if e.write_retryable?
+        retry_message = options && options[:retry_message]
+        log_retry(e, message: retry_message)
+        yield
+      else
+        raise e
+      end
     end
 
     # Implements write retrying functionality by yielding to the passed
@@ -243,7 +247,7 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Auth::Unauthorized => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
@@ -261,12 +265,12 @@ module Mongo
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
         retry_write(e, txn_num, context: context.with(is_retry: true), &block)
-      rescue Error::OperationFailure => e
+      rescue Error::OperationFailure, Error::PoolError => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
-        if e.unsupported_retryable_write?
+        if e.respond_to?(:unsupported_retryable_write?) && e.unsupported_retryable_write?
           raise_unsupported_error(e)
-        elsif !e.label?('RetryableWriteError')
+        elsif !e.label?('RetryableWriteError') && !e.write_retryable?
           raise e
         end
 
@@ -304,7 +308,7 @@ module Mongo
           server.with_connection(connection_global_id: context.connection_global_id) do |connection|
             yield connection, nil, context
           end
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Error::OperationFailure => e
+        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -367,14 +371,14 @@ module Mongo
       server = select_server(cluster, server_selector, session)
       begin
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError, Error::ServerNotUsable => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ServerNotUsable => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction?
           raise e
         end
         retry_read(e, server_selector, session, &block)
-      rescue Error::OperationFailure, Auth::Unauthorized => e
+      rescue Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if session.in_transaction? || !e.write_retryable?
@@ -390,7 +394,7 @@ module Mongo
       begin
         attempt += 1
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
         e.add_note('legacy retry')
         e.add_note("attempt #{attempt}")
         if attempt > client.max_read_retries || (session && session.in_transaction?)
@@ -399,7 +403,7 @@ module Mongo
         log_retry(e, message: 'Legacy read retry')
         server = select_server(cluster, server_selector, session)
         retry
-      rescue Error::OperationFailure => e
+      rescue Error::OperationFailure, Error::PoolError => e
         e.add_note('legacy retry')
         e.add_note("attempt #{attempt}")
         if e.retryable? && !(session && session.in_transaction?)
@@ -445,11 +449,11 @@ module Mongo
 
       begin
         yield server, true
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
         e.add_note('modern retry')
         e.add_note("attempt 2")
         raise e
-      rescue Error::OperationFailure => e
+      rescue Error::OperationFailure, Error::PoolError => e
         e.add_note('modern retry')
         unless e.write_retryable?
           original_error.add_note("later retry failed: #{e.class}: #{e}")
@@ -492,13 +496,13 @@ module Mongo
       server.with_connection(connection_global_id: context.connection_global_id) do |connection|
         yield(connection, txn_num, context)
       end
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolClearedError => e
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable => e
       e.add_note('modern retry')
       e.add_note('attempt 2')
       raise e
-    rescue Error::OperationFailure => e
+    rescue Error::OperationFailure, Error::PoolError => e
       e.add_note('modern retry')
-      if e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')
+      if (e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')) || e.write_retryable?
         e.add_note('attempt 2')
         raise e
       else

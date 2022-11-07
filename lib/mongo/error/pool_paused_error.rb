@@ -20,6 +20,8 @@ module Mongo
 
     # Exception raised if an operation is attempted on a paused connection pool.
     class PoolPausedError < PoolError
+      include WriteRetryable
+      include ChangeStreamResumable
 
       # Instantiate the new exception.
       #
