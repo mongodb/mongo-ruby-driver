@@ -1010,34 +1010,32 @@ module Mongo
 
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connections
-        gens = Set.new
-        until @interrupt_connections.empty?
-          if conn = @interrupt_connections.pop
-            if @checked_out_connections.include?(conn)
-              # If the connection has been checked out, mark it as interrupted and it will
-              # be disconnected on check in.
-              conn.interrupted!
-              do_check_in(conn)
-            elsif @pending_connections.include?(conn)
-              # If the connection is pending, disconnect with the interrupted flag.
-              conn.disconnect!(reason: :stale, interrupted: true)
-              @pending_connections.delete(conn)
-            end
-            gens << [ conn.generation, conn.service_id ]
-          end
+        return if @interrupt_connections.empty?
 
-          # Close the write side of the pipe. Pending connections might be
-          # hanging on the Kernel#select call, so in order to interrupt that,
-          # we also listen for the read side of the pipe in Kernel#select and
-          # close the write side of the pipe here, which will cause select to
-          # wake up and raise an IOError now that the socket is closed.
-          # The read side of the pipe will be scheduled for closing on the next
-          # generation bump.
-          if @interrupt_connections.empty?
-            gens.each do |gen, service_id|
-              @generation_manager.remove_pipe_fds(gen, service_id: service_id)
-            end
+        gens = Set.new
+        while conn = @interrupt_connections.pop
+          if @checked_out_connections.include?(conn)
+            # If the connection has been checked out, mark it as interrupted and it will
+            # be disconnected on check in.
+            conn.interrupted!
+            do_check_in(conn)
+          elsif @pending_connections.include?(conn)
+            # If the connection is pending, disconnect with the interrupted flag.
+            conn.disconnect!(reason: :stale, interrupted: true)
+            @pending_connections.delete(conn)
           end
+          gens << [ conn.generation, conn.service_id ]
+        end
+
+        # Close the write side of the pipe. Pending connections might be
+        # hanging on the Kernel#select call, so in order to interrupt that,
+        # we also listen for the read side of the pipe in Kernel#select and
+        # close the write side of the pipe here, which will cause select to
+        # wake up and raise an IOError now that the socket is closed.
+        # The read side of the pipe will be scheduled for closing on the next
+        # generation bump.
+        gens.each do |gen, service_id|
+          @generation_manager.remove_pipe_fds(gen, service_id: service_id)
         end
       end
 
