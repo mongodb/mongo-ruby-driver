@@ -247,7 +247,7 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Auth::Unauthorized => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::PoolError, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
@@ -265,12 +265,12 @@ module Mongo
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
         retry_write(e, txn_num, context: context.with(is_retry: true), &block)
-      rescue Error::OperationFailure, Error::PoolError => e
+      rescue Error::OperationFailure => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
-        if e.respond_to?(:unsupported_retryable_write?) && e.unsupported_retryable_write?
+        if e.unsupported_retryable_write?
           raise_unsupported_error(e)
-        elsif !e.label?('RetryableWriteError') && !e.write_retryable?
+        elsif !e.label?('RetryableWriteError')
           raise e
         end
 
