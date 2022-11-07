@@ -119,7 +119,6 @@ module Mongo
 
         @server = server
         @options = options.freeze
-        @options = @options.merge(backtrace: caller(0))
 
         @generation_manager = GenerationManager.new(server: server)
         @ready = false
