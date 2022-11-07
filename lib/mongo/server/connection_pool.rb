@@ -685,7 +685,9 @@ module Mongo
                 interrupt_in_use_connections: options&.[](:interrupt_in_use_connections)
               )
             )
-            do_pause unless @server.load_balancer?
+            # Only pause the connection pool if the server was marked unknown,
+            # otherwise, allow the retry to be attempted with a ready pool.
+            do_pause if !@server.load_balancer? && @server.unknown?
           end
         end
 
