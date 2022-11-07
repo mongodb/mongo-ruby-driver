@@ -125,7 +125,7 @@ module Unified
 
         collection.indexes.create_one(
           args.use!('keys'),
-          name: args.use!('name'),
+          name: args.use('name'),
           **opts,
         )
       end
