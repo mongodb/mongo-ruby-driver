@@ -1141,7 +1141,7 @@ describe Mongo::Server::ConnectionPool do
         end
 
         it "interrupts the connections" do
-          expect(pool).to receive(:populate).exactly(2).and_call_original
+          expect(pool).to receive(:populate).exactly(3).and_call_original
           pool.clear(lazy: true, interrupt_in_use_connections: true)
           expect(interrupt_connections.length).to eq(4)
 
