@@ -949,7 +949,7 @@ module Mongo
         r, _ = @generation_manager.pipe_fds(service_id: server.description.service_id)
         opts = options.merge(
           connection_pool: self,
-          fd: r
+          pipe: r
           # Do not pass app metadata - this will be retrieved by the connection
           # based on the auth needs.
         )

@@ -334,10 +334,10 @@ module Mongo
             raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
           end
         end
-        fd = options[:fd]
+        pipe = options[:pipe]
         if exc.is_a?(IO::WaitReadable)
-          if fd
-            select_args = [[@socket, fd], nil, [@socket, fd], select_timeout]
+          if pipe
+            select_args = [[@socket, pipe], nil, [@socket, pipe], select_timeout]
           else
             select_args = [[@socket], nil, [@socket], select_timeout]
           end
@@ -347,11 +347,11 @@ module Mongo
 
         rv = Kernel.select(*select_args)
         if Lint.enabled?
-          if fd && rv&.include?(fd)
+          if pipe && rv&.include?(pipe)
             # If the return value of select is the read end of the pipe, and
             # an IOError is not raised, then that means the socket is still
             # open. Select is interrupted be closing the write end of the
-            # pipe, which either returns the fd if the socket is open, or
+            # pipe, which either returns the pipe if the socket is open, or
             # raises an IOError if it isn't. Select is interrupted after all
             # of the pending and checked out connections have been interrupted
             # and closed, and this only happens once the pool is cleared with
