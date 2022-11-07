@@ -228,7 +228,7 @@ describe 'Client with auto encryption #reconnect' do
     let(:key_vault_client_option) do
       new_local_client(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options
+        SpecConfig.instance.test_options.merge(populator_io: false)
       )
     end
 
