@@ -15,9 +15,11 @@ describe Mongo::Client do
         expect_any_instance_of(Mongo::Server::Monitor).not_to receive(:scan!)
 
         # return should be instant
-        c = Timeout.timeout(1) do
-          ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
-        end
+        start = Mongo::Utils.monotonic_time
+        c = ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
+        fin = Mongo::Utils.monotonic_time
+        expect(fin - start).to be < 1
+
         expect(c.cluster.servers).to be_empty
         c.close
       end
