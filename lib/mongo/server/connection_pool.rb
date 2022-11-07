@@ -1010,7 +1010,7 @@ module Mongo
 
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connections
-        return if @interrupt_connections.empty?
+        return false if @interrupt_connections.empty?
 
         gens = Set.new
         while conn = @interrupt_connections.pop
@@ -1037,6 +1037,8 @@ module Mongo
         gens.each do |gen, service_id|
           @generation_manager.remove_pipe_fds(gen, service_id: service_id)
         end
+
+        true
       end
 
       # Checks whether a connection is stale.
