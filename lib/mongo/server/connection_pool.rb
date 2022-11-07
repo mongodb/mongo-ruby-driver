@@ -592,6 +592,8 @@ module Mongo
         end
       end
 
+      # Mark the connection pool as paused. The lock must have already been
+      # acquired when this method is called.
       def pause
         raise_if_closed!
 
@@ -601,11 +603,9 @@ module Mongo
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
 
-        return if paused?
+        return if !@ready
 
-        @lock.synchronize do
-          @ready = false
-        end
+        @ready = false
       ensure
         check_invariants
       end
@@ -669,17 +669,17 @@ module Mongo
             schedule_for_interruption(@checked_out_connections, service_id)
             schedule_for_interruption(@pending_connections, service_id)
           end
-        end
 
-        unless paused?
-          publish_cmap_event(
-            Monitoring::Event::Cmap::PoolCleared.new(
-              @server.address,
-              service_id: service_id,
-              interrupt_in_use_connections: options&.[](:interrupt_in_use_connections)
+          if @ready
+            publish_cmap_event(
+              Monitoring::Event::Cmap::PoolCleared.new(
+                @server.address,
+                service_id: service_id,
+                interrupt_in_use_connections: options&.[](:interrupt_in_use_connections)
+              )
             )
-          )
-          pause unless @server.load_balancer?
+            pause unless @server.load_balancer?
+          end
         end
 
         # "Schedule the background thread" after clearing. This is responsible
