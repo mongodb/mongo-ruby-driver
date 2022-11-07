@@ -604,7 +604,7 @@ module Mongo
         check_invariants
       end
 
-      # Mark the connection pool as paused without acquiring the lock
+      # Mark the connection pool as paused without acquiring the lock.
       #
       # @api private
       def do_pause
