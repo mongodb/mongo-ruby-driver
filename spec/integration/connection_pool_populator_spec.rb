@@ -106,7 +106,7 @@ describe 'Connection pool populator integration' do
         pool.check_in(first_connection)
 
         RSpec::Mocks.with_temporary_scope do
-          pool.server.should receive(:unknown?).and_return(true)
+          allow(pool.server).to receive(:unknown?).and_return(true)
           if server.load_balancer?
             pool.clear(service_id: first_connection.service_id)
           else

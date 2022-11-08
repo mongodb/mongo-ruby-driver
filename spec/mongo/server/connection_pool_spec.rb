@@ -1084,7 +1084,7 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.available_count).to eq(2)
 
         RSpec::Mocks.with_temporary_scope do
-          pool.server.should receive(:unknown?).and_return(true)
+          allow(pool.server).to receive(:unknown?).and_return(true)
           pool.disconnect!
         end
 
@@ -1146,7 +1146,7 @@ describe Mongo::Server::ConnectionPool do
         it "interrupts the connections" do
           expect(pool).to receive(:populate).exactly(3).and_call_original
           RSpec::Mocks.with_temporary_scope do
-            pool.server.should receive(:unknown?).and_return(true)
+            allow(pool.server).to receive(:unknown?).and_return(true)
             pool.clear(lazy: true, interrupt_in_use_connections: true)
           end
           expect(interrupt_connections.length).to eq(4)
