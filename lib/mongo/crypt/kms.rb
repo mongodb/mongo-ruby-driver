@@ -18,6 +18,12 @@
 module Mongo
   module Crypt
     module KMS
+      # This error indicates that we could not obtain credential for
+      # a KMS service.
+      #
+      # @api private
+      class CredentialsNotFound < RuntimeError; end
+
       # This module contains helper methods for validating KMS parameters.
       #
       # @api private

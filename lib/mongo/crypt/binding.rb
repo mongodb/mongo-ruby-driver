@@ -83,7 +83,7 @@ module Mongo
       # will cause a `LoadError`.
       #
       # @api private
-      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.5.2")
+      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.6.1")
 
       # @!method self.mongocrypt_version(len)
       #   @api private

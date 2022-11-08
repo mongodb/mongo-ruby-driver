@@ -125,6 +125,15 @@ module Mongo
                 )
               end
               providers[:aws] = aws_credentials.to_h
+            elsif kms_providers.gcp&.empty?
+              begin
+                gcp_access_token = KMS::GCP::CredentialsRetriever.get_access_token
+              rescue KMS::CredentialsNotFound => e
+                raise Error::CryptError.new(
+                  "Could not locate GCP credentials: #{e.class}: #{e.message}"
+                )
+              end
+              providers[:gcp] = { access_token: gcp_access_token }
             end
             Binding.ctx_provide_kms_providers(
               self,
