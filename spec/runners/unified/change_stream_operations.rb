@@ -27,8 +27,9 @@ module Unified
           opts[:show_expanded_events] = args.use!('showExpandedEvents')
         end
         cs = object.watch(pipeline, **opts)
-        name = op.use!('saveResultAsEntity')
-        entities.set(:change_stream, name, cs)
+        if name = op.use('saveResultAsEntity')
+          entities.set(:change_stream, name, cs)
+        end
       end
     end
 
