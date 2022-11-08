@@ -596,8 +596,6 @@ module Mongo
       def pause
         raise_if_closed!
 
-        @pause_backtrace = caller(0)
-
         check_invariants
 
         @lock.synchronize do
@@ -611,9 +609,11 @@ module Mongo
       #
       # @api private
       def do_pause
+        @pause_backtrace = caller(0)
         if Lint.enabled? && !@server.unknown?
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
+
 
         return if !@ready
 
