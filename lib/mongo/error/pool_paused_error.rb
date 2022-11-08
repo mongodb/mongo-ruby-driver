@@ -31,11 +31,9 @@ module Mongo
       # @since 2.9.0
       # @api private
       def initialize(address, pool)
-        puts "POOL PAUSEDDD"
-        puts pool.instance_variable_get(:@pause_backtrace)
         super(address, pool,
           "Attempted to use a connection pool which is paused (for #{address} " +
-            "with pool 0x#{pool.object_id})")
+            "with pool 0x#{pool.object_id})\n\n#{pool.instance_variable_get(:@pause_backtrace)}")
       end
     end
   end
