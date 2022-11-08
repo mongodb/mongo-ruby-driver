@@ -33,7 +33,7 @@ module Mongo
       def initialize(address, pool)
         super(address, pool,
           "Connection to #{address} interrupted due to server monitor timeout " +
-            "(for pool 0x#{pool.object_id})")
+            "(for pool 0x#{pool.object_id})\n\n#{pool.instance_variable_get(:@pause_backtrace)}\n\n#{pool.instance_variable_get(:@backtrace)}")
       end
     end
   end
