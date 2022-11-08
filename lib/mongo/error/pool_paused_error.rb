@@ -33,7 +33,7 @@ module Mongo
       def initialize(address, pool)
         super(address, pool,
           "Attempted to use a connection pool which is paused (for #{address} " +
-            "with pool 0x#{pool.object_id})\n\n#{pool.instance_variable_get(:@pause_backtrace)}")
+            "with pool 0x#{pool.object_id})\n\n#{pool.instance_variable_get(:@pause_backtrace)}\n\n#{pool.instance_variable_get(:@backtrace)}")
       end
     end
   end

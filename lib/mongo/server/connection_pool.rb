@@ -90,6 +90,7 @@ module Mongo
       #
       # @since 2.0.0, API changed in 2.9.0
       def initialize(server, options = {})
+        @backtrace = caller(0)
         unless server.is_a?(Server)
           raise ArgumentError, 'First argument must be a Server instance'
         end
