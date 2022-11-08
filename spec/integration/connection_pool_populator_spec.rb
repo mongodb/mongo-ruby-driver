@@ -105,10 +105,13 @@ describe 'Connection pool populator integration' do
         first_connection = pool.check_out
         pool.check_in(first_connection)
 
-        if server.load_balancer?
-          pool.clear(service_id: first_connection.service_id)
-        else
-          pool.clear
+        RSpec::Mocks.with_temporary_scope do
+          pool.server.should receive(:unknown?).and_return(true)
+          if server.load_balancer?
+            pool.clear(service_id: first_connection.service_id)
+          else
+            pool.clear
+          end
         end
 
         ::Utils.wait_for_condition(3) do
