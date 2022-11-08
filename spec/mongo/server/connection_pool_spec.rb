@@ -1145,7 +1145,10 @@ describe Mongo::Server::ConnectionPool do
 
         it "interrupts the connections" do
           expect(pool).to receive(:populate).exactly(3).and_call_original
-          pool.clear(lazy: true, interrupt_in_use_connections: true)
+          RSpec::Mocks.with_temporary_scope do
+            pool.server.should receive(:unknown?).and_return(true)
+            pool.clear(lazy: true, interrupt_in_use_connections: true)
+          end
           expect(interrupt_connections.length).to eq(4)
 
           ::Utils.wait_for_condition(3) do
