@@ -446,6 +446,16 @@ module Unified
           else
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end
+        elsif op.use('ignoreResultAndError')
+          unless respond_to?(method_name)
+            raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name.to_s}"
+          end
+
+          begin
+            send(method_name, op)
+          # We can possibly rescue more errors here, add as needed.
+          rescue Mongo::Error
+          end
         else
           unless respond_to?(method_name, true)
             raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name.to_s}"

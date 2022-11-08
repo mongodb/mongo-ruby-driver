@@ -293,6 +293,18 @@ module Unified
       end
     end
 
+    def assert_number_connections_checked_out(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        connections = args.use!('connections')
+        actual_c = client.cluster.servers.map(&:pool_internal).compact.sum do |p|
+          p.instance_variable_get(:@checked_out_connections).length
+        end
+        assert_eq(actual_c, connections, "Expected client #{client} to have #{connections} checked out connections but there are #{actual_c}.")
+      end
+    end
+
     private
 
     def assert_no_arguments(op)
