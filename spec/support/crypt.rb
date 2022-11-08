@@ -139,6 +139,7 @@ module Crypt
     let(:schema_map) do
       BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
+
     let(:data_key_options) { {} }
 
     let(:encrypted_ssn) do
