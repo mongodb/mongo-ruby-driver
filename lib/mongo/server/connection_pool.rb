@@ -595,6 +595,8 @@ module Mongo
       def pause
         raise_if_closed!
 
+        @pause_backtrace = caller(0)
+
         check_invariants
 
         @lock.synchronize do
