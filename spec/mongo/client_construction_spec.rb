@@ -2702,7 +2702,7 @@ describe Mongo::Client do
         new_local_client(['127.0.0.1:27017'],
           database: SpecConfig.instance.test_db,
           server_selection_timeout: 0.5,
-          socket_timeout: 0.1, connect_timeout: 0.1)
+          socket_timeout: 0.1, connect_timeout: 0.1, populator_io: false)
       end
       let(:new_client) do
         client.with(app_name: 'client_construction_spec').tap do |new_client|
