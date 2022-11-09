@@ -93,6 +93,7 @@ module Unified
           let: args.use('let'),
           comment: args.use('comment'),
           hint: args.use('hint'),
+          upsert: args.use('upsert'),
         }
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym
