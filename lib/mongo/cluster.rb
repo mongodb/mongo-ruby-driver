@@ -641,7 +641,9 @@ module Mongo
               # TODO should service id be taken out of updated_desc?
               # We could also assert that
               # options[:service_id] == updated_desc.service_id
-              server.clear_connection_pool(service_id: options[:service_id])
+              err = options[:scan_error]
+              interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
+              server.clear_connection_pool(service_id: options[:service_id], interrupt_in_use_connections: interrupt)
             end
           end
         end
