@@ -10,16 +10,16 @@ describe Mongo::Client do
 
   describe '.new' do
     context 'with scan: false' do
+      fails_on_jruby
+
       it 'does not perform i/o' do
         allow_any_instance_of(Mongo::Server::Monitor).to receive(:run!)
         expect_any_instance_of(Mongo::Server::Monitor).not_to receive(:scan!)
 
         # return should be instant
-        start = Mongo::Utils.monotonic_time
-        c = ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
-        fin = Mongo::Utils.monotonic_time
-        expect(fin - start).to be < 1
-
+        c = Timeout.timeout(1) do
+          ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
+        end
         expect(c.cluster.servers).to be_empty
         c.close
       end
