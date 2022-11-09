@@ -689,16 +689,11 @@ module Mongo
             # otherwise, allow the retry to be attempted with a ready pool.
             do_pause if !@server.load_balancer? && @server.unknown?
           end
-
-          # "Schedule the background thread" after clearing. This is responsible
-          # for cleaning up stale threads, and interrupting in use connections.
-          if options && options[:stop_populator]
-            stop_populator_unlocked
-          else
-            @populate_semaphore.signal
-          end
         end
 
+        # "Schedule the background thread" after clearing. This is responsible
+        # for cleaning up stale threads, and interrupting in use connections.
+        @populate_semaphore.signal
         true
       ensure
         check_invariants
@@ -749,6 +744,8 @@ module Mongo
       #
       # @option options [ true | false ] :force Also close all checked out
       #   connections.
+      # @option options [ true | false ] :stay_ready For internal driver use
+      #    only. Whether or not to mark the pool as closed.
       #
       # @return [ true ] Always true.
       #
@@ -774,10 +771,12 @@ module Mongo
             end
           end
 
-          # mark pool as closed before releasing lock so
-          # no connections can be created, checked in, or checked out
-          @closed = true
-          @ready = false
+          unless options && options[:stay_ready]
+            # mark pool as closed before releasing lock so
+            # no connections can be created, checked in, or checked out
+            @closed = true
+            @ready = false
+          end
         end
 
         publish_cmap_event(
@@ -875,12 +874,6 @@ module Mongo
           # but not deleted from pending_connections. These should be cleaned up.
           clear_pending_connections
         end
-      end
-
-      # Stop the populator without acquiring the lock.
-      def stop_populator_unlocked
-        @populator.stop!
-        clear_pending_connections
       end
 
       # This method does three things:
@@ -1179,6 +1172,7 @@ module Mongo
         end
       end
 
+      # Clear and disconnect the pending connections.
       def clear_pending_connections
         until @pending_connections.empty?
           connection = @pending_connections.take(1).first
