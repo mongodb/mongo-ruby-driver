@@ -14,17 +14,14 @@ describe 'Client' do
       client.close
     end
 
-    it 'fails in connection pool' do
-      lambda do
-        client.database.command(ping: 1)
-      end.should raise_error(Mongo::Error::ClientClosed)
+    it 'is still usable for operations' do
+      resp = client.database.command(ping: 1)
+      expect(resp).to be_a(Mongo::Operation::Result)
     end
 
     context 'operation that can use sessions' do
-      it 'fails in connection pool' do
-        lambda do
-          client['collection'].insert_one(test: 1)
-        end.should raise_error(Mongo::Error::ClientClosed)
+      it 'is still usable for operations' do
+        client['collection'].insert_one(test: 1)
       end
     end
 
@@ -41,7 +38,7 @@ describe 'Client' do
         it 'fails server selection' do
           expect do
             client.database.command(ping: 1)
-          end.to raise_error(Mongo::Error::ClientClosed)
+          end.to raise_error(Mongo::Error::NoServerAvailable)
         end
       end
 
@@ -49,7 +46,7 @@ describe 'Client' do
         it 'fails server selection' do
           expect do
             client['collection'].insert_one(test: 1)
-          end.to raise_error(Mongo::Error::ClientClosed)
+          end.to raise_error(Mongo::Error::NoServerAvailable)
         end
       end
     end

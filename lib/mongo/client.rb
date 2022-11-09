@@ -1141,7 +1141,8 @@ module Mongo
     #
     # @api private
     def with_session(options = {}, &block)
-      assert_not_closed
+      # TODO: Add this back in RUBY-3174.
+      # assert_not_closed
 
       session = get_session(options)
 
