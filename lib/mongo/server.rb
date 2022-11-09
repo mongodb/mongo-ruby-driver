@@ -639,11 +639,11 @@ module Mongo
 
     # @api private
     def update_description(description)
-      @description = description
       pool = pool_internal
-      if pool && !unknown?
+      if pool && !description.unknown?
         pool.ready
       end
+      @description = description
     end
 
     # Clear the servers description so that it is considered unknown and can be
