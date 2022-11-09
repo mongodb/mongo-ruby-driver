@@ -119,7 +119,6 @@ module Mongo
 
         @server = server
         @options = options.freeze
-        @options = @options
 
         @generation_manager = GenerationManager.new(server: server)
         @ready = false
@@ -612,7 +611,6 @@ module Mongo
         if Lint.enabled? && !@server.unknown?
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
-
 
         return if !@ready
 
