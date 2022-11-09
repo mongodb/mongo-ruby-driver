@@ -1149,7 +1149,6 @@ describe Mongo::Server::ConnectionPool do
             allow(pool.server).to receive(:unknown?).and_return(true)
             pool.clear(lazy: true, interrupt_in_use_connections: true)
           end
-          expect(interrupt_connections.length).to eq(4)
 
           ::Utils.wait_for_condition(3) do
             pool.size == 0
