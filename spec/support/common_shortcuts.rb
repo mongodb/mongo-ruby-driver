@@ -325,6 +325,8 @@ module CommonShortcuts
         client.cluster.servers_list.each do |server|
           if pool = server.pool
             pool.instance_variable_set('@closed', false)
+            # Stop the populator so that we don't have leftover threads.
+            pool.instance_variable_get('@populator').stop!
           end
         end
       end
@@ -405,6 +407,9 @@ module CommonShortcuts
     # Used for tests that e.g. mock network operations to avoid interference
     # from server monitoring.
     def reset_pool(server)
+      if pool = server.pool_internal
+        pool.close
+      end
       server.remove_instance_variable('@pool')
       server.pool.ready
     end

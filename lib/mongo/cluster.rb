@@ -625,10 +625,12 @@ module Mongo
     #   respective server is cleared. Set this option to true to keep the
     #   existing connection pool (required when handling not master errors
     #   on 4.2+ servers).
-    # @option aptions [ true | false ] :awaited Whether the updated description
+    # @option options [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
     # @option options [ Object ] :service_id Change state for the specified
     #   service id only.
+    # @option options [ Mongo::Error | nil ] :scan_error The error encountered
+    #   while scanning, or nil if no error was raised.
     #
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
@@ -639,7 +641,9 @@ module Mongo
               # TODO should service id be taken out of updated_desc?
               # We could also assert that
               # options[:service_id] == updated_desc.service_id
-              server.clear_connection_pool(service_id: options[:service_id])
+              err = options[:scan_error]
+              interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
+              server.clear_connection_pool(service_id: options[:service_id], interrupt_in_use_connections: interrupt)
             end
           end
         end
@@ -659,7 +663,9 @@ module Mongo
           if flow.became_unknown?
             servers_list.each do |server|
               if server.address == updated_desc.address
-                server.clear_connection_pool
+                err = options[:scan_error]
+                interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
+                server.clear_connection_pool(interrupt_in_use_connections: interrupt)
               end
             end
           end
@@ -831,6 +837,9 @@ module Mongo
       address = Address.new(host, options)
       if !addresses.include?(address)
         opts = options.merge(monitor: false)
+        # If we aren't starting the montoring threads, we also don't want to
+        # start the pool's populator thread.
+        opts.merge!(populator_io: false) unless options.fetch(:monitoring_io, true)
         # Note that in a load-balanced topology, every server must be a
         # load balancer (load_balancer: true is specified in the options)
         # but this option isn't set here because we are required by the

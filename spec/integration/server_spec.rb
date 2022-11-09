@@ -29,11 +29,14 @@ describe 'Server' do
           expect(server).not_to be_unknown
         end
 
-        it 'fails in connection pool' do
+        after do
+          server.close
+        end
+
+        it 'can be used for reads' do
           # See also RUBY-3102.
-          lambda do
-            view.send(:send_initial_query, server)
-          end.should raise_error(Mongo::Error::PoolPausedError)
+          result = view.send(:send_initial_query, server)
+          expect(result).to be_a(Mongo::Operation::Find::Result)
         end
       end
 
@@ -45,6 +48,10 @@ describe 'Server' do
           client.close
           server.unknown!
           expect(server).to be_unknown
+        end
+
+        after do
+          server.close
         end
 
         it 'is unusable' do

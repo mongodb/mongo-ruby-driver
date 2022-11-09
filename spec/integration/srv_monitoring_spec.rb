@@ -134,6 +134,7 @@ describe 'SRV Monitoring' do
             nameserver_port: [['127.0.0.1', 5300], ['127.0.0.1', 5300]],
           },
           logger: logger,
+          populator_io: false,
         ),
       )
     end

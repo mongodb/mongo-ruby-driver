@@ -43,6 +43,14 @@ describe Mongo::Cursor do
           reset_pool(server)
         end
       end
+
+      after do
+        authorized_client.cluster.servers.each do |server|
+          if pool = server.pool_internal
+            pool.close
+          end
+        end
+      end
     end
 
     context 'cursor exhausted by initial result' do
@@ -754,6 +762,10 @@ describe Mongo::Cursor do
 
       before do
         reset_pool(server)
+      end
+
+      after do
+        server.pool.close
       end
 
       it 'does not raise an error' do

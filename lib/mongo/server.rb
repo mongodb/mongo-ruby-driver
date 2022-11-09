@@ -54,6 +54,15 @@ module Mongo
     #   done by this server. Note: setting this option to false will make
     #   the server non-functional. It is intended for use in tests which
     #   manually invoke SDAM state transitions.
+    # @option options [ true, false ] :populator_io For internal driver
+    #   use only. Set to false to prevent the populator threads from being
+    #   created and started in the server's connection pool. It is intended
+    #   for use in tests that also turn off monitoring_io, unless the populator
+    #   is explicitly needed. If monitoring_io is off, but the populator_io
+    #   is on, the populator needs to be manually closed at the end of the
+    #   test, since a cluster without monitoring is considered not connected,
+    #   and thus will not clean up the connection pool populator threads on
+    #   close.
     # @option options [ true | false ] :load_balancer Whether this server
     #   is a load balancer.
     # @option options [ String ] :connect The client connection mode.
@@ -630,11 +639,11 @@ module Mongo
 
     # @api private
     def update_description(description)
-      @description = description
       pool = pool_internal
-      if pool && !unknown?
+      if pool && !description.unknown?
         pool.ready
       end
+      @description = description
     end
 
     # Clear the servers description so that it is considered unknown and can be
@@ -647,16 +656,18 @@ module Mongo
 
     # @param [ Object ] :service_id Close connections with the specified
     #   service id only.
+    # @param [ true | false ] :interrupt_in_use_connections Whether or not the
+    #   cleared connections should be interrupted as well.
     #
     # @api private
-    def clear_connection_pool(service_id: nil)
+    def clear_connection_pool(service_id: nil, interrupt_in_use_connections: false)
       @pool_lock.synchronize do
         # A server being marked unknown after it is closed is technically
         # incorrect but it does not meaningfully alter any state.
         # Because historically the driver permitted servers to be marked
         # unknown at any time, continue doing so even if the pool is closed.
         if @pool && !@pool.closed?
-          @pool.disconnect!(service_id: service_id)
+          @pool.disconnect!(service_id: service_id, interrupt_in_use_connections: interrupt_in_use_connections)
         end
       end
     end

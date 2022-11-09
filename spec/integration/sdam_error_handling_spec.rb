@@ -25,6 +25,7 @@ describe 'SDAM error handling' do
       SpecConfig.instance.all_test_options.merge(
         socket_timeout: 3, connect_timeout: 3,
         heartbeat_frequency: 100,
+        populator_io: false,
         # Uncomment to print all events to stdout:
         #sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
         **Utils.disable_retries_client_options)

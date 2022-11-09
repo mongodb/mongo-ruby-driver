@@ -52,6 +52,10 @@ describe Mongo::Client do
         # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
         clean_slate
 
+        before do
+          authorized_client.reconnect if authorized_client.closed?
+        end
+
         it 'raises an exception' do
           expect do
             new_client

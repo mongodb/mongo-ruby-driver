@@ -129,14 +129,13 @@ describe Mongo::Server do
       end
 
       it 'pauses and clears the connection pool' do
-        expect(server.pool_internal).to receive(:pause).once.and_call_original
-        expect(server.pool_internal).to receive(:clear).once.and_call_original
+        expect(server.pool_internal).to receive(:close).once.and_call_original
         RSpec::Mocks.with_temporary_scope do
           # you can't disconnect from a known server, since this pauses the
           # pool and we only want to pause the pools of unknown servers.
           server.unknown!
           allow(server).to receive(:unknown?).and_return(true)
-          server.disconnect!
+          server.close
         end
       end
     end

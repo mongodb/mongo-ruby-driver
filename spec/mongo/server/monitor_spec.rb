@@ -271,7 +271,6 @@ describe Mongo::Server::Monitor do
         expect(monitor).to receive(:check).and_raise(IOError)
         # The retry is done on a new socket instance.
         #expect(socket).to receive(:write).and_call_original
-
         monitor.send(:do_scan)
       end
 
@@ -281,7 +280,9 @@ describe Mongo::Server::Monitor do
           # of the message.
           expect(msg).to match(/#{server.address}/)
         end
-        expect(result).to be_a(Hash)
+        expect do
+          result
+        end.to raise_error(IOError)
       end
     end
 

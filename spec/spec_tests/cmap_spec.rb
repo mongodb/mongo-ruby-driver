@@ -27,7 +27,7 @@ describe 'Cmap' do
   let(:options) do
     Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
       SpecConfig.instance.all_test_options,
-    )).update(monitoring_io: false).tap do |options|
+    )).update(monitoring_io: false, populator_io: true).tap do |options|
       # We have a wait queue timeout set in the test suite options, but having
       # this option set interferes with assertions in the cmap spec tests.
       options.delete(:wait_queue_timeout)
@@ -61,28 +61,21 @@ describe 'Cmap' do
             allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
           end
         )
-        spec.setup(@server, subscriber)
+
+        @client = ClusterTools.instance.direct_client(ClusterConfig.instance.primary_address,
+          database: 'admin')
+        spec.setup(@server, @client, subscriber)
       end
 
       after do
-        if @server && (pool = @server.instance_variable_get('@pool'))
-          begin
-            pool.disconnect!
-          rescue Mongo::Error::PoolClosedError
-          end
+        if pool = @server&.pool_internal
+          pool.disconnect!
         end
 
         spec.pool&.close
       end
 
       let!(:result) do
-        socket = double('fake socket')
-        allow(socket).to receive(:close)
-        # When linting, connection pool ensures the connection returned
-        # is connected.
-        allow(socket).to receive(:alive?).and_return(true)
-
-        allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(socket)
         if @server.load_balancer?
           allow_any_instance_of(Mongo::Server::Connection).to receive(:service_id).and_return('very fake')
         end

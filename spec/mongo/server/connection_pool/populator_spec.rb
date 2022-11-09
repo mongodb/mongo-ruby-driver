@@ -29,8 +29,8 @@ describe Mongo::Server::ConnectionPool::Populator do
   before do
     # We create our own populator to test; disable pool's background populator
     # and clear the pool, so ours can run
-    pool.stop_populator
     pool.disconnect!
+    pool.stop_populator
   end
 
   describe '#log_warn' do
@@ -65,6 +65,7 @@ describe Mongo::Server::ConnectionPool::Populator do
       end
 
       it 'populates the pool up to min_size' do
+        pool.instance_variable_set(:@ready, true)
         populator.run!
         ::Utils.wait_for_condition(3) do
           pool.size >= 2
@@ -87,6 +88,17 @@ describe Mongo::Server::ConnectionPool::Populator do
       it 'does not terminate the thread' do
         expect(pool).to receive(:populate).once.and_raise(Mongo::Error::SocketError)
         populator.run!
+        sleep 0.5
+        expect(populator.running?).to be true
+      end
+    end
+
+    context "when clearing the pool" do
+      it "the populator is run one extra time" do
+        expect(pool).to receive(:populate).twice
+        populator.run!
+        sleep 0.5
+        pool.disconnect!
         sleep 0.5
         expect(populator.running?).to be true
       end

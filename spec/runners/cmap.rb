@@ -49,6 +49,8 @@ module Mongo
         @expected_error = @test['error']
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
+        @fail_point_command = @test['failPoint']
+        @threads = Set.new
 
         process_run_on
         preprocess
@@ -56,14 +58,17 @@ module Mongo
 
       attr_reader :pool
 
-      def setup(server, subscriber)
+      def setup(server, client, subscriber)
         @subscriber = subscriber
+        @client = client
         # The driver always creates pools for known servers.
         # There is a test which creates and destroys a pool and it only expects
         # those two events, not the ready event.
         # This situation cannot happen in normal driver operation, but to
         # support this test, create the pool manually here.
         @pool = Mongo::Server::ConnectionPool.new(server, server.options)
+
+        configure_fail_point
       end
 
       def run
@@ -76,6 +81,8 @@ module Mongo
             if err
               result['error'] = err
               break
+            elsif op.name == 'start'
+              @threads << state[op.target]
             end
           end
 
@@ -141,6 +148,7 @@ module Mongo
                       {
                         'type' => 'ConnectionPoolCleared',
                         'address' => event.address,
+                        'interruptInUseConnections' => event.options[:interrupt_in_use_connections]
                       }
                     when Mongo::Monitoring::Event::Cmap::PoolReady
                       {
@@ -154,6 +162,22 @@ module Mongo
             events << event unless @ignore_events.include?(event.fetch('type'))
           end
         end
+      ensure
+        disable_fail_points
+        kill_remaining_threads
+      end
+
+      def disable_fail_points
+        if @fail_point_command
+          @client.command(
+            configureFailPoint: @fail_point_command['configureFailPoint'],
+            mode: 'off'
+          )
+        end
+      end
+
+      def kill_remaining_threads
+        @threads.each(&:kill)
       end
 
       def satisfied?
@@ -167,6 +191,9 @@ module Mongo
         end
         if @topologies
           ok &&= @topologies.include?(cc.topology)
+        end
+        if @oses
+          ok &&= @oses.any? { |os| SpecConfig.instance.send("#{os.to_s}?")}
         end
         ok
       end
@@ -198,7 +225,7 @@ module Mongo
       # This method only handles options used by spec tests at the time when
       # this method was written. Other options are silently dropped.
       def process_options(options)
-        (options || {}).reduce({}) do |opts, kv|
+        (options || {}).each_with_object({}) do |kv, opts|
           case kv.first
           when 'maxIdleTimeMS'
             opts[:max_idle_time] = kv.last / 1000.0
@@ -218,8 +245,6 @@ module Mongo
           else
             raise "Unknown option #{kv.first}"
           end
-
-          opts
         end
       end
 
@@ -232,8 +257,8 @@ module Mongo
             doc.keys.first == 'maxServerVersion'
           end&.values&.first
 
-          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }['topology']
-            topologies.map do |topology|
+          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }
+            (topologies['topology'] || {}).map do |topology|
               {
                 'replicaset' => :replica_set,
                 'single' => :single,
@@ -246,8 +271,20 @@ module Mongo
                 end
               end
             end
-          else
-            nil
+          end
+
+          @oses = if oses = run_on.detect { |doc| doc.keys.first == 'requireOs' }
+            (oses['requireOs'] || {}).map do |os|
+              {
+                'macos' => :macos,
+                'linux' => :linux,
+                'windows' => :windows,
+              }[os].tap do |v|
+                unless v
+                  raise "Unknown os #{os}"
+                end
+              end
+            end
           end
         end
       end
@@ -266,6 +303,10 @@ module Mongo
             end
           end
         end
+      end
+
+      def configure_fail_point
+        @client.database.command(@fail_point_command) if @fail_point_command
       end
     end
 
@@ -292,6 +333,10 @@ module Mongo
       # @return [ String | nil ] label The label for the returned connection.
       attr_reader :label
 
+      # @return [ true | false ] interrupt_in_use_connections Whether or not
+      #   all connections should be closed on pool clear.
+      attr_reader :interrupt_in_use_connections
+
       # @return [ String | nil ] The binding for the connection which should run the operation.
       attr_reader :connection
 
@@ -313,6 +358,7 @@ module Mongo
         @connection = operation['connection']
         @event = operation['event']
         @count = operation['count']
+        @interrupt_in_use_connections = !!operation['interruptInUseConnections']
       end
 
       def run(pool, state, main_thread = true)
@@ -337,8 +383,6 @@ module Mongo
           run_clear_op(state)
         when 'close'
           run_close_op(state)
-        when 'ready'
-          run_ready_op(state)
         else
           raise "invalid operation: #{name}"
         end
@@ -368,18 +412,19 @@ module Mongo
       def run_start_op(state)
         state[target] = Thread.start do
           Thread.current[:name] = @target
-          thread_ops.each { |op| op.run(pool, state, false) }
+          thread_ops.each do |op|
+            op.run(pool, state, false)
+          end
         end
+
+        # Allow the thread to begin running.
+        sleep 0.1
 
         # Since we expect exceptions to occur in some cases, we disable the printing of error
         # messages from the thread if the Ruby version supports it.
         if state[target].respond_to?(:report_on_exception)
           state[target].report_on_exception = false
         end
-      end
-
-      # Ruby driver does not have the concept of pausing and readying the pool.
-      def run_ready_op(_state)
       end
 
       def run_wait_op(_state)
@@ -429,7 +474,7 @@ module Mongo
         RSpec::Mocks.with_temporary_scope do
           allow(pool.server).to receive(:unknown?).and_return(true)
 
-          pool.clear(lazy: true)
+          pool.clear(lazy: true, interrupt_in_use_connections: interrupt_in_use_connections)
         end
       end
 

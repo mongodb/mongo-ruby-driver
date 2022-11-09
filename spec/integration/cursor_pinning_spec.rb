@@ -4,7 +4,11 @@
 require 'spec_helper'
 
 describe 'Cursor pinning' do
-  let(:client) { authorized_client }
+  let(:client) do
+    authorized_client.tap do |client|
+      client.reconnect if client.closed?
+    end
+  end
   let(:collection_name) { 'cursor_pinning' }
   let(:collection) { client[collection_name] }
 
@@ -22,10 +26,6 @@ describe 'Cursor pinning' do
 
     # When not in load-balanced topology, iterating a cursor creates
     # new connections as needed.
-
-    before do
-      client.reconnect
-    end
 
     it 'creates new connections for iteration' do
       server.pool.size.should == 0

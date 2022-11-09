@@ -80,6 +80,7 @@ module Mongo
       :monitoring_io,
       :password,
       :platform,
+      :populator_io,
       :read,
       :read_concern,
       :read_retry_interval,
