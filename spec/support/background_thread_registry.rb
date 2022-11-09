@@ -32,7 +32,6 @@ class BackgroundThreadRegistry
         object: object,
         # When rake spec:prepare is run, the current_example method is not defined
         example: RSpec.respond_to?(:current_example) ? RSpec.current_example : nil,
-        backtrace: caller(0),
       )
     end
   end
@@ -52,7 +51,6 @@ class BackgroundThreadRegistry
           else
             msg << "\n  not in an example"
           end
-          msg << "\n\n#{record.backtrace}"
         end
         raise msg
       end
