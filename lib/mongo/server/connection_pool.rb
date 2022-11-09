@@ -90,7 +90,6 @@ module Mongo
       #
       # @since 2.0.0, API changed in 2.9.0
       def initialize(server, options = {})
-        @backtrace = caller(0)
         unless server.is_a?(Server)
           raise ArgumentError, 'First argument must be a Server instance'
         end
@@ -120,7 +119,7 @@ module Mongo
 
         @server = server
         @options = options.freeze
-        @options = @options.merge(backtrace: caller(0))
+        @options = @options
 
         @generation_manager = GenerationManager.new(server: server)
         @ready = false
@@ -610,7 +609,6 @@ module Mongo
       #
       # @api private
       def do_pause
-        @pause_backtrace = caller(0)
         if Lint.enabled? && !@server.unknown?
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
