@@ -703,11 +703,12 @@ module Mongo
       def ready
         raise_if_closed!
 
-        if Lint.enabled?
-          unless @server.connected?
-            raise Error::LintError, "Attempting to ready a pool for server #{@server.summary} which is disconnected"
-          end
-        end
+        # TODO: Add this back in RUBY-3174.
+        # if Lint.enabled?
+        #   unless @server.connected?
+        #     raise Error::LintError, "Attempting to ready a pool for server #{@server.summary} which is disconnected"
+        #   end
+        # end
 
         @lock.synchronize do
           return if @ready
