@@ -1161,6 +1161,15 @@ describe Mongo::Server::ConnectionPool do
         end
       end
     end
+
+    context "when in load-balanced mode" do
+      require_topology :load_balanced
+
+      it "does not pause the pool" do
+        pool.clear
+        expect(pool).to_not be_paused
+      end
+    end
   end
 
   describe '#close' do
