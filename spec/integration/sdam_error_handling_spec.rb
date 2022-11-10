@@ -425,4 +425,58 @@ describe 'SDAM error handling' do
       end
     end
   end
+
+  context "when there is an error on the handshake" do
+    require_fail_command
+
+    let(:admin_client) do
+      new_local_client(SpecConfig.instance.addresses, {
+          populator_io: false,
+          direct_connection: true,
+          app_name: "SDAMMinHeartbeatFrequencyTest",
+          database: 'admin'
+        }
+      )
+    end
+
+    let(:cmd_client) do
+      # Change the server selection timeout so that we are given a new cluster.
+      admin_client.with(server_selection_timeout: 5)
+    end
+
+    let(:set_fail_point) do
+      admin_client.command(
+        configureFailPoint: 'failCommand',
+        mode: { times: 5 },
+        data: {
+          failCommands: %w(isMaster hello),
+          errorCode: 1234,
+          appName: "SDAMMinHeartbeatFrequencyTest"
+        },
+      )
+    end
+
+    let(:operation) do
+      expect(server.monitor.connection).not_to be nil
+      set_fail_point
+    end
+
+    it "waits 500ms between failed hello checks" do
+      operation
+      start = Mongo::Utils.monotonic_time
+      cmd_client.command(hello: 1)
+      duration = Mongo::Utils.monotonic_time - start
+      expect(duration).to be >= 2
+      expect(duration).to be <= 3.5
+
+      # The cluster that we use to set up the failpoint should not be the same
+      # one we ping on, so that the ping will have to select a server. The admin
+      # client has already selected a server.
+      expect(admin_client.cluster.object_id).to_not eq(cmd_client.cluster.object_id)
+    end
+
+    after do
+      admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
+    end
+  end
 end
