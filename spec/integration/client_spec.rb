@@ -6,7 +6,7 @@ require 'spec_helper'
 describe 'Client' do
   # TODO after the client is closed, operations should fail with an exception
   # that communicates this state, instead of failing with server selection or
-  # pool errors. RUBY-3102
+  # pool errors. RUBY-3102, RUBY-3174.
   context 'after client is disconnected' do
     let(:client) { authorized_client.with(server_selection_timeout: 1) }
 

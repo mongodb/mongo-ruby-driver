@@ -428,7 +428,8 @@ module Mongo
       end
 
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.new(self, options).tap do |pool|
+        opts = connected? ? options : options.merge(populator_io: false)
+        @pool ||= ConnectionPool.new(self, opts).tap do |pool|
           pool.ready
         end
       end
