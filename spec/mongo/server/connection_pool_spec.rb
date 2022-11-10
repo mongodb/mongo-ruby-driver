@@ -1166,6 +1166,7 @@ describe Mongo::Server::ConnectionPool do
       require_topology :load_balanced
 
       it "does not pause the pool" do
+        pool.server.should receive(:unknown?).and_return(true)
         pool.clear
         expect(pool).to_not be_paused
       end
