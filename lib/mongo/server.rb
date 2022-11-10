@@ -303,7 +303,10 @@ module Mongo
         _pool, @pool = @pool, nil
       end
 
-      _pool&.close
+      # TODO: change this to _pool.close in RUBY-3174.
+      # Clear the pool. If the server is not unknown then the
+      # pool will stay ready. Stop the background populator thread.
+      _pool&.close(stay_ready: true)
 
       nil
     end
@@ -424,7 +427,8 @@ module Mongo
       end
 
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.new(self, options).tap do |pool|
+        opts = connected? ? options : options.merge(populator_io: false)
+        @pool ||= ConnectionPool.new(self, opts).tap do |pool|
           pool.ready
         end
       end

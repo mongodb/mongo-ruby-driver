@@ -703,11 +703,12 @@ module Mongo
       def ready
         raise_if_closed!
 
-        if Lint.enabled?
-          unless @server.connected?
-            raise Error::LintError, "Attempting to ready a pool for server #{@server.summary} which is disconnected"
-          end
-        end
+        # TODO: Add this back in RUBY-3174.
+        # if Lint.enabled?
+        #   unless @server.connected?
+        #     raise Error::LintError, "Attempting to ready a pool for server #{@server.summary} which is disconnected"
+        #   end
+        # end
 
         @lock.synchronize do
           return if @ready
@@ -744,6 +745,8 @@ module Mongo
       #
       # @option options [ true | false ] :force Also close all checked out
       #   connections.
+      # @option options [ true | false ] :stay_ready For internal driver use
+      #    only. Whether or not to mark the pool as closed.
       #
       # @return [ true ] Always true.
       #
@@ -769,10 +772,12 @@ module Mongo
             end
           end
 
-          # mark pool as closed before releasing lock so
-          # no connections can be created, checked in, or checked out
-          @closed = true
-          @ready = false
+          unless options && options[:stay_ready]
+            # mark pool as closed before releasing lock so
+            # no connections can be created, checked in, or checked out
+            @closed = true
+            @ready = false
+          end
         end
 
         publish_cmap_event(
@@ -868,11 +873,7 @@ module Mongo
           # connections waiting to be connected, connections which have not yet
           # been moved to available_connections, or connections moved to available_connections
           # but not deleted from pending_connections. These should be cleaned up.
-          until @pending_connections.empty?
-            connection = @pending_connections.take(1).first
-            connection.disconnect!
-            @pending_connections.delete(connection)
-          end
+          clear_pending_connections
         end
       end
 
@@ -1169,6 +1170,15 @@ module Mongo
         @interrupt_connections += connections.select do |conn|
           (!server.load_balancer? || conn.service_id == service_id) &&
           conn.generation < @generation_manager.generation(service_id: service_id)
+        end
+      end
+
+      # Clear and disconnect the pending connections.
+      def clear_pending_connections
+        until @pending_connections.empty?
+          connection = @pending_connections.take(1).first
+          connection.disconnect!
+          @pending_connections.delete(connection)
         end
       end
     end
