@@ -1,6 +1,9 @@
 version: 1
 style: unit
 description: readying a ready pool emits no events
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 operations:
   - name: ready
   - name: ready
