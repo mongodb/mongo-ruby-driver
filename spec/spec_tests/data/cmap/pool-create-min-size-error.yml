@@ -5,6 +5,7 @@ runOn:
   -
     # required for appName in fail point
     minServerVersion: "4.9.0"
+  - topology: [ "single", "replicaset", "sharded" ]
 failPoint:
   configureFailPoint: failCommand
   # high amount to ensure not interfered with by monitor checks.
