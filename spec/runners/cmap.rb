@@ -43,7 +43,7 @@ module Mongo
         @test = ::Utils.load_spec_yaml_file(test_path)
 
         @description = @test['description']
-        @pool_options = ::Utils.snakeize_hash(process_options(@test['poolOptions']))
+        @pool_options = process_options(@test['poolOptions'])
         @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
         @processed_ops = []
         @expected_error = @test['error']
@@ -67,6 +67,7 @@ module Mongo
         # This situation cannot happen in normal driver operation, but to
         # support this test, create the pool manually here.
         @pool = Mongo::Server::ConnectionPool.new(server, server.options)
+        server.instance_variable_set(:@pool, @pool)
 
         configure_fail_point
       end
@@ -307,6 +308,7 @@ module Mongo
 
       def configure_fail_point
         @client.database.command(@fail_point_command) if @fail_point_command
+        Mongo.broken_view_options = false if @fail_point_command
       end
     end
 
@@ -438,7 +440,7 @@ module Mongo
       def run_wait_for_event_op(state)
         subscriber = @spec.subscriber
         looped = 0
-        deadline = Utils.monotonic_time + 3
+        deadline = Utils.monotonic_time + 113
         loop do
           actual_events = @spec.subscriber.published_events.select do |e|
             e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
