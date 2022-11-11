@@ -1,9 +1,6 @@
 version: 1
 style: unit
 description: Connections MUST be interrupted as soon as possible (interruptInUseConnections=true)
-# Remove the topology runOn requirement when cmap specs are adjusted for lbs
-runOn:
-  - topology: [ "single", "replicaset", "sharded" ]
 poolOptions:
   # ensure it's not involved by default
   backgroundThreadIntervalMS: 10000
