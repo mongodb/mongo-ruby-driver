@@ -308,7 +308,6 @@ module Mongo
 
       def configure_fail_point
         @client.database.command(@fail_point_command) if @fail_point_command
-        Mongo.broken_view_options = false if @fail_point_command
       end
     end
 
