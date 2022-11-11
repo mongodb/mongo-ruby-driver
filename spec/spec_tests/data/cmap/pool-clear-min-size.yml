@@ -4,6 +4,10 @@ description: pool clear halts background minPoolSize establishments
 poolOptions:
   minPoolSize: 1
   backgroundThreadIntervalMS: 50
+# Remove this runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  -
+    topology: [ "single", "replicaset", "sharded" ]
 operations:
   - name: ready
   - name: waitForEvent

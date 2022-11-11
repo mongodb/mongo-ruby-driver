@@ -1,6 +1,10 @@
 version: 1
 style: integration
 description: clear with interruptInUseConnections = true closes pending connections
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - minServerVersion: "4.9.0"
+  - topology: [ "single", "replicaset", "sharded" ]
 failPoint:
   configureFailPoint: failCommand
   mode: "alwaysOn"

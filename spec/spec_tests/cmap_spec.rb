@@ -9,7 +9,6 @@ require 'runners/cmap'
 # commands being sent during cleanup from interfering with assertions.
 
 describe 'Cmap' do
-  require_topology :single, :replica_set, :sharded
   clean_slate
 
   declare_topology_double
