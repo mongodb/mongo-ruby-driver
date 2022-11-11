@@ -430,7 +430,7 @@ describe 'SDAM error handling' do
     require_fail_command
 
     let(:admin_client) do
-      new_local_client(SpecConfig.instance.addresses, {
+      new_local_client(SpecConfig.instance.addresses.slice(0, 1), {
           populator_io: false,
           direct_connection: true,
           app_name: "SDAMMinHeartbeatFrequencyTest",
