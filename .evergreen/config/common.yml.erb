@@ -531,6 +531,7 @@ post:
   - func: "delete serverless instance"
   <% end %>
 
+<% unless @atlas %>
 task_groups:
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -568,6 +569,7 @@ task_groups:
             .evergreen/csfle/gcpkms/delete-instance.sh
     tasks:
       - testgcpkms-task
+<% end %>
 
 tasks:
 

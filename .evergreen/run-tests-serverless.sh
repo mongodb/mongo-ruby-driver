@@ -26,14 +26,16 @@ else
     exit -1
 fi
 
-. .evergreen/csfle/activate_venv.sh
-pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+cd .evergreen/csfle
+. ./activate-kmstlsvenv.sh
 
-python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
-python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
-python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
-python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
-python3 -u .evergreen/csfle/kms_kmip_server.py &
+pip install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+
+python -u ./kms_http_server.py --ca_file ../x509gen/ca.pem --cert_file ../x509gen/server.pem --port 7999 &
+python -u ./kms_http_server.py --ca_file ../x509gen/ca.pem --cert_file ../x509gen/expired.pem --port 8000 &
+python -u ./kms_http_server.py --ca_file ../x509gen/ca.pem --cert_file ../x509gen/wrong-host.pem --port 8001 &
+python -u ./kms_http_server.py --ca_file ../x509gen/ca.pem --cert_file ../x509gen/server.pem --port 8002 --require_client_cert &
+python -u ./kms_kmip_server.py &
 
 echo "Waiting for mock KMS servers to start..."
 wait_for_kms_server() {
@@ -54,7 +56,8 @@ wait_for_kms_server 5698
 echo "Waiting for mock KMS servers to start... done."
 
 # Obtain temporary AWS credentials
-PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
+. ./set-temp-creds.sh
+cd -
 
 echo "Running specs"
 
