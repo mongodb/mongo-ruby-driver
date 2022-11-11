@@ -440,7 +440,7 @@ module Mongo
       def run_wait_for_event_op(state)
         subscriber = @spec.subscriber
         looped = 0
-        deadline = Utils.monotonic_time + 113
+        deadline = Utils.monotonic_time + 3
         loop do
           actual_events = @spec.subscriber.published_events.select do |e|
             e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
