@@ -427,7 +427,8 @@ describe 'SDAM error handling' do
   end
 
   context "when there is an error on the handshake" do
-    require_fail_command
+    # require appName for fail point
+    min_server_version "4.9"
 
     let(:admin_client) do
       new_local_client(SpecConfig.instance.addresses.slice(0, 1), {
