@@ -43,7 +43,7 @@ module Mongo
         @test = ::Utils.load_spec_yaml_file(test_path)
 
         @description = @test['description']
-        @pool_options = ::Utils.snakeize_hash(process_options(@test['poolOptions']))
+        @pool_options = process_options(@test['poolOptions'])
         @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
         @processed_ops = []
         @expected_error = @test['error']
@@ -67,6 +67,7 @@ module Mongo
         # This situation cannot happen in normal driver operation, but to
         # support this test, create the pool manually here.
         @pool = Mongo::Server::ConnectionPool.new(server, server.options)
+        server.instance_variable_set(:@pool, @pool)
 
         configure_fail_point
       end

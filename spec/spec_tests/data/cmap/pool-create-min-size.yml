@@ -1,6 +1,9 @@
 version: 1
 style: unit
 description: must be able to start a pool with minPoolSize connections
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 poolOptions:
   minPoolSize: 3
 operations:
