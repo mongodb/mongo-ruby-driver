@@ -286,7 +286,7 @@ describe 'Client-Side Encryption' do
                 master_key: master_key
              }
             )
-          end.to raise_error(Mongo::Error::KmsError, /(SocketError|ECONNRESET)/)
+          end.to raise_error(Mongo::Error::KmsError, /(certificate_required|SocketError|ECONNRESET)/)
         end
       end
 
