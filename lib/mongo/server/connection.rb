@@ -228,8 +228,6 @@ module Mongo
         end
 
         unless @socket
-          # When @socket is assigned, the socket should have handshaken and
-          # authenticated and be usable.
           @socket = create_socket
           @description, @compressor = do_connect
 
