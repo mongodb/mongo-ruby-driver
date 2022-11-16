@@ -100,6 +100,13 @@ module Unified
             opts = {}
           end
 
+          # max_pool_size gets automatically set to 3 if not explicitly set by
+          # the test, therefore, if min_pool_size is set, make sure to set the
+          # max_pool_size as well to something greater.
+          if !opts.key?('max_pool_size') && min_pool_size = opts[:min_pool_size]
+            opts[:max_pool_size] = min_pool_size + 3
+          end
+
           if spec.use('useMultipleMongoses')
             if ClusterConfig.instance.topology == :sharded
               unless SpecConfig.instance.addresses.length > 1
@@ -121,8 +128,6 @@ module Unified
             store_events.each do |spec|
               entity_name = spec['id']
               event_names = spec['events']
-              #event_name = event_name.gsub(/Event$/, '').gsub(/[A-Z]/) { |m| "_#{m}" }.upcase
-              #event_name = event_name.gsub(/Event$/, '').sub(/./) { |m| m.upcase }
               event_names.each do |event_name|
                 store_event_names[event_name] = entity_name
               end
