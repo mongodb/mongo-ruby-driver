@@ -37,6 +37,12 @@ operations:
   #   opened by the background thread, before the background thread releases its permit.
   - name: wait
     ms: 200
+  - name: wait
+    thread: thread1
+    ms: 200
+  - name: wait
+    thread: thread2
+    ms: 200
   - name: checkOut
     thread: thread1
   - name: waitForEvent
