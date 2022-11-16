@@ -3,11 +3,10 @@ style: integration
 description: threads blocked by maxConnecting check out minPoolSize connections
 # Remove the topology runOn requirement when cmap specs are adjusted for lbs
 runOn:
-  - topology: [ "single", "replicaset", "sharded" ]
-runOn:
   -
     # required for blockConnection in fail point
     minServerVersion: "4.4.0"
+  - topology: [ "single", "replicaset", "sharded" ]
 failPoint:
   configureFailPoint: failCommand
   mode: "alwaysOn"
