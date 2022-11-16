@@ -96,7 +96,7 @@ module Mongo
     #
     # @since 2.1.0
     def logger
-      ((options && options[:logger]) || Logger.logger)
+      ((respond_to?(:options) && options && options[:logger]) || Logger.logger)
     end
 
     private
@@ -106,7 +106,7 @@ module Mongo
     end
 
     def _mongo_log_prefix
-      (options && options[:log_prefix]) || PREFIX
+      (respond_to?(:options) && options && options[:log_prefix]) || PREFIX
     end
   end
 end

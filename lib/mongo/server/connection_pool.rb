@@ -350,6 +350,7 @@ module Mongo
 
         connection = retrieve_and_connect_connection(connection_global_id)
 
+        log_info("CHECKOUT SUCCEEDED #{connection.object_id}")
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
         )
@@ -443,6 +444,7 @@ module Mongo
           connection.record_checkin!
           @available_connections << connection
 
+          log_info("AVAILABLE CONNECTION")
           # Wake up only one thread waiting for an available connection,
           # since only one connection was checked in.
           @available_semaphore.signal
@@ -857,8 +859,10 @@ module Mongo
         end
 
         begin
-          @max_connecting_semaphore.acquire do
-            connect_connection(connection)
+          unless connection.connected?
+            @max_connecting_semaphore.acquire do
+              connect_connection(connection)
+            end
           end
         rescue Exception
           @lock.synchronize do

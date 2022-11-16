@@ -237,7 +237,10 @@ module Mongo
 
         unless @socket
           @socket = create_socket
+          start = Utils.monotonic_time
           @description, @compressor = do_connect
+          @connected = true
+          log_info("CONNECTION TIME #{self.object_id}: #{Utils.monotonic_time - start}")
 
           if server.load_balancer?
             if Lint.enabled?

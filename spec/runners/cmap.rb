@@ -8,7 +8,7 @@ module Mongo
 
     # Represents a specification.
     class Spec
-
+      include Loggable
       # @return [ String ] description The spec description.
       attr_reader :description
 
@@ -77,6 +77,7 @@ module Mongo
 
         {}.tap do |result|
           processed_ops.each do |op|
+            log_info("\n---------------- OP #{op.name} ----------------\n")
             err = op.run(pool, state)
 
             if err
@@ -314,6 +315,7 @@ module Mongo
 
     # Represents an operation in the spec. Operations are sequential.
     class Operation
+      include Loggable
       include RSpec::Mocks::ExampleMethods
 
       # @return [ String ] command The name of the operation to run.
@@ -415,6 +417,7 @@ module Mongo
         state[target] = Thread.start do
           Thread.current[:name] = @target
           thread_ops.each do |op|
+            log_info("\n---------------- TH OP #{op.name} ----------------\n")
             op.run(pool, state, false)
           end
         end
@@ -451,7 +454,9 @@ module Mongo
           if looped == 1
             puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
           end
+          # log_warn("CHECK TIME #{deadline - Utils.monotonic_time}")
           if Utils.monotonic_time > deadline
+            # log_warn("RAISE ERROR")
             raise "Did not receive #{@count} #{@event} events in time (have #{actual_events.length}): #{@spec.description}"
           end
           looped += 1
