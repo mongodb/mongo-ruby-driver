@@ -1,6 +1,9 @@
 version: 1
 style: integration
 description: threads blocked by maxConnecting check out returned connections
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 runOn:
   -
     # required for blockConnection in fail point

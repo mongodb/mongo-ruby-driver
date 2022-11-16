@@ -1,6 +1,9 @@
 version: 1
 style: integration
 description: waiting on maxConnecting is limited by WaitQueueTimeoutMS
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 runOn:
   -
     # required for blockConnection in fail point
