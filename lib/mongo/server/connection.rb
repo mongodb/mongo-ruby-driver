@@ -147,6 +147,14 @@ module Mongo
         options[:connection_pool]
       end
 
+      # Whether the connection was connected and was not interrupted, closed,
+      # or had an error raised.
+      #
+      # @return [ true | false ] if the connection was connected.
+      def connected?
+        !closed? && !error? && !interrupted? && !!@socket
+      end
+
       # Whether the connection was closed.
       #
       # Closed connections should no longer be used. Instead obtain a new

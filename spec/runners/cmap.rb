@@ -240,7 +240,8 @@ module Mongo
             opts[:wait_queue_timeout] = kv.last / 1000.0
           when 'backgroundThreadIntervalMS'
             # The populator busy loops, this option doesn't apply to our driver.
-            #opts[:pool_background_thread_interval] = kv.last / 1000.0
+          when 'maxConnecting'
+            opts[:max_connecting] = kv.last
           when 'appName'
             opts[:app_name] = kv.last
           else

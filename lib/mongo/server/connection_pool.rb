@@ -857,7 +857,9 @@ module Mongo
         end
 
         begin
-          connect_connection(connection)
+          @max_connecting_semaphore.acquire do
+            connect_connection(connection)
+          end
         rescue Exception
           @lock.synchronize do
             @pending_connections.delete(connection)
