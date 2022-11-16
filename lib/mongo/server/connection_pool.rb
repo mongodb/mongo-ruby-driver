@@ -861,7 +861,9 @@ module Mongo
         begin
           unless connection.connected?
             @max_connecting_semaphore.acquire do
+              log_info("BEGIN CONNECT: bgnd #{connection.object_id}")
               connect_connection(connection)
+              log_info("CONNECT SUCCEEDED: bgnd #{connection.object_id}")
             end
           end
         rescue Exception
@@ -876,6 +878,7 @@ module Mongo
           @available_connections << connection
           @pending_connections.delete(connection)
 
+          log_info("AVAILABLE CONNECTION: BACKGROUND #{connection.object_id}")
           # wake up one thread waiting for connections, since one was created
           @available_semaphore.signal
           @size_cv.signal
