@@ -18,9 +18,6 @@ module Mongo
       # @return [ Array<Operation> ] spec_ops The spec operations.
       attr_reader :spec_ops
 
-      # @return [ Array<Operation> ] processed_ops The processed operations.
-      attr_reader :processed_ops
-
       # @return [ Error | nil ] error The expected error.
       attr_reader :expected_error
 
@@ -45,7 +42,6 @@ module Mongo
         @description = @test['description']
         @pool_options = process_options(@test['poolOptions'])
         @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
-        @processed_ops = []
         @expected_error = @test['error']
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
@@ -53,7 +49,6 @@ module Mongo
         @threads = Set.new
 
         process_run_on
-        preprocess
       end
 
       attr_reader :pool
@@ -76,8 +71,7 @@ module Mongo
         state = {}
 
         {}.tap do |result|
-          processed_ops.each do |op|
-            log_info("\n---------------- OP #{op.name} ----------------\n")
+          spec_ops.each do |op|
             err = op.run(pool, state)
 
             if err
@@ -292,22 +286,6 @@ module Mongo
         end
       end
 
-      # Places operations run by the non-main thread in the `thread_ops` field of the corresponding
-      # `start` operation.
-      def preprocess
-        until spec_ops.empty?
-          processed_ops << spec_ops.shift
-
-          if processed_ops.last.name == "start"
-            spec_ops.delete_if do |op|
-              if op.thread == processed_ops.last.target
-                processed_ops.last.thread_ops << op
-              end
-            end
-          end
-        end
-      end
-
       def configure_fail_point
         @client.database.command(@fail_point_command) if @fail_point_command
       end
@@ -327,9 +305,6 @@ module Mongo
 
       # @return [ String | nil ] target The name of the started thread.
       attr_reader :target
-
-      # @return [ Array<Operation> ] thread_ops The operations to run on the thread.
-      attr_reader :thread_ops
 
       # @return [ Integer | nil ] ms The number of milliseconds to sleep.
       attr_reader :ms
@@ -355,7 +330,6 @@ module Mongo
         @spec = spec
         @name = operation['name']
         @thread = operation['thread']
-        @thread_ops = []
         @target = operation['target']
         @ms = operation['ms']
         @label = operation['label']
@@ -366,8 +340,9 @@ module Mongo
       end
 
       def run(pool, state, main_thread = true)
-        @pool = pool
+        return run_on_thread(state) if thread && main_thread
 
+        @pool = pool
         case name
         when 'start'
           run_start_op(state)
@@ -414,13 +389,27 @@ module Mongo
       private
 
       def run_start_op(state)
-        state[target] = Thread.start do
-          Thread.current[:name] = @target
-          thread_ops.each do |op|
-            log_info("\n---------------- TH OP #{op.name} ----------------\n")
-            op.run(pool, state, false)
+        thread_context = ThreadContext.new
+        thread = Thread.new do
+          loop do
+            begin
+              op = thread_context.operations.pop(true)
+              op.run(pool, state, false)
+            rescue ThreadError
+              # Queue is empty
+            end
+            if thread_context.stop?
+              break
+            else
+              sleep 0.1
+            end
           end
         end
+        class << thread
+          attr_accessor :context
+        end
+        thread.context = thread_context
+        state[target] = thread
 
         # Allow the thread to begin running.
         sleep 0.1
@@ -437,7 +426,12 @@ module Mongo
       end
 
       def run_wait_for_thread_op(state)
-        state[target].join
+        if thread = state[target]
+          thread.context.signal_stop
+          thread.join
+        else
+          raise "Expected thread for '#{thread}' but none exists."
+        end
       end
 
       def run_wait_for_event_op(state)
@@ -492,6 +486,31 @@ module Mongo
       def run_ready_op(state)
         pool.ready
       end
+
+      def run_on_thread(state)
+        if thd = state[thread]
+          state[thread].context.operations << self
+        else
+          raise "Expected thread for '#{thread}' but none exists."
+        end
+        nil
+      end
+    end
+
+    class ThreadContext
+      def initialize
+        @operations = Queue.new
+      end
+
+      def stop?
+        !!@stop
+      end
+
+      def signal_stop
+        @stop = true
+      end
+
+      attr_reader :operations
     end
   end
 end
