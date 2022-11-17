@@ -432,6 +432,7 @@ module Mongo
         else
           raise "Expected thread for '#{thread}' but none exists."
         end
+        nil
       end
 
       def run_wait_for_event_op(state)
