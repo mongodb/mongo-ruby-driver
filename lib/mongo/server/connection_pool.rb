@@ -143,6 +143,8 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
+        @max_connecting = options.fetch(:max_connecting, 2)
+
         # Background thread reponsible for maintaining the size of
         # the pool to at least min_size
         @populator = Populator.new(self, options)
@@ -319,6 +321,9 @@ module Mongo
 
       # @api private
       attr_reader :populator
+
+      # @api private
+      attr_reader :max_connecting
 
       # Checks a connection out of the pool.
       #
@@ -822,6 +827,23 @@ module Mongo
         end
       end
 
+      # @return [ true | false ] if there is a connection available or there is
+      # room for another connecton.
+      def available_connection?
+        return false unless @pending_connections.length < max_connecting
+        ok = false
+        ok ||= if @server.load_balancer? && connection_global_id
+          @available_connections.any? do |conn|
+            conn.global_id == connection_global_id
+          end
+        else
+          @available_connections.any?
+        end
+        ok ||= max_size == 0
+        ok ||= unsynchronized_size < max_size
+        ok
+      end
+
       def create_connection
         r, _ = @generation_manager.pipe_fds(service_id: server.description.service_id)
         opts = options.merge(
@@ -857,11 +879,7 @@ module Mongo
         end
 
         begin
-          unless connection.connected?
-            @max_connecting_semaphore.acquire do
-              connect_connection(connection)
-            end
-          end
+          connect_connection(connection)
         rescue Exception
           @lock.synchronize do
             @pending_connections.delete(connection)
