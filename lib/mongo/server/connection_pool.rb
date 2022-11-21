@@ -640,6 +640,8 @@ module Mongo
             @closed = true
             @ready = false
           end
+
+          @size_cv.broadcast
         end
 
         publish_cmap_event(
@@ -857,6 +859,7 @@ module Mongo
         rescue Exception
           @lock.synchronize do
             @pending_connections.delete(connection)
+            @size_cv.signal
           end
           raise
         end
@@ -867,6 +870,7 @@ module Mongo
 
           # wake up one thread waiting for connections, since one was created
           @available_semaphore.signal
+          @size_cv.signal
         end
 
         true
