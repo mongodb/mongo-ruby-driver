@@ -330,85 +330,7 @@ module Mongo
         raise_pool_closed! if closed?
         raise_pool_paused! if paused?
 
-        deadline = Utils.monotonic_time + wait_timeout
-        pid = Process.pid
-        connection = nil
-        # It seems that synchronize sets up its own loop, thus a simple break
-        # is insufficient to break the outer loop
-        catch(:done) do
-          loop do
-            # Lock must be taken on each iteration, rather for the method
-            # overall, otherwise other threads will not be able to check in
-            # a connection while this thread is waiting for one.
-            @lock.synchronize do
-              until @available_connections.empty?
-                connection = next_available_connection(
-                  connection_global_id: connection_global_id
-                )
-
-                unless process_available_connection(connection, pid, connection_global_id)
-                  # If there's no available connection and we're not looking
-                  # for a specific connection, don't attempt to look at the
-                  # available connections again.
-                  if connection.nil? && !connection_global_id
-                    break
-                  else
-                    next
-                  end
-                end
-
-                @pending_connections << connection
-                throw(:done)
-              end
-
-              if @server.load_balancer? && connection_global_id
-                unless @checked_out_connections.detect { |c| c.global_id == connection_global_id }
-                  raise Error::ConnectionUnavailable.new
-                end
-                # We need a particular connection, and if it is not available
-                # we can wait for an in-progress operation to return
-                # such a connection to the pool.
-              else
-                # If we are below pool capacity, create a new connection.
-                #
-                # Ruby does not allow a thread to lock a mutex which it already
-                # holds.
-                if max_size == 0 || unsynchronized_size < max_size
-                  connection = create_connection
-                  @pending_connections << connection
-                  throw(:done)
-                end
-              end
-            end
-
-            wait = deadline - Utils.monotonic_time
-            raise_check_out_timeout!(connection_global_id) if wait <= 0
-            @available_semaphore.wait(wait)
-          end
-        end
-
-        begin
-          connect_connection(connection)
-        rescue Exception
-          # Handshake or authentication failed
-          @lock.synchronize do
-            @pending_connections.delete(connection)
-          end
-          @populate_semaphore.signal
-
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-            ),
-          )
-          raise
-        end
-
-        @lock.synchronize do
-          @checked_out_connections << connection
-          @pending_connections.delete(connection)
-        end
+        connection = retrieve_and_connect_connection(connection_global_id)
 
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
@@ -1145,7 +1067,7 @@ module Mongo
         raise Error::PoolPausedError.new(@server.address, self)
       end
 
-      def process_available_connection(connection, pid, connection_global_id)
+      def valid_available_connection?(connection, pid, connection_global_id)
         if connection.nil?
           if connection_global_id
             # A particular connection is requested, but it is not available.
@@ -1199,6 +1121,114 @@ module Mongo
           end
         end
         true
+      end
+
+      # Retrieves a connection if one is available, otherwise we create a new
+      # one. If no connection exists and the pool is at max size, wait until
+      # a connection is checked back into the pool.
+      #
+      # @param [ Float ] deadline The deadline to get the connection.
+      # @param [ Integer ] pid The current process id.
+      # @param [ Integer ] connection_global_id The global id for the
+      #   connection to check out.
+      #
+      # @return [ Mongo::Server::Connection ] The checked out connection.
+      #
+      # @raise [ Error::PoolClosedError ] If the pool has been closed.
+      # @raise [ Timeout::Error ] If the connection pool is at maximum size
+      #   and remains so for longer than the wait timeout.
+      def get_connection(deadline, pid, connection_global_id)
+        loop do
+          # Lock must be taken on each iteration, rather for the method
+          # overall, otherwise other threads will not be able to check in
+          # a connection while this thread is waiting for one.
+
+          @lock.synchronize do
+            until @available_connections.empty?
+              connection = next_available_connection(
+                connection_global_id: connection_global_id
+              )
+
+              unless valid_available_connection?(connection, pid, connection_global_id)
+                # If there's no available connection and we're not looking
+                # for a specific connection, don't attempt to look at the
+                # available connections again.
+                if connection.nil? && !connection_global_id
+                  break
+                else
+                  next
+                end
+              end
+
+              @pending_connections << connection
+              return connection
+            end
+
+            if @server.load_balancer? && connection_global_id
+              unless @checked_out_connections.detect { |c| c.global_id == connection_global_id }
+                raise Error::ConnectionUnavailable.new
+              end
+              # We need a particular connection, and if it is not available
+              # we can wait for an in-progress operation to return
+              # such a connection to the pool.
+            else
+              # If we are below pool capacity, create a new connection.
+              #
+              # Ruby does not allow a thread to lock a mutex which it already
+              # holds.
+              if max_size == 0 || unsynchronized_size < max_size
+                connection = create_connection
+                @pending_connections << connection
+                return connection
+              end
+            end
+          end
+
+          wait = deadline - Utils.monotonic_time
+          raise_check_out_timeout!(connection_global_id) if wait <= 0
+          @available_semaphore.wait(wait)
+        end
+      end
+
+      # Retrieves a connection and connects it.
+      #
+      # @param [ Integer ] connection_global_id The global id for the
+      #   connection to check out.
+      #
+      # @return [ Mongo::Server::Connection ] The checked out connection.
+      #
+      # @raise [ Error::PoolClosedError ] If the pool has been closed.
+      # @raise [ Timeout::Error ] If the connection pool is at maximum size
+      #   and remains so for longer than the wait timeout.
+      def retrieve_and_connect_connection(connection_global_id)
+        deadline = Utils.monotonic_time + wait_timeout
+
+        connection = get_connection(deadline, Process.pid, connection_global_id)
+
+        begin
+          connect_connection(connection)
+        rescue Exception
+          # Handshake or authentication failed
+          @lock.synchronize do
+            @pending_connections.delete(connection)
+          end
+          @populate_semaphore.signal
+
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+            ),
+          )
+          raise
+        end
+
+        @lock.synchronize do
+          @checked_out_connections << connection
+          @pending_connections.delete(connection)
+        end
+
+        connection
       end
     end
   end
