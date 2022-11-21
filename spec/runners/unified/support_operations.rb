@@ -29,7 +29,13 @@ module Unified
       consume_test_runner(op)
       use_arguments(op) do |args|
         client = entities.get(:client, args.use!('client'))
-        client.command(args.use('failPoint'))
+        client.command(fp = args.use('failPoint'))
+
+        $disable_fail_points ||= []
+        $disable_fail_points << [
+          fp,
+          ClusterConfig.instance.primary_address,
+        ]
       end
     end
 

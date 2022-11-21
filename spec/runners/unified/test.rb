@@ -390,7 +390,7 @@ module Unified
           method_name = "_#{name}"
         end
 
-        if ["modify_collection"].include?(name.to_s)
+        if ["modify_collection", "list_index_names"].include?(name.to_s)
           skip "Mongo Ruby Driver does not support #{name.to_s}"
         end
 

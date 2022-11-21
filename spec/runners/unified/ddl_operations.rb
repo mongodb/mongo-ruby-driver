@@ -6,13 +6,21 @@ module Unified
   module DdlOperations
 
     def list_databases(op)
+      list_dbs(op, name_only: false)
+    end
+
+    def list_database_names(op)
+      list_dbs(op, name_only: false)
+    end
+
+    def list_dbs(op, name_only: false)
       client = entities.get(:client, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        client.list_databases({}, false, **opts)
+        client.list_databases(args.use('filter') || {}, name_only, **opts)
       end
     end
 
@@ -47,6 +55,14 @@ module Unified
     end
 
     def list_collections(op)
+      list_colls(op, name_only: false)
+    end
+
+    def list_collection_names(op)
+      list_colls(op, name_only: true)
+    end
+
+    def list_colls(op, name_only: false)
       database = entities.get(:database, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
@@ -56,7 +72,7 @@ module Unified
         if filter = args.use('filter')
           opts[:filter] = filter
         end
-        database.list_collections(**opts)
+        database.list_collections(**opts.merge(name_only: name_only))
       end
     end
 
