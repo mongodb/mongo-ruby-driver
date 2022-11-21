@@ -1179,7 +1179,9 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             unless @size_cv.wait(wait)
-              @size_cv.notify if unavailable_connections < max_size
+              # Timed out, notify the next thread to ensure a timeout doesn't
+              # consume the condition.
+              @size_cv.signal if unavailable_connections < max_size
               raise_check_out_timeout!(connection_global_id)
             end
             raise_if_not_ready!
