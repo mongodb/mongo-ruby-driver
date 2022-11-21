@@ -327,27 +327,8 @@ module Mongo
           Monitoring::Event::Cmap::ConnectionCheckOutStarted.new(@server.address)
         )
 
-        if closed?
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
-            ),
-          )
-          raise Error::PoolClosedError.new(@server.address, self)
-        end
-
-        if paused?
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              # CMAP spec decided to conflate pool paused with all the other
-              # possible non-timeout errors.
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
-            ),
-          )
-          raise Error::PoolPausedError.new(@server.address, self)
-        end
+        raise_pool_closed! if closed?
+        raise_pool_paused! if paused?
 
         deadline = Utils.monotonic_time + wait_timeout
         pid = Process.pid
@@ -365,55 +346,13 @@ module Mongo
                   connection_global_id: connection_global_id
                 )
 
-                if connection.nil?
-                  if connection_global_id
-                    # A particular connection is requested, but it is not available.
-                    # If it is nether available not checked out, we should stop here.
-                    @checked_out_connections.detect do |conn|
-                      conn.connection_global_id == connection_global_id
-                    end.tap do |conn|
-                      if conn.nil?
-                        publish_cmap_event(
-                          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-                            @server.address,
-                            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-                          ),
-                        )
-                        raise Error::MissingConnection.new
-                      end
-                    end
-                  else
+                unless process_available_connection(connection, pid, connection_global_id)
+                  # If there's no available connection and we're not looking
+                  # for a specific connection, don't attempt to look at the
+                  # available connections again.
+                  if connection.nil? && !connection_global_id
                     break
-                  end
-                end
-
-                if connection.pid != pid
-                  log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
-                  connection.disconnect!(reason: :stale)
-                  @populate_semaphore.signal
-                  next
-                end
-
-                if !connection.pinned?
-                  # If connection is marked as pinned, it is used by a transaction
-                  # or a series of cursor operations in a load balanced setup.
-                  # In this case connection should not be disconnected until
-                  # unpinned.
-                  if connection.generation != generation(
-                    service_id: connection.service_id
-                  )
-                    # Stale connections should be disconnected in the clear
-                    # method, but if any don't, check again here
-                    connection.disconnect!(reason: :stale)
-                    @populate_semaphore.signal
-                    next
-                  end
-
-                  if max_idle_time && connection.last_checkin &&
-                    Time.now - connection.last_checkin > max_idle_time
-                  then
-                    connection.disconnect!(reason: :idle)
-                    @populate_semaphore.signal
+                  else
                     next
                   end
                 end
@@ -443,30 +382,7 @@ module Mongo
             end
 
             wait = deadline - Utils.monotonic_time
-            if wait <= 0
-              publish_cmap_event(
-                Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-                  @server.address,
-                  Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT,
-                ),
-              )
-
-              msg = @lock.synchronize do
-                connection_global_id_msg = if connection_global_id
-                  " for connection #{connection_global_id}"
-                else
-                  ''
-                end
-
-                "Timed out attempting to check out a connection " +
-                  "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
-                  "Connections in pool: #{@available_connections.length} available, " +
-                  "#{@checked_out_connections.length} checked out, " +
-                  "#{@pending_connections.length} pending " +
-                  "(max size: #{max_size})"
-              end
-              raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
-            end
+            raise_check_out_timeout!(connection_global_id) if wait <= 0
             @available_semaphore.wait(wait)
           end
         end
@@ -1180,6 +1096,109 @@ module Mongo
           connection.disconnect!
           @pending_connections.delete(connection)
         end
+      end
+
+      def raise_check_out_timeout!(connection_global_id)
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+            @server.address,
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT,
+          ),
+        )
+
+        msg = @lock.synchronize do
+          connection_global_id_msg = if connection_global_id
+            " for connection #{connection_global_id}"
+          else
+            ''
+          end
+
+          "Timed out attempting to check out a connection " +
+            "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
+            "Connections in pool: #{@available_connections.length} available, " +
+            "#{@checked_out_connections.length} checked out, " +
+            "#{@pending_connections.length} pending " +
+            "(max size: #{max_size})"
+        end
+        raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
+      end
+
+      def raise_pool_closed!
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+            @server.address,
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
+          ),
+        )
+        raise Error::PoolClosedError.new(@server.address, self)
+      end
+
+      def raise_pool_paused!
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+            @server.address,
+            # CMAP spec decided to conflate pool paused with all the other
+            # possible non-timeout errors.
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
+          ),
+        )
+        raise Error::PoolPausedError.new(@server.address, self)
+      end
+
+      def process_available_connection(connection, pid, connection_global_id)
+        if connection.nil?
+          if connection_global_id
+            # A particular connection is requested, but it is not available.
+            # If it is nether available not checked out, we should stop here.
+            @checked_out_connections.detect do |conn|
+              conn.connection_global_id == connection_global_id
+            end.tap do |conn|
+              if conn.nil?
+                publish_cmap_event(
+                  Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+                    @server.address,
+                    Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+                  ),
+                )
+                raise Error::MissingConnection.new
+              end
+            end
+          else
+            return false
+          end
+        end
+
+        if connection.pid != pid
+          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
+          connection.disconnect!(reason: :stale)
+          @populate_semaphore.signal
+          return false
+        end
+
+        if !connection.pinned?
+          # If connection is marked as pinned, it is used by a transaction
+          # or a series of cursor operations in a load balanced setup.
+          # In this case connection should not be disconnected until
+          # unpinned.
+          if connection.generation != generation(
+            service_id: connection.service_id
+          )
+            # Stale connections should be disconnected in the clear
+            # method, but if any don't, check again here
+            connection.disconnect!(reason: :stale)
+            @populate_semaphore.signal
+            return false
+          end
+
+          if max_idle_time && connection.last_checkin &&
+            Time.now - connection.last_checkin > max_idle_time
+          then
+            connection.disconnect!(reason: :idle)
+            @populate_semaphore.signal
+            return false
+          end
+        end
+        true
       end
     end
   end
