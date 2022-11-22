@@ -28,8 +28,6 @@ describe Mongo::ConditionVariable do
     consumer.join
 
     (Mongo::Utils.monotonic_time - start_time).should < 1
-
-    result.should be true
   end
 
   it 'waits until broadcast' do
@@ -51,8 +49,6 @@ describe Mongo::ConditionVariable do
     consumer.join
 
     (Mongo::Utils.monotonic_time - start_time).should < 1
-
-    result.should be true
   end
 
   it 'times out' do
@@ -71,8 +67,6 @@ describe Mongo::ConditionVariable do
     consumer.join
 
     (Mongo::Utils.monotonic_time - start_time).should > 1
-
-    result.should be false
   end
 
   context "when acquiring the lock and waiting" do
@@ -152,10 +146,10 @@ describe Mongo::ConditionVariable do
   end
 
   context "when waiting but not signaling" do
-    it "returns false" do
+    it "waits until timeout" do
       lock.synchronize do
         start = Mongo::Utils.monotonic_time
-        expect(condition_variable.wait(1)).to be false
+        condition_variable.wait(1)
         duration = Mongo::Utils.monotonic_time - start
         expect(duration).to be > 1
       end
