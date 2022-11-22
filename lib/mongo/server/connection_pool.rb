@@ -407,6 +407,8 @@ module Mongo
         # the exception) should be fine.
 
         @checked_out_connections.delete(connection)
+        @size_cv.signal
+
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id, self)
         )
@@ -445,8 +447,6 @@ module Mongo
           # since only one connection was checked in.
           @available_semaphore.signal
         end
-
-        @size_cv.signal
       end
 
       # Mark the connection pool as paused.
@@ -844,7 +844,7 @@ module Mongo
         connection = nil
 
         @lock.synchronize do
-          if !closed? && @ready && unsynchronized_size < min_size
+          if !closed? && @ready && (unsynchronized_size + @pending) < min_size
             connection = create_connection
             @pending_connections << connection
           else
@@ -1067,7 +1067,7 @@ module Mongo
           "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
           "Connections in pool: #{@available_connections.length} available, " +
           "#{@checked_out_connections.length} checked out, " +
-          "#{@pending_connections.length} pending " +
+          "#{@pending_connections.length + @pending} pending " +
           "(max size: #{max_size})"
         raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
       end
