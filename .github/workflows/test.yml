@@ -10,12 +10,12 @@ jobs:
     env:
       CI: true
       TESTOPTS: "-v"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04 ]
+        os: [ ubuntu-latest ]
         ruby: ["2.5", "2.6", "2.7", "3.0", "3.1"]
         mongodb: ["3.6", "4.4", "5.0"]
         topology: [replica_set, sharded_cluster]
