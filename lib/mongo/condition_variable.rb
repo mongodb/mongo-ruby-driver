@@ -34,6 +34,7 @@ module Mongo
     #   timeout was reached.
     def wait(timeout = nil)
       maybe_raise_error!
+      return false if timeout && timeout < 0
       @cv.wait(@lock, timeout)
       @lock.owned?
     end
