@@ -89,60 +89,6 @@ describe Mongo::ConditionVariable do
         end
       end
     end
-
-    it "addresses the waiting threads in order" do
-      t1_waiting = false
-      t2_waiting = false
-      t3_waiting = false
-      order = []
-      threads = []
-      threads << Thread.new do
-        lock.synchronize do
-          t1_waiting = true
-          unless condition_variable.wait(10)
-            fail "condition variable timed out"
-          end
-          order << 1
-        end
-      end
-      threads << Thread.new do
-        until t1_waiting
-          sleep 0.1
-        end
-        lock.synchronize do
-          t2_waiting = true
-          unless condition_variable.wait(10)
-            fail "condition variable timed out"
-          end
-          order << 2
-        end
-      end
-      threads << Thread.new do
-        until t2_waiting
-          sleep 0.1
-        end
-        lock.synchronize do
-          t3_waiting = true
-          unless condition_variable.wait(10)
-            fail "condition variable timed out"
-          end
-          order << 3
-        end
-      end
-
-      until t3_waiting
-        sleep 0.1
-      end
-
-      3.times do
-        lock.synchronize do
-          condition_variable.signal
-        end
-      end
-      threads.map(&:join)
-
-      expect(order).to eq([ 1, 2, 3 ])
-    end
   end
 
   context "when waiting but not signaling" do
