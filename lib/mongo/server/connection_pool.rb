@@ -1182,12 +1182,8 @@ module Mongo
         @size_cv.synchronize do
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
-            unless @size_cv.wait(wait)
-              # Timed out, notify the next thread to ensure a timeout doesn't
-              # consume the condition.
-              @size_cv.signal if unavailable_connections < max_size
-              raise_check_out_timeout!(connection_global_id)
-            end
+            raise_check_out_timeout!(connection_global_id) if wait <= 0
+            @size_cv.wait(wait)
             raise_if_not_ready!
           end
           @pending += 1

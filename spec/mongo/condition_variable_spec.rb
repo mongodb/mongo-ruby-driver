@@ -150,4 +150,15 @@ describe Mongo::ConditionVariable do
       expect(order).to eq([ 1, 2, 3 ])
     end
   end
+
+  context "when waiting but not signaling" do
+    it "returns false" do
+      lock.synchronize do
+        start = Mongo::Utils.monotonic_time
+        expect(condition_variable.wait(1)).to be false
+        duration = Mongo::Utils.monotonic_time - start
+        expect(duration).to be > 1
+      end
+    end
+  end
 end

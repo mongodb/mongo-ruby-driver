@@ -29,14 +29,10 @@ module Mongo
 
     # Waits for the condition variable to be signaled up to timeout seconds.
     # If condition variable is not signaled, returns after timeout seconds.
-    #
-    # @return [ true | false ] true if condition variable was signaled, false if
-    #   timeout was reached.
     def wait(timeout = nil)
       maybe_raise_error!
       return false if timeout && timeout < 0
       @cv.wait(@lock, timeout)
-      @lock.owned?
     end
 
     def broadcast
