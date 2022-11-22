@@ -25,7 +25,6 @@ module Mongo
     def initialize(lock = Mutex.new)
       @lock = lock
       @cv = ::ConditionVariable.new
-      @queue = []
     end
 
     # Waits for the condition variable to be signaled up to timeout seconds.
@@ -36,20 +35,16 @@ module Mongo
     def wait(timeout = nil)
       maybe_raise_error!
       @cv.wait(@lock, timeout)
-      (!@queue.empty?).tap do
-        @queue.clear
-      end
+      @lock.owned?
     end
 
     def broadcast
       maybe_raise_error!
-      @queue.push(true)
       @cv.broadcast
     end
 
     def signal
       maybe_raise_error!
-      @queue.push(true)
       @cv.signal
     end
 
