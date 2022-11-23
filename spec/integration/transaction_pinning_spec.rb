@@ -80,7 +80,7 @@ describe 'Transaction pinning' do
         client["tx_pin"].create
       end
 
-      it 'raises ConnectionUnavailable' do
+      it 'raises MissingConnection' do
         session = client.start_session
         session.start_transaction
         client["tx_pin"].insert_one({test: 1}, session: session)
@@ -94,7 +94,7 @@ describe 'Transaction pinning' do
 
         lambda do
           client["tx_pin"].insert_one({test: 2}, session: session)
-        end.should raise_error(Mongo::Error::ConnectionUnavailable)
+        end.should raise_error(Mongo::Error::MissingConnection)
       end
     end
 
