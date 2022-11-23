@@ -549,7 +549,7 @@ module Mongo
           end
 
           # Broadcast here to cause all of the threads waiting on the pool size
-          # pool size to decrease to break out of the wait loop and error.
+          # to decrease to break out of the wait loop and error.
           @size_cv.broadcast
         end
 
