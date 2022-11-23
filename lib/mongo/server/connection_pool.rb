@@ -805,9 +805,7 @@ module Mongo
       # Returns the next available connection, optionally with given
       # global id. If no suitable connections are available,
       # returns nil.
-      def next_available_connection(connection_global_id: nil)
-        raise_unless_locked!
-
+      def next_available_connection(connection_global_id)
         if @server.load_balancer? && connection_global_id
           conn = @available_connections.detect do |conn|
             conn.global_id == connection_global_id
@@ -1196,11 +1194,7 @@ module Mongo
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       def get_connection(deadline, pid, connection_global_id)
-
-        if connection = next_available_connection(
-            connection_global_id: connection_global_id
-           )
-
+        if connection = next_available_connection(connection_global_id)
           unless valid_available_connection?(connection, pid, connection_global_id)
             return nil
           end
@@ -1266,7 +1260,8 @@ module Mongo
           @connection_requests += 1
         end
 
-        loop do
+        connection = nil
+        while connection.nil?
           # Lock must be taken on each iteration, rather for the method
           # overall, otherwise other threads will not be able to check in
           # a connection while this thread is waiting for one.
@@ -1282,44 +1277,42 @@ module Mongo
 
             get_connection(deadline, Process.pid, connection_global_id)
           end
+        end
 
-          next if connection.nil?
-
-          begin
-            connect_connection(connection)
-          rescue Exception
-            # Handshake or authentication failed
-            @lock.synchronize do
-              if @pending_connections.include?(connection)
-                @pending_connections.delete(connection)
-              else
-                @connection_requests -= 1
-              end
-              @max_connecting_cv.signal
-              @size_cv.signal
-            end
-            @populate_semaphore.signal
-
-            publish_cmap_event(
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-                @server.address,
-                Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-              ),
-            )
-            raise
-          end
-
+        begin
+          connect_connection(connection)
+        rescue Exception
+          # Handshake or authentication failed
           @lock.synchronize do
-            @checked_out_connections << connection
             if @pending_connections.include?(connection)
               @pending_connections.delete(connection)
             else
               @connection_requests -= 1
             end
             @max_connecting_cv.signal
-            # no need to signal size_cv here since the number of unavailable
-            # connections is unchanged.
+            @size_cv.signal
           end
+          @populate_semaphore.signal
+
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+            ),
+          )
+          raise
+        end
+
+        @lock.synchronize do
+          @checked_out_connections << connection
+          if @pending_connections.include?(connection)
+            @pending_connections.delete(connection)
+          else
+            @connection_requests -= 1
+          end
+          @max_connecting_cv.signal
+          # no need to signal size_cv here since the number of unavailable
+          # connections is unchanged.
         end
 
         connection
