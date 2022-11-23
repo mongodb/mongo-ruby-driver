@@ -446,6 +446,8 @@ module Mongo
         else
           connection.record_checkin!
           @available_connections << connection
+
+          @max_connecting_cv.signal
         end
       end
 
