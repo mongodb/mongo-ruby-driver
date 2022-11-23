@@ -56,7 +56,7 @@ module Mongo
       # @option options [ String | nil ] :crypt_shared_lib_path Path that should
       #   be  the used to load the crypt shared library. Providing this option
       #   overrides default crypt shared library load paths for libmongocrypt.
-      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      # @option options [ Boolean | nil ] :crypt_shared_required Whether
       #   crypt_shared library is required. If 'true', an error will be raised
       #   if a crypt_shared library cannot be loaded by libmongocrypt.
       # @option options [ Boolean | nil ] :explicit_encryption_only Whether this
@@ -104,8 +104,8 @@ module Mongo
 
         initialize_mongocrypt
 
-        @crypt_shared_lib_required = !!options[:crypt_shared_lib_required]
-        if @crypt_shared_lib_required && crypt_shared_lib_version == 0
+        @crypt_shared_required = !!options[:crypt_shared_required]
+        if @crypt_shared_required && crypt_shared_lib_version == 0
           raise Mongo::Error::CryptError.new(
             "Crypt shared library is required, but cannot be loaded  according to libmongocrypt"
           )

@@ -84,7 +84,7 @@ module Mongo
       # @option options [ String | nil ] :crypt_shared_lib_path Path that should
       #   be  the used to load the crypt shared library. Providing this option
       #   overrides default crypt shared library load paths for libmongocrypt.
-      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      # @option options [ Boolean | nil ] :crypt_shared_required Whether
       #   crypt shared library is required. If 'true', an error will be raised
       #   if a crypt_shared library cannot be loaded by libmongocrypt.
       #
@@ -103,7 +103,7 @@ module Mongo
           encrypted_fields_map: @options[:encrypted_fields_map],
           bypass_query_analysis: @options[:bypass_query_analysis],
           crypt_shared_lib_path: @options[:extra_options][:crypt_shared_lib_path],
-          crypt_shared_lib_required: @options[:extra_options][:crypt_shared_lib_required],
+          crypt_shared_required: @options[:extra_options][:crypt_shared_required],
         )
 
         @mongocryptd_options = @options[:extra_options].slice(
@@ -115,9 +115,9 @@ module Mongo
         @mongocryptd_options[:mongocryptd_bypass_spawn] = @options[:bypass_auto_encryption] ||
           @options[:extra_options][:mongocryptd_bypass_spawn] ||
           @crypt_handle.crypt_shared_lib_available? ||
-          @options[:extra_options][:crypt_shared_lib_required]
+          @options[:extra_options][:crypt_shared_required]
 
-        unless @options[:extra_options][:crypt_shared_lib_required] || @crypt_handle.crypt_shared_lib_available?
+        unless @options[:extra_options][:crypt_shared_required] || @crypt_handle.crypt_shared_lib_available?
           # Set server selection timeout to 1 to prevent the client waiting for a
           # long timeout before spawning mongocryptd
           @mongocryptd_client = Client.new(
