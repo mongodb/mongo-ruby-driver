@@ -449,9 +449,7 @@ module Mongo
           if looped == 1
             puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
           end
-          # log_warn("CHECK TIME #{deadline - Utils.monotonic_time}")
           if Utils.monotonic_time > deadline
-            # log_warn("RAISE ERROR")
             raise "Did not receive #{@count} #{@event} events in time (have #{actual_events.length}): #{@spec.description}"
           end
           looped += 1
