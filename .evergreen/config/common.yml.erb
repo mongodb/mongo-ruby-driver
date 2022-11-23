@@ -50,74 +50,6 @@ functions:
           curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
           gcc -O2 -g -oegos -lrt egos.c
 
-  <% if @atlas %>
-  "create expansions":
-    # Make an evergreen expansion file with dynamic values
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        script: |
-          # Get the current unique version of this checkout
-          if [ "${is_patch}" = "true" ]; then
-            CURRENT_VERSION=$(git describe)-patch-${version_id}
-          else
-            CURRENT_VERSION=latest
-          fi
-
-          export DRIVERS_TOOLS="$(pwd)/.mod/drivers-evergreen-tools"
-
-          # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
-          if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
-            export DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
-          fi
-
-          export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
-          export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
-          export UPLOAD_BUCKET="${project}"
-          export PROJECT_DIRECTORY="$(pwd)"
-
-          cat <<EOT > expansion.yml
-          CURRENT_VERSION: "$CURRENT_VERSION"
-          DRIVERS_TOOLS: "$DRIVERS_TOOLS"
-          MONGO_ORCHESTRATION_HOME: "$MONGO_ORCHESTRATION_HOME"
-          MONGODB_BINARIES: "$MONGODB_BINARIES"
-          UPLOAD_BUCKET: "$UPLOAD_BUCKET"
-          PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
-          PREPARE_SHELL: |
-            set -o errexit
-            set -o xtrace
-            export DRIVERS_TOOLS="$DRIVERS_TOOLS"
-            export MONGO_ORCHESTRATION_HOME="$MONGO_ORCHESTRATION_HOME"
-            export MONGODB_BINARIES="$MONGODB_BINARIES"
-            export UPLOAD_BUCKET="$UPLOAD_BUCKET"
-            export PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
-
-            # TMPDIR cannot be too long, see
-            # https://github.com/broadinstitute/cromwell/issues/3647.
-            # Why is it even set at all?
-            #export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
-            export PATH="$MONGODB_BINARIES:$PATH"
-            export PROJECT="${project}"
-            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
-            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
-            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
-            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
-            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
-            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
-            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
-            export RVM_RUBY="${RVM_RUBY}"
-            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
-            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
-            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
-            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
-            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
-          EOT
-          # See what we've done
-          cat expansion.yml
-  <% else %>
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -195,6 +127,23 @@ functions:
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
 
+            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
+            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
+            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
+            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
+            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
+            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
+            export RVM_RUBY="${RVM_RUBY}"
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
+            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
+            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+
             # Needed for generating temporary aws credentials.
             if [ -n "${FLE}" ];
             then
@@ -206,7 +155,6 @@ functions:
 
           # See what we've done
           cat expansion.yml
-  <% end %>
 
     # Load the expansion file to make an evergreen variable with the current
     # unique version
@@ -527,11 +475,8 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
-  <% if @atlas %>
   - func: "delete serverless instance"
-  <% end %>
 
-<% unless @atlas %>
 task_groups:
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -569,11 +514,8 @@ task_groups:
             .evergreen/csfle/gcpkms/delete-instance.sh
     tasks:
       - testgcpkms-task
-<% end %>
 
 tasks:
-
-  <% if @atlas %>
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
@@ -581,7 +523,6 @@ tasks:
     commands:
       - func: "export FLE credentials"
       - func: "run serverless tests"
-  <% else %>
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -642,4 +583,3 @@ tasks:
             export GCPKMS_ZONE=${GCPKMS_ZONE}
             export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
             GCPKMS_CMD="TEST_FLE_GCP_AUTO=1 RVM_RUBY=ruby-3.1 FLE=helper TOPOLOGY=standalone MONGODB_VERSION=6.0 MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}" MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY='${fle_gcp_private_key}' MONGO_RUBY_DRIVER_GCP_PROJECT_ID='${fle_gcp_project_id}' MONGO_RUBY_DRIVER_GCP_LOCATION='${fle_gcp_location}' MONGO_RUBY_DRIVER_GCP_KEY_RING='${fle_gcp_key_ring}' MONGO_RUBY_DRIVER_GCP_KEY_NAME='${fle_gcp_key_name}' ./.evergreen/run-tests-gcp.sh" .evergreen/csfle/gcpkms/run-command.sh
-  <% end %>

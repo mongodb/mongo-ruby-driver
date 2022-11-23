@@ -129,6 +129,23 @@ functions:
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
 
+            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
+            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
+            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
+            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
+            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
+            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
+            export RVM_RUBY="${RVM_RUBY}"
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
+            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
+            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+
             # Needed for generating temporary aws credentials.
             if [ -n "${FLE}" ];
             then
@@ -460,6 +477,7 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
+  - func: "delete serverless instance"
 
 task_groups:
   - name: testgcpkms_task_group
@@ -500,7 +518,13 @@ task_groups:
       - testgcpkms-task
 
 tasks:
-
+  - name: "test-atlas"
+    commands:
+      - func: "run Atlas tests"
+  - name: "test-serverless"
+    commands:
+      - func: "export FLE credentials"
+      - func: "run serverless tests"
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -1731,3 +1755,21 @@ buildvariants:
       - name: testgcpkms_task_group
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
+  - matrix_name: "atlas"
+    matrix_spec:
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+    display_name: "Atlas tests ${ruby}"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-atlas
+
+  - matrix_name: "serverless"
+    matrix_spec:
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+      fle: helper
+    display_name: "Atlas serverless ${ruby} single mongos"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-serverless
