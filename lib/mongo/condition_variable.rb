@@ -30,24 +30,26 @@ module Mongo
     # Waits for the condition variable to be signaled up to timeout seconds.
     # If condition variable is not signaled, returns after timeout seconds.
     def wait(timeout = nil)
-      maybe_raise_error!
+      raise_unless_locked!
       return false if timeout && timeout < 0
       @cv.wait(@lock, timeout)
     end
 
     def broadcast
-      maybe_raise_error!
+      raise_unless_locked!
       @cv.broadcast
     end
 
     def signal
-      maybe_raise_error!
+      raise_unless_locked!
       @cv.signal
     end
 
     def_delegators :@lock, :synchronize
 
-    def maybe_raise_error!
+    private
+
+    def raise_unless_locked!
       unless @lock.owned?
         raise ArgumentError, "the lock must be owned when calling this method"
       end

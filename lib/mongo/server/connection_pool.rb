@@ -345,8 +345,8 @@ module Mongo
           Monitoring::Event::Cmap::ConnectionCheckOutStarted.new(@server.address)
         )
 
-        raise_pool_closed! if closed?
-        raise_pool_paused! if paused?
+        raise_if_pool_closed!
+        raise_if_pool_paused_locked!
 
         connection = retrieve_and_connect_connection(connection_global_id)
 
@@ -1078,32 +1078,42 @@ module Mongo
         end
       end
 
-      def raise_pool_closed!
-        publish_cmap_event(
-          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-            @server.address,
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
-          ),
-        )
-        raise Error::PoolClosedError.new(@server.address, self)
+      def raise_if_pool_closed!
+        if closed?
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
+            ),
+          )
+          raise Error::PoolClosedError.new(@server.address, self)
+        end
       end
 
-      def raise_pool_paused!
-        publish_cmap_event(
-          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-            @server.address,
-            # CMAP spec decided to conflate pool paused with all the other
-            # possible non-timeout errors.
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
-          ),
-        )
-        raise Error::PoolPausedError.new(@server.address, self)
+      def raise_if_pool_paused!
+        if !@ready
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              # CMAP spec decided to conflate pool paused with all the other
+              # possible non-timeout errors.
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
+            ),
+          )
+          raise Error::PoolPausedError.new(@server.address, self)
+        end
+      end
+
+      def raise_if_pool_paused_locked!
+        @lock.synchronize do
+          raise_if_pool_paused!
+        end
       end
 
       # The lock should be acquired when calling this method.
       def raise_if_not_ready!
-        raise_pool_closed! if closed?
-        raise_pool_paused! if !@ready
+        raise_if_pool_closed!
+        raise_if_pool_paused!
       end
 
       def valid_available_connection?(connection, pid, connection_global_id)
