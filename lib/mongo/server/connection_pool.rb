@@ -1278,6 +1278,8 @@ module Mongo
             end
 
             get_connection(deadline, Process.pid, connection_global_id)
+            wait = deadline - Utils.monotonic_time
+            raise_check_out_timeout!(connection_global_id) if wait <= 0
           end
         end
 
