@@ -808,6 +808,8 @@ module Mongo
       # global id. If no suitable connections are available,
       # returns nil.
       def next_available_connection(connection_global_id)
+        raise_unless_locked!
+
         if @server.load_balancer? && connection_global_id
           conn = @available_connections.detect do |conn|
             conn.global_id == connection_global_id
