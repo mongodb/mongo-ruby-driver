@@ -730,6 +730,27 @@ describe Mongo::Server::ConnectionPool do
         expect(checkout_failed_events.size).to eq(1)
         expect(checkout_failed_events.first.reason).to be(:connection_error)
       end
+
+      context "when the error is caused by close" do
+        let(:pool) { server.pool }
+        let(:options) { { max_size: 1 } }
+
+        it "raises an error and returns immediately" do
+          expect(pool.max_size).to eq(1)
+          Timeout::timeout(1) do
+            c1 = pool.check_out
+            thread = Thread.new do
+              c2 = pool.check_out
+            end
+
+            sleep 0.1
+            expect do
+              pool.close
+              thread.join
+            end.to raise_error(Mongo::Error::PoolClosedError)
+          end
+        end
+      end
     end
 
     context "when the pool is paused" do

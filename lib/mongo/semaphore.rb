@@ -23,7 +23,7 @@ module Mongo
   class Semaphore
     def initialize
       @lock = Mutex.new
-      @cv = ConditionVariable.new
+      @cv = ::ConditionVariable.new
     end
 
     # Waits for the semaphore to be signaled up to timeout seconds.

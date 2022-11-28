@@ -16,42 +16,42 @@
 # limitations under the License.
 
 module Mongo
-  # This is a semaphore that distinguishes waits ending due to the timeout
-  # being reached from waits ending due to the semaphore being signaled.
+  # This is an implementation of a condition variable.
   #
   # @api private
-  class DistinguishingSemaphore
-    def initialize
-      @lock = Mutex.new
+  class ConditionVariable
+    extend Forwardable
+
+    def initialize(lock = Mutex.new)
+      @lock = lock
       @cv = ::ConditionVariable.new
-      @queue = []
     end
 
-    # Waits for the semaphore to be signaled up to timeout seconds.
-    # If semaphore is not signaled, returns after timeout seconds.
-    #
-    # @return [ true | false ] true if semaphore was signaled, false if
-    #   timeout was reached.
+    # Waits for the condition variable to be signaled up to timeout seconds.
+    # If condition variable is not signaled, returns after timeout seconds.
     def wait(timeout = nil)
-      @lock.synchronize do
-        @cv.wait(@lock, timeout)
-        (!@queue.empty?).tap do
-          @queue.clear
-        end
-      end
+      raise_unless_locked!
+      return false if timeout && timeout < 0
+      @cv.wait(@lock, timeout)
     end
 
     def broadcast
-      @lock.synchronize do
-        @queue.push(true)
-        @cv.broadcast
-      end
+      raise_unless_locked!
+      @cv.broadcast
     end
 
     def signal
-      @lock.synchronize do
-        @queue.push(true)
-        @cv.signal
+      raise_unless_locked!
+      @cv.signal
+    end
+
+    def_delegators :@lock, :synchronize
+
+    private
+
+    def raise_unless_locked!
+      unless @lock.owned?
+        raise ArgumentError, "the lock must be owned when calling this method"
       end
     end
   end
