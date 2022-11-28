@@ -821,23 +821,6 @@ module Mongo
         end
       end
 
-      # @return [ true | false ] if there is a connection available or there is
-      # room for another connecton.
-      def available_connection?
-        return false unless @pending_connections.length < max_connecting
-        ok = false
-        ok ||= if @server.load_balancer? && connection_global_id
-          @available_connections.any? do |conn|
-            conn.global_id == connection_global_id
-          end
-        else
-          @available_connections.any?
-        end
-        ok ||= max_size == 0
-        ok ||= unsynchronized_size < max_size
-        ok
-      end
-
       def create_connection
         r, _ = @generation_manager.pipe_fds(service_id: server.description.service_id)
         opts = options.merge(
