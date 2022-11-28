@@ -1196,7 +1196,7 @@ module Mongo
           # A particular connection is requested, but it is not available.
           # If it is nether available not checked out, we should stop here.
           @checked_out_connections.detect do |conn|
-            conn.connection_global_id == connection_global_id
+            conn.global_id == connection_global_id
           end.tap do |conn|
             if conn.nil?
               publish_cmap_event(
