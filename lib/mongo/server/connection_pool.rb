@@ -1192,7 +1192,7 @@ module Mongo
             @pending_connections << connection
           end
           return connection
-        elsif connection_global_id
+        elsif connection_global_id && @server.load_balancer?
           # A particular connection is requested, but it is not available.
           # If it is nether available not checked out, we should stop here.
           @checked_out_connections.detect do |conn|
@@ -1211,6 +1211,7 @@ module Mongo
           # We need a particular connection, and if it is not available
           # we can wait for an in-progress operation to return
           # such a connection to the pool.
+          nil
         else
           connection = create_connection
           @connection_requests -= 1
