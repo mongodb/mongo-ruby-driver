@@ -1241,6 +1241,7 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
+            log_info("WAITING ON SIZE: #{RSpec.current_example} mc: #{@max_connecting}")
             @size_cv.wait(wait)
             raise_if_not_ready!
           end
@@ -1258,7 +1259,7 @@ module Mongo
             until @available_connections.any? || @pending_connections.length < @max_connecting
               wait = deadline - Utils.monotonic_time
               raise_check_out_timeout!(connection_global_id) if wait <= 0
-              log_info("WAITING ON MC #{RSpec.current_example} mc: #{@max_connecting}")
+              log_info("WAITING ON MC: #{RSpec.current_example} mc: #{@max_connecting}")
               @max_connecting_cv.wait(wait)
               raise_if_not_ready!
             end
