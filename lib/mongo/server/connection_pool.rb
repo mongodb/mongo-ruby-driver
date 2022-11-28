@@ -807,6 +807,8 @@ module Mongo
       # global id. If no suitable connections are available,
       # returns nil.
       def next_available_connection(connection_global_id: nil)
+        raise_unless_locked!
+
         if @server.load_balancer? && connection_global_id
           conn = @available_connections.detect do |conn|
             conn.global_id == connection_global_id
@@ -1050,6 +1052,8 @@ module Mongo
 
       # The lock should be acquired when calling this method.
       def raise_check_out_timeout!(connection_global_id)
+        raise_unless_locked!
+
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
             @server.address,
@@ -1091,6 +1095,8 @@ module Mongo
       end
 
       def raise_if_pool_paused!
+        raise_unless_locked!
+
         if !@ready
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
@@ -1112,8 +1118,15 @@ module Mongo
 
       # The lock should be acquired when calling this method.
       def raise_if_not_ready!
+        raise_unless_locked!
         raise_if_pool_closed!
         raise_if_pool_paused!
+      end
+
+      def raise_unless_locked!
+        unless @lock.owned?
+          raise ArgumentError, "the lock must be owned when calling this method"
+        end
       end
 
       def valid_available_connection?(connection, pid, connection_global_id)
