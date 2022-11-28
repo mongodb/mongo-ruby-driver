@@ -1273,7 +1273,8 @@ module Mongo
 
         begin
           connect_connection(connection)
-        rescue Exception
+        rescue Exception => e
+          log_info("CHECKOUT EXC #{e}")
           # Handshake or authentication failed
           @lock.synchronize do
             if @pending_connections.include?(connection)

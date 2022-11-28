@@ -458,7 +458,9 @@ module Mongo
       end
 
       def run_checkout_op(state)
+        log_info('BEGIN CHECK OUT')
         conn = pool.check_out
+        log_info("FINISH CHECK OUT #{conn}")
         state[label] = conn if label
       end
 
