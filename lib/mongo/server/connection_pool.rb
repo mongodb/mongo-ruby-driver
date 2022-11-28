@@ -1211,7 +1211,6 @@ module Mongo
           # We need a particular connection, and if it is not available
           # we can wait for an in-progress operation to return
           # such a connection to the pool.
-          nil
         else
           connection = create_connection
           @connection_requests -= 1
@@ -1260,9 +1259,9 @@ module Mongo
               raise_if_not_ready!
             end
 
-            get_connection(deadline, Process.pid, connection_global_id).tap do
+            get_connection(deadline, Process.pid, connection_global_id).tap do |c|
               wait = deadline - Utils.monotonic_time
-              raise_check_out_timeout!(connection_global_id) if wait <= 0
+              raise_check_out_timeout!(connection_global_id) if c.nil? && wait <= 0
             end
           end
         end
