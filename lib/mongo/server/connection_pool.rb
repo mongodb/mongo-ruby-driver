@@ -1277,9 +1277,10 @@ module Mongo
               raise_if_not_ready!
             end
 
-            get_connection(deadline, Process.pid, connection_global_id)
-            wait = deadline - Utils.monotonic_time
-            raise_check_out_timeout!(connection_global_id) if wait <= 0
+            get_connection(deadline, Process.pid, connection_global_id).tap do
+              wait = deadline - Utils.monotonic_time
+              raise_check_out_timeout!(connection_global_id) if wait <= 0
+            end
           end
         end
 
