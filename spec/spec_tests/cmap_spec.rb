@@ -110,6 +110,9 @@ describe 'Cmap' do
 
       it 'emits the correct number of events' do
         RSpec::Mocks.with_temporary_scope do
+          unless actual_events.length == spec.expected_events.length
+            raise "ACTUAL: #{actual_events}\n\nEXPECTED: #{spec.expected_events}"
+          end
           expect(actual_events.length).to eq(spec.expected_events.length)
         end
       end
