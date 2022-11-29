@@ -35,8 +35,9 @@ operations:
   # - it is long enough to make sure that the background thread opens a connection before thread1 releases its permit;
   # - it is short enough to allow thread2 to become blocked acquiring a permit to open a connection, and then grab the connection
   #   opened by the background thread, before the background thread releases its permit.
+  # This wait is not necessary in ruby since the background thread runs immediately.
   - name: wait
-    ms: 200
+    ms: 0
   - name: checkOut
     thread: thread1
   - name: waitForEvent

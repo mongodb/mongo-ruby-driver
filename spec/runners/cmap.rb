@@ -491,6 +491,8 @@ module Mongo
       def run_on_thread(state)
         if thd = state[thread]
           state[thread].context.operations << self
+          # Sleep to allow the other thread to execute the new command.
+          sleep 0.1
         else
           raise "Expected thread for '#{thread}' but none exists."
         end
