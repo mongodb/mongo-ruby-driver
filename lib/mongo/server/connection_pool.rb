@@ -351,7 +351,7 @@ module Mongo
 
         raise_if_pool_closed!
         raise_if_pool_paused_locked!
-        log_info("START CHECKOUT #{caller(0)}")
+        log_info("START CHECKOUT")
         connection = retrieve_and_connect_connection(connection_global_id)
 
         publish_cmap_event(
