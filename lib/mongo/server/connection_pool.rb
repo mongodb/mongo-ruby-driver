@@ -525,6 +525,7 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
+          log_info("START CLEAR")
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
 
@@ -534,7 +535,9 @@ module Mongo
 
           if options && options[:interrupt_in_use_connections]
             schedule_for_interruption(@checked_out_connections, service_id)
+            log_info("SCHEDULE PENDING #{@pending_connections.length}")
             schedule_for_interruption(@pending_connections, service_id)
+            log_info("INTERRUPTING #{@interrupt_connections.length}")
           end
 
           if @ready
@@ -898,7 +901,7 @@ module Mongo
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connections
         return false if @interrupt_connections.empty?
-
+        log_info("BEGIN INTERRUPTION")
         gens = Set.new
         while conn = @interrupt_connections.pop
           if @checked_out_connections.include?(conn)
