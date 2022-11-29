@@ -68,6 +68,7 @@ module Mongo
       end
 
       def run
+        log_info("\n-------------- START #{@description} --------------\n\n")
         state = {}
 
         {}.tap do |result|
@@ -342,6 +343,8 @@ module Mongo
       def run(pool, state, main_thread = true)
         return run_on_thread(state) if thread && main_thread
 
+        log_info("\n---------------- OP #{name} ----------------\n\n")
+
         @pool = pool
         case name
         when 'start'
@@ -390,7 +393,7 @@ module Mongo
 
       def run_start_op(state)
         thread_context = ThreadContext.new
-        thread = Thread.new do
+        thread = Thread.start do
           loop do
             begin
               op = thread_context.operations.pop(true)

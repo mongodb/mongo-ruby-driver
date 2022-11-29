@@ -120,6 +120,7 @@ describe 'Cmap' do
       spec.expected_events.each_with_index do |expected_event, index|
         it "emits correct event #{index+1}" do
           RSpec::Mocks.with_temporary_scope do
+            puts("ACTUAL: #{actual_events}\nEXPECTED: #{spec.expected_events}")
             verifier.verify_hashes(actual_events[index], expected_event)
           end
         end
