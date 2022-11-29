@@ -559,11 +559,12 @@ module Mongo
           # Broadcast here to cause all of the threads waiting on the pool size
           # to decrease to break out of the wait loop and error.
           @size_cv.broadcast
+
+          # "Schedule the background thread" after clearing. This is responsible
+          # for cleaning up stale threads, and interrupting in use connections.
+          @populate_semaphore.signal
         end
 
-        # "Schedule the background thread" after clearing. This is responsible
-        # for cleaning up stale threads, and interrupting in use connections.
-        @populate_semaphore.signal
         true
       ensure
         check_invariants
