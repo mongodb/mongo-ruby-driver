@@ -287,9 +287,9 @@ Server Heartbeats
 
 The application can be notified of each server heartbeat by subscribing
 to SERVER_HEARTBEAT topic. A server heartbeat listener must implement
-three methods: `started`, `succeeded` and `failed`. Each heartbeat invokes
-the `started` method on the listener, and then either `succeeded` or `failed`
-method depending on the outcome of the heartbeat.
+three methods: ``started``, ``succeeded`` and ``failed``. Each heartbeat
+invokes the ``started`` method on the listener, and then either ``succeeded``
+or ``failed`` method depending on the outcome of the heartbeat.
 
 All heartbeat events contain the address of the server that the heartbeat
 was sent to. Succeeded and failed events contain the round trip time for
