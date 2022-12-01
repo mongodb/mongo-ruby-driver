@@ -351,7 +351,7 @@ module Mongo
 
         raise_if_pool_closed!
         raise_if_pool_paused_locked!
-        log_info("START CHECKOUT")
+
         connection = retrieve_and_connect_connection(connection_global_id)
 
         publish_cmap_event(
@@ -525,7 +525,6 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
-          log_info("START CLEAR")
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
 
@@ -535,9 +534,7 @@ module Mongo
 
           if options && options[:interrupt_in_use_connections]
             schedule_for_interruption(@checked_out_connections, service_id)
-            log_info("SCHEDULE PENDING #{@pending_connections.length}")
             schedule_for_interruption(@pending_connections, service_id)
-            log_info("INTERRUPTING #{@interrupt_connections.length}")
           end
 
           if @ready
@@ -854,9 +851,7 @@ module Mongo
             (unsynchronized_size + @connection_requests) < min_size &&
             @pending_connections.length < @max_connecting
           then
-            log_info("BCK create connection")
             connection = create_connection
-            log_info("BCK pending connection")
             @pending_connections << connection
           else
             return true if remove_interrupted_connections
@@ -866,11 +861,8 @@ module Mongo
         end
 
         begin
-          log_info("BCK connecting connection")
           connect_connection(connection)
-          log_info("BCK done connecting connection")
         rescue Exception => e
-          log_info("BCK exception #{e.inspect}")
           @lock.synchronize do
             @pending_connections.delete(connection)
             @max_connecting_cv.signal
@@ -901,7 +893,6 @@ module Mongo
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connections
         return false if @interrupt_connections.empty?
-        log_info("BEGIN INTERRUPTION")
         gens = Set.new
         while conn = @interrupt_connections.pop
           if @checked_out_connections.include?(conn)
@@ -912,7 +903,6 @@ module Mongo
           elsif @pending_connections.include?(conn)
             # If the connection is pending, disconnect with the interrupted flag.
             conn.disconnect!(reason: :stale, interrupted: true)
-            log_info("CONN #{conn.id} INTERRUPTED")
             @pending_connections.delete(conn)
           end
           gens << [ conn.generation, conn.service_id ]
@@ -1190,7 +1180,6 @@ module Mongo
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       def get_connection(deadline, pid, connection_global_id)
-        log_info("GET CONNECTION #{@available_connections.length}")
         if connection = next_available_connection(connection_global_id)
           unless valid_available_connection?(connection, pid, connection_global_id)
             return nil
@@ -1225,7 +1214,6 @@ module Mongo
           # such a connection to the pool.
           nil
         else
-          log_info("CREATED CONNECTION")
           connection = create_connection
           @connection_requests -= 1
           @pending_connections << connection
@@ -1252,12 +1240,10 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            log_info("WAITING ON SIZE: #{RSpec.current_example} mc: #{@max_connecting}")
             @size_cv.wait(wait)
             raise_if_not_ready!
           end
           @connection_requests += 1
-          log_info("PENDING REQUEST")
         end
 
         connection = nil
@@ -1271,7 +1257,6 @@ module Mongo
             until @available_connections.any? || @pending_connections.length < @max_connecting
               wait = deadline - Utils.monotonic_time
               raise_check_out_timeout!(connection_global_id) if wait <= 0
-              log_info("WAITING ON MC: #{RSpec.current_example} mc: #{@max_connecting}")
               @max_connecting_cv.wait(wait)
               raise_if_not_ready!
             end
@@ -1281,15 +1266,11 @@ module Mongo
               raise_check_out_timeout!(connection_global_id) if c.nil? && wait <= 0
             end
           end
-          log_info("GOT CONNECTION") if connection
         end
 
         begin
-          log_info("CONNECTING CONNECTION")
           connect_connection(connection)
-          log_info("DONE CONNECTING CONNECTION")
         rescue Exception => e
-          log_info("CHECKOUT EXC #{e}")
           # Handshake or authentication failed
           @lock.synchronize do
             if @pending_connections.include?(connection)
