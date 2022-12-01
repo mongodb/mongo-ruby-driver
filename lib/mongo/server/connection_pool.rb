@@ -1246,12 +1246,9 @@ module Mongo
           @connection_requests += 1
         end
 
-        connection = nil
-        while connection.nil?
-          # Lock must be taken on each iteration, rather for the method
-          # overall, otherwise other threads will not be able to check in
-          # a connection while this thread is waiting for one.
-          connection = @max_connecting_cv.synchronize do
+        @max_connecting_cv.synchronize do
+          connection = nil
+          while connection.nil?
             # The second gate to checking out a connection. Make sure 1) there
             # exists an available connection and 2) we are under max_connecting.
             until @available_connections.any? || @pending_connections.length < @max_connecting
@@ -1261,10 +1258,9 @@ module Mongo
               raise_if_not_ready!
             end
 
-            get_connection(deadline, Process.pid, connection_global_id).tap do |c|
-              wait = deadline - Utils.monotonic_time
-              raise_check_out_timeout!(connection_global_id) if c.nil? && wait <= 0
-            end
+            connection = get_connection(deadline, Process.pid, connection_global_id)
+            wait = deadline - Utils.monotonic_time
+            raise_check_out_timeout!(connection_global_id) if c.nil? && wait <= 0
           end
         end
 
