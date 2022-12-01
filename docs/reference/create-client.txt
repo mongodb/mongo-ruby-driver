@@ -1026,11 +1026,11 @@ URI options are explained in detail in the :manual:`Connection URI reference
        invalid values (e.g. negative and non-numeric values), invalid values
        provided via this URI option are ignored with a warning.
 
-  * - srvMaxHosts=Integer
-    - ``:srv_max_hosts => Integer``
+   * - srvMaxHosts=Integer
+     - ``:srv_max_hosts => Integer``
 
-  * - srvServiceName=String
-    - ``:srv_service_name => String``
+   * - srvServiceName=String
+     - ``:srv_service_name => String``
 
    * - ssl=Boolean
      - ``:ssl => true|false``
