@@ -35,6 +35,8 @@ This release of the Ruby driver increases the minimum required Ruby version
 to 2.4 and deprecates support for MongoDB server versions below 3.6.
 
 
+.. _release-notes-2.15:
+
 2.15
 ====
 
@@ -83,6 +85,8 @@ The following smaller improvements have been made:
 - Server selection timeout for ``mongocryptd`` has been increased to 10 seconds.
 
 
+.. _release-notes-2.14:
+
 2.14
 ====
 
@@ -115,6 +119,8 @@ The following smaller improvements have been made:
 Support for Ruby versions 2.3 and 2.4 has been deprecated as of this release.
 
 
+.. _release-notes-2.13:
+
 2.13
 ====
 
@@ -126,7 +132,7 @@ functionality has been added:
   cross-driver mechanims to discover deployment topology or force direct
   connection.
 - Support for :ref:`MONGODB-AWS authentication mechanism <aws-auth>`.
-- When SCRAM authentication is used with 4.4 and newer servers, the driver will 
+- When SCRAM authentication is used with 4.4 and newer servers, the driver will
   complete authentication with fewer network roundtrips.
 - The driver creates an additional monitoring connection for 4.4 and newer
   servers, permitting the server to notify the driver when its state changes.
@@ -157,6 +163,8 @@ The following smaller improvements have been made:
   can now be configured.
 
 
+.. _release-notes-2.12:
+
 2.12
 ====
 
@@ -170,6 +178,8 @@ The following smaller improvements have been made:
 - Authentication exceptions now include server information to aid in
   troubleshooting.
 
+
+.. _release-notes-2.11:
 
 2.11
 ====
@@ -200,6 +210,8 @@ This release of the Ruby driver increases the minimum required Ruby version
 to 2.3, as well as minimum supported JRuby version to 9.2.
 
 
+.. _release-notes-2.10:
+
 2.10
 ====
 
@@ -225,6 +237,8 @@ The following smaller improvements have been made:
 Support for Ruby versions less than 2.3 is deprecated in this release.
 
 
+.. _release-notes-2.9:
+
 2.9
 ===
 
@@ -243,7 +257,7 @@ This release adds the following new features:
 
 The following smaller improvements have been made:
 
-- Support for the ``startAfter`` option in the ``$changeStream``        
+- Support for the ``startAfter`` option in the ``$changeStream``
   aggregation pipeline stage.
 - Field order of BSON documents sent to the server changed for better logging.
 - Certificate paths with unescaped slashes can now be specified in
