@@ -778,11 +778,6 @@ module Mongo
         end
 
         return create_and_add_connection
-      rescue Error::AuthError, Error
-        # wake up one thread waiting for connections, since one could not
-        # be created here, and can instead be created in flow
-        @max_connecting_cv.signal
-        raise
       end
 
       # Finalize the connection pool for garbage collection.
