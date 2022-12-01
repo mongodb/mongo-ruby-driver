@@ -12,7 +12,7 @@ including managing databases, collections, indexes and users.
 .. toctree::
   :titlesonly:
 
-  database-tasks
-  collection-tasks
-  indexing
-  collations
+  /reference/database-tasks
+  /reference/collection-tasks
+  /reference/indexing
+  /reference/collations
