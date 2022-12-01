@@ -1233,10 +1233,12 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       def retrieve_and_connect_connection(connection_global_id)
         deadline = Utils.monotonic_time + wait_timeout
+        connection = nil
 
-        # The first gate to checking out a connection. Make sure the number of
-        # unavailable connections is less than the max pool size.
-        @size_cv.synchronize do
+        @lock.synchronize do
+
+          # The first gate to checking out a connection. Make sure the number of
+          # unavailable connections is less than the max pool size.
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
@@ -1244,10 +1246,7 @@ module Mongo
             raise_if_not_ready!
           end
           @connection_requests += 1
-        end
 
-        connection = nil
-        @max_connecting_cv.synchronize do
           while connection.nil?
             # The second gate to checking out a connection. Make sure 1) there
             # exists an available connection and 2) we are under max_connecting.
