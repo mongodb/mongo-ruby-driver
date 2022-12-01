@@ -1246,8 +1246,8 @@ module Mongo
           @connection_requests += 1
         end
 
+        connection = nil
         @max_connecting_cv.synchronize do
-          connection = nil
           while connection.nil?
             # The second gate to checking out a connection. Make sure 1) there
             # exists an available connection and 2) we are under max_connecting.
@@ -1260,7 +1260,7 @@ module Mongo
 
             connection = get_connection(deadline, Process.pid, connection_global_id)
             wait = deadline - Utils.monotonic_time
-            raise_check_out_timeout!(connection_global_id) if c.nil? && wait <= 0
+            raise_check_out_timeout!(connection_global_id) if connection.nil? && wait <= 0
           end
         end
 
