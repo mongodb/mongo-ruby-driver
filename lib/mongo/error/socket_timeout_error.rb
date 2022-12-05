@@ -24,11 +24,6 @@ module Mongo
     class SocketTimeoutError < Error
       include WriteRetryable
       include ChangeStreamResumable
-      include Loggable
-      def initialize(*args)
-        log_info("SOCKET TIMEOUT #{RSpec.current_example} #{caller(0)}")
-        super
-      end
     end
   end
 end
