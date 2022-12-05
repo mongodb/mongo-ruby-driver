@@ -227,13 +227,7 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        if error?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
-        end
-
-        if closed?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
-        end
+        raise_if_closed!
 
         unless @socket
           @socket = create_socket
@@ -275,6 +269,7 @@ module Mongo
       #   description instance from the hello response of the returned socket
       #   and the compressor to use.
       private def do_connect
+        raise_if_closed!
         begin
           pending_connection = PendingConnection.new(
             socket, @server, monitoring, options.merge(id: id))
@@ -410,6 +405,16 @@ module Mongo
         rescue Error::SocketTimeoutError => e
           @error = e
           raise
+        end
+      end
+
+      def raise_if_closed!
+        if error?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
+        end
+
+        if closed?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
         end
       end
     end

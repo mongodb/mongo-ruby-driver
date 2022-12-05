@@ -693,7 +693,7 @@ module Mongo
 
         connection = check_out(connection_global_id: connection_global_id)
         yield(connection)
-      rescue Error::SocketError, Error::SocketTimeoutError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
         maybe_raise_pool_cleared!(connection, e)
       ensure
         if connection
