@@ -103,7 +103,6 @@ describe 'fork reconnect' do
           status.exitstatus.should == 0
         end
       end
-
     end
   end
 end
