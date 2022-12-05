@@ -893,6 +893,7 @@ module Mongo
       # Interrupt connections scheduled for interruption.
       def remove_interrupted_connections
         return false if @interrupt_connections.empty?
+
         gens = Set.new
         while conn = @interrupt_connections.pop
           if @checked_out_connections.include?(conn)
@@ -1265,7 +1266,7 @@ module Mongo
 
         begin
           connect_connection(connection)
-        rescue Exception => e
+        rescue Exception
           # Handshake or authentication failed
           @lock.synchronize do
             if @pending_connections.include?(connection)

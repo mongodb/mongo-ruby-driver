@@ -110,9 +110,6 @@ describe 'Cmap' do
 
       it 'emits the correct number of events' do
         RSpec::Mocks.with_temporary_scope do
-          unless actual_events.length == spec.expected_events.length
-            raise "ACTUAL: #{actual_events}\n\nEXPECTED: #{spec.expected_events}"
-          end
           expect(actual_events.length).to eq(spec.expected_events.length)
         end
       end
@@ -120,7 +117,6 @@ describe 'Cmap' do
       spec.expected_events.each_with_index do |expected_event, index|
         it "emits correct event #{index+1}" do
           RSpec::Mocks.with_temporary_scope do
-            puts("ACTUAL: #{actual_events}\nEXPECTED: #{spec.expected_events}")
             verifier.verify_hashes(actual_events[index], expected_event)
           end
         end

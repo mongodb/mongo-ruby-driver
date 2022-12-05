@@ -8,6 +8,7 @@ module Mongo
 
     # Represents a specification.
     class Spec
+
       # @return [ String ] description The spec description.
       attr_reader :description
 
@@ -340,7 +341,6 @@ module Mongo
       def run(pool, state, main_thread = true)
         return run_on_thread(state) if thread && main_thread
 
-
         @pool = pool
         case name
         when 'start'
@@ -487,7 +487,7 @@ module Mongo
 
       def run_on_thread(state)
         if thd = state[thread]
-          state[thread].context.operations << self
+          thd.context.operations << self
           # Sleep to allow the other thread to execute the new command.
           sleep 0.1
         else
