@@ -862,7 +862,7 @@ module Mongo
 
         begin
           connect_connection(connection)
-        rescue Exception => e
+        rescue Exception
           @lock.synchronize do
             @pending_connections.delete(connection)
             @max_connecting_cv.signal
