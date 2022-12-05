@@ -8,7 +8,6 @@ module Mongo
 
     # Represents a specification.
     class Spec
-      include Loggable
       # @return [ String ] description The spec description.
       attr_reader :description
 
@@ -68,7 +67,6 @@ module Mongo
       end
 
       def run
-        log_info("\n-------------- START #{@description} --------------\n\n")
         state = {}
 
         {}.tap do |result|
@@ -294,7 +292,6 @@ module Mongo
 
     # Represents an operation in the spec. Operations are sequential.
     class Operation
-      include Loggable
       include RSpec::Mocks::ExampleMethods
 
       # @return [ String ] command The name of the operation to run.
@@ -343,7 +340,6 @@ module Mongo
       def run(pool, state, main_thread = true)
         return run_on_thread(state) if thread && main_thread
 
-        log_info("\n---------------- OP #{name} ----------------\n\n")
 
         @pool = pool
         case name
@@ -461,9 +457,7 @@ module Mongo
       end
 
       def run_checkout_op(state)
-        log_info('BEGIN CHECK OUT')
         conn = pool.check_out
-        log_info("FINISH CHECK OUT #{conn}")
         state[label] = conn if label
       end
 
