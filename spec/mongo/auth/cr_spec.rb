@@ -44,7 +44,6 @@ describe Mongo::Auth::CR do
 
       context 'when compression is used' do
         require_compression
-        min_server_fcv '3.6'
 
         it 'does not compress the message' do
           expect(Mongo::Protocol::Compressed).not_to receive(:new)
@@ -53,26 +52,6 @@ describe Mongo::Auth::CR do
           }.to raise_error(Mongo::Auth::Unauthorized)
         end
       end
-    end
-  end
-
-  context 'when the user is authorized for the database' do
-    max_server_fcv '2.6'
-
-    before do
-      connection.connect!
-    end
-
-    let(:cr) do
-      described_class.new(root_user, connection)
-    end
-
-    let(:login) do
-      cr.login
-    end
-
-    it 'logs the user into the connection' do
-      expect(login['ok']).to eq(1)
     end
   end
 end
