@@ -132,7 +132,7 @@ describe 'Retryable writes errors tests' do
     end
 
     let(:check_out_results) do
-      cmap_events.filter do |e|
+      cmap_events.select do |e|
         [
           Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut,
           Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed,
