@@ -19,6 +19,7 @@ describe Mongo::Auth::CR do
     end
 
     context 'when the user is not authorized' do
+      max_server_fcv "4.0"
 
       let(:user) do
         Mongo::Auth::User.new(
