@@ -1,6 +1,8 @@
 version: 1
 style: unit
 description: clearing pool clears the WaitQueue
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 poolOptions:
   maxPoolSize: 1
   waitQueueTimeoutMS: 30000
@@ -19,7 +21,7 @@ operations:
   - name: checkOut
     thread: thread2
   - name: start
-    target: thread3 
+    target: thread3
   - name: checkOut
     thread: thread3
   # wait for the 3 threads to start checking out a connection
