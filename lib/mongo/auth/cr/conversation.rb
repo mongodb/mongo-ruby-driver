@@ -28,7 +28,6 @@ module Mongo
       #   removed in driver version 3.0. Please use SCRAM instead.
       # @api private
       class Conversation < ConversationBase
-        include Loggable
 
         # The login message base.
         #
@@ -51,7 +50,6 @@ module Mongo
         #
         # @since 2.0.0
         def start(connection)
-          log_info("GET NONCE #{caller(0)}")
           selector = Auth::GET_NONCE
           build_message(connection, user.auth_source, selector)
         end
