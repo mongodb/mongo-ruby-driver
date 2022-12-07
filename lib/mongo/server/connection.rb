@@ -147,6 +147,14 @@ module Mongo
         options[:connection_pool]
       end
 
+      # Whether the connection was connected and was not interrupted, closed,
+      # or had an error raised.
+      #
+      # @return [ true | false ] if the connection was connected.
+      def connected?
+        !closed? && !error? && !interrupted? && !!@socket
+      end
+
       # Whether the connection was closed.
       #
       # Closed connections should no longer be used. Instead obtain a new
@@ -219,17 +227,9 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        if error?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
-        end
-
-        if closed?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
-        end
+        raise_if_closed!
 
         unless @socket
-          # When @socket is assigned, the socket should have handshaken and
-          # authenticated and be usable.
           @socket = create_socket
           @description, @compressor = do_connect
 
@@ -269,6 +269,7 @@ module Mongo
       #   description instance from the hello response of the returned socket
       #   and the compressor to use.
       private def do_connect
+        raise_if_closed!
         begin
           pending_connection = PendingConnection.new(
             socket, @server, monitoring, options.merge(id: id))
@@ -404,6 +405,16 @@ module Mongo
         rescue Error::SocketTimeoutError => e
           @error = e
           raise
+        end
+      end
+
+      def raise_if_closed!
+        if error?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
+        end
+
+        if closed?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
         end
       end
     end

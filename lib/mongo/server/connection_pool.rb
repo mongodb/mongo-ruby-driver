@@ -138,11 +138,6 @@ module Mongo
         # must do so under this lock.
         @lock = Mutex.new
 
-        # Condition variable broadcast when a connection is added to
-        # @available_connections, to wake up any threads waiting for an
-        # available connection when pool is at max size
-        @available_semaphore = Semaphore.new
-
         # Background thread reponsible for maintaining the size of
         # the pool to at least min_size
         @populator = Populator.new(self, options)
@@ -156,7 +151,13 @@ module Mongo
         # This represents the number of threads that have made it past the size_cv
         # gate but have not acquired a connection to add to the pending_connections
         # set.
-        @pending = 0
+        @connection_requests = 0
+
+        # Condition variable to enforce the second check in check_out: max_connecting.
+        # Thei condition variable should be signaled when the number of pending
+        # connections decreases.
+        @max_connecting_cv = Mongo::ConditionVariable.new(@lock)
+        @max_connecting = options.fetch(:max_connecting, 2)
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
@@ -262,7 +263,7 @@ module Mongo
       #
       # @api private
       def unavailable_connections
-        @checked_out_connections.length + @pending_connections.length + @pending
+        @checked_out_connections.length + @pending_connections.length + @connection_requests
       end
 
       # Number of available connections in the pool.
@@ -319,6 +320,9 @@ module Mongo
 
       # @api private
       attr_reader :populator
+
+      # @api private
+      attr_reader :max_connecting
 
       # Checks a connection out of the pool.
       #
@@ -443,9 +447,7 @@ module Mongo
           connection.record_checkin!
           @available_connections << connection
 
-          # Wake up only one thread waiting for an available connection,
-          # since only one connection was checked in.
-          @available_semaphore.signal
+          @max_connecting_cv.signal
         end
       end
 
@@ -548,6 +550,9 @@ module Mongo
             do_pause if !@server.load_balancer? && @server.unknown?
           end
 
+          # Broadcast here to cause all of the threads waiting on the max
+          # connecting to decrease to break out of the wait loop and error.
+          @max_connecting_cv.broadcast
           # Broadcast here to cause all of the threads waiting on the pool size
           # to decrease to break out of the wait loop and error.
           @size_cv.broadcast
@@ -641,6 +646,7 @@ module Mongo
             @ready = false
           end
 
+          @max_connecting_cv.broadcast
           @size_cv.broadcast
         end
 
@@ -687,7 +693,7 @@ module Mongo
 
         connection = check_out(connection_global_id: connection_global_id)
         yield(connection)
-      rescue Error::SocketError, Error::SocketTimeoutError => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
         maybe_raise_pool_cleared!(connection, e)
       ensure
         if connection
@@ -769,11 +775,6 @@ module Mongo
         end
 
         return create_and_add_connection
-      rescue Error::AuthError, Error
-        # wake up one thread waiting for connections, since one could not
-        # be created here, and can instead be created in flow
-        @available_semaphore.signal
-        raise
       end
 
       # Finalize the connection pool for garbage collection.
@@ -806,7 +807,7 @@ module Mongo
       # Returns the next available connection, optionally with given
       # global id. If no suitable connections are available,
       # returns nil.
-      def next_available_connection(connection_global_id: nil)
+      def next_available_connection(connection_global_id)
         raise_unless_locked!
 
         if @server.load_balancer? && connection_global_id
@@ -846,7 +847,10 @@ module Mongo
         connection = nil
 
         @lock.synchronize do
-          if !closed? && @ready && (unsynchronized_size + @pending) < min_size
+          if !closed? && @ready &&
+            (unsynchronized_size + @connection_requests) < min_size &&
+            @pending_connections.length < @max_connecting
+          then
             connection = create_connection
             @pending_connections << connection
           else
@@ -861,6 +865,7 @@ module Mongo
         rescue Exception
           @lock.synchronize do
             @pending_connections.delete(connection)
+            @max_connecting_cv.signal
             @size_cv.signal
           end
           raise
@@ -869,9 +874,7 @@ module Mongo
         @lock.synchronize do
           @available_connections << connection
           @pending_connections.delete(connection)
-
-          # wake up one thread waiting for connections, since one was created
-          @available_semaphore.signal
+          @max_connecting_cv.signal
           @size_cv.signal
         end
 
@@ -1071,7 +1074,7 @@ module Mongo
           "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
           "Connections in pool: #{@available_connections.length} available, " +
           "#{@checked_out_connections.length} checked out, " +
-          "#{@pending_connections.length + @pending} pending " +
+          "#{@pending_connections.length + @connection_requests} pending " +
           "(max size: #{max_size})"
         raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
       end
@@ -1130,28 +1133,6 @@ module Mongo
       end
 
       def valid_available_connection?(connection, pid, connection_global_id)
-        if connection.nil?
-          if connection_global_id
-            # A particular connection is requested, but it is not available.
-            # If it is nether available not checked out, we should stop here.
-            @checked_out_connections.detect do |conn|
-              conn.connection_global_id == connection_global_id
-            end.tap do |conn|
-              if conn.nil?
-                publish_cmap_event(
-                  Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-                    @server.address,
-                    Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-                  ),
-                )
-                raise Error::MissingConnection.new
-              end
-            end
-          else
-            return false
-          end
-        end
-
         if connection.pid != pid
           log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
           connection.disconnect!(reason: :stale)
@@ -1200,63 +1181,44 @@ module Mongo
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       def get_connection(deadline, pid, connection_global_id)
-        # The first gate to checking out a connection. Make sure the number of
-        # unavailable connections is less than the max pool size.
-        @size_cv.synchronize do
-          until max_size == 0 || unavailable_connections < max_size
-            wait = deadline - Utils.monotonic_time
-            raise_check_out_timeout!(connection_global_id) if wait <= 0
-            @size_cv.wait(wait)
-            raise_if_not_ready!
+        if connection = next_available_connection(connection_global_id)
+          unless valid_available_connection?(connection, pid, connection_global_id)
+            return nil
           end
-          @pending += 1
-        end
 
-        loop do
-          # Lock must be taken on each iteration, rather for the method
-          # overall, otherwise other threads will not be able to check in
-          # a connection while this thread is waiting for one.
-
-          @lock.synchronize do
-            until @available_connections.empty?
-              connection = next_available_connection(
-                connection_global_id: connection_global_id
+          # If the connection is connected, it's not considered a
+          # "pending connection". The pending_connections list represents
+          # the set of connections that are awaiting connection.
+          unless connection.connected?
+            @connection_requests -= 1
+            @pending_connections << connection
+          end
+          return connection
+        elsif connection_global_id && @server.load_balancer?
+          # A particular connection is requested, but it is not available.
+          # If it is nether available not checked out, we should stop here.
+          @checked_out_connections.detect do |conn|
+            conn.global_id == connection_global_id
+          end.tap do |conn|
+            if conn.nil?
+              publish_cmap_event(
+                Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+                  @server.address,
+                  Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+                ),
               )
-
-              unless valid_available_connection?(connection, pid, connection_global_id)
-                # If there's no available connection and we're not looking
-                # for a specific connection, don't attempt to look at the
-                # available connections again.
-                if connection.nil? && !connection_global_id
-                  break
-                else
-                  next
-                end
-              end
-
-              @pending -= 1
-              @pending_connections << connection
-              return connection
-            end
-
-            if @server.load_balancer? && connection_global_id
-              unless @checked_out_connections.detect { |c| c.global_id == connection_global_id }
-                raise Error::ConnectionUnavailable.new
-              end
-              # We need a particular connection, and if it is not available
-              # we can wait for an in-progress operation to return
-              # such a connection to the pool.
-            else
-              connection = create_connection
-              @pending -= 1
-              @pending_connections << connection
-              return connection
+              raise Error::MissingConnection.new
             end
           end
-
-          wait = deadline - Utils.monotonic_time
-          raise_check_out_timeout_locked!(connection_global_id) if wait <= 0
-          @available_semaphore.wait(wait)
+          # We need a particular connection, and if it is not available
+          # we can wait for an in-progress operation to return
+          # such a connection to the pool.
+          nil
+        else
+          connection = create_connection
+          @connection_requests -= 1
+          @pending_connections << connection
+          return connection
         end
       end
 
@@ -1272,15 +1234,47 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       def retrieve_and_connect_connection(connection_global_id)
         deadline = Utils.monotonic_time + wait_timeout
+        connection = nil
 
-        connection = get_connection(deadline, Process.pid, connection_global_id)
+        @lock.synchronize do
+
+          # The first gate to checking out a connection. Make sure the number of
+          # unavailable connections is less than the max pool size.
+          until max_size == 0 || unavailable_connections < max_size
+            wait = deadline - Utils.monotonic_time
+            raise_check_out_timeout!(connection_global_id) if wait <= 0
+            @size_cv.wait(wait)
+            raise_if_not_ready!
+          end
+          @connection_requests += 1
+
+          while connection.nil?
+            # The second gate to checking out a connection. Make sure 1) there
+            # exists an available connection and 2) we are under max_connecting.
+            until @available_connections.any? || @pending_connections.length < @max_connecting
+              wait = deadline - Utils.monotonic_time
+              raise_check_out_timeout!(connection_global_id) if wait <= 0
+              @max_connecting_cv.wait(wait)
+              raise_if_not_ready!
+            end
+
+            connection = get_connection(deadline, Process.pid, connection_global_id)
+            wait = deadline - Utils.monotonic_time
+            raise_check_out_timeout!(connection_global_id) if connection.nil? && wait <= 0
+          end
+        end
 
         begin
           connect_connection(connection)
         rescue Exception
           # Handshake or authentication failed
           @lock.synchronize do
-            @pending_connections.delete(connection)
+            if @pending_connections.include?(connection)
+              @pending_connections.delete(connection)
+            else
+              @connection_requests -= 1
+            end
+            @max_connecting_cv.signal
             @size_cv.signal
           end
           @populate_semaphore.signal
@@ -1296,7 +1290,12 @@ module Mongo
 
         @lock.synchronize do
           @checked_out_connections << connection
-          @pending_connections.delete(connection)
+          if @pending_connections.include?(connection)
+            @pending_connections.delete(connection)
+          else
+            @connection_requests -= 1
+          end
+          @max_connecting_cv.signal
           # no need to signal size_cv here since the number of unavailable
           # connections is unchanged.
         end

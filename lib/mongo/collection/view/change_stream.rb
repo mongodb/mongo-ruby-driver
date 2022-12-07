@@ -238,7 +238,7 @@ module Mongo
           unless closed?
             begin
               @cursor.close
-            rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError, Error::ConnectionUnavailable
+            rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError, Error::MissingConnection
               # ignore
             end
             @cursor = nil
