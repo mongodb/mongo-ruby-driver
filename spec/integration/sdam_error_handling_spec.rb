@@ -463,6 +463,7 @@ describe 'SDAM error handling' do
     end
 
     it "waits 500ms between failed hello checks" do
+      server.log_info("\n------------- START TEST -------------\n\n")
       operation
       start = Mongo::Utils.monotonic_time
       cmd_client.command(hello: 1)
