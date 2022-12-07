@@ -71,6 +71,7 @@ describe 'Retryable writes errors tests' do
 
     it "retries on PoolClearedError" do
       threads.map(&:join)
+      client.log_info("CHECKOUT RESULTS #{check_out_results}")
       expect(check_out_results[0]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut)
       expect(check_out_results[1]).to be_a(Mongo::Monitoring::Event::Cmap::PoolCleared)
       expect(check_out_results[2]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
