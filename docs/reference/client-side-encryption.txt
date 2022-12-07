@@ -111,7 +111,7 @@ If the library can be loaded, then the driver will not try to spawn mongocryptd 
 The daemon will be still spawned if the shared library cannot be found.
 
 It is also possible to require using the shared library by passing
-``crypt_shared_required: true`` option when creating a client. In this case,
+``crypt_shared_lib_required: true`` option when creating a client. In this case,
 an error will be raised if the shared library cannot be loaded.
 
 .. note::

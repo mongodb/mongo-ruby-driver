@@ -20,7 +20,7 @@ describe Mongo::Crypt::Handle do
         schema_map_path: schema_map_path,
         bypass_query_analysis: bypass_query_analysis,
         crypt_shared_lib_path: crypt_shared_lib_path,
-        crypt_shared_required: crypt_shared_required,
+        crypt_shared_lib_required: crypt_shared_lib_required,
         explicit_encryption_only: explicit_encryption_only,
       )
     end
@@ -41,7 +41,7 @@ describe Mongo::Crypt::Handle do
       nil
     end
 
-    let(:crypt_shared_required) do
+    let(:crypt_shared_lib_required) do
       nil
     end
 
@@ -118,11 +118,11 @@ describe Mongo::Crypt::Handle do
         end
       end
 
-      context 'with crypt_shared_required' do
+      context 'with crypt_shared_lib_required' do
         min_server_version '6.0.0'
 
         context 'set to true' do
-          let(:crypt_shared_required) do
+          let(:crypt_shared_lib_required) do
             true
           end
 
