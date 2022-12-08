@@ -70,6 +70,16 @@ describe 'Retryable writes errors tests' do
     end
 
     it "retries on PoolClearedError" do
+      # After the first find fails, the pool is paused and retry is triggered.
+      # Now, a race is started between the second find acquiring a connection,
+      # and the first retrying the read. Now, retry reads cause the cluster to
+      # be rescanned and the pool to be unpaused, allowing the second checkout
+      # to succeed (when it should fail). Therefore we want the second find's
+      # check out to win the race. This gives the check out a little head start.
+      allow(collection).to receive(:retry_read).and_wrap_original do |m, *args, &block|
+        sleep 1.0
+        m.call(*args, &block)
+      end
       threads.map(&:join)
       client.log_info("CHECKOUT RESULTS #{check_out_results}")
       expect(check_out_results[0]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut)
