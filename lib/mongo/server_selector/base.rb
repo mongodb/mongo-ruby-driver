@@ -625,9 +625,9 @@ module Mongo
         if cluster.server_selection_semaphore
           # Since the semaphore may have been signaled between us checking
           # the servers list earlier and the wait call below, we should not
-          # wait for the full remaining time - wait for up to 1 second, then
+          # wait for the full remaining time - wait for up to 0.5 second, then
           # recheck the state.
-          cluster.server_selection_semaphore.wait([time_remaining, 1].min)
+          cluster.server_selection_semaphore.wait([time_remaining, 0.5].min)
         else
           if Lint.enabled?
             raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'

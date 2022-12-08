@@ -263,10 +263,10 @@ module Mongo
             log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
             # Since the semaphore may have been signaled between us checking
             # the servers list above and the wait call below, we should not
-            # wait for the full remaining time - wait for up to 1 second, then
+            # wait for the full remaining time - wait for up to 0.5 second, then
             # recheck the state.
             begin
-              server_selection_semaphore.wait([time_remaining, 1].min)
+              server_selection_semaphore.wait([time_remaining, 0.5].min)
             rescue ::Timeout::Error
               # nothing
             end
