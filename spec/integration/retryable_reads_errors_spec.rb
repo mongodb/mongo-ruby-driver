@@ -14,7 +14,7 @@ describe 'Retryable writes errors tests' do
   context "PoolClearedError retryability test" do
     require_topology :single, :replica_set, :sharded
     require_no_multi_mongos
-    require_min_server_version '4.2.9'
+    min_server_version '4.2.9'
 
     let(:options) { { max_pool_size: 1 } }
 
