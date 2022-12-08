@@ -105,7 +105,8 @@ describe 'Retryable writes errors tests' do
               failCommands: [ "insert" ],
               errorCode: 91,
               blockConnection: true,
-              blockTimeMS: 1000
+              blockTimeMS: 1000,
+              errorLabels: ["RetryableWriteError"]
           }
       }
     end
