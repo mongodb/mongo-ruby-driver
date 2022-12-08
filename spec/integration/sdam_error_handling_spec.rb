@@ -431,12 +431,15 @@ describe 'SDAM error handling' do
     min_server_version "4.9"
 
     let(:admin_client) do
-      new_local_client(SpecConfig.instance.addresses.slice(0, 1), {
+      new_local_client(
+        [SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options.merge({
+          connect: :direct,
           populator_io: false,
           direct_connection: true,
           app_name: "SDAMMinHeartbeatFrequencyTest",
           database: 'admin'
-        }
+        })
       )
     end
 
@@ -459,15 +462,19 @@ describe 'SDAM error handling' do
 
     let(:operation) do
       expect(server.monitor.connection).not_to be nil
+      server.log_info("SETTING FAILPOINT")
       set_fail_point
+      server.log_info("FAILPOINT SET")
     end
 
     it "waits 500ms between failed hello checks" do
       server.log_info("\n------------- START TEST -------------\n\n")
       operation
+      server.log_info("STARTING COMMAND")
       start = Mongo::Utils.monotonic_time
       cmd_client.command(hello: 1)
       duration = Mongo::Utils.monotonic_time - start
+      server.log_info("FINISHED COMMAND")
       expect(duration).to be >= 2
       expect(duration).to be <= 3.5
 
@@ -478,7 +485,10 @@ describe 'SDAM error handling' do
     end
 
     after do
+      server.log_info("UNSETTING FAILPOINT")
       admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
+      server.log_info("FAILPOINT UNSET")
+      cmd_client.close
     end
   end
 end
