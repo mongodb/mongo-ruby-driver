@@ -5,6 +5,8 @@ require 'spec_helper'
 
 describe 'Retryable writes errors tests' do
 
+  let(:options) { {} }
+
   let(:client) do
     authorized_client.with(options.merge(retry_writes: true))
   end
