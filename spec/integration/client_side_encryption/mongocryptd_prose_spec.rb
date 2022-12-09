@@ -81,7 +81,7 @@ describe 'mongcryptd prose tests' do
     let(:extra_options) do
       {
         crypt_shared_lib_path: SpecConfig.instance.crypt_shared_lib_path,
-        crypt_shared_required: true,
+        crypt_shared_lib_required: true,
         mongocryptd_uri: mongocryptd_uri,
         mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=27777"]
       }
