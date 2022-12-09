@@ -1116,7 +1116,7 @@ module Mongo
       def raise_if_generation_bumped!(generation)
         raise_unless_locked!
         unless server.load_balancer?
-          if generation < generation_unlocked(service_id: server.description.service_id)
+          if generation < generation_unlocked
             publish_cmap_event(
               Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
                 @server.address,
