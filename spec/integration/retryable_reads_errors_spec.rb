@@ -3,12 +3,12 @@
 
 require 'spec_helper'
 
-describe 'Retryable writes errors tests' do
+describe 'Retryable reads errors tests' do
 
   let(:client) { authorized_client.with(options.merge(retry_reads: true)) }
 
   let(:collection) do
-    client['retryable-writes-error-spec']
+    client['retryable-reads-error-spec']
   end
 
   context "PoolClearedError retryability test" do
