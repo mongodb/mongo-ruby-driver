@@ -332,6 +332,11 @@ class ClusterTools
   end
 
   def direct_client(address, options = {})
+    connect = if SpecConfig.instance.connect_options[:connect] == :load_balanced
+      :load_balanced
+    else
+      :direct
+    end
     @direct_clients ||= {}
     cache_key = {address: address}.update(options)
     (
@@ -339,7 +344,7 @@ class ClusterTools
         [address.to_s],
         SpecConfig.instance.test_options.merge(
           SpecConfig.instance.auth_options).merge(
-          connect: :direct, server_selection_timeout: 10).merge(options))
+          connect: connect, server_selection_timeout: 10).merge(options))
     ).tap do |client|
       ClientRegistry.reconnect_client_if_perished(client)
     end

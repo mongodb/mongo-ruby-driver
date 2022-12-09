@@ -87,6 +87,8 @@ class SpecConfig
 
       begin
         case client.cluster.topology.class.name
+        when /LoadBalanced/
+          { connect: :load_balanced }
         when /Replica/
           { connect: :replica_set, replica_set: client.cluster.topology.replica_set_name }
         when /Sharded/
