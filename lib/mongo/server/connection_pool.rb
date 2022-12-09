@@ -1115,16 +1115,18 @@ module Mongo
 
       def raise_if_generation_bumped!(generation)
         raise_unless_locked!
-        if generation < generation_unlocked(service_id: server.description.service_id)
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              # CMAP spec decided to conflate pool paused with all the other
-              # possible non-timeout errors.
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
-            ),
-          )
-          raise Error::PoolClearedError.new(server.address, self)
+        unless server.load_balancer?
+          if generation < generation_unlocked(service_id: server.description.service_id)
+            publish_cmap_event(
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+                @server.address,
+                # CMAP spec decided to conflate pool paused with all the other
+                # possible non-timeout errors.
+                Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
+              ),
+            )
+            raise Error::PoolClearedError.new(server.address, self)
+          end
         end
       end
 
