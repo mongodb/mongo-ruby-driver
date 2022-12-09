@@ -89,7 +89,6 @@ module Mongo
             %i(
               ssl_verify_certificate
               ssl_verify_hostname
-              ssl_verify_ocsp_endpoint
             ).each do |opt|
               if provider_opts[opt] == false
                 raise ArgumentError.new(
