@@ -1116,6 +1116,21 @@ module Mongo
         end
       end
 
+      def raise_if_generation_bumped!(generation)
+        raise_unless_locked!
+        if generation < generation_unlocked(service_id: server.description.service_id)
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              # CMAP spec decided to conflate pool paused with all the other
+              # possible non-timeout errors.
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
+            ),
+          )
+          raise Error::PoolClearedError.new(server.address, self)
+        end
+      end
+
       def raise_if_pool_paused_locked!
         @lock.synchronize do
           raise_if_pool_paused!
@@ -1246,9 +1261,9 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            log_info("WAIT ON SIZE") unless Mongo.broken_view_options
+            generation = generation_unlocked(service_id: @server.description.service_id)
             @size_cv.wait(wait)
-            log_info("DONE WAIT ON SIZE ready? #{@ready}") unless Mongo.broken_view_options
+            raise_if_generation_bumped!(generation)
             raise_if_not_ready!
           end
           @connection_requests += 1
