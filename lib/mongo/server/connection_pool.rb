@@ -553,10 +553,10 @@ module Mongo
           end
 
           # Broadcast here to cause all of the threads waiting on the max
-          # connecting to decrease to break out of the wait loop and error.
+          # connecting to break out of the wait loop and error.
           @max_connecting_cv.broadcast
           # Broadcast here to cause all of the threads waiting on the pool size
-          # to decrease to break out of the wait loop and error.
+          # to break out of the wait loop and error.
           @size_cv.broadcast
         end
 
