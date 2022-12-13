@@ -70,7 +70,7 @@ module Mongo
       def run
         state = {}
 
-        pool.log_info("\n------------- START -------------\n\n")
+        pool.log_info("\n------------- START #{@description} -------------\n\n")
         Thread.current["mongo:thread"] = 'main'
         {}.tap do |result|
           spec_ops.each do |op|
