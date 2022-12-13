@@ -16,7 +16,7 @@ describe 'Retryable reads errors tests' do
     require_no_multi_mongos
     min_server_version '4.2.9'
 
-    let(:options) { { max_pool_size: 1 } }
+    let(:options) { { max_pool_size: 1, heartbeat_frequency: 1000 } }
 
     let(:failpoint) do
       {
@@ -76,32 +76,26 @@ describe 'Retryable reads errors tests' do
     end
 
     it "retries on PoolClearedError" do
-      client.log_info("\n--------------- START ---------------\n\n")
-
       # After the first find fails, the pool is paused and retry is triggered.
       # Now, a race is started between the second find acquiring a connection,
       # and the first retrying the read. Now, retry reads cause the cluster to
       # be rescanned and the pool to be unpaused, allowing the second checkout
       # to succeed (when it should fail). Therefore we want the second find's
       # check out to win the race. This gives the check out a little head start.
-      allow(collection).to receive(:retry_read).and_wrap_original do |m, *args, &block|
-        client.log_info("RETRY READ #{Thread.current['mongo:thread']}")
+      allow(client.cluster).to receive(:scan!).and_wrap_original do |m, *args, &block|
         ::Utils.wait_for_condition(5) do
           # check_out_results should contain:
           # - find1 connection check out successful
           # - pool cleared
           # - find2 connection check out failed
-          # We wait here for the third event to happen before we retry the read.
+          # We wait here for the third event to happen before we scan and rediscover the server.
           cmap_events.select do |e|
             event_types.include?(e.class)
           end.length >= 3
         end
         m.call(*args, &block)
       end
-      Mongo.broken_view_options = false
       threads.map(&:join)
-      Mongo.broken_view_options = true
-      client.log_info("CHECKOUT RESULTS #{check_out_results}")
       expect(check_out_results[0]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut)
       expect(check_out_results[1]).to be_a(Mongo::Monitoring::Event::Cmap::PoolCleared)
       expect(check_out_results[2]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
