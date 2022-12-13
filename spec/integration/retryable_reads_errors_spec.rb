@@ -36,9 +36,11 @@ describe 'Retryable reads errors tests' do
     let(:threads) do
       threads = []
       threads << Thread.new do
+        Thread.current['mongo:thread']='thread1'
         expect(collection.find(x: 1).first[:x]).to eq(1)
       end
       threads << Thread.new do
+        Thread.current['mongo:thread']='thread2'
         expect(collection.find(x: 1).first[:x]).to eq(1)
       end
       threads
@@ -52,13 +54,17 @@ describe 'Retryable reads errors tests' do
       subscriber.published_events
     end
 
+    let(:event_types) do
+      [
+        Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut,
+        Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed,
+        Mongo::Monitoring::Event::Cmap::PoolCleared,
+      ]
+    end
+
     let(:check_out_results) do
       cmap_events.select do |e|
-        [
-          Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut,
-          Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed,
-          Mongo::Monitoring::Event::Cmap::PoolCleared,
-        ].include?(e.class)
+        event_types.include?(e.class)
       end
     end
 
@@ -79,8 +85,17 @@ describe 'Retryable reads errors tests' do
       # to succeed (when it should fail). Therefore we want the second find's
       # check out to win the race. This gives the check out a little head start.
       allow(collection).to receive(:retry_read).and_wrap_original do |m, *args, &block|
-        sleep 1.0
-        client.log_info("RETRY READ")
+        client.log_info("RETRY READ #{Thread.current['mongo:thread']}")
+        ::Utils.wait_for_condition(5) do
+          # check_out_results should contain:
+          # - find1 connection check out successful
+          # - pool cleared
+          # - find2 connection check out failed
+          # We wait here for the third event to happen before we retry the read.
+          cmap_events.select do |e|
+            event_types.include?(e.class)
+          end.length >= 3
+        end
         m.call(*args, &block)
       end
       Mongo.broken_view_options = false
