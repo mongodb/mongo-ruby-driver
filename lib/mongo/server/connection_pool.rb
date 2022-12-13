@@ -474,7 +474,7 @@ module Mongo
 
         return if !@ready
 
-        log_info("PAUSING") unless Mongo.broken_view_options
+        log_info("PAUSING")
         @ready = false
       end
 
@@ -526,7 +526,7 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
-          log_info("START CLEAR LOCKED") unless Mongo.broken_view_options
+          log_info("START CLEAR LOCKED")
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
 
@@ -582,7 +582,7 @@ module Mongo
         @lock.synchronize do
           return if @ready
 
-          log_info("READY UP") unless Mongo.broken_view_options
+          log_info("READY UP")
           @ready = true
         end
 
@@ -1242,16 +1242,6 @@ module Mongo
         end
       end
 
-      def check_if_generation_changed
-        if server.load_balancer?
-          yield
-        else
-          generation = generation_unlocked(service_id: @server.description.service_id)
-          yield
-          raise_if_generation_bumped!(generation)
-        end
-      end
-
       # Retrieves a connection and connects it.
       #
       # @param [ Integer ] connection_global_id The global id for the
@@ -1273,9 +1263,9 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            check_if_generation_changed do
-              @size_cv.wait(wait)
-            end
+            log_info("WAITING ON SIZE #{Thread.current["mongo:thread"]}")
+            @size_cv.wait(wait)
+            log_info("DONE WAITING ON SIZE paused: #{!@ready} #{Thread.current["mongo:thread"]}")
             raise_if_not_ready!
           end
           @connection_requests += 1
