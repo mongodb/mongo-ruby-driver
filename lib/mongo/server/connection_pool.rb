@@ -1240,10 +1240,13 @@ module Mongo
       end
 
       def check_if_generation_changed
-        return yield if server.load_balancer?
-        generation = generation_unlocked(service_id: @server.description.service_id)
-        yield
-        raise_if_generation_bumped!(generation)
+        if server.load_balancer?
+          yield
+        else
+          generation = generation_unlocked(service_id: @server.description.service_id)
+          yield
+          raise_if_generation_bumped!(generation)
+        end
       end
 
       # Retrieves a connection and connects it.
