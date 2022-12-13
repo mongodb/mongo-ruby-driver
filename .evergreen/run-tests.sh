@@ -153,6 +153,13 @@ elif test "$AUTH" = aws-ecs; then
     eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
   fi
 
+elif test "$AUTH" = aws-web-identity; then
+  ./.evergreen/aws -a "IAM_AUTH_ASSUME_AWS_ACCOUNT" \
+    -s "IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY" \
+    -r us-east-1 \
+    assume-web-role "$MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN" "$AWS_WEB_IDENTITY_TOKEN_FILE" >.env.private.gen
+  eval `cat .env.private.gen`
+
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
+require 'securerandom'
+
 module AwsUtils
   class Orchestrator < Base
 
@@ -9,6 +11,17 @@ module AwsUtils
       resp = sts_client.assume_role(
         role_arn: role_arn,
         role_session_name: "#{NAMESPACE}.test",
+      )
+      resp.credentials
+    end
+
+    def assume_role_with_web_identity(role_arn, token_file)
+      token = File.open(token_file).read
+      resp = sts_client.assume_role_with_web_identity(
+        role_arn: role_arn,
+        role_session_name: SecureRandom.uuid,
+        web_identity_token: token,
+        duration_seconds: 900
       )
       resp.credentials
     end

@@ -45,6 +45,16 @@ when 'assume-role'
   puts "AWS_SESSION_TOKEN=#{credentials.session_token}"
   #puts "EXPIRATION=#{credentials.expiration.utc.strftime('%Y%m%dT%H%M%SZ')}"
   puts
+when 'assume-web-role'
+  arn = ARGV.shift
+  token_file = ARGV.shift
+
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  credentials = orchestrator.assume_role_with_web_identity(arn, token_file)
+  puts "AWS_ACCESS_KEY_ID=#{credentials.access_key_id}"
+  puts "AWS_SECRET_ACCESS_KEY=#{credentials.secret_access_key}"
+  puts "AWS_SESSION_TOKEN=#{credentials.session_token}"
+  puts
 when 'set-instance-profile'
   instance_id = ARGV.shift
   unless instance_id

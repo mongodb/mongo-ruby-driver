@@ -24,7 +24,7 @@ module Mongo
       # @api private
       class CredentialsNotFound < Mongo::Error::AuthError
         def initialize
-          super("Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata)")
+          super("Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata, and Web Identity)")
         end
       end
 
@@ -92,6 +92,12 @@ module Mongo
           )
 
           if credentials_valid?(credentials, 'environment variables')
+            return credentials
+          end
+
+          credentials = assume_role_with_wed_identity_credentials
+
+          if credentials && credentials_valid?(credentials, 'Web identity token')
             return credentials
           end
 
@@ -186,6 +192,48 @@ module Mongo
           )
         rescue ::Timeout::Error, IOError, SystemCallError
           return nil
+        end
+
+        def assume_role_with_wed_identity_credentials
+          token_file = ENV['AWS_WEB_IDENTITY_TOKEN_FILE']
+          role_arn = ENV['AWS_ROLE_ARN']
+          if token_file.nil? || role_arn.nil?
+            return nil
+          end
+          web_identity_token = File.open(token_file).read
+          role_session_name = ENV['AWS_ROLE_SESSION_NAME']
+          if role_session_name.nil?
+            role_session_name = "ruby-app-#{SecureRandom.alphanumeric(50)}"
+          end
+          uri = URI('https://sts.amazonaws.com/')
+          params = {
+            'Action' => 'AssumeRoleWithWebIdentity',
+            'Version' => '2011-06-15',
+            'RoleArn' => role_arn,
+            'WebIdentityToken' => web_identity_token,
+            'RoleSessionName' => role_session_name
+          }
+          uri.query = ::URI.encode_www_form(params)
+          req = Net::HTTP::Post.new(uri)
+          req['Accept'] = 'application/json'
+          resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |https|
+            https.request(req)
+          end
+          if resp.code != '200'
+            return nil
+          end
+          payload = JSON.parse(resp.body).dig(
+            'AssumeRoleWithWebIdentityResponse',
+            'AssumeRoleWithWebIdentityResult',
+            'Credentials'
+          ) || {}
+          Credentials.new(
+            payload['AccessKeyId'],
+            payload['SecretAccessKey'],
+            payload['SessionToken'],
+          )
+        rescue Errno::ENOENT, JSON::ParserError, IOError, SystemCallError
+          nil
         end
 
         def http_get(http, uri, metadata_token)

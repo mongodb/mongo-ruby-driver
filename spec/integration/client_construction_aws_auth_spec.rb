@@ -163,7 +163,7 @@ describe 'Client construction with AWS auth' do
   end
 
   context 'credentials specified via instance/task metadata' do
-    require_auth 'aws-ec2', 'aws-ecs'
+    require_auth 'aws-ec2', 'aws-ecs', 'aws-web-identity'
 
     before(:all) do
       # No explicit credentials are expected in the tested configurations
@@ -187,6 +187,15 @@ describe 'Client construction with AWS auth' do
       it 'uses the expected user' do
         puts "Authenticated as #{authenticated_user_name}"
         authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*ecstaskexecutionrole/i
+      end
+    end
+
+    context 'when using web identity' do
+      require_auth 'aws-web-identity'
+
+      it 'uses the expected user' do
+        puts "Authenticated as #{authenticated_user_name}"
+        authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*webIdentityTestRole/i
       end
     end
   end

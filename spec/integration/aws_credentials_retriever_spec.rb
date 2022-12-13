@@ -102,5 +102,31 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
 
       it_behaves_like 'retrieves the credentials'
     end
+
+    context 'web identity' do
+      before(:all) do
+        unless ENV['AUTH'] == 'aws-web-identity'
+          skip "Set AUTH=aws-web-identity in environment to run Wed identity tests"
+        end
+      end
+
+      context 'with AWS_ROLE_SESSION_NAME' do
+        before do
+          stub_const('ENV', ENV.to_hash.merge('AWS_ROLE_SESSION_NAME' => 'mongo-ruby-driver-test-app'))
+        end
+
+        it_behaves_like 'retrieves the credentials'
+      end
+
+      context 'without AWS_ROLE_SESSION_NAME' do
+        before do
+          env = ENV.to_hash.dup
+          env.delete('AWS_ROLE_SESSION_NAME')
+          stub_const('ENV', env)
+        end
+
+        it_behaves_like 'retrieves the credentials'
+      end
+    end
   end
 end

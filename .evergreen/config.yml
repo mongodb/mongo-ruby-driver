@@ -142,9 +142,6 @@ functions:
             export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
 
             # Needed for generating temporary aws credentials.
             if [ -n "${FLE}" ];
@@ -197,6 +194,13 @@ functions:
           IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
           IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
           IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+
+          IAM_WEB_IDENTITY_ISSUER="${iam_web_identity_issuer}"
+          IAM_WEB_IDENTITY_JWKS_URI="${iam_web_identity_jwks_uri}"
+          IAM_WEB_IDENTITY_RSA_KEY="${iam_web_identity_rsa_key}"
+          IAM_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
+          IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
+
           EOT
 
   "export FLE credentials":
@@ -712,6 +716,10 @@ axes:
         display_name: AWS Auth ECS Task
         variables:
           AUTH: aws-ecs
+      - id: aws-web-identity
+        display_name: AWS Auth Web Identity Task
+        variables:
+          AUTH: aws-web-identity
 
   - id: "ruby"
     display_name: Ruby Version
@@ -1524,7 +1532,7 @@ buildvariants:
 
   - matrix_name: aws-auth-temporary
     matrix_spec:
-      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs]
+      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs, aws-web-identity]
       ruby: [ruby-3.1]
       topology: standalone
       mongodb-version: '4.4'
