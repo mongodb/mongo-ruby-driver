@@ -474,7 +474,6 @@ module Mongo
 
         return if !@ready
 
-        log_info("PAUSING")
         @ready = false
       end
 
@@ -526,7 +525,6 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
-          log_info("START CLEAR LOCKED")
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
 
@@ -582,7 +580,6 @@ module Mongo
         @lock.synchronize do
           return if @ready
 
-          log_info("READY UP")
           @ready = true
         end
 
@@ -1116,23 +1113,6 @@ module Mongo
         end
       end
 
-      def raise_if_generation_bumped!(generation)
-        raise_unless_locked!
-        unless server.load_balancer?
-          if generation < generation_unlocked
-            publish_cmap_event(
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-                @server.address,
-                # CMAP spec decided to conflate pool paused with all the other
-                # possible non-timeout errors.
-                Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
-              ),
-            )
-            raise Error::PoolClearedError.new(server.address, self)
-          end
-        end
-      end
-
       def raise_if_pool_paused_locked!
         @lock.synchronize do
           raise_if_pool_paused!
@@ -1263,9 +1243,7 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            log_info("WAITING ON SIZE #{Thread.current["mongo:thread"]}")
             @size_cv.wait(wait)
-            log_info("DONE WAITING ON SIZE paused: #{!@ready} #{Thread.current["mongo:thread"]}")
             raise_if_not_ready!
           end
           @connection_requests += 1
