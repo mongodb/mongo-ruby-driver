@@ -1239,6 +1239,13 @@ module Mongo
         end
       end
 
+      def check_if_generation_changed
+        return yield if server.load_balancer?
+        generation = generation_unlocked(service_id: @server.description.service_id)
+        yield
+        raise_if_generation_bumped!(generation)
+      end
+
       # Retrieves a connection and connects it.
       #
       # @param [ Integer ] connection_global_id The global id for the
@@ -1260,9 +1267,9 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            generation = generation_unlocked(service_id: @server.description.service_id)
-            @size_cv.wait(wait)
-            raise_if_generation_bumped!(generation)
+            check_if_generation_changed do
+              @size_cv.wait(wait)
+            end
             raise_if_not_ready!
           end
           @connection_requests += 1
