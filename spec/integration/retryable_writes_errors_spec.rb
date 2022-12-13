@@ -134,13 +134,17 @@ describe 'Retryable writes errors tests' do
       subscriber.published_events
     end
 
+    let(:event_types) do
+      [
+        Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut,
+        Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed,
+        Mongo::Monitoring::Event::Cmap::PoolCleared,
+      ]
+    end
+
     let(:check_out_results) do
       cmap_events.select do |e|
-        [
-          Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut,
-          Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed,
-          Mongo::Monitoring::Event::Cmap::PoolCleared,
-        ].include?(e.class)
+        event_types.include?(e.class)
       end
     end
 
@@ -151,6 +155,25 @@ describe 'Retryable writes errors tests' do
     end
 
     it "retries on PoolClearedError" do
+      # After the first insert fails, the pool is paused and retry is triggered.
+      # Now, a race is started between the second insert acquiring a connection,
+      # and the first retrying the read. Now, retry reads cause the cluster to
+      # be rescanned and the pool to be unpaused, allowing the second checkout
+      # to succeed (when it should fail). Therefore we want the second insert's
+      # check out to win the race. This gives the check out a little head start.
+      allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:ready).and_wrap_original do |m, *args, &block|
+        ::Utils.wait_for_condition(5) do
+          # check_out_results should contain:
+          # - insert1 connection check out successful
+          # - pool cleared
+          # - insert2 connection check out failed
+          # We wait here for the third event to happen before we ready the pool.
+          cmap_events.select do |e|
+            event_types.include?(e.class)
+          end.length >= 3
+        end
+        m.call(*args, &block)
+      end
       threads.map(&:join)
       expect(check_out_results[0]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut)
       expect(check_out_results[1]).to be_a(Mongo::Monitoring::Event::Cmap::PoolCleared)
