@@ -84,19 +84,19 @@ describe 'Retryable reads errors tests' do
       # be rescanned and the pool to be unpaused, allowing the second checkout
       # to succeed (when it should fail). Therefore we want the second find's
       # check out to win the race. This gives the check out a little head start.
-      allow(client.cluster).to receive(:scan!).and_wrap_original do |m, *args, &block|
-        client.log_info("SCANNN #{Thread.current['mongo:thread']}")
+      allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:ready).and_wrap_original do |m, *args, &block|
+        client.log_info("READY #{Thread.current['mongo:thread']}")
         ::Utils.wait_for_condition(5) do
           # check_out_results should contain:
           # - find1 connection check out successful
           # - pool cleared
           # - find2 connection check out failed
-          # We wait here for the third event to happen before we scan and rediscover the server.
+          # We wait here for the third event to happen before we ready the pool.
           cmap_events.select do |e|
             event_types.include?(e.class)
           end.length >= 3
         end
-        client.log_info("DONE WAITING SCANNN #{Thread.current['mongo:thread']}")
+        client.log_info("DONE WAITING READY #{Thread.current['mongo:thread']}")
         m.call(*args, &block)
       end
       Mongo.broken_view_options = false
