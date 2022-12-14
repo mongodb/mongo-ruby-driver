@@ -96,6 +96,7 @@ describe 'Retryable writes errors tests' do
     require_topology :single, :replica_set, :sharded
     require_no_multi_mongos
     require_fail_command
+    require_retry_writes
 
     let(:options) { { max_pool_size: 1 } }
 
