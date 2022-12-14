@@ -70,6 +70,8 @@ module Mongo
       def run
         state = {}
 
+        pool.log_info("\n------------- START #{@description} -------------\n\n")
+        Thread.current["mongo:thread"] = 'main'
         {}.tap do |result|
           spec_ops.each do |op|
             err = op.run(pool, state)
@@ -341,6 +343,7 @@ module Mongo
       def run(pool, state, main_thread = true)
         return run_on_thread(state) if thread && main_thread
 
+        pool.log_info("OP: #{name}")
         @pool = pool
         case name
         when 'start'
@@ -392,6 +395,7 @@ module Mongo
         thread = Thread.start do
           loop do
             begin
+              Thread.current["mongo:thread"] = target
               op = thread_context.operations.pop(true)
               op.run(pool, state, false)
             rescue ThreadError
