@@ -582,10 +582,10 @@ module Mongo
         @lock.synchronize do
           return if @ready
 
-          log_info("READY UP #{caller{0}}")
           @ready = true
         end
 
+        log_info("READY UP #{caller{0}}")
         # Note that the CMAP spec demands serialization of CMAP events for a
         # pool. In order to implement this, event publication must be done into
         # a queue which is synchronized, instead of subscribers being invoked
