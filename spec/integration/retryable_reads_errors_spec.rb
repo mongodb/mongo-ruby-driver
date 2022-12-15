@@ -36,11 +36,9 @@ describe 'Retryable reads errors tests' do
     let(:threads) do
       threads = []
       threads << Thread.new do
-        Thread.current['mongo:thread']='thread1'
         expect(collection.find(x: 1).first[:x]).to eq(1)
       end
       threads << Thread.new do
-        Thread.current['mongo:thread']='thread2'
         expect(collection.find(x: 1).first[:x]).to eq(1)
       end
       threads
