@@ -474,7 +474,7 @@ module Mongo
 
         return if !@ready
 
-        log_info("PAUSING")
+
         @ready = false
       end
 
@@ -526,7 +526,6 @@ module Mongo
         service_id = options && options[:service_id]
 
         @lock.synchronize do
-          log_info("START CLEAR LOCKED")
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
 
@@ -559,6 +558,8 @@ module Mongo
           # to decrease to break out of the wait loop and error.
           @size_cv.broadcast
         end
+
+        log_info("PAUSED")
 
         # "Schedule the background thread" after clearing. This is responsible
         # for cleaning up stale threads, and interrupting in use connections.
