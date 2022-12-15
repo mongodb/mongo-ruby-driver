@@ -559,8 +559,6 @@ module Mongo
           @size_cv.broadcast
         end
 
-        log_info("PAUSED")
-
         # "Schedule the background thread" after clearing. This is responsible
         # for cleaning up stale threads, and interrupting in use connections.
         @populate_semaphore.signal
@@ -1247,9 +1245,7 @@ module Mongo
           until max_size == 0 || unavailable_connections < max_size
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            log_info("WAITING ON SIZE #{Thread.current["mongo:thread"]}")
             @size_cv.wait(wait)
-            log_info("DONE WAITING ON SIZE paused: #{!@ready} #{Thread.current["mongo:thread"]}")
             raise_if_not_ready!
           end
           @connection_requests += 1
