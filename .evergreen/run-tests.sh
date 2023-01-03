@@ -153,6 +153,7 @@ elif test "$AUTH" = aws-ecs; then
     eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
   fi
 
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = aws-web-identity; then
   ./.evergreen/aws -a "IAM_AUTH_ASSUME_AWS_ACCOUNT" \
     -s "IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY" \
