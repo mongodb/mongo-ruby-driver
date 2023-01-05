@@ -32,7 +32,7 @@ module Mongo
         :select_server
 
       # @return [ Mongo::Retryable ] retryable A reference to the client object
-      #   that instatiated this read worker.
+      #   that instatiated this worker.
       attr_reader :retryable
 
       # Constructs a new worker.
@@ -44,7 +44,7 @@ module Mongo
       #   worker = Mongo::Retryable::WriteWorker.new(self)
       #
       # @param [ Mongo::Retryable ] retryable The client object that is using
-      #   this worker to perform a retryable read operation
+      #   this worker to perform a retryable operation
       def initialize(retryable)
         @retryable = retryable
       end
