@@ -20,14 +20,19 @@ require 'mongo/retryable/write_worker'
 
 module Mongo
 
+  # Defines basic behavior around retrying operations.
+  #
+  # @since 2.1.0
   module Retryable
     extend Forwardable
 
+    # Delegate the public read_with_retry methods to the read_worker
     def_delegators :read_worker,
       :read_with_retry_cursor,
       :read_with_retry,
       :read_with_one_retry
 
+    # Delegate the public write_with_retry methods to the write_worker
     def_delegators :write_worker,
       :write_with_retry,
       :nro_write_with_retry
