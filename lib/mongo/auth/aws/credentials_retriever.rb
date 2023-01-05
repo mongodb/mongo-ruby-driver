@@ -36,6 +36,7 @@ module Mongo
       # - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
       #   environment variables (commonly used by AWS SDKs and various tools,
       #   as well as AWS Lambda)
+      # - AssumeRoleWithWebIdentity API call
       # - EC2 metadata endpoint
       # - ECS metadata endpoint
       #
@@ -95,7 +96,7 @@ module Mongo
             return credentials
           end
 
-          credentials = assume_role_with_wed_identity_credentials
+          credentials = web_identity_credentials
 
           if credentials && credentials_valid?(credentials, 'Web identity token')
             return credentials
@@ -194,7 +195,28 @@ module Mongo
           return nil
         end
 
-        def assume_role_with_wed_identity_credentials
+        # Returns credentials associated with web identity token that is
+        # stored in a file. This authentication mechanism is used to authenticate
+        # inside EKS. See https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
+        # for further details.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #   if retrieval failed.
+        def web_identity_credentials
+          web_identity_token, role_arn, role_session_name = prepare_web_identity_inputs
+          return nil if web_identity_token.nil?
+          response = request_web_identity_credentials(
+            web_identity_token, role_arn, role_session_name
+          )
+          return if response.nil?
+          credentials_from_web_identity_response(response)
+        end
+
+        # Returns inputs for the AssumeRoleWithWebIdentity AWS API call.
+        #
+        # @return [ Array<String | nil, String | nil, String | nil> ] Web
+        #   identity token, role arn, and role session name.
+        def prepare_web_identity_inputs
           token_file = ENV['AWS_WEB_IDENTITY_TOKEN_FILE']
           role_arn = ENV['AWS_ROLE_ARN']
           if token_file.nil? || role_arn.nil?
@@ -205,12 +227,30 @@ module Mongo
           if role_session_name.nil?
             role_session_name = "ruby-app-#{SecureRandom.alphanumeric(50)}"
           end
+          web_identity_token, role_arn, role_session_name
+        rescue Errno::ENOENT, IOError, SystemCallError
+          nil
+        end
+
+        # Calls AssumeRoleWithWebIdentity to obtain credentials for the
+        # given web identity token.
+        #
+        # @param [ String ] token The OAuth 2.0 access token or
+        #   OpenID Connect ID token that is provided by the identity provider.
+        # @param [ String ] role_arn The Amazon Resource Name (ARN) of the role
+        #   that the caller is assuming.
+        # @param [ String ] role_session_name An identifier for the assumed
+        #   role session.
+        #
+        # @return [ Net::HTTPResponse | nil ] AWS API response if successful,
+        #   otherwise nil.
+        def request_web_identity_credentials(token, role_arn, role_session_name)
           uri = URI('https://sts.amazonaws.com/')
           params = {
             'Action' => 'AssumeRoleWithWebIdentity',
             'Version' => '2011-06-15',
             'RoleArn' => role_arn,
-            'WebIdentityToken' => web_identity_token,
+            'WebIdentityToken' => token,
             'RoleSessionName' => role_session_name
           }
           uri.query = ::URI.encode_www_form(params)
@@ -222,7 +262,20 @@ module Mongo
           if resp.code != '200'
             return nil
           end
-          payload = JSON.parse(resp.body).dig(
+          resp
+        rescue Errno::ENOENT, IOError, SystemCallError
+          nil
+        end
+
+        # Extracts credentials from AssumeRoleWithWebIdentity response.
+        #
+        # @param [ Net::HTTPResponse ] response AssumeRoleWithWebIdentity
+        #   call response.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #   if response parsing failed.
+        def credentials_from_web_identity_response(response)
+          payload = JSON.parse(response.body).dig(
             'AssumeRoleWithWebIdentityResponse',
             'AssumeRoleWithWebIdentityResult',
             'Credentials'
@@ -232,7 +285,7 @@ module Mongo
             payload['SecretAccessKey'],
             payload['SessionToken'],
           )
-        rescue Errno::ENOENT, JSON::ParserError, IOError, SystemCallError
+        rescue JSON::ParserError
           nil
         end
 

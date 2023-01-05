@@ -5,36 +5,32 @@ $: << File.join(File.dirname(__FILE__), '../spec')
 require 'support/aws_utils'
 require 'optparse'
 
-options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: aws [options] command ..."
+def parse_options
+  options = {}
+  OptionParser.new do |opts|
+    opts.banner = "Usage: aws [options] command ..."
 
-  opts.on("-a", "--access-key-id=ID", "AWS access key ID") do |v|
-    options[:access_key_id] = v
-  end
+    opts.on("-a", "--access-key-id=ID", "AWS access key ID") do |v|
+      options[:access_key_id] = v
+    end
 
-  opts.on("-s", "--secret-access-key=SECRET", "AWS secret access key") do |v|
-    options[:secret_access_key] = v
-  end
+    opts.on("-s", "--secret-access-key=SECRET", "AWS secret access key") do |v|
+      options[:secret_access_key] = v
+    end
 
-  opts.on("-r", "--region=REGION", "AWS region") do |v|
-    options[:region] = v
-  end
+    opts.on("-r", "--region=REGION", "AWS region") do |v|
+      options[:region] = v
+    end
 
-  # launch-ecs options
-  opts.on('--ec2', 'Use EC2 launch type instead of Fargate') do |v|
-    options[:ec2] = true
-  end
-end.parse!
+    # launch-ecs options
+    opts.on('--ec2', 'Use EC2 launch type instead of Fargate') do |v|
+      options[:ec2] = true
+    end
+  end.parse!
+  options
+end
 
-case cmd = ARGV.shift
-when 'setup-resources'
-  AwsUtils::Provisioner.new.setup_aws_auth_resources
-when 'reset-keys'
-  AwsUtils::Provisioner.new.reset_keys
-when 'assume-role'
-  arn = ARGV.shift
-
+def assume_role(arn, options)
   orchestrator = AwsUtils::Orchestrator.new(**options)
   if arn.nil?
     arn = AwsUtils::Inspector.new(**options).assume_role_arn
@@ -43,49 +39,45 @@ when 'assume-role'
   puts "AWS_ACCESS_KEY_ID=#{credentials.access_key_id}"
   puts "AWS_SECRET_ACCESS_KEY=#{credentials.secret_access_key}"
   puts "AWS_SESSION_TOKEN=#{credentials.session_token}"
-  #puts "EXPIRATION=#{credentials.expiration.utc.strftime('%Y%m%dT%H%M%SZ')}"
   puts
-when 'assume-web-role'
-  arn = ARGV.shift
-  token_file = ARGV.shift
+end
 
+def assume_web_role(arn, token_file, options)
   orchestrator = AwsUtils::Orchestrator.new(**options)
   credentials = orchestrator.assume_role_with_web_identity(arn, token_file)
   puts "AWS_ACCESS_KEY_ID=#{credentials.access_key_id}"
   puts "AWS_SECRET_ACCESS_KEY=#{credentials.secret_access_key}"
   puts "AWS_SESSION_TOKEN=#{credentials.session_token}"
   puts
-when 'set-instance-profile'
-  instance_id = ARGV.shift
+end
+
+def set_instance_profile(instance_id, options)
   unless instance_id
     raise 'Instance id is required'
   end
-
   orchestrator = AwsUtils::Orchestrator.new(**options)
   orchestrator.set_instance_profile(instance_id)
-when 'clear-instance-profile'
-  instance_id = ARGV.shift
+end
+
+def clear_instance_profile(instance_id, options)
   unless instance_id
     raise 'Instance id is required'
   end
 
   orchestrator = AwsUtils::Orchestrator.new(**options)
   orchestrator.clear_instance_profile(instance_id)
-when 'key-pairs'
-  AwsUtils::Inspector.new(**options).list_key_pairs
-when 'launch-ec2'
-  public_key_path, = ARGV
+end
+
+def launch_ec2(public_key_path, options)
   unless public_key_path
     raise "Public key path must be given"
   end
 
   orchestrator = AwsUtils::Orchestrator.new(**options)
   orchestrator.provision_auth_ec2_instance(public_key_path: public_key_path)
-when 'stop-ec2'
-  orchestrator = AwsUtils::Orchestrator.new(**options)
-  orchestrator.terminate_auth_ec2_instance
-when 'launch-ecs'
-  public_key_path, = ARGV
+end
+
+def launch_ecs(public_key_path, options)
   unless public_key_path
     raise "Public key path must be given"
   end
@@ -94,6 +86,39 @@ when 'launch-ecs'
   orchestrator.provision_auth_ecs_task(
     public_key_path: public_key_path,
   )
+end
+
+options = parse_options
+
+case cmd = ARGV.shift
+when 'setup-resources'
+  AwsUtils::Provisioner.new.setup_aws_auth_resources
+when 'reset-keys'
+  AwsUtils::Provisioner.new.reset_keys
+when 'assume-role'
+  arn = ARGV.shift
+  assume_role(arn, options)
+when 'assume-web-role'
+  arn = ARGV.shift
+  token_file = ARGV.shift
+  assume_web_role(arn, token_file, options)
+when 'set-instance-profile'
+  instance_id = ARGV.shift
+  set_instance_profile(instance_id, options)
+when 'clear-instance-profile'
+  instance_id = ARGV.shift
+  clear_instance_profile(instance_id, options)
+when 'key-pairs'
+  AwsUtils::Inspector.new(**options).list_key_pairs
+when 'launch-ec2'
+  public_key_path, = ARGV
+  launch_ec2(public_key_path, options)
+when 'stop-ec2'
+  orchestrator = AwsUtils::Orchestrator.new(**options)
+  orchestrator.terminate_auth_ec2_instance
+when 'launch-ecs'
+  public_key_path, = ARGV
+  launch_ecs(public_key_path, options)
 when 'stop-ecs'
   orchestrator = AwsUtils::Orchestrator.new(**options)
   orchestrator.terminate_auth_ecs_task
