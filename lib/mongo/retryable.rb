@@ -131,7 +131,7 @@ module Mongo
         server = select_server(cluster, server_selector, session)
         begin
           yield server
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished, Error::PoolError, Error::OperationFailure => e
+        rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -163,7 +163,7 @@ module Mongo
     # @since 2.2.6
     def read_with_one_retry(options = nil)
       yield
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished, Error::PoolError => e
+    rescue *retryable_exceptions, Error::PoolError => e
       if e.write_retryable?
         retry_message = options && options[:retry_message]
         log_retry(e, message: retry_message)
@@ -247,7 +247,7 @@ module Mongo
           # it later for the retry as well.
           yield(connection, txn_num, context.dup)
         end
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished, Error::PoolError, Auth::Unauthorized => e
+      rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized => e
         e.add_note('modern retry')
         e.add_note("attempt 1")
         if !e.label?('RetryableWriteError')
@@ -308,7 +308,7 @@ module Mongo
           server.with_connection(connection_global_id: context.connection_global_id) do |connection|
             yield connection, nil, context
           end
-        rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished, Error::PoolError, Error::OperationFailure => e
+        rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure => e
           e.add_note('retries disabled')
           raise e
         end
@@ -336,88 +336,40 @@ module Mongo
     # @api private
     def legacy_write_with_retry(server = nil, context:)
       session = context.session
+      attempt = attempt ? attempt + 1 : 1
 
       # This is the pre-session retry logic, and is not subject to
       # current retryable write specifications.
       # In particular it does not retry on SocketError and SocketTimeoutError.
-      attempt = 0
-      begin
-        attempt += 1
-        server ||= select_server(cluster, ServerSelector.primary, session)
-        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
-          # Legacy retries do not use txn_num
-          yield connection, nil, context.dup
-        end
-      rescue Error::OperationFailure => e
-        e.add_note('legacy retry')
-        e.add_note("attempt #{attempt}")
-        server = nil
-        if attempt > client.max_write_retries
-          raise e
-        end
-        if e.label?('RetryableWriteError')
-          log_retry(e, message: 'Legacy write retry')
-          cluster.scan!(false)
-          retry
-        else
-          raise e
-        end
+      server ||= select_server(cluster, ServerSelector.primary, session)
+      server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        # Legacy retries do not use txn_num
+        yield connection, nil, context.dup
       end
+    rescue Error::OperationFailure => e
+      server = prepare_to_retry_legacy_write_with_retry(e, attempt)
+      retry
     end
 
     private
 
     def modern_read_with_retry(session, server_selector, &block)
-      server = select_server(cluster, server_selector, session)
-      begin
-        yield server
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished => e
-        e.add_note('modern retry')
-        e.add_note("attempt 1")
-        if session.in_transaction?
-          raise e
-        end
-        retry_read(e, server_selector, session, &block)
-      rescue Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
-        e.add_note('modern retry')
-        e.add_note("attempt 1")
-        if session.in_transaction? || !e.write_retryable?
-          raise e
-        end
-        retry_read(e, server_selector, session, &block)
+      yield select_server(cluster, server_selector, session)
+    rescue *retryable_exceptions, Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
+      e.add_note('modern retry')
+      e.add_note("attempt 1")
+      if session.in_transaction? || (!is_retryable_exception?(e) && !e.write_retryable?)
+        raise e
       end
+      retry_read(e, server_selector, session, &block)
     end
 
     def legacy_read_with_retry(session, server_selector)
-      attempt = 0
-      server = select_server(cluster, server_selector, session)
-      begin
-        attempt += 1
-        yield server
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished => e
-        e.add_note('legacy retry')
-        e.add_note("attempt #{attempt}")
-        if attempt > client.max_read_retries || (session && session.in_transaction?)
-          raise e
-        end
-        log_retry(e, message: 'Legacy read retry')
-        server = select_server(cluster, server_selector, session)
-        retry
-      rescue Error::OperationFailure, Error::PoolError => e
-        e.add_note('legacy retry')
-        e.add_note("attempt #{attempt}")
-        if e.retryable? && !(session && session.in_transaction?)
-          if attempt > client.max_read_retries
-            raise e
-          end
-          log_retry(e, message: 'Legacy read retry')
-          sleep(client.read_retry_interval)
-          server = select_server(cluster, server_selector, session)
-          retry
-        else
-          raise e
-        end
-      end
+      attempt = attempt ? attempt + 1 : 1
+      yield select_server(cluster, server_selector, session)
+    rescue *retryable_exceptions, Error::OperationFailure, Error::PoolError => e
+      retry_legacy_read_with_retry(e, attempt, session)
+      retry
     end
 
     def retry_write_allowed?(session, write_concern)
@@ -440,16 +392,14 @@ module Mongo
         server = select_server(cluster, server_selector, session)
       rescue Error, Error::AuthError => e
         original_error.add_note("later retry failed: #{e.class}: #{e}")
-
-        # See the corresponding note below in retry_write.
-        raise Error::RaiseOriginalError
+        raise original_error
       end
 
       log_retry(original_error, message: 'Read retry')
 
       begin
         yield server, true
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished => e
+      rescue *retryable_exceptions => e
         e.add_note('modern retry')
         e.add_note("attempt 2")
         raise e
@@ -466,8 +416,6 @@ module Mongo
         original_error.add_note("later retry failed: #{e.class}: #{e}")
         raise original_error
       end
-    rescue Error::RaiseOriginalError
-      raise original_error
     end
 
     def retry_write(original_error, txn_num, context:, &block)
@@ -496,7 +444,7 @@ module Mongo
       server.with_connection(connection_global_id: context.connection_global_id) do |connection|
         yield(connection, txn_num, context)
       end
-    rescue Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished, Error::PoolError => e
+    rescue *retryable_exceptions, Error::PoolError => e
       if e.write_retryable?
         e.add_note('modern retry')
         e.add_note('attempt 2')
@@ -547,6 +495,52 @@ module Mongo
         "retryWrites=false to your connection string or use the retry_writes: false Ruby client option")
       new_error.set_backtrace(e.backtrace)
       raise new_error
+    end
+
+    def retryable_exceptions
+      [
+        Error::SocketError,
+        Error::SocketTimeoutError,
+        Error::ServerNotUsable,
+        Error::ConnectionPerished
+      ].freeze
+    end
+
+    def is_retryable_exception?(exception)
+      retryable_exceptions.any? { |klass| klass === exception }
+    end
+
+    def retry_legacy_read_with_retry(exception, attempt, session)
+      exception.add_note('legacy retry')
+      exception.add_note("attempt #{attempt}")
+
+      if is_retryable_exception?(exception)
+        if attempt > client.max_read_retries || session&.in_transaction?
+          raise exception
+        end
+      elsif exception.retryable? && !session&.in_transaction?
+        if attempt > client.max_read_retries
+          raise exception
+        end
+      else
+        raise exception
+      end
+
+      log_retry(exception, message: 'Legacy read retry')
+      sleep(client.read_retry_interval) unless is_retryable_exception?(exception)
+    end
+
+    def prepare_to_retry_legacy_write_with_retry(exception, attempt)
+      exception.add_note('legacy retry')
+      exception.add_note("attempt #{attempt}")
+
+      if attempt <= client.max_write_retries && exception.label?('RetryableWriteError')
+        log_retry(exception, message: 'Legacy write retry')
+        cluster.scan!(false)
+        return nil # triggers a retry
+      end
+
+      raise exception # aborts the retry cycle
     end
   end
 end
