@@ -42,15 +42,6 @@ def assume_role(arn, options)
   puts
 end
 
-def assume_web_role(arn, token_file, options)
-  orchestrator = AwsUtils::Orchestrator.new(**options)
-  credentials = orchestrator.assume_role_with_web_identity(arn, token_file)
-  puts "AWS_ACCESS_KEY_ID=#{credentials.access_key_id}"
-  puts "AWS_SECRET_ACCESS_KEY=#{credentials.secret_access_key}"
-  puts "AWS_SESSION_TOKEN=#{credentials.session_token}"
-  puts
-end
-
 def set_instance_profile(instance_id, options)
   unless instance_id
     raise 'Instance id is required'
@@ -98,10 +89,6 @@ when 'reset-keys'
 when 'assume-role'
   arn = ARGV.shift
   assume_role(arn, options)
-when 'assume-web-role'
-  arn = ARGV.shift
-  token_file = ARGV.shift
-  assume_web_role(arn, token_file, options)
 when 'set-instance-profile'
   instance_id = ARGV.shift
   set_instance_profile(instance_id, options)
