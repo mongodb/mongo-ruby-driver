@@ -227,7 +227,7 @@ module Mongo
           if role_session_name.nil?
             role_session_name = "ruby-app-#{SecureRandom.alphanumeric(50)}"
           end
-          web_identity_token, role_arn, role_session_name
+          [web_identity_token, role_arn, role_session_name]
         rescue Errno::ENOENT, IOError, SystemCallError
           nil
         end
