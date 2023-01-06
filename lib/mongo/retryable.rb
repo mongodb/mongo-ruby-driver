@@ -50,15 +50,27 @@ module Mongo
       server_selector.select_server(cluster, nil, session)
     end
 
-    private
-
+    # Returns the read worker for handling retryable reads.
+    #
+    # @api private
+    #
+    # @note this is only a public method so that tests can add expectations
+    #   based on it.
     def read_worker
       @read_worker ||= ReadWorker.new(self)
     end
 
+    # Returns the write worker for handling retryable writes.
+    #
+    # @api private
+    #
+    # @note this is only a public method so that tests can add expectations
+    #   based on it.
     def write_worker
       @write_worker ||= WriteWorker.new(self)
     end
+
+    private
 
     # Returns a list of exception classes that are generally retryable. 
     def retryable_exceptions
