@@ -69,17 +69,5 @@ module Mongo
     def write_worker
       @write_worker ||= WriteWorker.new(self)
     end
-
-    private
-
-    # Returns a list of exception classes that are generally retryable. 
-    def retryable_exceptions
-      [
-        Error::ConnectionPerished,
-        Error::ServerNotUsable,
-        Error::SocketError,
-        Error::SocketTimeoutError
-      ].freeze
-    end
   end
 end
