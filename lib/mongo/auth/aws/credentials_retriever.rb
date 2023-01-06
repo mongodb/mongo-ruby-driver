@@ -218,19 +218,15 @@ module Mongo
         #   identity token, role arn, and role session name.
         def prepare_web_identity_inputs
           token_file = ENV['AWS_WEB_IDENTITY_TOKEN_FILE']
-          puts "token_file: #{token_file}"
           role_arn = ENV['AWS_ROLE_ARN']
-          puts "role_arn: #{role_arn}"
           if token_file.nil? || role_arn.nil?
             return nil
           end
           web_identity_token = File.open(token_file).read
-          puts "web_identity_token: #{web_identity_token}"
           role_session_name = ENV['AWS_ROLE_SESSION_NAME']
           if role_session_name.nil?
             role_session_name = "ruby-app-#{SecureRandom.alphanumeric(50)}"
           end
-          puts "role_session_name: #{role_session_name}"
           [web_identity_token, role_arn, role_session_name]
         rescue Errno::ENOENT, IOError, SystemCallError
           nil
@@ -263,8 +259,6 @@ module Mongo
           resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |https|
             https.request(req)
           end
-          puts "Response code: #{resp.code}"
-          puts "Response body: #{resp.body}"
           if resp.code != '200'
             return nil
           end
