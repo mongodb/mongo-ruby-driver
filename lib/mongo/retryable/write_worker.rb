@@ -120,6 +120,24 @@ module Mongo
         end
       end
 
+      # Queries whether the session and write concern support retrying writes.
+      #
+      # @param [ Mongo::Session ] session The session that the operation is
+      #   being run on.
+      # @param [ nil | Hash | WriteConcern::Base ] write_concern The write
+      #   concern.
+      #
+      # @return [ true | false ] Whether write retries are allowed or not.
+      def retry_write_allowed?(session, write_concern)
+        return false unless session&.retry_writes?
+
+        if write_concern.nil?
+          true
+        else
+          WriteConcern.get(write_concern).acknowledged?
+        end
+      end
+
       private
 
       # Makes sure the state of the arguments is consistent and valid.
@@ -225,24 +243,6 @@ module Mongo
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
         retry_write(e, txn_num, context: context.with(is_retry: true), &block)
-      end
-
-      # Queries whether the session and write concern support retrying writes.
-      #
-      # @param [ Mongo::Session ] session The session that the operation is
-      #   being run on.
-      # @param [ nil | Hash | WriteConcern::Base ] write_concern The write
-      #   concern.
-      #
-      # @return [ true | false ] Whether write retries are allowed or not.
-      def retry_write_allowed?(session, write_concern)
-        return false unless session&.retry_writes?
-
-        if write_concern.nil?
-          true
-        else
-          WriteConcern.get(write_concern).acknowledged?
-        end
       end
 
       # Called after a failed write, this will retry the write no more than

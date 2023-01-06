@@ -112,7 +112,7 @@ module Mongo
       # @return [ Result ] The result of the operation.
       def read_with_retry(session = nil, server_selector = nil, &block)
         if session.nil? && server_selector.nil?
-          deprecated_legacy_read_with_retry
+          deprecated_legacy_read_with_retry(&block)
         elsif session&.retry_reads?
           modern_read_with_retry(session, server_selector, &block)
         elsif client.max_read_retries > 0
@@ -175,7 +175,7 @@ module Mongo
         # bearing node in the cluster; the block may select a different server
         # which is fine.
         server_selector = ServerSelector.get(mode: :primary_preferred)
-        legacy_read_with_retry(nil, nil, &block)
+        legacy_read_with_retry(nil, server_selector, &block)
       end
 
       # Attempts to do a "modern" read with retry. Only a single retry will
