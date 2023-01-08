@@ -29,6 +29,7 @@ This release includes the following new features:
   client side encryption.
 - Added support for automatic GCP credentials retrieval when Google Cloud Key
   Management is used for client side encryption.
+- Added support for AWS IAM Roles for service accounts, EKS in particular.
 
 
 .. _release-notes-2.18:
