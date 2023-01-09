@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2015-2020 MongoDB Inc.
+# Copyright (C) 2015-2023 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -100,8 +100,6 @@ module Mongo
       #   write should be sent.
       # @yieldparam [ nil ] txn_num nil as transaction number.
       # @yieldparam [ Operation::Context ] context The operation context.
-      #
-      # @api private
       def nro_write_with_retry(write_concern, context:, &block)
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2015-2020 MongoDB Inc.
+# Copyright (C) 2015-2023 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ module Mongo
     # The abstract superclass for workers employed by Mongo::Retryable.
     #
     # @api private
-    #
-    # @since 2.19.0
     class BaseWorker
       extend Forwardable
 
@@ -51,7 +49,10 @@ module Mongo
 
       private
 
-      # Returns a list of exception classes that are generally retryable. 
+      # Indicate which exception classes that are generally retryable. 
+      #
+      # @return [ Array<Mongo:Error> ] Array of exception classes that are
+      #   considered retryable.
       def retryable_exceptions
         [
           Error::ConnectionPerished,
@@ -64,7 +65,7 @@ module Mongo
       # Tests to see if the given exception instance is of a type that can
       # be retried.
       #
-      # @return [ Boolean ] true if the exception is retryable.
+      # @return [ true | false ] true if the exception is retryable.
       def is_retryable_exception?(e)
         retryable_exceptions.any? { |klass| klass === e }
       end

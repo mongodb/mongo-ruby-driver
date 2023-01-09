@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
-# Copyright (C) 2015-2020 MongoDB Inc.
+# Copyright (C) 2015-2023 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -103,10 +103,10 @@ module Mongo
       #     ...
       #   end
       #
-      # @param [ Mongo::Session ] session The session that the operation is
-      #   being run on.
-      # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
-      #   selector for the operation.
+      # @param [ Mongo::Session | nil ] session The session that the operation
+      #   is being run on.
+      # @param [ Mongo::ServerSelector::Selectable | nil ] server_selector
+      #   Server selector for the operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
@@ -137,7 +137,7 @@ module Mongo
       #
       # @note This only retries read operations on socket errors.
       #
-      # @param [ Hash ] options Options.
+      # @param [ Hash | nil ] options Options.
       # @yield Calls the provided block with no arguments
       #
       # @option options [ String ] :retry_message Message to log when retrying.
