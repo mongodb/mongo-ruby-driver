@@ -138,9 +138,10 @@ module Mongo
       # @note This only retries read operations on socket errors.
       #
       # @param [ Hash | nil ] options Options.
-      # @yield Calls the provided block with no arguments
       #
       # @option options [ String ] :retry_message Message to log when retrying.
+      #
+      # @yield Calls the provided block with no arguments
       #
       # @return [ Result ] The result of the operation.
       #
