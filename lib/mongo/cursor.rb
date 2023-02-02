@@ -76,7 +76,7 @@ module Mongo
       @initial_result = result
       @namespace = result.namespace
       @remaining = limit if limited?
-      @cursor_id = result.cursor_id
+      set_cursor_id(result)
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
@@ -89,6 +89,14 @@ module Mongo
         register
         ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
           cluster))
+      end
+    end
+
+    def set_cursor_id(result)
+      @cursor_id = if result.cursor_id.is_a?(BSON::Int64)
+         result.cursor_id.value
+      else
+        result.cursor_id
       end
     end
 
@@ -465,7 +473,7 @@ module Mongo
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
       unregister if !closed? && result.cursor_id == 0
-      @cursor_id = result.cursor_id
+      @cursor_id = set_cursor_id(result)
 
       if result.respond_to?(:post_batch_resume_token)
         @post_batch_resume_token = result.post_batch_resume_token

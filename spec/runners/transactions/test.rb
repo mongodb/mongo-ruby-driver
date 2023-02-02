@@ -72,14 +72,14 @@ module Mongo
         end
 
         mode = if expectations_bson_types then :bson else nil end
-        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
 
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
         end
 
         @expected_results = operations.map do |o|
-          o = BSON::ExtJSON.parse_obj(o)
+          o = BSON::ExtJSON.parse_obj(o, mode: :bson)
 
           # We check both o.key('error') and o['error'] to provide a better
           # error message in case error: false is ever needed in the tests

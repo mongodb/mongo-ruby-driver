@@ -197,7 +197,16 @@ module Mongo
       end
 
       def send_initial_query(server, session, options = {})
-        initial_query_op(session, options).execute(server, context: Operation::Context.new(client: client, session: session))
+        opts = options.dup
+        execution_opts = {}
+        if opts.key?(:deserialize_as_bson)
+          execution_opts[:deserialize_as_bson] = opts.delete(:deserialize_as_bson)
+        end
+        initial_query_op(session, opts).execute(
+          server,
+          context: Operation::Context.new(client: client, session: session),
+          options: execution_opts
+        )
       end
     end
   end
