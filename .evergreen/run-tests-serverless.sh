@@ -29,7 +29,7 @@ fi
 cd .evergreen/csfle
 . ./activate-kmstlsvenv.sh
 
-pip install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+pip install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0 'sqlalchemy<2.0.0'
 
 python -u ./kms_http_server.py --ca_file ../x509gen/ca.pem --cert_file ../x509gen/server.pem --port 7999 &
 python -u ./kms_http_server.py --ca_file ../x509gen/ca.pem --cert_file ../x509gen/expired.pem --port 8000 &

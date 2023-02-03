@@ -182,7 +182,7 @@ if test -n "$FLE"; then
     # cryptography 3.4 requires rust, see
     # https://github.com/pyca/cryptography/issues/5771.
     #pip install boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
-    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0 'sqlalchemy<2.0.0'
   fi
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
