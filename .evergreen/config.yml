@@ -1506,18 +1506,19 @@ buildvariants:
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "fle-jruby"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: [jruby-9.2, jruby-9.3]
-      topology: standalone
-      mongodb-version: ['5.0']
-      os: ubuntu1804
-      fle: helper
-      docker-distro: ubuntu1804
-    display_name: "FLE: ${mongodb-version} ${ruby}"
-    tasks:
-      - name: "test-fle-via-docker"
+  # https://jira.mongodb.org/browse/RUBY-3217
+  #- matrix_name: "fle-jruby"
+  #  matrix_spec:
+  #    auth-and-ssl: "noauth-and-nossl"
+  #    ruby: [jruby-9.2, jruby-9.3]
+  #    topology: standalone
+  #    mongodb-version: ['5.0']
+  #    os: ubuntu1804
+  #    fle: helper
+  #    docker-distro: ubuntu1804
+  #  display_name: "FLE: ${mongodb-version} ${ruby}"
+  #  tasks:
+  #    - name: "test-fle-via-docker"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
