@@ -92,14 +92,6 @@ module Mongo
       end
     end
 
-    def set_cursor_id(result)
-      @cursor_id = if result.cursor_id.is_a?(BSON::Int64)
-         result.cursor_id.value
-      else
-        result.cursor_id
-      end
-    end
-
     # @api private
     attr_reader :server
 
@@ -511,6 +503,24 @@ module Mongo
       )
       op.execute(@server, context: context)
     end
+
+    # Sets @cursor_id from the operation result.
+    #
+    # In the operation result cursor id can be represented either as Integer
+    # value or as BSON::Int64. This method ensures that the instance variable
+    # is always of type Integer.
+    #
+    # @param [ Operation::Result ] result The result of the operation.
+    #
+    # @api private
+    def set_cursor_id(result)
+      @cursor_id = if result.cursor_id.is_a?(BSON::Int64)
+                     result.cursor_id.value
+                   else
+                     result.cursor_id
+                   end
+    end
+
   end
 end
 

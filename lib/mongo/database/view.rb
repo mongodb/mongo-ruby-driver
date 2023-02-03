@@ -104,6 +104,9 @@ module Mongo
       #   See https://mongodb.com/docs/manual/reference/command/listCollections/
       #   for more information and usage.
       # @option options [ Session ] :session The session to use.
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this message using BSON types instead of native Ruby types wherever
+      #   possible.
       #
       # @return [ Array<Hash> ] Info for each collection in the database.
       #
