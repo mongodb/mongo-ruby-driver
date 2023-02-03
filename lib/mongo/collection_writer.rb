@@ -309,7 +309,7 @@ module Mongo
       end
       request = BSON::OrderedHash[op_type, collection_name, WRITE_COMMAND_ARG_KEY[op_type], argument]
       request.merge!(:writeConcern => write_concern, :ordered => !opts[:continue_on_error])
-      request.merge!(opts)
+      # request.merge!(opts)
       instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => doc_or_docs) do
         @db.command(request)
       end
