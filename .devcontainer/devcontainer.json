@@ -1,0 +1,15 @@
+{
+    "name": "Mongo Ruby Driver",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "shutdownAction": "stopCompose",
+    "workspaceFolder": "/workspace",
+    "postCreateCommand": "mlaunch init --dir ~/mdb --setParameter enableTestCommands=1 --setParameter diagnosticDataCollectionEnabled=false --sharded 1 --replicaset --name test-rs --nodes 2 && bundle install && bundle exec rake spec:prepare",
+    // Add or remove extensions to make it work for you
+    "extensions": [
+        "castwide.solargraph",
+        "streetsidesoftware.code-spell-checker",
+        "rebornix.ruby",
+        "wingrunr21.vscode-ruby",
+    ]
+}

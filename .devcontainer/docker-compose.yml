@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  ruby-driver-dev:
+    container_name: mongo-ruby-driver-dev
+    build: .
+    init: true
+    volumes:
+      - ../:/workspace
+      # Remove if you do not use neovim
+      - ~/.config/nvim:/home/dbx/.config/nvim
+      # Remove if you do not use tmux
+      - ~/.tmux.conf:/home/dbx/.tmux.conf
+      - ~/.docker:/home/dbx/.docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/mnt/ssh
+      # Adjust accordingly if you use not using zsh
+      - ~/.zshrc:/home/dbx/.zshrc
+      - ~/.zsh_history:/home/dbx/.zsh_history
+      - ~/.gitconfig:/home/dbx/.gitconfig
+    command: sleep infinity
+    stdin_open: true
+    tty: true

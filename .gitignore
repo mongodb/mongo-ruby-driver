@@ -24,3 +24,5 @@ sandbox/*
 gemfiles/*.gemfile.lock
 .env.private*
 .env
+.devcontainer/*
+kms_providers.json

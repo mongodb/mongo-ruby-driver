@@ -57,6 +57,7 @@ def standard_dependencies
     gem 'ruby-prof', platforms: :mri
     gem 'erubi'
     gem 'tilt'
+    gem 'solargraph'
   end
 
   if ENV['FLE'] == 'helper'
