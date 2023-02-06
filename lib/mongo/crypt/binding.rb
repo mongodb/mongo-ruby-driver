@@ -1654,6 +1654,37 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_ctx_setopt_algorithm_range(ctx, opts)
+      #   @api private
+      #
+      # Set options for explicit encryption with the "rangePreview" algorithm.
+      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # public use.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ FFI::Pointer ] contention_factor opts A pointer to range
+      #   options document.
+      #
+      # @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_ctx_setopt_algorithm_range,
+        [
+          :pointer,
+          :pointer
+        ],
+        :bool
+      )
+
+      def self.ctx_setopt_algorithm_range(context, opts)
+        validate_document(opts)
+        data = kms_providers.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_setopt_algorithm_range(context.ctx_p, data_p)
+          end
+        end
+      end
+
       # Raise a Mongo::Error::CryptError based on the status of the underlying
       # mongocrypt_t object.
       #

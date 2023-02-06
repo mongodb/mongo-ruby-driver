@@ -113,6 +113,9 @@ module Mongo
         ).run_state_machine['v']
       end
 
+      def encrypt_expression(expression, options)
+      end
+
       # Decrypts a value that has already been encrypted
       #
       # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)

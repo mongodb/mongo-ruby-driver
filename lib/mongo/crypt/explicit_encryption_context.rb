@@ -39,27 +39,31 @@ module Mongo
       #   that will be used to encrypt the value.
       # @option options [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
-      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed".
+      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "RangePreview".
       # @option options [ Integer | nil ] :contention_factor Contention factor
       #   to be applied if encryption algorithm is set to "Indexed". If not
       #   provided, it defaults to a value of 0. Contention factor should be set
       #   only if encryption algorithm is set to "Indexed".
       # @option options [ String | nil ] query_type Query type to be applied
-      # if encryption algorithm is set to "Indexed". Query type should be set
-      #   only if encryption algorithm is set to "Indexed".  The only allowed
-      #   value is "equality".
+      #   if encryption algorithm is set to "Indexed" or "RangePreview".
+      #   Allowed values are "equality" and "rangePreview" .
       #
       # @raise [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
-      def initialize(mongocrypt, io, doc, options={})
+      def initialize(mongocrypt, io, doc, options = {})
         super(mongocrypt, io)
+        set_key_opts(options)
+        set_algorithm_opts(options)
+        Binding.ctx_explicit_encrypt_init(self, doc)
+      end
 
+      private
+      def set_key_opts(options)
         if options[:key_id].nil? && options[:key_alt_name].nil?
           raise ArgumentError.new(
             'The :key_id and :key_alt_name options cannot both be nil. ' +
             'Specify a :key_id option or :key_alt_name option (but not both)'
           )
         end
-
         if options[:key_id] && options[:key_alt_name]
           raise ArgumentError.new(
             'The :key_id and :key_alt_name options cannot both be present. ' +
@@ -67,30 +71,34 @@ module Mongo
             'option or specifying its alternate name with the :key_alt_name option'
           )
         end
-
-        # Set the key id or key alt name option on the mongocrypt_ctx_t object
-        # and raise an exception if the key_id or key_alt_name is invalid.
         if options[:key_id]
-          unless options[:key_id].is_a?(BSON::Binary) &&
-            options[:key_id].type == :uuid
+          set_key_id(options[:key_id])
+        elsif options[:key_alt_name]
+          set_key_alt_name(options[:key_alt_name])
+        end
+      end
+
+      def set_key_id(key_id)
+        unless key_id.is_a?(BSON::Binary) &&
+            key_id.type == :uuid
               raise ArgumentError.new(
                 "Expected the :key_id option to be a BSON::Binary object with " +
-                "type :uuid. #{options[:key_id]} is an invalid :key_id option"
+                "type :uuid. #{key_id} is an invalid :key_id option"
               )
           end
+          Binding.ctx_setopt_key_id(self, key_id.data)
+      end
 
-          Binding.ctx_setopt_key_id(self, options[:key_id].data)
-        elsif options[:key_alt_name]
-          unless options[:key_alt_name].is_a?(String)
+      def set_key_alt_name(key_alt_name)
+        unless key_alt_name.is_a?(String)
             raise ArgumentError.new(':key_alt_name option must be a String')
           end
-          Binding.ctx_setopt_key_alt_names(self, [options[:key_alt_name]])
-        end
+          Binding.ctx_setopt_key_alt_names(self, [key_alt_name])
+      end
 
-        # Set the algorithm option on the mongocrypt_ctx_t object and raises
-        # an exception if the algorithm is invalid.
+      def set_algorithm_opts(options)
         Binding.ctx_setopt_algorithm(self, options[:algorithm])
-        if options[:algorithm] == 'Indexed'
+        if %w(Indexed RangePreview).include?(options[:algorithm])
           if options[:contention_factor]
             Binding.ctx_setopt_contention_factor(self, options[:contention_factor])
           end
@@ -99,16 +107,15 @@ module Mongo
           end
         else
           if options[:contention_factor]
-            raise ArgumentError.new(':contention_factor is allowed only for "Indexed" algorithm')
+            raise ArgumentError.new(':contention_factor is allowed only for "Indexed" or "RangePreview" algorithms')
           end
           if options[:query_type]
-            raise ArgumentError.new(':query_type is allowed only for "Indexed" algorithm')
+            raise ArgumentError.new(':query_type is allowed only for "Indexed" or "RangePreview" algorithms')
           end
         end
-
-        # Initializes the mongocrypt_ctx_t object for explicit encryption and
-        # passes in the value to be encrypted.
-        Binding.ctx_explicit_encrypt_init(self, doc)
+        if options[:algorithm] == 'RangePreview'
+          Binding.ctx_setopt_algorithm_range(self, options[:range_preview])
+        end
       end
     end
   end
