@@ -53,6 +53,10 @@ module Mongo
         super(mongocrypt, io)
         set_key_opts(options)
         set_algorithm_opts(options)
+        init(doc)
+      end
+
+      def init(doc)
         Binding.ctx_explicit_encrypt_init(self, doc)
       end
 
@@ -114,7 +118,13 @@ module Mongo
           end
         end
         if options[:algorithm] == 'RangePreview'
-          Binding.ctx_setopt_algorithm_range(self, options[:range_preview])
+          Binding.ctx_setopt_algorithm_range(self, convert_range_opts(options[:range_opts]))
+        end
+      end
+
+      def convert_range_opts(range_opts)
+        range_opts.dup.tap do |opts|
+          opts[:sparsity] = BSON::Int64.new(opts[:sparsity]) unless opts[:sparsity].is_a?(BSON::Int64)
         end
       end
     end

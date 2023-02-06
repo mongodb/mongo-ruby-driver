@@ -120,6 +120,10 @@ module Mongo
       @encrypter.encrypt(value, options)
     end
 
+    def encrypt_expression(expression, options = {})
+      @encrypter.encrypt_expression(expression, options)
+    end
+
     # Decrypts a value that has already been encrypted.
     #
     # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)

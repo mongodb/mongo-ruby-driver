@@ -114,6 +114,12 @@ module Mongo
       end
 
       def encrypt_expression(expression, options)
+        Crypt::ExplicitEncryptionExpressionContext.new(
+          @crypt_handle,
+          @encryption_io,
+          { 'v': expression },
+          options
+        ).run_state_machine['v']
       end
 
       # Decrypts a value that has already been encrypted
