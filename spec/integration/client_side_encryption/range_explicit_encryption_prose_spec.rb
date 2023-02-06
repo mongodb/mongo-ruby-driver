@@ -167,9 +167,14 @@ describe 'Range Explicit Encryption' do
 
     it 'encrypting a document of a different type errors ' do
       skip if type == 'DoubleNoPrecision'
+      value = if type == 'Int'
+                6.0
+              else
+                6
+              end
       expect do
         client_encryption.encrypt(
-          6.0,
+          value,
           {
             key_id: key1_id,
             algorithm: "RangePreview",
@@ -263,6 +268,143 @@ describe 'Range Explicit Encryption' do
       [0, 6, 30, 200].each_with_index do |num, idx|
         insert_payload = client_encryption.encrypt(
           BSON::Int64.new(num),
+          key_id: key1_id,
+          algorithm: "RangePreview",
+          contention_factor: 0,
+          range_opts: range_opts
+        )
+        encrypted_client['explicit_encryption'].insert_one(
+          _id: idx,
+          "encrypted#{type}" => insert_payload
+        )
+      end
+    end
+
+    include_examples 'common cases'
+  end
+
+  context 'DoublePrecision' do
+    let(:type) do
+      'DoublePrecision'
+    end
+
+    let(:value_converter) do
+      Proc.new do |value|
+        if value.is_a?(Array)
+          value.map(&:to_f)
+        else
+          value.to_f
+        end
+      end
+    end
+
+    let(:encrypted_fields) do
+      range_encrypted_fields_doubleprecision
+    end
+
+    let(:range_opts) do
+      {
+        min: 0.0,
+        max: 200.0,
+        sparsity: 1,
+        precision: 2
+      }
+    end
+
+    before(:each) do
+      [0.0, 6.0, 30.0, 200.0].each_with_index do |num, idx|
+        insert_payload = client_encryption.encrypt(
+          num,
+          key_id: key1_id,
+          algorithm: "RangePreview",
+          contention_factor: 0,
+          range_opts: range_opts
+        )
+        encrypted_client['explicit_encryption'].insert_one(
+          _id: idx,
+          "encrypted#{type}" => insert_payload
+        )
+      end
+    end
+
+    include_examples 'common cases'
+  end
+
+  context 'DoubleNoPrecision' do
+    let(:type) do
+      'DoubleNoPrecision'
+    end
+
+    let(:value_converter) do
+      Proc.new do |value|
+        if value.is_a?(Array)
+          value.map(&:to_f)
+        else
+          value.to_f
+        end
+      end
+    end
+
+    let(:encrypted_fields) do
+      range_encrypted_fields_doublenoprecision
+    end
+
+    let(:range_opts) do
+      {
+        sparsity: 1
+      }
+    end
+
+    before(:each) do
+      [0.0, 6.0, 30.0, 200.0].each_with_index do |num, idx|
+        insert_payload = client_encryption.encrypt(
+          num,
+          key_id: key1_id,
+          algorithm: "RangePreview",
+          contention_factor: 0,
+          range_opts: range_opts
+        )
+        encrypted_client['explicit_encryption'].insert_one(
+          _id: idx,
+          "encrypted#{type}" => insert_payload
+        )
+      end
+    end
+
+    include_examples 'common cases'
+  end
+
+  context 'Date' do
+    let(:type) do
+      'Date'
+    end
+
+    let(:value_converter) do
+      Proc.new do |value|
+        if value.is_a?(Array)
+          value.map { |i| Time.new(i) }
+        else
+          Time.new(value)
+        end
+      end
+    end
+
+    let(:encrypted_fields) do
+      range_encrypted_fields_date
+    end
+
+    let(:range_opts) do
+      {
+        min: Time.new(0),
+        max: Time.new(200),
+        sparsity: 1
+      }
+    end
+
+    before(:each) do
+      [0, 6, 30, 200].each_with_index do |num, idx|
+        insert_payload = client_encryption.encrypt(
+          Time.new(num),
           key_id: key1_id,
           algorithm: "RangePreview",
           contention_factor: 0,
