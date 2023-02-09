@@ -20,7 +20,7 @@ module Mongo
         # Introduced with Client-Side Encryption tests
         @json_schema = BSON::ExtJSON.parse_obj(@spec['json_schema'])
         @key_vault_data = BSON::ExtJSON.parse_obj(@spec['key_vault_data'])
-        @encrypted_fields = BSON::ExtJSON.parse_obj(@spec['encrypted_fields'])
+        @encrypted_fields = BSON::ExtJSON.parse_obj(@spec['encrypted_fields'], mode: :bson)
 
         @requirements = if run_on = @spec['runOn']
           run_on.map do |spec|
