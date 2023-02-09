@@ -973,6 +973,8 @@ Note that writeConcern here is part of the operation rather than options,
 and the syntax is the camel case one that MongoDB server recognizes, not the
 underscore one that Ruby driver uses.
 
+.. _dots-dollars-in-field-names:
+
 Field Names with Dots/Periods (.) and Dollar Signs ($)
 ======================================================
 
@@ -986,7 +988,7 @@ for more information on working with these types of fields.
 A Note about the BSON Symbol type
 =================================
 
-Because the BSON specification deprecated the BSON symbol type, the `bson` gem
+Because the BSON specification deprecated the BSON symbol type, the ``bson`` gem
 will serialize Ruby symbols into BSON strings when used on its own. However, in
 order to maintain backwards compatibility with older datasets, the Ruby driver
 overrides this behavior to serialize Ruby symbols as BSON symbols. This is

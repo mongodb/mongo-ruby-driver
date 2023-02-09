@@ -52,10 +52,10 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       it 'throttles the scans to minimum 500ms' do
-        start = Time.now
+        start = Mongo::Utils.monotonic_time
         monitor.scan!
         monitor.scan!
-        expect(Time.now - start).to be >= 0.5
+        expect(Mongo::Utils.monotonic_time - start).to be >= 0.5
       end
     end
 
@@ -271,7 +271,6 @@ describe Mongo::Server::Monitor do
         expect(monitor).to receive(:check).and_raise(IOError)
         # The retry is done on a new socket instance.
         #expect(socket).to receive(:write).and_call_original
-
         monitor.send(:do_scan)
       end
 
@@ -281,7 +280,9 @@ describe Mongo::Server::Monitor do
           # of the message.
           expect(msg).to match(/#{server.address}/)
         end
-        expect(result).to be_a(Hash)
+        expect do
+          result
+        end.to raise_error(IOError)
       end
     end
 

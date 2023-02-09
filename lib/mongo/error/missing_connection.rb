@@ -18,7 +18,9 @@
 module Mongo
   class Error
 
-    # Exception raised when trying to check out connection that does not exist.
+    # Exception raised when trying to check out a connection with a specific
+    # global id, and the connection for that global id no longer exists in the
+    # pool.
     class MissingConnection < Error
     end
   end

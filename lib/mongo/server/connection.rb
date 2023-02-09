@@ -87,6 +87,9 @@ module Mongo
       # @param [ Mongo::Server ] server The server the connection is for.
       # @param [ Hash ] options The connection options.
       #
+      # @option options :pipe [ IO ] The file descriptor for the read end of the
+      #   pipe to listen on during the select system call when reading from the
+      #   socket.
       # @option options [ Integer ] :generation The generation of this
       #   connection. The generation should only be specified in this option
       #   when not in load-balancing mode, and it should be the generation
@@ -144,6 +147,14 @@ module Mongo
         options[:connection_pool]
       end
 
+      # Whether the connection was connected and was not interrupted, closed,
+      # or had an error raised.
+      #
+      # @return [ true | false ] if the connection was connected.
+      def connected?
+        !closed? && !error? && !interrupted? && !!@socket
+      end
+
       # Whether the connection was closed.
       #
       # Closed connections should no longer be used. Instead obtain a new
@@ -154,6 +165,21 @@ module Mongo
       # @since 2.9.0
       def closed?
         !!@closed
+      end
+
+      # Whether the connection was interrupted.
+      #
+      # Interrupted connections were already removed from the pool and should
+      # not be checked back into the pool.
+      #
+      # @return [ true | false ] Whether connection was interrupted.
+      def interrupted?
+        !!@interrupted
+      end
+
+      # Mark the connection as interrupted.
+      def interrupted!
+        @interrupted = true
       end
 
       # @api private
@@ -201,18 +227,11 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        if error?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
-        end
-
-        if closed?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
-        end
+        raise_if_closed!
 
         unless @socket
-          # When @socket is assigned, the socket should have handshaken and
-          # authenticated and be usable.
-          @socket, @description, @compressor = do_connect
+          @socket = create_socket
+          @description, @compressor = do_connect
 
           if server.load_balancer?
             if Lint.enabled?
@@ -232,27 +251,36 @@ module Mongo
         true
       end
 
+      # Creates the socket. The method is separate from do_connect, so that
+      # pending connections can be closed if they are interrupted during hello.
+      #
+      #
+      # @return [ Socket ] The created socket.
+      private def create_socket
+        add_server_diagnostics do
+          address.socket(socket_timeout, ssl_options.merge(
+            connection_address: address, connection_generation: generation, pipe: options[:pipe]))
+        end
+      end
+
       # Separate method to permit easier mocking in the test suite.
       #
-      # @return [ Array<Socket, Server::Description> ] Connected socket and
-      #   a server description instance from the hello response of the
-      #   returned socket.
+      # @return [ Array<Server::Description, String | Symbol> ] A server
+      #   description instance from the hello response of the returned socket
+      #   and the compressor to use.
       private def do_connect
-        socket = add_server_diagnostics do
-          address.socket(socket_timeout, ssl_options.merge(
-            connection_address: address, connection_generation: generation))
-        end
-
+        raise_if_closed!
         begin
           pending_connection = PendingConnection.new(
             socket, @server, monitoring, options.merge(id: id))
           pending_connection.handshake_and_authenticate!
         rescue Exception
-          socket.close
+          socket&.close
+          @socket = nil
           raise
         end
 
-        [socket, pending_connection.description, pending_connection.compressor]
+        [pending_connection.description, pending_connection.compressor]
       end
 
       # Disconnect the connection.
@@ -268,6 +296,8 @@ module Mongo
       #
       # @option options [ Symbol ] :reason The reason why the connection is
       #   being closed.
+      # @option options [ true | false ] :interrupted Whether or not the
+      #   connection was interrupted.
       #
       # @return [ true ] If the disconnect succeeded.
       #
@@ -282,6 +312,7 @@ module Mongo
           @socket = nil
         end
         @closed = true
+        interrupted! if options && options[:interrupted]
 
         # To satisfy CMAP spec tests, publish close events even if the
         # socket was never connected (and thus the ready event was never
@@ -374,6 +405,16 @@ module Mongo
         rescue Error::SocketTimeoutError => e
           @error = e
           raise
+        end
+      end
+
+      def raise_if_closed!
+        if error?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
+        end
+
+        if closed?
+          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
         end
       end
     end

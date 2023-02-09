@@ -48,6 +48,7 @@ describe 'Step down behavior' do
 
   describe 'getMore iteration' do
     min_server_fcv '4.2'
+    require_no_linting
 
     let(:subscribed_client) do
       test_client.tap do |client|
@@ -66,8 +67,9 @@ describe 'Step down behavior' do
     let(:enum) { view.to_enum }
 
     it 'continues through step down' do
-
-      subscribed_client.cluster.next_primary.pool.clear
+      server = subscribed_client.cluster.next_primary
+      server.pool_internal.do_clear
+      server.pool_internal.ready
       subscriber.clear_events!
 
       # get the first item

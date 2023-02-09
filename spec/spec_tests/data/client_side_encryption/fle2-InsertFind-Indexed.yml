@@ -1,7 +1,7 @@
 runOn:
   - minServerVersion: "6.0.0"
     # FLE 2 Encrypted collections are not supported on standalone.
-    topology: [ "replicaset", "sharded" ]
+    topology: [ "replicaset", "sharded", "load-balanced" ]
 database_name: &database_name "default"
 collection_name: &collection_name "default"
 data: []
@@ -68,7 +68,7 @@ tests:
                 "encryptedIndexed": {
                   "$eq": {
                     "$binary": {
-                      "base64": "BYkAAAAFZAAgAAAAAPGmZcUzdE/FPILvRSyAScGvZparGI2y9rJ/vSBxgCujBXMAIAAAAACi1RjmndKqgnXy7xb22RzUbnZl1sOZRXPOC0KcJkAxmQVjACAAAAAAWuidNu47c9A4Clic3DvFhn1AQJVC+FJtoE5bGZuz6PsSY20AAAAAAAAAAAAA",
+                      "base64": "BbEAAAAFZAAgAAAAAPGmZcUzdE/FPILvRSyAScGvZparGI2y9rJ/vSBxgCujBXMAIAAAAACi1RjmndKqgnXy7xb22RzUbnZl1sOZRXPOC0KcJkAxmQVjACAAAAAAWuidNu47c9A4Clic3DvFhn1AQJVC+FJtoE5bGZuz6PsFZQAgAAAAAOuac/eRLYakKX6B0vZ1r3QodOQFfjqJD+xlGiPu4/PsEmNtAAAAAAAAAAAAAA==",
                       "subType": "06"
                     }
                   }

@@ -119,11 +119,11 @@ describe 'Client-Side Encryption' do
 
     context 'with region, key, and endpoint at incorrect domain' do
       let(:master_key) do
-        master_key_template.merge({endpoint: "example.com"})
+        master_key_template.merge({endpoint: "doesnotexist.invalid"})
       end
 
       let(:error_regex) do
-        /parse error/
+        /SocketError: getaddrinfo:/
       end
 
       it_behaves_like 'raising a KMS error'

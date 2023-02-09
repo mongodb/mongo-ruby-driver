@@ -335,6 +335,8 @@ describe Mongo::Socket::OcspVerifier do
     # have a path in the OCSP URI (which the test also asserts).
     # Note that these certificates expire in 3 months and need to be replaced
     # with a more permanent solution.
+    # Use the spec/support/certificates/retrieve-atlas-cert script to retrieve
+    # current certificates from Atlas.
     let(:cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp.crt') }
     let(:ca_cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp-ca.crt') }
     let(:cert_store) do

@@ -54,6 +54,15 @@ module Mongo
     #   done by this server. Note: setting this option to false will make
     #   the server non-functional. It is intended for use in tests which
     #   manually invoke SDAM state transitions.
+    # @option options [ true, false ] :populator_io For internal driver
+    #   use only. Set to false to prevent the populator threads from being
+    #   created and started in the server's connection pool. It is intended
+    #   for use in tests that also turn off monitoring_io, unless the populator
+    #   is explicitly needed. If monitoring_io is off, but the populator_io
+    #   is on, the populator needs to be manually closed at the end of the
+    #   test, since a cluster without monitoring is considered not connected,
+    #   and thus will not clean up the connection pool populator threads on
+    #   close.
     # @option options [ true | false ] :load_balancer Whether this server
     #   is a load balancer.
     # @option options [ String ] :connect The client connection mode.
@@ -267,23 +276,39 @@ module Mongo
       if monitor
         monitor.stop!
       end
-      _pool = @pool_lock.synchronize do
-        @pool
-      end
-      if _pool
-        # For backwards compatibility we disconnect/clear the pool rather
-        # than close it here. We also stop the populator which allows the
-        # the pool to continue providing connections but stops it from
-        # connecting in background on clients/servers that are in fact
-        # intended to be closed and no longer used.
-        begin
-          _pool.disconnect!(stop_populator: true)
-        rescue Error::PoolClosedError
-          # If the pool was already closed, we don't need to do anything here.
-        end
-      end
+
       @connected = false
+
+      # The current CMAP spec requires a pool to be mostly unusable
+      # if its server is unknown (or, therefore, disconnected).
+      # However any outstanding operations should continue to completion,
+      # and their connections need to be checked into the pool to be
+      # torn down. Because of this cleanup requirement we cannot just
+      # close the pool and set it to nil here, to be recreated the next
+      # time the server is discovered.
+      pool_internal&.clear
+
       true
+    end
+
+    def close
+      if monitor
+        monitor.stop!
+      end
+
+      @connected = false
+
+      _pool = nil
+      @pool_lock.synchronize do
+        _pool, @pool = @pool, nil
+      end
+
+      # TODO: change this to _pool.close in RUBY-3174.
+      # Clear the pool. If the server is not unknown then the
+      # pool will stay ready. Stop the background populator thread.
+      _pool&.close(stay_ready: true)
+
+      nil
     end
 
     # Whether the server is connected.
@@ -397,8 +422,29 @@ module Mongo
     #
     # @since 2.0.0
     def pool
+      if unknown?
+        raise Error::ServerNotUsable, address
+      end
+
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.new(self, options)
+        opts = connected? ? options : options.merge(populator_io: false)
+        @pool ||= ConnectionPool.new(self, opts).tap do |pool|
+          pool.ready
+        end
+      end
+    end
+
+    # Internal driver method to retrieve the connection pool for this server.
+    #
+    # Unlike +pool+, +pool_internal+ will not create a pool if one does not
+    # already exist.
+    #
+    # @return [ Server::ConnectionPool | nil ] The connection pool, if one exists.
+    #
+    # @api private
+    def pool_internal
+      @pool_lock.synchronize do
+        @pool
       end
     end
 
@@ -480,17 +526,14 @@ module Mongo
     rescue Mongo::Error::SocketTimeoutError
       # possibly cluster is slow, do not give up on it
       raise
-    rescue Mongo::Error::SocketError => e
-      # non-timeout network error
+    rescue Mongo::Error::SocketError, Auth::Unauthorized => e
+      # non-timeout network error or auth error, clear the pool and mark the
+      # topology as unknown
       unknown!(
         generation: e.generation,
         service_id: e.service_id,
         stop_push_monitor: true,
       )
-      raise
-    rescue Auth::Unauthorized
-      # auth error, keep server description and topology as they are
-      pool.disconnect!
       raise
     end
 
@@ -547,6 +590,8 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!(options = {})
+      pool = pool_internal
+
       if load_balancer?
         # When the client is in load-balanced topology, servers (the one and
         # only that can be) starts out as a load balancer and stays as a
@@ -555,15 +600,18 @@ module Mongo
         # However, this method also clears connection pool for the server
         # when the latter is marked unknown, and this part needs to happen
         # when the server is a load balancer.
+        #
+        # It is possible for a load balancer server to not have a service id,
+        # for example if there haven't been any successful connections yet to
+        # this server, but the server can still be marked unknown if one
+        # of such connections failed midway through its establishment.
         if service_id = options[:service_id]
-          pool.disconnect!(service_id: service_id)
-        elsif Lint.enabled?
-          raise Error::LintError, 'Load balancer was asked to be marked unknown without a service id'
+          pool&.disconnect!(service_id: service_id)
         end
         return
       end
 
-      if options[:generation] && options[:generation] < pool.generation
+      if options[:generation] && options[:generation] < pool&.generation
         return
       end
 
@@ -595,17 +643,35 @@ module Mongo
 
     # @api private
     def update_description(description)
+      pool = pool_internal
+      if pool && !description.unknown?
+        pool.ready
+      end
       @description = description
+    end
+
+    # Clear the servers description so that it is considered unknown and can be
+    # safely disconnected.
+    #
+    # @api private
+    def clear_description
+      @description = Mongo::Server::Description.new(address, {})
     end
 
     # @param [ Object ] :service_id Close connections with the specified
     #   service id only.
+    # @param [ true | false ] :interrupt_in_use_connections Whether or not the
+    #   cleared connections should be interrupted as well.
     #
     # @api private
-    def clear_connection_pool(service_id: nil)
+    def clear_connection_pool(service_id: nil, interrupt_in_use_connections: false)
       @pool_lock.synchronize do
-        if @pool
-          @pool.disconnect!(service_id: service_id)
+        # A server being marked unknown after it is closed is technically
+        # incorrect but it does not meaningfully alter any state.
+        # Because historically the driver permitted servers to be marked
+        # unknown at any time, continue doing so even if the pool is closed.
+        if @pool && !@pool.closed?
+          @pool.disconnect!(service_id: service_id, interrupt_in_use_connections: interrupt_in_use_connections)
         end
       end
     end

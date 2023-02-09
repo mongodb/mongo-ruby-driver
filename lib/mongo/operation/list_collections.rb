@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/list_collections/command'
 require 'mongo/operation/list_collections/op_msg'
 require 'mongo/operation/list_collections/result'
 
@@ -29,7 +28,7 @@ module Mongo
     # @since 2.0.0
     class ListCollections
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

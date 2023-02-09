@@ -1,10 +1,14 @@
 version: 1
 style: unit
 description: must aggressively timeout threads enqueued longer than waitQueueTimeoutMS
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 poolOptions:
   maxPoolSize: 1
-  waitQueueTimeoutMS: 20
+  waitQueueTimeoutMS: 50
 operations:
+  - name: ready
   # Check out only possible connection
   - name: checkOut
     label: conn0
@@ -44,3 +48,4 @@ ignore:
   - ConnectionReady
   - ConnectionClosed
   - ConnectionPoolCreated
+  - ConnectionPoolReady

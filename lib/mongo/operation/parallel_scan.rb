@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/parallel_scan/command'
 require 'mongo/operation/parallel_scan/op_msg'
 require 'mongo/operation/parallel_scan/result'
 
@@ -29,7 +28,7 @@ module Mongo
     # @since 2.0.0
     class ParallelScan
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

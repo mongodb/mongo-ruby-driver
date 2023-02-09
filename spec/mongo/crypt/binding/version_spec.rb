@@ -41,5 +41,13 @@ describe 'Mongo::Crypt::Binding' do
         end.not_to raise_error(LoadError, /libmongocrypt version .* or above is required, but version .* was found./)
       end
     end
+
+    context 'when in a non-parsable format' do
+      it 'does not raise ArgumentError' do
+        expect do
+          Mongo::Crypt::Binding.validate_version("1.5.3-dev+20220730git8f8675fa11")
+        end.not_to raise_error(ArgumentError, /Malformed version number string/)
+      end
+    end
   end
 end

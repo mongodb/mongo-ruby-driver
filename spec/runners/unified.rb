@@ -48,6 +48,9 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
             end
           end
 
+          if test.retry?
+            retry_test tries: 3
+          end
           if expect_failure
             it 'fails as expected' do
               if test.group_reqs
@@ -61,7 +64,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                 end
               end
               begin
-                test.create_entities
+                test.create_spec_entities
                 test.set_initial_data
                 begin
                   test.run
@@ -69,11 +72,11 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                   test.assert_events
                 # HACK: other errors are possible and likely will need to
                 # be added here later as the tests evolve.
-                rescue Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation
+                rescue Mongo::Error::OperationFailure, Unified::Error::UnsupportedOperation, UsingHash::UsingHashKeyError, Unified::Error::EntityMissing
                 rescue => e
-                  fail "Expected to raise Mongo::Error::OperationFailure or Unified::Error::UnsupportedOperation, got #{e}"
+                  fail "Expected to raise Mongo::Error::OperationFailure or Unified::Error::UnsupportedOperation or UsingHash::UsingHashKeyError or Unified::Error::EntityMissing, got #{e.class}: #{e}"
                 else
-                  fail "Expected to raise Mongo::Error::OperationFailure or Unified::Error::UnsupportedOperation, but no error was raised"
+                  fail "Expected to raise Mongo::Error::OperationFailure or Unified::Error::UnsupportedOperation or UsingHash::UsingHashKeyError or Unified::Error::EntityMissing, but no error was raised"
                 end
               ensure
                 test.cleanup
@@ -91,7 +94,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
                   skip "Requirements not satisfied"
                 end
               end
-              test.create_entities
+              test.create_spec_entities
               test.set_initial_data
               test.run
               test.assert_outcome

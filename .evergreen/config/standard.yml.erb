@@ -515,18 +515,19 @@ buildvariants:
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "fle-jruby"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: [jruby-9.2, jruby-9.3]
-      topology: standalone
-      mongodb-version: ['5.0']
-      os: ubuntu1804
-      fle: helper
-      docker-distro: ubuntu1804
-    display_name: "FLE: ${mongodb-version} ${ruby}"
-    tasks:
-      - name: "test-fle-via-docker"
+  # https://jira.mongodb.org/browse/RUBY-3217
+  #- matrix_name: "fle-jruby"
+  #  matrix_spec:
+  #    auth-and-ssl: "noauth-and-nossl"
+  #    ruby: [jruby-9.2, jruby-9.3]
+  #    topology: standalone
+  #    mongodb-version: ['5.0']
+  #    os: ubuntu1804
+  #    fle: helper
+  #    docker-distro: ubuntu1804
+  #  display_name: "FLE: ${mongodb-version} ${ruby}"
+  #  tasks:
+  #    - name: "test-fle-via-docker"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
@@ -541,7 +542,7 @@ buildvariants:
 
   - matrix_name: aws-auth-temporary
     matrix_spec:
-      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs]
+      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs, aws-web-identity]
       ruby: [ruby-3.1]
       topology: standalone
       mongodb-version: '4.4'
@@ -642,3 +643,36 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
+
+  - matrix_name: testgcpkms-variant
+    matrix_spec:
+      ruby: ruby-3.0
+      fle: helper
+      topology: standalone
+      os: debian11
+      mongodb-version: 6.0
+    display_name: "GCP KMS"
+    tasks:
+      - name: testgcpkms_task_group
+        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+  - matrix_name: "atlas"
+    matrix_spec:
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+    display_name: "Atlas tests ${ruby}"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-atlas
+
+  - matrix_name: "serverless"
+    matrix_spec:
+      # https://jira.mongodb.org/browse/RUBY-3217
+      # ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.3"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1"]
+      fle: helper
+    display_name: "Atlas serverless ${ruby} single mongos"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-serverless

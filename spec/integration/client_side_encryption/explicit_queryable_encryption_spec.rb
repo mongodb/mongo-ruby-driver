@@ -71,13 +71,13 @@ describe 'Explicit Queryable Encryption' do
 
   it 'can insert encrypted indexed and find' do
     insert_payload = client_encryption.encrypt(
-      value, key_id: key1_id, algorithm: "Indexed"
+      value, key_id: key1_id, algorithm: "Indexed", contention_factor: 0
     )
     encrypted_client[encrypted_coll].insert_one(
       "encryptedIndexed" => insert_payload
     )
     find_payload = client_encryption.encrypt(
-      value, key_id: key1_id, algorithm: "Indexed", query_type: :equality
+      value, key_id: key1_id, algorithm: "Indexed", query_type: "equality", contention_factor: 0
     )
     find_results = encrypted_client[encrypted_coll]
       .find("encryptedIndexed" => find_payload)
@@ -96,7 +96,7 @@ describe 'Explicit Queryable Encryption' do
       )
     end
     find_payload = client_encryption.encrypt(
-      value, key_id: key1_id, algorithm: "Indexed", query_type: :equality
+      value, key_id: key1_id, algorithm: "Indexed", query_type: "equality", contention_factor: 0
     )
     find_results = encrypted_client[encrypted_coll]
       .find("encryptedIndexed" => find_payload)
@@ -106,7 +106,7 @@ describe 'Explicit Queryable Encryption' do
       expect(doc["encryptedIndexed"]).to eq(value)
     end
     find_payload_2 = client_encryption.encrypt(
-      value, key_id: key1_id, algorithm: "Indexed", query_type: :equality, contention_factor: 10
+      value, key_id: key1_id, algorithm: "Indexed", query_type: "equality", contention_factor: 10
     )
     find_results_2 = encrypted_client[encrypted_coll]
       .find("encryptedIndexed" => find_payload_2)
@@ -131,7 +131,7 @@ describe 'Explicit Queryable Encryption' do
 
   it 'can roundtrip encrypted indexed' do
     payload = client_encryption.encrypt(
-      value, key_id: key1_id, algorithm: "Indexed"
+      value, key_id: key1_id, algorithm: "Indexed", contention_factor: 0
     )
     decrypted_value = client_encryption.decrypt(payload)
     expect(decrypted_value).to eq(value)

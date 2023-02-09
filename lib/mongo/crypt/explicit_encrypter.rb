@@ -36,7 +36,11 @@ module Mongo
       #   should be hashes of TLS connection options. The options are equivalent
       #   to TLS connection options of Mongo::Client.
       def initialize(key_vault_client, key_vault_namespace, kms_providers, kms_tls_options)
-        @crypt_handle = Handle.new(kms_providers, kms_tls_options)
+        @crypt_handle = Handle.new(
+          kms_providers,
+          kms_tls_options,
+          explicit_encryption_only: true
+        )
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,
           metadata_client: nil,
@@ -52,7 +56,7 @@ module Mongo
       #   key document that contains master encryption key parameters.
       # @param [ Array<String> | nil ] key_alt_names An optional array of strings specifying
       #   alternate names for the new data key.
-      # @param [ BSON::Binary | nil ] key_material Optional 96 bytes to use as
+      # @param [ String | nil ] key_material Optional 96 bytes to use as
       #   custom key material for the data key being created.
       #   If key_material option is given, the custom key material is used
       #   for encrypting and decrypting data.
@@ -88,10 +92,10 @@ module Mongo
       #   to be applied if encryption algorithm is set to "Indexed". If not
       #   provided, it defaults to a value of 0. Contention factor should be set
       #   only if encryption algorithm is set to "Indexed".
-      # @option options [ Symbol ] query_type Query type to be applied
+      # @option options [ String | nil ] query_type Query type to be applied
       # if encryption algorithm is set to "Indexed". Query type should be set
       #   only if encryption algorithm is set to "Indexed". The only allowed
-      #   value is :equality.
+      #   value is "equality".
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
       #   one is required to perform explicit encryption.
@@ -207,7 +211,7 @@ module Mongo
           master_key_document
         ).run_state_machine
         if rewrap_result.nil?
-          return RewrapManyDataKeyResult.new({})
+          return RewrapManyDataKeyResult.new(nil)
         end
         data_key_documents = rewrap_result.fetch('v')
         updates = data_key_documents.map do |doc|

@@ -61,13 +61,13 @@ namespace :spec do
 
     client = ClientRegistry.instance.global_client('authorized')
     client.database.command(ping: 1)
-    deadline = Time.now + 300
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 300
     loop do
       begin
         client.cluster.validate_session_support!
         break
       rescue Mongo::Error::SessionsNotSupported
-        if Time.now >= deadline
+        if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
           raise "Sessions did not become supported in 300 seconds"
         end
         client.cluster.scan!

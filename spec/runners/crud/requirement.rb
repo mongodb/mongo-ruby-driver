@@ -109,12 +109,13 @@ module Mongo
           end
         end
         if @auth == true
-          ok &&= cc.auth_enabled?
+          ok &&= SpecConfig.instance.auth?
         elsif @auth == false
-          ok &&= !cc.auth_enabled?
+          ok &&= !SpecConfig.instance.auth?
         end
         if @csfle
           ok &&= !!(ENV['LIBMONGOCRYPT_PATH'] || ENV['FLE'])
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new('4.2.0')
         end
         ok
       end

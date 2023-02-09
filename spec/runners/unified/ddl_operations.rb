@@ -6,13 +6,21 @@ module Unified
   module DdlOperations
 
     def list_databases(op)
+      list_dbs(op, name_only: false)
+    end
+
+    def list_database_names(op)
+      list_dbs(op, name_only: false)
+    end
+
+    def list_dbs(op, name_only: false)
       client = entities.get(:client, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        client.list_databases({}, false, **opts)
+        client.list_databases(args.use('filter') || {}, name_only, **opts)
       end
     end
 
@@ -39,11 +47,22 @@ module Unified
         if view_on = args.use('viewOn')
           collection_opts[:view_on] = view_on
         end
+        if pipeline = args.use('pipeline')
+          collection_opts[:pipeline] = pipeline
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
 
     def list_collections(op)
+      list_colls(op, name_only: false)
+    end
+
+    def list_collection_names(op)
+      list_colls(op, name_only: true)
+    end
+
+    def list_colls(op, name_only: false)
       database = entities.get(:database, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
@@ -53,7 +72,7 @@ module Unified
         if filter = args.use('filter')
           opts[:filter] = filter
         end
-        database.list_collections(**opts)
+        database.list_collections(**opts.merge(name_only: name_only))
       end
     end
 
@@ -122,10 +141,13 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if args.key?('unique')
+          opts[:unique] = args.use('unique')
+        end
 
         collection.indexes.create_one(
           args.use!('keys'),
-          name: args.use!('name'),
+          name: args.use('name'),
           **opts,
         )
       end
@@ -171,6 +193,60 @@ module Unified
             # OK
           else
             raise
+          end
+        end
+      end
+    end
+
+    def create_entities(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        generate_entities(args.use!('entities'))
+      end
+    end
+
+    def record_topology_description(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        entities.set(:topology, args.use!('id'), client.cluster.topology)
+      end
+    end
+
+    def assert_topology_type(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        topology = entities.get(:topology, args.use!('topologyDescription'))
+        type = args.use!('topologyType')
+        unless topology.display_name == type
+          raise Error::ResultMismatch, "Expected topology type to be #{type}, but got #{topology.class}"
+        end
+      end
+    end
+
+    def retrieve_primary(topology)
+      topology.server_descriptions.detect { |k, desc| desc.primary? }&.first
+    end
+
+    def wait_for_primary_change(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        topology = entities.get(:topology, args.use!('priorTopologyDescription'))
+        timeout_ms = args.use('timeoutMS') || 10000
+        old_primary = retrieve_primary(topology)
+
+        deadline = Mongo::Utils.monotonic_time + timeout_ms / 1000.0
+        loop do
+          client.cluster.scan!
+          new_primary = client.cluster.next_primary.address
+          if new_primary && old_primary != new_primary
+            break
+          end
+          if Mongo::Utils.monotonic_time >= deadline
+            raise "Did not receive a change in primary from #{old_primary} in 10 seconds"
+          else
+            sleep 0.1
           end
         end
       end

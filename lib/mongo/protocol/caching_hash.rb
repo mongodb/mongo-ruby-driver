@@ -38,31 +38,14 @@ module Mongo
       #
       # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
       # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
+      #   This option is deprecated and will not be used. It will removed in version 3.0.
       #
       # @return [ BSON::ByteBuffer ] The buffer with the encoded object.
-      def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
+      def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
         if !@bytes
-          @bytes = @hash.to_bson(BSON::ByteBuffer.new, validating_keys).to_s
-        elsif needs_validation?(validating_keys)
-          @validated = true
-          return @hash.to_bson(buffer, validating_keys)
+          @bytes = @hash.to_bson(BSON::ByteBuffer.new).to_s
         end
-        @validated ||= validating_keys
         buffer.put_bytes(@bytes)
-      end
-
-      private
-
-      # Checks the current value for validating keys, and whether or not this
-      # bson has been validated in the past, and decides if we need to recalculate
-      # the to_bson to check the validations.
-      #
-      # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
-      #
-      # @return [ true, false ] Whether or not the bson needs to be recalculated
-      #   with validation.
-      def needs_validation?(validating_keys)
-        !@validated && validating_keys
       end
     end
   end

@@ -5,9 +5,7 @@ schemaVersion: "1.7"
 
 runOnRequirements:
   - minServerVersion: "4.3.1"
-    # Removed load balanced tests as per RUBY-2952 because they were causing
-    # failures.
-    topologies: [ replicaset, sharded-replicaset ] #, load-balanced ]
+    topologies: [ replicaset, sharded-replicaset, load-balanced ]
     serverless: forbid
 
 createEntities:
@@ -745,6 +743,9 @@ tests:
               databaseName: *database0
 
   - description: change stream resumes after StaleShardVersion
+    runOnRequirements:
+      # StaleShardVersion is obsolete as of 6.1 and is no longer marked as resumable.
+      - maxServerVersion: "6.0.99"
     operations:
       - name: failPoint
         object: testRunner

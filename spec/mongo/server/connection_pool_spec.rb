@@ -57,7 +57,17 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    register_pool(described_class.new(server, server_options))
+    register_pool(described_class.new(server, server_options)).tap do |pool|
+      pool.ready
+    end
+  end
+
+  let(:populate_semaphore) do
+    pool.instance_variable_get(:@populate_semaphore)
+  end
+
+  let(:populator) do
+    pool.instance_variable_get(:@populator)
   end
 
   describe '#initialize' do
@@ -106,6 +116,10 @@ describe Mongo::Server::ConnectionPool do
       it 'creates the pool with no connections' do
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
+      end
+
+      it "starts the populator" do
+        expect(populator).to be_running
       end
     end
 
@@ -295,6 +309,10 @@ describe Mongo::Server::ConnectionPool do
       it 'is true' do
         expect(pool.closed?).to be true
       end
+
+      it "stops the populator" do
+        expect(populator).to_not be_running
+      end
     end
   end
 
@@ -304,7 +322,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      server.disconnect!
+      server.close
     end
 
     let(:options) do
@@ -403,7 +421,6 @@ describe Mongo::Server::ConnectionPool do
 
         it_behaves_like 'adds connection to the pool'
       end
-
     end
 
     context 'connection of later generation than pool' do
@@ -424,6 +441,32 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it_behaves_like 'does not add connection to pool'
+    end
+
+    context 'interrupted connection' do
+      let!(:connection) do
+        pool.check_out.tap do |connection|
+          expect(connection).to receive(:interrupted?).at_least(:once).and_return(true)
+          expect(connection).not_to receive(:record_checkin!)
+        end
+      end
+
+      it_behaves_like 'does not add connection to pool'
+    end
+
+    context 'closed and interrupted connection' do
+      let!(:connection) do
+        pool.check_out.tap do |connection|
+          expect(connection).to receive(:interrupted?).exactly(:once).and_return(true)
+          expect(connection).to receive(:closed?).exactly(:once).and_return(true)
+          expect(connection).not_to receive(:record_checkin!)
+          expect(connection).not_to receive(:disconnect!)
+        end
+      end
+
+      it "returns immediately" do
+        expect(pool.check_in(connection)).to be_nil
+      end
     end
 
     context 'when pool is closed' do
@@ -666,7 +709,11 @@ describe Mongo::Server::ConnectionPool do
         client.cluster.next_primary.pool
       end
 
-       it 'raises an error and emits ConnectionCheckOutFailedEvent' do
+      before do
+        pool.ready
+      end
+
+      it 'raises an error and emits ConnectionCheckOutFailedEvent' do
         pool
 
         subscriber = Mrss::EventSubscriber.new
@@ -683,13 +730,347 @@ describe Mongo::Server::ConnectionPool do
         expect(checkout_failed_events.size).to eq(1)
         expect(checkout_failed_events.first.reason).to be(:connection_error)
       end
+
+      context "when the error is caused by close" do
+        let(:pool) { server.pool }
+        let(:options) { { max_size: 1 } }
+
+        it "raises an error and returns immediately" do
+          expect(pool.max_size).to eq(1)
+          Timeout::timeout(1) do
+            c1 = pool.check_out
+            thread = Thread.new do
+              c2 = pool.check_out
+            end
+
+            sleep 0.1
+            expect do
+              pool.close
+              thread.join
+            end.to raise_error(Mongo::Error::PoolClosedError)
+          end
+        end
+      end
+    end
+
+    context "when the pool is paused" do
+      require_no_linting
+
+      before do
+        pool.pause
+      end
+
+      it "raises a PoolPausedError" do
+        expect do
+          pool.check_out
+        end.to raise_error(Mongo::Error::PoolPausedError)
+      end
+    end
+  end
+
+  describe "#ready" do
+    require_no_linting
+
+    let(:pool) do
+      register_pool(described_class.new(server, server_options))
+    end
+
+    context "when the pool is closed" do
+      before do
+        pool.close
+      end
+
+      it "raises an error" do
+        expect do
+          pool.ready
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+
+    context "when readying an initialized pool" do
+      before do
+        pool.ready
+      end
+
+      it "starts the populator" do
+        expect(populator).to be_running
+      end
+
+      it "readies the pool" do
+        expect(pool).to be_ready
+      end
+    end
+
+    context "when readying a paused pool" do
+      before do
+        pool.ready
+        pool.pause
+      end
+
+      it "readies the pool" do
+        pool.ready
+        expect(pool).to be_ready
+      end
+
+      it "signals the populate semaphore" do
+        RSpec::Mocks.with_temporary_scope do
+          expect(populate_semaphore).to receive(:signal).and_wrap_original do |m, *args|
+            m.call(*args)
+          end
+          pool.ready
+        end
+      end
+    end
+  end
+
+  describe "#ready?" do
+    require_no_linting
+
+    let(:pool) do
+      register_pool(described_class.new(server, server_options))
+    end
+
+    shared_examples "pool is ready" do
+      it "is ready" do
+        expect(pool).to be_ready
+      end
+    end
+
+    shared_examples "pool is not ready" do
+      it "is not ready" do
+        expect(pool).to_not be_ready
+      end
+    end
+
+    context "before readying the pool" do
+      it_behaves_like "pool is not ready"
+    end
+
+    context "after readying the pool" do
+      before do
+        pool.ready
+      end
+
+      it_behaves_like "pool is ready"
+    end
+
+    context "after readying and pausing the pool" do
+      before do
+        pool.ready
+        pool.pause
+      end
+
+      it_behaves_like "pool is not ready"
+    end
+
+    context "after readying, pausing, and readying the pool" do
+      before do
+        pool.ready
+        pool.pause
+        pool.ready
+      end
+
+      it_behaves_like "pool is ready"
+    end
+
+    context "after closing the pool" do
+      before do
+        pool.ready
+        pool.close
+      end
+
+      it_behaves_like "pool is not ready"
+    end
+  end
+
+  describe "#pause" do
+    require_no_linting
+
+    let(:pool) do
+      register_pool(described_class.new(server, server_options))
+    end
+
+    context "when the pool is closed" do
+      before do
+        pool.close
+      end
+
+      it "raises an error" do
+        expect do
+          pool.pause
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+
+    context "when the pool is paused" do
+      before do
+        pool.ready
+        pool.pause
+      end
+
+      it "is still paused" do
+        expect(pool).to be_paused
+        pool.pause
+        expect(pool).to be_paused
+      end
+    end
+
+    context "when the pool is ready" do
+      before do
+        pool.ready
+      end
+
+      it "is still paused" do
+        expect(pool).to be_ready
+        pool.pause
+        expect(pool).to be_paused
+      end
+
+      it "does not stop the populator" do
+        expect(populator).to be_running
+      end
+    end
+  end
+
+  describe "#paused?" do
+    require_no_linting
+
+    let(:pool) do
+      register_pool(described_class.new(server, server_options))
+    end
+
+    shared_examples "pool is paused" do
+      it "is paused" do
+        expect(pool).to be_paused
+      end
+    end
+
+    shared_examples "pool is not paused" do
+      it "is not paused" do
+        expect(pool).to_not be_paused
+      end
+    end
+
+    context "before readying the pool" do
+      it_behaves_like "pool is paused"
+    end
+
+    context "after readying the pool" do
+      before do
+        pool.ready
+      end
+
+      it_behaves_like "pool is not paused"
+    end
+
+    context "after readying and pausing the pool" do
+      before do
+        pool.ready
+        pool.pause
+      end
+
+      it_behaves_like "pool is paused"
+    end
+
+    context "after readying, pausing, and readying the pool" do
+      before do
+        pool.ready
+        pool.pause
+        pool.ready
+      end
+
+      it_behaves_like "pool is not paused"
+    end
+
+    context "after closing the pool" do
+      before do
+        pool.ready
+        pool.close
+      end
+
+      it "raises an error" do
+        expect do
+          pool.paused?
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+  end
+
+  describe "#closed?" do
+    require_no_linting
+
+    let(:pool) do
+      register_pool(described_class.new(server, server_options))
+    end
+
+    shared_examples "pool is closed" do
+      it "is closed" do
+        expect(pool).to be_closed
+      end
+    end
+
+    shared_examples "pool is not closed" do
+      it "is not closed" do
+        expect(pool).to_not be_closed
+      end
+    end
+
+    context "before readying the pool" do
+      it_behaves_like "pool is not closed"
+    end
+
+    context "after readying the pool" do
+      before do
+        pool.ready
+      end
+
+      it_behaves_like "pool is not closed"
+    end
+
+    context "after readying and pausing the pool" do
+      before do
+        pool.ready
+        pool.pause
+      end
+
+      it_behaves_like "pool is not closed"
+    end
+
+    context "after closing the pool" do
+      before do
+        pool.ready
+        pool.close
+      end
+
+      it_behaves_like "pool is closed"
     end
   end
 
   describe '#disconnect!' do
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'does nothing' do
+        expect do
+          pool.disconnect!
+        end.not_to raise_error
+      end
+    end
+  end
+
+  describe '#clear' do
+    let(:checked_out_connections) { pool.instance_variable_get(:@checked_out_connections) }
+    let(:available_connections) { pool.instance_variable_get(:@available_connections) }
+    let(:pending_connections) { pool.instance_variable_get(:@pending_connections) }
+    let(:interrupt_connections) { pool.instance_variable_get(:@interrupt_connections) }
+
     def create_pool(min_pool_size)
       opts = SpecConfig.instance.test_options.merge(max_pool_size: 3, min_pool_size: min_pool_size)
       described_class.new(server, opts).tap do |pool|
+        pool.ready
         # kill background thread to test disconnect behavior
         pool.stop_populator
         expect(pool.instance_variable_get('@populator').running?).to be false
@@ -711,6 +1092,7 @@ describe Mongo::Server::ConnectionPool do
       # require different setup and assertions because load balancers
       # do not have a single global generation.
       require_topology :single, :replica_set, :sharded
+      require_no_linting
 
       it 'disconnects and removes and bumps' do
         old_connections = []
@@ -722,10 +1104,16 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
 
-        pool.disconnect!
+        RSpec::Mocks.with_temporary_scope do
+          allow(pool.server).to receive(:unknown?).and_return(true)
+          pool.disconnect!
+        end
 
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
+        expect(pool).to be_paused
+
+        pool.ready
 
         new_connection = pool.check_out
         expect(old_connections).not_to include(new_connection)
@@ -756,8 +1144,52 @@ describe Mongo::Server::ConnectionPool do
 
       it 'raises PoolClosedError' do
         expect do
-          pool.disconnect!
+          pool.clear
         end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+
+    context "when interrupting in use connections" do
+      context "when there's checked out connections" do
+        require_topology :single, :replica_set, :sharded
+        require_no_linting
+
+        before do
+          3.times { pool.check_out }
+          connection = pool.check_out
+          pool.check_in(connection)
+          expect(checked_out_connections.length).to eq(3)
+          expect(available_connections.length).to eq(1)
+
+          pending_connections << pool.send(:create_connection)
+        end
+
+        it "interrupts the connections" do
+          expect(pool).to receive(:populate).exactly(3).and_call_original
+          RSpec::Mocks.with_temporary_scope do
+            allow(pool.server).to receive(:unknown?).and_return(true)
+            pool.clear(lazy: true, interrupt_in_use_connections: true)
+          end
+
+          ::Utils.wait_for_condition(3) do
+            pool.size == 0
+          end
+
+          expect(pool.size).to eq(0)
+          expect(available_connections).to be_empty
+          expect(checked_out_connections).to be_empty
+          expect(pending_connections).to be_empty
+        end
+      end
+    end
+
+    context "when in load-balanced mode" do
+      require_topology :load_balanced
+
+      it "does not pause the pool" do
+        allow(pool.server).to receive(:unknown?).and_return(true)
+        pool.clear
+        expect(pool).to_not be_paused
       end
     end
   end
@@ -795,8 +1227,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      server.disconnect!
-      pool.close # this will no longer be needed after server disconnect kills bg thread
+      server.close
+      pool.close # this will no longer be needed after server close kills bg thread
     end
 
     it 'includes the object id' do
@@ -1072,15 +1504,20 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#populate' do
+    require_no_linting
+
     before do
       # Disable the populator and clear the pool to isolate populate behavior
       pool.stop_populator
-      pool.clear
+      pool.disconnect!
+      # Manually mark the pool ready.
+      pool.instance_variable_set('@ready', true)
     end
 
     let(:options) { {min_pool_size: 2, max_pool_size: 3} }
 
     context 'when pool size is at least min_pool_size' do
+
       before do
         first_connection = pool.check_out
         second_connection = pool.check_out

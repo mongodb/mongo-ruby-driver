@@ -36,7 +36,7 @@ module Mongo
           ::Timeout.timeout(sec) do
             yield
           end
-        rescue ::Timeout::Error => e
+        rescue ::Timeout::Error
           raise klass, message
         end
       else

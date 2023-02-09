@@ -34,49 +34,4 @@ describe Mongo::Protocol::CachingHash do
       end
     end
   end
-
-  describe "#needs_validation?" do
-
-    before do
-      hash.to_bson(BSON::ByteBuffer.new, validation)
-    end
-
-    let(:needs_validation?) do
-      hash.send(:needs_validation?, validating_keys)
-    end
-
-    context "when calling to_bson without validation" do
-      let(:validation) { false }
-
-      context "validating_keys is true" do
-        let(:validating_keys) { true }
-
-        it "is true" do
-          expect(needs_validation?).to be true
-        end
-      end
-
-      context "validating_keys is false" do
-        let(:validating_keys) { false }
-
-        it "is false" do
-          expect(needs_validation?).to be false
-        end
-      end
-    end
-
-    context "when calling to_bson with validation" do
-      let(:validation) { true }
-
-      [true, false].each do |b|
-        context "validating_keys is #{b}" do
-          let(:validating_keys) { b }
-
-          it "is false" do
-            expect(needs_validation?).to be false
-          end
-        end
-      end
-    end
-  end
 end

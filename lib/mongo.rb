@@ -38,6 +38,7 @@ require 'mongo/id'
 require 'mongo/bson'
 require 'mongo/semaphore'
 require 'mongo/distinguishing_semaphore'
+require 'mongo/condition_variable'
 require 'mongo/options'
 require 'mongo/loggable'
 require 'mongo/cluster_time'
@@ -94,6 +95,8 @@ module Mongo
     # Take all the public instance methods from the Config singleton and allow
     # them to be accessed through the Mongo module directly.
     def_delegators Config, :options=
+    delegate_option Config, :broken_view_aggregate
+    delegate_option Config, :broken_view_options
     delegate_option Config, :validate_update_replace
   end
 

@@ -408,7 +408,8 @@ The client-side encryption tests require the mongocryptd binary to be in the
 system path.
 
 Download enterprise versions of MongoDB here: https://www.mongodb.com/download-center/enterprise
-Read more about installing mongocryptd here: https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#mongocryptd
+Download the Automatic Encryption Shared Library https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/#std-label-qe-reference-shared-library-download
+Install and Configure mongocryptd: https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/
 
 Install libmongocrypt on your machine:
 
@@ -425,6 +426,9 @@ Option 1: Download a pre-built binary
 
 Option 2: Build from source
 - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt
+
+Option 3: Use libmongocrypt-helper gem (Linux only)
+- Run command `FLE=helper bundle install`
 
 Create AWS KMS keys
 Many of the Client-Side Encryption tests require that you have an encryption
@@ -713,3 +717,17 @@ To break into the debugger on JRuby, call:
 
     require 'ruby-debug'
     debugger
+
+## Testing against load balancer locally
+
+1. Install mongodb server v5.2+.
+2. Install haproxy.
+3. Install mongo-orchestration - https://github.com/10gen/mongo-orchestration/
+4. Install drivers-evergreen-tools - https://github.com/mongodb-labs/drivers-evergreen-tools. In ruby driver it is installed as git submodule under `.mod/drivers-evergreen-tools/`.
+5. Start mongo-orchestration: `mongo-orchestration start`.
+6. Start the cluster: `http PUT http://localhost:8889/v1/sharded_clusters/myCluster @.mod/drivers-evergreen-tools/.evergreen/orchestration/configs/sharded_clusters/basic-load-balancer.json` (this example uses httpie client, can be done with curl).
+7. Start load balancer: `MONGODB_URI="mongodb://localhost:27017,localhost:27018/" .mod/drivers-evergreen-tools/.evergreen/run-load-balancer.sh start`.
+8. Run tests: `TOPOLOGY=load-balanced MONGODB_URI='mongodb://127.0.0.1:8000/?loadBalanced=true' be rspec spec/`.
+9. Stop load balancer: `MONGODB_URI="mongodb://localhost:27017,localhost:27018/" .mod/drivers-evergreen-tools/.evergreen/run-load-balancer.sh stop`.
+10. Stop the cluster: `http DELETE http://localhost:8889/v1/sharded_clusters/myCluster`
+11. Stop mongo-orchestration: `mongo-orchestration stop`.

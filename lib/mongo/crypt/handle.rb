@@ -28,6 +28,9 @@ module Mongo
     # @api private
     class Handle
 
+      # @returns [ Crypt::KMS::Credentials ] Credentials for KMS providers.
+      attr_reader :kms_providers
+
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Crypt::KMS::Credentials ] kms_providers Credentials for KMS providers.
@@ -39,13 +42,26 @@ module Mongo
       #
       # @param [ Hash ] options A hash of options.
       # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
-      #   of the collection that stores auto encrypted documents.
+      #   of the collection that stores auto encrypted documents. This option is
+      #   mutually exclusive with :schema_map_path.
+      # @option options [ String | nil ] :schema_map_path A path to a file contains the JSON schema
+      #   of the collection that stores auto encrypted documents. This option is
+      #   mutually exclusive with :schema_map.
       # @option options [ Hash | nil ] :encrypted_fields_map maps a collection
       #   namespace to an encryptedFields.
       #   - Note: If a collection is present on both the encryptedFieldsMap
       #     and schemaMap, an error will be raised.
       # @option options [ Boolean | nil ] :bypass_query_analysis When true
       #   disables automatic analysis of outgoing commands.
+      # @option options [ String | nil ] :crypt_shared_lib_path Path that should
+      #   be  the used to load the crypt shared library. Providing this option
+      #   overrides default crypt shared library load paths for libmongocrypt.
+      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      #   crypt_shared library is required. If 'true', an error will be raised
+      #   if a crypt_shared library cannot be loaded by libmongocrypt.
+      # @option options [ Boolean | nil ] :explicit_encryption_only Whether this
+      #   handle is going to be used only for explicit encryption. If true,
+      #   libmongocrypt is instructed not to load crypt shared library.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       def initialize(kms_providers, kms_tls_options, options={})
@@ -56,10 +72,10 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
 
+        @kms_providers = kms_providers
         @kms_tls_options =  kms_tls_options
 
-        @schema_map = options[:schema_map]
-        set_schema_map if @schema_map
+        maybe_set_schema_map(options)
 
         @encrypted_fields_map = options[:encrypted_fields_map]
         set_encrypted_fields_map if @encrypted_fields_map
@@ -67,13 +83,33 @@ module Mongo
         @bypass_query_analysis = options[:bypass_query_analysis]
         set_bypass_query_analysis if @bypass_query_analysis
 
+        @crypt_shared_lib_path = options[:crypt_shared_lib_path]
+        @explicit_encryption_only = options[:explicit_encryption_only]
+        if @crypt_shared_lib_path
+          Binding.setopt_set_crypt_shared_lib_path_override(self, @crypt_shared_lib_path)
+        elsif !@bypass_query_analysis && !@explicit_encryption_only
+          Binding.setopt_append_crypt_shared_lib_search_path(self, "$SYSTEM")
+        end
+
         @logger = options[:logger]
         set_logger_callback if @logger
 
         set_crypto_hooks
 
-        Binding.setopt_kms_providers(self, kms_providers.to_document)
+        Binding.setopt_kms_providers(self, @kms_providers.to_document)
+
+        if @kms_providers.aws&.empty? || @kms_providers.gcp&.empty?
+          Binding.setopt_use_need_kms_credentials_state(self)
+        end
+
         initialize_mongocrypt
+
+        @crypt_shared_lib_required = !!options[:crypt_shared_lib_required]
+        if @crypt_shared_lib_required && crypt_shared_lib_version == 0
+          raise Mongo::Error::CryptError.new(
+            "Crypt shared library is required, but cannot be loaded  according to libmongocrypt"
+          )
+        end
       end
 
       # Return the reference to the underlying @mongocrypt object
@@ -93,17 +129,40 @@ module Mongo
         @kms_tls_options.fetch(provider, {})
       end
 
+      def crypt_shared_lib_version
+        Binding.crypt_shared_lib_version(self)
+      end
+
+      def crypt_shared_lib_available?
+        crypt_shared_lib_version != 0
+      end
+
       private
 
       # Set the schema map option on the underlying mongocrypt_t object
-      def set_schema_map
-        unless @schema_map.is_a?(Hash)
+      def maybe_set_schema_map(options)
+        if !options[:schema_map] && !options[:schema_map_path]
+          @schema_map = nil
+        elsif options[:schema_map] && options[:schema_map_path]
           raise ArgumentError.new(
-            "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil"
+            "Cannot set both schema_map and schema_map_path options."
           )
+        elsif options[:schema_map]
+          unless options[:schema_map].is_a?(Hash)
+            raise ArgumentError.new(
+              "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil."
+            )
+          end
+          @schema_map = options[:schema_map]
+          Binding.setopt_schema_map(self, @schema_map)
+        elsif options[:schema_map_path]
+          @schema_map = BSON::ExtJSON.parse(File.read(options[:schema_map_path]))
+          Binding.setopt_schema_map(self, @schema_map)
         end
-
-        Binding.setopt_schema_map(self, @schema_map)
+      rescue Errno::ENOENT
+        raise ArgumentError.new(
+          "#{@schema_map_path} is an invalid path to a file contains schema_map."
+        )
       end
 
       def set_encrypted_fields_map

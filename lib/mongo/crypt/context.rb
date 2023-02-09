@@ -27,6 +27,10 @@ module Mongo
     #
     # @api private
     class Context
+      extend Forwardable
+
+      def_delegators :@mongocrypt_handle, :kms_providers
+
       #  Create a new Context object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt_handle A handle to libmongocrypt
@@ -110,11 +114,33 @@ module Mongo
             end
 
             Binding.ctx_kms_done(self)
+          when :need_kms_credentials
+            providers = {}
+            if kms_providers.aws&.empty?
+              begin
+                aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials
+              rescue Auth::Aws::CredentialsNotFound
+                raise Error::CryptError.new(
+                  "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
+                )
+              end
+              providers[:aws] = aws_credentials.to_h
+            elsif kms_providers.gcp&.empty?
+              begin
+                gcp_access_token = KMS::GCP::CredentialsRetriever.get_access_token
+              rescue KMS::CredentialsNotFound => e
+                raise Error::CryptError.new(
+                  "Could not locate GCP credentials: #{e.class}: #{e.message}"
+                )
+              end
+              providers[:gcp] = { access_token: gcp_access_token }
+            end
+            Binding.ctx_provide_kms_providers(
+              self,
+              KMS::Credentials.new(providers).to_document
+            )
           else
             raise Error::CryptError.new(
-              # TODO: fix CryptError to improve this API -- the first argument
-              # in the initializer should not be optional
-              nil,
               "State #{state} is not supported by Mongo::Crypt::Context"
             )
           end

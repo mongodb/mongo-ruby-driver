@@ -24,10 +24,17 @@ describe 'Transaction pinning' do
     # Force each transaction to be on its own connection.
 
     before do
+      client.reconnect if client.closed?
       4.times do |i|
         # Collections cannot be created inside transactions.
         client["tx_pin_t#{i}"].drop
         client["tx_pin_t#{i}"].create
+      end
+    end
+
+    after do
+      if pool = server.pool_internal
+        pool.close
       end
     end
 
@@ -65,13 +72,15 @@ describe 'Transaction pinning' do
     # particular service.
 
     context 'when no connection is available' do
+      require_no_linting
 
       before do
+        client.reconnect if client.closed?
         client["tx_pin"].drop
         client["tx_pin"].create
       end
 
-      it 'raises ConnectionCheckOutTimeout' do
+      it 'raises MissingConnection' do
         session = client.start_session
         session.start_transaction
         client["tx_pin"].insert_one({test: 1}, session: session)
@@ -79,16 +88,21 @@ describe 'Transaction pinning' do
         session.pinned_connection_global_id.should_not be nil
 
         server.pool.size.should == 1
-        server.pool.clear
+        service_id = server.pool.instance_variable_get(:@available_connections).first.service_id
+        server.pool.clear(service_id: service_id)
         server.pool.size.should == 0
 
         lambda do
           client["tx_pin"].insert_one({test: 2}, session: session)
-        end.should raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+        end.should raise_error(Mongo::Error::MissingConnection)
       end
     end
 
     context 'when connection is available' do
+
+      before do
+        client.reconnect if client.closed?
+      end
 
       it 'uses the available connection' do
         sessions = []

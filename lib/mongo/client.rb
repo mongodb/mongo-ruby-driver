@@ -80,6 +80,7 @@ module Mongo
       :monitoring_io,
       :password,
       :platform,
+      :populator_io,
       :read,
       :read_concern,
       :read_retry_interval,
@@ -437,7 +438,8 @@ module Mongo
     #     are :aws, :azure, :gcp, :kmip, :local. There may be more than one
     #     kms provider specified.
     #   - :schema_map => Hash | nil, JSONSchema for one or more collections
-    #     specifying which fields should be encrypted.
+    #     specifying which fields should be encrypted. This option is
+    #     mutually exclusive with :schema_map_path.
     #     - Note: Schemas supplied in the schema_map only apply to configuring
     #       automatic encryption for client side encryption. Other validation
     #       rules in the JSON schema will not be enforced by the driver and will
@@ -448,6 +450,9 @@ module Mongo
     #       the client into sending unencrypted data that should be encrypted.
     #     - Note: If a collection is present on both the :encrypted_fields_map
     #       and :schema_map, an error will be raised.
+    #   - :schema_map_path => String | nil A path to a file contains the JSON schema
+    #   of the collection that stores auto encrypted documents. This option is
+    #   mutually exclusive with :schema_map.
     #   - :bypass_auto_encryption => Boolean, when true, disables auto encryption;
     #     defaults to false.
     #   - :extra_options => Hash | nil, options related to spawning mongocryptd
@@ -458,6 +463,12 @@ module Mongo
     #       and schemaMap, an error will be raised.
     #   - :bypass_query_analysis => Boolean | nil, when true disables automatic
     #     analysis of outgoing commands.
+    #   - :crypt_shared_lib_path => [ String | nil ]  Path that should
+    #     be  the used to load the crypt shared library. Providing this option
+    #     overrides default crypt shared library load paths for libmongocrypt.
+    #   - :crypt_shared_lib_required => [ Boolean | nil ]  Whether
+    #     crypt shared library is required. If 'true', an error will be raised
+    #     if a crypt_shared library cannot be loaded by libmongocrypt.
     #
     #   Notes on automatic encryption:
     #   - Automatic encryption is an enterprise only feature that only applies
@@ -586,9 +597,9 @@ module Mongo
 
       rescue
         begin
-          @cluster.disconnect!
+          @cluster.close
         rescue => e
-          log_warn("Eror disconnecting cluster in client constructor's exception handler: #{e.class}: #{e}")
+          log_warn("Eror closing cluster in client constructor's exception handler: #{e.class}: #{e}")
           # Drop this exception so that the original exception is raised
         end
         raise
@@ -763,7 +774,7 @@ module Mongo
         # We can't use the same cluster if some options that would affect it
         # have changed.
         if cluster_modifying?(opts)
-          Cluster.create(client)
+          Cluster.create(client, monitoring: opts[:monitoring])
         end
       end
     end
@@ -849,6 +860,10 @@ module Mongo
       @write_concern ||= WriteConcern.get(options[:write_concern] || options[:write])
     end
 
+    def closed?
+      !!@closed
+    end
+
     # Close all connections.
     #
     # @return [ true ] Always true.
@@ -856,6 +871,7 @@ module Mongo
     # @since 2.1.0
     def close
       @connect_lock.synchronize do
+        @closed = true
         do_close
       end
       true
@@ -889,6 +905,8 @@ module Mongo
         if @options[:auto_encryption_options]
           build_encrypter
         end
+
+        @closed = false
       end
 
       true
@@ -1069,8 +1087,11 @@ module Mongo
     def watch(pipeline = [], options = {})
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
+      view_options = options.dup
+      view_options[:await_data] = true if options[:max_await_time_ms]
+
       Mongo::Collection::View::ChangeStream.new(
-        Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"]),
+        Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"], {}, view_options),
         pipeline,
         Mongo::Collection::View::ChangeStream::CLUSTER,
         options)
@@ -1120,6 +1141,9 @@ module Mongo
     #
     # @api private
     def with_session(options = {}, &block)
+      # TODO: Add this back in RUBY-3174.
+      # assert_not_closed
+
       session = get_session(options)
 
       yield session
@@ -1182,7 +1206,7 @@ module Mongo
 
     # Implementation for #close, assumes the connect lock is already acquired.
     def do_close
-      @cluster.disconnect!
+      @cluster.close
       close_encrypter
     end
 
@@ -1563,7 +1587,7 @@ module Mongo
         # for custom classes implementing key access ([]).
         # Instead reject common cases of strings and symbols.
         if read.is_a?(String) || read.is_a?(Symbol)
-          raise Error::InvalidReadOption.new(read, 'must be a hash')
+          raise Error::InvalidReadOption.new(read, "the read preference must be specified as a hash: { mode: #{read.inspect} }")
         end
 
         if mode = read[:mode]
@@ -1574,6 +1598,12 @@ module Mongo
         end
       end
       true
+    end
+
+    def assert_not_closed
+      if closed?
+        raise Error::ClientClosed, "The client was closed and is not usable for operations. Call #reconnect to reset this client instance or create a new client instance"
+      end
     end
   end
 end

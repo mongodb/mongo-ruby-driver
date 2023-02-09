@@ -65,7 +65,7 @@ functions:
             CURRENT_VERSION=latest
           fi
 
-          export DRIVERS_TOOLS="$(pwd)/../drivers-tools"
+          export DRIVERS_TOOLS="$(pwd)/.mod/drivers-evergreen-tools"
 
           # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
           if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
@@ -128,6 +128,28 @@ functions:
             export OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}"
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
+
+            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
+            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
+            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
+            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
+            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
+            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
+            export RVM_RUBY="${RVM_RUBY}"
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
+            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
+            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+
+            # Needed for generating temporary aws credentials.
+            if [ -n "${FLE}" ];
+            then
+              export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+              export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+              export AWS_DEFAULT_REGION="${fle_aws_region}"
+            fi
           EOT
 
           # See what we've done
@@ -172,6 +194,13 @@ functions:
           IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
           IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
           IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+
+          IAM_WEB_IDENTITY_ISSUER="${iam_web_identity_issuer}"
+          IAM_WEB_IDENTITY_JWKS_URI="${iam_web_identity_jwks_uri}"
+          IAM_WEB_IDENTITY_RSA_KEY="${iam_web_identity_rsa_key}"
+          IAM_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
+          IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
+
           EOT
 
   "export FLE credentials":
@@ -438,7 +467,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
   "run static analysis":
     - command: shell.exec
@@ -462,9 +491,54 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
+  - func: "delete serverless instance"
+
+task_groups:
+  - name: testgcpkms_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: fetch source
+      - func: "create expansions"
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+            echo '${testgcpkms_key_file}' > /tmp/testgcpkms_key_file.json
+            export GCPKMS_KEYFILE=/tmp/testgcpkms_key_file.json
+            export GCPKMS_DRIVERS_TOOLS=$DRIVERS_TOOLS
+            export GCPKMS_SERVICEACCOUNT="${testgcpkms_service_account}"
+            export GCPKMS_MACHINETYPE="e2-standard-4"
+            .evergreen/csfle/gcpkms/create-and-setup-instance.sh
+      # Load the GCPKMS_GCLOUD, GCPKMS_INSTANCE, GCPKMS_REGION, and GCPKMS_ZONE expansions.
+      - command: expansions.update
+        params:
+          file: src/testgcpkms-expansions.yml
+    teardown_group:
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+            export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
+            export GCPKMS_PROJECT=${GCPKMS_PROJECT}
+            export GCPKMS_ZONE=${GCPKMS_ZONE}
+            export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
+            .evergreen/csfle/gcpkms/delete-instance.sh
+    tasks:
+      - testgcpkms-task
 
 tasks:
-
+  - name: "test-atlas"
+    commands:
+      - func: "run Atlas tests"
+  - name: "test-serverless"
+    commands:
+      - func: "export FLE credentials"
+      - func: "run serverless tests"
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -493,10 +567,38 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
-  - name: "rubocop"
+  - name: "testgcpkms-task"
     commands:
-      - func: "run static analysis"
-
+      - command: shell.exec
+        type: setup
+        params:
+          working_dir: "src"
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            echo "Copying files ... begin"
+            export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
+            export GCPKMS_PROJECT=${GCPKMS_PROJECT}
+            export GCPKMS_ZONE=${GCPKMS_ZONE}
+            export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
+            tar czf /tmp/mongo-ruby-driver.tgz .
+            GCPKMS_SRC=/tmp/mongo-ruby-driver.tgz GCPKMS_DST=$GCPKMS_INSTANCENAME: .evergreen/csfle/gcpkms/copy-file.sh
+            echo "Copying files ... end"
+            echo "Untarring file ... begin"
+            GCPKMS_CMD="tar xf mongo-ruby-driver.tgz" .evergreen/csfle/gcpkms/run-command.sh
+            echo "Untarring file ... end"
+      - command: shell.exec
+        type: test
+        params:
+          working_dir: "src"
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
+            export GCPKMS_PROJECT=${GCPKMS_PROJECT}
+            export GCPKMS_ZONE=${GCPKMS_ZONE}
+            export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
+            GCPKMS_CMD="TEST_FLE_GCP_AUTO=1 RVM_RUBY=ruby-3.1 FLE=helper TOPOLOGY=standalone MONGODB_VERSION=6.0 MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}" MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY='${fle_gcp_private_key}' MONGO_RUBY_DRIVER_GCP_PROJECT_ID='${fle_gcp_project_id}' MONGO_RUBY_DRIVER_GCP_LOCATION='${fle_gcp_location}' MONGO_RUBY_DRIVER_GCP_KEY_RING='${fle_gcp_key_ring}' MONGO_RUBY_DRIVER_GCP_KEY_NAME='${fle_gcp_key_name}' ./.evergreen/run-tests-gcp.sh" .evergreen/csfle/gcpkms/run-command.sh
 axes:
 
   - id: preload
@@ -624,6 +726,10 @@ axes:
         display_name: AWS Auth ECS Task
         variables:
           AUTH: aws-ecs
+      - id: aws-web-identity
+        display_name: AWS Auth Web Identity Task
+        variables:
+          AUTH: aws-web-identity
 
   - id: "ruby"
     display_name: Ruby Version
@@ -664,6 +770,9 @@ axes:
   - id: "os"
     display_name: OS
     values:
+      - id: debian11
+        display_name: "Debian 11"
+        run_on: debian11-small
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
@@ -1407,18 +1516,19 @@ buildvariants:
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "fle-jruby"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: [jruby-9.2, jruby-9.3]
-      topology: standalone
-      mongodb-version: ['5.0']
-      os: ubuntu1804
-      fle: helper
-      docker-distro: ubuntu1804
-    display_name: "FLE: ${mongodb-version} ${ruby}"
-    tasks:
-      - name: "test-fle-via-docker"
+  # https://jira.mongodb.org/browse/RUBY-3217
+  #- matrix_name: "fle-jruby"
+  #  matrix_spec:
+  #    auth-and-ssl: "noauth-and-nossl"
+  #    ruby: [jruby-9.2, jruby-9.3]
+  #    topology: standalone
+  #    mongodb-version: ['5.0']
+  #    os: ubuntu1804
+  #    fle: helper
+  #    docker-distro: ubuntu1804
+  #  display_name: "FLE: ${mongodb-version} ${ruby}"
+  #  tasks:
+  #    - name: "test-fle-via-docker"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
@@ -1433,7 +1543,7 @@ buildvariants:
 
   - matrix_name: aws-auth-temporary
     matrix_spec:
-      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs]
+      auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs, aws-web-identity]
       ruby: [ruby-3.1]
       topology: standalone
       mongodb-version: '4.4'
@@ -1444,7 +1554,7 @@ buildvariants:
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
-  
+
   - matrix_name: ocsp-verifier - ruby-2.5
     matrix_spec:
       ocsp-verifier: true
@@ -1476,7 +1586,7 @@ buildvariants:
       docker-distro: debian10
     display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
     tasks: *1
-  
+
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
@@ -1652,12 +1762,35 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
-  - matrix_name: "rubocop"
+  - matrix_name: testgcpkms-variant
     matrix_spec:
-      ruby: ["ruby-3.0"]
-      mongodb-version: '5.0'
+      ruby: ruby-3.0
+      fle: helper
       topology: standalone
-      os: ubuntu1604
-    display_name: "Rubocop"
+      os: debian11
+      mongodb-version: 6.0
+    display_name: "GCP KMS"
     tasks:
-      - name: "rubocop"
+      - name: testgcpkms_task_group
+        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+  - matrix_name: "atlas"
+    matrix_spec:
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+    display_name: "Atlas tests ${ruby}"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-atlas
+
+  - matrix_name: "serverless"
+    matrix_spec:
+      # https://jira.mongodb.org/browse/RUBY-3217
+      # ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.3"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1"]
+      fle: helper
+    display_name: "Atlas serverless ${ruby} single mongos"
+    run_on:
+      - ubuntu1804-small
+    tasks:
+       - name: test-serverless

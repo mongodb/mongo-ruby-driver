@@ -40,7 +40,7 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.6.0
-      def initialize(crud_spec, data, test)
+      def initialize(crud_spec, data, test, expectations_bson_types: true)
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
         @data = data || []
@@ -71,7 +71,8 @@ module Mongo
           Operation.new(self, op)
         end
 
-        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
+        mode = if expectations_bson_types then :bson else nil end
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
 
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
@@ -129,6 +130,37 @@ module Mongo
             test_client.subscribe(Mongo::Monitoring::SERVER_CLOSED, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
+          end
+
+          if kms_providers = @client_options.dig(:auto_encryption_options, :kms_providers)
+            @client_options[:auto_encryption_options][:kms_providers] = kms_providers.map do |provider, opts|
+              case provider
+              when :aws_temporary
+                [
+                  :aws,
+                  {
+                    access_key_id: SpecConfig.instance.fle_aws_temp_key,
+                    secret_access_key: SpecConfig.instance.fle_aws_temp_secret,
+                    session_token: SpecConfig.instance.fle_aws_temp_session_token,
+                  }
+                ]
+              when :aws_temporary_no_session_token
+                [
+                  :aws,
+                  {
+                    access_key_id: SpecConfig.instance.fle_aws_temp_key,
+                    secret_access_key: SpecConfig.instance.fle_aws_temp_secret,
+                  }
+                ]
+              else
+                [provider, opts]
+              end
+            end.to_h
+          end
+
+          if @client_options[:auto_encryption_options] && SpecConfig.instance.crypt_shared_lib_path
+            @client_options[:auto_encryption_options][:extra_options] ||= {}
+            @client_options[:auto_encryption_options][:extra_options][:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
           end
 
           ClientRegistry.instance.new_local_client(
@@ -244,24 +276,7 @@ module Mongo
           key_vault_coll.insert_many(@spec.key_vault_data)
         end
 
-        if @spec.encrypted_fields
-          encrypted_fields = @spec.encrypted_fields.dup
-          # This code MUST be removed as soon as server starts accepting
-          # contention as int32.
-          if encrypted_fields.key?('fields')
-            encrypted_fields['fields'] = encrypted_fields['fields'].dup.map do |field|
-              if field['queries'] && field['queries'].key?('contention')
-                new_field = field.dup
-                new_field['queries'] = field['queries'].dup
-                new_field['queries']['contention'] = BSON::Int64.new(field['queries']['contention'])
-                new_field
-              else
-                field
-              end
-            end
-          end
-          # End of code to be removed
-        end
+        encrypted_fields = @spec.encrypted_fields if @spec.encrypted_fields
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
         coll.drop(encrypted_fields: encrypted_fields)
 

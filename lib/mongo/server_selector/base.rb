@@ -175,6 +175,15 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil, write_aggregation: false)
+        select_server_impl(cluster, ping, session, write_aggregation).tap do |server|
+          if Lint.enabled? && !server.pool.ready?
+            raise Error::LintError, 'Server selector returning a server with a pool which is not ready'
+          end
+        end
+      end
+
+      # Parameters and return values are the same as for select_server.
+      private def select_server_impl(cluster, ping, session, write_aggregation)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
@@ -245,6 +254,18 @@ module Mongo
 =end
 
         loop do
+          if Lint.enabled?
+            cluster.servers.each do |server|
+              # TODO: Add this back in RUBY-3174.
+              # if !server.unknown? && !server.connected?
+              #   raise Error::LintError, "Server #{server.summary} is known but is not connected"
+              # end
+              if !server.unknown? && !server.pool.ready?
+                raise Error::LintError, "Server #{server.summary} is known but has non-ready pool"
+              end
+            end
+          end
+
           server = try_select_server(cluster, write_aggregation: write_aggregation)
 
           if server
@@ -604,9 +625,9 @@ module Mongo
         if cluster.server_selection_semaphore
           # Since the semaphore may have been signaled between us checking
           # the servers list earlier and the wait call below, we should not
-          # wait for the full remaining time - wait for up to 1 second, then
+          # wait for the full remaining time - wait for up to 0.5 second, then
           # recheck the state.
-          cluster.server_selection_semaphore.wait([time_remaining, 1].min)
+          cluster.server_selection_semaphore.wait([time_remaining, 0.5].min)
         else
           if Lint.enabled?
             raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'

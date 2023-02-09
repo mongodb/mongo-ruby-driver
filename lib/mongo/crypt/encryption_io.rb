@@ -192,18 +192,27 @@ module Mongo
       # Removes a key_alt_name from the key_alt_names array of the key document
       # in the key vault collection with the given id.
       def remove_key_alt_name(id, key_alt_name)
-        result = key_vault_collection.find_one_and_update(
+        key_vault_collection.find_one_and_update(
           { _id: id },
-          { '$pull' => { keyAltNames: key_alt_name } },
+          [
+            {
+              '$set' => {
+                keyAltNames: {
+                  '$cond' => [
+                    { '$eq' => [ '$keyAltNames', [ key_alt_name ] ] },
+                    '$$REMOVE',
+                    {
+                      '$filter' => {
+                        input: '$keyAltNames',
+                        cond: { '$ne' =>  [ '$$this', key_alt_name ] }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
         )
-        if result && result['keyAltNames'].size == 1
-          # We removed the only key alt name, so we delete the  field.
-          key_vault_collection.update_one(
-            { _id: id },
-            { '$unset' => { keyAltNames: true } },
-          )
-        end
-        result
       end
 
       # Apply given requests to the key vault collection using bulk write.

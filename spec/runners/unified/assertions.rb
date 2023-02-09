@@ -8,102 +8,106 @@ module Unified
 
     def assert_result_matches(actual, expected)
       if Hash === expected
-        use_all(expected, 'expected result', expected) do |expected|
-          %w(deleted inserted matched modified upserted).each do |k|
-            if count = expected.use("#{k}Count")
-              if Hash === count || count > 0
-                actual_count = case actual
-                when Mongo::BulkWrite::Result, Mongo::Operation::Delete::Result, Mongo::Operation::Update::Result
-                  actual.send("#{k}_count")
+        if expected.keys == ["$$unsetOrMatches"]
+          assert_result_matches(actual, UsingHash[expected.values.first])
+        else
+          use_all(expected, 'expected result', expected) do |expected|
+            %w(deleted inserted matched modified upserted).each do |k|
+              if count = expected.use("#{k}Count")
+                if Hash === count || count > 0
+                  actual_count = case actual
+                  when Mongo::BulkWrite::Result, Mongo::Operation::Delete::Result, Mongo::Operation::Update::Result
+                    actual.send("#{k}_count")
+                  else
+                    actual["n_#{k}"]
+                  end
+                  assert_value_matches(actual_count, count, "#{k} count")
+                end
+              end
+            end
+            %w(inserted upserted).each do |k|
+              expected_v = expected.use("#{k}Ids")
+              next unless expected_v
+              actual_v = case actual
+              when Mongo::BulkWrite::Result, Mongo::Operation::Update::Result
+                # Ruby driver returns inserted ids as an array of ids.
+                # The yaml file specifies them as a map from operation.
+                if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
+                  expected_v = expected_v.values.first.values
+                elsif Hash === expected_v
+                  expected_v = expected_v.values
+                end
+                actual.send("#{k}_ids")
+              else
+                actual["#{k}_ids"]
+              end
+              if expected_v
+                if expected_v.empty?
+                  if actual_v && !actual_v.empty?
+                    raise Error::ResultMismatch, "Actual not empty"
+                  end
                 else
-                  actual["n_#{k}"]
-                end
-                assert_value_matches(actual_count, count, "#{k} count")
-              end
-            end
-          end
-          %w(inserted upserted).each do |k|
-            expected_v = expected.use("#{k}Ids")
-            next unless expected_v
-            actual_v = case actual
-            when Mongo::BulkWrite::Result, Mongo::Operation::Update::Result
-              # Ruby driver returns inserted ids as an array of ids.
-              # The yaml file specifies them as a map from operation.
-              if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
-                expected_v = expected_v.values.first.values
-              elsif Hash === expected_v
-                expected_v = expected_v.values
-              end
-              actual.send("#{k}_ids")
-            else
-              actual["#{k}_ids"]
-            end
-            if expected_v
-              if expected_v.empty?
-                if actual_v && !actual_v.empty?
-                  raise Error::ResultMismatch, "Actual not empty"
-                end
-              else
-                if actual_v != expected_v
-                  raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                  if actual_v != expected_v
+                    raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                  end
                 end
               end
             end
-          end
 
-          %w(acknowledged).each do |k|
-            expected_v = expected.use(k)
-            next unless expected_v
-            actual_v = case actual
-            when Mongo::BulkWrite::Result, Mongo::Operation::Result
-              if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
-                expected_v = expected_v.values.first
-              end
-              actual.send("#{k}?")
-            else
-              actual[k]
-            end
-            if expected_v
-              if expected_v.empty?
-                if actual_v && !actual_v.empty?
-                  raise Error::ResultMismatch, "Actual not empty"
+            %w(acknowledged).each do |k|
+              expected_v = expected.use(k)
+              next unless expected_v
+              actual_v = case actual
+              when Mongo::BulkWrite::Result, Mongo::Operation::Result
+                if Hash === expected_v && expected_v.keys == %w($$unsetOrMatches)
+                  expected_v = expected_v.values.first
                 end
+                actual.send("#{k}?")
               else
-                if actual_v != expected_v
-                  raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                actual[k]
+              end
+              if expected_v
+                if expected_v.empty?
+                  if actual_v && !actual_v.empty?
+                    raise Error::ResultMismatch, "Actual not empty"
+                  end
+                else
+                  if actual_v != expected_v
+                    raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+                  end
                 end
               end
             end
-          end
 
-          %w(bulkWriteResult).each do |k|
-            expected_v = expected.use(k)
-            next unless expected_v
-            actual_v = case actual
-            when Mongo::Crypt::RewrapManyDataKeyResult
-              actual.send(Utils.underscore(k))
-            else
-              raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
-            end
-            if expected_v
-              if expected_v.empty?
-                if actual_v && !actual_v.empty?
-                  raise Error::ResultMismatch, "Actual not empty"
-                end
+            %w(bulkWriteResult).each do |k|
+              expected_v = expected.use(k)
+              next unless expected_v
+              actual_v = case actual
+              when Mongo::Crypt::RewrapManyDataKeyResult
+                actual.send(Utils.underscore(k))
               else
-                %w(deleted inserted matched modified upserted).each do |k|
-                  if count = expected_v.use("#{k}Count")
-                    if Hash === count || count > 0
-                      actual_count = actual_v.send("#{k}_count")
-                      assert_value_matches(actual_count, count, "#{k} count")
+                raise Error::ResultMismatch, "Mismatch: actual #{actual_v}, expected #{expected_v}"
+              end
+              if expected_v
+                if expected_v.empty?
+                  if actual_v && !actual_v.empty?
+                    raise Error::ResultMismatch, "Actual not empty"
+                  end
+                else
+                  %w(deleted inserted matched modified upserted).each do |k|
+                    if count = expected_v.use("#{k}Count")
+                      if Hash === count || count > 0
+                        actual_count = actual_v.send("#{k}_count")
+                        assert_value_matches(actual_count, count, "#{k} count")
+                      end
                     end
                   end
                 end
               end
             end
+            assert_matches(actual, expected, 'result')
+            expected.clear
           end
-          assert_matches(actual, expected, 'result')
-          expected.clear
         end
       else
         assert_matches(actual, expected, 'result')
@@ -118,7 +122,7 @@ module Unified
         spec = UsingHash[spec]
         collection = client.use(spec.use!('databaseName'))[spec.use!('collectionName')]
         expected_docs = spec.use!('documents')
-        actual_docs = collection.find({}, order: :_id).to_a
+        actual_docs = collection.find({}, sort: { _id: 1 }).to_a
         assert_documents_match(actual_docs, expected_docs)
         unless spec.empty?
           raise NotImplementedError, "Unhandled keys: #{spec}"
@@ -156,7 +160,7 @@ module Unified
         else
           false
         end
-        actual_events = subscriber.wanted_events(@observe_sensitive)
+        actual_events = subscriber.wanted_events(@observe_sensitive[client_id])
         case spec.use('eventType')
         when nil, 'command'
           actual_events.select! do |event|
@@ -205,6 +209,9 @@ module Unified
       if reply = spec.use('reply')
         assert_matches(actual.reply, reply, 'Command reply does not match expectation')
       end
+      if interrupt_in_use_connections = spec.use('interruptInUseConnections')
+        assert_matches(actual.options[:interrupt_in_use_connections], interrupt_in_use_connections, 'Command interrupt_in_use_connections does not match expectation')
+      end
       unless spec.empty?
         raise NotImplementedError, "Unhandled keys: #{spec}"
       end
@@ -212,6 +219,12 @@ module Unified
 
     def assert_eq(actual, expected, msg)
       unless expected == actual
+        raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
+      end
+    end
+
+    def assert_gte(actual, expected, msg)
+      unless actual >= expected
         raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
       end
     end
@@ -240,6 +253,10 @@ module Unified
         if expected.keys == %w($$unsetOrMatches) && expected.values.first.keys == %w(insertedId)
           actual_v = actual.inserted_id
           expected_v = expected.values.first.values.first
+          assert_value_matches(actual_v, expected_v, 'inserted_id')
+        elsif expected.keys == %w(insertedId)
+          actual_v = actual.inserted_id
+          expected_v = expected.values.first
           assert_value_matches(actual_v, expected_v, 'inserted_id')
         else
           if expected.empty?

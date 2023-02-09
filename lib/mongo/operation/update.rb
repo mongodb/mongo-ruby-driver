@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/update/command'
 require 'mongo/operation/update/op_msg'
 require 'mongo/operation/update/result'
 require 'mongo/operation/update/bulk_result'

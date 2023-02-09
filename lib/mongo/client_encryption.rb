@@ -71,7 +71,7 @@ module Mongo
     #     will not be properly parsed.
     # @option options [ Array<String> ] :key_alt_names An optional array of
     #   strings specifying alternate names for the new data key.
-    # @option options [ BSON::Binary | nil ] :key_material Optional
+    # @option options [ String | nil ] :key_material Optional
     #   96 bytes to use as custom key material for the data key being created.
     #   If :key_material option is given, the custom key material is used
     #   for encrypting and decrypting data.
@@ -85,7 +85,6 @@ module Mongo
       key_material = options[:key_material]
       @encrypter.create_and_insert_data_key(key_document, key_alt_names, key_material)
     end
-    alias :create_key :create_data_key
 
     # Encrypts a value using the specified encryption key and algorithm.
     #
@@ -104,10 +103,10 @@ module Mongo
     #   to be applied if encryption algorithm is set to "Indexed". If not
     #   provided, it defaults to a value of 0. Contention factor should be set
     #   only if encryption algorithm is set to "Indexed".
-    # @option options [ Symbol ] query_type Query type to be applied
+    # @option options [ String | nil ] query_type Query type to be applied
     # if encryption algorithm is set to "Indexed". Query type should be set
     #   only if encryption algorithm is set to "Indexed". The only allowed
-    #   value is :equality.
+    #   value is "equality".
     #
     # @note The :key_id and :key_alt_name options are mutually exclusive. Only
     #   one is required to perform explicit encryption.
@@ -205,6 +204,5 @@ module Mongo
     def rewrap_many_data_key(filter, opts = {})
       @encrypter.rewrap_many_data_key(filter, opts)
     end
-
   end
 end

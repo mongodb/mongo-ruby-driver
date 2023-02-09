@@ -57,7 +57,10 @@ module Mongo
       # @option options [ String ] :key_vault_namespace The namespace of the key
       #   vault in the format database.collection.
       # @option options [ Hash | nil ] :schema_map The JSONSchema of the collection(s)
-      #   with encrypted fields.
+      #   with encrypted fields. This option is mutually exclusive with :schema_map_path.
+      # @option options [ String | nil ] :schema_map_path A path to a file contains the JSON schema
+      #   of the collection that stores auto encrypted documents. This option is
+      #   mutually exclusive with :schema_map.
       # @option options [ Boolean | nil ] :bypass_auto_encryption When true, disables
       #   auto-encryption. Default is false.
       # @option options [ Hash | nil ] :extra_options Options related to spawning
@@ -78,28 +81,53 @@ module Mongo
       #     and schemaMap, an error will be raised.
       # @option options [ Boolean | nil ] :bypass_query_analysis When true
       #   disables automatic analysis of outgoing commands.
+      # @option options [ String | nil ] :crypt_shared_lib_path Path that should
+      #   be  the used to load the crypt shared library. Providing this option
+      #   overrides default crypt shared library load paths for libmongocrypt.
+      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      #   crypt shared library is required. If 'true', an error will be raised
+      #   if a crypt_shared library cannot be loaded by libmongocrypt.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def initialize(options)
+        # Note that this call may eventually, via other method invocations,
+        # create additional clients which have to be cleaned up.
         @options = set_default_options(options).freeze
 
         @crypt_handle = Crypt::Handle.new(
           Crypt::KMS::Credentials.new(@options[:kms_providers]),
           Crypt::KMS::Validations.validate_tls_options(@options[:kms_tls_options]),
           schema_map: @options[:schema_map],
+          schema_map_path: @options[:schema_map_path],
           encrypted_fields_map: @options[:encrypted_fields_map],
-          bypass_query_analysis: @options[:bypass_query_analysis]
+          bypass_query_analysis: @options[:bypass_query_analysis],
+          crypt_shared_lib_path: @options[:extra_options][:crypt_shared_lib_path],
+          crypt_shared_lib_required: @options[:extra_options][:crypt_shared_lib_required],
         )
 
-        # Set server selection timeout to 1 to prevent the client waiting for a
-        # long timeout before spawning mongocryptd
-        @mongocryptd_client = Client.new(
-          @options[:extra_options][:mongocryptd_uri],
-          monitoring_io: @options[:client].options[:monitoring_io],
-          server_selection_timeout: 10,
-          database: @options[:client].options[:database]
+        @mongocryptd_options = @options[:extra_options].slice(
+          :mongocryptd_uri,
+          :mongocryptd_bypass_spawn,
+          :mongocryptd_spawn_path,
+          :mongocryptd_spawn_args
         )
+        @mongocryptd_options[:mongocryptd_bypass_spawn] = @options[:bypass_auto_encryption] ||
+          @options[:extra_options][:mongocryptd_bypass_spawn] ||
+          @crypt_handle.crypt_shared_lib_available? ||
+          @options[:extra_options][:crypt_shared_lib_required]
+
+        unless @options[:extra_options][:crypt_shared_lib_required] || @crypt_handle.crypt_shared_lib_available?
+          # Set server selection timeout to 1 to prevent the client waiting for a
+          # long timeout before spawning mongocryptd
+          @mongocryptd_client = Client.new(
+            @options[:extra_options][:mongocryptd_uri],
+            monitoring_io: @options[:client].options[:monitoring_io],
+            populator_io: @options[:client].options[:populator_io],
+            server_selection_timeout: 10,
+            database: @options[:client].options[:database]
+          )
+        end
 
         begin
           @encryption_io = EncryptionIO.new(
@@ -108,17 +136,41 @@ module Mongo
             key_vault_namespace: @options[:key_vault_namespace],
             key_vault_client: @key_vault_client,
             metadata_client: @metadata_client,
-            mongocryptd_options: @options[:extra_options]
+            mongocryptd_options: @mongocryptd_options
           )
         rescue
           begin
-            @mongocryptd_client.close
+            @mongocryptd_client&.close
           rescue => e
             log_warn("Error closing mongocryptd client in auto encrypter's constructor: #{e.class}: #{e}")
             # Drop this exception so that the original exception is raised
           end
           raise
         end
+      rescue
+        if @key_vault_client && @key_vault_client != options[:client] &&
+          @key_vault_client.cluster != options[:client].cluster
+        then
+          begin
+            @key_vault_client.close
+          rescue => e
+            log_warn("Error closing key vault client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+        end
+
+        if @metadata_client && @metadata_client != options[:client] &&
+          @metadata_client.cluster != options[:client].cluster
+        then
+          begin
+            @metadata_client.close
+          rescue => e
+            log_warn("Error closing metadata client in auto encrypter's constructor: #{e.class}: #{e}")
+            # Drop this exception so that the original exception is raised
+          end
+        end
+
+        raise
       end
 
       # Whether this encrypter should perform encryption (returns false if
@@ -164,6 +216,18 @@ module Mongo
       def close
         @mongocryptd_client.close if @mongocryptd_client
 
+        if @key_vault_client && @key_vault_client != options[:client] &&
+          @key_vault_client.cluster != options[:client].cluster
+        then
+          @key_vault_client.close
+        end
+
+        if @metadata_client && @metadata_client != options[:client] &&
+          @metadata_client.cluster != options[:client].cluster
+        then
+          @metadata_client.close
+        end
+
         true
       end
 
@@ -206,26 +270,16 @@ module Mongo
         client = options[:client]
         @key_vault_client = if options[:key_vault_client]
           options[:key_vault_client]
-        # https://jira.mongodb.org/browse/RUBY-3010
-        # https://jira.mongodb.org/browse/RUBY-3011
-        # Specification requires to use existing client when connection pool
-        # size is unlimited (0). Ruby driver does not support unlimited pool
-        # size.
-        # elsif client.options[:max_pool_size] == 0
-        #   client
+        elsif client.options[:max_pool_size] == 0
+          client
         else
           internal_client(client)
         end
 
         @metadata_client = if options[:bypass_auto_encryption]
           nil
-        # Specification requires to use existing client when connection pool
-        # size is unlimited (0). Ruby driver does not support unlimited pool
-        # size.
-        # https://jira.mongodb.org/browse/RUBY-3010
-        # https://jira.mongodb.org/browse/RUBY-3011
-        # elsif client.options[:max_pool_size] == 0
-        #   client
+        elsif client.options[:max_pool_size] == 0
+          client
         else
           internal_client(client)
         end
@@ -242,12 +296,8 @@ module Mongo
       def internal_client(client)
         @internal_client ||= client.with(
           auto_encryption_options: nil,
-          # Specification requires that the internal client's connection pool
-          # size is unlimited (0). Ruby driver does not support unlimited pool
-          # size.
-          # https://jira.mongodb.org/browse/RUBY-3010
-          # https://jira.mongodb.org/browse/RUBY-3011
-          # max_pool_size: 0
+          min_pool_size: 0,
+          monitoring: client.send(:monitoring),
         )
       end
     end

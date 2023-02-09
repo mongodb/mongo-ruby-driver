@@ -4,7 +4,11 @@
 require 'spec_helper'
 
 describe 'Cursor pinning' do
-  let(:client) { authorized_client }
+  let(:client) do
+    authorized_client.tap do |client|
+      client.reconnect if client.closed?
+    end
+  end
   let(:collection_name) { 'cursor_pinning' }
   let(:collection) { client[collection_name] }
 

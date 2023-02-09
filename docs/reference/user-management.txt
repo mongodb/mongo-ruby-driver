@@ -42,7 +42,7 @@ Users and Databases
 ===================
 
 When a client connects to the server, MongoDB distinguishes the database
-that the client will perform operations on from the `auth source <auth-source>`_
+that the client will perform operations on from the :ref:`auth source <auth-source>`
 which is the database storing the user that the client is authenticating as.
 
 In many cases, the auth source is the same as the database. When they differ,
@@ -121,7 +121,7 @@ For more information about roles in MongoDB, see the
 
 In addition to the ``:roles`` option, the ``create`` method supports a
 ``:session`` option, which allows you to specify a ``Mongo::Session`` object
-to use for this operation, as well as a ``:write_concern`` option, 
+to use for this operation, as well as a ``:write_concern`` option,
 which specifies the write concern of this operation when performed on a
 replica set.
 

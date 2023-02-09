@@ -362,6 +362,42 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
+    context 'when an enumerable is used instead of an array' do
+
+      context 'when the enumerable is not empty' do
+
+        let(:source_data) do
+          [{ name: 'test1' }, { name: 'test2' }]
+        end
+
+        let(:result) do
+          authorized_collection.insert_many(source_data.lazy)
+        end
+
+        it 'should accepts them without raising an error' do
+          expect { result }.to_not raise_error
+          expect(result.inserted_count).to eq(source_data.size)
+        end
+      end
+
+      context 'when the enumerable is empty' do
+
+        let(:source_data) do
+          []
+        end
+
+        let(:result) do
+          authorized_collection.insert_many(source_data.lazy)
+        end
+
+        it 'should raise ArgumentError' do
+          expect do
+            result
+          end.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
+        end
+      end
+    end
+
     context 'when a session is provided' do
 
       let(:session) do
@@ -4410,6 +4446,26 @@ describe Mongo::Collection do
 
     it 'does not raise an exception' do
       expect(result).to be_nil
+    end
+  end
+
+  context "when creating collection with view_on and pipeline" do
+    before do
+      authorized_client["my_view"].drop
+      authorized_collection.insert_one({ bar: "here!" })
+      authorized_client["my_view",
+        view_on: authorized_collection.name,
+        pipeline: [ { :'$project' => { "baz": "$bar" } } ]
+      ].create
+    end
+
+    it "the view has a document" do
+      expect(authorized_client["my_view"].find.to_a.length).to eq(1)
+    end
+
+    it "applies the pipeline" do
+      expect(authorized_client["my_view"].find.first).to have_key("baz")
+      expect(authorized_client["my_view"].find.first["baz"]).to eq("here!")
     end
   end
 end

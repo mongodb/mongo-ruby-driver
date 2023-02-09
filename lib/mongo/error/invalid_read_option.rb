@@ -31,7 +31,7 @@ module Mongo
       #
       # @since 2.6.0
       def initialize(read_option, msg)
-        super("Invalid read option: #{read_option}: #{msg}")
+        super("Invalid read preference value: #{read_option.inspect}: #{msg}")
       end
     end
   end

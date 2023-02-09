@@ -21,6 +21,8 @@ module Mongo
     # Exception raised when trying to perform operations on a connection that
     # experienced a network error.
     class ConnectionPerished < Error
+      include WriteRetryable
+      include ChangeStreamResumable
     end
   end
 end

@@ -293,6 +293,12 @@ describe Mongo::Address do
             expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE).int).to be <= 120
           end
         end
+
+        if Socket.const_defined?(:TCP_USER_TIMEOUT)
+          it 'sets the socket TCP_KEEPIDLE option' do
+            expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_USER_TIMEOUT).int).to be <= 210
+          end
+        end
       end
     end
 

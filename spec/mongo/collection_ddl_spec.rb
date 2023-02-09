@@ -109,11 +109,7 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a capped collection command'
-
-          context 'when validators can be set' do
-            min_server_fcv '3.2'
-            it_behaves_like 'a validated collection command'
-          end
+          it_behaves_like 'a validated collection command'
         end
 
         context 'when instantiating a collection through the database' do
@@ -123,10 +119,47 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a capped collection command'
+          it_behaves_like 'a validated collection command'
+        end
 
-          context 'when validators can be set' do
-            min_server_fcv '3.2'
-            it_behaves_like 'a validated collection command'
+        context 'when instantiating a collection using create' do
+
+          before do
+            authorized_client[:specs].drop
+          end
+
+          let!(:response) do
+            authorized_client[:specs].create(options)
+          end
+
+          let(:collection) do
+            authorized_client[:specs]
+          end
+
+          let(:collstats) do
+            database.read_command(:collstats => :specs).documents.first
+          end
+
+          let(:options) do
+            { :capped => true, :size => 4096, :max => 512 }
+          end
+
+          it 'executes the command' do
+            expect(response).to be_successful
+          end
+
+          it 'sets the collection as capped' do
+            expect(collection).to be_capped
+          end
+
+          it 'creates the collection in the database' do
+            expect(database.collection_names).to include('specs')
+          end
+
+          it "applies the options" do
+            expect(collstats["capped"]).to be true
+            expect(collstats["max"]).to eq(512)
+            expect(collstats["maxSize"]).to eq(4096)
           end
         end
       end
@@ -148,7 +181,6 @@ describe Mongo::Collection do
         end
 
         context 'when the server supports write concern on the create command' do
-          min_server_fcv '3.4'
           require_topology :replica_set
 
           it 'applies the write concern' do
@@ -159,7 +191,6 @@ describe Mongo::Collection do
         end
 
         context 'when write concern passed in as an option' do
-          min_server_fcv '3.4'
           require_topology :replica_set
 
           before do
@@ -189,14 +220,6 @@ describe Mongo::Collection do
             expect(command[:writeConcern][:w]).to eq(2)
           end
         end
-
-        context 'when the server does not support write concern on the create command' do
-          max_server_version '3.2'
-
-          it 'does not apply the write concern' do
-            expect(collection.create).to be_successful
-          end
-        end
       end
 
       context 'when the collection has a collation' do
@@ -219,45 +242,18 @@ describe Mongo::Collection do
             collection.drop
           end
 
-          context 'when the server supports collations' do
-            min_server_fcv '3.4'
-
-            it 'executes the command' do
-              expect(response).to be_successful
-            end
-
-            it 'sets the collection with a collation' do
-              response
-              expect(collection_info['options']['collation']['locale']).to eq('fr')
-            end
-
-            it 'creates the collection in the database' do
-              response
-              expect(database.collection_names).to include('specs')
-            end
+          it 'executes the command' do
+            expect(response).to be_successful
           end
 
-          context 'when the server does not support collations' do
-            max_server_version '3.2'
+          it 'sets the collection with a collation' do
+            response
+            expect(collection_info['options']['collation']['locale']).to eq('fr')
+          end
 
-            it 'raises an error' do
-              expect {
-                response
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-
-            context 'when a String key is used' do
-
-              let(:options) do
-                { 'collation' => { locale: 'fr' } }
-              end
-
-              it 'raises an exception' do
-                expect {
-                  response
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
-            end
+          it 'creates the collection in the database' do
+            response
+            expect(database.collection_names).to include('specs')
           end
         end
 
@@ -277,6 +273,43 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a collection command with a collation option'
+        end
+
+        context 'when passing the options through create' do
+
+          let(:collection) do
+            authorized_client[:specs]
+          end
+
+          let(:response) do
+            collection.create(options)
+          end
+
+          let(:options) do
+            { :collation => { locale: 'fr' } }
+          end
+
+          let(:collection_info) do
+            database.list_collections.find { |i| i['name'] == 'specs' }
+          end
+
+          before do
+            collection.drop
+          end
+
+          it 'executes the command' do
+            expect(response).to be_successful
+          end
+
+          it 'sets the collection with a collation' do
+            response
+            expect(collection_info['options']['collation']['locale']).to eq('fr')
+          end
+
+          it 'creates the collection in the database' do
+            response
+            expect(database.collection_names).to include('specs')
+          end
         end
       end
 
@@ -312,7 +345,6 @@ describe Mongo::Collection do
     end
 
     context 'when collation has a strength' do
-      min_server_fcv '3.4'
 
       let(:band_collection) do
         described_class.new(database, :bands)
@@ -418,7 +450,6 @@ describe Mongo::Collection do
         end
 
         context 'when the server supports write concern on the drop command' do
-          min_server_fcv '3.4'
           require_set_write_concern
 
           it 'applies the write concern' do
@@ -429,7 +460,6 @@ describe Mongo::Collection do
         end
 
         context 'when write concern passed in as an option' do
-          min_server_fcv '3.4'
           require_set_write_concern
 
           let(:events) do
@@ -455,14 +485,6 @@ describe Mongo::Collection do
             expect(command[:writeConcern][:w]).to eq(0)
           end
         end
-
-        context 'when the server does not support write concern on the drop command' do
-          max_server_version '3.2'
-
-          it 'does not apply the write concern' do
-            expect(collection_with_write_options.drop).to be_successful
-          end
-        end
       end
     end
 
@@ -478,6 +500,28 @@ describe Mongo::Collection do
 
       it 'returns false' do
         expect(collection.drop).to be(false)
+      end
+    end
+
+    context "when providing a pipeline in create" do
+
+      let(:options) do
+        { view_on: "specs", pipeline: [ { :'$project' => { "baz": "$bar" } } ] }
+      end
+
+      before do
+        authorized_client["my_view"].drop
+        authorized_client[:specs].drop
+      end
+
+      it "the pipeline gets passed to the command" do
+        expect(Mongo::Operation::Create).to receive(:new).and_wrap_original do |m, *args|
+          expect(args.first.slice(:selector)[:selector]).to have_key(:pipeline)
+          expect(args.first.slice(:selector)[:selector]).to have_key(:viewOn)
+          m.call(*args)
+        end
+        expect_any_instance_of(Mongo::Operation::Create).to receive(:execute)
+        authorized_client[:specs].create(options)
       end
     end
   end

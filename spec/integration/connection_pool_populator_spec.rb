@@ -77,24 +77,27 @@ describe 'Connection pool populator integration' do
 
     context 'when min size is zero' do
 
-      it 'does not start the background thread' do
+      it 'does start the background thread' do
         pool
         sleep 2
 
         expect(pool.size).to eq(0)
-        expect(pool.instance_variable_get('@populator').running?).to be false
+        expect(pool.instance_variable_get('@populator')).to be_running
       end
     end
   end
 
   describe '#clear' do
     context 'when a min size is provided' do
+      require_no_linting
+
        let(:options) do
         { min_pool_size: 1 }
       end
 
       it 'repopulates the pool periodically only up to min size' do
-        pool
+        pool.ready
+        expect(pool.instance_variable_get('@populator')).to be_running
 
         sleep 2
         expect(pool.size).to eq(1)
@@ -102,8 +105,21 @@ describe 'Connection pool populator integration' do
         first_connection = pool.check_out
         pool.check_in(first_connection)
 
-        pool.clear
+        RSpec::Mocks.with_temporary_scope do
+          allow(pool.server).to receive(:unknown?).and_return(true)
+          if server.load_balancer?
+            pool.clear(service_id: first_connection.service_id)
+          else
+            pool.clear
+          end
+        end
 
+        ::Utils.wait_for_condition(3) do
+          pool.size == 0
+        end
+        expect(pool.size).to eq(0)
+
+        pool.ready
         sleep 2
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)
@@ -258,7 +274,7 @@ describe 'Connection pool populator integration' do
           receive(:create_and_add_connection).twice.and_raise(Mongo::Error::SocketError)
         pool
         sleep 2
-        expect(pool.populator.running?).to be true
+        expect(pool.populator).to be_running
       end
     end
 
@@ -268,7 +284,7 @@ describe 'Connection pool populator integration' do
           receive(:create_and_add_connection).and_raise(Mongo::Error)
         pool
         sleep 2
-        expect(pool.populator.running?).to be true
+        expect(pool.populator).to be_running
       end
     end
   end
@@ -282,6 +298,10 @@ describe 'Connection pool populator integration' do
       it 'populates the parent and child pools' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
           server_options.merge(min_pool_size: 2, max_pool_size: 5))
+
+        # force initialization of the pool
+        client.cluster.servers.first.pool
+
         # let pool populate
         sleep 2
         server = client.cluster.next_primary

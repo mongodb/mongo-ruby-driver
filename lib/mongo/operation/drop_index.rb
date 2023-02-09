@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/drop_index/command'
 require 'mongo/operation/drop_index/op_msg'
 
 module Mongo
@@ -28,7 +27,7 @@ module Mongo
     # @since 2.0.0
     class DropIndex
       include Specifiable
-      include OpMsgOrCommand
+      include OpMsgExecutable
     end
   end
 end

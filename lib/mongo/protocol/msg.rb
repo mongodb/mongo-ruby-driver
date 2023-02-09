@@ -58,6 +58,7 @@ module Mongo
       # @option options [ true, false ] validating_keys Whether keys should be
       #   validated for being valid document keys (i.e. not begin with $ and
       #   not contain dots).
+      #   This option is deprecated and will not be used. It will removed in version 3.0.
       #
       # @api private
       #
@@ -229,22 +230,6 @@ module Mongo
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
-          # This code MUST be removed as soon as server starts accepting
-          # contention as int32.
-          if schema = enc_cmd.dig('encryptionInformation', 'schema')
-            enc_cmd['encryptionInformation']['schema'] = schema.map do |coll, params|
-              if params['fields']
-                params['fields'] = params['fields'].map do |field|
-                  if contention = field.dig('queries', 'contention')
-                    field['queries']['contention'] = BSON::Int64.new(contention)
-                  end
-                  field
-                end
-              end
-              [coll, params]
-            end.to_h
-          end
-          # End of code to be removed
 
           Msg.new(@flags, @options, enc_cmd)
         else

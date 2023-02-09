@@ -44,10 +44,10 @@ module Mongo
       #   to be applied if encryption algorithm is set to "Indexed". If not
       #   provided, it defaults to a value of 0. Contention factor should be set
       #   only if encryption algorithm is set to "Indexed".
-      # @option options [ Symbol ] query_type Query type to be applied
+      # @option options [ String | nil ] query_type Query type to be applied
       # if encryption algorithm is set to "Indexed". Query type should be set
       #   only if encryption algorithm is set to "Indexed".  The only allowed
-      #   value is :equality.
+      #   value is "equality".
       #
       # @raise [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
       def initialize(mongocrypt, io, doc, options={})
@@ -89,6 +89,7 @@ module Mongo
 
         # Set the algorithm option on the mongocrypt_ctx_t object and raises
         # an exception if the algorithm is invalid.
+        Binding.ctx_setopt_algorithm(self, options[:algorithm])
         if options[:algorithm] == 'Indexed'
           if options[:contention_factor]
             Binding.ctx_setopt_contention_factor(self, options[:contention_factor])
@@ -96,18 +97,12 @@ module Mongo
           if options[:query_type]
             Binding.ctx_setopt_query_type(self, options[:query_type])
           end
-          Binding.ctx_setopt_index_type(self, :equality)
         else
           if options[:contention_factor]
             raise ArgumentError.new(':contention_factor is allowed only for "Indexed" algorithm')
           end
           if options[:query_type]
             raise ArgumentError.new(':query_type is allowed only for "Indexed" algorithm')
-          end
-          if options[:algorithm] == 'Unindexed'
-            Binding.ctx_setopt_index_type(self, :none)
-          else
-            Binding.ctx_setopt_algorithm(self, options[:algorithm])
           end
         end
 

@@ -10,7 +10,7 @@ The Ruby driver supports Ruby 2.5-3.0 and JRuby 9.2.
 ## Documentation
 
 High level documentation and usage examples are located
-[here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
+[here](https://www.mongodb.com/docs/ecosystem/drivers/ruby/).
 
 API documentation for the most recent release can be found
 [here](https://mongodb.com/docs/ruby-driver/current/api/).
@@ -58,7 +58,7 @@ is publicly visible.
 
 If you have identified a potential security-related issue in the Ruby driver
 (or any other MongoDB product), please report it by following the
-[instructions here](http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
+[instructions here](https://www.mongodb.com/docs/manual/tutorial/create-a-vulnerability-report).
 
 ## Product Feature Requests
 
@@ -66,6 +66,16 @@ To request a feature which is not specific to the Ruby driver, or which
 affects more than the driver alone (for example, a feature which requires
 MongoDB server support), please submit your idea through the
 [MongoDB Feedback Forum](https://feedback.mongodb.com/forums/924286-drivers).
+
+## Maintenance and Bug Fix Policy
+
+New driver functionality is generally added in a backwards-compatible manner
+and results in new minor driver releases (2.x). Bug fixes are generally made on
+master first and are backported to the current minor driver release. Exceptions
+may be made on a case-by-case basis, for example security fixes may be
+backported to older stable branches. Only the most recent minor driver release
+is officially supported. Customers should use the most recent driver release in
+their applications.
 
 ## Running Tests
 

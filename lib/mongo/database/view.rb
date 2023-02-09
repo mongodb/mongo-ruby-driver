@@ -141,7 +141,7 @@ module Mongo
       # @param [ Array<Hash> ] pipeline The aggregation pipeline.
       # @param [ Hash ] options The aggregation options.
       #
-      # @return [ Aggregation ] The aggregation object.
+      # @return [ Collection::View::Aggregation ] The aggregation object.
       #
       # @since 2.10.0
       # @api private
@@ -172,7 +172,7 @@ module Mongo
             doc['name'].start_with?('system.') || doc['name'].include?('$')
           end
         else
-          docs = cursor.reject do |doc|
+          cursor.reject do |doc|
             doc['name'].start_with?("#{database.name}.system") || doc['name'].include?('$')
           end
         end

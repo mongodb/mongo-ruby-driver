@@ -152,7 +152,7 @@ describe Mongo::Session do
         it 'times out' do
           start = Mongo::Utils.monotonic_time
 
-          10.times do |i|
+          11.times do |i|
             expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
           end
           expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)

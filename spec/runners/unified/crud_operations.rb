@@ -6,6 +6,14 @@ module Unified
   module CrudOperations
 
     def find(op)
+      get_find_view(op).to_a
+    end
+
+    def find_one(op)
+      get_find_view(op).first
+    end
+
+    def get_find_view(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = {
@@ -37,7 +45,7 @@ module Unified
         if projection = args.use('projection')
           req = req.projection(projection)
         end
-        result = req.to_a
+        req
       end
     end
 
@@ -93,6 +101,7 @@ module Unified
           let: args.use('let'),
           comment: args.use('comment'),
           hint: args.use('hint'),
+          upsert: args.use('upsert'),
         }
         if return_document = args.use('returnDocument')
           opts[:return_document] = return_document.downcase.to_sym

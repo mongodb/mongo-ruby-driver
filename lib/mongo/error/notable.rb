@@ -57,6 +57,13 @@ module Mongo
         @notes << note
       end
 
+      # Allows multiple notes to be added in a single call, for convenience.
+      #
+      # @api private
+      def add_notes(*notes)
+        notes.each { |note| add_note(note) }
+      end
+
       # Returns connection pool generation for the connection on which the
       # error occurred.
       #

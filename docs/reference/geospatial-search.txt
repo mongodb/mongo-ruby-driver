@@ -18,7 +18,7 @@ with the Ruby driver.
 
 The examples on this page use a sample collection called
 ``restaurants`` in the ``test`` database. 
-A `sample dataset <http://docs.mongodb.org/getting-started/shell/import-data/>`_
+A `sample dataset <https://www.mongodb.com/docs/getting-started/shell/import-data/>`_
 is available for download.
 
 The following is a sample document in the ``restaurants``

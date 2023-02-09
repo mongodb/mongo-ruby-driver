@@ -4,6 +4,9 @@
 require 'spec_helper'
 
 describe 'Client' do
+  # TODO after the client is closed, operations should fail with an exception
+  # that communicates this state, instead of failing with server selection or
+  # pool errors. RUBY-3102, RUBY-3174.
   context 'after client is disconnected' do
     let(:client) { authorized_client.with(server_selection_timeout: 1) }
 
@@ -16,8 +19,10 @@ describe 'Client' do
       expect(resp).to be_a(Mongo::Operation::Result)
     end
 
-    it 'is still usable for operations that can use sessions' do
-      client['collection'].insert_one(test: 1)
+    context 'operation that can use sessions' do
+      it 'is still usable for operations' do
+        client['collection'].insert_one(test: 1)
+      end
     end
 
     context 'after all servers are marked unknown' do

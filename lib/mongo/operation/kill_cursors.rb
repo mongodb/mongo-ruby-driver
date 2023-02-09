@@ -16,7 +16,6 @@
 # limitations under the License.
 
 require 'mongo/operation/kill_cursors/command_builder'
-require 'mongo/operation/kill_cursors/command'
 require 'mongo/operation/kill_cursors/op_msg'
 
 module Mongo
@@ -29,7 +28,7 @@ module Mongo
     # @since 2.0.0
     class KillCursors
       include Specifiable
-      include OpMsgOrFindCommand
+      include OpMsgExecutable
     end
   end
 end

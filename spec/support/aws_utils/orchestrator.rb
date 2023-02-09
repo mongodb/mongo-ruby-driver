@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # encoding: utf-8
 
+require 'securerandom'
+
 module AwsUtils
   class Orchestrator < Base
 
@@ -13,13 +15,24 @@ module AwsUtils
       resp.credentials
     end
 
+    def assume_role_with_web_identity(role_arn, token_file)
+      token = File.open(token_file).read
+      resp = sts_client.assume_role_with_web_identity(
+        role_arn: role_arn,
+        role_session_name: SecureRandom.uuid,
+        web_identity_token: token,
+        duration_seconds: 900
+      )
+      resp.credentials
+    end
+
     def set_instance_profile(instance_id,
       instance_profile_name: AWS_AUTH_INSTANCE_PROFILE_NAME,
       instance_profile_arn: nil
     )
       clear_instance_profile(instance_id)
 
-      deadline = Time.now + 30
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30
       begin
         ec2_client.associate_iam_instance_profile(
           iam_instance_profile: {
@@ -29,7 +42,7 @@ module AwsUtils
           instance_id: instance_id,
         )
       rescue Aws::EC2::Errors::RequestLimitExceeded => e
-        if Time.now >= deadline
+        if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
           raise
         end
         STDERR.puts("AWS request limit exceeded: #{e.class}: #{e}, will retry")
@@ -43,13 +56,13 @@ module AwsUtils
         :iam_instance_profile_associations, :instance_id, instance_id)
 
       if assoc
-        deadline = Time.now + 30
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30
         begin
           ec2_client.disassociate_iam_instance_profile(
             association_id: assoc.association_id,
           )
         rescue Aws::EC2::Errors::RequestLimitExceeded => e
-          if Time.now >= deadline
+          if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
             raise
           end
           STDERR.puts("AWS request limit exceeded: #{e.class}: #{e}, will retry")
@@ -288,7 +301,7 @@ CMD
       service_name: AWS_AUTH_ECS_SERVICE_NAME,
       timeout: 20
     )
-      deadline = Time.now + timeout
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
 
       # The AWS SDK waiter seems to immediately fail sometimes right after
       # the service is created, so wait for the service to become active
@@ -313,8 +326,7 @@ CMD
           status = service.status
         end
 
-        now = Time.now
-        if now >= deadline
+        if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
           raise "Service #{service_name} in cluster #{cluster_name} did not become ready in #{timeout} seconds (current status: #{status})"
         end
 

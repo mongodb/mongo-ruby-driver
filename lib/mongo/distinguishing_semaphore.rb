@@ -23,7 +23,7 @@ module Mongo
   class DistinguishingSemaphore
     def initialize
       @lock = Mutex.new
-      @cv = ConditionVariable.new
+      @cv = ::ConditionVariable.new
       @queue = []
     end
 
