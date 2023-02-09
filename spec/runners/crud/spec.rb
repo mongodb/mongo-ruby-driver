@@ -11,7 +11,7 @@ module Mongo
       # @param [ String ] test_path The path to the file.
       #
       # @since 2.0.0
-      def initialize(test_path, expectations_bson_types: false)
+      def initialize(test_path)
         @spec = ::Utils.load_spec_yaml_file(test_path)
         @description = File.basename(test_path)
         @data = BSON::ExtJSON.parse_obj(@spec['data'])
@@ -31,7 +31,6 @@ module Mongo
         else
           nil
         end
-        @expectations_bson_types = expectations_bson_types
       end
 
       # @return [ String ] description The spec description.
@@ -69,7 +68,7 @@ module Mongo
       # Get a list of Test instances, one for each test definition.
       def tests
         @tests.map do |test|
-          Mongo::CRUD::CRUDTest.new(self, @data, test, expectations_bson_types: @expectations_bson_types)
+          Mongo::CRUD::CRUDTest.new(self, @data, test)
         end
       end
     end

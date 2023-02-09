@@ -72,7 +72,7 @@ module Mongo
         end
 
         mode = if expectations_bson_types then :bson else nil end
-        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
 
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))

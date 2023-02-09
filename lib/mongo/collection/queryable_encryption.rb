@@ -116,6 +116,7 @@ module Mongo
           encrypted_fields['ecocCollection'] || "enxcol_.#{name}.ecoc",
         ]
       end
+
     end
   end
 end

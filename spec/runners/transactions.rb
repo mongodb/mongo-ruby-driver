@@ -23,12 +23,8 @@ def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
   config_override :validate_update_replace, true
 
   test_paths.each do |file|
-    expectations_bson_types = if file =~ /fle2-CreateCollection.yml/
-                                false
-                              else
-                                expectations_bson_types
-                              end
-    spec = Mongo::Transactions::Spec.new(file, expectations_bson_types: expectations_bson_types)
+
+    spec = Mongo::Transactions::Spec.new(file)
 
     context(spec.description) do
 

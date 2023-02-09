@@ -27,7 +27,7 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.0.0
-      def initialize(crud_spec, data, test, expectations_bson_types: false)
+      def initialize(crud_spec, data, test)
         @spec = crud_spec
         @data = data
         @description = test['description']
@@ -45,12 +45,7 @@ module Mongo
           @operations = [Operation.new(self, test['operation'], test['outcome'])]
         end
 
-        mode = if expectations_bson_types
-                 :bson
-               else
-                 nil
-               end
-        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
+        @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
 
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
