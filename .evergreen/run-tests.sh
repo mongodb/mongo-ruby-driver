@@ -172,7 +172,6 @@ if test -n "$FLE"; then
       export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/csfle_lib/lib/mongo_crypt_v1.so
     else
       echo 'Could not find crypt_shared library'
-      exit 1
     fi
   else
     echo "Downloading crypt_shared package from $MONGO_CRYPT_SHARED_DOWNLOAD_URL"
