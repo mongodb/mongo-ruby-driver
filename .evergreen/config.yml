@@ -14,7 +14,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-exec_timeout_secs: 2700
+exec_timeout_secs: 3600
 
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
@@ -1469,7 +1469,6 @@ buildvariants:
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle"
-
 
   - matrix_name: "fle-6.0"
     matrix_spec:
