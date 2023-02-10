@@ -31,8 +31,8 @@ module Mongo
       #   that implements driver I/O methods required to run the
       #   state machine
       # @param [ BSON::Document ] doc A document to encrypt
-      # @param [ Hash ] options
       #
+      # @param [ Hash ] options
       # @option options [ BSON::Binary ] :key_id A BSON::Binary object of type
       #   :uuid representing the UUID of the data key to use for encryption.
       # @option options [ String ] :key_alt_name The alternate name of the data key
@@ -46,7 +46,21 @@ module Mongo
       #   only if encryption algorithm is set to "Indexed".
       # @option options [ String | nil ] query_type Query type to be applied
       #   if encryption algorithm is set to "Indexed" or "RangePreview".
-      #   Allowed values are "equality" and "rangePreview" .
+      #   Allowed values are "equality" and "rangePreview".
+      # @option options [ Hash | nil ] :range_opts Specifies index options for
+      #   a Queryable Encryption field supporting "rangePreview" queries.
+      #   Allowed options are:
+      #   - :min
+      #   - :max
+      #   - :sparsity
+      #   - :precision
+      #   min, max, sparsity, and range must match the values set in
+      #   the encryptedFields of the destination collection.
+      #   For double and decimal128, min/max/precision must all be set,
+      #   or all be unset.
+      #
+      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # public use.
       #
       # @raise [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
       def initialize(mongocrypt, io, doc, options = {})

@@ -1692,11 +1692,12 @@ module Mongo
       #   @api private
       #
       # Set options for explicit encryption with the "rangePreview" algorithm.
+      #
       # @note The RangePreview algorithm is experimental only. It is not intended for
       # public use.
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
-      # @param [ FFI::Pointer ] contention_factor opts A pointer to range
+      # @param [ FFI::Pointer ] opts opts A pointer to range
       #   options document.
       #
       # @return [ Boolean ] Whether setting this option succeeded.
@@ -1709,6 +1710,15 @@ module Mongo
         :bool
       )
 
+      # Set options for explicit encryption with the "rangePreview" algorithm.
+      #
+      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # public use.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ Hash ] opts options
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
       def self.ctx_setopt_algorithm_range(context, opts)
         validate_document(opts)
         data = opts.to_bson.to_s
