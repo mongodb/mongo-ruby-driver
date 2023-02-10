@@ -469,16 +469,6 @@ functions:
           ${PREPARE_SHELL}
           SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
-  "run static analysis":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          TEST_CMD="bundle exec rake rubocop" .evergreen/run-tests.sh
-
 pre:
   - func: "fetch source"
   - func: "fetch egos"
