@@ -430,6 +430,7 @@ describe Mongo::Collection do
 
         context 'when the collection does not exist' do
           require_set_write_concern
+          max_server_fcv '6.99.99'
 
           it 'does not raise an error' do
             expect(database['non-existent-coll'].drop).to be(false)
@@ -490,6 +491,7 @@ describe Mongo::Collection do
 
     context 'when the collection does not exist' do
       require_set_write_concern
+      max_server_fcv '6.99.99'
 
       before do
         begin
