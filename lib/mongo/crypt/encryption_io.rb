@@ -98,7 +98,7 @@ module Mongo
           raise ArgumentError, 'collection_info requires metadata_client to have been passed to the constructor, but it was not'
         end
 
-        @metadata_client.use(db_name).database.list_collections(filter: filter).first
+        @metadata_client.use(db_name).database.list_collections(filter: filter, deserialize_as_bson: true).first
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings

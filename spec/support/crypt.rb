@@ -115,7 +115,13 @@ module Crypt
     end
 
     let(:encrypted_fields) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/encryptedFields.json'))
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/encrypted_fields/encryptedFields.json'))
+    end
+
+    %w[Date DoubleNoPrecision DoublePrecision Int Long].each do |type|
+      let("range_encrypted_fields_#{type.downcase}".to_sym) do
+        BSON::ExtJSON.parse(File.read("spec/support/crypt/encrypted_fields/range-encryptedFields-#{type}.json"))
+      end
     end
 
     let(:key1_document) do

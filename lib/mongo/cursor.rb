@@ -76,7 +76,7 @@ module Mongo
       @initial_result = result
       @namespace = result.namespace
       @remaining = limit if limited?
-      @cursor_id = result.cursor_id
+      set_cursor_id(result)
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
@@ -465,7 +465,7 @@ module Mongo
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
       unregister if !closed? && result.cursor_id == 0
-      @cursor_id = result.cursor_id
+      @cursor_id = set_cursor_id(result)
 
       if result.respond_to?(:post_batch_resume_token)
         @post_batch_resume_token = result.post_batch_resume_token
@@ -503,6 +503,24 @@ module Mongo
       )
       op.execute(@server, context: context)
     end
+
+    # Sets @cursor_id from the operation result.
+    #
+    # In the operation result cursor id can be represented either as Integer
+    # value or as BSON::Int64. This method ensures that the instance variable
+    # is always of type Integer.
+    #
+    # @param [ Operation::Result ] result The result of the operation.
+    #
+    # @api private
+    def set_cursor_id(result)
+      @cursor_id = if result.cursor_id.is_a?(BSON::Int64)
+                     result.cursor_id.value
+                   else
+                     result.cursor_id
+                   end
+    end
+
   end
 end
 

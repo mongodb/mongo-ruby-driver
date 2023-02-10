@@ -72,14 +72,17 @@ module Mongo
         end
 
         mode = if expectations_bson_types then :bson else nil end
+        if crud_spec.description == 'fle2-CreateCollection.yml'
+          mode = nil
+        end
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
 
         if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
+          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: mode))
         end
 
         @expected_results = operations.map do |o|
-          o = BSON::ExtJSON.parse_obj(o)
+          o = BSON::ExtJSON.parse_obj(o, mode: :bson)
 
           # We check both o.key('error') and o['error'] to provide a better
           # error message in case error: false is ever needed in the tests
