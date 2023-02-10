@@ -151,7 +151,7 @@ describe 'Range Explicit Encryption' do
     end
 
     it 'encrypting a document greater than the maximum errors' do
-      skip if type == 'DoubleNoPrecision'
+      skip if %w(DoubleNoPrecision DecimalNoPrecision).include?(type)
       expect do
         client_encryption.encrypt(
           value_converter.call(201),
@@ -166,7 +166,7 @@ describe 'Range Explicit Encryption' do
     end
 
     it 'encrypting a document of a different type errors ' do
-      skip if type == 'DoubleNoPrecision'
+      skip if %w(DoubleNoPrecision DecimalNoPrecision).include?(type)
       value = if type == 'Int'
                 6.0
               else
@@ -186,10 +186,25 @@ describe 'Range Explicit Encryption' do
     end
 
     it 'setting precision errors if the type is not a double' do
-      skip if type != 'DoubleNoPrecision'
+      skip if %w(DoublePrecision DoubleNoPrecision DecimalPrecision DecimalNoPrecision).include?(type)
+      expect do
+        client_encryption.encrypt(
+          value_converter.call(6),
+          {
+            key_id: key1_id,
+            algorithm: "RangePreview",
+            contention_factor: 0,
+            range_opts: {
+              min: value_converter.call(0),
+              max: value_converter.call(200),
+              sparsity: 1,
+              precision: 2
+            }
+          }
+        )
+      end.to raise_error(Mongo::Error::CryptError, /precision/)
     end
   end
-
 
   context 'Int' do
     let(:type) do
@@ -405,6 +420,101 @@ describe 'Range Explicit Encryption' do
       [0, 6, 30, 200].each_with_index do |num, idx|
         insert_payload = client_encryption.encrypt(
           Time.new(num),
+          key_id: key1_id,
+          algorithm: "RangePreview",
+          contention_factor: 0,
+          range_opts: range_opts
+        )
+        encrypted_client['explicit_encryption'].insert_one(
+          _id: idx,
+          "encrypted#{type}" => insert_payload
+        )
+      end
+    end
+
+    include_examples 'common cases'
+  end
+
+  context 'DecimalPrecision' do
+    require_topology :replica_set
+
+    let(:type) do
+      'DecimalPrecision'
+    end
+
+    let(:value_converter) do
+      Proc.new do |value|
+        if value.is_a?(Array)
+          value.map { |val| BSON::Decimal128.new(val.to_s)}
+        else
+          BSON::Decimal128.new(value.to_s)
+        end
+      end
+    end
+
+    let(:encrypted_fields) do
+      range_encrypted_fields_decimalprecision
+    end
+
+    let(:range_opts) do
+      {
+        min: BSON::Decimal128.new('0.0'),
+        max: BSON::Decimal128.new('200.0'),
+        sparsity: 1,
+        precision: 2
+      }
+    end
+
+    before(:each) do
+      %w[0 6 30 200].each_with_index do |num, idx|
+        insert_payload = client_encryption.encrypt(
+          BSON::Decimal128.new(num),
+          key_id: key1_id,
+          algorithm: "RangePreview",
+          contention_factor: 0,
+          range_opts: range_opts
+        )
+        encrypted_client['explicit_encryption'].insert_one(
+          _id: idx,
+          "encrypted#{type}" => insert_payload
+        )
+      end
+    end
+
+    include_examples 'common cases'
+  end
+
+  context 'DecimalNoPrecision' do
+    require_topology :replica_set
+
+    let(:type) do
+      'DecimalNoPrecision'
+    end
+
+    let(:value_converter) do
+      Proc.new do |value|
+        if value.is_a?(Array)
+          value.map { |val| BSON::Decimal128.new(val.to_s)}
+        else
+          BSON::Decimal128.new(value.to_s)
+        end
+      end
+    end
+
+    let(:encrypted_fields) do
+      range_encrypted_fields_decimalnoprecision
+    end
+
+    let(:range_opts) do
+      {
+        sparsity: 1
+      }
+    end
+
+    before(:each) do
+      %w[0 6 30 200].each_with_index do |num, idx|
+        insert_payload = client_encryption.encrypt(
+          BSON::Decimal128.new(num),
           key_id: key1_id,
           algorithm: "RangePreview",
           contention_factor: 0,
