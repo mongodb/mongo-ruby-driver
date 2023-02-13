@@ -11,7 +11,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-exec_timeout_secs: 2700
+exec_timeout_secs: 3600
 
 <% egos_wrap = "./egos stdbuf -i0 -o0 -e0" %>
 
