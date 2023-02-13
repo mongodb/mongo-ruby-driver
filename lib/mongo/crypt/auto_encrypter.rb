@@ -117,7 +117,7 @@ module Mongo
           @crypt_handle.crypt_shared_lib_available? ||
           @options[:extra_options][:crypt_shared_lib_required]
 
-        unless @options[:extra_options][:crypt_shared_lib_required] || @crypt_handle.crypt_shared_lib_available?
+        unless @options[:extra_options][:crypt_shared_lib_required] || @crypt_handle.crypt_shared_lib_available? || @options[:bypass_query_analysis]
           # Set server selection timeout to 1 to prevent the client waiting for a
           # long timeout before spawning mongocryptd
           @mongocryptd_client = Client.new(

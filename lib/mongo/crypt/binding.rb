@@ -717,6 +717,40 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_ctx_explicit_encrypt_init(ctx, msg)
+      #   @api private
+      #
+      #   Initializes the ctx for explicit expression encryption.
+      #   @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      #   @param [ FFI::Pointer ] msg A pointer to a mongocrypt_binary_t object
+      #     that references the message to be encrypted as a binary string.
+      #   @note Before calling this method, set a key_id, key_alt_name (optional),
+      #     and encryption algorithm using the following methods:
+      #     mongocrypt_ctx_setopt_key_id, mongocrypt_ctx_setopt_key_alt_name,
+      #     and mongocrypt_ctx_setopt_algorithm.
+      #   @return [ Boolean ] Whether the initialization was successful.
+      attach_function(
+        :mongocrypt_ctx_explicit_encrypt_expression_init,
+        [:pointer, :pointer],
+        :bool
+      )
+
+      # Initialize the Context for explicit expression encryption.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ Hash ] doc A BSON document to encrypt
+      #
+      # @raise [ Mongo::Error::CryptError ] If initialization fails
+      def self.ctx_explicit_encrypt_expression_init(context, doc)
+        validate_document(doc)
+        data = doc.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_explicit_encrypt_expression_init(context.ctx_p, data_p)
+          end
+        end
+      end
+
       # @!method self.mongocrypt_ctx_decrypt_init(ctx, doc)
       #   @api private
       #
@@ -1651,6 +1685,47 @@ module Mongo
       def self.ctx_setopt_contention_factor(context, factor)
         check_ctx_status(context) do
           mongocrypt_ctx_setopt_contention_factor(context.ctx_p, factor)
+        end
+      end
+
+      # @!method self.mongocrypt_ctx_setopt_algorithm_range(ctx, opts)
+      #   @api private
+      #
+      # Set options for explicit encryption with the "rangePreview" algorithm.
+      #
+      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # public use.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ FFI::Pointer ] opts opts A pointer to range
+      #   options document.
+      #
+      # @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_ctx_setopt_algorithm_range,
+        [
+          :pointer,
+          :pointer
+        ],
+        :bool
+      )
+
+      # Set options for explicit encryption with the "rangePreview" algorithm.
+      #
+      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # public use.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ Hash ] opts options
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
+      def self.ctx_setopt_algorithm_range(context, opts)
+        validate_document(opts)
+        data = opts.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_setopt_algorithm_range(context.ctx_p, data_p)
+          end
         end
       end
 

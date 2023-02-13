@@ -120,6 +120,46 @@ module Mongo
       @encrypter.encrypt(value, options)
     end
 
+    # Encrypts a Match Expression or Aggregate Expression to query a range index.
+    #
+    # @example Encrypt Match Expression.
+    #   encryption.encrypt_expression(
+    #     {'$and' =>  [{'field' => {'$gt' => 10}}, {'field' =>  {'$lt' => 20 }}]}
+    #   )
+    # @example Encrypt Aggregate Expression.
+    #   encryption.encrypt_expression(
+    #     {'$and' =>  [{'$gt' => ['$field', 10]}, {'$lt' => ['$field', 20]}}
+    #   )
+    #   {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}]
+    # Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+    # @note: The Range algorithm is experimental only. It is not intended
+    #   for public use. It is subject to breaking changes.
+    #
+    # @param [ Hash ] expression Expression to encrypt.
+    # # @param [ Hash ] options
+    # @option options [ BSON::Binary ] :key_id A BSON::Binary object of type :uuid
+    #   representing the UUID of the encryption key as it is stored in the key
+    #   vault collection.
+    # @option options [ String ] :key_alt_name The alternate name for the
+    #   encryption key.
+    # @option options [ String ] :algorithm The algorithm used to encrypt the
+    #   expression. The only allowed value is "RangePreview"
+    # @option options [ Integer | nil ] :contention_factor Contention factor
+    #   to be applied If not  provided, it defaults to a value of 0.
+    # @option options [ String | nil ] query_type Query type to be applied.
+    #   The only allowed value is "rangePreview".
+    #
+    # @note The :key_id and :key_alt_name options are mutually exclusive. Only
+    #   one is required to perform explicit encryption.
+    #
+    # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
+    #   representing the encrypted expression.
+    #
+    # @raise [ ArgumentError ] if disallowed values in options are set.
+    def encrypt_expression(expression, options = {})
+      @encrypter.encrypt_expression(expression, options)
+    end
+
     # Decrypts a value that has already been encrypted.
     #
     # @param [ BSON::Binary ] value A BSON Binary object of subtype 6 (ciphertext)
