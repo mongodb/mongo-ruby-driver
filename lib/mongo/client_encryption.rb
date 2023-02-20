@@ -244,5 +244,71 @@ module Mongo
     def rewrap_many_data_key(filter, opts = {})
       @encrypter.rewrap_many_data_key(filter, opts)
     end
+
+    # Create collection with encrypted fields.
+    #
+    # If :encryption_fields contains a keyId with a null value, a data key
+    # will be automatically generated and assigned to keyId value.
+    #
+    # @note This method does not update the :encrypted_fields_map in the client's
+    #   :auto_encryption_options. Therefore, in order to use the collection
+    #   created by this method with automatic encryption, the user must create
+    #   a new client after calling this function with the :encrypted_fields returned.
+    #
+    # @note This method is a part of the queryable encryption API and therefore
+    #   is in public technical preview. This method should be considered
+    #   experimental and is subject to change.
+    #
+    # @param [ Mongo::Database ] database Database to create collection in.
+    # @param [ String ] coll_name Name of collection to create.
+    # @param [ Hash ] coll_opts Options for collection to create.
+    # @param [ String ] kms_provider KMS provider to encrypt fields.
+    # @param [ Hash | nil ] master_key Document describing master key to encrypt fields.
+    #
+    # @return [ Array<Operation::Result, Hash> ] The result of the create
+    #   collection operation and the encrypted fields map used to create
+    #   the collection.
+    def create_encrypted_collection(database, coll_name, coll_opts, kms_provider, master_key)
+      raise ArgumentError, 'coll_opts must contain :encrypted_fields' unless coll_opts[:encrypted_fields]
+
+      encrypted_fields = create_data_keys(coll_opts[:encrypted_fields], kms_provider, master_key)
+      begin
+        new_coll_opts = coll_opts.dup.merge(encrypted_fields: encrypted_fields)
+        [database[coll_name].create(new_coll_opts), encrypted_fields]
+      rescue Mongo::Error => e
+        raise Error::CryptError, "Error creating collection with encrypted fields \
+              #{encrypted_fields}: #{e.class}: #{e.message}"
+      end
+    end
+
+    private
+
+    # Create data keys for fields in encrypted_fields that has :keyId key,
+    # but the value is nil.
+    #
+    # @param [ Hash ] encrypted_fields Encrypted fields map.
+    # @param [ String ] kms_provider KMS provider to encrypt fields.
+    # @param [ Hash | nil ] master_key Document describing master key to encrypt fields.
+    #
+    # @return [ Hash ] Encrypted fields map with keyIds for fields
+    #   that did not have one.
+    def create_data_keys(encrypted_fields, kms_provider, master_key)
+      encrypted_fields = encrypted_fields.dup
+      # We must return the partially formed encrypted_fields hash if an error
+      # occurs - https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#create-encrypted-collection-helper
+      # Thefore, we do this in a loop instead of using #map.
+      encrypted_fields[:fields].size.times do |i|
+        field = encrypted_fields[:fields][i]
+        next unless field.is_a?(Hash) && field.fetch(:keyId, false).nil?
+
+        begin
+          encrypted_fields[:fields][i][:keyId] = create_data_key(kms_provider, master_key: master_key)
+        rescue Error::CryptError => e
+          raise Error::CryptError, "Error creating data key for field #{field[:path]} \
+              with encrypted fields #{encrypted_fields}: #{e.class}: #{e.message}"
+        end
+      end
+      encrypted_fields
+    end
   end
 end
